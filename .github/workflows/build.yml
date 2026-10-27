@@ -1,0 +1,28 @@
+name: Build mod
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Unpack and build
+        run: |
+          unzip -q eggsteal-mod-src-v3.zip -d proj
+          find proj -maxdepth 3 | head -30
+          D=$(dirname "$(find proj -name build.gradle | head -1)")
+          echo "Building in: $D"
+          cd "$D"
+          gradle build --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gunsmod-jar
+          path: proj/**/build/libs/*.jar
