@@ -65,6 +65,9 @@ public class EggSteal {
     public static final DeferredHolder<EntityType<?>, EntityType<AuctionEggEntity>> AUCTION = ENTITIES.register("auction_egg",
             () -> EntityType.Builder.of(AuctionEggEntity::new, MobCategory.MISC).sized(0.7f, 0.8f).clientTrackingRange(16).updateInterval(1).build("auction_egg"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<EventMarkerEntity>> EVENT_MARKER = ENTITIES.register("event_marker",
+            () -> EntityType.Builder.<EventMarkerEntity>of(EventMarkerEntity::new, MobCategory.MISC).sized(0.2f, 0.2f).clientTrackingRange(16).updateInterval(20).build("event_marker"));
+
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = TABS.register("main",
             () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.eggsteal"))
                     .icon(() -> new ItemStack(EGG_ITEMS.get(0).get()))

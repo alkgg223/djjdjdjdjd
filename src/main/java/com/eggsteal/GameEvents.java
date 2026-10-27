@@ -101,6 +101,7 @@ public class GameEvents {
         for (Map.Entry<UUID, Economy.Stats> en : new ArrayList<>(eco.map.entrySet())) {
             if (!en.getValue().bot || en.getValue().base < 0) continue;
             UUID id = en.getKey();
+            Steal.returnStolen(sl, id);
             Entity b = sl.getEntity(id);
             if (b != null) b.discard();
             for (CreatureEntity c : sl.getEntities(net.minecraft.world.level.entity.EntityTypeTest.forClass(CreatureEntity.class), x -> id.equals(x.owner()))) c.discard();
@@ -126,6 +127,7 @@ public class GameEvents {
             for (ServerPlayer p : s.getPlayerList().getPlayers()) {
                 if (p.getMainHandItem().getItem() instanceof CoilItem ci)
                     p.addEffect(new MobEffectInstance(ci.jump ? MobEffects.JUMP : MobEffects.MOVEMENT_SPEED, 30, ci.jump ? 3 : 2, false, false, false));
+                carryingStolen(p, eco);
             }
         }
         if (t % 20 == 0) {
@@ -136,6 +138,20 @@ public class GameEvents {
         }
         RandomEvents.tick(s);
         if (t % 100 == 0) Hud.leaderboard(s);
+    }
+
+    /** A stolen egg is heavy: the thief glows and walks slower (much slower with an egg of a rich bot). */
+    static void carryingStolen(ServerPlayer p, Economy eco) {
+        int g = -1;
+        for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
+            ItemStack s = p.getInventory().getItem(i);
+            if (!(s.getItem() instanceof EggItem)) continue;
+            UUID from = Steal.fromOf(s);
+            if (from != null) g = Math.max(g, Economy.guard(eco.map.get(from)));
+        }
+        if (g < 0) return;
+        p.addEffect(new MobEffectInstance(MobEffects.GLOWING, 30, 0, false, false, false));
+        if (g > 0) p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, g >= 2 ? 1 : 0, false, false, true));
     }
 
     @SubscribeEvent
@@ -200,8 +216,10 @@ public class GameEvents {
             Steal.onHit(target, attacker);
             // a hit from a bat (or from any bot) freezes players and bots for 3 seconds
             boolean bat = attacker.getMainHandItem().getItem() instanceof BatItem || attacker instanceof BotEntity;
-            if (bat && (target instanceof Player || target instanceof BotEntity))
-                target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 7, false, true, true));
+            if (bat && (target instanceof Player || target instanceof BotEntity)) {
+                int g = attacker instanceof BotEntity ? Economy.guard(Economy.get(attacker.getServer()).map.get(attacker.getUUID())) : 0;
+                target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60 + 20 * g, 7, false, true, true));
+            }
         }
     }
 

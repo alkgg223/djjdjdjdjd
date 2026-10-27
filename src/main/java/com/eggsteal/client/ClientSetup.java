@@ -13,5 +13,6 @@ public class ClientSetup {
         e.registerEntityRenderer(EggSteal.CREATURE.get(), CreatureRenderer::new);
         e.registerEntityRenderer(EggSteal.BOT.get(), BotRenderer::new);
         e.registerEntityRenderer(EggSteal.AUCTION.get(), AuctionEggRenderer::new);
+        e.registerEntityRenderer(EggSteal.EVENT_MARKER.get(), EventSkyRenderer::new);
     }
 }

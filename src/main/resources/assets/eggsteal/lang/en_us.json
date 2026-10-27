@@ -81,5 +81,7 @@
  "block.eggsteal.skin_rune": "Rune Block",
  "block.eggsteal.skin_frost": "Frost Block",
  "block.eggsteal.skin_slime": "Slime Block",
- "block.eggsteal.skin_lavarock": "Lavarock Block"
+ "block.eggsteal.skin_lavarock": "Lavarock Block",
+ "entity.eggsteal.event_marker": "Event Sky",
+ "entity.eggsteal.auction_egg": "Rare Egg"
 }

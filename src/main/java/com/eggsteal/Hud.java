@@ -107,7 +107,8 @@ public class Hud {
             UUID o = eco.baseOwner[i];
             Economy.Stats st = o == null ? null : eco.map.get(o);
             String t = st == null ? "§7Free base" : "§l" + st.name + (st.bot ? " §7[BOT]" : " §a[PLAYER]") + "\n§6$" + Economy.fmt(st.money)
-                    + (st.rebirths > 0 ? "  §d✦ Rebirth " + st.rebirths : "") + "\n§7Belt Lv" + st.belt + " · Slots " + Arena.available(st) + (st.floor2 ? " · 2F" : "");
+                    + (st.rebirths > 0 ? "  §d✦ Rebirth " + st.rebirths : "") + "\n§7Belt Lv" + st.belt + " · Slots " + Arena.available(st) + (st.floor2 ? " · 2F" : "")
+                    + (Economy.guard(st) > 0 ? "\n" + Economy.GUARD_NAMES[Economy.guard(st)] + " §7- stealing takes " + Economy.GUARD_STEAL_TICKS[Economy.guard(st)] / 20 + "s" : "");
             setText(s, "es_b" + i, t);
         }
     }

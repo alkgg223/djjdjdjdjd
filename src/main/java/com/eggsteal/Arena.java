@@ -56,20 +56,30 @@ public class Arena {
         return -1;
     }
 
-    public static void spawnCreature(ServerLevel sl, UUID owner, int variant, int mut, int base, int idx, int hatch) {
+    public static CreatureEntity spawnCreature(ServerLevel sl, UUID owner, int variant, int mut, int base, int idx, int hatch) {
         Vec3 p = slot(base, idx);
         CreatureEntity ce = EggSteal.CREATURE.get().create(sl);
-        if (ce == null) return;
+        if (ce == null) return null;
         ce.moveTo(p.x, p.y, p.z, dir(base) > 0 ? 0f : 180f, 0f);
         ce.setVariant(variant);
         ce.setMutation(mut);
         ce.setOwner(owner);
         if (hatch > 0) ce.startHatch(hatch);
         sl.addFreshEntity(ce);
+        return ce;
     }
 
-    public static void spawnCreature(ServerLevel sl, UUID owner, int variant, int mut, int base, int idx) {
-        spawnCreature(sl, owner, variant, mut, base, idx, CreatureEntity.HATCH_TIME);
+    public static CreatureEntity spawnCreature(ServerLevel sl, UUID owner, int variant, int mut, int base, int idx) {
+        return spawnCreature(sl, owner, variant, mut, base, idx, CreatureEntity.HATCH_TIME);
+    }
+
+    /** The slot index a creature stands on, or -1. */
+    public static int slotOf(int base, CreatureEntity c) {
+        for (int i = 0; i < 12; i++) {
+            Vec3 p = slot(base, i);
+            if (c.distanceToSqr(p.x, p.y, p.z) < 1.5) return i;
+        }
+        return -1;
     }
 
     /** Places a creature in the first free slot. Returns false when the base is full. */

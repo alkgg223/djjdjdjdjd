@@ -47,6 +47,8 @@ public class BotEntity extends PathfinderMob {
     /** Stuck detection: where I wanted to go, and for how long I have not moved. */
     private double wantX, wantY, wantZ, lastX, lastZ;
     private int wantTick = -999, still, attackCool;
+    /** The current target has something of mine (my egg, my creature, or is stealing one right now): chase hard. */
+    private boolean owesMe;
 
     public BotEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -68,6 +70,7 @@ public class BotEntity extends PathfinderMob {
     public void aggro(LivingEntity thief) {
         setTarget(thief);
         chase = 0;
+        owesMe = level() instanceof ServerLevel sl && owes(sl, thief);
     }
 
     /** Called when a theft succeeded: run home with the creature. */
@@ -118,6 +121,10 @@ public class BotEntity extends PathfinderMob {
         still += 10;
         if (still == 30 || still == 90) getJumpControl().jump();
         if (still == 60 || still == 120) { getNavigation().stop(); go(wantX, wantY, wantZ, 1.2); }
+        boolean caught = carried >= 0 && carriedFrom != null; // a thief trapped by a laser must stay catchable
+        int inside = Arena.baseAt(getX(), getZ());
+        if (inside >= 0 && inside != st.base && Laser.active(inside)) caught = true;
+        if (still >= 160 && caught) { still = 100; return; }
         if (still >= 160 && st.base >= 0) { // 8 s without moving: teleport home and start over
             Vec3 h = Arena.home(st.base);
             getNavigation().stop();
@@ -129,18 +136,38 @@ public class BotEntity extends PathfinderMob {
         }
     }
 
+    /** Does this entity have something of mine: my egg, my creature on its back or freshly placed, or is it stealing one? */
+    private boolean owes(ServerLevel sl, LivingEntity t) {
+        UUID me = getUUID(), tid = t.getUUID();
+        if (t instanceof Player p) {
+            for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
+                ItemStack s = p.getInventory().getItem(i);
+                if (s.getItem() instanceof EggItem && me.equals(Steal.fromOf(s))) return true;
+            }
+        }
+        if (t instanceof BotEntity b && me.equals(b.carriedFrom)) return true;
+        long now = sl.getGameTime();
+        return !sl.getEntities(EntityTypeTest.forClass(CreatureEntity.class), c ->
+                (me.equals(c.owner()) && tid.equals(c.stealer())) || (tid.equals(c.owner()) && me.equals(c.stolenFrom()) && c.stolenUntil() > now)).isEmpty();
+    }
+
     private void fight(LivingEntity t, Economy.Stats st) {
         getLookControl().setLookAt(t, 30f, 30f);
         double d = distanceTo(t);
-        if (st.coilSpeed && d > 5) {
+        int g = Economy.guard(st);
+        if (owesMe) { // a thief: run after it much faster (rich bots even more), and jump over things
+            addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, Math.min(4, 2 + g), false, false));
+            addEffect(new MobEffectInstance(MobEffects.JUMP, 40, 1, false, false));
+        }
+        if ((st.coilSpeed || owesMe) && d > 5) {
             equip(EggSteal.SPEED_COIL.get());
-            addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, 2, false, false));
+            if (!owesMe) addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, 2, false, false));
         } else equip(weaponItem(st));
         if (attackCool > 0) attackCool--;
-        if (d < 2.4 && attackCool <= 0 && hasLineOfSight(t)) {
+        if (d < 2.6 && attackCool <= 0 && hasLineOfSight(t)) {
             swing(InteractionHand.MAIN_HAND);
             doHurtTarget(t);
-            attackCool = 14;
+            attackCool = owesMe ? 10 : 14;
         }
         if (tickCount % 5 == 0 && d > 1.6) go(t.getX(), t.getY(), t.getZ(), 1.3);
     }
@@ -168,8 +195,10 @@ public class BotEntity extends PathfinderMob {
             if (egg != null && distanceTo(egg) < 3.4 && Auction.buy(egg, getUUID(), sl.getServer())) { phase = 0; setTarget(null); }
         }
         LivingEntity t = getTarget();
+        if (t != null && tickCount % 10 == 0) owesMe = owes(sl, t);
         if (t != null) {
-            boolean drop = ++chase > 300 || !t.isAlive() || t.isRemoved()
+            int limit = owesMe ? 900 + 300 * Economy.guard(st) : 300; // never give up quickly on a thief
+            boolean drop = ++chase > limit || !t.isAlive() || t.isRemoved()
                     || (t instanceof Player p && (p.isCreative() || p.isSpectator()))
                     || (phase == 5 && chase > 60); // never miss the rare egg because of a long fight
             if (drop) { setTarget(null); chase = 0; equip(weaponItem(st)); }
@@ -222,7 +251,7 @@ public class BotEntity extends PathfinderMob {
 
     /** Someone who is not me is close to my base and my laser is ready: go back and press the button. */
     private boolean shouldDefend(ServerLevel sl, Economy eco, Economy.Stats st) {
-        if (!Laser.ready(sl.getServer(), st.base) || random.nextFloat() > 0.4f) return false;
+        if (!Laser.ready(sl.getServer(), st.base) || random.nextFloat() > (Economy.guard(st) > 0 ? 1f : 0.4f)) return false;
         if (Arena.owned(sl, getUUID()) == 0) return false;
         int cx = Arena.cx(st.base), cz = Arena.cz(st.base);
         AABB box = new AABB(cx - 22, 60, cz - 22, cx + 22, 80, cz + 22);
@@ -418,6 +447,17 @@ public class BotEntity extends PathfinderMob {
     private void goHome(ServerLevel sl, Economy eco, Economy.Stats st) {
         if (carried < 0) { phase = 0; return; }
         int idx = Arena.freeSlot(sl, st.base, st);
+        if (idx < 0) { // base full: sell my weakest creature to make room
+            CreatureEntity weakest = null;
+            for (CreatureEntity c : sl.getEntities(EntityTypeTest.forClass(CreatureEntity.class), x -> getUUID().equals(x.owner())))
+                if (Arena.slotOf(st.base, c) >= 0 && (weakest == null || value(c) < value(weakest))) weakest = c;
+            if (weakest != null && (carriedFrom != null || value(weakest) < Creature.VALUES[carried].price * Mutation.of(carriedMut).mult)) {
+                idx = Arena.slotOf(st.base, weakest);
+                st.money += weakest.creature().price * 0.5;
+                weakest.discard();
+                eco.setDirty();
+            }
+        }
         if (idx < 0) {
             st.money += Creature.VALUES[carried].price * 0.5;
             carried = -1;
@@ -429,7 +469,8 @@ public class BotEntity extends PathfinderMob {
         }
         Vec3 p = Arena.slot(st.base, idx);
         if (position().distanceToSqr(p.x, p.y, p.z) < 9) {
-            Arena.spawnCreature(sl, getUUID(), carried, carriedMut, st.base, idx);
+            CreatureEntity placed = Arena.spawnCreature(sl, getUUID(), carried, carriedMut, st.base, idx);
+            if (placed != null && carriedFrom != null) placed.markStolen(carriedFrom, sl.getGameTime() + Steal.recoverWindow(eco.map.get(carriedFrom)));
             carried = -1;
             carriedMut = 0;
             carriedFrom = null;

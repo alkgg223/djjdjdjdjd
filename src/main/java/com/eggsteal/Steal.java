@@ -95,13 +95,25 @@ public class Steal {
         }
     }
 
+    /** How long (ticks) the victim can still win a creature back by hitting the thief after it was placed in the thief's base. */
+    public static int recoverWindow(Economy.Stats victim) { return 600 + 300 * Economy.guard(victim); }
+
     /** Called whenever a living entity is about to be hurt by another living entity. */
     public static void onHit(LivingEntity target, LivingEntity attacker) {
+        UUID aid = attacker.getUUID();
         if (target.level() instanceof ServerLevel sl) {
             UUID tid = target.getUUID();
             for (CreatureEntity c : sl.getEntities(EntityTypeTest.forClass(CreatureEntity.class), x -> tid.equals(x.stealer()))) c.cancelSteal();
+            // the thief already put my creature in its base a moment ago: hitting it still brings the creature back
+            long now = sl.getGameTime();
+            for (CreatureEntity c : sl.getEntities(EntityTypeTest.forClass(CreatureEntity.class),
+                    x -> tid.equals(x.owner()) && aid.equals(x.stolenFrom()) && x.stolenUntil() > now)) {
+                int v = c.variant(), mut = c.mutation();
+                c.discard();
+                give(attacker, v, mut);
+                if (target instanceof ServerPlayer tp) tp.sendSystemMessage(Component.literal("§c" + nameOf(sl, attacker) + " took back the " + Creature.VALUES[v].tag() + "§c you stole!"));
+            }
         }
-        UUID aid = attacker.getUUID();
         if (target instanceof Player p) {
             for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
                 ItemStack s = p.getInventory().getItem(i);
@@ -118,6 +130,32 @@ public class Steal {
             b.carriedFrom = null;
             b.setTarget(null);
             give(attacker, v, mut);
+        }
+    }
+
+    /** Gives a creature back to its owner by UUID, whether the owner is an online player, a bot, or offline. */
+    public static void giveTo(ServerLevel sl, UUID owner, int variant, int mut) {
+        ServerPlayer sp = sl.getServer().getPlayerList().getPlayer(owner);
+        if (sp != null) { give(sp, variant, mut); return; }
+        if (sl.getEntity(owner) instanceof BotEntity b) { b.receive(variant, mut); return; }
+        Economy eco = Economy.get(sl.getServer());
+        Economy.Stats st = eco.map.get(owner);
+        if (st != null && !Arena.place(sl, owner, variant, mut, st, 0)) { st.money += Creature.VALUES[variant].price * 0.5; eco.setDirty(); }
+    }
+
+    /** A thief leaves the game: whatever it carries or stole a moment ago goes back to the victims. Returns nothing else. */
+    public static void returnStolen(ServerLevel sl, UUID thief) {
+        if (sl.getEntity(thief) instanceof BotEntity b && b.carried >= 0 && b.carriedFrom != null) {
+            giveTo(sl, b.carriedFrom, b.carried, b.carriedMut);
+            b.carried = -1;
+            b.carriedFrom = null;
+        }
+        long now = sl.getGameTime();
+        for (CreatureEntity c : sl.getEntities(EntityTypeTest.forClass(CreatureEntity.class), x -> thief.equals(x.owner()) && x.stolenFrom() != null && x.stolenUntil() > now)) {
+            UUID from = c.stolenFrom();
+            int v = c.variant(), mut = c.mutation();
+            c.discard();
+            giveTo(sl, from, v, mut);
         }
     }
 

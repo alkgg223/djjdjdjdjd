@@ -32,7 +32,9 @@ public class EggItem extends Item {
             p.displayClientMessage(Component.literal("§cNo free slot! Buy more slots in the shop (/eggsteal shop)"), true);
             return InteractionResult.FAIL;
         }
-        Arena.spawnCreature(sl, p.getUUID(), creature.ordinal(), Steal.mutOf(ctx.getItemInHand()), st.base, idx);
+        CreatureEntity ce = Arena.spawnCreature(sl, p.getUUID(), creature.ordinal(), Steal.mutOf(ctx.getItemInHand()), st.base, idx);
+        java.util.UUID from = Steal.fromOf(ctx.getItemInHand());
+        if (ce != null && from != null) ce.markStolen(from, sl.getGameTime() + Steal.recoverWindow(eco.map.get(from)));
         ctx.getItemInHand().shrink(1);
         return InteractionResult.SUCCESS;
     }

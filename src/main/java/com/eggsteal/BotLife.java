@@ -53,6 +53,7 @@ public class BotLife {
 
     static void leave(MinecraftServer s, ServerLevel sl, Economy eco, UUID id, Economy.Stats st) {
         s.getPlayerList().broadcastSystemMessage(Component.translatable("multiplayer.player.left", Component.literal(st.name)).withStyle(ChatFormatting.YELLOW), false);
+        Steal.returnStolen(sl, id);
         Entity e = sl.getEntity(id);
         if (e != null) e.discard();
         for (CreatureEntity c : sl.getEntities(EntityTypeTest.forClass(CreatureEntity.class), x -> id.equals(x.owner()))) c.discard();

@@ -88,6 +88,19 @@ public class Economy extends SavedData {
         return c.income * (1 + 0.15 * s.income) * rebirthMult(s) * Mutation.of(mutation).mult * RandomEvents.incomeMult();
     }
 
+    /** Steal time per guard level: rich bots watch their creatures much more closely. */
+    public static final int[] GUARD_STEAL_TICKS = {0, 120, 260, 400};
+    public static final String[] GUARD_NAMES = {"", "§eRich", "§6Very rich", "§c§lSuper rich"};
+
+    /** How well a bot protects its creatures: 0 normal, 1 rich, 2 very rich, 3 super rich. Players are always 0. */
+    public static int guard(Stats s) {
+        if (s == null || !s.bot) return 0;
+        if (s.money >= 20_000_000 || s.rebirths >= 4) return 3;
+        if (s.money >= 1_000_000 || s.rebirths >= 2) return 2;
+        if (s.money >= 50_000 || s.rebirths >= 1) return 1;
+        return 0;
+    }
+
     public static double rebirthMult(Stats s) { return 1 + 0.5 * s.rebirths; }
     public static double rebirthCost(Stats s) { return 1_000_000 * Math.pow(4, s.rebirths); }
     public static String rebirthTag(Stats s) { return s.rebirths > 0 ? "§d✦R" + s.rebirths + " " : ""; }

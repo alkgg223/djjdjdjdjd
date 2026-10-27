@@ -30,6 +30,9 @@ public class CreatureEntity extends PathfinderMob {
     private static final EntityDataAccessor<Integer> MUT = SynchedEntityData.defineId(CreatureEntity.class, EntityDataSerializers.INT);
     public static final int HATCH_TIME = 60;
     private UUID owner, stealer;
+    /** Who this creature was stolen from, and until when (game time) hitting the thief still gets it back. */
+    private UUID stolenFrom;
+    private long stolenUntil;
     private int stealEnd;
     private boolean wasHatching;
     /** Client only: counts down from 10 right after hatching, for the pop-in animation. */
@@ -80,13 +83,24 @@ public class CreatureEntity extends PathfinderMob {
     public UUID stealer() { return stealer; }
     public boolean stealing() { return stealer != null; }
 
-    /** Normal creatures are stolen at once; pack creatures need the thief to stay close for 8 seconds. */
+    public UUID stolenFrom() { return stolenFrom; }
+    public long stolenUntil() { return stolenUntil; }
+    public void markStolen(UUID from, long until) { stolenFrom = from; stolenUntil = until; }
+
+    /**
+     * Normal creatures are stolen at once; pack creatures need the thief to stay close for 8 seconds,
+     * and creatures of rich bots for 6 to 20 seconds while the bot rushes over to defend them.
+     */
     public void beginSteal(LivingEntity thief) {
-        int t = creature().stealTicks();
+        Economy.Stats os = owner == null || level().getServer() == null ? null : Economy.get(level().getServer()).map.get(owner);
+        int g = Economy.guard(os);
+        int t = Math.max(creature().stealTicks(), Economy.GUARD_STEAL_TICKS[g]);
         if (t <= 0) { Steal.finish(this, thief); return; }
         if (stealer != null) return;
         stealer = thief.getUUID();
         stealEnd = tickCount + t;
+        if (g > 0 && thief instanceof ServerPlayer sp)
+            sp.sendSystemMessage(Component.literal(Economy.GUARD_NAMES[g] + " bot! §cStay right next to it for " + t / 20 + "s - the owner is coming for you!"));
         Steal.notifyAttempt((ServerLevel) level(), owner, thief, variant());
     }
 
@@ -102,7 +116,7 @@ public class CreatureEntity extends PathfinderMob {
         if (level().isClientSide) { clientTick(); return; }
         if (stealer != null) {
             Entity e = ((ServerLevel) level()).getEntity(stealer);
-            if (!(e instanceof LivingEntity th) || !th.isAlive() || distanceTo(th) > 4.5) cancelSteal();
+            if (!(e instanceof LivingEntity th) || !th.isAlive() || distanceTo(th) > 4.0) cancelSteal();
             else if (tickCount >= stealEnd) { stealer = null; Steal.finish(this, th); return; }
             else if (tickCount % 10 == 0) {
                 int left = (stealEnd - tickCount) / 20 + 1;
@@ -170,6 +184,7 @@ public class CreatureEntity extends PathfinderMob {
         t.putInt("hatch", entityData.get(HATCH));
         t.putInt("mut", mutation());
         if (owner != null) t.putUUID("owner", owner);
+        if (stolenFrom != null) { t.putUUID("stolenFrom", stolenFrom); t.putLong("stolenUntil", stolenUntil); }
     }
 
     @Override
@@ -179,5 +194,6 @@ public class CreatureEntity extends PathfinderMob {
         entityData.set(HATCH, t.getInt("hatch"));
         entityData.set(MUT, t.getInt("mut"));
         if (t.hasUUID("owner")) owner = t.getUUID("owner");
+        if (t.hasUUID("stolenFrom")) { stolenFrom = t.getUUID("stolenFrom"); stolenUntil = t.getLong("stolenUntil"); }
     }
 }
