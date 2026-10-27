@@ -13,6 +13,8 @@ import net.minecraft.world.phys.Vec3;
 public class Belt {
     static final int[] timers = new int[Arena.BASES];
 
+    public static void reset() { java.util.Arrays.fill(timers, 0); }
+
     public static double speed(int lvl) { return 0.04 * (1 + 0.2 * lvl); }
 
     public static Creature pick(RandomSource r, int lvl) {
@@ -37,7 +39,7 @@ public class Belt {
             if (eco.baseOwner[i] == null) continue;
             Economy.Stats st = eco.map.get(eco.baseOwner[i]);
             if (st == null) continue;
-            double sp = speed(st.belt);
+            double sp = speed(st.belt) * RandomEvents.beltSpeedMult();
             int cx = Arena.cx(i);
             for (ItemEntity e : sl.getEntitiesOfClass(ItemEntity.class, box(i), it -> it.getPersistentData().contains("es_belt"))) {
                 e.setDeltaMovement(Vec3.ZERO);
@@ -45,17 +47,19 @@ public class Belt {
                 e.setPos(e.getX() + sp, e.getY(), e.getZ());
             }
             if (--timers[i] <= 0) {
-                timers[i] = (int) (110 / (1 + 0.15 * st.belt));
-                Creature c = pick(sl.random, st.belt);
+                timers[i] = (int) (110 / (1 + 0.15 * st.belt) / RandomEvents.beltSpeedMult());
+                Creature c = pick(sl.random, st.belt + 2 * st.rebirths + RandomEvents.luckBonus());
+                int mut = RandomEvents.rollMutation(sl.random);
                 ItemEntity e = new ItemEntity(sl, cx - 10, 64.4, Arena.beltZ(i) + 0.5, new ItemStack(EggSteal.EGG_ITEMS.get(c.ordinal()).get()));
                 e.setDeltaMovement(Vec3.ZERO);
                 e.setNoGravity(true);
                 e.setNeverPickUp();
                 e.setUnlimitedLifetime();
-                e.setCustomName(Component.literal(c.tag() + " §6$" + Economy.fmt(c.price)));
+                e.setCustomName(Component.literal(Mutation.of(mut).prefix() + c.tag() + " §6$" + Economy.fmt(c.price)));
                 e.setCustomNameVisible(true);
                 e.getPersistentData().putInt("es_belt", c.ordinal());
                 e.getPersistentData().putInt("es_base", i);
+                if (mut > 0) e.getPersistentData().putInt("es_mut", mut);
                 sl.addFreshEntity(e);
             }
         }

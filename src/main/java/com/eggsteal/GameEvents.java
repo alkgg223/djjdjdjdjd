@@ -3,6 +3,8 @@ package com.eggsteal;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -28,6 +30,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 @EventBusSubscriber(modid = EggSteal.MODID)
@@ -35,9 +38,25 @@ public class GameEvents {
 
     static boolean inArena(double x, double z) { return Math.abs(x) <= 80 && Math.abs(z) <= 60; }
 
+    /** All static game state (timers use the server tick counter, which restarts at 0) belongs to one world. */
+    static void resetState() {
+        Laser.clearState();
+        Auction.reset();
+        Belt.reset();
+        BotLife.reset();
+        RandomEvents.reset();
+    }
+
     @SubscribeEvent
     public static void started(ServerStartedEvent e) {
+        resetState();
         if (Economy.get(e.getServer()).arenaBuilt) Arena.rules(e.getServer());
+    }
+
+    @SubscribeEvent
+    public static void stopping(ServerStoppingEvent e) {
+        RandomEvents.stop(e.getServer());
+        resetState();
     }
 
     @SubscribeEvent
@@ -65,7 +84,7 @@ public class GameEvents {
             Vec3 h = Arena.home(st.base);
             p.teleportTo(sl, h.x, h.y + 1, h.z, 0f, 0f);
         }
-        p.sendSystemMessage(Component.literal("§6Welcome to Egg Steal! §7Buy eggs by right-clicking your conveyor belt next to an egg, right-click an egg on your base to hatch it, steal from others, and upgrade at the Shop in the center (or /eggsteal shop). Press the red button in your base for a 30s laser door!"));
+        p.sendSystemMessage(Component.literal("§6Welcome to Egg Steal! §7Buy eggs by right-clicking your conveyor belt next to an egg, right-click an egg on your base to hatch it, steal from others, and upgrade at the Shop in the center (or /eggsteal shop). Press the red button in your base for a 30s laser door! §dRich enough? Rebirth in the shop for a permanent money boost. §eWatch out for random events!"));
     }
 
     @SubscribeEvent
@@ -113,7 +132,9 @@ public class GameEvents {
             Hud.actionbar(s);
             BotLife.tick(s, eco);
             Auction.tick(s);
+            Hud.setText(s, "es_event", RandomEvents.status(s));
         }
+        RandomEvents.tick(s);
         if (t % 100 == 0) Hud.leaderboard(s);
     }
 
@@ -158,6 +179,7 @@ public class GameEvents {
         e.setCancellationResult(InteractionResult.SUCCESS);
         if (best == null) { p.displayClientMessage(Component.literal("§7No egg here - click the belt right next to an egg."), true); return; }
         Creature c = Creature.VALUES[best.getPersistentData().getInt("es_belt")];
+        int mut = best.getPersistentData().getInt("es_mut");
         if (st.money < c.price) {
             p.displayClientMessage(Component.literal("§cNot enough money! Need $" + Economy.fmt(c.price)), true);
             return;
@@ -165,9 +187,9 @@ public class GameEvents {
         st.money -= c.price;
         eco.setDirty();
         best.discard();
-        ItemStack egg = Steal.makeEgg(c.ordinal(), null);
+        ItemStack egg = Steal.makeEgg(c.ordinal(), null, mut);
         if (!p.getInventory().add(egg)) p.drop(egg, false);
-        p.displayClientMessage(Component.literal("§aBought " + c.tag() + " §aegg! Right-click it on your base to hatch."), true);
+        p.displayClientMessage(Component.literal("§aBought " + Mutation.of(mut).prefix() + c.tag() + " §aegg! Right-click it on your base to hatch."), true);
     }
 
     @SubscribeEvent
@@ -193,6 +215,14 @@ public class GameEvents {
         if (e.getEntity() instanceof Player p && !p.isCreative() && inArena(e.getPos().getX(), e.getPos().getZ())) e.setCanceled(true);
     }
 
+    static LiteralArgumentBuilder<CommandSourceStack> eventCommand() {
+        LiteralArgumentBuilder<CommandSourceStack> ev = Commands.literal("event").requires(src -> src.hasPermission(2));
+        for (RandomEvents.Kind k : RandomEvents.Kind.values())
+            ev.then(Commands.literal(k.id).executes(c -> { RandomEvents.start(c.getSource().getServer(), k); return 1; }));
+        ev.then(Commands.literal("stop").executes(c -> { RandomEvents.stop(c.getSource().getServer()); return 1; }));
+        return ev;
+    }
+
     @SubscribeEvent
     public static void commands(RegisterCommandsEvent e) {
         e.getDispatcher().register(Commands.literal("eggsteal")
@@ -204,6 +234,8 @@ public class GameEvents {
                     return 1;
                 }))
                 .then(Commands.literal("top").executes(c -> { Hud.leaderboard(c.getSource().getServer()); return 1; }))
+                .then(Commands.literal("rebirth").executes(c -> { Shop.open(c.getSource().getPlayerOrException(), false, ShopMenu.TAB_REBIRTH); return 1; }))
+                .then(eventCommand())
                 .then(Commands.literal("arena").requires(s -> s.hasPermission(2)).executes(c -> {
                     Arena.build(c.getSource().getServer().overworld());
                     return 1;

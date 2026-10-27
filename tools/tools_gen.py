@@ -57,7 +57,7 @@ def build(parts):
 os.makedirs(R + 'models/creature', exist_ok=True)
 for name, parts in C.items():
     v, n, f = build(parts)
-    with open(R + f'models/creature/{name}.obj', 'w') as o:
+    with open(os.devnull, 'w') as o:  # the creature models now come from tools/gen_models.py
         o.write(f'# {name} (smooth normals)\n')
         for x, y, z in v: o.write(f'v {x:.4f} {y:.4f} {z:.4f}\n')
         for x, y, z in n: o.write(f'vn {x:.4f} {y:.4f} {z:.4f}\n')

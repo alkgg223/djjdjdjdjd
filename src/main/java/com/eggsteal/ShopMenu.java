@@ -22,13 +22,15 @@ public class ShopMenu extends AbstractContainerMenu {
     private final ServerPlayer player;
     private final SimpleContainer box = new SimpleContainer(54);
     private final boolean builder;
-    private int tab; // 0 upgrades, 1 items, 2 base, 3 info, 4 skins
+    public static final int TAB_UPGRADES = 0, TAB_ITEMS = 1, TAB_BASE = 2, TAB_INFO = 3, TAB_SKINS = 4, TAB_REBIRTH = 5;
+    private int tab;
+    private boolean rebirthArmed;
 
-    public ShopMenu(int id, Inventory inv, ServerPlayer p, boolean builder) {
+    public ShopMenu(int id, Inventory inv, ServerPlayer p, boolean builder, int tab) {
         super(MenuType.GENERIC_9x6, id);
         this.player = p;
         this.builder = builder;
-        this.tab = builder ? 2 : 0;
+        this.tab = tab;
         for (int r = 0; r < 6; r++)
             for (int c = 0; c < 9; c++)
                 addSlot(new Slot(box, c + r * 9, 8 + c * 18, 18 + r * 18) {
@@ -51,8 +53,8 @@ public class ShopMenu extends AbstractContainerMenu {
         return s;
     }
 
-    private int[] tabSlots() { return builder ? new int[]{3, 5} : new int[]{1, 3, 5, 7}; }
-    private int[] tabIds() { return builder ? new int[]{2, 3} : new int[]{0, 1, 4, 3}; }
+    private int[] tabSlots() { return builder ? new int[]{3, 5} : new int[]{0, 2, 4, 6, 8}; }
+    private int[] tabIds() { return builder ? new int[]{TAB_BASE, TAB_INFO} : new int[]{TAB_UPGRADES, TAB_ITEMS, TAB_SKINS, TAB_REBIRTH, TAB_INFO}; }
 
     private void refresh() {
         Economy eco = Economy.get(player.server);
@@ -62,8 +64,8 @@ public class ShopMenu extends AbstractContainerMenu {
         for (int i = 0; i < 54; i++) box.setItem(i, pane.copy());
         ItemStack line = icon(Items.BLACK_STAINED_GLASS_PANE, " ");
         for (int i = 9; i < 18; i++) box.setItem(i, line.copy());
-        String[] names = {"§e§lUpgrades", "§b§lItems", "§a§lBase", "§f§lInfo", "§d§lSkins"};
-        Item[] icons = {Items.EXPERIENCE_BOTTLE, Items.NETHER_STAR, Items.BRICKS, Items.BOOK, Items.PAINTING};
+        String[] names = {"§e§lUpgrades", "§b§lItems", "§a§lBase", "§f§lInfo", "§d§lSkins", "§5§lRebirth"};
+        Item[] icons = {Items.EXPERIENCE_BOTTLE, Items.NETHER_STAR, Items.BRICKS, Items.BOOK, Items.PAINTING, Items.TOTEM_OF_UNDYING};
         int[] ts = tabSlots(), ids = tabIds();
         for (int i = 0; i < ts.length; i++) {
             ItemStack t = icon(icons[ids[i]], (ids[i] == tab ? "§6▶ " : "§7") + names[ids[i]].substring(2).replace("§l", ""), ids[i] == tab ? "§aSelected" : "§7Click to open");
@@ -102,11 +104,31 @@ public class ShopMenu extends AbstractContainerMenu {
                             "", eq ? "§aEquipped" : own ? "§eOwned - click to equip" : (st.money >= sk.price ? "§aClick to buy: $" : "§cCost: $") + Economy.fmt(sk.price)));
                 }
             }
+            case TAB_REBIRTH -> {
+                double cost = Economy.rebirthCost(st);
+                boolean can = st.money >= cost;
+                box.setItem(20, icon(Items.EXPERIENCE_BOTTLE, "§dYour rebirths: §f" + st.rebirths, "§7Income multiplier now: §ax" + Economy.rebirthMult(st),
+                        "§7Belt luck bonus: §a+" + (2 * st.rebirths) + " levels"));
+                ItemStack r = icon(Items.TOTEM_OF_UNDYING, rebirthArmed ? "§c§lCLICK AGAIN TO CONFIRM!" : "§5§l✦ REBIRTH ✦",
+                        "§7Rebirth " + (st.rebirths + 1) + ": all money x" + Economy.rebirthMult(st) + " §7→ §ax" + (1 + 0.5 * (st.rebirths + 1)),
+                        "§7and rarer eggs on your belt.", "",
+                        "§cResets: §7money, Income and Belt upgrades", "§aKeeps: §7creatures, slots, 2nd floor, skins, items", "",
+                        (can ? "§aClick to rebirth: $" : "§cCost: $") + Economy.fmt(cost));
+                if (rebirthArmed) r.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+                box.setItem(22, r);
+                List<Economy.Stats> top = new ArrayList<>(eco.map.values());
+                top.sort((a, b) -> Integer.compare(b.rebirths, a.rebirths));
+                List<String> lore = new ArrayList<>();
+                for (int i = 0; i < Math.min(6, top.size()); i++)
+                    lore.add("§e" + (i + 1) + ". §f" + top.get(i).name + (top.get(i).bot ? " §7[BOT]" : "") + " §d" + top.get(i).rebirths + " rebirths");
+                box.setItem(24, icon(Items.GOLDEN_HELMET, "§6§lTop Rebirths", lore.toArray(new String[0])));
+            }
             default -> {
                 int owned = Arena.owned(player.serverLevel(), player.getUUID());
                 int rank = 1;
                 for (Economy.Stats o : eco.map.values()) if (o.money > st.money) rank++;
                 box.setItem(22, icon(Items.PLAYER_HEAD, "§f" + st.name, "§6Money: $" + Economy.fmt(st.money), "§7Rank: #" + rank + " of " + eco.map.size(),
+                        "§dRebirths: " + st.rebirths + " §7(income x" + Economy.rebirthMult(st) + ")",
                         "§7Creatures: " + owned + "/" + Arena.available(st), "§7Income Lv" + st.income + " · Belt Lv" + st.belt, "§7Second floor: " + (st.floor2 ? "yes" : "no")));
             }
         }
@@ -121,7 +143,15 @@ public class ShopMenu extends AbstractContainerMenu {
     private void onButton(int slot) {
         if (slot == 53) { player.closeContainer(); return; }
         int[] ts = tabSlots(), ids = tabIds();
-        for (int i = 0; i < ts.length; i++) if (ts[i] == slot) { tab = ids[i]; refresh(); return; }
+        for (int i = 0; i < ts.length; i++) if (ts[i] == slot) { tab = ids[i]; rebirthArmed = false; refresh(); return; }
+        if (tab == TAB_REBIRTH && slot == 22) {
+            Economy.Stats st = Economy.get(player.server).stats(player.getUUID());
+            if (!rebirthArmed && st.money >= Economy.rebirthCost(st)) rebirthArmed = true;
+            else if (rebirthArmed) { rebirthArmed = false; Shop.rebirth(player); }
+            else Shop.rebirth(player); // not enough money: shows the message
+            refresh();
+            return;
+        }
         if (tab == 0) {
             if (slot == 20) Shop.buyUpgrade(player, Economy.Upgrade.INCOME);
             else if (slot == 22) Shop.buyUpgrade(player, Economy.Upgrade.BELT);

@@ -23,6 +23,11 @@ public class BotLife {
     static final Map<UUID, Long> leaveAt = new HashMap<>();
     static final List<Long> joins = new ArrayList<>();
 
+    public static void reset() {
+        leaveAt.clear();
+        joins.clear();
+    }
+
     public static void tick(MinecraftServer s, Economy eco) {
         long now = s.getTickCount();
         ServerLevel sl = s.overworld();
@@ -97,6 +102,8 @@ public class BotLife {
             count = rnd(7, 12); minOrd = 5; maxOrd = 15;
         }
         if (st.coilSpeed) st.speed += 3;
+        if (tier == 1 && Math.random() < 0.3) st.rebirths = 1;
+        if (tier == 2) st.rebirths = rnd(1, 4);
         if (tier >= 1 && Math.random() < (tier == 1 ? 0.25 : 0.7)) {
             st.skin = tier == 1 ? rnd(1, 5) : rnd(1, 20);
             st.skinsOwned |= 1L << st.skin;
@@ -107,7 +114,8 @@ public class BotLife {
         for (int k = 0; k < Math.min(count, avail); k++) {
             int ord = rnd(minOrd, maxOrd);
             if (tier == 2 && Math.random() < 0.4) ord = rnd(10, 15);
-            Arena.place(sl, id, ord, st, 0);
+            int mut = tier == 2 && Math.random() < 0.2 ? rnd(1, Mutation.values().length - 1) : 0;
+            Arena.place(sl, id, ord, mut, st, 0);
         }
         if (tier == 2 && Math.random() < 0.3) { // rich bots may own pack creatures (which are hard to steal)
             int pack = rnd(0, Creature.PACKS.length - 1);

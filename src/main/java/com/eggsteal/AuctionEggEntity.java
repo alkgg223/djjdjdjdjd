@@ -26,7 +26,7 @@ public class AuctionEggEntity extends Entity {
     private static final EntityDataAccessor<Long> PRICE = SynchedEntityData.defineId(AuctionEggEntity.class, EntityDataSerializers.LONG);
     public UUID lastBuyer;
     public long lastPaid;
-    public int dest = -1, stage;
+    public int dest = -1, stage, mut;
 
     public AuctionEggEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -57,7 +57,7 @@ public class AuctionEggEntity extends Entity {
             Economy.Stats st = Economy.get(level().getServer()).map.get(lastBuyer);
             if (st != null) holder = " §7(" + st.name + "'s)";
         }
-        setCustomName(Component.literal(creature().tag() + " §6$" + Economy.fmt(price()) + holder));
+        setCustomName(Component.literal(Mutation.of(mut).prefix() + creature().tag() + " §6$" + Economy.fmt(price()) + holder));
         setCustomNameVisible(true);
     }
 
@@ -112,6 +112,7 @@ public class AuctionEggEntity extends Entity {
         t.putLong("paid", lastPaid);
         t.putInt("dest", dest);
         t.putInt("stage", stage);
+        t.putInt("mut", mut);
         if (lastBuyer != null) t.putUUID("buyer", lastBuyer);
     }
 
@@ -122,6 +123,7 @@ public class AuctionEggEntity extends Entity {
         lastPaid = t.getLong("paid");
         dest = t.contains("dest") ? t.getInt("dest") : -1;
         stage = t.getInt("stage");
+        mut = t.getInt("mut");
         if (t.hasUUID("buyer")) lastBuyer = t.getUUID("buyer");
     }
 }

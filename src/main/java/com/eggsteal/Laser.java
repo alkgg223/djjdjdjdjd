@@ -25,6 +25,15 @@ public class Laser {
     static final boolean[] on = new boolean[Arena.BASES];
     static final String[] last = new String[Arena.BASES];
 
+    /** Timers are server tick numbers, which restart at 0 with every world: forget them when a server starts. */
+    public static void clearState() {
+        java.util.Arrays.fill(until, 0);
+        java.util.Arrays.fill(cool, 0);
+        java.util.Arrays.fill(ended, 0);
+        java.util.Arrays.fill(on, false);
+        java.util.Arrays.fill(last, null);
+    }
+
     public static boolean active(int b) { return on[b]; }
     public static long endedAt(int b) { return ended[b]; }
     public static boolean ready(MinecraftServer s, int b) { return !on[b] && s.getTickCount() >= cool[b]; }

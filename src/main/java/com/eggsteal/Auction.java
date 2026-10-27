@@ -11,7 +11,7 @@ import net.minecraft.world.level.entity.EntityTypeTest;
 
 /** The very-rare-egg system of the center belt (pack creatures only appear here). */
 public class Auction {
-    public static final double BELT_SPEED = 0.02;   // blocks per tick while on the belt (~0.4 b/s)
+    public static final double BELT_SPEED = 0.01;   // blocks per tick while on the belt (~0.2 b/s, half of the old speed)
     public static final double WALK_SPEED = 0.215;  // same as a walking player
     static long nextSpawn;
 
@@ -20,12 +20,21 @@ public class Auction {
         return l.isEmpty() ? null : l.get(0);
     }
 
+    public static void reset() { nextSpawn = 0; }
+
     public static void tick(MinecraftServer s) {
         long now = s.getTickCount();
         ServerLevel sl = s.overworld();
         if (nextSpawn == 0) nextSpawn = now + 600;
         if (now < nextSpawn || active(sl) != null) return;
         nextSpawn = now + 1800 + (long) (Math.random() * 1800);
+        spawn(s);
+    }
+
+    /** Puts a new rare egg at the start of the center belt (if none is there already). */
+    public static void spawn(MinecraftServer s) {
+        ServerLevel sl = s.overworld();
+        if (active(sl) != null) return;
         int pack = (int) (Math.random() * Creature.PACKS.length);
         int k = 0;
         while (k < 9 && Math.random() < 0.45) k++;
@@ -34,8 +43,10 @@ public class Auction {
         if (e == null) return;
         e.moveTo(-8.5, 64.5, 0.5, 0f, 0f);
         e.init(c.ordinal(), (long) c.price);
+        e.mut = RandomEvents.rollMutation(sl.random);
+        e.refreshName();
         sl.addFreshEntity(e);
-        Hud.announce(s, "§d§lRARE EGG!", "§f" + c.tag() + " §fegg (" + Creature.PACKS[pack] + " pack) appeared on the center belt for §6$" + Economy.fmt(c.price));
+        Hud.announce(s, "§d§lRARE EGG!", "§f" + Mutation.of(e.mut).prefix() + c.tag() + " §fegg (" + Creature.PACKS[pack] + " pack) appeared on the center belt for §6$" + Economy.fmt(c.price));
     }
 
     /** Buy the egg for its current price. The price doubles and the egg turns toward the buyer's base. */
@@ -67,16 +78,16 @@ public class Auction {
         UUID id = egg.lastBuyer;
         Economy.Stats st = id == null ? null : eco.map.get(id);
         if (st != null) {
-            boolean ok = Arena.place(sl, id, egg.variant(), st, CreatureEntity.HATCH_TIME);
+            boolean ok = Arena.place(sl, id, egg.variant(), egg.mut, st, CreatureEntity.HATCH_TIME);
             ServerPlayer p = s.getPlayerList().getPlayer(id);
             if (ok) {
                 s.getPlayerList().broadcastSystemMessage(Component.literal("§a" + st.name + "'s " + egg.creature().tag() + " §aegg arrived and is hatching!"), false);
             } else if (p != null) {
-                ItemStack item = Steal.makeEgg(egg.variant(), null);
+                ItemStack item = Steal.makeEgg(egg.variant(), null, egg.mut);
                 if (!p.getInventory().add(item)) p.drop(item, false);
                 p.sendSystemMessage(Component.literal("§eNo free slot - the egg was put in your inventory."));
             } else {
-                st.money += egg.creature().price * 0.5;
+                st.money += egg.lastPaid;
             }
             eco.setDirty();
         }

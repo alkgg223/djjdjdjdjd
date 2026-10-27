@@ -56,33 +56,43 @@ public class Arena {
         return -1;
     }
 
-    public static void spawnCreature(ServerLevel sl, UUID owner, int variant, int base, int idx, int hatch) {
+    public static void spawnCreature(ServerLevel sl, UUID owner, int variant, int mut, int base, int idx, int hatch) {
         Vec3 p = slot(base, idx);
         CreatureEntity ce = EggSteal.CREATURE.get().create(sl);
         if (ce == null) return;
         ce.moveTo(p.x, p.y, p.z, dir(base) > 0 ? 0f : 180f, 0f);
         ce.setVariant(variant);
+        ce.setMutation(mut);
         ce.setOwner(owner);
         if (hatch > 0) ce.startHatch(hatch);
         sl.addFreshEntity(ce);
     }
 
-    public static void spawnCreature(ServerLevel sl, UUID owner, int variant, int base, int idx) {
-        spawnCreature(sl, owner, variant, base, idx, CreatureEntity.HATCH_TIME);
+    public static void spawnCreature(ServerLevel sl, UUID owner, int variant, int mut, int base, int idx) {
+        spawnCreature(sl, owner, variant, mut, base, idx, CreatureEntity.HATCH_TIME);
     }
 
     /** Places a creature in the first free slot. Returns false when the base is full. */
-    public static boolean place(ServerLevel sl, UUID owner, int variant, Economy.Stats st, int hatch) {
+    public static boolean place(ServerLevel sl, UUID owner, int variant, int mut, Economy.Stats st, int hatch) {
         if (st.base < 0) return false;
         int idx = freeSlot(sl, st.base, st);
         if (idx < 0) return false;
-        spawnCreature(sl, owner, variant, st.base, idx, hatch);
+        spawnCreature(sl, owner, variant, mut, st.base, idx, hatch);
         return true;
     }
 
-    public static boolean place(ServerLevel sl, UUID owner, int variant, Economy.Stats st) {
-        return place(sl, owner, variant, st, CreatureEntity.HATCH_TIME);
+    public static boolean place(ServerLevel sl, UUID owner, int variant, Economy.Stats st, int hatch) {
+        return place(sl, owner, variant, 0, st, hatch);
     }
+
+    /** The base whose walls contain this point, or -1 when it is outside every base. */
+    public static int baseAt(double x, double z) {
+        for (int i = 0; i < BASES; i++) if (Math.abs(x - (cx(i) + 0.5)) < 12 && Math.abs(z - (cz(i) + 0.5)) < 12) return i;
+        return -1;
+    }
+
+    /** A point just outside a base's entrance, used by bots to walk in and out through the door instead of into walls. */
+    public static Vec3 gateOutside(int i) { return new Vec3(cx(i) + 0.5, 64, gapZ(i) + dir(i) * 2 + 0.5); }
 
     public static void rules(MinecraftServer s) {
         s.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false, s);
@@ -211,6 +221,7 @@ public class Arena {
         Hud.summon(server, "es_shoplbl", 0.5, 67, 6.5, 1.5f, "§a§lSHOP\n§7Upgrades, items & skins");
         Hud.summon(server, "es_buildlbl", 0.5, 67, -5.5, 1.5f, "§b§lBASE BUILDER\n§7Build a 2nd floor");
         Hud.summon(server, "es_cbelt", 0.5, 66.5, 1.8, 1.8f, "§d§lRARE EGG BELT\n§7Pack creatures only appear here!");
+        Hud.ensureBoards(server);
         for (int i = 0; i < BASES; i++) {
             Hud.summon(server, "es_b" + i, cx(i), 76, cz(i), 2f, "Free base");
             Hud.summon(server, "es_ls" + i, cx(i) + 0.5, 70, gapZ(i) + 0.6 * dir(i), 1.5f, "§aDoor open");

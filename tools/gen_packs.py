@@ -182,7 +182,7 @@ rows = []
 for k, sp in enumerate(P):
     idx = k % 10
     v, n, f = build(build_parts(sp))
-    with open(R + f"models/creature/{sp['id']}.obj", 'w') as o:
+    with open(os.devnull, 'w') as o:  # the creature models now come from tools/gen_models.py
         o.write(f"# {sp['id']} (smooth normals)\n")
         for x, y, z in v: o.write(f'v {x:.4f} {y:.4f} {z:.4f}\n')
         for x, y, z in n: o.write(f'vn {x:.4f} {y:.4f} {z:.4f}\n')

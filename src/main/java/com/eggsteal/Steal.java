@@ -14,14 +14,26 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.entity.EntityTypeTest;
 
 public class Steal {
-    public static ItemStack makeEgg(int variant, UUID from) {
+    public static ItemStack makeEgg(int variant, UUID from) { return makeEgg(variant, from, 0); }
+
+    public static ItemStack makeEgg(int variant, UUID from, int mut) {
         ItemStack s = new ItemStack(EggSteal.EGG_ITEMS.get(variant).get());
-        if (from != null) {
+        if (from != null || mut > 0) {
             CompoundTag t = new CompoundTag();
-            t.putUUID("from", from);
+            if (from != null) t.putUUID("from", from);
+            if (mut > 0) t.putInt("mut", mut);
             s.set(DataComponents.CUSTOM_DATA, CustomData.of(t));
         }
+        if (mut > 0) {
+            s.set(DataComponents.CUSTOM_NAME, Component.literal(Mutation.of(mut).prefix() + Creature.VALUES[variant].tag() + " Egg").withStyle(st -> st.withItalic(false)));
+            s.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        }
         return s;
+    }
+
+    public static int mutOf(ItemStack s) {
+        CustomData cd = s.get(DataComponents.CUSTOM_DATA);
+        return cd == null ? 0 : cd.copyTag().getInt("mut");
     }
 
     public static UUID fromOf(ItemStack s) {
@@ -47,14 +59,15 @@ public class Steal {
     public static void finish(CreatureEntity c, LivingEntity thief) {
         ServerLevel sl = (ServerLevel) c.level();
         UUID from = c.owner();
-        int v = c.variant();
+        int v = c.variant(), mut = c.mutation();
         c.discard();
         if (thief instanceof ServerPlayer p) {
-            ItemStack egg = makeEgg(v, from);
+            ItemStack egg = makeEgg(v, from, mut);
             if (!p.getInventory().add(egg)) p.drop(egg, false);
             p.sendSystemMessage(Component.literal("§aYou stole " + Creature.VALUES[v].tag() + "§a! Run home and place the egg in your base before they hit you!"));
         } else if (thief instanceof BotEntity b) {
             b.carried = v;
+            b.carriedMut = mut;
             b.carriedFrom = from;
             b.stolen();
         }
@@ -93,34 +106,35 @@ public class Steal {
             for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
                 ItemStack s = p.getInventory().getItem(i);
                 if (s.getItem() instanceof EggItem ei && aid.equals(fromOf(s))) {
-                    int n = s.getCount();
+                    int n = s.getCount(), mut = mutOf(s);
                     p.getInventory().setItem(i, ItemStack.EMPTY);
-                    for (int k = 0; k < n; k++) give(attacker, ei.creature.ordinal());
+                    for (int k = 0; k < n; k++) give(attacker, ei.creature.ordinal(), mut);
                 }
             }
         } else if (target instanceof BotEntity b && b.carried >= 0 && aid.equals(b.carriedFrom)) {
-            int v = b.carried;
+            int v = b.carried, mut = b.carriedMut;
             b.carried = -1;
+            b.carriedMut = 0;
             b.carriedFrom = null;
             b.setTarget(null);
-            give(attacker, v);
+            give(attacker, v, mut);
         }
     }
 
     /** The creature goes straight back to its owner's base (not into an inventory). */
-    public static void give(LivingEntity who, int variant) {
+    public static void give(LivingEntity who, int variant, int mut) {
         if (who instanceof ServerPlayer sp) {
             Economy eco = Economy.get(sp.server);
             Economy.Stats st = eco.stats(sp.getUUID());
-            if (Arena.place((ServerLevel) sp.level(), sp.getUUID(), variant, st, 0)) {
+            if (Arena.place((ServerLevel) sp.level(), sp.getUUID(), variant, mut, st, 0)) {
                 sp.sendSystemMessage(Component.literal("§aYour " + Creature.VALUES[variant].tag() + " §ais back in your base!"));
             } else {
-                ItemStack egg = makeEgg(variant, null);
+                ItemStack egg = makeEgg(variant, null, mut);
                 if (!sp.getInventory().add(egg)) sp.drop(egg, false);
                 sp.sendSystemMessage(Component.literal("§eYour base is full - the " + Creature.VALUES[variant].tag() + " §eegg is in your inventory."));
             }
         } else if (who instanceof BotEntity b) {
-            b.receive(variant);
+            b.receive(variant, mut);
         }
     }
 }

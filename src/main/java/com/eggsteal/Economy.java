@@ -18,7 +18,7 @@ public class Economy extends SavedData {
         public boolean bot, kit, floor2, coilSpeed, coilJump, malicious;
         public double money;
         /** bots only: movement level (random per bot, +3 with a speed coil) */
-        public int speed, income, belt, slots, weapon, skin;
+        public int speed, income, belt, slots, weapon, skin, rebirths;
         public long skinsOwned;
         public int base = -1;
     }
@@ -81,7 +81,25 @@ public class Economy extends SavedData {
         setDirty();
     }
 
-    public static double rate(Stats s, Creature c) { return c.income * (1 + 0.15 * s.income); }
+    public static double rate(Stats s, Creature c) { return rate(s, c, 0); }
+
+    /** Money per second of one creature: upgrades, rebirths, its mutation and the money-rain event all multiply it. */
+    public static double rate(Stats s, Creature c, int mutation) {
+        return c.income * (1 + 0.15 * s.income) * rebirthMult(s) * Mutation.of(mutation).mult * RandomEvents.incomeMult();
+    }
+
+    public static double rebirthMult(Stats s) { return 1 + 0.5 * s.rebirths; }
+    public static double rebirthCost(Stats s) { return 1_000_000 * Math.pow(4, s.rebirths); }
+    public static String rebirthTag(Stats s) { return s.rebirths > 0 ? "§d✦R" + s.rebirths + " " : ""; }
+
+    /** Rebirth: money and the Income/Belt upgrades start over, in exchange for a permanent income boost and luckier belts. */
+    public void rebirth(Stats s) {
+        s.rebirths++;
+        s.money = 500.0 * s.rebirths;
+        s.income = 0;
+        s.belt = 0;
+        setDirty();
+    }
 
     public static String fmt(double v) {
         if (v < 1000) return String.valueOf((long) v);
@@ -102,6 +120,7 @@ public class Economy extends SavedData {
             s.belt = t.getInt("belt"); s.slots = t.getInt("slots"); s.base = t.getInt("base");
             s.floor2 = t.getBoolean("floor2"); s.coilSpeed = t.getBoolean("coilSpeed"); s.coilJump = t.getBoolean("coilJump"); s.weapon = t.getInt("weapon");
             s.malicious = t.getBoolean("malicious"); s.skin = t.getInt("skin"); s.skinsOwned = t.getLong("skinsOwned");
+            s.rebirths = t.getInt("rebirths");
             e.map.put(t.getUUID("id"), s);
         }
         ListTag b = tag.getList("bases", Tag.TAG_COMPOUND);
@@ -122,6 +141,7 @@ public class Economy extends SavedData {
             t.putInt("belt", s.belt); t.putInt("slots", s.slots); t.putInt("base", s.base);
             t.putBoolean("floor2", s.floor2); t.putBoolean("coilSpeed", s.coilSpeed); t.putBoolean("coilJump", s.coilJump); t.putInt("weapon", s.weapon);
             t.putBoolean("malicious", s.malicious); t.putInt("skin", s.skin); t.putLong("skinsOwned", s.skinsOwned);
+            t.putInt("rebirths", s.rebirths);
             l.add(t);
         }
         tag.put("stats", l);
