@@ -14,7 +14,7 @@ def write(path, obj):
 
 
 BLOCKS = ["weapon_workbench", "modification_table", "ammo_crate", "missile_launcher", "bot_spawner", "arena_controller",
-          "sandbags", "sandbags_low", "concrete_barrier", "barbed_wire", "explosive_barrel", "heavy_launcher"]
+          "sandbags", "sandbags_low", "concrete_barrier", "barbed_wire", "explosive_barrel", "heavy_launcher", "vehicle_spawner"]
 
 # ------------------------------------------------------------------------------------ loot tables
 for b in BLOCKS:
@@ -28,14 +28,14 @@ for b in BLOCKS:
 write(os.path.join(D, "minecraft", "tags", "block", "mineable", "pickaxe.json"), {"values": [
     "gunsmod:weapon_workbench", "gunsmod:modification_table", "gunsmod:missile_launcher", "gunsmod:bot_spawner",
     "gunsmod:arena_controller", "gunsmod:concrete_barrier", "gunsmod:barbed_wire", "gunsmod:explosive_barrel",
-    "gunsmod:heavy_launcher", "gunsmod:heavy_launcher_part"]})
+    "gunsmod:heavy_launcher", "gunsmod:heavy_launcher_part", "gunsmod:vehicle_spawner"]})
 write(os.path.join(D, "minecraft", "tags", "block", "mineable", "axe.json"), {"values": ["gunsmod:ammo_crate"]})
 write(os.path.join(D, "minecraft", "tags", "block", "mineable", "shovel.json"), {"values": ["gunsmod:sandbags", "gunsmod:sandbags_low"]})
 
 # ------------------------------------------------------------------------------------ damage types
-write(os.path.join(D, "gunsmod", "damage_type", "bullet.json"), {"message_id": "gunsmod.bullet", "exhaustion": 0.1, "scaling": "when_caused_by_living_non_player"})
-write(os.path.join(D, "gunsmod", "damage_type", "flames.json"), {"message_id": "gunsmod.flames", "exhaustion": 0.1, "scaling": "when_caused_by_living_non_player", "effects": "burning"})
-write(os.path.join(D, "gunsmod", "damage_type", "roadkill.json"), {"message_id": "gunsmod.roadkill", "exhaustion": 0.1, "scaling": "when_caused_by_living_non_player"})
+write(os.path.join(D, "gunsmod", "damage_type", "bullet.json"), {"message_id": "gunsmod.bullet", "exhaustion": 0.1, "scaling": "never"})
+write(os.path.join(D, "gunsmod", "damage_type", "flames.json"), {"message_id": "gunsmod.flames", "exhaustion": 0.1, "scaling": "never", "effects": "burning"})
+write(os.path.join(D, "gunsmod", "damage_type", "roadkill.json"), {"message_id": "gunsmod.roadkill", "exhaustion": 0.1, "scaling": "never"})
 write(os.path.join(D, "minecraft", "tags", "damage_type", "is_projectile.json"), {"values": ["gunsmod:bullet"]})
 write(os.path.join(D, "minecraft", "tags", "damage_type", "no_knockback.json"), {"values": ["gunsmod:bullet", "gunsmod:flames"]})
 write(os.path.join(D, "minecraft", "tags", "damage_type", "is_fire.json"), {"values": ["gunsmod:flames"]})
@@ -69,6 +69,8 @@ shaped("missile_launcher", ["SRS", "SDS", "BBB"], {"S": S, "R": "minecraft:redst
 shaped("heavy_launcher", ["SRS", "LDL", "BBB"], {"S": S, "R": "minecraft:redstone_block", "L": "gunsmod:missile_launcher", "D": "minecraft:dispenser",
                                                 "B": "minecraft:iron_block"}, "gunsmod:heavy_launcher")
 shaped("bot_spawner", ["SES", "SRS", "III"], {"S": S, "E": "minecraft:emerald", "R": "minecraft:redstone_block", "I": "minecraft:iron_ingot"}, "gunsmod:bot_spawner")
+shaped("vehicle_spawner", ["SRS", "ICI", "SSS"], {"S": S, "R": "minecraft:redstone_block", "I": "minecraft:iron_block", "C": "minecraft:compass"},
+       "gunsmod:vehicle_spawner")
 shaped("arena_controller", ["SGS", "SRS", "SCS"], {"S": S, "G": "minecraft:glass", "R": "minecraft:redstone_block", "C": "minecraft:compass"}, "gunsmod:arena_controller")
 shaped("arena_tool", ["PMP", "SCS", "PSP"], {"P": "minecraft:paper", "M": "minecraft:map", "S": S, "C": "minecraft:compass"}, "gunsmod:arena_tool")
 shaped("sandbags", ["SSS", "WWW", "SSS"], {"S": "#minecraft:sand", "W": "minecraft:string"}, "gunsmod:sandbags", 6)
@@ -106,7 +108,8 @@ ITEMS = {
     "missile_titan": ("Titan Strategic Missile", "صاروخ تايتان الاستراتيجي"),
     "launch_remote": ("Launch Remote", "ريموت الإطلاق"), "dog_tag": ("Soldier Dog Tag", "قلادة الجندي"), "arena_tool": ("Battlefield Deployer", "مُنشئ ساحة الحرب"),
     "green_soldier": ("Green Soldier", "جندي أخضر"), "red_soldier": ("Red Soldier", "جندي أحمر"), "green_jeep": ("Green Military Jeep", "جيب عسكري أخضر"),
-    "red_jeep": ("Red Military Jeep", "جيب عسكري أحمر"), "steel_ingot": ("Steel Ingot", "سبيكة فولاذ"), "gun_parts": ("Gun Parts", "قطع أسلحة"),
+    "red_jeep": ("Red Military Jeep", "جيب عسكري أحمر"), "green_tank": ("Green Battle Tank", "دبابة خضراء"), "red_tank": ("Red Battle Tank", "دبابة حمراء"),
+    "green_helicopter": ("Green Attack Helicopter", "هليكوبتر هجومية خضراء"), "red_helicopter": ("Red Attack Helicopter", "هليكوبتر هجومية حمراء"), "steel_ingot": ("Steel Ingot", "سبيكة فولاذ"), "gun_parts": ("Gun Parts", "قطع أسلحة"),
 }
 BLOCKN = {
     "weapon_workbench": ("Weapon Workbench", "طاولة صنع الأسلحة"), "modification_table": ("Gunsmith Table", "طاولة تعديل الأسلحة"),
@@ -115,6 +118,7 @@ BLOCKN = {
     "sandbags": ("Sandbags", "أكياس رمل"), "sandbags_low": ("Low Sandbags", "أكياس رمل منخفضة"), "concrete_barrier": ("Concrete Barrier", "حاجز خرساني"),
     "barbed_wire": ("Barbed Wire", "أسلاك شائكة"), "explosive_barrel": ("Explosive Barrel", "برميل متفجر"),
     "heavy_launcher": ("Heavy Missile Launcher (3x5)", "منصة الصواريخ الثقيلة (3×5)"), "heavy_launcher_part": ("Heavy Missile Launcher", "منصة الصواريخ الثقيلة"),
+    "vehicle_spawner": ("Vehicle Spawner", "مولّد المركبات"),
 }
 
 EN = {"itemGroup.gunsmod": "Guns & Warfare", "key.categories.gunsmod": "Guns & Warfare"}
@@ -129,6 +133,7 @@ for k, (e, a) in BLOCKN.items():
 T = {
     "entity.gunsmod.soldier": ("Soldier", "جندي"), "entity.gunsmod.jeep": ("Military Jeep", "جيب عسكري"), "entity.gunsmod.rocket": ("Rocket", "صاروخ"),
     "entity.gunsmod.grenade": ("Grenade", "قنبلة"), "entity.gunsmod.missile": ("Missile", "صاروخ موجه"),
+    "entity.gunsmod.tank": ("Battle Tank", "دبابة"), "entity.gunsmod.helicopter": ("Attack Helicopter", "هليكوبتر هجومية"),
     "gunsmod.category.pistol": ("Pistol", "مسدس"), "gunsmod.category.smg": ("Submachine Gun", "رشاش قصير"), "gunsmod.category.rifle": ("Assault Rifle", "بندقية هجومية"),
     "gunsmod.category.shotgun": ("Shotgun", "شوزن"), "gunsmod.category.sniper": ("Sniper Rifle", "قناصة"), "gunsmod.category.heavy": ("Heavy Weapon", "سلاح ثقيل"),
     "gunsmod.category.explosive": ("Explosive Launcher", "قاذف متفجرات"), "gunsmod.category.special": ("Special Weapon", "سلاح خاص"),
@@ -147,10 +152,32 @@ T = {
     "gunsmod.tip.remote2": ("Use: open the launch control panel", "كليك يمين: افتح لوحة التحكم بالإطلاق"),
     "gunsmod.tip.tag_empty": ("Use on a soldier to save his loadout", "استخدمها على جندي لحفظ تعديلاته"),
     "gunsmod.tip.tag_weapon": ("Weapon: %s", "السلاح: %s"), "gunsmod.tip.tag_use": ("Put it in a Deployment Pad, or use on the ground", "ضعها في منصة النشر أو استخدمها على الأرض"),
-    "gunsmod.tip.soldier_controls": ("Give a gun, a launch remote or missiles: use them on him | Empty hand: follow/hold | Sneak: edit",
-                                     "أعطه سلاحاً أو ريموت أو صواريخ بالكليك عليه | يد فارغة: اتبعني/ابقَ | شفت: تعديل"),
+    "gunsmod.tip.soldier_controls": ("Patrols and fights on its own | Give it a gun, remote or missiles by using them on it | Sneak + empty hand: gear",
+                                     "يتحرك ويقاتل بمفرده | أعطه سلاحاً أو ريموت أو صواريخ بالكليك عليه | شفت + يد فارغة: العتاد"),
     "gunsmod.tip.jeep1": ("Use: get in (driver first) | Sneak + use: gunner seat", "كليك يمين: اركب (السائق أولاً) | شفت + كليك: مقعد الرشاش"),
-    "gunsmod.tip.jeep2": ("V: change seat | H: horn | G: order the driver | iron ingot: repair", "V: تغيير المقعد | H: البوق | G: أمر السائق | سبيكة حديد: تصليح"),
+    "gunsmod.tip.jeep2": ("V: change seat | H: horn | iron ingot: repair", "V: تغيير المقعد | H: البوق | سبيكة حديد: تصليح"),
+    "gunsmod.desc.tank": ("Main battle tank for one: drive, aim the turret with your view, fire", "دبابة قتال لشخص واحد: تقود وتوجه المدفع بنظرك وتطلق"),
+    "gunsmod.tip.tank1": ("Attack: 120 mm gun | Use: machine gun | WASD: drive", "ضغط: مدفع 120مم | كليك يمين: رشاش | WASD: قيادة"),
+    "gunsmod.tip.tank2": ("Iron ingot / iron block: repair", "سبيكة / بلوك حديد: تصليح"),
+    "gunsmod.desc.heli": ("Attack helicopter with rockets and a chin gun", "هليكوبتر هجومية بصواريخ ورشاش أمامي"),
+    "gunsmod.tip.heli1": ("W/S: nose down/up | A/D: turn | Jump: climb | Sneak: descend, get out once landed", "W/S: للأمام/للخلف | A/D: دوران | قفز: صعود | شفت: نزول، والخروج بعد الهبوط"),
+    "gunsmod.tip.heli2": ("Attack: rockets | Use: chin gun | iron: repair", "ضغط: صواريخ | كليك يمين: رشاش | حديد: تصليح"),
+    "gunsmod.tip.spawner_hint": ("Use it on a Vehicle Spawner to keep one in service", "استخدمه على مولّد المركبات ليعيد إنتاجها دائماً"),
+    "gunsmod.msg.no_room_vehicle": ("Not enough room for this vehicle", "لا توجد مساحة كافية لهذه المركبة"),
+    "gunsmod.msg.spawner_set": ("Spawner: %s", "المولّد: %s"),
+    "gunsmod.msg.spawner_empty": ("Use a jeep, tank or helicopter on the spawner", "استخدم جيب أو دبابة أو هليكوبتر على المولّد"),
+    "gunsmod.msg.spawner_cleared": ("Vehicle taken back", "تم استرجاع المركبة"),
+    "gunsmod.msg.spawner_wait": ("%s returns in %s s", "%s تعود بعد %s ث"),
+    "gunsmod.msg.spawner_out": ("%s is out; a new one comes when it is destroyed", "%s في الخدمة؛ تأتي واحدة جديدة عندما تُدمَّر"),
+    "gunsmod.seat.commander": ("Commander", "قائد الدبابة"), "gunsmod.seat.pilot": ("Pilot", "الطيار"),
+    "gunsmod.hud.gun_ready": ("GUN READY", "المدفع جاهز"), "gunsmod.hud.gun_loading": ("LOADING...", "جارِ التلقيم..."),
+    "gunsmod.hud.tank_hint": ("WASD drive  |  Attack: 120 mm  |  Use: machine gun", "WASD قيادة  |  ضغط: مدفع  |  كليك يمين: رشاش"),
+    "gunsmod.hud.rockets": ("Rockets: %s", "الصواريخ: %s"), "gunsmod.hud.rockets_loading": ("Rockets: reloading", "الصواريخ: تعبئة"),
+    "gunsmod.hud.altitude": ("ALT %s m", "الارتفاع %s م"), "gunsmod.hud.climb": ("V/S %s", "عمودي %s"), "gunsmod.hud.rotor": ("ROTOR %s%%", "المروحة %s%%"),
+    "gunsmod.hud.pull_up": ("PULL UP", "ارتفع!"),
+    "gunsmod.hud.heli_hint": ("W/S fly  A/D turn  Jump up  Sneak down  |  Attack: rockets  Use: gun", "W/S طيران  A/D دوران  قفز صعود  شفت نزول  |  ضغط: صواريخ  يمين: رشاش"),
+    "gunsmod.state.patrol": ("Patrolling", "في دورية"), "gunsmod.state.combat": ("In combat", "يقاتل"), "gunsmod.state.vehicle": ("In a vehicle", "في مركبة"),
+    "gunsmod.ui.patrols": ("Patrols on its own", "يتحرك بمفرده"),
     "gunsmod.tip.arena_tool": ("Use on the ground twice to build", "استخدمه على الأرض مرتين للبناء"),
     "gunsmod.mode.semi": ("Semi", "طلقة"), "gunsmod.mode.auto": ("Auto", "آلي"), "gunsmod.mode.burst": ("Burst", "دفعات"),
     "gunsmod.slot.scope": ("Optic", "منظار"), "gunsmod.slot.muzzle": ("Muzzle", "فوهة"), "gunsmod.slot.grip": ("Grip", "مقبض"),
@@ -207,8 +234,7 @@ T = {
     "gunsmod.desc.jeep": ("Military jeep with a turret, 40 km/h", "جيب عسكري برشاش، 40 كم/س"),
     "gunsmod.desc.arena_tool": ("Builds a 50x50 battlefield with a command console", "يبني ساحة حرب 50×50 مع جهاز تحكم"),
     "gunsmod.msg.no_ammo": ("No %s left!", "لا يوجد %s!"), "gunsmod.msg.gave_weapon": ("%s took the weapon", "%s أخذ السلاح"),
-    "gunsmod.msg.order.0": ("%s: following you", "%s: أتبعك"), "gunsmod.msg.order.1": ("%s: holding position", "%s: سأبقى هنا"),
-    "gunsmod.msg.order.2": ("%s: patrolling", "%s: أقوم بالدورية"), "gunsmod.msg.crate_wait": ("Resupply in %s s", "إعادة التزويد بعد %s ث"),
+    "gunsmod.msg.crate_wait": ("Resupply in %s s", "إعادة التزويد بعد %s ث"),
     "gunsmod.msg.crate_given": ("Resupplied: %s", "تم التزويد: %s"), "gunsmod.msg.crate_hint": ("Use the crate while holding a gun", "استخدم الصندوق وأنت تمسك سلاحاً"),
     "gunsmod.msg.already_loaded": ("A missile is already loaded", "يوجد صاروخ محمّل مسبقاً"), "gunsmod.msg.missile_loaded": ("Missile loaded", "تم تحميل الصاروخ"),
     "gunsmod.msg.remote_linked": ("Linked station %s %s %s (%s/%s)", "تم ربط المحطة %s %s %s (%s/%s)"),
@@ -239,9 +265,9 @@ T = {
     "gunsmod.hud.reloading": ("RELOADING", "جارِ التعبئة"), "gunsmod.hud.no_ammo": ("NO AMMO", "لا توجد ذخيرة"), "gunsmod.hud.reload": ("RELOAD [%s]", "عبّئ [%s]"),
     "gunsmod.hud.overheat": ("OVERHEATED", "سخونة زائدة"), "gunsmod.hud.heat": ("Barrel heat", "حرارة الماسورة"),
     "gunsmod.hud.drive_hint": ("W/S: throttle  A/D: steer  [%s] seat  [%s] horn", "W/S: سرعة  A/D: توجيه  [%s] المقعد  [%s] البوق"),
-    "gunsmod.hud.seat_hint": ("[%s] change seat  [%s] horn  [%s] order the driver to the target", "[%s] تغيير المقعد  [%s] البوق  [%s] أمر السائق بالتحرك للهدف"),
+    "gunsmod.hud.seat_hint": ("[%s] change seat  [%s] horn", "[%s] تغيير المقعد  [%s] البوق"),
     "gunsmod.hud.unarmed": ("Unarmed", "بدون سلاح"),
-    "gunsmod.order.0": ("Follow", "اتبعني"), "gunsmod.order.1": ("Hold", "ابقَ هنا"), "gunsmod.order.2": ("Patrol", "دورية"),
+
     "gunsmod.ui.craft": ("CRAFT", "اصنع"), "gunsmod.ui.drag_hint": ("drag to rotate, scroll to zoom", "اسحب للتدوير وعجلة للتكبير"),
     "gunsmod.ui.damage": ("Damage", "الضرر"), "gunsmod.ui.rate": ("Rate", "السرعة"), "gunsmod.ui.accuracy": ("Accuracy", "الدقة"),
     "gunsmod.ui.range": ("Range", "المدى"), "gunsmod.ui.mobility": ("Mobility", "الحركة"), "gunsmod.ui.requires": ("Requires:", "المطلوب:"),
@@ -265,7 +291,7 @@ T = {
     "gunsmod.launch.arming": ("Arming...", "جارِ التسليح..."), "gunsmod.launch.lift": ("Lift the safety cover", "ارفع الغطاء الواقي"),
     "gunsmod.launch.disarm": ("DISARM", "فك التسليح"), "gunsmod.launch.launching": ("LAUNCHING", "جارِ الإطلاق"),
     "key.gunsmod.reload": ("Reload", "تعبئة السلاح"), "key.gunsmod.seat": ("Jeep: change seat", "الجيب: تغيير المقعد"),
-    "key.gunsmod.horn": ("Jeep: horn", "الجيب: البوق"), "key.gunsmod.order": ("Jeep: order driver to target", "الجيب: أمر السائق"),
+    "key.gunsmod.horn": ("Jeep: horn", "الجيب: البوق"),
     "death.attack.gunsmod.bullet": ("%1$s was shot", "%1$s قُتل بالرصاص"), "death.attack.gunsmod.bullet.player": ("%1$s was shot by %2$s", "%1$s قُتل برصاص %2$s"),
     "death.attack.gunsmod.bullet.item": ("%1$s was shot by %2$s using %3$s", "%1$s قُتل برصاص %2$s بسلاح %3$s"),
     "death.attack.gunsmod.flames": ("%1$s was burnt to a crisp", "%1$s احترق"), "death.attack.gunsmod.flames.player": ("%1$s was burnt by %2$s", "%1$s أحرقه %2$s"),
@@ -285,7 +311,10 @@ SUB = {"gunshot": ("Gunshot", "إطلاق نار"), "gunshot_suppressed": ("Supp
        "bullet_whiz": ("Bullet whizzes by", "رصاصة تمر بقربك"), "overheat": ("Gun overheats", "سخونة السلاح"), "mag_out": ("Magazine out", "إخراج المخزن"),
        "mag_in": ("Magazine in", "إدخال المخزن"), "bolt": ("Bolt racked", "سحب الأقسام"), "shell_insert": ("Shell inserted", "إدخال خرطوشة"),
        "break_open": ("Action opened", "فتح السلاح"), "explosion_big": ("Huge explosion", "انفجار ضخم"),
-       "explosion_far": ("Distant explosion", "انفجار بعيد"), "missile_incoming": ("Incoming missile!", "صاروخ قادم!")}
+       "explosion_far": ("Distant explosion", "انفجار بعيد"), "missile_incoming": ("Incoming missile!", "صاروخ قادم!"),
+       "tank_engine": ("Tank engine", "محرك الدبابة"), "tank_fire": ("Tank gun fires", "إطلاق مدفع الدبابة"), "tank_reload": ("Gun loaded", "تلقيم المدفع"),
+       "heli_rotor": ("Helicopter rotor", "مروحة الهليكوبتر"), "heli_start": ("Turbine starts", "تشغيل التوربين"),
+       "heli_rocket": ("Rocket fired", "إطلاق صاروخ"), "heli_gun": ("Chin gun fires", "إطلاق الرشاش الأمامي")}
 sounds = json.load(open(os.path.join(A, "sounds.json")))
 for name, s in sounds.items():
     key = s["subtitle"]

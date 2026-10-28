@@ -1,7 +1,9 @@
 package com.gunsmod.net;
 
 import com.gunsmod.block.LauncherBlockEntity;
+import com.gunsmod.entity.HelicopterEntity;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.TankEntity;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.item.GunItem;
 import com.gunsmod.item.RemoteItem;
@@ -44,9 +46,14 @@ public final class ServerNet {
         switch (p.action()) {
             case 0 -> jeep.switchSeat(sp);
             case 1 -> jeep.honk();
-            case 2 -> jeep.orderDriveTo(sp, p.x(), p.y(), p.z());
             default -> { }
         }
+    }
+
+    public static void vehicleFire(Net.VehicleFire p, IPayloadContext ctx) {
+        if (!(ctx.player() instanceof ServerPlayer sp)) return;
+        if (sp.getVehicle() instanceof TankEntity tank && tank.getControllingPassenger() == sp) tank.setTrigger(p.weapon(), p.down());
+        else if (sp.getVehicle() instanceof HelicopterEntity heli && heli.getControllingPassenger() == sp) heli.setTrigger(p.weapon(), p.down());
     }
 
     public static void launchAction(Net.LaunchAction p, IPayloadContext ctx) {

@@ -6,7 +6,6 @@ import com.gunsmod.block.SpawnerBlockEntity;
 import com.gunsmod.entity.ai.BotArtillery;
 import com.gunsmod.entity.ai.BotAvoidGrenadeGoal;
 import com.gunsmod.entity.ai.BotCombatGoal;
-import com.gunsmod.entity.ai.BotFollowGoal;
 import com.gunsmod.entity.ai.BotPatrolGoal;
 import com.gunsmod.entity.ai.BotReloadGoal;
 import com.gunsmod.entity.ai.BotTargetGoal;
@@ -21,7 +20,6 @@ import com.gunsmod.item.MissileItem;
 import com.gunsmod.item.RemoteItem;
 import com.gunsmod.menu.BotMenu;
 import java.util.List;
-import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -71,10 +69,8 @@ import net.minecraft.world.phys.Vec3;
 public class BotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Byte> DATA_TEAM = SynchedEntityData.defineId(BotEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> DATA_SKIN = SynchedEntityData.defineId(BotEntity.class, EntityDataSerializers.BYTE);
-    private static final EntityDataAccessor<Byte> DATA_ORDER = SynchedEntityData.defineId(BotEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Boolean> DATA_AIMING = SynchedEntityData.defineId(BotEntity.class, EntityDataSerializers.BOOLEAN);
 
-    public static final int ORDER_FOLLOW = 0, ORDER_HOLD = 1, ORDER_PATROL = 2;
     /**
      * Movement speeds as navigation multipliers of {@link #BASE_SPEED}. A mob moves at about 43 * speed^2 blocks/s, so
      * walk = 3.9 b/s, jog = 4.7 b/s and run = 5.6 b/s, the same as a sprinting player. Soldiers never use the vanilla
@@ -83,7 +79,6 @@ public class BotEntity extends PathfinderMob {
     public static final double BASE_SPEED = 0.3, SPEED_WALK = 1.0, SPEED_JOG = 1.1, SPEED_RUN = 1.2;
     private static final String[] CALLSIGNS = {"Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Ghost", "Hunter", "Viper", "Wolf", "Eagle", "Cobra"};
 
-    @Nullable public UUID owner;
     @Nullable public BlockPos home;
     @Nullable public BlockPos spawnerPos;
     @Nullable public BlockPos arenaPos;
@@ -128,7 +123,6 @@ public class BotEntity extends PathfinderMob {
         super.defineSynchedData(builder);
         builder.define(DATA_TEAM, (byte) 0);
         builder.define(DATA_SKIN, (byte) 0);
-        builder.define(DATA_ORDER, (byte) ORDER_PATROL);
         builder.define(DATA_AIMING, false);
     }
 
@@ -139,7 +133,6 @@ public class BotEntity extends PathfinderMob {
         this.goalSelector.addGoal(2, new BotVehicleGoal(this));
         this.goalSelector.addGoal(3, new BotCombatGoal(this));
         this.goalSelector.addGoal(4, new BotReloadGoal(this));
-        this.goalSelector.addGoal(5, new BotFollowGoal(this));
         this.goalSelector.addGoal(6, new BotPatrolGoal(this));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8f));
         this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
@@ -163,26 +156,12 @@ public class BotEntity extends PathfinderMob {
         this.entityData.set(DATA_SKIN, (byte) (skin & 3));
     }
 
-    public int getOrder() {
-        return this.entityData.get(DATA_ORDER);
-    }
-
-    public void setOrder(int order) {
-        this.entityData.set(DATA_ORDER, (byte) order);
-        if (order != ORDER_FOLLOW) this.home = this.blockPosition();
-    }
-
     public boolean isAiming() {
         return this.entityData.get(DATA_AIMING);
     }
 
     public void setAiming(boolean aiming) {
         if (isAiming() != aiming) this.entityData.set(DATA_AIMING, aiming);
-    }
-
-    @Nullable
-    public Player getOwnerPlayer() {
-        return owner == null ? null : this.level().getPlayerByUUID(owner);
     }
 
     /** configure a fresh soldier with a team, a random face and a team-typical weapon */
@@ -215,6 +194,7 @@ public class BotEntity extends PathfinderMob {
             return getBotTeam() == BotTeam.RED && !ignorePlayers && !p.isCreative() && !p.isSpectator();
         }
         if (e instanceof JeepEntity) return false;
+        if (e instanceof VehicleEntity v) return v.getBotTeam() != getBotTeam() && v.isManned();
         return e instanceof Enemy && getBotTeam() == BotTeam.GREEN && !(e instanceof net.minecraft.world.entity.monster.Creeper && distanceToSqr(e) < 9);
     }
 
@@ -243,6 +223,12 @@ public class BotEntity extends PathfinderMob {
     @Nullable
     public GunType gunType() {
         return GunItem.typeOf(this.getMainHandItem());
+    }
+
+    /** rockets and grenades can hurt armour, bullets can not */
+    public boolean hasAntiArmor() {
+        GunType t = gunType();
+        return t != null && (t.kind == GunType.Kind.ROCKET || t.kind == GunType.Kind.GRENADE);
     }
 
     public boolean isReloadingGun() {
@@ -296,7 +282,8 @@ public class BotEntity extends PathfinderMob {
         float pitch = (float) -(Mth.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)) * Mth.RAD_TO_DEG);
         // friendly fire check along the line
         AABB box = new AABB(eye, aim).inflate(0.6);
-        for (LivingEntity e : this.level().getEntitiesOfClass(LivingEntity.class, box, e -> e != this && e != target && !isEnemy(e) && !(e instanceof JeepEntity))) {
+        for (LivingEntity e : this.level().getEntitiesOfClass(LivingEntity.class, box, e -> e != this && e != target && !isEnemy(e)
+                && !(e instanceof JeepEntity) && !(e instanceof VehicleEntity) && e != this.getVehicle())) {
             if (e.getBoundingBox().inflate(0.35).clip(eye, aim).isPresent()) return false;
         }
         boolean aimingDown = t.category == GunType.Category.SNIPER || dist > 22;
@@ -408,6 +395,11 @@ public class BotEntity extends PathfinderMob {
             }
         }
         LivingEntity target = this.getTarget();
+        // the crew of a tank or helicopter can not be hit: fight the vehicle instead
+        if (target != null && target.getVehicle() instanceof VehicleEntity v && v.protectsCrew()) {
+            this.setTarget(isEnemy(v) ? v : null);
+            target = this.getTarget();
+        }
         if (target != null && (!target.isAlive() || !isEnemy(target) || distanceToSqr(target) > 96 * 96 || target.level() != this.level())) {
             this.setTarget(null);
         }
@@ -472,7 +464,6 @@ public class BotEntity extends PathfinderMob {
                     if (!player.getInventory().add(old)) player.drop(old, false);
                 }
                 reloadLeft = 0;
-                if (owner == null) owner = player.getUUID();
                 player.displayClientMessage(Component.translatable("gunsmod.msg.gave_weapon", this.getDisplayName()), true);
                 this.playBotSound(Reg.sound("bolt"), 0.8f, 1f);
             }
@@ -485,7 +476,6 @@ public class BotEntity extends PathfinderMob {
                 this.setGuaranteedDrop(EquipmentSlot.OFFHAND);
                 held.shrink(1);
                 if (!old.isEmpty() && !player.getInventory().add(old)) player.drop(old, false);
-                if (owner == null) owner = player.getUUID();
                 player.displayClientMessage(Component.translatable("gunsmod.msg.gave_remote", this.getDisplayName(),
                         RemoteItem.links(this.getOffhandItem()).stations().size()), true);
                 this.playBotSound(Reg.sound("ui_confirm"), 0.8f, 1f);
@@ -516,17 +506,10 @@ public class BotEntity extends PathfinderMob {
             }
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
-        if (held.isEmpty()) {
+        // soldiers take no orders: they patrol on their own; sneak + empty hand opens the gear editor
+        if (held.isEmpty() && player.isShiftKeyDown()) {
             if (!this.level().isClientSide && player instanceof ServerPlayer sp) {
-                if (player.isShiftKeyDown()) {
-                    sp.openMenu(new SimpleMenuProvider((id, inv, p) -> new BotMenu(id, inv, this), this.getDisplayName()), buf -> buf.writeVarInt(this.getId()));
-                } else {
-                    owner = player.getUUID();
-                    int next = getOrder() == ORDER_FOLLOW ? ORDER_HOLD : ORDER_FOLLOW;
-                    setOrder(next);
-                    player.displayClientMessage(Component.translatable("gunsmod.msg.order." + next, this.getDisplayName()), true);
-                    this.playBotSound(Reg.sound("ui_beep"), 0.6f, 1.2f);
-                }
+                sp.openMenu(new SimpleMenuProvider((id, inv, p) -> new BotMenu(id, inv, this), this.getDisplayName()), buf -> buf.writeVarInt(this.getId()));
             }
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
@@ -538,7 +521,6 @@ public class BotEntity extends PathfinderMob {
         CompoundTag t = new CompoundTag();
         t.putInt("team", getBotTeam().ordinal());
         t.putInt("skin", getSkin());
-        t.putInt("order", getOrder());
         t.putInt("grenades", grenades);
         if (this.hasCustomName()) t.putString("name", this.getCustomName().getString());
         var reg = this.registryAccess();
@@ -554,7 +536,6 @@ public class BotEntity extends PathfinderMob {
     public void applyLoadout(CompoundTag t) {
         setTeam(BotTeam.byId(t.getInt("team")));
         setSkin(t.getInt("skin"));
-        if (t.contains("order")) setOrder(t.getInt("order"));
         grenades = t.contains("grenades") ? t.getInt("grenades") : 2;
         if (t.contains("name")) {
             this.setCustomName(Component.literal(t.getString("name")).withStyle(getBotTeam().chat));
@@ -575,11 +556,9 @@ public class BotEntity extends PathfinderMob {
         super.addAdditionalSaveData(tag);
         tag.putInt("Team", getBotTeam().ordinal());
         tag.putInt("Skin", getSkin());
-        tag.putInt("Order", getOrder());
         tag.putInt("Grenades", grenades);
         tag.putInt("Smokes", smokes);
         tag.putBoolean("IgnorePlayers", ignorePlayers);
-        if (owner != null) tag.putUUID("Owner", owner);
         if (home != null) tag.put("Home", NbtUtils.writeBlockPos(home));
         if (spawnerPos != null) tag.put("Spawner", NbtUtils.writeBlockPos(spawnerPos));
         if (arenaPos != null) tag.put("Arena", NbtUtils.writeBlockPos(arenaPos));
@@ -600,11 +579,9 @@ public class BotEntity extends PathfinderMob {
         super.readAdditionalSaveData(tag);
         setTeam(BotTeam.byId(tag.getInt("Team")));
         setSkin(tag.getInt("Skin"));
-        this.entityData.set(DATA_ORDER, (byte) tag.getInt("Order"));
         grenades = tag.getInt("Grenades");
         smokes = tag.getInt("Smokes");
         ignorePlayers = tag.getBoolean("IgnorePlayers");
-        if (tag.hasUUID("Owner")) owner = tag.getUUID("Owner");
         home = NbtUtils.readBlockPos(tag, "Home").orElse(null);
         spawnerPos = NbtUtils.readBlockPos(tag, "Spawner").orElse(null);
         arenaPos = NbtUtils.readBlockPos(tag, "Arena").orElse(null);

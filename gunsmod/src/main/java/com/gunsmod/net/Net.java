@@ -21,16 +21,18 @@ public final class Net {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar r = event.registrar("2");
+        PayloadRegistrar r = event.registrar("3");
         r.playToServer(Shoot.TYPE, Shoot.CODEC, ServerNet::shoot);
         r.playToServer(Reload.TYPE, Reload.CODEC, ServerNet::reload);
         r.playToServer(Turret.TYPE, Turret.CODEC, ServerNet::turret);
         r.playToServer(VehicleAction.TYPE, VehicleAction.CODEC, ServerNet::vehicleAction);
         r.playToServer(LaunchAction.TYPE, LaunchAction.CODEC, ServerNet::launchAction);
+        r.playToServer(VehicleFire.TYPE, VehicleFire.CODEC, ServerNet::vehicleFire);
         r.playToClient(ShotFx.TYPE, ShotFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.shotFx(p));
         r.playToClient(HitMarker.TYPE, HitMarker.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.hitMarker(p));
         r.playToClient(LaunchStatus.TYPE, LaunchStatus.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.launchStatus(p));
         r.playToClient(ExplosionFx.TYPE, ExplosionFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.explosion(p));
+        r.playToClient(MuzzleFx.TYPE, MuzzleFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.muzzle(p));
     }
 
     // ================================================================================ client -> server
@@ -85,7 +87,27 @@ public final class Net {
         }
     }
 
-    /** 0 = switch seat, 1 = horn, 2 = order the driver to a position */
+    /** tank / helicopter triggers: weapon 0 = main gun or rockets (attack key), 1 = machine gun or chin gun (use key) */
+    public record VehicleFire(int weapon, boolean down) implements CustomPacketPayload {
+        public static final Type<VehicleFire> TYPE = payloadType("vehicle_fire");
+        public static final StreamCodec<RegistryFriendlyByteBuf, VehicleFire> CODEC = CustomPacketPayload.codec(VehicleFire::write, VehicleFire::new);
+
+        VehicleFire(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt(), b.readBoolean());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(weapon);
+            b.writeBoolean(down);
+        }
+
+        @Override
+        public Type<VehicleFire> type() {
+            return TYPE;
+        }
+    }
+
+    /** 0 = switch seat, 1 = horn */
     public record VehicleAction(int action, double x, double y, double z) implements CustomPacketPayload {
         public static final Type<VehicleAction> TYPE = payloadType("vehicle_action");
         public static final StreamCodec<RegistryFriendlyByteBuf, VehicleAction> CODEC = CustomPacketPayload.codec(VehicleAction::write, VehicleAction::new);
@@ -258,6 +280,32 @@ public final class Net {
 
         @Override
         public Type<LaunchStatus> type() {
+            return TYPE;
+        }
+    }
+
+    /** a big gun firing: muzzle fireball along the barrel, smoke ring and the dust it kicks up */
+    public record MuzzleFx(Vec3 pos, Vec3 dir, float size, int entity) implements CustomPacketPayload {
+        public static final Type<MuzzleFx> TYPE = payloadType("muzzle_fx");
+        public static final StreamCodec<RegistryFriendlyByteBuf, MuzzleFx> CODEC = CustomPacketPayload.codec(MuzzleFx::write, MuzzleFx::new);
+
+        MuzzleFx(RegistryFriendlyByteBuf b) {
+            this(new Vec3(b.readDouble(), b.readDouble(), b.readDouble()), new Vec3(b.readFloat(), b.readFloat(), b.readFloat()), b.readFloat(), b.readVarInt());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeDouble(pos.x);
+            b.writeDouble(pos.y);
+            b.writeDouble(pos.z);
+            b.writeFloat((float) dir.x);
+            b.writeFloat((float) dir.y);
+            b.writeFloat((float) dir.z);
+            b.writeFloat(size);
+            b.writeVarInt(entity);
+        }
+
+        @Override
+        public Type<MuzzleFx> type() {
             return TYPE;
         }
     }

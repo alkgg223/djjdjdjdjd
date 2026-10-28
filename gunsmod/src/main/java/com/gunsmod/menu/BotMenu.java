@@ -19,7 +19,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 
-/** Soldier editor: weapon, armour, launch remote and missile rack slots, and orders. */
+/** Soldier editor: weapon, armour, launch remote and missile rack slots, face and grenades. */
 public class BotMenu extends AbstractContainerMenu {
     public static final EquipmentSlot[] EQUIP = {EquipmentSlot.MAINHAND, EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS,
             EquipmentSlot.FEET, EquipmentSlot.OFFHAND};
@@ -50,7 +50,7 @@ public class BotMenu extends AbstractContainerMenu {
             @Override
             public int get(int i) {
                 return switch (i) {
-                    case 0 -> bot.getOrder();
+                    case 0 -> 0;
                     case 1 -> bot.getSkin();
                     case 2 -> bot.grenades;
                     case 3 -> bot.getBotTeam().ordinal();
@@ -106,10 +106,6 @@ public class BotMenu extends AbstractContainerMenu {
     public boolean clickMenuButton(Player player, int id) {
         if (bot == null || player.level().isClientSide) return true;
         switch (id) {
-            case 0, 1, 2 -> {
-                bot.owner = player.getUUID();
-                bot.setOrder(id);
-            }
             case 3 -> bot.setSkin(bot.getSkin() + 1);
             case 4 -> bot.grenades = Math.min(5, bot.grenades + 1);
             default -> { }

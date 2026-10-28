@@ -4,6 +4,8 @@ import com.gunsmod.GunsMod;
 import com.gunsmod.client.render.GunRenderer;
 import com.gunsmod.client.sound.FlameSound;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.TankEntity;
+import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.item.GunItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -53,6 +55,11 @@ public final class ClientEvents {
             e.setSwingHand(false);
             return;
         }
+        if (p.getVehicle() instanceof VehicleEntity v && v.getControllingPassenger() == p && (e.isAttack() || e.isUseItem())) {
+            e.setCanceled(true);
+            e.setSwingHand(false);
+            return;
+        }
         if (e.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND || !(p.getMainHandItem().getItem() instanceof GunItem)) return;
         if (e.isAttack()) {
             e.setCanceled(true);
@@ -83,6 +90,7 @@ public final class ClientEvents {
         if (!e.getName().equals(VanillaGuiLayers.CROSSHAIR)) return;
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null) return;
-        if (GunClient.holdingGun(p) || p.getVehicle() instanceof JeepEntity j && j.isGunner(p)) e.setCanceled(true);
+        if (GunClient.holdingGun(p) || p.getVehicle() instanceof JeepEntity j && j.isGunner(p)
+                || p.getVehicle() instanceof TankEntity t && t.getControllingPassenger() == p) e.setCanceled(true);
     }
 }

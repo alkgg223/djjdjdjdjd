@@ -139,6 +139,10 @@ public final class WorkbenchRecipes {
         l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.RED_SOLDIER.get()), List.of(c(steel, 4), c(Items.IRON_HELMET, 1), c(Items.EMERALD, 2), c(Items.RED_DYE, 1))));
         l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.GREEN_JEEP.get()), List.of(c(steel, 24), c(Items.IRON_BLOCK, 4), c(Items.BLACK_WOOL, 4), c(Items.REDSTONE_BLOCK, 2), c(Items.GREEN_DYE, 2))));
         l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.RED_JEEP.get()), List.of(c(steel, 24), c(Items.IRON_BLOCK, 4), c(Items.BLACK_WOOL, 4), c(Items.REDSTONE_BLOCK, 2), c(Items.RED_DYE, 2))));
+        l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.GREEN_TANK.get()), List.of(c(steel, 48), c(Items.IRON_BLOCK, 12), c(Items.REDSTONE_BLOCK, 4), c(Items.TNT, 8), c(Items.GREEN_DYE, 4))));
+        l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.RED_TANK.get()), List.of(c(steel, 48), c(Items.IRON_BLOCK, 12), c(Items.REDSTONE_BLOCK, 4), c(Items.TNT, 8), c(Items.RED_DYE, 4))));
+        l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.GREEN_HELICOPTER.get()), List.of(c(steel, 40), c(Items.IRON_BLOCK, 8), c(Items.GLASS, 8), c(Items.REDSTONE_BLOCK, 4), c(Items.GREEN_DYE, 4))));
+        l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.RED_HELICOPTER.get()), List.of(c(steel, 40), c(Items.IRON_BLOCK, 8), c(Items.GLASS, 8), c(Items.REDSTONE_BLOCK, 4), c(Items.RED_DYE, 4))));
         l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.DOG_TAG.get()), List.of(c(Items.IRON_NUGGET, 4), c(Items.CHAIN, 1))));
         l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.GUN_PARTS.get(), 4), List.of(c(steel, 2), c(Items.IRON_NUGGET, 4))));
         return l;

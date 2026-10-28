@@ -147,7 +147,6 @@ public class ArenaBlockEntity extends BlockEntity {
         BotEntity b = new BotEntity(Reg.BOT.get(), sl);
         b.moveTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, 0, 0);
         b.setup(team, sl.random, pick(team, i));
-        b.setOrder(BotEntity.ORDER_PATROL);
         b.home = new BlockPos((greenBase.getX() + redBase.getX()) / 2, spot.getY(), (greenBase.getZ() + redBase.getZ()) / 2);
         b.arenaPos = worldPosition;
         b.ignorePlayers = mode == MODE_AI;

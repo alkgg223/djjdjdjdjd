@@ -5,6 +5,7 @@ import com.gunsmod.block.ExplosiveBarrelBlock;
 import com.gunsmod.entity.BotEntity;
 import com.gunsmod.entity.BotTeam;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.entity.RocketEntity;
 import com.gunsmod.item.AmmoItem;
 import com.gunsmod.item.GunItem;
@@ -86,6 +87,7 @@ public final class GunLogic {
         if (e == shooter || !e.isAlive() || e.isSpectator() || !e.isPickable()) return false;
         if (shooter.getVehicle() != null && (e == shooter.getVehicle() || e.getVehicle() == shooter.getVehicle())) return false;
         if (e.getVehicle() == shooter) return false;
+        if (e.getVehicle() instanceof VehicleEntity v && v.protectsCrew()) return false;   // the armour takes the hit
         return !BotTeam.friendly(shooter, e);
     }
 
@@ -101,7 +103,7 @@ public final class GunLogic {
         double bestD = Double.MAX_VALUE;
         AABB box = new AABB(from, blockEnd).inflate(1.0);
         for (Entity e : level.getEntities(shooter, box, e -> canHit(shooter, e))) {
-            var hit = e.getBoundingBox().inflate(e instanceof JeepEntity ? 0.0 : 0.12).clip(from, blockEnd);
+            var hit = e.getBoundingBox().inflate(e instanceof JeepEntity || e instanceof VehicleEntity ? 0.0 : 0.12).clip(from, blockEnd);
             if (hit.isPresent()) {
                 double d = from.distanceToSqr(hit.get());
                 if (d < bestD) {
@@ -112,7 +114,7 @@ public final class GunLogic {
             }
         }
         if (best != null) {
-            boolean head = best instanceof LivingEntity le && !(best instanceof JeepEntity) && le.getBbHeight() > 1.2f
+            boolean head = best instanceof LivingEntity le && !(best instanceof JeepEntity) && !(best instanceof VehicleEntity) && le.getBbHeight() > 1.2f
                     && bestHit.y > le.getEyeY() - 0.28;
             return new Trace(bestHit, (byte) 2, best, head, null);
         }
@@ -211,6 +213,8 @@ public final class GunLogic {
         boolean wasAlive = target.isAlive();
         if (target instanceof JeepEntity jeep) {
             jeep.hurtByBullet(src, dmg * (t == GunType.M107 ? 2.5f : t.category == GunType.Category.SNIPER ? 1.2f : 0.6f));
+        } else if (target instanceof VehicleEntity v) {
+            v.hurtByBullet(src, dmg * (t == GunType.M107 ? 3f : 1f));
         } else {
             target.invulnerableTime = 0;
             target.hurt(src, dmg);

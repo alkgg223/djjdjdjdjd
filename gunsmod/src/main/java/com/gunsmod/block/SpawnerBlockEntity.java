@@ -161,7 +161,6 @@ public class SpawnerBlockEntity extends BlockEntity {
         b.applyLoadout(DogTagItem.data(tag()));
         b.spawnerPos = worldPosition;
         b.home = worldPosition;
-        if (b.getOrder() == BotEntity.ORDER_FOLLOW) b.setOrder(BotEntity.ORDER_PATROL);
         b.home = worldPosition;
         sl.addFreshEntity(b);
         alive.add(b.getUUID());

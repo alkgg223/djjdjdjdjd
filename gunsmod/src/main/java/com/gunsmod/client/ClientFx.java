@@ -183,6 +183,58 @@ public final class ClientFx {
         }
     }
 
+    /** a tank gun or rocket pod firing: fireball along the barrel, a smoke ring, dust kicked up off the ground */
+    public static void muzzleBlast(Vec3 pos, Vec3 dir, float size) {
+        Minecraft mc = Minecraft.getInstance();
+        ClientLevel level = mc.level;
+        if (level == null || BlastParticles.fireballSprites == null) return;
+        RandomSource r = level.random;
+        float q = quality(mc);
+        Vec3 d = dir.lengthSqr() > 1e-6 ? dir.normalize() : new Vec3(0, 0, 1);
+        add(new BlastParticles.Flash(level, pos.x, pos.y, pos.z, BlastParticles.flashSprites, 1.4f * size, 3));
+        int nFire = (int) (10 * size * q) + 2;
+        for (int i = 0; i < nFire; i++) {
+            double sp = (0.15 + r.nextDouble() * 0.55) * size;
+            add(new BlastParticles.Fireball(level, pos.x, pos.y, pos.z, d.x * sp + r.nextGaussian() * 0.05, d.y * sp + r.nextGaussian() * 0.05,
+                    d.z * sp + r.nextGaussian() * 0.05, BlastParticles.fireballSprites, (0.4f + r.nextFloat() * 0.5f) * size, 4 + r.nextInt(5)));
+        }
+        // smoke ring around the muzzle, drifting forward
+        Vec3 side = Math.abs(d.y) < 0.95 ? d.cross(new Vec3(0, 1, 0)).normalize() : new Vec3(1, 0, 0);
+        Vec3 up = side.cross(d).normalize();
+        int nRing = (int) (14 * size * q) + 3;
+        for (int i = 0; i < nRing; i++) {
+            double a = r.nextDouble() * Mth.TWO_PI;
+            Vec3 out = side.scale(Math.cos(a)).add(up.scale(Math.sin(a)));
+            double sp = 0.12 * size;
+            float g = 0.55f + r.nextFloat() * 0.15f;
+            add(new BlastParticles.DustCloud(level, pos.x, pos.y, pos.z, out.x * sp + d.x * 0.18 * size, out.y * sp + d.y * 0.18 * size + 0.01,
+                    out.z * sp + d.z * 0.18 * size, BlastParticles.dustSprites, (0.6f + r.nextFloat() * 0.5f) * size, 50 + r.nextInt(40),
+                    g, g * 0.97f, g * 0.92f, 0.02f * size, 0.001f));
+        }
+        if (size >= 1f) {
+            // the pressure wave lifts dust off the ground below the gun
+            int gy = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, Mth.floor(pos.x), Mth.floor(pos.z));
+            if (pos.y - gy < 4) {
+                BlockState soil = level.getBlockState(BlockPos.containing(pos.x, gy - 1, pos.z));
+                int col = soil.isAir() ? 0x8a7a5a : soil.getMapColor(level, BlockPos.containing(pos.x, gy - 1, pos.z)).col;
+                float sr = ((col >> 16) & 255) / 255f, sg = ((col >> 8) & 255) / 255f, sb = (col & 255) / 255f;
+                int nDust = (int) (16 * size * q);
+                for (int i = 0; i < nDust; i++) {
+                    double a = r.nextDouble() * Mth.TWO_PI;
+                    double sp = 0.2 + r.nextDouble() * 0.35;
+                    float g = 0.75f + r.nextFloat() * 0.2f;
+                    add(new BlastParticles.DustCloud(level, pos.x + Math.cos(a) * 1.5 + d.x * 2, gy + 0.3, pos.z + Math.sin(a) * 1.5 + d.z * 2,
+                            Math.cos(a) * sp + d.x * 0.3, 0.02, Math.sin(a) * sp + d.z * 0.3, BlastParticles.dustSprites,
+                            (0.9f + r.nextFloat()) * size, 60 + r.nextInt(50), Mth.lerp(0.5f, sr, 0.55f) * g, Mth.lerp(0.5f, sg, 0.5f) * g,
+                            Mth.lerp(0.5f, sb, 0.44f) * g, 0.03f * size, 0.002f));
+                }
+            }
+            Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
+            double dist = cam.distanceTo(pos);
+            if (dist < 30) shake = Math.max(shake, (float) (size * 1.2 * (1 - dist / 30)));
+        }
+    }
+
     /** the Titan's mushroom cloud: a rising fire column that spreads into a cap and slowly stains dark */
     private static void mushroom(double x, double ground, double z, float size, float q) {
         double top = ground + 18 + size * 5;

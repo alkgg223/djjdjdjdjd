@@ -348,6 +348,134 @@ def heavy_launch(rng):
     return fade(norm(sat(out, 1.8)), 0.001, 0.8)
 
 
+# ----------------------------------------------------------------------------------- armour
+def _loopify(x, xf_sec=0.25):
+    """seamless loop: crossfade the tail into the head"""
+    xf = int(xf_sec * SR)
+    body = x[:-xf].copy()
+    w = np.linspace(0, 1, xf)
+    body[:xf] = body[:xf] * w + x[-xf:] * (1 - w)
+    return body
+
+
+def tank_engine(rng, fire_hz, L, clatter=0.0, link_hz=12.0, whine=0.15):
+    """diesel rumble (firing pulses + harmonics), turbocharger whine and, when driving, the clank of the track links"""
+    n = int(SR * (L + 0.25))
+    tt = np.arange(n) / SR
+    f = round(fire_hz * L) / L
+    ph = 2 * np.pi * f * tt
+    x = np.zeros(n)
+    for h, amp in ((0.5, 0.5), (1, 1.0), (1.5, 0.35), (2, 0.55), (3, 0.3), (4, 0.18), (6, 0.08)):
+        x += amp * np.sin(h * ph + rng.uniform(0, 6.28))
+    pulses = (np.sin(ph) > 0.7).astype(float)
+    x += lp(pulses * rng.standard_normal(n), 700) * 1.6
+    x += lp(rng.standard_normal(n), 300) * 0.9
+    x = lp(x, 1800, 3)
+    if whine:
+        wf = 1450 + 60 * np.sin(2 * np.pi * 0.4 * tt)
+        x += np.sin(2 * np.pi * np.cumsum(wf) / SR) * whine * 0.25 + bp(rng.standard_normal(n), 2500, 5000) * whine * 0.08
+    if clatter:
+        k = round(link_hz * L) / L
+        period = int(SR / k)
+        clank = np.zeros(n)
+        for i in range(0, n, period):
+            j = i + int(rng.uniform(-0.08, 0.08) * period)
+            if 0 <= j < n:
+                L2 = min(int(0.05 * SR), n - j)
+                c = bp(rng.standard_normal(L2), 900, 4200) * np.exp(-np.arange(L2) / SR / 0.012) * rng.uniform(0.6, 1.2)
+                clank[j:j + L2] += c
+        squeak = bp(rng.standard_normal(n), 2800, 3600) * (0.5 + 0.5 * np.sin(2 * np.pi * 0.7 * tt)) * 0.08
+        x = norm(x) + (clank * 0.9 + squeak) * clatter
+    x = _loopify(norm(sat(norm(x), 1.4)))
+    return norm(x, 0.85)
+
+
+def tank_fire(rng, L=3.6):
+    """120 mm gun: sharp muzzle crack, chest-hitting low boom and a long rolling echo"""
+    n = int(SR * L)
+    out = np.zeros(n)
+    crack = hp(noise(0.02, rng), 1200) * env_exp(int(0.02 * SR), 0.004)
+    place(out, crack * 2.0, 0.0)
+    body = lp(noise(1.2, rng), 420, 3) * env_exp(int(1.2 * SR), 0.22, 0.001)
+    place(out, body * 2.4, 0.0)
+    tt = t(0.9)
+    f = 34 * (1 + 2.2 * np.exp(-tt / 0.03))
+    boom = np.sin(2 * np.pi * np.cumsum(f) / SR) * env_exp(len(tt), 0.28, 0.002)
+    place(out, boom * 2.2, 0.0)
+    out = sat(out, 3.0)
+    out = reverb(out, decay=2.4, lpf=900, mix=0.5, rng=rng, predelay=0.05)
+    e = lp(out, 500) * 0.35
+    out = pad(out, n)
+    place(out, e[: n - int(0.6 * SR)], 0.6)
+    place(out, e[: n - int(1.25 * SR)] * 0.5, 1.25)
+    return fade(norm(pad(out, n)), 0.0005, 0.4)
+
+
+def tank_reload():
+    rng = np.random.default_rng(91)
+    return compose([(click(rng, 800, 3000, 0.01, 1.0, 0.06), 0.0), (thunk(rng, 90, 0.08, 1.2), 0.02), (scrape(rng, 0.35, 600, 2500, 0.5), 0.15),
+                    (thunk(rng, 140, 0.06, 1.0), 0.55), (click(rng, 1200, 4000, 0.008, 1.2, 0.05), 0.56), (thunk(rng, 70, 0.12, 1.4), 0.8),
+                    (click(rng, 1500, 5000, 0.006, 1.0, 0.04), 0.82)], 1.2)
+
+
+def heli_rotor(rng, bpf=12.0, L=3.0):
+    """main rotor blade slap (a thump per blade passage) over turbine whine and rushing air"""
+    n = int(SR * (L + 0.25))
+    tt = np.arange(n) / SR
+    k = round(bpf * L) / L
+    period = SR / k
+    slap = np.zeros(n)
+    i = 0.0
+    while i < n:
+        j = int(i)
+        L2 = min(int(0.07 * SR), n - j)
+        if L2 > 0:
+            seg = np.arange(L2) / SR
+            thump = np.sin(2 * np.pi * 62 * seg) * np.exp(-seg / 0.018) + lp(rng.standard_normal(L2), 900) * np.exp(-seg / 0.01) * 0.6
+            slap[j:j + L2] += thump * rng.uniform(0.85, 1.1)
+        i += period
+    air = lp(rng.standard_normal(n), 1200) * (0.6 + 0.4 * np.sin(2 * np.pi * k * tt) ** 2)
+    whine = np.sin(2 * np.pi * np.cumsum(np.full(n, 1180.0) + 8 * np.sin(2 * np.pi * 0.3 * tt)) / SR) * 0.12
+    hiss = bp(rng.standard_normal(n), 5000, 9000) * 0.05
+    tail = np.sin(2 * np.pi * np.cumsum(np.full(n, k * 5.6)) / SR) * 0.08
+    x = norm(slap) * 1.0 + norm(air) * 0.45 + whine + hiss + tail
+    x = _loopify(norm(sat(norm(x), 1.3)))
+    return norm(x, 0.9)
+
+
+def heli_start(rng, L=5.5):
+    """starter clicks, turbine spooling up, then the rotor thumps speeding up"""
+    n = int(SR * L)
+    tt = np.arange(n) / SR
+    out = np.zeros(n)
+    place(out, compose([(click(rng, 1000, 4000, 0.01, 1.0), 0.0), (click(rng, 800, 3000, 0.02, 0.6), 0.25)], 0.4) * 0.6, 0.0)
+    spool = np.clip(tt / 4.0, 0, 1) ** 0.7
+    f = 180 + 1000 * spool
+    whine = np.sin(2 * np.pi * np.cumsum(f) / SR) * (0.1 + 0.25 * spool) * np.clip((tt - 0.3) / 0.5, 0, 1)
+    out += whine + bp(rng.standard_normal(n), 3000, 8000) * 0.06 * spool
+    # rotor thumps accelerating
+    ph = np.cumsum(0.5 + 11.5 * np.clip((tt - 1.0) / 4.5, 0, 1) ** 1.3) / SR
+    beats = np.floor(ph)
+    hit = np.diff(np.concatenate([[0], beats])) > 0
+    for j in np.nonzero(hit)[0]:
+        L2 = min(int(0.08 * SR), n - j)
+        seg = np.arange(L2) / SR
+        out[j:j + L2] += np.sin(2 * np.pi * 58 * seg) * np.exp(-seg / 0.02) * min(1.0, tt[j] / 3.0)
+    return fade(norm(sat(norm(out), 1.2), 0.9), 0.01, 0.3)
+
+
+def heli_rocket(rng, L=1.4):
+    n = int(SR * L)
+    out = np.zeros(n)
+    pop = lp(noise(0.08, rng), 1500) * env_exp(int(0.08 * SR), 0.015)
+    place(out, pop * 1.4, 0.0)
+    w = int(1.2 * SR)
+    whoosh = bp(noise(1.2, rng), 900, 6000) * np.concatenate([np.linspace(0, 1, int(0.03 * SR)), np.exp(-np.arange(w - int(0.03 * SR)) / SR / 0.35)])
+    place(out, whoosh * 1.1, 0.01)
+    out = reverb(sat(out, 2.0), decay=0.9, lpf=2500, mix=0.35, rng=rng)
+    return fade(norm(pad(out, n)), 0.001, 0.2)
+
+
 def build_all():
     rng = np.random.default_rng(7)
     sounds = {}
@@ -392,6 +520,16 @@ def build_all():
     add("grenade_bounce", [compose([(click(rng, 2000, 6000, 0.008, 1.0), 0.0), (thunk(rng, 500, 0.01, 0.4), 0.0)], 0.12)], "grenade_bounce")
     add("bullet_whiz", [compose([(bp(noise(0.25, rng), 1500, 5000) * np.sin(np.linspace(0, np.pi, int(0.25 * SR))) ** 3, 0.0)], 0.3)], "bullet_whiz")
     add("turret_overheat", [compose([(bp(noise(0.8, rng), 3000, 8000) * np.exp(-np.arange(int(0.8 * SR)) / SR / 0.3) * 0.5, 0.0), (click(rng, 1000, 3000, 0.01, 1.0), 0.0)], 0.9)], "overheat")
+    # armour (appended last so the earlier sounds stay identical)
+    add("tank_idle", [tank_engine(np.random.default_rng(101), 24, 2.5, clatter=0.0, whine=0.2)], "tank_engine")
+    add("tank_drive", [tank_engine(np.random.default_rng(102), 46, 2.0, clatter=0.9, link_hz=14.0, whine=0.3)], "tank_engine")
+    add("tank_fire", [tank_fire(np.random.default_rng(103 + i)) for i in range(2)], "tank_fire")
+    add("tank_reload", [tank_reload()], "tank_reload")
+    add("heli_rotor", [heli_rotor(np.random.default_rng(104))], "heli_rotor")
+    add("heli_start", [heli_start(np.random.default_rng(105))], "heli_start")
+    add("heli_rocket", [heli_rocket(np.random.default_rng(106 + i)) for i in range(2)], "heli_rocket")
+    add("heli_gun", [gunshot(np.random.default_rng(108 + i), crack=1.5, body_f=320, body_tau=0.1, thump_f=48, thump=1.5, tail=0.7, echo=0.25,
+                             drive=3.6, mech=0.0, length=0.9) for i in range(3)], "heli_gun")
     with open(os.path.join(ROOT, "sounds.json"), "w") as fh:
         json.dump(sounds, fh, indent=1)
     return sounds

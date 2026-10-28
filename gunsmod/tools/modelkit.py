@@ -95,6 +95,8 @@ MATERIALS = {
     "glass_clear": ("#9fc4d6", "glass", 0.0, 0.08),
     "decal": ("#000000", "matte", 0.0, 0.0),
     "tintcloth": ("#cfcfc8", "canvas", 0.06, 0.12),
+    "track": ("#2a2826", "metal", 0.08, 0.30),
+    "rotor": ("#232528", "paint", 0.04, 0.18),
 }
 
 MAT_ALPHA = {"glass_clear": 0.38, "decal": 0.0}
@@ -589,6 +591,21 @@ class Model:
             col = np.array([0.88, 0.88, 0.84], np.float32) if arg != "red" else np.array([0.75, 0.12, 0.1], np.float32)
             p[m] = col
             self._apatch[m] = 1.0
+        elif kind == "camo":
+            # darker irregular blotches; on tinted paint they read as a two-tone camouflage of the team colour
+            rng = np.random.default_rng(int(e["from"][0] * 131 + e["from"][1] * 17 + e["from"][2] * 7 + w * 3 + h) % (2 ** 31))
+            yy, xx = np.mgrid[0:h, 0:w]
+            m = np.zeros((h, w), bool)
+            for _ in range(max(1, (w * h) // 260)):
+                cx, cy = rng.uniform(0, w), rng.uniform(0, h)
+                rx, ry = rng.uniform(3, 9), rng.uniform(2, 6)
+                m |= ((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2 < 1.0
+            p[m] *= 0.62
+        elif kind == "grime":
+            # dust and soot collecting towards the bottom of side faces
+            if side or f in ("east", "west"):
+                g = np.linspace(0.0, 1.0, h)[:, None, None] ** 2
+                p *= 1.0 - g * 0.28
         elif kind == "stripe" and side:
             col = {"red": [0.7, 0.1, 0.08], "green": [0.2, 0.55, 0.2], "white": [0.85, 0.85, 0.8], "yellow": [0.85, 0.7, 0.1]}.get(arg, [0.85, 0.85, 0.8])
             p[int(h * 0.4):int(h * 0.6), :] = np.array(col, np.float32)

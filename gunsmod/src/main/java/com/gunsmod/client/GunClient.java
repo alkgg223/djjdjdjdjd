@@ -3,6 +3,7 @@ package com.gunsmod.client;
 import com.gunsmod.Reg;
 import com.gunsmod.entity.BotEntity;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.gun.Attachment;
 import com.gunsmod.gun.GunAttachments;
 import com.gunsmod.gun.GunLogic;
@@ -41,7 +42,6 @@ public final class GunClient {
     public static final KeyMapping RELOAD = new KeyMapping("key.gunsmod.reload", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, CATEGORY);
     public static final KeyMapping SEAT = new KeyMapping("key.gunsmod.seat", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, CATEGORY);
     public static final KeyMapping HORN = new KeyMapping("key.gunsmod.horn", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, CATEGORY);
-    public static final KeyMapping ORDER = new KeyMapping("key.gunsmod.order", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, CATEGORY);
 
     // aiming
     public static boolean aiming;
@@ -66,6 +66,7 @@ public final class GunClient {
     public static boolean hitKill;
     public static int ticks;
     private static boolean turretWas;
+    private static boolean vehAttackWas, vehUseWas;
     private static final RandomSource RNG = RandomSource.create();
 
     public static float aim(float pt) {
@@ -122,13 +123,6 @@ public final class GunClient {
             }
             while (SEAT.consumeClick()) PacketDistributor.sendToServer(new Net.VehicleAction(0, 0, 0, 0));
             while (HORN.consumeClick()) PacketDistributor.sendToServer(new Net.VehicleAction(1, 0, 0, 0));
-            while (ORDER.consumeClick()) {
-                HitResult hr = p.pick(300, 1f, false);
-                if (hr.getType() == HitResult.Type.BLOCK) {
-                    Vec3 l = hr.getLocation();
-                    PacketDistributor.sendToServer(new Net.VehicleAction(2, l.x, l.y, l.z));
-                }
-            }
             if (jeep.isDriver(p) || gunner) {
                 aiming = false;
                 aim = Math.max(0, aim - 0.25f);
@@ -137,6 +131,27 @@ public final class GunClient {
         } else if (turretWas) {
             PacketDistributor.sendToServer(new Net.Turret(false));
             turretWas = false;
+        }
+        // tank commander / helicopter pilot: attack = main gun or rockets, use = machine gun or chin gun
+        if (p.getVehicle() instanceof VehicleEntity v && v.getControllingPassenger() == p) {
+            boolean a = !inScreen && mc.options.keyAttack.isDown(), u = !inScreen && mc.options.keyUse.isDown();
+            if (a != vehAttackWas) {
+                PacketDistributor.sendToServer(new Net.VehicleFire(0, a));
+                vehAttackWas = a;
+            }
+            if (u != vehUseWas) {
+                PacketDistributor.sendToServer(new Net.VehicleFire(1, u));
+                vehUseWas = u;
+            }
+            aiming = false;
+            aim = Math.max(0, aim - 0.25f);
+            return;
+        } else if (vehAttackWas || vehUseWas) {
+            if (p.getVehicle() instanceof VehicleEntity) {
+                PacketDistributor.sendToServer(new Net.VehicleFire(0, false));
+                PacketDistributor.sendToServer(new Net.VehicleFire(1, false));
+            }
+            vehAttackWas = vehUseWas = false;
         }
 
         ItemStack st = p.getMainHandItem();
@@ -219,7 +234,7 @@ public final class GunClient {
         HitResult hr = mc.hitResult;
         if (hr instanceof EntityHitResult eh) {
             Entity e = eh.getEntity();
-            return e instanceof BotEntity || e instanceof JeepEntity || !(e instanceof LivingEntity);
+            return e instanceof BotEntity || e instanceof JeepEntity || e instanceof VehicleEntity || !(e instanceof LivingEntity);
         }
         if (hr instanceof BlockHitResult bh && hr.getType() == HitResult.Type.BLOCK && mc.level != null) {
             BlockState s = mc.level.getBlockState(bh.getBlockPos());

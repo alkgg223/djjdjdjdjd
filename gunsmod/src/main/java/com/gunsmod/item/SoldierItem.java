@@ -30,12 +30,6 @@ public class SoldierItem extends Item {
             BotEntity b = new BotEntity(Reg.BOT.get(), sl);
             b.moveTo(p.getX() + 0.5, p.getY(), p.getZ() + 0.5, ctx.getRotation() + 180f, 0);
             b.setup(team, sl.random, null);
-            if (team == BotTeam.GREEN && ctx.getPlayer() != null) {
-                b.owner = ctx.getPlayer().getUUID();
-                b.setOrder(BotEntity.ORDER_FOLLOW);
-            } else {
-                b.setOrder(BotEntity.ORDER_PATROL);
-            }
             sl.addFreshEntity(b);
             if (ctx.getPlayer() == null || !ctx.getPlayer().getAbilities().instabuild) ctx.getItemInHand().shrink(1);
         }

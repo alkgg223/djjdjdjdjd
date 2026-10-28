@@ -1,6 +1,8 @@
 package com.gunsmod.entity;
 
 import com.gunsmod.Reg;
+import com.gunsmod.block.VehicleSpawnerBlockEntity;
+import com.gunsmod.entity.ai.DriveAI;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.net.Net;
 import com.gunsmod.world.Blast;
@@ -10,6 +12,7 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -42,7 +45,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * Military jeep with four seats (driver, turret gunner, passenger, rear). Speed builds up gradually to 40 km/h.
  * Model space: 1 unit = 0.1 block, front at -Z, +X = right side, (8, 0, 8) = entity origin.
  */
-public class JeepEntity extends Mob {
+public class JeepEntity extends Mob implements BotRideable {
     public static final int SEAT_DRIVER = 0, SEAT_GUNNER = 1, SEAT_PASSENGER = 2, SEAT_REAR = 3;
     /** seat positions in model units */
     public static final double[][] SEATS = {{2.6, 5.6, 4.6}, {8.0, 16.6, 17.3}, {13.4, 5.6, 4.6}, {13.4, 5.6, 12.6}};
@@ -80,7 +83,11 @@ public class JeepEntity extends Mob {
     private boolean overheated;
     private int turretCooldown;
     private int lastPassengerFire;
-    @Nullable private Vec3 orderPos;
+    @Nullable private Vec3 patrolPos;
+    private int patrolSince;
+    /** patrol centre (where it was placed) and the vehicle spawner that owns it */
+    @Nullable public BlockPos home;
+    @Nullable public BlockPos spawnerPos;
     private int stuckTicks, reverseTicks;
     private Vec3 lastPos = Vec3.ZERO;
     private float lastYaw;
@@ -162,6 +169,7 @@ public class JeepEntity extends Mob {
         return null;
     }
 
+    @Override
     public boolean seatFree(int seat) {
         return seatEntity(seat) == null;
     }
@@ -174,12 +182,19 @@ public class JeepEntity extends Mob {
         return seatOf(e) == SEAT_GUNNER;
     }
 
+    @Override
+    public boolean fitForBots() {
+        return this.getHealth() > this.getMaxHealth() * 0.3f;
+    }
+
+    @Override
     public int seatForBot(BotEntity bot) {
         if (seatFree(SEAT_DRIVER)) return SEAT_DRIVER;
         if (seatFree(SEAT_GUNNER)) return SEAT_GUNNER;
         return -1;
     }
 
+    @Override
     public void board(Entity e, int seat) {
         if (this.level().isClientSide || !seatFree(seat) || e.isPassenger()) return;
         pendingSeat = seat;
@@ -342,6 +357,7 @@ public class JeepEntity extends Mob {
         if (att != null && att.getVehicle() == this) return false;
         if (att instanceof Player p && p.getAbilities().instabuild && p.isShiftKeyDown()) {
             this.spawnAtLocation(new ItemStack(getBotTeam() == BotTeam.RED ? Reg.RED_JEEP.get() : Reg.GREEN_JEEP.get()));
+            VehicleSpawnerBlockEntity.vehicleGone(this.level(), spawnerPos, this.getUUID());
             this.discard();
             return true;
         }
@@ -369,6 +385,7 @@ public class JeepEntity extends Mob {
         if (this.level().isClientSide || this.isRemoved()) return;
         super.die(source);
         this.ejectPassengers();
+        VehicleSpawnerBlockEntity.vehicleGone(this.level(), spawnerPos, this.getUUID());
         Blast.explode(this.level(), this, this.position().add(0, 1.0, 0), 3.2f, true, Level.ExplosionInteraction.MOB, Blast.FX_FIRE, 1.2f);
         this.discard();
     }
@@ -533,27 +550,13 @@ public class JeepEntity extends Mob {
     }
 
     // ------------------------------------------------------------------------------------ bot driving
-    public void orderDriveTo(Player p, double x, double y, double z) {
-        if (getControllingPassenger() instanceof BotEntity && seatOf(p) > 0) {
-            orderPos = new Vec3(x, y, z);
-            p.displayClientMessage(Component.translatable("gunsmod.msg.driving_to", (int) x, (int) y, (int) z), true);
-            this.level().playSound(null, getX(), getY(), getZ(), Reg.sound("ui_confirm"), SoundSource.NEUTRAL, 0.8f, 1f);
-        } else {
-            p.displayClientMessage(Component.translatable("gunsmod.msg.no_driver"), true);
-        }
-    }
-
     private void botDrive(BotEntity driver) {
         Vec3 goal = null;
         double stopDist = 6;
         LivingEntity enemy = driver.getTarget();
         Entity gunner = seatEntity(SEAT_GUNNER);
         if (enemy == null && gunner instanceof BotEntity gb) enemy = gb.getTarget();
-        if (orderPos != null) {
-            if (orderPos.distanceToSqr(this.position()) < 36) orderPos = null;
-            else goal = orderPos;
-        }
-        if (goal == null && enemy != null) {
+        if (enemy != null) {
             // orbit the enemy so the gunner keeps shooting
             Vec3 rel = this.position().subtract(enemy.position()).multiply(1, 0, 1);
             if (rel.lengthSqr() < 0.01) rel = new Vec3(1, 0, 0);
@@ -564,15 +567,18 @@ public class JeepEntity extends Mob {
             stopDist = 2;
         }
         if (goal == null) {
-            Player owner = driver.getOwnerPlayer();
-            if (owner != null && owner.getVehicle() != this && owner.distanceToSqr(this) > 14 * 14 && driver.getOrder() == BotEntity.ORDER_FOLLOW) {
-                goal = owner.position();
-                stopDist = 9;
+            // no enemy: keep patrolling the area, one waypoint after the other, never parking
+            if (home == null) home = this.blockPosition();
+            if (patrolPos == null || patrolPos.distanceToSqr(this.position()) < 10 * 10 || this.tickCount - patrolSince > 900) {
+                patrolPos = DriveAI.groundWaypoint(this, Vec3.atBottomCenterOf(home), 96, 25, 55, 10);
+                patrolSince = this.tickCount;
             }
+            goal = patrolPos;
+            stopDist = 0;
         }
         if (goal == null) {
-            throttleIn = 0;
-            steerIn = 0;
+            throttleIn = 0.4f;
+            steerIn = 0.6f;
             return;
         }
         Vec3 to = goal.subtract(this.position());
@@ -725,12 +731,16 @@ public class JeepEntity extends Mob {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("Team", getBotTeam().ordinal());
+        if (home != null) tag.put("Home", NbtUtils.writeBlockPos(home));
+        if (spawnerPos != null) tag.put("Spawner", NbtUtils.writeBlockPos(spawnerPos));
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         setTeam(BotTeam.byId(tag.getInt("Team")));
+        home = NbtUtils.readBlockPos(tag, "Home").orElse(null);
+        spawnerPos = NbtUtils.readBlockPos(tag, "Spawner").orElse(null);
     }
 
     @Override

@@ -263,5 +263,57 @@
    "gunsmod:turret_overheat"
   ],
   "subtitle": "subtitles.gunsmod.overheat"
+ },
+ "tank_idle": {
+  "sounds": [
+   "gunsmod:tank_idle"
+  ],
+  "subtitle": "subtitles.gunsmod.tank_engine"
+ },
+ "tank_drive": {
+  "sounds": [
+   "gunsmod:tank_drive"
+  ],
+  "subtitle": "subtitles.gunsmod.tank_engine"
+ },
+ "tank_fire": {
+  "sounds": [
+   "gunsmod:tank_fire_1",
+   "gunsmod:tank_fire_2"
+  ],
+  "subtitle": "subtitles.gunsmod.tank_fire"
+ },
+ "tank_reload": {
+  "sounds": [
+   "gunsmod:tank_reload"
+  ],
+  "subtitle": "subtitles.gunsmod.tank_reload"
+ },
+ "heli_rotor": {
+  "sounds": [
+   "gunsmod:heli_rotor"
+  ],
+  "subtitle": "subtitles.gunsmod.heli_rotor"
+ },
+ "heli_start": {
+  "sounds": [
+   "gunsmod:heli_start"
+  ],
+  "subtitle": "subtitles.gunsmod.heli_start"
+ },
+ "heli_rocket": {
+  "sounds": [
+   "gunsmod:heli_rocket_1",
+   "gunsmod:heli_rocket_2"
+  ],
+  "subtitle": "subtitles.gunsmod.heli_rocket"
+ },
+ "heli_gun": {
+  "sounds": [
+   "gunsmod:heli_gun_1",
+   "gunsmod:heli_gun_2",
+   "gunsmod:heli_gun_3"
+  ],
+  "subtitle": "subtitles.gunsmod.heli_gun"
  }
 }

@@ -29,10 +29,11 @@ public enum BotTeam {
         return id == 1 ? RED : GREEN;
     }
 
-    /** team of any entity: soldiers and jeeps carry one, players fight with the green side, everything else is neutral */
+    /** team of any entity: soldiers and vehicles carry one, players fight with the green side, everything else is neutral */
     public static BotTeam of(Entity e) {
         if (e instanceof BotEntity b) return b.getBotTeam();
         if (e instanceof JeepEntity j) return j.getBotTeam();
+        if (e instanceof VehicleEntity v) return v.getBotTeam();
         if (e instanceof Player) return GREEN;
         return null;
     }

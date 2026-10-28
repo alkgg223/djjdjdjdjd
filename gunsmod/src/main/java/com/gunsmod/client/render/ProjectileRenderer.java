@@ -29,6 +29,18 @@ public class ProjectileRenderer<T extends Entity> extends EntityRenderer<T> {
         ItemStack stack;
         float scale;
         pose.pushPose();
+        if (e instanceof RocketEntity r && r.isVehicleRound()) {
+            // 120 mm shell / helicopter rocket: baked models pointing along -Z
+            pose.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(pt, e.yRotO, e.getYRot()) + 180f));
+            pose.mulPose(Axis.XP.rotationDegrees(Mth.lerp(pt, e.xRotO, e.getXRot())));
+            pose.scale(1.6f, 1.6f, 1.6f);
+            pose.translate(-0.5f, -0.5f, -0.5f);
+            BakedRender.entityCutout(r.getKind() == RocketEntity.TANK_SHELL ? "entity/vehicle_ammo/shell" : "entity/vehicle_ammo/rocket",
+                    pose, buf, light, OverlayTexture.NO_OVERLAY, 1, 1, 1);
+            pose.popPose();
+            super.render(e, yaw, pt, pose, buf, light);
+            return;
+        }
         if (e instanceof RocketEntity r) {
             stack = new ItemStack(r.getKind() == 0 ? Reg.AMMO_ITEMS.get(com.gunsmod.gun.AmmoType.ROCKET).get() : Reg.AMMO_ITEMS.get(com.gunsmod.gun.AmmoType.GRENADE).get());
             scale = r.getKind() == 0 ? 0.55f : 0.35f;

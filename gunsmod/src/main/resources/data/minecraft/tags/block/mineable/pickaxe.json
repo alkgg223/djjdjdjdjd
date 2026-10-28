@@ -9,6 +9,7 @@
   "gunsmod:barbed_wire",
   "gunsmod:explosive_barrel",
   "gunsmod:heavy_launcher",
-  "gunsmod:heavy_launcher_part"
+  "gunsmod:heavy_launcher_part",
+  "gunsmod:vehicle_spawner"
  ]
 }

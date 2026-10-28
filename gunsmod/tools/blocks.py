@@ -166,6 +166,31 @@ def bot_spawner():
     return m
 
 
+@blk("vehicle_spawner")
+def vehicle_spawner():
+    """landing / parking pad: hazard border, glowing ring with an arrow towards the front, corner lamps and a console"""
+    m = Model("vehicle_spawner", density=6)
+    m.box([0, 0, 0], [16, 2.4, 16], "concrete_dark", deco=("dirty",))
+    for x0, z0, x1, z1 in ((0, 0, 16, 1.6), (0, 14.4, 16, 16), (0, 1.6, 1.6, 14.4), (14.4, 1.6, 16, 14.4)):
+        m.box([x0, 2.4, z0], [x1, 3.0, z1], "hazard")
+    m.box([1.6, 2.4, 1.6], [14.4, 2.8, 14.4], "dark_paint", deco=("dirty",))
+    m.cyl("y", (8, 8), 5.4, 2.8, 3.0, "glow_orange", sides=16, end_mat="glow_orange")
+    for e in m.elements[-8:]:
+        e["light"] = True
+    m.cyl("y", (8, 8), 4.8, 2.8, 3.1, "dark_paint", sides=16)
+    # arrow to the south side: the model's north faces the player who placed it, vehicles face away from them
+    m.box([7.4, 3.1, 4.6], [8.6, 3.2, 11.4], "glow_orange", light=True)
+    m.box([5.6, 3.1, 10.45], [8.6, 3.2, 11.35], "glow_orange", rot=("y", -45.0, [7.1, 3.15, 10.9]), light=True)
+    m.box([7.4, 3.1, 10.45], [10.4, 3.2, 11.35], "glow_orange", rot=("y", 45.0, [8.9, 3.15, 10.9]), light=True)
+    for x, z in ((0.4, 0.4), (14.4, 0.4), (0.4, 14.4), (14.4, 14.4)):
+        m.box([x, 3.0, z], [x + 1.2, 3.8, z + 1.2], "steel")
+        m.box([x + 0.2, 3.8, z + 0.2], [x + 1.0, 4.4, z + 1.0], "glow_red", light=True)
+    # console at the back (towards the player)
+    m.box([5.0, 2.4, 0.2], [11.0, 4.0, 1.6], "grey_metal", deco=("panel",))
+    m.box([5.6, 4.0, 0.4], [10.4, 4.2, 1.4], "screen", light=True)
+    return m
+
+
 @blk("arena_controller")
 def arena_controller():
     m = Model("arena_controller", density=6)

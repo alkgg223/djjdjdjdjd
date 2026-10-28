@@ -20,7 +20,7 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 
 /**
- * Soldier dog tag: use it on a soldier to save its loadout (team, face, weapon with attachments, armour, orders).
+ * Soldier dog tag: use it on a soldier to save its loadout (team, face, weapon with attachments, armour).
  * Put it into a deployment pad, or use it on the ground to deploy a copy.
  */
 public class DogTagItem extends Item {
@@ -60,7 +60,6 @@ public class DogTagItem extends Item {
             BotEntity b = new BotEntity(Reg.BOT.get(), sl);
             b.moveTo(p.getX() + 0.5, p.getY(), p.getZ() + 0.5, ctx.getRotation() + 180f, 0);
             b.applyLoadout(data(s));
-            if (ctx.getPlayer() != null) b.owner = ctx.getPlayer().getUUID();
             b.home = p;
             sl.addFreshEntity(b);
             if (ctx.getPlayer() == null || !ctx.getPlayer().getAbilities().instabuild) {

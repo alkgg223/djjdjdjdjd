@@ -3,6 +3,7 @@ package com.gunsmod.client;
 import com.gunsmod.Reg;
 import com.gunsmod.client.screen.LaunchScreen;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.gun.GunType;
 import com.gunsmod.net.Net;
@@ -31,15 +32,16 @@ public final class ClientNet {
         Entity shooter = level.getEntity(p.shooter());
         Vec3 muzzle = p.origin();
         GunType t = p.gun() >= 0 ? GunType.byId(p.gun()) : null;
-        if (shooter instanceof LivingEntity le && !(shooter instanceof JeepEntity)) {
+        if (shooter instanceof LivingEntity le && !(shooter instanceof JeepEntity) && !(shooter instanceof VehicleEntity)) {
             float yaw = le.getYHeadRot(), pitch = le.getXRot();
             Vec3 look = GunLogic.dir(pitch, yaw);
             Vec3 right = GunLogic.dir(0, yaw + 90);
             muzzle = le.getEyePosition().add(look.scale(t != null && t.category == GunType.Category.PISTOL ? 0.75 : 1.15)).add(right.scale(0.3)).add(0, -0.3, 0);
         }
         if (t == null) {
-            // jeep turret
-            level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound("shot_turret"), SoundSource.HOSTILE, 7f, 0.95f + R.nextFloat() * 0.1f, true);
+            // vehicle guns: -1 jeep turret, -2 tank coaxial machine gun, -3 helicopter chin gun
+            String snd = p.gun() == -2 ? "shot_lmg" : p.gun() == -3 ? "heli_gun" : "shot_turret";
+            level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound(snd), SoundSource.HOSTILE, p.gun() == -3 ? 9f : 7f, 0.95f + R.nextFloat() * 0.1f, true);
             level.addParticle(Reg.MUZZLE_FLASH.get(), muzzle.x, muzzle.y, muzzle.z, 0, 0, 0);
             level.addParticle(Reg.SMOKE.get(), muzzle.x, muzzle.y, muzzle.z, 0, 0.02, 0);
         } else {
@@ -122,5 +124,9 @@ public final class ClientNet {
 
     public static void explosion(Net.ExplosionFx p) {
         ClientFx.blast(p.pos(), p.style(), p.size());
+    }
+
+    public static void muzzle(Net.MuzzleFx p) {
+        ClientFx.muzzleBlast(p.pos(), p.dir(), p.size());
     }
 }

@@ -2,17 +2,23 @@ package com.gunsmod;
 
 import com.gunsmod.block.ArenaBlockEntity;
 import com.gunsmod.entity.BotEntity;
+import com.gunsmod.entity.HelicopterEntity;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.TankEntity;
+import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.net.Net;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 @Mod(GunsMod.MODID)
 public class GunsMod {
@@ -23,11 +29,22 @@ public class GunsMod {
         modBus.addListener(GunsMod::attributes);
         modBus.addListener(Net::register);
         NeoForge.EVENT_BUS.addListener(GunsMod::onDeath);
+        NeoForge.EVENT_BUS.addListener(GunsMod::crewProtection);
     }
 
     private static void attributes(EntityAttributeCreationEvent e) {
         e.put(Reg.BOT.get(), BotEntity.createAttributes().build());
         e.put(Reg.JEEP.get(), JeepEntity.createAttributes().build());
+        e.put(Reg.TANK.get(), TankEntity.createAttributes().build());
+        e.put(Reg.HELICOPTER.get(), HelicopterEntity.createAttributes().build());
+    }
+
+    /** the crew of a tank or helicopter sits behind armour: hits go to the vehicle, not to them */
+    private static void crewProtection(LivingIncomingDamageEvent e) {
+        if (!(e.getEntity().getVehicle() instanceof VehicleEntity v) || !v.protectsCrew() || !v.isAlive()) return;
+        var src = e.getSource();
+        if (src.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || src.is(DamageTypes.DROWN) || src.is(DamageTypes.STARVE)) return;
+        e.setCanceled(true);
     }
 
     /** a player that dies during an arena round is out of that round */

@@ -12,7 +12,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 
-/** Soldier editor: weapon / armour, orders, face; the soldier is shown in 3D. */
+/** Soldier editor: weapon / armour, remote, missiles, face; the soldier is shown in 3D. Soldiers take no orders. */
 public class BotScreen extends AbstractContainerScreen<BotMenu> {
     public BotScreen(BotMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -24,13 +24,9 @@ public class BotScreen extends AbstractContainerScreen<BotMenu> {
 
     private List<UiKit.Btn> buttons() {
         int x = leftPos, y = topPos;
-        int order = menu.data.get(0);
         List<UiKit.Btn> l = new ArrayList<>();
-        l.add(new UiKit.Btn(0, x + 136, y + 18, 70, 16, Component.translatable("gunsmod.order.0"), true, order == 0));
-        l.add(new UiKit.Btn(1, x + 136, y + 36, 70, 16, Component.translatable("gunsmod.order.1"), true, order == 1));
-        l.add(new UiKit.Btn(2, x + 136, y + 54, 70, 16, Component.translatable("gunsmod.order.2"), true, order == 2));
-        l.add(new UiKit.Btn(3, x + 136, y + 74, 70, 14, Component.translatable("gunsmod.ui.face"), true, false));
-        l.add(new UiKit.Btn(4, x + 136, y + 90, 70, 14, Component.translatable("gunsmod.ui.grenades", menu.data.get(2)), true, false));
+        l.add(new UiKit.Btn(3, x + 136, y + 18, 70, 16, Component.translatable("gunsmod.ui.face"), true, false));
+        l.add(new UiKit.Btn(4, x + 136, y + 38, 70, 16, Component.translatable("gunsmod.ui.grenades", menu.data.get(2)), true, false));
         return l;
     }
 
@@ -54,6 +50,7 @@ public class BotScreen extends AbstractContainerScreen<BotMenu> {
             InventoryScreen.renderEntityInInventoryFollowsMouse(g, x + 106, y + 20, x + 131, y + 90, 26, 0.0625f, mx, my, menu.bot);
         }
         for (UiKit.Btn b : buttons()) UiKit.button(g, font, b, mx, my);
+        small(g, Component.translatable("gunsmod.ui.patrols").getString(), x + 137, y + 62, UiKit.GOOD);
     }
 
     private void small(GuiGraphics g, String s, int x, int y, int col) {

@@ -2,7 +2,10 @@ package com.gunsmod.client;
 
 import com.gunsmod.Reg;
 import com.gunsmod.entity.BotEntity;
+import com.gunsmod.entity.HelicopterEntity;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.TankEntity;
+import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.gun.Attachment;
 import com.gunsmod.gun.GunAttachments;
 import com.gunsmod.gun.GunLogic;
@@ -65,6 +68,11 @@ public final class Hud {
         if (hidden(mc) || !mc.options.getCameraType().isFirstPerson()) return;
         LocalPlayer p = mc.player;
         int cx = g.guiWidth() / 2, cy = g.guiHeight() / 2;
+        if (p.getVehicle() instanceof TankEntity tank && tank.getControllingPassenger() == p) {
+            tankReticle(g, mc, p, tank, cx, cy, dt.getGameTimeDeltaPartialTick(true));
+            hitMarker(g, cx, cy);
+            return;
+        }
         if (p.getVehicle() instanceof JeepEntity jeep && jeep.isGunner(p)) {
             int col = jeep.isOverheated() ? 0xFFFF4040 : 0xE0FFFFFF;
             g.fill(cx - 1, cy - 9, cx + 1, cy - 3, col);
@@ -108,6 +116,32 @@ public final class Hud {
         hitMarker(g, cx, cy);
     }
 
+    /** where the gun really points (the turret lags behind the view) and whether it is loaded */
+    private static void tankReticle(GuiGraphics g, Minecraft mc, LocalPlayer p, TankEntity tank, int cx, int cy, float pt) {
+        float gunYaw = Mth.rotLerp(pt, tank.yRotO, tank.getYRot()) + Mth.rotLerp(pt, tank.prevTurret, tank.getTurretYaw());
+        float dyaw = Mth.wrapDegrees(gunYaw - p.getViewYRot(pt));
+        float dpitch = Mth.lerp(pt, tank.prevGun, tank.getGunPitch()) - p.getViewXRot(pt);
+        double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(mc.options.fov().get() / 2.0));
+        boolean ok = Math.abs(dyaw) < 80 && Math.abs(dpitch) < 80;
+        int gx = cx + (ok ? (int) Math.round(Math.tan(Math.toRadians(dyaw)) * f) : 0);
+        int gy = cy + (ok ? (int) Math.round(Math.tan(Math.toRadians(dpitch)) * f) : 0);
+        boolean loaded = tank.getReload() <= 0;
+        int col = loaded ? 0xE040FF60 : 0xE0FFA030;
+        // view centre: small dot
+        g.fill(cx, cy, cx + 1, cy + 1, 0x90FFFFFF);
+        // gun: open cross with a ranging bar
+        g.fill(gx - 14, gy, gx - 4, gy + 1, col);
+        g.fill(gx + 5, gy, gx + 15, gy + 1, col);
+        g.fill(gx, gy + 5, gx + 1, gy + 13, col);
+        g.fill(gx - 3, gy + 8, gx + 4, gy + 9, col);
+        g.fill(gx - 1, gy - 1, gx + 2, gy + 2, col);
+        if (!loaded) {
+            float k = 1f - tank.getReload() / (float) TankEntity.RELOAD;
+            g.fill(gx - 15, gy + 16, gx + 16, gy + 18, 0x80000000);
+            g.fill(gx - 15, gy + 16, gx - 15 + (int) (31 * k), gy + 18, 0xFFFFA030);
+        }
+    }
+
     private static void hitMarker(GuiGraphics g, int cx, int cy) {
         if (GunClient.hitMarker <= 0) return;
         int col = GunClient.hitKill ? 0xFFFF3030 : 0xFFFFFFFF;
@@ -128,7 +162,7 @@ public final class Hud {
         Minecraft mc = Minecraft.getInstance();
         if (hidden(mc)) return;
         LocalPlayer p = mc.player;
-        if (p.getVehicle() instanceof JeepEntity) return;
+        if (p.getVehicle() instanceof JeepEntity || p.getVehicle() instanceof VehicleEntity v && v.getControllingPassenger() == p) return;
         ItemStack st = p.getMainHandItem();
         if (!(st.getItem() instanceof GunItem gun)) return;
         Font f = mc.font;
@@ -194,7 +228,16 @@ public final class Hud {
     // ------------------------------------------------------------------------------------ vehicle
     public static void vehicle(GuiGraphics g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
-        if (hidden(mc) || !(mc.player.getVehicle() instanceof JeepEntity jeep)) return;
+        if (hidden(mc)) return;
+        if (mc.player.getVehicle() instanceof TankEntity tank) {
+            tankHud(g, mc, tank);
+            return;
+        }
+        if (mc.player.getVehicle() instanceof HelicopterEntity heli) {
+            heliHud(g, mc, heli);
+            return;
+        }
+        if (!(mc.player.getVehicle() instanceof JeepEntity jeep)) return;
         Font f = mc.font;
         int s = 92;
         int x = g.guiWidth() / 2 - 91 - s - 8, y = g.guiHeight() - s - 4;
@@ -239,8 +282,95 @@ public final class Hud {
             g.drawString(f, lbl, g.guiWidth() / 2 - f.width(lbl) / 2, hy + 5, jeep.isOverheated() ? 0xFFFF5040 : 0xFFD0D0D0, true);
         }
         Component hint = Component.translatable(jeep.isDriver(mc.player) ? "gunsmod.hud.drive_hint" : "gunsmod.hud.seat_hint",
-                GunClient.SEAT.getTranslatedKeyMessage(), GunClient.HORN.getTranslatedKeyMessage(), GunClient.ORDER.getTranslatedKeyMessage());
+                GunClient.SEAT.getTranslatedKeyMessage(), GunClient.HORN.getTranslatedKeyMessage());
         g.drawString(f, hint, g.guiWidth() / 2 - f.width(hint) / 2, 6, 0xA0FFFFFF, true);
+    }
+
+    private static int gauge(GuiGraphics g, Minecraft mc, double kmh, double maxKmh, String gear) {
+        Font f = mc.font;
+        int s = 92;
+        int x = g.guiWidth() / 2 - 91 - s - 8, y = g.guiHeight() - s - 4;
+        if (x < 4) {
+            x = 4;
+            y = g.guiHeight() - s - 44;
+        }
+        RenderSystem.enableBlend();
+        g.blit(GAUGE, x, y, 0, 0, s, s, s, s);
+        // the dial reads 0..60; faster vehicles scale onto it
+        float ang = 150f + (float) Math.min(62, kmh * 60.0 / maxKmh) * 4f;
+        g.pose().pushPose();
+        g.pose().translate(x + s / 2f, y + s / 2f, 0);
+        g.pose().mulPose(Axis.ZP.rotationDegrees(ang));
+        g.fill(-2, -1, (int) (s * 0.40f), 1, 0xFFFF3A2A);
+        g.fill(-4, -3, 4, 3, 0xFF202020);
+        g.pose().popPose();
+        String sp = String.format("%d", Math.round(kmh));
+        g.pose().pushPose();
+        g.pose().translate(x + s / 2f - f.width(sp), y + s * 0.62f, 0);
+        g.pose().scale(2f, 2f, 1f);
+        g.drawString(f, sp, 0, 0, 0xFFFFFFFF, true);
+        g.pose().popPose();
+        if (gear != null) g.drawString(f, gear, x + s - 14, y + s - 14, gear.equals("R") ? 0xFFFF6040 : 0xFF8FE08F, true);
+        RenderSystem.disableBlend();
+        return x + s + 6;
+    }
+
+    private static void panel(GuiGraphics g, Minecraft mc, int bx, Component title, float hp, Component extra, int extraCol) {
+        Font f = mc.font;
+        int by = g.guiHeight() - 30, bw = 96;
+        g.blitSprite(PANEL, bx - 3, by - 28, bw + 6, 42);
+        g.drawString(f, title, bx, by - 24, 0xFFE8D9A0, true);
+        if (extra != null) g.drawString(f, extra, bx, by - 12, extraCol, true);
+        g.fill(bx, by, bx + bw, by + 4, 0x80000000);
+        g.fill(bx, by, bx + (int) (bw * hp), by + 4, hp > 0.5f ? 0xFF60D060 : hp > 0.25f ? 0xFFE0B040 : 0xFFE04030);
+    }
+
+    private static void tankHud(GuiGraphics g, Minecraft mc, TankEntity tank) {
+        boolean commander = tank.getControllingPassenger() == mc.player;
+        double v = tank.getDisplaySpeed();
+        int bx = gauge(g, mc, Math.abs(v) * 20 * 3.6, 60, v < -0.005 ? "R" : Math.abs(v) < 0.005 ? "N" : "D");
+        Component gun = Component.translatable(tank.getReload() > 0 ? "gunsmod.hud.gun_loading" : "gunsmod.hud.gun_ready");
+        panel(g, mc, bx, Component.translatable("gunsmod.seat.commander"), tank.getHealth() / tank.getMaxHealth(), gun,
+                tank.getReload() > 0 ? 0xFFFFA030 : 0xFF60FF80);
+        // turret direction: hull from above, gun line
+        int ix = bx + 106, iy = g.guiHeight() - 34;
+        g.fill(ix - 6, iy - 10, ix + 6, iy + 10, 0x80303830);
+        g.fill(ix - 5, iy - 9, ix + 5, iy + 9, 0xA0607050);
+        g.pose().pushPose();
+        g.pose().translate(ix + 0.5f, iy + 0.5f, 0);
+        g.pose().mulPose(Axis.ZP.rotationDegrees(tank.getTurretYaw()));
+        g.fill(-3, -3, 4, 4, 0xFFB0C090);
+        g.fill(0, -16, 1, -3, 0xFFE0F0C0);
+        g.pose().popPose();
+        if (commander) {
+            Component hint = Component.translatable("gunsmod.hud.tank_hint");
+            g.drawString(mc.font, hint, g.guiWidth() / 2 - mc.font.width(hint) / 2, 6, 0xA0FFFFFF, true);
+        }
+    }
+
+    private static void heliHud(GuiGraphics g, Minecraft mc, HelicopterEntity heli) {
+        boolean pilot = heli.getControllingPassenger() == mc.player;
+        int bx = gauge(g, mc, heli.airSpeed * 20 * 3.6, 120, null);
+        Component rk = heli.getRocketReload() > 0 ? Component.translatable("gunsmod.hud.rockets_loading")
+                : Component.translatable("gunsmod.hud.rockets", heli.getRockets());
+        panel(g, mc, bx, Component.translatable(pilot ? "gunsmod.seat.pilot" : "gunsmod.seat.2"), heli.getHealth() / heli.getMaxHealth(), rk,
+                heli.getRocketReload() > 0 ? 0xFFFFA030 : 0xFFFFFFFF);
+        Font f = mc.font;
+        int x = bx + 106, y = g.guiHeight() - 56;
+        double alt = heli.heightAboveGround();
+        double vs = heli.climbRate * 20;
+        g.blitSprite(PANEL, x - 3, y - 3, 74, 50);
+        g.drawString(f, Component.translatable("gunsmod.hud.altitude", String.format("%.0f", alt)), x, y, 0xFFE8E8E8, true);
+        g.drawString(f, Component.translatable("gunsmod.hud.climb", String.format("%+.1f", vs)), x, y + 11, vs < -6 ? 0xFFFF6040 : 0xFFC8D8C8, true);
+        g.drawString(f, Component.translatable("gunsmod.hud.rotor", Math.round(heli.rotor * 100)), x, y + 22, heli.rotor < 0.9f ? 0xFFFFC040 : 0xFF80E080, true);
+        if (alt < 6 && heli.climbRate < -0.3 && (mc.player.tickCount / 4) % 2 == 0) {
+            Component w = Component.translatable("gunsmod.hud.pull_up");
+            g.drawString(f, w, g.guiWidth() / 2 - f.width(w) / 2, g.guiHeight() / 2 + 30, 0xFFFF4030, true);
+        }
+        if (pilot) {
+            Component hint = Component.translatable("gunsmod.hud.heli_hint");
+            g.drawString(f, hint, g.guiWidth() / 2 - f.width(hint) / 2, 6, 0xA0FFFFFF, true);
+        }
     }
 
     // ------------------------------------------------------------------------------------ soldier info
@@ -258,6 +388,7 @@ public final class Hud {
         float hp = bot.getHealth() / bot.getMaxHealth();
         g.fill(x + 5, y + 28, x + w - 5, y + 32, 0x80000000);
         g.fill(x + 5, y + 28, x + 5 + (int) ((w - 10) * hp), y + 32, bot.getBotTeam().color | 0xFF000000);
-        g.drawString(f, Component.translatable("gunsmod.order." + bot.getOrder()), x + w - 5 - f.width(Component.translatable("gunsmod.order." + bot.getOrder())), y + 15, 0xFF8FD18F, true);
+        Component state = Component.translatable(bot.isAiming() ? "gunsmod.state.combat" : bot.isPassenger() ? "gunsmod.state.vehicle" : "gunsmod.state.patrol");
+        g.drawString(f, state, x + w - 5 - f.width(state), y + 15, bot.isAiming() ? 0xFFFF7060 : 0xFF8FD18F, true);
     }
 }
