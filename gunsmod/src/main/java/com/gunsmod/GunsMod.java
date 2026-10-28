@@ -5,10 +5,12 @@ import com.gunsmod.entity.BotEntity;
 import com.gunsmod.entity.ArmoredCarEntity;
 import com.gunsmod.entity.HelicopterEntity;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.JetEntity;
 import com.gunsmod.entity.TankEntity;
 import com.gunsmod.entity.VehicleKind;
 import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.net.Net;
+import com.gunsmod.world.OrchardBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,6 +23,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 @Mod(GunsMod.MODID)
 public class GunsMod {
@@ -32,6 +35,7 @@ public class GunsMod {
         modBus.addListener(Net::register);
         NeoForge.EVENT_BUS.addListener(GunsMod::onDeath);
         NeoForge.EVENT_BUS.addListener(GunsMod::crewProtection);
+        NeoForge.EVENT_BUS.addListener(GunsMod::serverTick);
     }
 
     private static void attributes(EntityAttributeCreationEvent e) {
@@ -43,9 +47,15 @@ public class GunsMod {
                 case TANK -> e.put(k.type(), TankEntity.createAttributes(k.tank()).build());
                 case HELI -> e.put(k.type(), HelicopterEntity.createAttributes(k.heli()).build());
                 case CAR -> e.put(k.type(), ArmoredCarEntity.createAttributes(k.car()).build());
+                case JET -> e.put(k.type(), JetEntity.createAttributes().build());
                 default -> { }
             }
         }
+    }
+
+    /** big battlefield jobs build a few rows every tick */
+    private static void serverTick(ServerTickEvent.Post e) {
+        OrchardBuilder.tick();
     }
 
     /** the crew of any vehicle (jeep included) is protected: hits go to the vehicle until it blows up */

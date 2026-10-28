@@ -150,6 +150,8 @@ public final class WorkbenchRecipes {
                     case HELI -> List.of(c(steel, k == VehicleKind.HIND ? 48 : 40), c(Items.IRON_BLOCK, 8), c(Items.GLASS, 8), c(Items.REDSTONE_BLOCK, 4),
                             c(Items.TNT, k == VehicleKind.COBRA ? 0 : 6), c(dye, 4));
                     case JEEP -> List.of(c(steel, 24), c(Items.IRON_BLOCK, 4), c(Items.REDSTONE_BLOCK, 2), c(Items.TNT, 6), c(dye, 2));
+                    case JET -> List.of(c(steel, 64), c(Items.IRON_BLOCK, 12), c(Items.GLASS, 6), c(Items.REDSTONE_BLOCK, 8), c(Items.BLAZE_ROD, 4),
+                            c(Items.TNT, 8), c(dye, 4));
                     case CAR -> k == VehicleKind.PANTSIR
                             ? List.of(c(steel, 52), c(Items.IRON_BLOCK, 10), c(Items.REDSTONE_BLOCK, 8), c(Items.COMPASS, 2), c(Items.TNT, 10), c(dye, 4))
                             : List.of(c(steel, 40), c(Items.IRON_BLOCK, 8), c(Items.REDSTONE_BLOCK, 4), c(Items.TNT, 6), c(dye, 4));

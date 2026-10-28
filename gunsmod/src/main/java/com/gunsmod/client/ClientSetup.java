@@ -12,6 +12,7 @@ import com.gunsmod.client.render.HelicopterRenderer;
 import com.gunsmod.client.render.HeavyLauncherRenderer;
 import com.gunsmod.client.render.JeepItemRenderer;
 import com.gunsmod.client.render.JeepRenderer;
+import com.gunsmod.client.render.JetRenderer;
 import com.gunsmod.client.render.LauncherRenderer;
 import com.gunsmod.client.render.MissileRenderer;
 import com.gunsmod.client.render.ProjectileRenderer;
@@ -108,6 +109,10 @@ public final class ClientSetup {
             }
             if (h.geo.chin() != null) e.register(BakedRender.id("entity/" + h.geo.model() + "/chin"));
         }
+        for (String p : new String[]{"body", "mark_green", "mark_red", "gear_nose", "gear_main", "aim9_l", "aim9_r", "mav_0", "mav_1", "mav_2",
+                "mav_3", "burner"}) {
+            e.register(BakedRender.id("entity/f16/" + p));
+        }
         for (CarType c : CarType.values()) {
             for (String p : new String[]{"body", "mark_green", "mark_red", "turret", "gun"}) e.register(BakedRender.id("entity/" + c.geo.model() + "/" + p));
             if (c.geo.radar() != null) e.register(BakedRender.id("entity/" + c.geo.model() + "/radar"));
@@ -129,6 +134,7 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.HELI_KA52.get(), HelicopterRenderer::new);
         e.registerEntityRenderer(Reg.BTR.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.PANTSIR.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.F16.get(), JetRenderer::new);
         e.registerEntityRenderer(Reg.GUIDED_MISSILE.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.FLARE_ENTITY.get(), NoopRenderer::new);
         e.registerEntityRenderer(Reg.ROCKET.get(), ProjectileRenderer::new);

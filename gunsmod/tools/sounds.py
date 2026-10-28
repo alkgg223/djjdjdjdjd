@@ -543,6 +543,141 @@ def radar_ping(rng, L=0.6):
     return fade(norm(x, 0.6), 0.001, 0.1)
 
 
+# ----------------------------------------------------------------------------------- v1.5: F-16
+def tv_lowpass(x, f0, f1, steps=40):
+    """low-pass whose cutoff glides from f0 to f1 (Hz) over the signal, done in short overlapping blocks"""
+    n = len(x)
+    out = np.zeros(n)
+    win = n // steps
+    hann = np.hanning(2 * win)
+    for i in range(steps + 1):
+        a = max(0, i * win - win)
+        b = min(n, i * win + win)
+        if b - a < 32:
+            continue
+        f = f0 * (f1 / f0) ** (i / steps)
+        seg = lp(x[a:b], min(f, SR / 2 - 100), 2)
+        w = hann[: b - a] if a > 0 else np.ones(b - a)
+        out[a:b] += seg * w[: b - a]
+    return out
+
+
+def sweep(f, L):
+    """sine whose frequency follows the array f (Hz per sample)"""
+    return np.sin(2 * np.pi * np.cumsum(f) / SR)
+
+
+def jet_start(rng, L=9.0):
+    """jet fuel starter whine, light-off thump, the turbine spooling up to idle"""
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    out = np.zeros(n)
+    fs = 250 + 2300 * np.clip(k / 3.2, 0, 1) ** 0.7
+    starter = (sweep(fs, L) * 0.5 + sweep(fs * 2.01, L) * 0.2) * np.clip(k / 0.4, 0, 1) * np.exp(-np.maximum(0, k - 4.5) / 1.5)
+    out += starter * 0.6 + bp(noise(L, rng), 2000, 7000) * 0.12 * np.clip(k / 1.0, 0, 1)
+    # light-off
+    place(out, lp(noise(0.8, rng), 300, 2) * env_exp(int(0.8 * SR), 0.25) * 2.2, 3.0)
+    place(out, np.sin(2 * np.pi * 45 * t(0.6)) * env_exp(int(0.6 * SR), 0.2) * 1.5, 3.0)
+    spool = np.clip((k - 3.0) / 4.5, 0, 1) ** 0.8
+    roar = tv_lowpass(noise(L, rng), 200, 2200) * spool * 1.3
+    fw = 900 + 2900 * spool
+    whine = (sweep(fw, L) * 0.35 + sweep(fw * 1.98, L) * 0.12) * spool
+    out += roar + whine + lp(noise(L, rng), 120, 2) * spool * 0.8
+    return fade(norm(reverb(out, 0.8, 3000, 0.2, rng)[:n]), 0.05, 0.6)
+
+
+def jet_idle(rng, L=3.0):
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    fw = 3700 * (1 + 0.004 * np.sin(2 * np.pi * 0.7 * k))
+    whine = sweep(fw, L) * 0.3 + sweep(fw * 2.0, L) * 0.08 + sweep(fw * 0.5, L) * 0.1
+    hiss = bp(noise(L, rng), 1500, 8000) * 0.35
+    rumble = lp(noise(L, rng), 160, 2) * 0.9
+    return _loopify(norm(whine + hiss + rumble, 0.8))
+
+
+def jet_engine(rng, L=3.0):
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    roar = lp(noise(L, rng), 1800, 2) * 1.4 + bp(noise(L, rng), 300, 1200) * 0.8
+    rumble = lp(noise(L, rng), 90, 2) * 1.6
+    crackle = np.zeros(n)
+    for _ in range(120):
+        place(crackle, click(rng, 600, 3000, 0.004, 0.2 + rng.random() * 0.3), rng.random() * (L - 0.05))
+    fw = 4100 * (1 + 0.003 * np.sin(2 * np.pi * 0.5 * k))
+    whine = sweep(fw, L) * 0.12
+    out = sat(roar + rumble + crackle * 0.4 + whine, 1.4)
+    return _loopify(norm(out, 0.9))
+
+
+def jet_afterburner(rng, L=3.0):
+    n = int(SR * L)
+    rumble = lp(noise(L, rng), 120, 3) * 2.2 + lp(noise(L, rng), 450, 2) * 1.0
+    crackle = np.zeros(n)
+    for _ in range(420):
+        at = rng.random() * (L - 0.05)
+        place(crackle, click(rng, 300, 2500, 0.006 + rng.random() * 0.008, 0.3 + rng.random() * 0.5), at)
+    k = np.arange(n) / SR
+    out = sat((rumble + crackle * 0.8) * (1 + 0.15 * np.sin(2 * np.pi * 3.3 * k)), 1.8)
+    return _loopify(norm(out, 0.9))
+
+
+def jet_flyby(rng, L=4.6, peak=1.3):
+    """a fast low pass: rising whine and roar, the roar at its loudest overhead, then the deep tearing rumble
+    falling in pitch (Doppler) and fading away"""
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    s = np.tanh((k - peak) / 0.18)                       # -1 before, +1 after the pass
+    env = np.exp(-np.abs(k - peak) / np.where(k < peak, 0.55, 1.3))
+    fw = 4600 * (1 - 0.18 * (s + 1) / 2)
+    whine = (sweep(fw, L) * 0.4 + sweep(fw * 0.5, L) * 0.15) * np.exp(-np.maximum(0, k - peak) / 0.5)
+    hi = bp(noise(L, rng), 900, 6000) * (1 - (s + 1) / 2 * 0.8)
+    lo = lp(noise(L, rng), 500, 2) * 1.6 * (0.3 + (s + 1) / 2)
+    tear = lp(noise(L, rng), 900, 2) * (1 + 0.8 * np.sign(np.sin(2 * np.pi * 23 * k))) * 0.5 * ((s + 1) / 2)
+    rumble = lp(noise(L, rng), 90, 2) * 1.8
+    out = (whine + hi + lo + tear + rumble) * env
+    out = sat(out * 1.4, 1.6)
+    return fade(norm(reverb(out, 1.4, 1800, 0.3, rng)[:n]), 0.2, 0.8)
+
+
+def jet_cannon(rng, L=0.26):
+    """M61 Vulcan: 100 rounds a second blur into a tearing buzz"""
+    n = int(SR * L)
+    out = np.zeros(n)
+    for i in range(int(L * 100)):
+        shot = gunshot(np.random.default_rng(rng.integers(1 << 30)), crack=1.2, body_f=420, body_tau=0.02, thump_f=70, thump=0.9,
+                       tail=0.05, mech=0.0, length=0.1)
+        place(out, shot * (0.8 + 0.2 * rng.random()), i * 0.01)
+    k = np.arange(n) / SR
+    out += bp(noise(L, rng), 200, 900) * 0.4
+    out = sat(lp(out, 5000), 2.0)
+    return fade(norm(reverb(out, 0.5, 2500, 0.25, rng)[:n]), 0.001, 0.04)
+
+
+def build_v15():
+    with open(os.path.join(ROOT, "sounds.json")) as fh:
+        sounds = json.load(fh)
+
+    def add(name, xs, subtitle=None):
+        files = []
+        for i, x in enumerate(xs):
+            fn = f"{name}_{i + 1}" if len(xs) > 1 else name
+            write_ogg(os.path.join(OUT, fn + ".ogg"), x)
+            files.append(f"gunsmod:{fn}")
+        sounds[name] = {"sounds": files, "subtitle": f"subtitles.gunsmod.{subtitle or name}"}
+
+    add("jet_start", [jet_start(np.random.default_rng(170))])
+    add("jet_idle", [jet_idle(np.random.default_rng(171))], "jet_engine")
+    add("jet_engine", [jet_engine(np.random.default_rng(172))], "jet_engine")
+    add("jet_afterburner", [jet_afterburner(np.random.default_rng(173))])
+    add("jet_flyby", [jet_flyby(np.random.default_rng(174 + i)) for i in range(2)])
+    add("jet_missile", [missile_motor(np.random.default_rng(176 + i), 2.2, 1.4, 1400, 0.35, 0.5) for i in range(2)])
+    add("jet_cannon", [jet_cannon(np.random.default_rng(178 + i)) for i in range(2)])
+    with open(os.path.join(ROOT, "sounds.json"), "w") as fh:
+        json.dump(sounds, fh, indent=1)
+    return sounds
+
+
 def build_v14():
     """the sounds added in 1.4 (written next to the existing ones, which stay untouched)"""
     with open(os.path.join(ROOT, "sounds.json")) as fh:
@@ -632,5 +767,5 @@ def build_all():
 
 if __name__ == "__main__":
     import sys
-    s = build_v14() if "v14" in sys.argv else build_all()
+    s = build_v15() if "v15" in sys.argv else build_v14() if "v14" in sys.argv else build_all()
     print(len(s), "sound events")

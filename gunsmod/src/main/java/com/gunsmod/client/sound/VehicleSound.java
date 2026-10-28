@@ -4,6 +4,7 @@ import com.gunsmod.Reg;
 import com.gunsmod.client.particle.BlastParticles;
 import com.gunsmod.entity.ArmoredCarEntity;
 import com.gunsmod.entity.HelicopterEntity;
+import com.gunsmod.entity.JetEntity;
 import com.gunsmod.entity.TankEntity;
 import com.gunsmod.entity.VehicleEntity;
 import java.util.Map;
@@ -54,6 +55,7 @@ public class VehicleSound extends AbstractTickableSoundInstance {
         if (v instanceof TankEntity t) tank(t);
         else if (v instanceof HelicopterEntity h) heli(h);
         else if (v instanceof ArmoredCarEntity c) car(c);
+        else if (v instanceof JetEntity j) JetSound.tick(j);
         damageSmoke(v);
     }
 
@@ -167,6 +169,7 @@ public class VehicleSound extends AbstractTickableSoundInstance {
     private static void damageSmoke(VehicleEntity v) {
         float hp = v.getHealth() / v.getMaxHealth();
         if (hp >= 0.5f || v.tickCount % (hp < 0.25f ? 2 : 5) != 0) return;
+        if (v instanceof JetEntity) return;      // the jet burns its own way when it goes down
         double[] sm = v instanceof TankEntity tk ? tk.kind.geo.smoke() : v instanceof ArmoredCarEntity c ? c.geo.smoke()
                 : v instanceof HelicopterEntity h ? new double[]{h.geo.hub()[0], h.geo.hub()[1] - 2.2, h.geo.hub()[2] + 1.5} : new double[]{8, 8.4, 4};
         Vec3 p = v.toWorld(sm[0], sm[1], sm[2]);

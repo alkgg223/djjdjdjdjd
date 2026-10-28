@@ -428,17 +428,17 @@ public class ArmoredCarEntity extends VehicleEntity {
         if (getLockProgress() != progress) this.entityData.set(DATA_LOCK, (byte) progress);
     }
 
-    private boolean enemyAircraft(HelicopterEntity h, @Nullable LivingEntity crew) {
-        if (!h.isAlive() || h.getPassengers().isEmpty() || !h.isAirborne()) return false;
+    private boolean enemyAircraft(VehicleEntity h, @Nullable LivingEntity crew) {
+        if (!(h instanceof Aircraft a) || !h.isAlive() || h.getPassengers().isEmpty() || !a.isAirborne()) return false;
         if (crew != null && BotTeam.friendly(crew, h.getControllingPassenger())) return false;
         return crew == null || h.getBotTeam() != getBotTeam() || crew instanceof Player;
     }
 
-    /** Pantsir: the helicopter closest to the sight line inside the cone is tracked; held long enough, it is locked */
+    /** Pantsir: the aircraft closest to the sight line inside the cone is tracked; held long enough, it is locked */
     private void radarTrack(LivingEntity crew, Vec3 eye, Vec3 look, int rate) {
-        HelicopterEntity best = null;
+        VehicleEntity best = null;
         double bestAng = rate > 1 ? RADAR_RANGE : 12;
-        for (HelicopterEntity h : this.level().getEntitiesOfClass(HelicopterEntity.class, this.getBoundingBox().inflate(RADAR_RANGE, RADAR_RANGE * 0.6, RADAR_RANGE),
+        for (VehicleEntity h : this.level().getEntitiesOfClass(VehicleEntity.class, this.getBoundingBox().inflate(RADAR_RANGE, RADAR_RANGE * 0.6, RADAR_RANGE),
                 h -> enemyAircraft(h, crew))) {
             Vec3 c = h.position().add(0, h.getBbHeight() * 0.5, 0);
             Vec3 to = c.subtract(eye);
@@ -458,19 +458,19 @@ public class ArmoredCarEntity extends VehicleEntity {
             trackCount = Math.min(LOCK_TICKS, trackCount + rate);
             if (trackCount >= LOCK_TICKS) this.level().playSound(null, getX(), getY() + 2, getZ(), Reg.sound("lock_on"), SoundSource.NEUTRAL, 1f, 0.9f);
         }
-        if (best != null) best.radarWarning();
+        if (best instanceof Aircraft a) a.radarWarning();
         setTrack(id, id < 0 ? 0 : trackCount);
     }
 
     @Nullable
-    private HelicopterEntity tracked() {
-        return getTrack() >= 0 && this.level().getEntity(getTrack()) instanceof HelicopterEntity h ? h : null;
+    private VehicleEntity tracked() {
+        return getTrack() >= 0 && this.level().getEntity(getTrack()) instanceof VehicleEntity h && h instanceof Aircraft ? h : null;
     }
 
     private void fireMain(@Nullable LivingEntity gunner, @Nullable Vec3 aimAt) {
         if (mainCooldown > 0 || getAmmo() <= 0 || getReload() > 0) return;
         if (kind.antiAir()) {
-            HelicopterEntity h = tracked();
+            VehicleEntity h = tracked();
             if (h == null || !isLocked()) {
                 fireMain = false;
                 return;
@@ -513,7 +513,7 @@ public class ArmoredCarEntity extends VehicleEntity {
             double[][] mz = geo.muzzles();
             Vec3 muzzle = gunPoint(mz[muzzleIndex++ % mz.length]);
             Vec3 dir = gunDir();
-            HelicopterEntity h = tracked();
+            VehicleEntity h = tracked();
             if (aimAt == null && h != null && isLocked()) {
                 Vec3 to = h.position().add(0, h.getBbHeight() * 0.5, 0).subtract(muzzle).normalize();
                 if (to.dot(dir) > Math.cos(Math.toRadians(10))) dir = to;
@@ -522,7 +522,7 @@ public class ArmoredCarEntity extends VehicleEntity {
             }
             dir = spread(dir, 0.7f);
             GunLogic.Trace tr = GunLogic.trace(this.level(), shooter, muzzle, dir, 260);
-            HelicopterEntity hit = tr.entity() instanceof HelicopterEntity he ? he : flak(muzzle, tr.end(), gunner);
+            VehicleEntity hit = tr.entity() instanceof VehicleEntity he && he instanceof Aircraft ? he : flak(muzzle, tr.end(), gunner);
             if (hit != null) {
                 hit.invulnerableTime = 0;
                 hit.hurt(this.damageSources().explosion(this, gunner), 5f);
@@ -544,11 +544,11 @@ public class ArmoredCarEntity extends VehicleEntity {
 
     /** proximity: a 30 mm round passing close to a helicopter still damages it */
     @Nullable
-    private HelicopterEntity flak(Vec3 from, Vec3 to, @Nullable LivingEntity gunner) {
+    private VehicleEntity flak(Vec3 from, Vec3 to, @Nullable LivingEntity gunner) {
         Vec3 ab = to.subtract(from);
         double len2 = ab.lengthSqr();
         if (len2 < 1) return null;
-        for (HelicopterEntity h : this.level().getEntitiesOfClass(HelicopterEntity.class, new AABB(from, to).inflate(3), h -> enemyAircraft(h, gunner))) {
+        for (VehicleEntity h : this.level().getEntitiesOfClass(VehicleEntity.class, new AABB(from, to).inflate(3), h -> enemyAircraft(h, gunner))) {
             Vec3 c = h.position().add(0, h.getBbHeight() * 0.5, 0);
             double t = Mth.clamp(c.subtract(from).dot(ab) / len2, 0, 1);
             if (from.add(ab.scale(t)).distanceTo(c) < h.getBbWidth() * 0.5 + 1.2) return h;
@@ -630,9 +630,9 @@ public class ArmoredCarEntity extends VehicleEntity {
     /** Pantsir: radar picks the nearest enemy helicopter, locks it, launches missiles and fires the guns when it is close */
     private void botAirDefence(BotEntity bot) {
         radarTrack(bot, sightWorld(), gunDir(), 2);
-        HelicopterEntity h = tracked();
+        VehicleEntity h = tracked();
         if (h == null) {
-            if (bot.getTarget() instanceof HelicopterEntity) bot.setTarget(null);
+            if (bot.getTarget() instanceof Aircraft) bot.setTarget(null);
             // search: the module turns slowly while the radar spins
             traverse(getTurretYaw() + 3f, -15f, 1.5f, 1f);
             return;

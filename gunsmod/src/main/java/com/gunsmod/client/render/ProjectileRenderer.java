@@ -56,9 +56,10 @@ public class ProjectileRenderer<T extends Entity> extends EntityRenderer<T> {
         } else if (e instanceof GuidedMissileEntity m) {
             pose.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(pt, e.yRotO, e.getYRot()) + 180f));
             pose.mulPose(Axis.XP.rotationDegrees(Mth.lerp(pt, e.xRotO, e.getXRot())));
-            pose.scale(1.6f, 1.6f, 1.6f);
+            float sc = m.getKind() == GuidedMissileEntity.MAVERICK ? 2.2f : 1.6f;
+            pose.scale(sc, sc, sc);
             pose.translate(-0.5f, -0.5f, -0.5f);
-            BakedRender.entityCutout(m.getKind() == GuidedMissileEntity.SAM ? "entity/vehicle_ammo/sam" : "entity/vehicle_ammo/atgm",
+            BakedRender.entityCutout(m.antiAir() ? "entity/vehicle_ammo/sam" : "entity/vehicle_ammo/atgm",
                     pose, buf, light, OverlayTexture.NO_OVERLAY, 1, 1, 1);
             pose.popPose();
             super.render(e, yaw, pt, pose, buf, light);

@@ -5,6 +5,7 @@ import sys
 import armor as AR
 import armor2 as A2
 import armor3 as A3
+import jet as J
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "resources")
 A = os.path.join(ROOT, "assets", "gunsmod")
@@ -37,6 +38,9 @@ if __name__ == "__main__":
                          "gunsmod:item/vehicle/car_wheel", parts_out={"body": os.path.join(A, "models", "entity", "car", "wheel.json")})
     if "cars" in which or "tow" in which or not sys.argv[1:]:
         out(A3.tow(), "jeep_tow", "jeep_tow")
+    for name, fn in J.JETS.items():
+        if name in which or "jets" in which or not sys.argv[1:]:
+            out(fn(), name, name)
     if "ammo" in which or not sys.argv[1:]:
         out(AR.projectiles(), "vehicle_ammo", "vehicle_ammo")
     print("ok")

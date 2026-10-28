@@ -89,7 +89,7 @@ public class GrenadeEntity extends Projectile {
             if (age >= 60 && !this.level().isClientSide) {
                 Entity owner = this.getOwner();
                 Blast.explode(this.level(), this, this.position().add(0, 0.2, 0), 2.8f, false,
-                        owner instanceof Player ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.MOB, Blast.FX_SMALL, 0.75f);
+                        owner instanceof Player ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.NONE, Blast.FX_SMALL, 0.75f);
                 this.discard();
             } else if (this.level().isClientSide && age % 3 == 0) {
                 this.level().addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE, getX(), getY() + 0.2, getZ(), 0, 0.02, 0);

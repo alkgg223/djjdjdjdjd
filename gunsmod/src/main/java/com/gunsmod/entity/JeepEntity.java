@@ -396,7 +396,8 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
         super.die(source);
         this.ejectPassengers();
         VehicleSpawnerBlockEntity.vehicleGone(this.level(), spawnerPos, this.getUUID());
-        Blast.explode(this.level(), this, this.position().add(0, 1.0, 0), 3.2f, true, Level.ExplosionInteraction.MOB, Blast.FX_FIRE, 1.2f);
+        // the wreck burns out: fireball, no damage to the terrain
+        Blast.explode(this.level(), this, this.position().add(0, 1.0, 0), 3.2f, false, Level.ExplosionInteraction.NONE, Blast.FX_FIRE, 1.2f);
         this.discard();
     }
 

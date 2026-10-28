@@ -48,10 +48,12 @@ public final class ClientNet {
                 case -3 -> "heli_gun";
                 case -4, -6 -> "cannon_30";
                 case -5 -> "shot_minigun";
+                case -7 -> "jet_cannon";
                 default -> "shot_turret";
             };
             float pitch = id == -6 ? 1.15f : 0.95f;
-            level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound(snd), SoundSource.HOSTILE, id <= -3 ? 10f : 7f, pitch + R.nextFloat() * 0.1f, true);
+            // the M61 fires 100 rounds a second: one burst sample covers several ticks
+            if (id != -7 || level.getGameTime() % 4 == 0) level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound(snd), SoundSource.HOSTILE, id <= -3 ? 10f : 7f, pitch + R.nextFloat() * 0.1f, true);
             level.addParticle(Reg.MUZZLE_FLASH.get(), muzzle.x, muzzle.y, muzzle.z, 0, 0, 0);
             level.addParticle(Reg.SMOKE.get(), muzzle.x, muzzle.y, muzzle.z, 0, 0.02, 0);
             if (id == -4 || id == -6) {

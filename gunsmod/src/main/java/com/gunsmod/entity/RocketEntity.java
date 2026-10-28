@@ -160,7 +160,8 @@ public class RocketEntity extends Projectile {
             this.discard();
             return;
         }
-        Level.ExplosionInteraction mode = owner instanceof Player ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.MOB;
+        // soldiers' rockets and 40 mm grenades leave the terrain as it is
+        Level.ExplosionInteraction mode = owner instanceof Player ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.NONE;
         Blast.explode(this.level(), this, at, getKind() == 0 ? 3.6f : 2.4f, false, mode, Blast.FX_SMALL, getKind() == 0 ? 1.0f : 0.7f);
         this.discard();
     }

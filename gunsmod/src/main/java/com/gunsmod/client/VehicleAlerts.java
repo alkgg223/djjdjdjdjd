@@ -4,6 +4,7 @@ import com.gunsmod.Reg;
 import com.gunsmod.entity.ArmoredCarEntity;
 import com.gunsmod.entity.HeliType;
 import com.gunsmod.entity.HelicopterEntity;
+import com.gunsmod.entity.JetEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -26,6 +27,13 @@ public final class VehicleAlerts {
             if (h.firesFor(p) && h.getLockTarget() >= 0 && h.getWeapon().guide == HeliType.Guide.LOCK) {
                 lockTone(mc, p, h.getLockProgress() >= HelicopterEntity.LOCK_TICKS);
             }
+        } else if (p.getVehicle() instanceof JetEntity j) {
+            int w = j.getWarning();
+            if (w == 2 && t % 5 == 0) beep(mc, p, "missile_warning", 0.9f, 1.0f);
+            else if (w == 1 && t % 20 == 0) beep(mc, p, "lock_tone", 0.5f, 0.7f);
+            if (j.getLockTarget() >= 0 && j.missilesLeft(j.getWeapon()) > 0) lockTone(mc, p, j.getLockProgress() >= JetEntity.LOCK_TICKS);
+            // stall warning horn
+            if (!j.onGround() && j.getAirSpeed() < JetEntity.STALL * 1.1 && t % 8 == 0) beep(mc, p, "ui_beep", 0.6f, 0.6f);
         } else if (p.getVehicle() instanceof ArmoredCarEntity c && c.kind.antiAir() && c.getControllingPassenger() == p) {
             if (t % 40 == 0) beep(mc, p, "radar_ping", 0.35f, 1f);
             if (c.getTrack() >= 0) lockTone(mc, p, c.isLocked());

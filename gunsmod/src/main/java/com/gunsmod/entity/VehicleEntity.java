@@ -182,9 +182,15 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
     }
 
     // ------------------------------------------------------------------------------------ geometry
+    /** blocks per model unit (the jet uses bigger units) */
+    public double unit() {
+        return UNIT;
+    }
+
     /** model units -> world position using the current yaw */
     public Vec3 toWorld(double mx, double my, double mz) {
-        double right = (mx - 8) * UNIT, up = my * UNIT, fwd = -(mz - 8) * UNIT;
+        double u = unit();
+        double right = (mx - 8) * u, up = my * u, fwd = -(mz - 8) * u;
         float yr = this.getYRot() * Mth.DEG_TO_RAD;
         double fx = -Mth.sin(yr), fz = Mth.cos(yr);
         double rx = -Mth.cos(yr), rz = -Mth.sin(yr);

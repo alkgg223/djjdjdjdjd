@@ -6,6 +6,7 @@ import com.gunsmod.entity.BotEntity;
 import com.gunsmod.entity.HeliType;
 import com.gunsmod.entity.HelicopterEntity;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.JetEntity;
 import com.gunsmod.entity.TankEntity;
 import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.gun.Attachment;
@@ -33,6 +34,9 @@ public final class Hud {
     private Hud() {}
 
     private static final ResourceLocation SCOPE = Reg.id("textures/gui/scope.png");
+    private static final ResourceLocation SCOPE_RED_DOT = Reg.id("textures/gui/scope_red_dot.png");
+    private static final ResourceLocation SCOPE_HOLO = Reg.id("textures/gui/scope_holo.png");
+    private static final ResourceLocation SCOPE_ACOG = Reg.id("textures/gui/scope_acog.png");
     private static final ResourceLocation GAUGE = Reg.id("textures/gui/speedometer.png");
     private static final ResourceLocation PANEL = Reg.id("panel_dark");
 
@@ -53,15 +57,23 @@ public final class Hud {
     public static void scope(GuiGraphics g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
         if (hidden(mc) || !GunClient.scoped()) return;
+        Attachment optic = GunItem.attachments(mc.player.getMainHandItem()).get(Attachment.Slot.SCOPE);
         int w = g.guiWidth(), h = g.guiHeight();
         int s = Math.min(w, h);
+        ResourceLocation tex = optic == Attachment.RED_DOT ? SCOPE_RED_DOT : optic == Attachment.HOLO_SIGHT ? SCOPE_HOLO
+                : optic == Attachment.ACOG ? SCOPE_ACOG : SCOPE;
+        // reflex sights: a short tube / window at arm's length, the world stays visible round it
+        boolean reflex = optic == Attachment.RED_DOT || optic == Attachment.HOLO_SIGHT;
+        if (reflex) s = (int) (Math.min(w, h) * 1.15f);
         int x = (w - s) / 2, y = (h - s) / 2;
         RenderSystem.enableBlend();
-        g.blit(SCOPE, x, y, 0, 0, s, s, s, s);
-        g.fill(0, 0, x, h, 0xFF000000);
-        g.fill(x + s, 0, w, h, 0xFF000000);
-        g.fill(x, 0, x + s, y, 0xFF000000);
-        g.fill(x, y + s, x + s, h, 0xFF000000);
+        g.blit(tex, x, y, 0, 0, s, s, s, s);
+        if (!reflex) {
+            g.fill(0, 0, x, h, 0xFF000000);
+            g.fill(x + s, 0, w, h, 0xFF000000);
+            g.fill(x, 0, x + s, y, 0xFF000000);
+            g.fill(x, y + s, x + s, h, 0xFF000000);
+        }
         RenderSystem.disableBlend();
     }
 
@@ -79,6 +91,11 @@ public final class Hud {
         float pt = dt.getGameTimeDeltaPartialTick(true);
         if (p.getVehicle() instanceof ArmoredCarEntity car && car.getControllingPassenger() == p) {
             carReticle(g, mc, p, car, cx, cy, pt);
+            hitMarker(g, cx, cy);
+            return;
+        }
+        if (p.getVehicle() instanceof JetEntity jet) {
+            jetReticle(g, mc, p, jet, cx, cy, pt);
             hitMarker(g, cx, cy);
             return;
         }
@@ -226,6 +243,71 @@ public final class Hud {
         }
     }
 
+    /** F-16 head-up display: pitch ladder, flight path marker / gun pipper, heading tape, missile lock box */
+    private static void jetReticle(GuiGraphics g, Minecraft mc, LocalPlayer p, JetEntity jet, int cx, int cy, float pt) {
+        int col = 0xD040FF70;
+        double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(mc.options.fov().get() / 2.0));
+        float viewX = p.getViewXRot(pt), viewY = p.getViewYRot(pt);
+        // pitch ladder every 10 degrees (dashed below the horizon)
+        for (int k = -60; k <= 60; k += 10) {
+            float dp = -k - viewX;
+            if (Math.abs(dp) > 40) continue;
+            int y = cy + (int) Math.round(Math.tan(Math.toRadians(dp)) * f);
+            int w = k == 0 ? 70 : 34, gap = k == 0 ? 14 : 22;
+            if (k < 0) {
+                for (int x = gap; x < gap + w; x += 6) {
+                    g.fill(cx - x - 3, y, cx - x, y + 1, col);
+                    g.fill(cx + x, y, cx + x + 3, y + 1, col);
+                }
+            } else {
+                g.fill(cx - gap - w, y, cx - gap, y + 1, col);
+                g.fill(cx + gap, y, cx + gap + w, y + 1, col);
+            }
+            if (k != 0) {
+                String lbl = String.valueOf(Math.abs(k));
+                g.drawString(mc.font, lbl, cx + gap + w + 3, y - 4, col, false);
+            }
+        }
+        // flight path marker where the nose points: the gun shoots there
+        float dyaw = Mth.wrapDegrees(Mth.rotLerp(pt, jet.yRotO, jet.getYRot()) - viewY);
+        float dpitch = -Mth.lerp(pt, jet.prevPitch, jet.visPitch) - viewX;
+        if (Math.abs(dyaw) < 70 && Math.abs(dpitch) < 70) {
+            int gx = cx + (int) Math.round(Math.tan(Math.toRadians(dyaw)) * f), gy = cy + (int) Math.round(Math.tan(Math.toRadians(dpitch)) * f);
+            for (int i = 0; i < 16; i++) {
+                double a = i * Math.PI * 2 / 16;
+                int x = gx + (int) Math.round(Math.cos(a) * 5), y = gy + (int) Math.round(Math.sin(a) * 5);
+                g.fill(x, y, x + 1, y + 1, col);
+            }
+            g.fill(gx - 13, gy, gx - 5, gy + 1, col);
+            g.fill(gx + 6, gy, gx + 14, gy + 1, col);
+            g.fill(gx, gy - 10, gx + 1, gy - 5, col);
+            g.fill(gx, gy, gx + 1, gy + 1, 0xFFFFFFFF);
+        }
+        // heading tape
+        int hy = 22;
+        float hdg = Mth.wrapDegrees(viewY + 180f);
+        for (int d = -30; d <= 30; d += 5) {
+            float h = hdg + d;
+            int x = cx + (int) (d * 3.2f);
+            int mark = Math.round(h);
+            boolean big = Math.floorMod(Math.round(h), 10) == 0;
+            g.fill(x, hy, x + 1, hy + (big ? 6 : 3), col);
+            if (big) {
+                String t = String.format("%03d", Math.floorMod(mark, 360));
+                g.drawString(mc.font, t, x - mc.font.width(t) / 2, hy + 8, col, false);
+            }
+        }
+        g.fill(cx, hy - 4, cx + 1, hy, 0xFFFFFFFF);
+        int lock = jet.getLockTarget();
+        if (lock >= 0) {
+            Entity t = mc.level.getEntity(lock);
+            if (t != null) {
+                int[] sp = project(mc, p, t.getPosition(pt).add(0, t.getBbHeight() * 0.5, 0), cx, cy, pt, g.guiHeight());
+                if (sp != null) lockBox(g, sp[0], sp[1], jet.getLockProgress() / (float) JetEntity.LOCK_TICKS, (p.tickCount / 3) % 2 == 0);
+            }
+        }
+    }
+
     private static void carReticle(GuiGraphics g, Minecraft mc, LocalPlayer p, ArmoredCarEntity car, int cx, int cy, float pt) {
         float gunYaw = Mth.rotLerp(pt, car.yRotO, car.getYRot()) + Mth.rotLerp(pt, car.prevTurret, car.getTurretYaw());
         float dyaw = Mth.wrapDegrees(gunYaw - p.getViewYRot(pt));
@@ -362,6 +444,10 @@ public final class Hud {
         }
         if (mc.player.getVehicle() instanceof ArmoredCarEntity car) {
             carHud(g, mc, car);
+            return;
+        }
+        if (mc.player.getVehicle() instanceof JetEntity jet) {
+            jetHud(g, mc, jet);
             return;
         }
         if (!(mc.player.getVehicle() instanceof JeepEntity jeep)) return;
@@ -520,6 +606,72 @@ public final class Hud {
         }
     }
 
+    private static void jetHud(GuiGraphics g, Minecraft mc, JetEntity jet) {
+        Font f = mc.font;
+        int w = g.guiWidth(), h = g.guiHeight(), cy = h / 2;
+        int col = 0xE040FF70;
+        boolean blink = (mc.player.tickCount / 4) % 2 == 0;
+        // speed (left) and altitude (right) boxes
+        double kmh = jet.getAirSpeed() * 20 * 3.6;
+        String spd = String.valueOf(Math.round(kmh));
+        int lx = w / 2 - 120, rx = w / 2 + 92;
+        g.fill(lx - 2, cy - 8, lx + 30, cy + 8, 0x80001000);
+        g.drawString(f, spd, lx + 26 - f.width(spd), cy - 4, col, false);
+        g.drawString(f, "KMH", lx, cy + 10, col, false);
+        String alt = String.valueOf(Math.round(jet.heightAboveGround()));
+        g.fill(rx - 2, cy - 8, rx + 30, cy + 8, 0x80001000);
+        g.drawString(f, alt, rx + 26 - f.width(alt), cy - 4, col, false);
+        g.drawString(f, "ALT", rx, cy + 10, col, false);
+        // throttle bar with the reheat mark
+        int tx = w / 2 - 140, ty = cy + 40, th = 60;
+        float thr = jet.getThrottle();
+        g.fill(tx, ty - th, tx + 5, ty, 0x80000000);
+        g.fill(tx, ty - (int) (th * thr), tx + 5, ty, jet.isAfterburner() ? 0xFFFF9020 : 0xFF40D060);
+        g.drawString(f, jet.isAfterburner() ? "AB" : Math.round(thr * 100) + "%", tx - 2, ty + 3, jet.isAfterburner() ? 0xFFFFA030 : col, false);
+        // gear lights
+        boolean down = jet.gear < 0.02f, moving = jet.gear > 0.02f && jet.gear < 0.98f;
+        int gx = w / 2 + 132;
+        for (int i = 0; i < 3; i++) {
+            int c = down ? 0xFF30E040 : moving ? 0xFFFF4030 : 0x60404040;
+            g.fill(gx + i * 7, cy + 34, gx + i * 7 + 5, cy + 39, c);
+        }
+        g.drawString(f, Component.translatable(down ? "gunsmod.hud.gear_down" : moving ? "gunsmod.hud.gear_moving" : "gunsmod.hud.gear_up"), gx - 4, cy + 42,
+                down ? 0xFF30E040 : 0xFFB0B0B0, true);
+        // stores, gun, flares, health
+        int bx = 6, by = h - 64;
+        g.blitSprite(PANEL, bx - 3, by - 4, 126, 58);
+        int wpn = jet.getWeapon();
+        Component wn = Component.translatable(wpn == 0 ? "gunsmod.weapon.maverick" : "gunsmod.weapon.aim9");
+        g.drawString(f, Component.translatable("gunsmod.hud.weapon_ammo", wn, jet.missilesLeft(wpn)), bx, by, 0xFFFFFFFF, true);
+        g.drawString(f, Component.translatable("gunsmod.hud.gun_rounds", jet.getGunRounds()), bx, by + 11, 0xFFE0E0E0, true);
+        g.drawString(f, Component.translatable("gunsmod.hud.flares", jet.getFlares()), bx, by + 22, jet.getFlares() > 0 ? 0xFFFFE0A0 : 0xFFFF6040, true);
+        float hp = jet.getHealth() / jet.getMaxHealth();
+        g.fill(bx, by + 36, bx + 118, by + 40, 0x80000000);
+        g.fill(bx, by + 36, bx + (int) (118 * hp), by + 40, hp > 0.5f ? 0xFF60D060 : hp > 0.25f ? 0xFFE0B040 : 0xFFE04030);
+        // warnings
+        int warn = jet.getWarning();
+        Component big = null;
+        int bigCol = 0xFFFF3020;
+        if (warn == 2) big = Component.translatable("gunsmod.hud.missile_warning");
+        else if (!jet.onGround() && jet.getAirSpeed() < JetEntity.STALL * 1.1) big = Component.translatable("gunsmod.hud.stall");
+        else if (!jet.onGround() && jet.heightAboveGround() < 25 && jet.velocity.y < -0.4) big = Component.translatable("gunsmod.hud.pull_up");
+        else if (warn == 1) {
+            big = Component.translatable("gunsmod.hud.radar_warning");
+            bigCol = 0xFFFFC020;
+        }
+        if (big != null && blink) {
+            g.pose().pushPose();
+            g.pose().translate(w / 2f - f.width(big), cy - 70, 0);
+            g.pose().scale(2f, 2f, 1f);
+            g.drawString(f, big, 0, 0, bigCol, true);
+            g.pose().popPose();
+        }
+        if (jet.onGround() && jet.getAirSpeed() < 0.2) {
+            Component hint = Component.translatable("gunsmod.hud.jet_hint", GunClient.RELOAD.getTranslatedKeyMessage(), GunClient.FLARES.getTranslatedKeyMessage());
+            g.drawString(f, hint, w / 2 - f.width(hint) / 2, 6 + 40, 0xC0FFFFFF, true);
+        }
+    }
+
     private static void carHud(GuiGraphics g, Minecraft mc, ArmoredCarEntity car) {
         boolean commander = car.getControllingPassenger() == mc.player;
         double v = car.getDisplaySpeed();
@@ -562,10 +714,10 @@ public final class Hud {
         }
         double range = ArmoredCarEntity.RADAR_RANGE;
         float yaw = car.getYRot();
-        for (HelicopterEntity h : mc.level.getEntitiesOfClass(HelicopterEntity.class, car.getBoundingBox().inflate(range, range, range))) {
+        for (VehicleEntity h : mc.level.getEntitiesOfClass(VehicleEntity.class, car.getBoundingBox().inflate(range, range, range))) {
             double dx = h.getX() - car.getX(), dz = h.getZ() - car.getZ();
             double dist = Math.sqrt(dx * dx + dz * dz);
-            if (dist > range || !h.isAirborne()) continue;
+            if (dist > range || !(h instanceof com.gunsmod.entity.Aircraft a) || !a.isAirborne()) continue;
             // bearing from the hull heading: positive = to the right
             double rel = Math.toRadians(Math.toDegrees(Math.atan2(dz, dx)) - 90 - yaw);
             double k = dist / range * r;

@@ -1,6 +1,7 @@
 package com.gunsmod.client.render;
 
 import com.gunsmod.entity.BotTeam;
+import com.gunsmod.entity.JetEntity;
 import com.gunsmod.entity.VehicleKind;
 import com.gunsmod.item.JeepItem;
 import com.gunsmod.item.VehicleItem;
@@ -56,6 +57,17 @@ public class JeepItemRenderer extends BlockEntityWithoutLevelRenderer {
         VehicleKind.Group grp = v.kind.group;
         boolean heli = grp == VehicleKind.Group.HELI;
         boolean longOne = v.kind == VehicleKind.PANTSIR;
+        if (grp == VehicleKind.Group.JET) {
+            pose.pushPose();
+            pose.translate(0.5f, 0.1f, 0.5f);
+            float s = ctx == ItemDisplayContext.GUI ? 0.06f : ctx == ItemDisplayContext.NONE ? 0.13f : 0.05f;
+            pose.scale(s, s, s);
+            if (ctx == ItemDisplayContext.GUI) pose.translate(0, 1.6f, 0);
+            pose.mulPose(Axis.YP.rotationDegrees(180));
+            JetRenderer.renderJet(pose, buf, light, v.team, 0f, JetEntity.ALL_STORES, false, false, 1f);
+            pose.popPose();
+            return;
+        }
         pose.pushPose();
         pose.translate(0.5f, heli ? 0.08f : 0.14f, 0.5f);
         float s = ctx == ItemDisplayContext.GUI ? (heli ? 0.085f : longOne ? 0.085f : 0.115f) : ctx == ItemDisplayContext.NONE ? 0.2f : (heli ? 0.07f : 0.09f);

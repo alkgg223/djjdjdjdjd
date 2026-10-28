@@ -142,7 +142,8 @@ public class HelicopterRenderer extends EntityRenderer<HelicopterEntity> {
         pose.pushPose();
         pose.translate(x, y, z);
         pose.mulPose(Axis.YP.rotationDegrees(-spin));
-        VertexConsumer vc = buf.getBuffer(RenderType.entityTranslucent(BLUR));
+        // no depth write: a disc drawn before the fuselage must not hide it (seen from above the body vanished)
+        VertexConsumer vc = buf.getBuffer(RenderType.entityTranslucentEmissive(BLUR));
         PoseStack.Pose last = pose.last();
         Matrix4f m = last.pose();
         float[][] up = {{-rad, -rad, 0, 0}, {-rad, rad, 0, 1}, {rad, rad, 1, 1}, {rad, -rad, 1, 0}};

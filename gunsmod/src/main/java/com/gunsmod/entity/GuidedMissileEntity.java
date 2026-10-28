@@ -23,11 +23,12 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Guided missiles. Hellfire flies to the target it was locked on; Vikhr, Shturm and TOW ride the operator's line of
- * sight; the Pantsir's SAM chases the helicopter its radar tracks, bursts next to it and only ever harms aircraft.
+ * sight; the Pantsir's SAM and the F-16's Sidewinder chase an aircraft, burst next to it and only ever harm aircraft;
+ * the F-16's Maverick flies to the vehicle it was locked on.
  * Homing missiles can be pulled away by flares. Like all vehicle weapons they never break blocks.
  */
 public class GuidedMissileEntity extends Projectile {
-    public static final int HELLFIRE = 0, VIKHR = 1, SHTURM = 2, TOW = 3, SAM = 4;
+    public static final int HELLFIRE = 0, VIKHR = 1, SHTURM = 2, TOW = 3, SAM = 4, MAVERICK = 5, AIM9 = 6;
     private static final EntityDataAccessor<Byte> DATA_KIND = SynchedEntityData.defineId(GuidedMissileEntity.class, EntityDataSerializers.BYTE);
 
     private int life, targetId = -1, guiderId = -1;
@@ -78,6 +79,8 @@ public class GuidedMissileEntity extends Projectile {
             case HELLFIRE -> 3.2;
             case VIKHR -> 4.4;
             case SAM -> 5.2;
+            case AIM9 -> 6.5;
+            case MAVERICK -> 3.6;
             default -> 2.6;
         };
     }
@@ -86,6 +89,8 @@ public class GuidedMissileEntity extends Projectile {
     private double agility() {
         return switch (getKind()) {
             case SAM -> 9.0;
+            case AIM9 -> 12.0;
+            case MAVERICK -> 5.0;
             case HELLFIRE -> 6.0;
             case TOW -> 5.0;
             default -> 4.0;
@@ -105,7 +110,7 @@ public class GuidedMissileEntity extends Projectile {
         Entity owner = this.getOwner();
         if (owner != null && (e == owner.getVehicle() || e.getVehicle() != null && e.getVehicle() == owner.getVehicle())) return false;
         if (e instanceof FlareEntity) return false;
-        if (getKind() == SAM) return e instanceof HelicopterEntity && super.canHitEntity(e) && !BotTeam.friendly(owner, e.getControllingPassenger());
+        if (antiAir()) return e instanceof Aircraft && super.canHitEntity(e) && !BotTeam.friendly(owner, e.getControllingPassenger());
         if (VehicleEntity.shieldOf(e) != null) return false;
         return super.canHitEntity(e) && !BotTeam.friendly(owner, e);
     }
@@ -125,8 +130,8 @@ public class GuidedMissileEntity extends Projectile {
                 }
             }
             v = steer(v);
-            if (getKind() == SAM && proximity()) return;
-            if (life > (getKind() == SAM ? 170 : 220) || this.isInWater()) {
+            if (antiAir() && proximity()) return;
+            if (life > (antiAir() ? 170 : 220) || this.isInWater()) {
                 detonate(this.position());
                 return;
             }
@@ -153,7 +158,7 @@ public class GuidedMissileEntity extends Projectile {
                     Vec3 tv = t.position().subtract(t.xo, t.yo, t.zo);
                     double time = aim.distanceTo(this.position()) / Math.max(1, speed);
                     want = aim.add(tv.scale(Math.min(time, 20) * 0.8)).subtract(this.position());
-                    if (t instanceof HelicopterEntity h) h.missileWarning(this);
+                    if (t instanceof Aircraft a) a.missileWarning(this);
                 }
             }
         } else if (guiderId >= 0) {
@@ -179,7 +184,7 @@ public class GuidedMissileEntity extends Projectile {
                 Vec3 perp = w.subtract(dir.scale(cos));
                 if (perp.lengthSqr() > 1e-9) dir = dir.scale(Math.cos(max)).add(perp.normalize().scale(Math.sin(max))).normalize();
             }
-        } else if (getKind() != SAM) {
+        } else if (!antiAir()) {
             dir = dir.add(0, -0.004, 0).normalize();
         }
         return dir.scale(speed);
@@ -192,7 +197,7 @@ public class GuidedMissileEntity extends Projectile {
                 f -> f.isAlive() && f.age() < 40 && !triedFlares.contains(f.salvo()));
         for (FlareEntity f : flares) {
             triedFlares.add(f.salvo());
-            float chance = getKind() == SAM ? 0.75f : 0.45f;
+            float chance = getKind() == SAM ? 0.75f : getKind() == AIM9 ? 0.65f : 0.45f;
             if (this.random.nextFloat() < chance) {
                 targetId = f.getId();
                 return;
@@ -200,7 +205,12 @@ public class GuidedMissileEntity extends Projectile {
         }
     }
 
-    /** SAM: burst when it passes close to a helicopter (or the flare it was fooled by) */
+    /** surface-to-air and air-to-air missiles: only aircraft are their targets */
+    public boolean antiAir() {
+        return getKind() == SAM || getKind() == AIM9;
+    }
+
+    /** SAM / Sidewinder: burst when it passes close to an aircraft (or the flare it was fooled by) */
     private boolean proximity() {
         Entity t = targetId >= 0 ? this.level().getEntity(targetId) : null;
         if (t instanceof FlareEntity f && f.distanceTo(this) < 3.0) {
@@ -208,7 +218,7 @@ public class GuidedMissileEntity extends Projectile {
             this.discard();
             return true;
         }
-        for (HelicopterEntity h : this.level().getEntitiesOfClass(HelicopterEntity.class, this.getBoundingBox().inflate(4.5), this::canHitEntity)) {
+        for (VehicleEntity h : this.level().getEntitiesOfClass(VehicleEntity.class, this.getBoundingBox().inflate(4.5), this::canHitEntity)) {
             if (h.position().add(0, h.getBbHeight() * 0.5, 0).distanceTo(this.position()) < 4.5) {
                 detonate(this.position());
                 return true;
@@ -218,7 +228,7 @@ public class GuidedMissileEntity extends Projectile {
     }
 
     private void directHit(Entity e) {
-        if (getKind() == SAM) return;   // the burst does it
+        if (antiAir()) return;   // the burst does it
         boolean armour = e instanceof VehicleEntity || e instanceof JeepEntity;
         e.invulnerableTime = 0;
         e.hurt(this.damageSources().explosion(this, this.getOwner()), armour ? hitArmour : hitSoft);
@@ -226,9 +236,9 @@ public class GuidedMissileEntity extends Projectile {
     }
 
     private void detonate(Vec3 at) {
-        if (getKind() == SAM) {
+        if (antiAir()) {
             // fragmentation burst: only aircraft are hurt
-            for (HelicopterEntity h : this.level().getEntitiesOfClass(HelicopterEntity.class, new AABB(at, at).inflate(7))) {
+            for (VehicleEntity h : this.level().getEntitiesOfClass(VehicleEntity.class, new AABB(at, at).inflate(7))) {
                 if (!canHitEntity(h)) continue;
                 double d = h.position().add(0, h.getBbHeight() * 0.5, 0).distanceTo(at);
                 if (d > 7) continue;
@@ -245,7 +255,7 @@ public class GuidedMissileEntity extends Projectile {
     }
 
     private void trail(Vec3 v) {
-        int n = getKind() == SAM ? 5 : 3;
+        int n = antiAir() ? 5 : 3;
         for (int i = 0; i < n; i++) {
             double f = i / (double) n;
             this.level().addParticle(Reg.MISSILE_SMOKE.get(), getX() - v.x * f, getY() - v.y * f, getZ() - v.z * f, 0, 0.01, 0);

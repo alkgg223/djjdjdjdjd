@@ -96,6 +96,7 @@ public final class ClientEvents {
         if (p == null) return;
         if (GunClient.holdingGun(p) || p.getVehicle() instanceof JeepEntity j && j.isGunner(p)
                 || p.getVehicle() instanceof TankEntity t && t.getControllingPassenger() == p
-                || p.getVehicle() instanceof ArmoredCarEntity c && c.getControllingPassenger() == p) e.setCanceled(true);
+                || p.getVehicle() instanceof ArmoredCarEntity c && c.getControllingPassenger() == p
+                || p.getVehicle() instanceof com.gunsmod.entity.JetEntity) e.setCanceled(true);
     }
 }

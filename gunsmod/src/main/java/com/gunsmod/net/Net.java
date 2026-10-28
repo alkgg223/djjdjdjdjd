@@ -188,10 +188,11 @@ public final class Net {
             b.writeDouble(origin.y);
             b.writeDouble(origin.z);
             b.writeVarInt(ends.size());
+            // ends are already relative to the origin (every sender builds them that way)
             for (Vec3 v : ends) {
-                b.writeFloat((float) (v.x - origin.x));
-                b.writeFloat((float) (v.y - origin.y));
-                b.writeFloat((float) (v.z - origin.z));
+                b.writeFloat((float) v.x);
+                b.writeFloat((float) v.y);
+                b.writeFloat((float) v.z);
             }
             b.writeByteArray(kinds);
             b.writeBoolean(suppressed);

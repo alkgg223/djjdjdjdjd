@@ -181,7 +181,9 @@ public class MissileEntity extends Projectile {
         int step = boom++;
         Entity owner = this.getOwner();
         Vec3 at = blast;
-        Level.ExplosionInteraction tnt = Level.ExplosionInteraction.TNT;
+        // missiles called in by soldiers hurt but leave the terrain as it is (no craters, no fires)
+        boolean gentle = gentle();
+        Level.ExplosionInteraction tnt = mode();
         boolean done;
         switch (getKind()) {
             case MissileItem.CLUSTER -> {
@@ -190,18 +192,20 @@ public class MissileEntity extends Projectile {
                 done = step >= 10;
             }
             case MissileItem.INCENDIARY -> {
-                Blast.explode(level, this, at, 4.0f, true, tnt, Blast.FX_FIRE, 1.8f);
-                Blast.firestorm(level, at, 8, 60);
-                Blast.scorch(level, at, 8, true, false);
+                Blast.explode(level, this, at, 4.0f, !gentle, tnt, Blast.FX_FIRE, 1.8f);
+                if (!gentle) {
+                    Blast.firestorm(level, at, 8, 60);
+                    Blast.scorch(level, at, 8, true, false);
+                }
                 done = true;
             }
             case MissileItem.THERMOBARIC -> {
                 if (step == 0) {
-                    Blast.explode(level, this, at, 9.0f, true, tnt, Blast.FX_FIRE, 3.2f);
+                    Blast.explode(level, this, at, 9.0f, !gentle, tnt, Blast.FX_FIRE, 3.2f);
                     Blast.shockwave(level, at, 28, 26f, 8, this, owner);
                 } else if (step <= 3) {
                     for (int i = 0; i < 2; i++) ring(level, at, 8, (step - 1) * 2 + i, 6, 5.5f, true);
-                } else if (step == 4) {
+                } else if (step == 4 && !gentle) {
                     Blast.firestorm(level, at, 16, 130);
                     Blast.scorch(level, at, 16, true, true);
                 }
@@ -224,13 +228,13 @@ public class MissileEntity extends Projectile {
             }
             case MissileItem.TITAN -> {
                 if (step == 0) {
-                    Blast.explode(level, this, at, 14.0f, true, tnt, Blast.FX_TITAN, 4.0f);
+                    Blast.explode(level, this, at, 14.0f, !gentle, tnt, Blast.FX_TITAN, 4.0f);
                     Blast.shockwave(level, at, 64, 44f, 10, this, owner);
                 } else if (step <= 4) {
                     for (int i = 0; i < 2; i++) ring(level, at, 8, (step - 1) * 2 + i, 10, 8.0f, true);
                 } else if (step <= 8) {
                     for (int i = 0; i < 2; i++) ring(level, at, 8, (step - 5) * 2 + i, 18, 6.0f, true);
-                } else if (step == 9) {
+                } else if (step == 9 && !gentle) {
                     Blast.firestorm(level, at, 28, 220);
                     Blast.scorch(level, at, 26, true, true);
                 }
@@ -238,7 +242,7 @@ public class MissileEntity extends Projectile {
             }
             default -> {
                 Blast.explode(level, this, at, 7.0f, false, tnt, Blast.FX_MISSILE, 2.0f);
-                Blast.scorch(level, at, 6, false, false);
+                if (!gentle) Blast.scorch(level, at, 6, false, false);
                 done = true;
             }
         }
@@ -250,14 +254,23 @@ public class MissileEntity extends Projectile {
         double a = Mth.TWO_PI * i / n + 0.3;
         int x = Mth.floor(at.x + Math.cos(a) * radius), z = Mth.floor(at.z + Math.sin(a) * radius);
         int y = Math.min(level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z), Mth.floor(at.y) + 6);
-        Blast.explode(level, this, new Vec3(x + 0.5, y + 0.5, z + 0.5), power, fire, Level.ExplosionInteraction.TNT, Blast.FX_SMALL, 1.3f);
+        Blast.explode(level, this, new Vec3(x + 0.5, y + 0.5, z + 0.5), power, fire && !gentle(), mode(), Blast.FX_SMALL, 1.3f);
     }
 
     private void bomblet(ServerLevel level, Vec3 at, double r, float power, boolean fire) {
         double a = random.nextDouble() * Mth.TWO_PI;
         int x = Mth.floor(at.x + Math.cos(a) * r), z = Mth.floor(at.z + Math.sin(a) * r);
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
-        Blast.explode(level, this, new Vec3(x + 0.5, y + 0.5, z + 0.5), power, fire, Level.ExplosionInteraction.TNT, Blast.FX_SMALL, 0.8f);
+        Blast.explode(level, this, new Vec3(x + 0.5, y + 0.5, z + 0.5), power, fire && !gentle(), mode(), Blast.FX_SMALL, 0.8f);
+    }
+
+    /** launched on a soldier's call: no damage to the terrain */
+    private boolean gentle() {
+        return this.getOwner() instanceof BotEntity;
+    }
+
+    private Level.ExplosionInteraction mode() {
+        return gentle() ? Level.ExplosionInteraction.NONE : Level.ExplosionInteraction.TNT;
     }
 
     // ------------------------------------------------------------------------------------ save

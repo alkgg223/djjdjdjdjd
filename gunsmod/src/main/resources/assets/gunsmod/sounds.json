@@ -373,5 +373,50 @@
    "gunsmod:radar_ping"
   ],
   "subtitle": "subtitles.gunsmod.radar_ping"
+ },
+ "jet_start": {
+  "sounds": [
+   "gunsmod:jet_start"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_start"
+ },
+ "jet_idle": {
+  "sounds": [
+   "gunsmod:jet_idle"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "jet_engine": {
+  "sounds": [
+   "gunsmod:jet_engine"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "jet_afterburner": {
+  "sounds": [
+   "gunsmod:jet_afterburner"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_afterburner"
+ },
+ "jet_flyby": {
+  "sounds": [
+   "gunsmod:jet_flyby_1",
+   "gunsmod:jet_flyby_2"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "jet_missile": {
+  "sounds": [
+   "gunsmod:jet_missile_1",
+   "gunsmod:jet_missile_2"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_missile"
+ },
+ "jet_cannon": {
+  "sounds": [
+   "gunsmod:jet_cannon_1",
+   "gunsmod:jet_cannon_2"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_cannon"
  }
 }

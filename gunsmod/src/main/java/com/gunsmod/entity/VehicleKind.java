@@ -16,9 +16,10 @@ public enum VehicleKind {
     KA52("ka52", Group.HELI),
     TOW_HUMVEE("tow_humvee", Group.JEEP),
     BTR("btr82", Group.CAR),
-    PANTSIR("pantsir", Group.CAR);
+    PANTSIR("pantsir", Group.CAR),
+    F16("f16", Group.JET);
 
-    public enum Group { TANK, HELI, JEEP, CAR }
+    public enum Group { TANK, HELI, JEEP, CAR, JET }
 
     public final String item;
     public final Group group;
@@ -41,6 +42,7 @@ public enum VehicleKind {
             case TOW_HUMVEE -> Reg.JEEP_TOW.get();
             case BTR -> Reg.BTR.get();
             case PANTSIR -> Reg.PANTSIR.get();
+            case F16 -> Reg.F16.get();
         };
     }
 

@@ -159,6 +159,8 @@ public class SpawnerBlockEntity extends BlockEntity {
         BotEntity b = new BotEntity(Reg.BOT.get(), sl);
         b.moveTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, sl.random.nextFloat() * 360f, 0);
         b.applyLoadout(DogTagItem.data(tag()));
+        // battlefield tags: every soldier gets a different random gun and attachments
+        if (DogTagItem.data(tag()).getBoolean("random")) b.setup(b.getBotTeam(), sl.random, null);
         b.spawnerPos = worldPosition;
         b.home = worldPosition;
         b.home = worldPosition;

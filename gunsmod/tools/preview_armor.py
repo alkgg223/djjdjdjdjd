@@ -10,6 +10,7 @@ from PIL import Image
 import armor as AR
 import armor2 as A2
 import armor3 as A3
+import jet as J
 from modelkit import _rot_matrix, load_json_model, render_quads, tex_loader
 
 RES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "resources")
@@ -196,6 +197,26 @@ def tow():
     return q
 
 
+def jet2(name, team="green", gear=0.0, burner=True):
+    """the jet as the renderer assembles it; gear 0 = down, 90 = folded"""
+    J.JETS[name]()
+    g = J.GEO[name]
+    tint = TINT[team]
+    D = os.path.join(E, name)
+    q = part(os.path.join(D, "body.json"), tint) + part(os.path.join(D, f"mark_{team}.json"))
+    nx, ny, nz = g["gearNose"]
+    q += part(os.path.join(D, "gear_nose.json"), tint, _rot_matrix("x", gear), np.array([nx, ny, nz]))
+    mx, my, mz = g["gearMain"]
+    q += part(os.path.join(D, "gear_main.json"), tint, _rot_matrix("x", -gear), np.array([mx, my, mz]))
+    for p in ["aim9_l", "aim9_r", "mav_0", "mav_1", "mav_2", "mav_3"] + (["burner"] if burner else []):
+        q += part(os.path.join(D, p + ".json"))
+    red = np.zeros((2, 2, 4), np.float32)
+    red[..., 0] = red[..., 3] = 1.0
+    sx, sy, sz = g["seat"]
+    q += head((sx, sy + 1.02 / 0.375, sz), red)
+    return q
+
+
 def sheet(q, path, views=((-145, 18), (35, 22), (90, 4), (180, 60))):
     ims = [render_quads(q, yaw=a, pitch=b, size=(640, 400)) for a, b in views]
     s = Image.new("RGB", (1280, 800))
@@ -217,6 +238,8 @@ if __name__ == "__main__":
         sheet(q, out)
     elif what in A2.TANKS:
         sheet(tank2(what, team), out)
+    elif what in J.JETS:
+        sheet(jet2(what, team, gear=float(sys.argv[4]) if len(sys.argv) > 4 else 0.0), out, views=((-150, 15), (40, 20), (90, 2), (0, 85)))
     elif what in A3.CARS:
         sheet(car2(what, team), out)
     elif what == "tow":

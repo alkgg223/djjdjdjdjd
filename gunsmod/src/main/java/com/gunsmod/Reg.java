@@ -26,6 +26,7 @@ import com.gunsmod.entity.GuidedMissileEntity;
 import com.gunsmod.entity.GrenadeEntity;
 import com.gunsmod.entity.HelicopterEntity;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.JetEntity;
 import com.gunsmod.entity.MissileEntity;
 import com.gunsmod.entity.RocketEntity;
 import com.gunsmod.entity.HeliType;
@@ -44,6 +45,7 @@ import com.gunsmod.item.GrenadeItem;
 import com.gunsmod.item.GunItem;
 import com.gunsmod.item.JeepItem;
 import com.gunsmod.item.MissileItem;
+import com.gunsmod.item.OrchardToolItem;
 import com.gunsmod.item.RemoteItem;
 import com.gunsmod.item.RemoteLinks;
 import com.gunsmod.item.SoldierItem;
@@ -132,7 +134,7 @@ public final class Reg {
                 "ui_confirm", "hitmarker", "grenade_bounce", "bullet_whiz", "turret_overheat", "heavy_launch", "explosion_big",
                 "explosion_far", "missile_incoming", "tank_idle", "tank_drive", "tank_fire", "tank_reload", "heli_rotor", "heli_start",
                 "heli_rocket", "heli_gun", "flare", "missile_warning", "lock_tone", "lock_on", "atgm_launch", "sam_launch", "cannon_30",
-                "bomb_drop", "radar_ping"}) {
+                "bomb_drop", "radar_ping", "jet_start", "jet_idle", "jet_engine", "jet_afterburner", "jet_flyby", "jet_missile", "jet_cannon"}) {
             SOUND.put(s, SOUNDS.register(s, () -> SoundEvent.createVariableRangeEvent(id(s))));
         }
     }
@@ -222,6 +224,9 @@ public final class Reg {
     public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELI_KA52 = heli("heli_ka52", HeliType.KA52);
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> BTR = car("btr82", CarType.BTR);
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> PANTSIR = car("pantsir", CarType.PANTSIR);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> F16 = ENTITIES.register("f16",
+            () -> EntityType.Builder.<JetEntity>of(JetEntity::new, MobCategory.MISC).sized(3.0f, 2.2f).eyeHeight(1.8f).clientTrackingRange(24)
+                    .updateInterval(1).build("f16"));
 
     private static DeferredHolder<EntityType<?>, EntityType<TankEntity>> tank(String id, TankType k) {
         return ENTITIES.register(id, () -> EntityType.Builder.<TankEntity>of((t, l) -> new TankEntity(t, l, k), MobCategory.MISC)
@@ -301,6 +306,7 @@ public final class Reg {
     public static final DeferredItem<RemoteItem> REMOTE = ITEMS.register("launch_remote", () -> new RemoteItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
     public static final DeferredItem<DogTagItem> DOG_TAG = ITEMS.register("dog_tag", () -> new DogTagItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<ArenaToolItem> ARENA_TOOL = ITEMS.register("arena_tool", () -> new ArenaToolItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
+    public static final DeferredItem<OrchardToolItem> ORCHARD_TOOL = ITEMS.register("orchard_tool", () -> new OrchardToolItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final DeferredItem<SoldierItem> GREEN_SOLDIER = ITEMS.register("green_soldier", () -> new SoldierItem(BotTeam.GREEN, new Item.Properties().stacksTo(16)));
     public static final DeferredItem<SoldierItem> RED_SOLDIER = ITEMS.register("red_soldier", () -> new SoldierItem(BotTeam.RED, new Item.Properties().stacksTo(16)));
     public static final DeferredItem<JeepItem> GREEN_JEEP = ITEMS.register("green_jeep", () -> new JeepItem(BotTeam.GREEN, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
@@ -383,6 +389,7 @@ public final class Reg {
                 }
                 out.accept(DOG_TAG.get());
                 out.accept(ARENA_TOOL.get());
+                out.accept(ORCHARD_TOOL.get());
                 out.accept(STEEL_INGOT.get());
                 out.accept(GUN_PARTS.get());
                 for (DeferredItem<BlockItem> b : BLOCK_ITEMS.values()) out.accept(b.get());

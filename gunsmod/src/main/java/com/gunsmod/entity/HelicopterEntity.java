@@ -43,7 +43,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * Soldiers fly patrols with hover stops, stop at a stand-off distance to fire, move to a new firing position now and
  * then, bomb from above (Hind) and throw flares when a missile comes for them.
  */
-public class HelicopterEntity extends VehicleEntity implements MissileGuider {
+public class HelicopterEntity extends VehicleEntity implements MissileGuider, Aircraft {
     public static final int LOCK_TICKS = 20;
     private static final double LOCK_RANGE = 220, LOCK_CONE = 3.5;
 
@@ -219,6 +219,7 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider {
         return this.entityData.get(DATA_CHIN_PITCH);
     }
 
+    @Override
     public boolean isAirborne() {
         return !this.onGround() && heightAboveGround() > 1.2;
     }
@@ -425,6 +426,7 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider {
 
     // ------------------------------------------------------------------------------------ warnings and flares
     /** a homing missile is coming for us */
+    @Override
     public void missileWarning(GuidedMissileEntity m) {
         warnMissile = 8;
         if (getControllingPassenger() instanceof BotEntity && flaredFor != m.getId()) {
@@ -435,6 +437,7 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider {
     }
 
     /** an air defence radar is tracking us */
+    @Override
     public void radarWarning() {
         warnRadar = 8;
     }

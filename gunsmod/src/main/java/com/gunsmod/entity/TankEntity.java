@@ -423,6 +423,7 @@ public class TankEntity extends VehicleEntity {
         double bestScore = Double.MAX_VALUE;
         for (LivingEntity e : vehicle.level().getEntitiesOfClass(LivingEntity.class, vehicle.getBoundingBox().inflate(range, range * 0.6, range), bot::isEnemy)) {
             if (VehicleEntity.shieldOf(e) != null) continue;    // shoot the vehicle, not the crew
+            if (e instanceof JetEntity jet && jet.isAirborne()) continue;    // far too fast: that is the air defence's job
             Vec3 c = e.position().add(0, e.getBbHeight() * 0.5, 0);
             if (c.distanceTo(eye) > range) continue;
             if (vehicle.level().clip(new ClipContext(eye, c, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, vehicle)).getType() != HitResult.Type.MISS) continue;

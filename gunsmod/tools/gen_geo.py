@@ -4,6 +4,7 @@ import os
 import armor as AR
 import armor2 as A2
 import armor3 as A3
+import jet as J
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "java", "com", "gunsmod", "entity", "VehicleGeo.java")
 
@@ -20,6 +21,10 @@ CAR_FIELDS = [("turret", "double[]"), ("gun", "double[]"), ("muzzles", "double[]
               ("radar", "double[]"), ("wheels", "double[][]"), ("wheelR", "double"), ("steerAxles", "int"), ("seats", "double[][]"),
               ("front", "double[][]"), ("back", "double[][]"), ("exhaust", "double[][]"), ("smoke", "double[]"), ("size", "double[]"),
               ("gunMin", "double"), ("gunMax", "double")]
+
+JET_FIELDS = [("seat", "double[]"), ("cannon", "double[]"), ("nozzle", "double[]"), ("gearNose", "double[]"), ("gearMain", "double[]"),
+              ("tips", "double[][]"), ("pylons", "double[][]"), ("flares", "double[][]"), ("ends", "double[][]"), ("pivotY", "double"),
+              ("size", "double[]")]
 
 
 def jt(v, t):
@@ -93,6 +98,13 @@ def main():
         g = A3.GEO[name]
         args = [jv(name)] + [jt(g[f], t) for f, t in CAR_FIELDS]
         lines.append(f"    public static final Car {name.upper()} = new Car({', '.join(args)});")
+    for fn in J.JETS.values():
+        fn()
+    lines += ["", "    /** jets: model units of 0.375 block */",
+              "    public record Jet(String model, " + ", ".join(t + " " + f for f, t in JET_FIELDS) + ") {}", ""]
+    for name in J.JETS:
+        g = J.GEO[name]
+        lines.append(f"    public static final Jet {name.upper()} = new Jet({', '.join([jv(name)] + [jt(g[f], t) for f, t in JET_FIELDS])});")
     lines += ["", "    /** TOW launcher on the Humvee turret (jeep units): elevation pivot and tube mouth */",
               f"    public static final double[] TOW_PIVOT = {jt(A3.TOW_PIVOT, 'double[]')};",
               f"    public static final double[] TOW_MUZZLE = {jt(A3.TOW_MUZZLE, 'double[]')};"]

@@ -90,6 +90,7 @@ public class VehicleItem extends Item {
         String k = switch (kind.group) {
             case TANK -> "tank";
             case HELI -> "heli";
+            case JET -> "jet";
             default -> kind.item;
         };
         tip.add(Component.translatable("gunsmod.desc.vehicle." + kind.item).withStyle(ChatFormatting.GRAY));

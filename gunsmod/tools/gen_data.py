@@ -102,7 +102,7 @@ ITEMS = {
     "red_dot": ("Red Dot Sight", "منظار نقطة حمراء"), "holo_sight": ("Holographic Sight", "منظار هولوغرافي"), "acog": ("ACOG Scope 4x", "منظار ACOG"),
     "sniper_scope": ("Sniper Scope 8x", "منظار قناصة"), "suppressor": ("Suppressor", "كاتم صوت"), "compensator": ("Compensator", "معوض ارتداد"),
     "vertical_grip": ("Vertical Grip", "مقبض عمودي"), "angled_grip": ("Angled Grip", "مقبض مائل"), "laser_sight": ("Laser Sight", "مؤشر ليزر"),
-    "flashlight": ("Tactical Flashlight", "كشاف تكتيكي"),
+    "flashlight": ("Tactical Flashlight", "كشاف تكتيكي"), "orchard_tool": ("Orchard Battlefield Deployer", "مُنشئ ساحة البساتين"),
     "extended_mag": ("Extended Magazine", "مخزن ممتد"), "frag_grenade": ("Frag Grenade", "قنبلة يدوية"), "smoke_grenade": ("Smoke Grenade", "قنبلة دخان"),
     "missile_he": ("HE Missile", "صاروخ شديد الانفجار"), "missile_cluster": ("Cluster Missile", "صاروخ عنقودي"), "missile_incendiary": ("Incendiary Missile", "صاروخ حارق"),
     "missile_thermobaric": ("Thermobaric Missile", "صاروخ فراغي حراري"), "missile_bunker_buster": ("Bunker Buster Missile", "صاروخ خارق للتحصينات"),
@@ -125,6 +125,8 @@ VEHICLES = {
     "tow_humvee": ("TOW Humvee", "همفي TOW", "Humvee with a TOW anti-tank missile launcher: the missile flies where the gunner aims", "همفي بقاذف صواريخ TOW المضادة للدروع: الصاروخ يطير إلى حيث يصوب الرامي"),
     "btr82": ("BTR-82A", "BTR-82A", "8x8 armoured carrier: 30 mm cannon, machine gun, carries 3 on top, swims", "ناقلة جند مدرعة 8×8: مدفع 30 مم ورشاش، تحمل 3 فوقها، تسبح"),
     "pantsir": ("Pantsir-S1", "بانتسير-S1", "Air defence: radar, 12 guided missiles, twin 30 mm guns; only hits aircraft", "دفاع جوي: رادار و12 صاروخاً موجهاً ومدفعان 30 مم مزدوجان؛ يصيب الطائرات فقط"),
+    "f16": ("F-16 Fighting Falcon", "إف-16 فايتنغ فالكون", "Fighter jet, 180 km/h: needs a run to take off, Mavericks against vehicles, Sidewinders against aircraft, 20 mm cannon, flares",
+            "طائرة مقاتلة 180 كم/س: تحتاج مدرجاً للإقلاع، صواريخ مافريك ضد المركبات، سايدويندر ضد الطائرات، مدفع 20 مم، شعلات"),
 }
 for v, (e, a, de, da) in VEHICLES.items():
     ITEMS["green_" + v] = ("Green " + e, a + " خضراء")
@@ -157,6 +159,26 @@ T = {
     "entity.gunsmod.heli_hind": ("Mi-24 Hind", "مي-24 هايند"), "entity.gunsmod.heli_ka52": ("Ka-52 Alligator", "كا-52 أليغاتور"),
     "entity.gunsmod.jeep_tow": ("TOW Humvee", "همفي TOW"), "entity.gunsmod.btr82": ("BTR-82A", "BTR-82A"), "entity.gunsmod.pantsir": ("Pantsir-S1", "بانتسير-S1"),
     "entity.gunsmod.guided_missile": ("Guided Missile", "صاروخ موجه"), "entity.gunsmod.flare": ("Flare", "شعلة تمويه"),
+    "entity.gunsmod.f16": ("F-16 Fighting Falcon", "إف-16 فايتنغ فالكون"),
+    "gunsmod.desc.orchard_tool": ("Builds a 300 x 500 orchard battlefield with two bases, vehicles and a runway each",
+                                  "يبني ساحة بساتين 300×500 مع قاعدتين وفي كل قاعدة مركبات ومدرج طائرات"),
+    "gunsmod.tip.orchard_tool": ("Use on the ground to see the outline, use again on the same spot to build (clears the area!)",
+                                 "استخدمه على الأرض لرؤية الحدود، ثم مرة أخرى بنفس المكان للبناء (يمسح المنطقة!)"),
+    "gunsmod.msg.orchard_confirm": ("300 x 500 outline shown. Use again on the same spot to build (clears the area!)",
+                                    "تم عرض حدود 300×500. استخدمه مرة أخرى بنفس المكان للبناء (سيتم مسح المنطقة!)"),
+    "gunsmod.msg.orchard_building": ("Building the orchard battlefield... this takes about 20 seconds", "جارِ بناء ساحة البساتين... يستغرق حوالي 20 ثانية"),
+    "gunsmod.msg.orchard_progress": ("Orchard battlefield: %s%%", "ساحة البساتين: %s%%"),
+    "gunsmod.msg.orchard_done": ("Orchard battlefield ready (%s s). Both bases deploy soldiers and vehicles.", "ساحة البساتين جاهزة (%s ث). القاعدتان تنشران الجنود والمركبات."),
+    "gunsmod.msg.orchard_busy": ("Another battlefield is still being built", "ساحة أخرى ما زالت قيد البناء"),
+    "gunsmod.hud.gear_down": ("GEAR DOWN", "العجلات نازلة"), "gunsmod.hud.gear_up": ("GEAR UP", "العجلات مرفوعة"),
+    "gunsmod.hud.gear_moving": ("GEAR", "العجلات تتحرك"), "gunsmod.hud.stall": ("STALL", "انهيار السرعة!"),
+    "gunsmod.hud.gun_rounds": ("GUN %s", "المدفع %s"),
+    "gunsmod.hud.jet_hint": ("W/S throttle (W at full = afterburner)  Look to steer  At 70 km/h look up to take off  [%s] weapon  [%s] flares",
+                             "W/S الدفع (W بالأقصى = حارق لاحق)  انظر للتوجيه  عند 70 كم/س انظر للأعلى للإقلاع  [%s] السلاح  [%s] الشعلات"),
+    "gunsmod.weapon.maverick": ("Maverick", "مافريك"), "gunsmod.weapon.aim9": ("Sidewinder", "سايدويندر"),
+    "gunsmod.tip.jet1": ("W/S throttle | look to steer | A/D rudder | at 70 km/h look up to take off, the gear folds by itself",
+                         "W/S الدفع | انظر للتوجيه | A/D الدفة | عند 70 كم/س انظر للأعلى للإقلاع والعجلات تُرفع وحدها"),
+    "gunsmod.tip.jet2": ("Attack: missile (lock first) | Use: cannon | R: Maverick/Sidewinder | X: flares", "ضغط: صاروخ (بعد القفل) | يمين: المدفع | R: مافريك/سايدويندر | X: شعلات"),
     "gunsmod.desc.flashlight": ("Weapon light: a real beam that lights up the dark", "كشاف للسلاح: شعاع حقيقي يضيء الظلام"),
     "gunsmod.seat.heli_gunner": ("Gunner (works the gun)", "الرامي (يتحكم بالرشاش)"), "gunsmod.seat.passenger": ("Passenger", "راكب"),
     "gunsmod.hud.weapon_ammo": ("%s: %s", "%s: %s"), "gunsmod.hud.weapon_loading": ("%s: reloading", "%s: تعبئة"),
@@ -365,7 +387,10 @@ SUB = {"gunshot": ("Gunshot", "إطلاق نار"), "gunshot_suppressed": ("Supp
        "flare": ("Flares released", "إطلاق شعلات التمويه"), "missile_warning": ("Missile warning", "إنذار صاروخ"), "lock_tone": ("Seeker tone", "نغمة الباحث"),
        "lock_on": ("Target locked", "تم القفل على الهدف"), "atgm_launch": ("Guided missile launched", "إطلاق صاروخ موجه"),
        "sam_launch": ("Surface-to-air missile launched", "إطلاق صاروخ أرض-جو"), "cannon_30": ("30 mm cannon fires", "إطلاق مدفع 30 مم"),
-       "bomb_drop": ("Bomb released", "إلقاء قنبلة"), "radar_ping": ("Radar sweep", "مسح الرادار")}
+       "bomb_drop": ("Bomb released", "إلقاء قنبلة"), "radar_ping": ("Radar sweep", "مسح الرادار"),
+       "jet_start": ("Jet engine starts", "تشغيل محرك الطائرة"), "jet_engine": ("Jet engine", "محرك نفاث"),
+       "jet_afterburner": ("Afterburner roars", "هدير الحارق اللاحق"), "jet_flyby": ("Jet flies past", "طائرة تمر بسرعة"),
+       "jet_missile": ("Missile launched", "إطلاق صاروخ"), "jet_cannon": ("Jet cannon fires", "إطلاق مدفع الطائرة")}
 sounds = json.load(open(os.path.join(A, "sounds.json")))
 for name, s in sounds.items():
     key = s["subtitle"]

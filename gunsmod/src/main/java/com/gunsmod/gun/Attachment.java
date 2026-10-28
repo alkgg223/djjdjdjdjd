@@ -36,8 +36,9 @@ public enum Attachment {
         this.eyeHeight = eyeHeight;
     }
 
+    /** aiming through it shows the sight picture (the gun model would block the view through the optic) */
     public boolean overlayScope() {
-        return this == SNIPER_SCOPE;
+        return slot == Slot.SCOPE;
     }
 
     public static Attachment fromIndex(int index) {
