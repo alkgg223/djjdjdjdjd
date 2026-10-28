@@ -38,6 +38,9 @@ public final class ClientFx {
     private static final List<int[]> AGES = new ArrayList<>();
     /** camera shake strength (degrees) and white screen flash (0..1), both decay every tick */
     public static float shake, flash;
+    /** recent blasts (decays each tick): a salvo of many missiles thins each blast's particles so phones keep up */
+    private static float load;
+    private static final int MAX_EMITTERS = 48;
 
     private static float quality(Minecraft mc) {
         ParticleStatus s = mc.options.particles().get();
@@ -49,6 +52,7 @@ public final class ClientFx {
     }
 
     private static void emit(Emitter e) {
+        if (EMITTERS.size() >= MAX_EMITTERS) return;
         EMITTERS.add(e);
         AGES.add(new int[1]);
     }
@@ -57,6 +61,7 @@ public final class ClientFx {
         shake *= 0.86f;
         if (shake < 0.02f) shake = 0;
         flash = Math.max(0, flash - 0.035f);
+        load *= 0.95f;
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             EMITTERS.clear();
@@ -81,7 +86,8 @@ public final class ClientFx {
         ClientLevel level = mc.level;
         if (level == null || BlastParticles.fireballSprites == null) return;
         RandomSource r = level.random;
-        float q = quality(mc);
+        float q = quality(mc) / (1f + Math.max(0f, load - 3f) * 0.35f);
+        load += 1f;
         boolean fire = style == Blast.FX_FIRE, titan = style == Blast.FX_TITAN, eruption = style == Blast.FX_ERUPTION;
         double x = pos.x, y = pos.y, z = pos.z;
         int gy = level.getHeight(Heightmap.Types.MOTION_BLOCKING, Mth.floor(x), Mth.floor(z));

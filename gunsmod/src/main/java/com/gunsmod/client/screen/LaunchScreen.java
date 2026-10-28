@@ -22,9 +22,9 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * Missile launch control. Left: the remote's stations (up to 15), middle: the selected station and target entry,
- * right: the launch panel (lift the safety cover to arm, press the red button). With SALVO on the panel arms and
- * fires every linked station at once.
+ * Missile launch control. Left: the remote's stations (up to 100, scrollable), middle: the selected station and
+ * target entry, right: the launch panel (lift the safety cover to arm, press the red button). With SALVO on the panel
+ * arms and fires every linked station at once; LAUNCH ALL (tap twice) fires every loaded station that has a target.
  */
 public class LaunchScreen extends Screen {
     private static final ResourceLocation COVER = Reg.id("textures/gui/launch_cover.png");
@@ -32,7 +32,7 @@ public class LaunchScreen extends Screen {
     private static final ResourceLocation BUTTON_PRESSED = Reg.id("textures/gui/launch_button_pressed.png");
     private static final String[] TAGS = {"HE", "CL", "IN", "TB", "BB", "TT"};
     private static final int[] TAG_COLORS = {0xFFEDEDE0, 0xFF8FC46A, 0xFFFF9A3A, 0xFFFF6A2A, 0xFFB8BCC2, 0xFFFF4040};
-    private static final int ROW = 12;
+    private static final int ROW = 12, VISIBLE = 15;
 
     private Net.LaunchStatus status;
     private int selected;
@@ -45,6 +45,9 @@ public class LaunchScreen extends Screen {
     private int pressTicks;
     private int ticks;
     private int armTick = -100;
+    /** first station row shown in the list, and the countdown of the launch-all confirmation */
+    private int scroll;
+    private int confirmTicks;
 
     public LaunchScreen(Net.LaunchStatus status) {
         super(Component.translatable("gunsmod.launch.title"));
@@ -88,6 +91,26 @@ public class LaunchScreen extends Screen {
         fillTarget(true);
         coverOpen = armed();
         cover = prevCover = coverOpen ? 1f : 0f;
+        scrollTo(selected);
+    }
+
+    private int maxScroll() {
+        return Math.max(0, status.stations().size() - VISIBLE);
+    }
+
+    private void scrollTo(int row) {
+        if (row < scroll) scroll = row;
+        else if (row >= scroll + VISIBLE) scroll = row - VISIBLE + 1;
+        scroll = Mth.clamp(scroll, 0, maxScroll());
+    }
+
+    /** stations that would fire with LAUNCH ALL: loaded, not busy, with a missile and a target */
+    private int readyCount() {
+        int n = 0;
+        for (Net.StationInfo s : status.stations()) {
+            if (s.found() && s.missile() >= 0 && s.hasTarget() && s.state() < LauncherBlockEntity.ERECTING) n++;
+        }
+        return n;
     }
 
     /** put the selected station's target into the boxes when the selection changes */
@@ -120,6 +143,7 @@ public class LaunchScreen extends Screen {
         prevCover = cover;
         cover = Mth.clamp(cover + (coverOpen ? 0.18f : -0.25f), 0f, 1f);
         if (pressTicks > 0) pressTicks--;
+        if (confirmTicks > 0) confirmTicks--;
         if (ticks % 10 == 0) send(Net.LaunchAction.QUERY, 0, 0, 0);
     }
 
@@ -145,12 +169,27 @@ public class LaunchScreen extends Screen {
     }
 
     private UiKit.Btn disarmButton() {
-        return new UiKit.Btn(4, px(), py() + 122, 108, 16, Component.translatable("gunsmod.launch.disarm"), armed(), false);
+        return new UiKit.Btn(4, px(), py() + 122, salvoAllowed() ? 52 : 108, 16, Component.translatable("gunsmod.launch.disarm"), armed(), false);
     }
 
     private UiKit.Btn salvoButton() {
-        return new UiKit.Btn(11, px(), py() + 142, 108, 16,
-                Component.translatable(salvo ? "gunsmod.launch.salvo_on" : "gunsmod.launch.salvo_off", status.stations().size()), true, salvo);
+        return new UiKit.Btn(11, px() + 54, py() + 122, 54, 16,
+                Component.translatable(salvo ? "gunsmod.launch.salvo_on" : "gunsmod.launch.salvo_off"), true, salvo);
+    }
+
+    private UiKit.Btn fireAllButton() {
+        int ready = readyCount();
+        Component label = confirmTicks > 0 ? Component.translatable("gunsmod.launch.fire_all_confirm", ready)
+                : Component.translatable("gunsmod.launch.fire_all_btn", ready);
+        return new UiKit.Btn(12, px(), py() + 142, 108, 20, label, ready > 0, true);
+    }
+
+    private UiKit.Btn scrollUpButton() {
+        return new UiKit.Btn(13, left + 104, top + 24, 12, 11, Component.literal("\u25B2"), scroll > 0, false);
+    }
+
+    private UiKit.Btn scrollDownButton() {
+        return new UiKit.Btn(14, left + 117, top + 24, 12, 11, Component.literal("\u25BC"), scroll < maxScroll(), false);
     }
 
     private boolean salvoAllowed() {
@@ -188,22 +227,34 @@ public class LaunchScreen extends Screen {
         UiKit.dark(g, x, y, 124, h - 30);
         g.drawString(font, Component.translatable("gunsmod.launch.stations"), x + 4, y + 4, UiKit.ACCENT, false);
         List<Net.StationInfo> l = status.stations();
-        for (int i = 0; i < l.size(); i++) {
+        scroll = Mth.clamp(scroll, 0, maxScroll());
+        for (int v = 0; v < VISIBLE && scroll + v < l.size(); v++) {
+            int i = scroll + v;
             Net.StationInfo s = l.get(i);
-            int ry = y + 15 + i * ROW;
+            int ry = y + 15 + v * ROW;
             boolean sel = i == Math.floorMod(selected, l.size());
-            boolean hover = mx >= x + 2 && mx < x + 122 && my >= ry && my < ry + ROW;
-            if (sel) g.fill(x + 2, ry, x + 122, ry + ROW - 1, 0x60E0B040);
-            else if (hover) g.fill(x + 2, ry, x + 122, ry + ROW - 1, 0x30FFFFFF);
-            g.fill(x + 16, ry + 3, x + 22, ry + 9, lamp(s, blink));
-            small(g, String.format("%02d", i + 1), x + 4, ry + 3, sel ? 0xFFFFFFFF : UiKit.MUTED);
+            boolean hover = mx >= x + 2 && mx < x + 117 && my >= ry && my < ry + ROW;
+            if (sel) g.fill(x + 2, ry, x + 117, ry + ROW - 1, 0x60E0B040);
+            else if (hover) g.fill(x + 2, ry, x + 117, ry + ROW - 1, 0x30FFFFFF);
+            g.fill(x + 18, ry + 3, x + 24, ry + 9, lamp(s, blink));
+            small(g, String.valueOf(i + 1), x + 3, ry + 3, sel ? 0xFFFFFFFF : UiKit.MUTED);
             String tag = s.missile() >= 0 && s.missile() < TAGS.length ? TAGS[s.missile()] : "--";
-            small(g, tag + (s.heavy() ? "*" : ""), x + 25, ry + 3, s.missile() >= 0 ? TAG_COLORS[s.missile()] : 0xFF707070);
+            small(g, tag + (s.heavy() ? "*" : ""), x + 27, ry + 3, s.missile() >= 0 ? TAG_COLORS[s.missile()] : 0xFF707070);
             String pos = s.found() ? s.pos().getX() + " " + s.pos().getY() + " " + s.pos().getZ()
                     : Component.translatable("gunsmod.launch.missing").getString();
-            small(g, pos, x + 44, ry + 3, s.found() ? UiKit.TEXT : UiKit.BAD);
+            small(g, pos, x + 45, ry + 3, s.found() ? UiKit.TEXT : UiKit.BAD);
         }
         if (l.isEmpty()) small(g, Component.translatable("gunsmod.launch.no_stations").getString(), x + 4, y + 18, UiKit.BAD);
+        if (l.size() > VISIBLE) {
+            // scrollbar + page buttons (touch friendly)
+            int top0 = y + 15, len = VISIBLE * ROW;
+            int bar = Math.max(10, len * VISIBLE / l.size());
+            int by0 = top0 + (len - bar) * scroll / Math.max(1, maxScroll());
+            g.fill(x + 118, top0, x + 121, top0 + len, 0x40FFFFFF);
+            g.fill(x + 118, by0, x + 121, by0 + bar, 0xFFE0B040);
+            UiKit.button(g, font, scrollUpButton(), mx, my);
+            UiKit.button(g, font, scrollDownButton(), mx, my);
+        }
     }
 
     private static int lamp(Net.StationInfo s, boolean blink) {
@@ -281,6 +332,11 @@ public class LaunchScreen extends Screen {
         g.drawString(font, hint, lx + 54 - font.width(hint) / 2, ly + 108, armed ? UiKit.BAD : 0xFFDDDDDD, true);
         UiKit.button(g, font, disarmButton(), mx, my);
         if (salvoAllowed()) UiKit.button(g, font, salvoButton(), mx, my);
+        if (status.remote()) {
+            UiKit.Btn b = fireAllButton();
+            if (confirmTicks > 0 && blink) g.fill(b.x() - 1, b.y() - 1, b.x() + b.w() + 1, b.y() + b.h() + 1, 0xFFFF3020);
+            UiKit.button(g, font, b, mx, my);
+        }
     }
 
     @Override
@@ -296,8 +352,14 @@ public class LaunchScreen extends Screen {
         // station list
         int lx0 = left + 8, ly0 = top + 22 + 15;
         List<Net.StationInfo> l = status.stations();
-        if (mx >= lx0 + 2 && mx < lx0 + 122 && my >= ly0 && my < ly0 + l.size() * ROW) {
-            int i = (int) ((my - ly0) / ROW);
+        if (l.size() > VISIBLE && (scrollUpButton().hit(mx, my) || scrollDownButton().hit(mx, my))) {
+            scroll = Mth.clamp(scroll + (scrollUpButton().hit(mx, my) ? -VISIBLE + 1 : VISIBLE - 1), 0, maxScroll());
+            sound(SoundEvents.UI_BUTTON_CLICK.value(), 1.4f);
+            return true;
+        }
+        int rows = Math.min(VISIBLE, l.size() - scroll);
+        if (mx >= lx0 + 2 && mx < lx0 + 117 && my >= ly0 && my < ly0 + rows * ROW) {
+            int i = scroll + (int) ((my - ly0) / ROW);
             if (i != Math.floorMod(selected, Math.max(1, l.size()))) {
                 selected = i;
                 fillTarget(true);
@@ -320,6 +382,20 @@ public class LaunchScreen extends Screen {
         if (status.remote() && !l.isEmpty() && unlinkButton().hit(mx, my)) {
             send(Net.LaunchAction.UNLINK, 0, 0, 0);
             sound(Reg.sound("cover_open"), 0.6f);
+            return true;
+        }
+        if (status.remote() && fireAllButton().hit(mx, my)) {
+            if (readyCount() == 0) {
+                sound(Reg.sound("dry_fire"), 1f);
+            } else if (confirmTicks > 0) {
+                confirmTicks = 0;
+                pressTicks = 8;
+                send(Net.LaunchAction.FIRE_ALL, 0, 0, 0);
+                sound(Reg.sound("arm_switch"), 0.7f);
+            } else {
+                confirmTicks = 60;
+                sound(Reg.sound("cover_open"), 1.3f);
+            }
             return true;
         }
         if (salvoAllowed() && salvoButton().hit(mx, my)) {
@@ -351,6 +427,32 @@ public class LaunchScreen extends Screen {
         }
         return false;
     }
+
+    @Override
+    public boolean mouseScrolled(double mx, double my, double sx, double sy) {
+        if (mx >= left + 8 && mx < left + 132 && my >= top + 22 && my < top + h - 8) {
+            scroll = Mth.clamp(scroll - (int) Math.signum(sy) * 3, 0, maxScroll());
+            return true;
+        }
+        return super.mouseScrolled(mx, my, sx, sy);
+    }
+
+    /** dragging over the list scrolls it (touch screens have no wheel) */
+    @Override
+    public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+        if (mx >= left + 8 && mx < left + 132 && my >= top + 37 && my < top + 37 + VISIBLE * ROW) {
+            dragAcc += dy;
+            int rows = (int) (dragAcc / ROW);
+            if (rows != 0) {
+                scroll = Mth.clamp(scroll - rows, 0, maxScroll());
+                dragAcc -= rows * ROW;
+            }
+            return true;
+        }
+        return super.mouseDragged(mx, my, button, dx, dy);
+    }
+
+    private double dragAcc;
 
     private void sound(SoundEvent s, float pitch) {
         this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(s, pitch));

@@ -38,6 +38,8 @@ public class LauncherBlockEntity extends BlockEntity {
     private int tx, ty, tz;
     private int state = IDLE;
     private int timer;
+    /** extra ticks to wait fully erected before ignition (ripple salvos) */
+    private int hold;
     @Nullable private UUID launcher;
     /** client animation clock */
     public int clientTimer;
@@ -139,8 +141,14 @@ public class LauncherBlockEntity extends BlockEntity {
 
     /** start the launch sequence of an armed station */
     public boolean launch(@Nullable Entity by) {
+        return launch(by, 0);
+    }
+
+    /** start the launch sequence, igniting {@code delay} ticks later than usual */
+    public boolean launch(@Nullable Entity by, int delay) {
         if (state != ARMED) return false;
         begin(by);
+        hold = Math.max(0, delay);
         return true;
     }
 
@@ -158,6 +166,7 @@ public class LauncherBlockEntity extends BlockEntity {
     private void begin(@Nullable Entity by) {
         state = ERECTING;
         timer = 0;
+        hold = 0;
         launcher = by != null ? by.getUUID() : null;
         level.playSound(null, worldPosition, Reg.sound("missile_alarm"), SoundSource.BLOCKS, isHeavy() ? 6f : 4f, 0.9f);
         keepLoaded();
@@ -167,7 +176,7 @@ public class LauncherBlockEntity extends BlockEntity {
     public void keepLoaded() {
         if (level instanceof ServerLevel sl) {
             ChunkPos cp = new ChunkPos(worldPosition);
-            sl.getChunkSource().addRegionTicket(STATION_TICKET, cp, 2, cp);
+            sl.getChunkSource().addRegionTicket(STATION_TICKET, cp, 1, cp);
         }
     }
 
@@ -211,7 +220,7 @@ public class LauncherBlockEntity extends BlockEntity {
         if (!isBusy()) return;
         timer++;
         if (timer % 40 == 0) keepLoaded();
-        if (state == ERECTING && timer >= erectTime()) {
+        if (state == ERECTING && timer >= erectTime() + hold) {
             state = IGNITION;
             timer = 0;
             level.playSound(null, worldPosition, Reg.sound(isHeavy() ? "heavy_launch" : "missile_launch"), SoundSource.BLOCKS, isHeavy() ? 10f : 6f, 1f);
@@ -273,6 +282,7 @@ public class LauncherBlockEntity extends BlockEntity {
         tag.putInt("TZ", tz);
         tag.putInt("State", state == ARMED ? IDLE : state);
         tag.putInt("Timer", timer);
+        tag.putInt("Hold", hold);
         if (launcher != null) tag.putUUID("Launcher", launcher);
     }
 
@@ -288,6 +298,7 @@ public class LauncherBlockEntity extends BlockEntity {
         if (newState != state) clientTimer = 0;
         state = newState;
         timer = tag.getInt("Timer");
+        hold = tag.getInt("Hold");
         launcher = tag.hasUUID("Launcher") ? tag.getUUID("Launcher") : null;
     }
 

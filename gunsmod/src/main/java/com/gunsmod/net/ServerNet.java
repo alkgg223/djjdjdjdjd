@@ -65,15 +65,17 @@ public final class ServerNet {
         switch (p.action()) {
             case Net.LaunchAction.SELECT -> RemoteItem.setLinks(remote, links.select(p.x()));
             case Net.LaunchAction.UNLINK -> RemoteItem.unlink(remote, p.station(), sp);
+            case Net.LaunchAction.FIRE_ALL -> fireAll(sp, level, links);
             case Net.LaunchAction.TARGET_ALL, Net.LaunchAction.ARM_ALL, Net.LaunchAction.LAUNCH_ALL, Net.LaunchAction.DISARM_ALL -> {
                 int n = 0;
                 for (BlockPos pos : links.stations()) {
                     LauncherBlockEntity be = LauncherBlockEntity.at(level, pos);
                     if (be == null) continue;
+                    int k = n;
                     boolean ok = switch (p.action()) {
                         case Net.LaunchAction.TARGET_ALL -> be.setTarget(p.x(), p.y(), p.z());
                         case Net.LaunchAction.ARM_ALL -> be.getState() == LauncherBlockEntity.IDLE && be.arm() == null;
-                        case Net.LaunchAction.LAUNCH_ALL -> be.launch(sp);
+                        case Net.LaunchAction.LAUNCH_ALL -> be.launch(sp, ripple(k));
                         default -> {
                             boolean armed = be.getState() == LauncherBlockEntity.ARMED;
                             be.disarm();
@@ -95,6 +97,32 @@ public final class ServerNet {
             }
         }
         sendRemoteStatus(sp, remote, false);
+    }
+
+    /** stagger big salvos a little: up to 20 launches in a 3 second ripple, then the next 20 together with them */
+    private static int ripple(int k) {
+        return (k % 20) * 3;
+    }
+
+    /** arm and launch every linked station that has a missile and a target */
+    private static void fireAll(ServerPlayer sp, ServerLevel level, RemoteLinks links) {
+        int launched = 0, noTarget = 0;
+        for (BlockPos pos : links.stations()) {
+            LauncherBlockEntity be = LauncherBlockEntity.at(level, pos);
+            if (be == null || !be.hasMissile() || be.isBusy()) continue;
+            if (!be.hasTarget()) {
+                noTarget++;
+                continue;
+            }
+            if (be.getState() == LauncherBlockEntity.IDLE && be.arm() != null) continue;
+            if (be.launch(sp, ripple(launched))) launched++;
+        }
+        if (launched == 0) {
+            sp.displayClientMessage(Component.translatable(noTarget > 0 ? "gunsmod.msg.fire_all_notarget" : "gunsmod.msg.fire_all_none", noTarget), true);
+        } else {
+            sp.displayClientMessage(noTarget > 0 ? Component.translatable("gunsmod.msg.fire_all_some", launched, noTarget)
+                    : Component.translatable("gunsmod.msg.fire_all", launched), true);
+        }
     }
 
     /** an action on one station */

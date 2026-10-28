@@ -110,11 +110,12 @@ public final class Net {
     /**
      * missile launch station actions. remote = sent from a remote's screen (the stations are the remote's links), otherwise
      * from a station opened by hand. actions: 0 query, 1 set target, 2 arm, 3 launch, 4 disarm, 5 select (x = index),
-     * 6 set the target of every station, 7 arm every station, 8 launch every armed station, 9 disarm all, 10 unlink.
+     * 6 set the target of every station, 7 arm every station, 8 launch every armed station, 9 disarm all, 10 unlink,
+     * 11 fire everything: arm and launch every loaded station that has a target, in a quick ripple.
      */
     public record LaunchAction(BlockPos station, int action, int x, int y, int z, boolean remote) implements CustomPacketPayload {
         public static final int QUERY = 0, TARGET = 1, ARM = 2, LAUNCH = 3, DISARM = 4, SELECT = 5, TARGET_ALL = 6, ARM_ALL = 7,
-                LAUNCH_ALL = 8, DISARM_ALL = 9, UNLINK = 10;
+                LAUNCH_ALL = 8, DISARM_ALL = 9, UNLINK = 10, FIRE_ALL = 11;
         public static final Type<LaunchAction> TYPE = payloadType("launch_action");
         public static final StreamCodec<RegistryFriendlyByteBuf, LaunchAction> CODEC = CustomPacketPayload.codec(LaunchAction::write, LaunchAction::new);
 
@@ -237,7 +238,7 @@ public final class Net {
         }
 
         private static List<StationInfo> readStations(RegistryFriendlyByteBuf b) {
-            int n = Math.min(b.readVarInt(), 64);
+            int n = Math.min(b.readVarInt(), 256);
             List<StationInfo> l = new ArrayList<>(n);
             for (int i = 0; i < n; i++) l.add(new StationInfo(b));
             return l;

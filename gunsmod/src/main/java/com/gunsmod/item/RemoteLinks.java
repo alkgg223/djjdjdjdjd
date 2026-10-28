@@ -11,7 +11,7 @@ import net.minecraft.network.codec.StreamCodec;
 
 /** Launch stations a remote controls (up to {@link #MAX}) and the one currently selected. */
 public record RemoteLinks(List<BlockPos> stations, int selected) {
-    public static final int MAX = 15;
+    public static final int MAX = 100;
     public static final RemoteLinks EMPTY = new RemoteLinks(List.of(), 0);
     public static final Codec<RemoteLinks> CODEC = RecordCodecBuilder.create(i -> i.group(
             BlockPos.CODEC.listOf().fieldOf("stations").forGetter(RemoteLinks::stations),

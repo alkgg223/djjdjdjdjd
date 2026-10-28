@@ -57,8 +57,18 @@ public final class UiKit {
         boolean hover = b.enabled && mx >= b.x && my >= b.y && mx < b.x + b.w && my < b.y + b.h;
         ResourceLocation sprite = !b.enabled ? BUTTON_OFF : b.red ? BUTTON_RED : hover ? BUTTON_HOVER : BUTTON;
         g.blitSprite(sprite, b.x, b.y, b.w, b.h);
-        int tw = f.width(b.label);
-        g.drawString(f, b.label, b.x + (b.w - tw) / 2, b.y + (b.h - 8) / 2, b.enabled ? 0xFFFFFFFF : 0xFF8A8A8A, true);
+        int tw = f.width(b.label), col = b.enabled ? 0xFFFFFFFF : 0xFF8A8A8A;
+        if (tw <= b.w - 4) {
+            g.drawString(f, b.label, b.x + (b.w - tw) / 2, b.y + (b.h - 8) / 2, col, true);
+        } else {
+            // long labels (some languages) shrink to fit instead of spilling over the button
+            float s = (b.w - 4f) / tw;
+            g.pose().pushPose();
+            g.pose().translate(b.x + 2, b.y + (b.h - 8 * s) / 2f, 0);
+            g.pose().scale(s, s, 1f);
+            g.drawString(f, b.label, 0, 0, col, true);
+            g.pose().popPose();
+        }
     }
 
     public static void title(GuiGraphics g, Font f, Component c, int x, int y) {
