@@ -31,7 +31,7 @@ public class JeepRenderer extends EntityRenderer<JeepEntity> {
         // small damage wobble
         if (jeep.hurtTime > 0) pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin((jeep.hurtTime - pt) * 2f) * 1.5f));
         renderJeep(pose, buf, light, jeep.getBotTeam(), Mth.lerp(pt, jeep.prevWheelSpin, jeep.wheelSpin), jeep.getSteerVisual(),
-                turretYaw(jeep, pt), turretPitch(jeep, pt));
+                turretYaw(jeep, pt), turretPitch(jeep, pt), jeep.tow);
         pose.popPose();
         super.render(jeep, yaw, pt, pose, buf, light);
     }
@@ -50,6 +50,12 @@ public class JeepRenderer extends EntityRenderer<JeepEntity> {
 
     /** pose at the entity origin, facing the model front (-Z) to the entity's heading */
     public static void renderJeep(PoseStack pose, MultiBufferSource buf, int light, BotTeam team, float spin, float steer, float tYaw, float tPitch) {
+        renderJeep(pose, buf, light, team, spin, steer, tYaw, tPitch, false);
+    }
+
+    /** {@code tow}: the TOW launcher instead of the machine gun */
+    public static void renderJeep(PoseStack pose, MultiBufferSource buf, int light, BotTeam team, float spin, float steer, float tYaw, float tPitch,
+                                  boolean tow) {
         int ov = OverlayTexture.NO_OVERLAY;
         float r = team.r, g = team.g, b = team.b;
         pose.pushPose();
@@ -80,7 +86,8 @@ public class JeepRenderer extends EntityRenderer<JeepEntity> {
         pose.translate(px, gy, gz);
         pose.mulPose(Axis.XP.rotationDegrees(-tPitch));
         pose.translate(-px, -gy, -gz);
-        BakedRender.entityCutout("entity/jeep/gun", pose, buf, light, ov, 1, 1, 1);
+        if (tow) BakedRender.entity("entity/jeep_tow/launcher", pose, buf, light, ov, 1, 1, 1);
+        else BakedRender.entityCutout("entity/jeep/gun", pose, buf, light, ov, 1, 1, 1);
         pose.popPose();
         pose.popPose();
     }

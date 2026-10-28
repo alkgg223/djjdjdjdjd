@@ -38,12 +38,35 @@ public final class ClientNet {
             Vec3 right = GunLogic.dir(0, yaw + 90);
             muzzle = le.getEyePosition().add(look.scale(t != null && t.category == GunType.Category.PISTOL ? 0.75 : 1.15)).add(right.scale(0.3)).add(0, -0.3, 0);
         }
+        if (!p.suppressed()) ClientLights.light(shooter != null ? shooter : (Object) p.shooter(), muzzle, t == null ? 14 : 13, 3);
         if (t == null) {
-            // vehicle guns: -1 jeep turret, -2 tank coaxial machine gun, -3 helicopter chin gun
-            String snd = p.gun() == -2 ? "shot_lmg" : p.gun() == -3 ? "heli_gun" : "shot_turret";
-            level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound(snd), SoundSource.HOSTILE, p.gun() == -3 ? 9f : 7f, 0.95f + R.nextFloat() * 0.1f, true);
+            // vehicle guns: -1 jeep turret, -2 coaxial machine gun, -3 20 mm chin gun, -4 30 mm cannon, -5 12.7 mm gatling,
+            // -6 anti-aircraft twin 30 mm
+            int id = p.gun();
+            String snd = switch (id) {
+                case -2 -> "shot_lmg";
+                case -3 -> "heli_gun";
+                case -4, -6 -> "cannon_30";
+                case -5 -> "shot_minigun";
+                default -> "shot_turret";
+            };
+            float pitch = id == -6 ? 1.15f : 0.95f;
+            level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound(snd), SoundSource.HOSTILE, id <= -3 ? 10f : 7f, pitch + R.nextFloat() * 0.1f, true);
             level.addParticle(Reg.MUZZLE_FLASH.get(), muzzle.x, muzzle.y, muzzle.z, 0, 0, 0);
             level.addParticle(Reg.SMOKE.get(), muzzle.x, muzzle.y, muzzle.z, 0, 0.02, 0);
+            if (id == -4 || id == -6) {
+                // 30 mm high explosive: a bright burst where it hits
+                for (int i = 0; i < p.ends().size(); i++) {
+                    Vec3 end = p.end(i);
+                    if ((p.kinds().length > i ? p.kinds()[i] : 0) == 0 && id == -4) continue;
+                    ClientLights.flash(end, 12, 3);
+                    level.addParticle(Reg.FLAME.get(), end.x, end.y, end.z, 0, 0.02, 0);
+                    level.addParticle(Reg.SMOKE.get(), end.x, end.y + 0.2, end.z, 0, 0.04, 0);
+                    for (int k = 0; k < 4; k++) {
+                        level.addParticle(Reg.SPARK.get(), end.x, end.y, end.z, R.nextGaussian() * 0.15, 0.1 + R.nextDouble() * 0.15, R.nextGaussian() * 0.15);
+                    }
+                }
+            }
         } else {
             GunClient.playShot(level, t, muzzle, p.suppressed(), false);
             if (t.kind == GunType.Kind.FLAME) {
@@ -124,9 +147,11 @@ public final class ClientNet {
 
     public static void explosion(Net.ExplosionFx p) {
         ClientFx.blast(p.pos(), p.style(), p.size());
+        ClientLights.flash(p.pos().add(0, 1, 0), 15, 6 + (int) (p.size() * 5));
     }
 
     public static void muzzle(Net.MuzzleFx p) {
         ClientFx.muzzleBlast(p.pos(), p.dir(), p.size());
+        ClientLights.light("mz" + p.entity(), p.pos(), 15, 5);
     }
 }

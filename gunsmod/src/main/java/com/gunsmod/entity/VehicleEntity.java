@@ -77,6 +77,16 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         return true;
     }
 
+    /** the vehicle that shields this entity (tank, helicopter, armoured car or jeep), or null when it is exposed */
+    @Nullable
+    public static Entity shieldOf(@Nullable Entity e) {
+        if (e == null) return null;
+        Entity v = e.getVehicle();
+        if (v instanceof VehicleEntity ve && ve.protectsCrew() && ve.isAlive()) return v;
+        if (v instanceof JeepEntity j && j.isAlive()) return v;
+        return null;
+    }
+
     // ------------------------------------------------------------------------------------ team
     @Override
     public BotTeam getBotTeam() {
@@ -213,7 +223,7 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         if (!this.level().isClientSide) {
             if (this.getPassengers().size() < seatCount()) {
                 board(player, this.getPassengers().size());
-                player.displayClientMessage(Component.translatable(seatOf(player) == 0 ? seatName0() : "gunsmod.seat.2"), true);
+                player.displayClientMessage(Component.translatable(seatName(seatOf(player))), true);
             }
         }
         return InteractionResult.sidedSuccess(this.level().isClientSide);
@@ -221,6 +231,20 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
 
     protected String seatName0() {
         return "gunsmod.seat.0";
+    }
+
+    protected String seatName(int seat) {
+        return seat == 0 ? seatName0() : "gunsmod.seat.2";
+    }
+
+    // ------------------------------------------------------------------------------------ crew input
+    /** a fire / action key from a crew member: 0 attack, 1 use, 2 flares / countermeasures, 3 switch weapon */
+    public void trigger(Entity who, int weapon, boolean down) {
+    }
+
+    /** this crew member's attack and use keys work the vehicle's weapons (not his own gun) */
+    public boolean firesFor(Entity e) {
+        return getControllingPassenger() == e;
     }
 
     // ------------------------------------------------------------------------------------ damage

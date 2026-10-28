@@ -33,7 +33,9 @@ for j in ("green_jeep", "red_jeep"):
                        "thirdperson_righthand": {"rotation": [70, 45, 0], "translation": [0, 2, 0], "scale": [0.6, 0.6, 0.6]},
                        "firstperson_righthand": {"rotation": [0, 45, 0], "translation": [0, 0, 0], "scale": [0.7, 0.7, 0.7]}}})
 
-for j, tex in (("green_tank", "tank"), ("red_tank", "tank"), ("green_helicopter", "heli"), ("red_helicopter", "heli")):
+VEH = [("tank", "tank"), ("helicopter", "heli"), ("leopard", "leopard"), ("t90", "t90"), ("challenger", "challenger"), ("apache", "heli_apache"),
+       ("hind", "heli_hind"), ("ka52", "heli_ka52"), ("tow_humvee", "jeep"), ("btr82", "btr82"), ("pantsir", "pantsir")]
+for j, tex in [(team + "_" + v, t) for v, t in VEH for team in ("green", "red")]:
     write(os.path.join(ROOT, "models", "item", j + ".json"),
           {"parent": "builtin/entity", "gui_light": "side", "textures": {"particle": f"gunsmod:item/vehicle/{tex}"},
            "display": {"gui": {"rotation": [25, -135, 0], "translation": [0, 0, 0], "scale": [1, 1, 1]},

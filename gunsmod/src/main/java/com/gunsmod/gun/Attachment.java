@@ -11,7 +11,9 @@ public enum Attachment {
     VERTICAL_GRIP("vertical_grip", Slot.GRIP, 1.0f, 0.95f, 0.85f, 0.8f, 0f),
     ANGLED_GRIP("angled_grip", Slot.GRIP, 1.0f, 0.9f, 0.9f, 0.88f, 0f),
     LASER_SIGHT("laser_sight", Slot.LASER, 1.0f, 1.0f, 0.6f, 1.0f, 0f),
-    EXTENDED_MAG("extended_mag", Slot.MAG, 1.0f, 1.0f, 1.0f, 1.0f, 0f);
+    EXTENDED_MAG("extended_mag", Slot.MAG, 1.0f, 1.0f, 1.0f, 1.0f, 0f),
+    /** weapon light on the side rail (shares the slot with the laser); lights up the dark */
+    FLASHLIGHT("flashlight", Slot.LASER, 1.0f, 1.0f, 0.92f, 1.0f, 0f);
 
     public enum Slot { SCOPE, MUZZLE, GRIP, LASER, MAG }
 

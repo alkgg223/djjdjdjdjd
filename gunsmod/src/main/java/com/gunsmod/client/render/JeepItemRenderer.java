@@ -1,5 +1,7 @@
 package com.gunsmod.client.render;
 
+import com.gunsmod.entity.BotTeam;
+import com.gunsmod.entity.VehicleKind;
 import com.gunsmod.item.JeepItem;
 import com.gunsmod.item.VehicleItem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -11,7 +13,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 
-/** The jeep items show a small version of the real jeep. */
+/** The vehicle items show a small version of the real vehicle. */
 public class JeepItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static JeepItemRenderer instance;
 
@@ -29,11 +31,14 @@ public class JeepItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     @Override
     public void renderByItem(ItemStack stack, ItemDisplayContext ctx, PoseStack pose, MultiBufferSource buf, int light, int overlay) {
-        if (stack.getItem() instanceof VehicleItem v) {
+        if (stack.getItem() instanceof VehicleItem v && v.kind.group != VehicleKind.Group.JEEP) {
             renderVehicle(v, ctx, pose, buf, light);
             return;
         }
-        if (!(stack.getItem() instanceof JeepItem item)) return;
+        BotTeam team;
+        if (stack.getItem() instanceof JeepItem item) team = item.team;
+        else if (stack.getItem() instanceof VehicleItem v) team = v.team;
+        else return;
         pose.pushPose();
         pose.translate(0.5f, 0.12f, 0.5f);
         float s = ctx == ItemDisplayContext.GUI ? 0.2f : ctx == ItemDisplayContext.NONE ? 0.32f : 0.16f;
@@ -42,21 +47,27 @@ public class JeepItemRenderer extends BlockEntityWithoutLevelRenderer {
             pose.translate(0, 0.8f, 0);
         }
         pose.mulPose(Axis.YP.rotationDegrees(180));
-        JeepRenderer.renderJeep(pose, buf, light, item.team, 0f, 0f, 0f, 0f);
+        JeepRenderer.renderJeep(pose, buf, light, team, 0f, 0f, 0f, 0f, stack.getItem() instanceof VehicleItem);
         pose.popPose();
     }
 
-    /** tank and helicopter: same idea, scaled down further (they are much bigger than the jeep) */
+    /** tanks, helicopters and armed cars: same idea, scaled down to fit (they are much bigger than the jeep) */
     private static void renderVehicle(VehicleItem v, ItemDisplayContext ctx, PoseStack pose, MultiBufferSource buf, int light) {
-        boolean tank = v.kind == VehicleItem.Kind.TANK;
+        VehicleKind.Group grp = v.kind.group;
+        boolean heli = grp == VehicleKind.Group.HELI;
+        boolean longOne = v.kind == VehicleKind.PANTSIR;
         pose.pushPose();
-        pose.translate(0.5f, tank ? 0.14f : 0.08f, 0.5f);
-        float s = ctx == ItemDisplayContext.GUI ? (tank ? 0.115f : 0.085f) : ctx == ItemDisplayContext.NONE ? 0.2f : (tank ? 0.09f : 0.07f);
+        pose.translate(0.5f, heli ? 0.08f : 0.14f, 0.5f);
+        float s = ctx == ItemDisplayContext.GUI ? (heli ? 0.085f : longOne ? 0.085f : 0.115f) : ctx == ItemDisplayContext.NONE ? 0.2f : (heli ? 0.07f : 0.09f);
         pose.scale(s, s, s);
-        if (ctx == ItemDisplayContext.GUI) pose.translate(0, tank ? 0.6f : 1.4f, 0);
+        if (ctx == ItemDisplayContext.GUI) pose.translate(0, heli ? 1.4f : 0.6f, 0);
         pose.mulPose(Axis.YP.rotationDegrees(180));
-        if (tank) TankRenderer.renderTank(pose, buf, light, v.team, 0f, 0f, 0f, 0f, 0f);
-        else HelicopterRenderer.renderHeli(pose, buf, light, v.team, 30f, 0f, 0f, 0f, 0f);
+        switch (grp) {
+            case TANK -> TankRenderer.renderTank(pose, buf, light, v.kind.tank(), v.team, 0f, 0f, 0f, 0f, 0f);
+            case HELI -> HelicopterRenderer.renderHeli(pose, buf, light, v.kind.heli(), v.team, 30f, 0f, 0f, 0f, 0f);
+            case CAR -> ArmoredCarRenderer.renderCar(pose, buf, light, v.kind.car(), v.team, 0f, 0f, 0f, 0f, 30f);
+            default -> { }
+        }
         pose.popPose();
     }
 }

@@ -1,15 +1,18 @@
 package com.gunsmod.entity;
 
 import com.gunsmod.Reg;
+import com.gunsmod.entity.HeliType.Weapon;
 import com.gunsmod.entity.ai.DriveAI;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.gun.GunType;
 import com.gunsmod.net.Net;
+import com.gunsmod.world.Blast;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntSupplier;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -27,44 +30,55 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * Attack helicopter: pilot (rear) + front seat. W/S tilt the nose to fly forward / back, A/D turn, jump climbs, sneak
- * descends (sneak only gets you out once landed). Attack fires rockets from the wing pods, use fires the chin gun; both
- * go where the pilot looks. The rotor needs a few seconds to spool up. Soldiers fly patrols and attack runs.
+ * Attack helicopter. W/S tilt the nose to fly forward / back, A/D turn, jump climbs, sneak descends (sneak only gets
+ * you out once landed). Attack fires the selected wing weapon (R switches), use fires the gun, X drops flares. A player
+ * in the front seat works the gun himself. Missiles that lock on need the target held in the sight for a second;
+ * beam riding missiles fly where the pilot keeps looking. The rotor needs a few seconds to spool up.
+ * Soldiers fly patrols with hover stops, stop at a stand-off distance to fire, move to a new firing position now and
+ * then, bomb from above (Hind) and throw flares when a missile comes for them.
  */
-public class HelicopterEntity extends VehicleEntity {
-    public static final double HUB_X = 8.0, HUB_Y = 10.7, HUB_Z = 3.0;
-    public static final double TAIL_X = 8.95, TAIL_Y = 8.4, TAIL_Z = 28.3;
-    public static final double CHIN_X = 8.0, CHIN_Y = 1.6, CHIN_Z = -9.6;
-    public static final double ROTOR_R = 18.4;
-    private static final double[][] SEATS = {{8.0, 2.72, -1.8}, {8.0, 2.12, -6.6}};
-    private static final double[][] PODS = {{3.5, 2.95, -0.6}, {12.5, 2.95, -0.6}};
-    /** nose, tail and rotor tips that must not go into blocks */
-    private static final double[][] ENDS = {{8, 4, -12.6}, {8, 7, 29.5}, {8 + ROTOR_R, 10.7, 3}, {8 - ROTOR_R, 10.7, 3}, {8, 10.7, 3 + ROTOR_R}, {8, 10.7, 3 - ROTOR_R}};
-    public static final double MAX_SPEED = 1.35;
-    public static final int ROCKETS = 16, ROCKET_RELOAD = 160;
-    public static final double ROCKET_SPEED = 3.6;
+public class HelicopterEntity extends VehicleEntity implements MissileGuider {
+    public static final int LOCK_TICKS = 20;
+    private static final double LOCK_RANGE = 220, LOCK_CONE = 3.5;
 
-    private static final EntityDataAccessor<Integer> DATA_ROCKETS = SynchedEntityData.defineId(HelicopterEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Byte> DATA_WEAPON = SynchedEntityData.defineId(HelicopterEntity.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Integer> DATA_AMMO = SynchedEntityData.defineId(HelicopterEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_RELOAD = SynchedEntityData.defineId(HelicopterEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_FLARES = SynchedEntityData.defineId(HelicopterEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_LOCK = SynchedEntityData.defineId(HelicopterEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Byte> DATA_LOCK_PROGRESS = SynchedEntityData.defineId(HelicopterEntity.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Byte> DATA_WARN = SynchedEntityData.defineId(HelicopterEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Float> DATA_CHIN_YAW = SynchedEntityData.defineId(HelicopterEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_CHIN_PITCH = SynchedEntityData.defineId(HelicopterEntity.class, EntityDataSerializers.FLOAT);
 
     /** climb input of the local pilot (jump +1, sneak -1), supplied by the client */
     public static IntSupplier liftInput = () -> 0;
 
+    public final HeliType kind;
+    public final VehicleGeo.Heli geo;
+    private final double[][] ends;
+
     private float fwdIn, turnIn, liftIn;
     private float yawRate;
-    private boolean fireRockets, fireGun;
-    private int rocketCooldown, gunCooldown, pod, scanTimer, salvoLeft, phaseTicks, gunBurst, gunPause;
-    private boolean attackRun;
-    @Nullable private Vec3 aimError;
-    @Nullable private Vec3 patrolPos;
-    private int patrolSince;
+    private boolean fireStores, fireGun, gunnerFire;
+    private final int[] ammo, reload;
+    private int storeCooldown, gunCooldown, mountIndex, flareCooldown, flareQueue, flareSalvo, lockCandidate = -1, lockCount;
+    private int warnMissile, warnRadar, lastBeamShot = -1000;
+    @Nullable private Vec3 beamDir;
+    // soldier pilot
+    private enum Phase { PATROL, RELOCATE, HOLD, BOMB_RUN }
+    private Phase phase = Phase.PATROL;
+    private int scanTimer, phaseTicks, hidden, hoverLeft, gunBurst, gunPause, salvoLeft;
+    private double standAngle;
+    private boolean bombed;
+    @Nullable private Vec3 patrolPos, aimError;
+    private int patrolSince, flaredFor = -1;
     // shared visuals (computed on every side from the motion)
     public float rotor, prevRotor, rotorAngle, prevRotorAngle, tailAngle, prevTailAngle;
     public float visPitch, visRoll, prevVisPitch, prevVisRoll;
@@ -75,12 +89,32 @@ public class HelicopterEntity extends VehicleEntity {
     public double airSpeed, climbRate;
 
     public HelicopterEntity(EntityType<? extends HelicopterEntity> type, Level level) {
-        super(type, level);
+        this(type, level, HeliType.COBRA);
     }
 
-    public static AttributeSupplier.Builder createAttributes() {
+    public HelicopterEntity(EntityType<? extends HelicopterEntity> type, Level level, HeliType kind) {
+        super(type, level);
+        this.kind = kind;
+        this.geo = kind.geo;
+        double[] h = geo.hub();
+        double r = geo.rotorR();
+        double[][] base = geo.ends();
+        ends = new double[base.length + 4][];
+        System.arraycopy(base, 0, ends, 0, base.length);
+        ends[base.length] = new double[]{h[0] + r, h[1], h[2]};
+        ends[base.length + 1] = new double[]{h[0] - r, h[1], h[2]};
+        ends[base.length + 2] = new double[]{h[0], h[1], h[2] + r};
+        ends[base.length + 3] = new double[]{h[0], h[1], h[2] - r};
+        ammo = new int[kind.weapons.length];
+        reload = new int[kind.weapons.length];
+        for (int i = 0; i < ammo.length; i++) ammo[i] = kind.weapons[i].ammo;
+        this.entityData.set(DATA_FLARES, kind.flares);
+        this.entityData.set(DATA_AMMO, ammo[0]);
+    }
+
+    public static AttributeSupplier.Builder createAttributes(HeliType kind) {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 180.0)
+                .add(Attributes.MAX_HEALTH, kind.health)
                 .add(Attributes.ARMOR, 8.0)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.3)
@@ -90,25 +124,30 @@ public class HelicopterEntity extends VehicleEntity {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
-        b.define(DATA_ROCKETS, ROCKETS);
+        b.define(DATA_WEAPON, (byte) 0);
+        b.define(DATA_AMMO, 0);
         b.define(DATA_RELOAD, 0);
+        b.define(DATA_FLARES, 0);
+        b.define(DATA_LOCK, -1);
+        b.define(DATA_LOCK_PROGRESS, (byte) 0);
+        b.define(DATA_WARN, (byte) 0);
         b.define(DATA_CHIN_YAW, 0f);
         b.define(DATA_CHIN_PITCH, 0f);
     }
 
     @Override
     public ItemStack pickItem() {
-        return new ItemStack(getBotTeam() == BotTeam.RED ? Reg.RED_HELICOPTER.get() : Reg.GREEN_HELICOPTER.get());
+        return new ItemStack(kind.item(getBotTeam()));
     }
 
     @Override
     public int seatCount() {
-        return 2;
+        return kind.seats();
     }
 
     @Override
     protected Vec3 seatModel(int seat) {
-        double[] s = SEATS[Math.min(seat, 1)];
+        double[] s = geo.seats()[Math.min(seat, geo.seats().length - 1)];
         return new Vec3(s[0], s[1], s[2]);
     }
 
@@ -119,7 +158,7 @@ public class HelicopterEntity extends VehicleEntity {
 
     @Override
     public float bulletFactor() {
-        return 0.3f;
+        return kind.bulletFactor;
     }
 
     @Override
@@ -128,17 +167,48 @@ public class HelicopterEntity extends VehicleEntity {
     }
 
     @Override
+    protected String seatName(int seat) {
+        return seat == 1 ? "gunsmod.seat.heli_gunner" : "gunsmod.seat.passenger";
+    }
+
+    @Override
     public int seatForBot(BotEntity bot) {
         // soldiers only take the controls of a helicopter standing on the ground
         return this.getPassengers().isEmpty() && this.onGround() ? 0 : -1;
     }
 
-    public int getRockets() {
-        return this.entityData.get(DATA_ROCKETS);
+    // ------------------------------------------------------------------------------------ state for HUD / renderer
+    public int getWeaponIndex() {
+        return Mth.clamp(this.entityData.get(DATA_WEAPON), 0, kind.weapons.length - 1);
     }
 
-    public int getRocketReload() {
+    public Weapon getWeapon() {
+        return kind.weapons[getWeaponIndex()];
+    }
+
+    public int getAmmo() {
+        return this.entityData.get(DATA_AMMO);
+    }
+
+    public int getReload() {
         return this.entityData.get(DATA_RELOAD);
+    }
+
+    public int getFlares() {
+        return this.entityData.get(DATA_FLARES);
+    }
+
+    public int getLockTarget() {
+        return this.entityData.get(DATA_LOCK);
+    }
+
+    public int getLockProgress() {
+        return this.entityData.get(DATA_LOCK_PROGRESS);
+    }
+
+    /** 0 nothing, 1 tracked by a radar, 2 missile on the way */
+    public int getWarning() {
+        return this.entityData.get(DATA_WARN);
     }
 
     public float getChinYaw() {
@@ -165,9 +235,39 @@ public class HelicopterEntity extends VehicleEntity {
     }
 
     // ------------------------------------------------------------------------------------ input
-    public void setTrigger(int weapon, boolean down) {
-        if (weapon == 0) fireRockets = down;
-        else fireGun = down;
+    @Override
+    public void trigger(Entity who, int weapon, boolean down) {
+        int seat = seatOf(who);
+        if (seat == 1 && who instanceof Player) {
+            if (weapon <= 1) gunnerFire = down;
+            return;
+        }
+        if (seat != 0) return;
+        switch (weapon) {
+            case 0 -> fireStores = down;
+            case 1 -> fireGun = down;
+            case 2 -> {
+                if (down) dropFlares();
+            }
+            case 3 -> {
+                if (down) switchWeapon((getWeaponIndex() + 1) % kind.weapons.length);
+            }
+            default -> { }
+        }
+    }
+
+    @Override
+    public boolean firesFor(Entity e) {
+        int s = seatOf(e);
+        return s == 0 || s == 1;
+    }
+
+    private void switchWeapon(int i) {
+        if (i == getWeaponIndex()) return;
+        this.entityData.set(DATA_WEAPON, (byte) i);
+        lockCandidate = -1;
+        lockCount = 0;
+        this.level().playSound(null, getX(), getY(), getZ(), Reg.sound("arm_switch"), SoundSource.NEUTRAL, 1.0f, 1.1f);
     }
 
     @Override
@@ -201,8 +301,8 @@ public class HelicopterEntity extends VehicleEntity {
         float power = rotor;
         Vec3 v = this.getDeltaMovement();
         boolean ground = this.onGround();
-        // yaw: the tail rotor turns it, on the ground only with some lift
-        yawRate += (tr * 3.4f - yawRate) * 0.18f;
+        // yaw: the tail rotor (or the coaxial rotors) turn it, on the ground only with some lift
+        yawRate += (tr * kind.yawRate - yawRate) * 0.18f;
         if (!ground || li > 0) this.setYRot(this.getYRot() + yawRate * power);
         this.yBodyRot = this.getYRot();
         this.yHeadRot = this.getYRot();
@@ -210,13 +310,13 @@ public class HelicopterEntity extends VehicleEntity {
         Vec3 right = new Vec3(-fwd.z, 0, fwd.x);
         // tilting the rotor disc drives it along the nose; the fuselage resists sliding sideways
         double along = v.x * fwd.x + v.z * fwd.z, side = v.x * right.x + v.z * right.z;
-        if (!ground || li > 0) along += f * 0.034 * power;
+        if (!ground || li > 0) along += f * kind.accel * power;
         along *= 0.976;
         side *= 0.86;
-        along = Mth.clamp(along, -MAX_SPEED * 0.4, MAX_SPEED);
+        along = Mth.clamp(along, -kind.maxSpeed * 0.4, kind.maxSpeed);
         double vy = v.y;
         if (power > 0.55 && pilot) {
-            double want = li > 0 ? 0.32 * li : li < 0 ? 0.28 * li : 0.0;
+            double want = li > 0 ? kind.climb * li : li < 0 ? 0.28 * li : 0.0;
             vy += (want - vy) * 0.12 * power;
         } else {
             // no lift: it drops, a turning rotor (autorotation) slows the fall a little
@@ -245,9 +345,9 @@ public class HelicopterEntity extends VehicleEntity {
     }
 
     private boolean endsBlocked(Vec3 offset, boolean rotorToo) {
-        int n = rotorToo ? ENDS.length : 2;
+        int n = rotorToo ? ends.length : ends.length - 4;
         for (int i = 0; i < n; i++) {
-            double[] p = ENDS[i];
+            double[] p = ends[i];
             Vec3 w = toWorld(p[0], p[1], p[2]).add(offset);
             BlockPos bp = BlockPos.containing(w);
             var shape = this.level().getBlockState(bp).getCollisionShape(this.level(), bp);
@@ -313,82 +413,264 @@ public class HelicopterEntity extends VehicleEntity {
         lastAlong = along;
         lastPos = this.position();
         lastYaw = this.getYRot();
-        if (!this.level().isClientSide) weaponsTick();
+        if (!this.level().isClientSide) {
+            weaponsTick();
+            flaresTick();
+            int warn = warnMissile > 0 ? 2 : warnRadar > 0 ? 1 : 0;
+            if (warnMissile > 0) warnMissile--;
+            if (warnRadar > 0) warnRadar--;
+            if (getWarning() != warn) this.entityData.set(DATA_WARN, (byte) warn);
+        }
+    }
+
+    // ------------------------------------------------------------------------------------ warnings and flares
+    /** a homing missile is coming for us */
+    public void missileWarning(GuidedMissileEntity m) {
+        warnMissile = 8;
+        if (getControllingPassenger() instanceof BotEntity && flaredFor != m.getId()) {
+            // soldiers see the warning and dump flares (mostly in time)
+            flaredFor = m.getId();
+            if (this.random.nextFloat() < 0.85f) dropFlares();
+        }
+    }
+
+    /** an air defence radar is tracking us */
+    public void radarWarning() {
+        warnRadar = 8;
+    }
+
+    private void dropFlares() {
+        if (flareCooldown > 0 || getFlares() <= 0 || !this.isAlive()) return;
+        flareCooldown = 40;
+        flareQueue = 4;
+        flareSalvo = this.random.nextInt();
+    }
+
+    private void flaresTick() {
+        if (flareCooldown > 0) flareCooldown--;
+        // the dispensers are slowly refilled from the reserve between salvos
+        else if (getFlares() < kind.flares && this.tickCount % 60 == 0) this.entityData.set(DATA_FLARES, getFlares() + 1);
+        if (flareQueue <= 0 || flareCooldown % 3 != 1) return;
+        flareQueue--;
+        Vec3 fwd = forward();
+        Vec3 right = new Vec3(-fwd.z, 0, fwd.x);
+        double[][] pts = geo.flares();
+        for (int i = 0; i < pts.length && getFlares() > 0; i++) {
+            double[] p = pts[i];
+            Vec3 at = toWorld(p[0], p[1], p[2]);
+            double s = p[0] < 8 ? -1 : 1;
+            Vec3 out = right.scale(s * (0.35 + this.random.nextDouble() * 0.2)).add(fwd.scale(-0.15)).add(0, -0.12 + this.random.nextDouble() * 0.1, 0);
+            this.level().addFreshEntity(new FlareEntity(this.level(), at, this.getDeltaMovement().add(out), flareSalvo));
+            this.entityData.set(DATA_FLARES, getFlares() - 1);
+        }
+        this.level().playSound(null, getX(), getY(), getZ(), Reg.sound("flare"), SoundSource.NEUTRAL, 3f, 0.9f + this.random.nextFloat() * 0.2f);
     }
 
     // ------------------------------------------------------------------------------------ weapons
-    private Vec3 podWorld(int i) {
-        double[] p = PODS[i];
-        return toWorld(p[0], p[1], p[2] - 0.6);
+    private Vec3 mountWorld(Weapon w, int i) {
+        double[][] pts = switch (w.mount) {
+            case PODS -> geo.pods();
+            case RAILS -> geo.rails().length > 0 ? geo.rails() : geo.pods();
+            case BOMBS -> geo.bombs().length > 0 ? geo.bombs() : geo.pods();
+        };
+        double[] p = pts[i % pts.length];
+        return toWorld(p[0], p[1] - (w.mount == HeliType.Mount.BOMBS ? 1.2 : 0), p[2] - 0.6);
     }
 
-    public Vec3 chinMuzzle() {
+    /** gun turret pivot (or the fixed cannon) in world space */
+    public Vec3 gunWorld() {
+        double[] c = geo.chin() != null ? geo.chin() : geo.cannon();
+        return toWorld(c[0], c[1], c[2]);
+    }
+
+    public Vec3 gunMuzzle() {
         Vec3 d = GunLogic.dir(getChinPitch(), this.getYRot() + getChinYaw());
-        return toWorld(CHIN_X, CHIN_Y - 0.15, CHIN_Z).add(d.scale(0.9));
+        if (geo.chin() != null) return gunWorld().add(0, -0.05, 0).add(d.scale((geo.chinLen() + 0.7) * UNIT));
+        return gunWorld().add(d.scale(0.2));
+    }
+
+    /** where guided missiles are steered from: the sight in the nose */
+    public Vec3 sightWorld() {
+        double[] n = geo.ends()[0];
+        return toWorld(n[0], n[1] - 0.6, n[2] + 0.5);
+    }
+
+    @Override
+    @Nullable
+    public Vec3[] beam() {
+        if (beamDir == null || getControllingPassenger() == null || this.tickCount - lastBeamShot > 240) return null;
+        return new Vec3[]{sightWorld(), beamDir};
     }
 
     private void weaponsTick() {
-        if (rocketCooldown > 0) rocketCooldown--;
+        if (storeCooldown > 0) storeCooldown--;
         if (gunCooldown > 0) gunCooldown--;
-        int reload = getRocketReload();
-        if (getRockets() <= 0 && reload == 0) {
-            this.entityData.set(DATA_RELOAD, ROCKET_RELOAD);
-        } else if (reload > 0) {
-            this.entityData.set(DATA_RELOAD, --reload);
-            if (reload == 0) {
-                this.entityData.set(DATA_ROCKETS, ROCKETS);
-                this.level().playSound(null, getX(), getY(), getZ(), Reg.sound("tank_reload"), SoundSource.NEUTRAL, 1.0f, 1.3f);
+        for (int i = 0; i < ammo.length; i++) {
+            Weapon w = kind.weapons[i];
+            if (ammo[i] <= 0 && reload[i] == 0) reload[i] = w.reload;
+            else if (reload[i] > 0 && --reload[i] == 0) {
+                ammo[i] = w.ammo;
+                if (i == getWeaponIndex()) this.level().playSound(null, getX(), getY(), getZ(), Reg.sound("tank_reload"), SoundSource.NEUTRAL, 1.0f, 1.3f);
             }
         }
+        int cur = getWeaponIndex();
+        if (this.entityData.get(DATA_AMMO) != ammo[cur]) this.entityData.set(DATA_AMMO, ammo[cur]);
+        if (this.entityData.get(DATA_RELOAD) != reload[cur]) this.entityData.set(DATA_RELOAD, reload[cur]);
         LivingEntity pilot = getControllingPassenger();
+        Entity front = seatEntity(1);
         if (pilot instanceof Player p) {
-            Vec3 look = p.getLookAngle();
-            aimChin(Mth.wrapDegrees(p.getYRot() - this.getYRot()), p.getXRot());
-            if (fireRockets) fireRocket(p, look);
-            if (fireGun && gunCooldown <= 0) fireGun(p, null);
+            beamDir = sightLine(p);
+            lockTick(p);
+            Player gunner = front instanceof Player g ? g : p;
+            aimGun(Mth.wrapDegrees(gunner.getYRot() - this.getYRot()), gunner.getXRot());
+            if (fireStores) fireStores(p, beamDir, lockedTarget());
+            boolean gun = front instanceof Player ? gunnerFire : fireGun;
+            if (gun && gunCooldown <= 0) fireGun(gunner, null);
         } else if (!(pilot instanceof BotEntity)) {
-            fireRockets = fireGun = false;
-            aimChin(0, 0);
+            fireStores = fireGun = gunnerFire = false;
+            beamDir = null;
+            setLock(-1, 0);
+            aimGun(0, 0);
         }
     }
 
-    private void aimChin(float yaw, float pitch) {
+    /** the pilot's line of sight from the nose sight to what he looks at */
+    private Vec3 sightLine(Player p) {
+        Vec3 eye = p.getEyePosition(), look = p.getLookAngle();
+        Vec3 far = eye.add(look.scale(320));
+        HitResult hr = this.level().clip(new ClipContext(eye.add(look.scale(3)), far, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
+        Vec3 at = hr.getType() == HitResult.Type.MISS ? far : hr.getLocation();
+        Vec3 d = at.subtract(sightWorld());
+        return d.lengthSqr() < 1e-4 ? look : d.normalize();
+    }
+
+    @Nullable
+    private Entity lockedTarget() {
+        if (getWeapon().guide != HeliType.Guide.LOCK || getLockProgress() < LOCK_TICKS) return null;
+        return this.level().getEntity(getLockTarget());
+    }
+
+    private void setLock(int id, int progress) {
+        if (getLockTarget() != id) this.entityData.set(DATA_LOCK, id);
+        if (getLockProgress() != progress) this.entityData.set(DATA_LOCK_PROGRESS, (byte) progress);
+    }
+
+    /** missiles that lock on: the pilot holds a target in the sight until the seeker has it */
+    private void lockTick(Player p) {
+        if (getWeapon().guide != HeliType.Guide.LOCK || ammo[getWeaponIndex()] <= 0) {
+            setLock(-1, 0);
+            return;
+        }
+        Vec3 eye = p.getEyePosition(), look = p.getLookAngle();
+        LivingEntity best = null;
+        double bestAng = LOCK_CONE;
+        AABB box = new AABB(eye, eye.add(look.scale(LOCK_RANGE))).inflate(14);
+        for (LivingEntity e : this.level().getEntitiesOfClass(LivingEntity.class, box, e -> e.isAlive() && e != this && e.getVehicle() != this
+                && !(e instanceof Player pl && pl.isCreative()) && VehicleEntity.shieldOf(e) == null && !BotTeam.friendly(p, e))) {
+            Vec3 c = e.position().add(0, e.getBbHeight() * 0.5, 0);
+            Vec3 to = c.subtract(eye);
+            double dist = to.length();
+            if (dist > LOCK_RANGE || dist < 6) continue;
+            double ang = Math.toDegrees(Math.acos(Mth.clamp(to.normalize().dot(look), -1, 1)));
+            // vehicles are what the seeker looks for
+            if (e instanceof VehicleEntity || e instanceof JeepEntity) ang -= 1.0;
+            if (ang >= bestAng) continue;
+            if (this.level().clip(new ClipContext(eye.add(look.scale(3)), c, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p)).getType() != HitResult.Type.MISS) continue;
+            bestAng = ang;
+            best = e;
+        }
+        int id = best == null ? -1 : best.getId();
+        if (id != lockCandidate) {
+            lockCandidate = id;
+            lockCount = 0;
+        } else if (id >= 0 && lockCount < LOCK_TICKS) {
+            lockCount++;
+            if (lockCount == LOCK_TICKS) this.level().playSound(null, getX(), getY(), getZ(), Reg.sound("lock_on"), SoundSource.NEUTRAL, 0.8f, 1f);
+        }
+        setLock(id, id < 0 ? 0 : lockCount);
+    }
+
+    private void aimGun(float yaw, float pitch) {
+        HeliType.Gun g = kind.gun;
         float cy = getChinYaw(), cp = getChinPitch();
-        float wy = Mth.clamp(yaw, -110f, 110f), wp = Mth.clamp(pitch, -15f, 60f);
+        float wy = Mth.clamp(yaw, -g.yawLimit, g.yawLimit), wp = Mth.clamp(pitch, g.pitchMin, g.pitchMax);
         this.entityData.set(DATA_CHIN_YAW, cy + Mth.clamp(Mth.wrapDegrees(wy - cy), -9f, 9f));
         this.entityData.set(DATA_CHIN_PITCH, cp + Mth.clamp(wp - cp, -6f, 6f));
     }
 
-    private void fireRocket(LivingEntity shooter, Vec3 dir) {
-        if (rocketCooldown > 0 || getRockets() <= 0 || rotor < 0.6f) return;
-        rocketCooldown = 4;
-        pod = 1 - pod;
-        Vec3 at = podWorld(pod);
-        RocketEntity r = new RocketEntity(this.level(), shooter, RocketEntity.HELI_ROCKET);
-        r.setPos(at.x, at.y, at.z);
-        r.setDeltaMovement(dir.normalize().scale(2.2).add(this.getDeltaMovement()));
-        r.alignToMotion();
-        this.level().addFreshEntity(r);
-        this.entityData.set(DATA_ROCKETS, getRockets() - 1);
-        this.level().playSound(null, at.x, at.y, at.z, Reg.sound("heli_rocket"), SoundSource.NEUTRAL, 5f, 0.9f + this.random.nextFloat() * 0.2f);
-        if (this.level() instanceof ServerLevel sl) {
-            PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, 128, new Net.MuzzleFx(at, dir.normalize(), 0.45f, this.getId()));
-            BotEntity.alertGunfire(sl, shooter, 96);
+    private void fireStores(LivingEntity shooter, Vec3 dir, @Nullable Entity lockOn) {
+        int wi = getWeaponIndex();
+        Weapon w = kind.weapons[wi];
+        if (storeCooldown > 0 || ammo[wi] <= 0 || rotor < 0.6f) return;
+        storeCooldown = w.cooldown;
+        mountIndex++;
+        Vec3 at = mountWorld(w, mountIndex);
+        ammo[wi]--;
+        switch (w.mount) {
+            case PODS -> {
+                RocketEntity r = new RocketEntity(this.level(), shooter, RocketEntity.HELI_ROCKET);
+                r.setPos(at.x, at.y, at.z);
+                Vec3 d = dir.normalize();
+                if (w == Weapon.S8) d = GunLogic.dir((float) -Math.toDegrees(Math.asin(Mth.clamp(d.y, -1, 1))) + (float) this.random.nextGaussian() * 0.6f,
+                        (float) (Mth.atan2(d.z, d.x) * Mth.RAD_TO_DEG) - 90f + (float) this.random.nextGaussian() * 0.6f);
+                r.setDeltaMovement(d.scale(2.2).add(this.getDeltaMovement()));
+                r.setPower(w.hitArmour, w.hitSoft, w.blast);
+                r.alignToMotion();
+                this.level().addFreshEntity(r);
+                this.level().playSound(null, at.x, at.y, at.z, Reg.sound("heli_rocket"), SoundSource.NEUTRAL, 5f, (w == Weapon.S8 ? 0.8f : 0.9f) + this.random.nextFloat() * 0.2f);
+                muzzleFx(at, d, 0.45f);
+            }
+            case RAILS -> {
+                int k = w == Weapon.HELLFIRE ? GuidedMissileEntity.HELLFIRE : w == Weapon.VIKHR ? GuidedMissileEntity.VIKHR : GuidedMissileEntity.SHTURM;
+                GuidedMissileEntity m = new GuidedMissileEntity(this.level(), shooter, k).power(w.hitArmour, w.hitSoft, w.blast);
+                m.setPos(at.x, at.y, at.z);
+                m.setDeltaMovement(dir.normalize().scale(1.3).add(this.getDeltaMovement()));
+                if (w.guide == HeliType.Guide.LOCK) m.target(lockOn);
+                else {
+                    m.guider(this);
+                    lastBeamShot = this.tickCount;
+                }
+                m.alignToMotion();
+                this.level().addFreshEntity(m);
+                this.level().playSound(null, at.x, at.y, at.z, Reg.sound("atgm_launch"), SoundSource.NEUTRAL, 6f, 0.95f + this.random.nextFloat() * 0.1f);
+                muzzleFx(at, dir.normalize(), 0.6f);
+            }
+            case BOMBS -> {
+                RocketEntity b = new RocketEntity(this.level(), shooter, RocketEntity.BOMB);
+                b.setPos(at.x, at.y, at.z);
+                b.setDeltaMovement(this.getDeltaMovement().add(0, -0.1, 0));
+                b.setPower(w.hitArmour, w.hitSoft, w.blast);
+                b.alignToMotion();
+                this.level().addFreshEntity(b);
+                this.level().playSound(null, at.x, at.y, at.z, Reg.sound("bomb_drop"), SoundSource.NEUTRAL, 4f, 1f);
+            }
         }
+        if (this.level() instanceof ServerLevel sl) BotEntity.alertGunfire(sl, shooter, 96);
+    }
+
+    private void muzzleFx(Vec3 at, Vec3 dir, float size) {
+        if (this.level() instanceof ServerLevel sl) PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, 128, new Net.MuzzleFx(at, dir, size, this.getId()));
     }
 
     private void fireGun(LivingEntity shooter, @Nullable Vec3 aimAt) {
-        gunCooldown = 3;
-        Vec3 muzzle = chinMuzzle();
+        HeliType.Gun g = kind.gun;
+        gunCooldown = g.cooldown;
+        Vec3 muzzle = gunMuzzle();
         Vec3 d = aimAt != null ? aimAt.subtract(muzzle).normalize() : GunLogic.dir(getChinPitch(), this.getYRot() + getChinYaw());
         float yaw = (float) (Mth.atan2(d.z, d.x) * Mth.RAD_TO_DEG) - 90f;
         float pitch = (float) -(Mth.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)) * Mth.RAD_TO_DEG);
-        Vec3 dir = GunLogic.dir(pitch + (float) this.random.nextGaussian() * 0.9f, yaw + (float) this.random.nextGaussian() * 0.9f);
-        GunLogic.Trace tr = GunLogic.trace(this.level(), shooter, muzzle, dir, 160);
-        if (tr.entity() != null && tr.entity() != this) GunLogic.damage(shooter, tr.entity(), 11f, false, GunType.M249);
+        Vec3 dir = GunLogic.dir(pitch + (float) this.random.nextGaussian() * g.spread, yaw + (float) this.random.nextGaussian() * g.spread);
+        GunLogic.Trace tr = GunLogic.trace(this.level(), shooter, muzzle, dir, 180);
+        if (tr.entity() != null && tr.entity() != this) GunLogic.damage(shooter, tr.entity(), g.damage, false, GunType.M249);
+        if (g.splash > 0 && tr.kind() != 0) {
+            // 30 mm high explosive: a small burst where it hits
+            Vec3 e = tr.end();
+            this.level().explode(this, e.x, e.y, e.z, g.splash, Level.ExplosionInteraction.NONE);
+            if (this.random.nextInt(3) == 0) Blast.fx(this.level(), e, Blast.FX_SMALL, 0.25f);
+        }
         List<Vec3> ends = new ArrayList<>();
         ends.add(tr.end().subtract(muzzle));
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, new Net.ShotFx(this.getId(), -3, muzzle, ends, new byte[]{tr.kind()}, false));
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, new Net.ShotFx(this.getId(), g.fx, muzzle, ends, new byte[]{tr.kind()}, false));
         if (this.level() instanceof ServerLevel sl) BotEntity.alertGunfire(sl, shooter, 80);
     }
 
@@ -396,111 +678,235 @@ public class HelicopterEntity extends VehicleEntity {
     private void botPilot(BotEntity bot) {
         if (--scanTimer <= 0) {
             scanTimer = 10;
-            LivingEntity t = TankEntity.scan(this, bot, 120, toWorld(8, 2, -9), bot.getTarget());
+            LivingEntity t = TankEntity.scan(this, bot, 140, sightWorld(), bot.getTarget());
             if (t != null && t != bot.getTarget()) {
                 bot.setTarget(t);
                 aimError = null;
+                if (phase == Phase.PATROL) startRelocate(t, true);
             }
         }
         LivingEntity t = bot.getTarget();
-        if (t != null && (!t.isAlive() || t.distanceToSqr(this) > 150 * 150)) t = null;
+        if (t != null && (!t.isAlive() || t.distanceToSqr(this) > 170 * 170)) t = null;
         // spool up on the ground first
         if (rotor < 0.92f) {
             fwdIn = turnIn = 0;
             liftIn = rotor > 0.8f ? 0.3f : 0f;
             return;
         }
-        Vec3 goal;
+        Vec3 goal, face;
         double clearance;
-        Vec3 face;
         if (t == null) {
-            attackRun = false;
+            beamDir = null;
+            setLock(-1, 0);
+            phase = Phase.PATROL;
             BlockPos h = home != null ? home : this.blockPosition();
-            if (patrolPos == null || horiz(patrolPos) < 16 || this.tickCount - patrolSince > 1200) {
-                patrolPos = patrolPoint(Vec3.atBottomCenterOf(h));
-                patrolSince = this.tickCount;
+            if (hoverLeft > 0) {
+                // a stop: hang in the air and look around
+                hoverLeft--;
+                goal = null;
+                face = this.position().add(forward());
+            } else {
+                if (patrolPos == null || this.tickCount - patrolSince > 1200) {
+                    patrolPos = patrolPoint(Vec3.atBottomCenterOf(h));
+                    patrolSince = this.tickCount;
+                }
+                if (horiz(patrolPos) < 14) {
+                    patrolPos = null;
+                    hoverLeft = 60 + this.random.nextInt(80);
+                    goal = null;
+                    face = this.position().add(forward());
+                } else {
+                    goal = patrolPos;
+                    face = goal;
+                }
             }
-            goal = patrolPos;
-            face = goal;
             clearance = 24;
-            aimChin(0, 10);
+            aimGun(0, 10);
         } else {
             bot.setAiming(true);
-            double dist = horiz(t.position());
             phaseTicks++;
-            Vec3 away = this.position().subtract(t.position()).multiply(1, 0, 1);
-            if (away.lengthSqr() < 0.01) away = new Vec3(1, 0, 0);
-            away = away.normalize();
-            if (attackRun) {
-                // nose on the target, close to rocket range, fire a salvo, then break away
-                goal = t.position().add(away.scale(42));
-                face = t.position();
-                if (phaseTicks > 200 || salvoLeft == 0 && phaseTicks > 30 && dist < 50) {
-                    attackRun = false;
-                    phaseTicks = 0;
+            double dist = horiz(t.position());
+            boolean see = sees(t);
+            hidden = see ? 0 : hidden + 1;
+            Weapon w = chooseWeapon(t);
+            double stand = w == null ? 40 : w.guide != HeliType.Guide.NONE ? 75 : w.mount == HeliType.Mount.BOMBS ? 40 : 52;
+            clearance = Math.max(12, t.getY() + 12 - groundY());
+            switch (phase) {
+                case RELOCATE -> {
+                    goal = standPoint(t, stand);
+                    face = goal;
+                    if (horiz(goal) < 10 || phaseTicks > 260) {
+                        phase = Phase.HOLD;
+                        phaseTicks = 0;
+                    }
                 }
-            } else {
-                // circle out to the side and come round again
-                double a = Math.toRadians(80);
-                Vec3 side = new Vec3(away.x * Math.cos(a) - away.z * Math.sin(a), 0, away.x * Math.sin(a) + away.z * Math.cos(a));
-                goal = t.position().add(side.scale(60));
-                face = goal;
-                if (phaseTicks > 90 || horiz(goal) < 15) {
-                    attackRun = true;
-                    phaseTicks = 0;
-                    salvoLeft = 4;
+                case BOMB_RUN -> {
+                    // straight over the target at bombing height, release when the bombs will land on it
+                    Vec3 away = t.position().subtract(this.position()).multiply(1, 0, 1);
+                    goal = t.position().add(away.lengthSqr() < 0.01 ? forward() : away.normalize().scale(45));
+                    face = bombed ? goal : t.position();
+                    clearance = Math.max(18, t.getY() + 20 - groundY());
+                    if (!bombed) bombRelease(bot, t, dist);
+                    if (bombed && dist > 40 || phaseTicks > 400) startRelocate(t, false);
+                }
+                default -> {
+                    // hold: hover facing the target at the stand-off distance and fire
+                    face = t.position();
+                    Vec3 away = this.position().subtract(t.position()).multiply(1, 0, 1);
+                    goal = Math.abs(dist - stand) > 12 && away.lengthSqr() > 0.01 ? t.position().add(away.normalize().scale(stand)) : null;
+                    if (see) botWeapons(bot, t, dist, w);
+                    if (hidden > 50 || phaseTicks > 180 + this.random.nextInt(120)) startRelocate(t, false);
+                    else if (kind == HeliType.HIND && phaseTicks > 60 && ammo[weaponOf(Weapon.BOMB)] > 0 && !(t instanceof HelicopterEntity)
+                            && this.random.nextInt(200) == 0) {
+                        phase = Phase.BOMB_RUN;
+                        phaseTicks = 0;
+                        bombed = false;
+                    }
                 }
             }
-            clearance = Math.max(12, t.getY() + 14 - groundY());
-            botWeapons(bot, t, dist);
         }
-        // fly: turn to the goal, keep the height above the terrain ahead
+        fly(goal, face, clearance);
+    }
+
+    private boolean sees(LivingEntity t) {
+        Vec3 c = t.position().add(0, t.getBbHeight() * 0.6, 0);
+        return this.level().clip(new ClipContext(sightWorld(), c, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)).getType() == HitResult.Type.MISS;
+    }
+
+    private void startRelocate(LivingEntity t, boolean first) {
+        Vec3 away = this.position().subtract(t.position());
+        double here = Math.atan2(away.z, away.x);
+        standAngle = first ? here : here + Math.toRadians((this.random.nextBoolean() ? 1 : -1) * (50 + this.random.nextInt(50)));
+        phase = Phase.RELOCATE;
+        phaseTicks = 0;
+        hidden = 0;
+    }
+
+    private Vec3 standPoint(LivingEntity t, double dist) {
+        return t.position().add(Math.cos(standAngle) * dist, 0, Math.sin(standAngle) * dist);
+    }
+
+    /** turn to {@code face}, fly to {@code goal} (or hover when null) and hold the height above the ground ahead */
+    private void fly(@Nullable Vec3 goal, Vec3 face, double clearance) {
         Vec3 to = face.subtract(this.position());
         float desired = (float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f;
         float diff = Mth.wrapDegrees(desired - this.getYRot());
         turnIn = Mth.clamp(diff / 22f, -1f, 1f);
-        double hd = horiz(goal);
-        if (attackRun && t != null) {
-            double dist = horiz(t.position());
-            fwdIn = Math.abs(diff) > 45 ? 0f : dist < 34 ? -0.5f : dist > 52 ? 0.8f : 0.15f;
+        Vec3 fwd = forward();
+        Vec3 v = this.getDeltaMovement();
+        double along = v.x * fwd.x + v.z * fwd.z;
+        if (goal == null) {
+            fwdIn = (float) Mth.clamp(-along * 3.0, -1.0, 1.0);
         } else {
-            fwdIn = Math.abs(diff) > 70 ? 0.1f : (float) Mth.clamp(hd / 30.0, 0.25, 1.0);
+            Vec3 g = goal.subtract(this.position());
+            double ahead = g.x * fwd.x + g.z * fwd.z;
+            double hd = Math.sqrt(g.x * g.x + g.z * g.z);
+            if (Math.abs(diff) > 70 && hd > 20) fwdIn = 0.1f;
+            else {
+                double want = Mth.clamp(ahead / 30.0, -0.6, 1.0) * kind.maxSpeed;
+                fwdIn = (float) Mth.clamp((want - along) * 4.0, -1.0, 1.0);
+            }
         }
         double ground = Math.max(groundY(), DriveAI.maxGround(this.level(), this.position(), forward(), 36 + airSpeed * 20));
         double wantY = ground + clearance;
         liftIn = (float) Mth.clamp((wantY - this.getY()) / 5.0, -1.0, 1.0);
     }
 
-    private void botWeapons(BotEntity bot, LivingEntity t, double dist) {
-        if (aimError == null) aimError = TankEntity.rollAimError(this.random);
-        Vec3 podPos = podWorld(pod);
-        boolean los = this.level().clip(new ClipContext(podPos, t.position().add(0, t.getBbHeight() * 0.5, 0), ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE, this)).getType() == HitResult.Type.MISS;
-        Vec3 to = t.position().subtract(this.position());
-        float bearing = Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f - this.getYRot());
-        // chin gun follows the target
-        Vec3 chinTo = t.position().add(0, t.getBbHeight() * 0.5, 0).subtract(toWorld(CHIN_X, CHIN_Y, CHIN_Z));
-        float cp = (float) -(Mth.atan2(chinTo.y, Math.sqrt(chinTo.x * chinTo.x + chinTo.z * chinTo.z)) * Mth.RAD_TO_DEG);
-        aimChin(bearing, cp);
-        if (attackRun && salvoLeft > 0 && los && Math.abs(bearing) < 8f && dist > 14 && dist < 90 && rocketCooldown <= 0) {
-            Vec3 aim = TankEntity.lead(podPos, t, ROCKET_SPEED, 0.004).add(aimError);
-            fireRocket(bot, aim.subtract(podPos));
-            rocketCooldown = 6;
-            salvoLeft--;
-            aimError = TankEntity.rollAimError(this.random);
+    private int weaponOf(Weapon w) {
+        for (int i = 0; i < kind.weapons.length; i++) if (kind.weapons[i] == w) return i;
+        return 0;
+    }
+
+    /** guided missiles for vehicles, rockets for groups on the ground, the gun for the rest; selects it */
+    @Nullable
+    private Weapon chooseWeapon(LivingEntity t) {
+        boolean vehicle = t instanceof VehicleEntity || t instanceof JeepEntity;
+        boolean air = t instanceof HelicopterEntity;
+        int pick = -1;
+        for (int i = 0; i < kind.weapons.length; i++) {
+            Weapon w = kind.weapons[i];
+            if (ammo[i] <= 0 || w.mount == HeliType.Mount.BOMBS) continue;
+            boolean guided = w.guide != HeliType.Guide.NONE;
+            if (air && !guided) continue;
+            if (pick < 0 || vehicle && guided && kind.weapons[pick].guide == HeliType.Guide.NONE
+                    || !vehicle && !guided && kind.weapons[pick].guide != HeliType.Guide.NONE) pick = i;
         }
-        boolean soft = !(t instanceof VehicleEntity) || !((VehicleEntity) t).isArmored();
-        if (soft && los && dist < 80 && Math.abs(Mth.wrapDegrees(bearing - getChinYaw())) < 6f) {
+        if (pick < 0) return null;
+        if (pick != getWeaponIndex()) this.entityData.set(DATA_WEAPON, (byte) pick);
+        return kind.weapons[pick];
+    }
+
+    private void botWeapons(BotEntity bot, LivingEntity t, double dist, @Nullable Weapon w) {
+        if (aimError == null) aimError = TankEntity.rollAimError(this.random);
+        Vec3 c = t.position().add(0, t.getBbHeight() * 0.5, 0);
+        Vec3 to = c.subtract(this.position());
+        float bearing = Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f - this.getYRot());
+        // the gun follows the target
+        Vec3 gunTo = c.subtract(gunWorld());
+        float gp = (float) -(Mth.atan2(gunTo.y, Math.sqrt(gunTo.x * gunTo.x + gunTo.z * gunTo.z)) * Mth.RAD_TO_DEG);
+        aimGun(bearing, gp);
+        beamDir = c.subtract(sightWorld()).normalize();
+        if (w != null && storeCooldown <= 0 && Math.abs(bearing) < (w.guide == HeliType.Guide.NONE ? 6f : 15f) && dist > 16 && dist < 130) {
+            int wi = getWeaponIndex();
+            if (w.guide == HeliType.Guide.LOCK) {
+                setLock(t.getId(), LOCK_TICKS);
+                if (this.tickCount - lastBeamShot > 50) {
+                    fireStores(bot, beamDir, t);
+                    lastBeamShot = this.tickCount;
+                }
+            } else if (w.guide == HeliType.Guide.BEAM) {
+                // one missile at a time: keep the sight on the target until it hits
+                if (this.tickCount - lastBeamShot > 70) fireStores(bot, beamDir, null);
+            } else if (dist < 95) {
+                if (salvoLeft <= 0 && this.random.nextInt(25) == 0) salvoLeft = w == Weapon.S8 ? 8 : 4;
+                if (salvoLeft > 0) {
+                    Vec3 pod = mountWorld(w, mountIndex + 1);
+                    Vec3 aim = TankEntity.lead(pod, t, 3.6, 0.004).add(aimError);
+                    fireStores(bot, aim.subtract(pod), null);
+                    salvoLeft--;
+                    aimError = TankEntity.rollAimError(this.random);
+                }
+            }
+            if (ammo[wi] <= 0) salvoLeft = 0;
+        }
+        boolean soft = !(t instanceof VehicleEntity v) || !v.isArmored();
+        float gunErr = Math.abs(Mth.wrapDegrees(bearing - getChinYaw()));
+        if (soft && dist < 90 && gunErr < (kind.gun.turret() ? 6f : 3f)) {
             if (gunPause > 0) gunPause--;
             else if (gunCooldown <= 0) {
-                Vec3 at = t.position().add(0, t.getBbHeight() * 0.5, 0);
+                Vec3 at = c;
                 if (this.random.nextFloat() >= 0.7f) at = at.add((this.random.nextDouble() - 0.5) * 4, 0, (this.random.nextDouble() - 0.5) * 4);
                 fireGun(bot, at);
-                if (++gunBurst >= 5 + this.random.nextInt(4)) {
+                if (++gunBurst >= (kind.gun == HeliType.Gun.YAKB ? 14 : 6) + this.random.nextInt(4)) {
                     gunBurst = 0;
                     gunPause = 20 + this.random.nextInt(20);
                 }
             }
+        }
+    }
+
+    private void bombRelease(BotEntity bot, LivingEntity t, double dist) {
+        int wi = weaponOf(Weapon.BOMB);
+        if (ammo[wi] <= 0) {
+            bombed = true;
+            return;
+        }
+        double h = Math.max(1, this.getY() - t.getY());
+        double fall = Math.sqrt(2 * h / 0.04);
+        double throwDist = airSpeed * fall * 0.9;
+        Vec3 to = t.position().subtract(this.position());
+        float bearing = Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f - this.getYRot());
+        if (Math.abs(bearing) < 12f && dist < throwDist + 3) {
+            int keep = getWeaponIndex();
+            this.entityData.set(DATA_WEAPON, (byte) wi);
+            storeCooldown = 0;
+            fireStores(bot, forward(), null);
+            if (ammo[wi] > 0) {
+                storeCooldown = 0;
+                fireStores(bot, forward(), null);
+            }
+            this.entityData.set(DATA_WEAPON, (byte) keep);
+            bombed = true;
         }
     }
 
@@ -528,5 +934,27 @@ public class HelicopterEntity extends VehicleEntity {
         double d = 60 + this.random.nextDouble() * 60;
         double a = dir * Mth.DEG_TO_RAD;
         return new Vec3(here.x - Math.sin(a) * d, here.y, here.z + Math.cos(a) * d);
+    }
+
+    // ------------------------------------------------------------------------------------ save
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putIntArray("Ammo", ammo.clone());
+        tag.putIntArray("Reloads", reload.clone());
+        tag.putInt("Flares", getFlares());
+        tag.putByte("Weapon", (byte) getWeaponIndex());
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        int[] a = tag.getIntArray("Ammo"), r = tag.getIntArray("Reloads");
+        for (int i = 0; i < ammo.length; i++) {
+            if (i < a.length) ammo[i] = Mth.clamp(a[i], 0, kind.weapons[i].ammo);
+            if (i < r.length) reload[i] = Math.max(0, r[i]);
+        }
+        if (tag.contains("Flares")) this.entityData.set(DATA_FLARES, Mth.clamp(tag.getInt("Flares"), 0, kind.flares));
+        this.entityData.set(DATA_WEAPON, (byte) Mth.clamp(tag.getByte("Weapon"), 0, kind.weapons.length - 1));
     }
 }

@@ -29,7 +29,7 @@ public class BotTargetGoal extends Goal {
         LivingEntity best = null;
         double bestScore = Double.MAX_VALUE;
         for (LivingEntity e : bot.level().getEntitiesOfClass(LivingEntity.class, bot.getBoundingBox().inflate(range, 16, range), bot::isEnemy)) {
-            if (e.getVehicle() instanceof VehicleEntity v && v.protectsCrew()) continue;   // the vehicle itself is the target
+            if (VehicleEntity.shieldOf(e) != null) continue;   // the vehicle itself is the target
             boolean see = bot.canSeeTarget(e);
             double d = bot.distanceTo(e);
             if (!see && d > 12 && e != bot.lastAttacker) continue;

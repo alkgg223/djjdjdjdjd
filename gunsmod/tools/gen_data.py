@@ -102,6 +102,7 @@ ITEMS = {
     "red_dot": ("Red Dot Sight", "منظار نقطة حمراء"), "holo_sight": ("Holographic Sight", "منظار هولوغرافي"), "acog": ("ACOG Scope 4x", "منظار ACOG"),
     "sniper_scope": ("Sniper Scope 8x", "منظار قناصة"), "suppressor": ("Suppressor", "كاتم صوت"), "compensator": ("Compensator", "معوض ارتداد"),
     "vertical_grip": ("Vertical Grip", "مقبض عمودي"), "angled_grip": ("Angled Grip", "مقبض مائل"), "laser_sight": ("Laser Sight", "مؤشر ليزر"),
+    "flashlight": ("Tactical Flashlight", "كشاف تكتيكي"),
     "extended_mag": ("Extended Magazine", "مخزن ممتد"), "frag_grenade": ("Frag Grenade", "قنبلة يدوية"), "smoke_grenade": ("Smoke Grenade", "قنبلة دخان"),
     "missile_he": ("HE Missile", "صاروخ شديد الانفجار"), "missile_cluster": ("Cluster Missile", "صاروخ عنقودي"), "missile_incendiary": ("Incendiary Missile", "صاروخ حارق"),
     "missile_thermobaric": ("Thermobaric Missile", "صاروخ فراغي حراري"), "missile_bunker_buster": ("Bunker Buster Missile", "صاروخ خارق للتحصينات"),
@@ -109,8 +110,25 @@ ITEMS = {
     "launch_remote": ("Launch Remote", "ريموت الإطلاق"), "dog_tag": ("Soldier Dog Tag", "قلادة الجندي"), "arena_tool": ("Battlefield Deployer", "مُنشئ ساحة الحرب"),
     "green_soldier": ("Green Soldier", "جندي أخضر"), "red_soldier": ("Red Soldier", "جندي أحمر"), "green_jeep": ("Green Military Jeep", "جيب عسكري أخضر"),
     "red_jeep": ("Red Military Jeep", "جيب عسكري أحمر"), "green_tank": ("Green Battle Tank", "دبابة خضراء"), "red_tank": ("Red Battle Tank", "دبابة حمراء"),
-    "green_helicopter": ("Green Attack Helicopter", "هليكوبتر هجومية خضراء"), "red_helicopter": ("Red Attack Helicopter", "هليكوبتر هجومية حمراء"), "steel_ingot": ("Steel Ingot", "سبيكة فولاذ"), "gun_parts": ("Gun Parts", "قطع أسلحة"),
+    "green_helicopter": ("Green AH-1 Cobra", "كوبرا AH-1 خضراء"), "red_helicopter": ("Red AH-1 Cobra", "كوبرا AH-1 حمراء"), "steel_ingot": ("Steel Ingot", "سبيكة فولاذ"), "gun_parts": ("Gun Parts", "قطع أسلحة"),
 }
+# v1.4 vehicles: item id -> (English name, Arabic name, English description, Arabic description)
+VEHICLES = {
+    "tank": ("M1A2 Abrams", "أبرامز M1A2", "Main battle tank: fast turbine, quick loader, balanced armour", "دبابة قتال رئيسية: محرك توربيني سريع وتلقيم سريع ودرع متوازن"),
+    "leopard": ("Leopard 2A6", "ليوبارد 2A6", "Fastest tank, long 120 mm L55 gun: flattest shot, fastest reload", "أسرع دبابة، مدفع 120 مم طويل: أدق طلقة وأسرع تلقيم"),
+    "t90": ("T-90A", "T-90A", "125 mm gun hits hardest, slow autoloader, low and agile", "مدفع 125 مم الأقوى ضرراً، ملقم آلي بطيء، منخفضة وسريعة الدوران"),
+    "challenger": ("Challenger 2", "تشالنجر 2", "Heaviest armour, slowest, HESH shells with a big blast", "أثقل درع وأبطأ حركة، قذائف HESH بانفجار كبير"),
+    "helicopter": ("AH-1 Cobra", "كوبرا AH-1", "Light and nimble: 20 mm chin gun, Hydra rockets", "خفيفة ورشيقة: رشاش 20 مم وصواريخ هايدرا"),
+    "apache": ("AH-64 Apache", "أباتشي AH-64", "30 mm chain gun, lock-on Hellfire missiles, Hydra rockets", "مدفع 30 مم، صواريخ هيلفاير بالقفل على الهدف، صواريخ هايدرا"),
+    "hind": ("Mi-24 Hind", "مي-24 هايند", "Flying tank: 12.7 mm gatling, S-8 salvos, FAB-250 bombs, Shturm missiles, carries 4", "دبابة طائرة: رشاش 12.7 دوار، رشقات S-8، قنابل FAB-250، صواريخ شتورم، تحمل 4"),
+    "ka52": ("Ka-52 Alligator", "كا-52 أليغاتور", "Coaxial rotors, turns fastest: 30 mm cannon, laser-guided Vikhr missiles, S-8", "مراوح متحدة المحور وأسرع دوران: مدفع 30 مم، صواريخ فيخر الموجهة بالليزر، S-8"),
+    "tow_humvee": ("TOW Humvee", "همفي TOW", "Humvee with a TOW anti-tank missile launcher: the missile flies where the gunner aims", "همفي بقاذف صواريخ TOW المضادة للدروع: الصاروخ يطير إلى حيث يصوب الرامي"),
+    "btr82": ("BTR-82A", "BTR-82A", "8x8 armoured carrier: 30 mm cannon, machine gun, carries 3 on top, swims", "ناقلة جند مدرعة 8×8: مدفع 30 مم ورشاش، تحمل 3 فوقها، تسبح"),
+    "pantsir": ("Pantsir-S1", "بانتسير-S1", "Air defence: radar, 12 guided missiles, twin 30 mm guns; only hits aircraft", "دفاع جوي: رادار و12 صاروخاً موجهاً ومدفعان 30 مم مزدوجان؛ يصيب الطائرات فقط"),
+}
+for v, (e, a, de, da) in VEHICLES.items():
+    ITEMS["green_" + v] = ("Green " + e, a + " خضراء")
+    ITEMS["red_" + v] = ("Red " + e, a + " حمراء")
 BLOCKN = {
     "weapon_workbench": ("Weapon Workbench", "طاولة صنع الأسلحة"), "modification_table": ("Gunsmith Table", "طاولة تعديل الأسلحة"),
     "ammo_crate": ("Ammo Supply Crate", "صندوق إمداد الذخيرة"), "missile_launcher": ("Missile Launch Station", "محطة إطلاق الصواريخ"),
@@ -133,7 +151,32 @@ for k, (e, a) in BLOCKN.items():
 T = {
     "entity.gunsmod.soldier": ("Soldier", "جندي"), "entity.gunsmod.jeep": ("Military Jeep", "جيب عسكري"), "entity.gunsmod.rocket": ("Rocket", "صاروخ"),
     "entity.gunsmod.grenade": ("Grenade", "قنبلة"), "entity.gunsmod.missile": ("Missile", "صاروخ موجه"),
-    "entity.gunsmod.tank": ("Battle Tank", "دبابة"), "entity.gunsmod.helicopter": ("Attack Helicopter", "هليكوبتر هجومية"),
+    "entity.gunsmod.tank": ("M1A2 Abrams", "أبرامز M1A2"), "entity.gunsmod.helicopter": ("AH-1 Cobra", "كوبرا AH-1"),
+    "entity.gunsmod.tank_leopard": ("Leopard 2A6", "ليوبارد 2A6"), "entity.gunsmod.tank_t90": ("T-90A", "T-90A"),
+    "entity.gunsmod.tank_challenger": ("Challenger 2", "تشالنجر 2"), "entity.gunsmod.heli_apache": ("AH-64 Apache", "أباتشي AH-64"),
+    "entity.gunsmod.heli_hind": ("Mi-24 Hind", "مي-24 هايند"), "entity.gunsmod.heli_ka52": ("Ka-52 Alligator", "كا-52 أليغاتور"),
+    "entity.gunsmod.jeep_tow": ("TOW Humvee", "همفي TOW"), "entity.gunsmod.btr82": ("BTR-82A", "BTR-82A"), "entity.gunsmod.pantsir": ("Pantsir-S1", "بانتسير-S1"),
+    "entity.gunsmod.guided_missile": ("Guided Missile", "صاروخ موجه"), "entity.gunsmod.flare": ("Flare", "شعلة تمويه"),
+    "gunsmod.desc.flashlight": ("Weapon light: a real beam that lights up the dark", "كشاف للسلاح: شعاع حقيقي يضيء الظلام"),
+    "gunsmod.seat.heli_gunner": ("Gunner (works the gun)", "الرامي (يتحكم بالرشاش)"), "gunsmod.seat.passenger": ("Passenger", "راكب"),
+    "gunsmod.hud.weapon_ammo": ("%s: %s", "%s: %s"), "gunsmod.hud.weapon_loading": ("%s: reloading", "%s: تعبئة"),
+    "gunsmod.hud.flares": ("FLARES %s", "شعلات %s"), "gunsmod.hud.missile_warning": ("MISSILE!", "صاروخ!"),
+    "gunsmod.hud.radar_warning": ("RADAR LOCK", "رادار يتتبعك"), "gunsmod.hud.radar_locked": ("LOCKED", "تم القفل"),
+    "gunsmod.hud.radar_tracking": ("TRACKING", "تتبع"), "gunsmod.hud.radar_search": ("SEARCH", "بحث"),
+    "gunsmod.hud.tow_ready": ("TOW READY", "صاروخ TOW جاهز"), "gunsmod.hud.tow_loading": ("TOW: reloading", "TOW: تعبئة"),
+    "gunsmod.hud.btr_hint": ("WASD drive  |  Attack: 30 mm  |  Use: machine gun", "WASD قيادة  |  ضغط: مدفع 30 مم  |  يمين: رشاش"),
+    "gunsmod.hud.pantsir_hint": ("Keep a helicopter in the sight until LOCKED  |  Attack: missile  |  Use: 30 mm guns",
+                                 "ثبّت الهليكوبتر في المنظار حتى القفل  |  ضغط: صاروخ  |  يمين: مدافع 30 مم"),
+    "gunsmod.weapon.hydra": ("Hydra rockets", "صواريخ هايدرا"), "gunsmod.weapon.s8": ("S-8 rockets", "صواريخ S-8"),
+    "gunsmod.weapon.hellfire": ("Hellfire", "هيلفاير"), "gunsmod.weapon.vikhr": ("Vikhr", "فيخر"), "gunsmod.weapon.shturm": ("Shturm", "شتورم"),
+    "gunsmod.weapon.bomb": ("FAB-250 bombs", "قنابل FAB-250"), "gunsmod.weapon.sam": ("SAM", "صواريخ أرض-جو"), "gunsmod.weapon.cannon30": ("30 mm", "30 مم"),
+    "key.gunsmod.flares": ("Helicopter: flares", "الهليكوبتر: شعلات التمويه"),
+    "gunsmod.tip.tow_humvee1": ("Gunner: aim and attack to fire, then keep the sight on the target", "الرامي: صوّب واضغط للإطلاق ثم ثبّت المنظار على الهدف"),
+    "gunsmod.tip.tow_humvee2": ("Driver and passengers are protected until it is destroyed", "السائق والركاب محميون حتى تُدمَّر"),
+    "gunsmod.tip.btr821": ("Commander drives and fires: attack 30 mm, use machine gun", "القائد يقود ويطلق: ضغط مدفع 30 مم، يمين رشاش"),
+    "gunsmod.tip.btr822": ("3 passengers ride protected | swims | iron: repair", "3 ركاب محميون | تسبح | الحديد: تصليح"),
+    "gunsmod.tip.pantsir1": ("Radar finds helicopters: hold one in the sight until LOCKED, attack fires a missile", "الرادار يكشف الهليكوبترات: ثبتها في المنظار حتى القفل ثم اضغط لإطلاق صاروخ"),
+    "gunsmod.tip.pantsir2": ("Use: radar-directed 30 mm guns | never hits ground targets", "يمين: مدافع 30 مم موجهة بالرادار | لا تصيب الأهداف الأرضية"),
     "gunsmod.category.pistol": ("Pistol", "مسدس"), "gunsmod.category.smg": ("Submachine Gun", "رشاش قصير"), "gunsmod.category.rifle": ("Assault Rifle", "بندقية هجومية"),
     "gunsmod.category.shotgun": ("Shotgun", "شوزن"), "gunsmod.category.sniper": ("Sniper Rifle", "قناصة"), "gunsmod.category.heavy": ("Heavy Weapon", "سلاح ثقيل"),
     "gunsmod.category.explosive": ("Explosive Launcher", "قاذف متفجرات"), "gunsmod.category.special": ("Special Weapon", "سلاح خاص"),
@@ -161,11 +204,11 @@ T = {
     "gunsmod.tip.tank2": ("Iron ingot / iron block: repair", "سبيكة / بلوك حديد: تصليح"),
     "gunsmod.desc.heli": ("Attack helicopter with rockets and a chin gun", "هليكوبتر هجومية بصواريخ ورشاش أمامي"),
     "gunsmod.tip.heli1": ("W/S: nose down/up | A/D: turn | Jump: climb | Sneak: descend, get out once landed", "W/S: للأمام/للخلف | A/D: دوران | قفز: صعود | شفت: نزول، والخروج بعد الهبوط"),
-    "gunsmod.tip.heli2": ("Attack: rockets | Use: chin gun | iron: repair", "ضغط: صواريخ | كليك يمين: رشاش | حديد: تصليح"),
+    "gunsmod.tip.heli2": ("Attack: weapon | Use: gun | R: next weapon | X: flares | iron: repair", "ضغط: السلاح | يمين: الرشاش | R: السلاح التالي | X: شعلات | حديد: تصليح"),
     "gunsmod.tip.spawner_hint": ("Use it on a Vehicle Spawner to keep one in service", "استخدمه على مولّد المركبات ليعيد إنتاجها دائماً"),
     "gunsmod.msg.no_room_vehicle": ("Not enough room for this vehicle", "لا توجد مساحة كافية لهذه المركبة"),
     "gunsmod.msg.spawner_set": ("Spawner: %s", "المولّد: %s"),
-    "gunsmod.msg.spawner_empty": ("Use a jeep, tank or helicopter on the spawner", "استخدم جيب أو دبابة أو هليكوبتر على المولّد"),
+    "gunsmod.msg.spawner_empty": ("Use any vehicle item on the spawner", "استخدم أي مركبة على المولّد"),
     "gunsmod.msg.spawner_cleared": ("Vehicle taken back", "تم استرجاع المركبة"),
     "gunsmod.msg.spawner_wait": ("%s returns in %s s", "%s تعود بعد %s ث"),
     "gunsmod.msg.spawner_out": ("%s is out; a new one comes when it is destroyed", "%s في الخدمة؛ تأتي واحدة جديدة عندما تُدمَّر"),
@@ -175,7 +218,8 @@ T = {
     "gunsmod.hud.rockets": ("Rockets: %s", "الصواريخ: %s"), "gunsmod.hud.rockets_loading": ("Rockets: reloading", "الصواريخ: تعبئة"),
     "gunsmod.hud.altitude": ("ALT %s m", "الارتفاع %s م"), "gunsmod.hud.climb": ("V/S %s", "عمودي %s"), "gunsmod.hud.rotor": ("ROTOR %s%%", "المروحة %s%%"),
     "gunsmod.hud.pull_up": ("PULL UP", "ارتفع!"),
-    "gunsmod.hud.heli_hint": ("W/S fly  A/D turn  Jump up  Sneak down  |  Attack: rockets  Use: gun", "W/S طيران  A/D دوران  قفز صعود  شفت نزول  |  ضغط: صواريخ  يمين: رشاش"),
+    "gunsmod.hud.heli_hint": ("W/S fly  A/D turn  Jump up  Sneak down  |  Attack: weapon  Use: gun  [%s] next weapon  [%s] flares",
+                              "W/S طيران  A/D دوران  قفز صعود  شفت نزول  |  ضغط: السلاح  يمين: الرشاش  [%s] السلاح التالي  [%s] الشعلات"),
     "gunsmod.state.patrol": ("Patrolling", "في دورية"), "gunsmod.state.combat": ("In combat", "يقاتل"), "gunsmod.state.vehicle": ("In a vehicle", "في مركبة"),
     "gunsmod.ui.patrols": ("Patrols on its own", "يتحرك بمفرده"),
     "gunsmod.tip.arena_tool": ("Use on the ground twice to build", "استخدمه على الأرض مرتين للبناء"),
@@ -302,6 +346,9 @@ T = {
 for k, (e, a) in T.items():
     EN[k] = e
     AR[k] = a
+for v, (e, a, de, da) in VEHICLES.items():
+    EN["gunsmod.desc.vehicle." + v] = de
+    AR["gunsmod.desc.vehicle." + v] = da
 
 SUB = {"gunshot": ("Gunshot", "إطلاق نار"), "gunshot_suppressed": ("Suppressed shot", "طلقة مكتومة"), "grenade_launch": ("Grenade launched", "إطلاق قنبلة"),
        "rocket_launch": ("Rocket launched", "إطلاق صاروخ"), "flamethrower": ("Flamethrower roars", "هدير قاذف اللهب"), "dry_fire": ("Gun clicks", "نقرة سلاح فارغ"),
@@ -314,7 +361,11 @@ SUB = {"gunshot": ("Gunshot", "إطلاق نار"), "gunshot_suppressed": ("Supp
        "explosion_far": ("Distant explosion", "انفجار بعيد"), "missile_incoming": ("Incoming missile!", "صاروخ قادم!"),
        "tank_engine": ("Tank engine", "محرك الدبابة"), "tank_fire": ("Tank gun fires", "إطلاق مدفع الدبابة"), "tank_reload": ("Gun loaded", "تلقيم المدفع"),
        "heli_rotor": ("Helicopter rotor", "مروحة الهليكوبتر"), "heli_start": ("Turbine starts", "تشغيل التوربين"),
-       "heli_rocket": ("Rocket fired", "إطلاق صاروخ"), "heli_gun": ("Chin gun fires", "إطلاق الرشاش الأمامي")}
+       "heli_rocket": ("Rocket fired", "إطلاق صاروخ"), "heli_gun": ("Chin gun fires", "إطلاق الرشاش الأمامي"),
+       "flare": ("Flares released", "إطلاق شعلات التمويه"), "missile_warning": ("Missile warning", "إنذار صاروخ"), "lock_tone": ("Seeker tone", "نغمة الباحث"),
+       "lock_on": ("Target locked", "تم القفل على الهدف"), "atgm_launch": ("Guided missile launched", "إطلاق صاروخ موجه"),
+       "sam_launch": ("Surface-to-air missile launched", "إطلاق صاروخ أرض-جو"), "cannon_30": ("30 mm cannon fires", "إطلاق مدفع 30 مم"),
+       "bomb_drop": ("Bomb released", "إلقاء قنبلة"), "radar_ping": ("Radar sweep", "مسح الرادار")}
 sounds = json.load(open(os.path.join(A, "sounds.json")))
 for name, s in sounds.items():
     key = s["subtitle"]

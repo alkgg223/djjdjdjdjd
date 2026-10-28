@@ -87,7 +87,7 @@ public final class GunLogic {
         if (e == shooter || !e.isAlive() || e.isSpectator() || !e.isPickable()) return false;
         if (shooter.getVehicle() != null && (e == shooter.getVehicle() || e.getVehicle() == shooter.getVehicle())) return false;
         if (e.getVehicle() == shooter) return false;
-        if (e.getVehicle() instanceof VehicleEntity v && v.protectsCrew()) return false;   // the armour takes the hit
+        if (VehicleEntity.shieldOf(e) != null) return false;   // the vehicle takes the hit
         return !BotTeam.friendly(shooter, e);
     }
 

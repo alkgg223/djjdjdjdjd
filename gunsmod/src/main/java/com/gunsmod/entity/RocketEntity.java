@@ -19,11 +19,13 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-/** RPG rocket, 40 mm grenade, 120 mm tank shell or helicopter rocket. Vehicle rounds hurt but never break blocks. */
+/** RPG rocket, 40 mm grenade, tank shell, helicopter rocket or aircraft bomb. Vehicle rounds hurt but never break blocks. */
 public class RocketEntity extends Projectile {
-    public static final int RPG = 0, GRENADE = 1, TANK_SHELL = 2, HELI_ROCKET = 3;
+    public static final int RPG = 0, GRENADE = 1, TANK_SHELL = 2, HELI_ROCKET = 3, BOMB = 4;
     private static final EntityDataAccessor<Byte> DATA_KIND = SynchedEntityData.defineId(RocketEntity.class, EntityDataSerializers.BYTE);
     private int life;
+    /** vehicle rounds: direct hit damage against armour / everything else and the blast power (set by the vehicle) */
+    private float hitArmour = -1, hitSoft = -1, blast = -1;
 
     public RocketEntity(EntityType<? extends RocketEntity> type, Level level) {
         super(type, level);
@@ -49,6 +51,12 @@ public class RocketEntity extends Projectile {
         return getKind() >= TANK_SHELL;
     }
 
+    public void setPower(float armour, float soft, float blastPower) {
+        hitArmour = armour;
+        hitSoft = soft;
+        blast = blastPower;
+    }
+
     /** point the entity along its velocity (for the first rendered frame) */
     public void alignToMotion() {
         Vec3 v = this.getDeltaMovement();
@@ -63,7 +71,7 @@ public class RocketEntity extends Projectile {
     protected boolean canHitEntity(Entity e) {
         Entity owner = this.getOwner();
         if (owner != null && (e == owner.getVehicle() || e.getVehicle() == owner.getVehicle() && owner.getVehicle() != null)) return false;
-        if (e.getVehicle() instanceof VehicleEntity v && v.protectsCrew()) return false;    // the round hits the vehicle
+        if (VehicleEntity.shieldOf(e) != null) return false;    // the round hits the vehicle
         return super.canHitEntity(e) && !BotTeam.friendly(owner, e);
     }
 
@@ -88,6 +96,7 @@ public class RocketEntity extends Projectile {
                 v = v.add(0, -0.006, 0);
             }
             case TANK_SHELL -> v = v.add(0, -0.03, 0);
+            case BOMB -> v = v.scale(0.995).add(0, -0.04, 0);
             case HELI_ROCKET -> {
                 if (v.length() < 4.2) v = v.scale(1.06);
                 v = v.add(0, -0.004, 0);
@@ -108,7 +117,11 @@ public class RocketEntity extends Projectile {
                     this.level().addParticle(Reg.SMOKE.get(), getX() - v.x * f, getY() - v.y * f, getZ() - v.z * f, 0, 0.01, 0);
                 }
                 this.level().addParticle(Reg.FLAME.get(), getX() - v.x * 0.15, getY() - v.y * 0.15, getZ() - v.z * 0.15, -v.x * 0.04, -v.y * 0.04, -v.z * 0.04);
+                FxHooks.light.accept(this, 12);
+            } else if (getKind() == BOMB) {
+                // falls silently, no trail
             } else if (getKind() == 0) {
+                FxHooks.light.accept(this, 11);
                 for (int i = 0; i < 3; i++) {
                     double f = i / 3.0;
                     this.level().addParticle(Reg.SMOKE.get(), getX() - v.x * f, getY() - v.y * f, getZ() - v.z * f, 0, 0.01, 0);
@@ -117,7 +130,7 @@ public class RocketEntity extends Projectile {
             } else if (life % 2 == 0) {
                 this.level().addParticle(ParticleTypes.SMOKE, getX(), getY(), getZ(), 0, 0, 0);
             }
-        } else if (isVehicleRound() && life > 110) {
+        } else if (isVehicleRound() && life > (getKind() == BOMB ? 400 : 110)) {
             this.discard();
         } else if (life > 240 || this.isInWater() && getKind() == 1) {
             detonate(this.position());
@@ -129,7 +142,8 @@ public class RocketEntity extends Projectile {
         if (!isVehicleRound()) return;
         Entity owner = this.getOwner();
         boolean armour = e instanceof VehicleEntity || e instanceof JeepEntity;
-        float dmg = getKind() == TANK_SHELL ? (armour ? 55f : 40f) : (armour ? 16f : 14f);
+        float dmg = armour && hitArmour >= 0 ? hitArmour : !armour && hitSoft >= 0 ? hitSoft
+                : getKind() == TANK_SHELL ? (armour ? 55f : 40f) : (armour ? 16f : 14f);
         e.invulnerableTime = 0;
         e.hurt(this.damageSources().explosion(this, owner), dmg);
         e.invulnerableTime = 0;
@@ -140,7 +154,9 @@ public class RocketEntity extends Projectile {
         if (isVehicleRound()) {
             // same blast as the launch station missiles, but the terrain stays as it is
             boolean shell = getKind() == TANK_SHELL;
-            Blast.explode(this.level(), this, at, shell ? 3.2f : 2.6f, false, Level.ExplosionInteraction.NONE, Blast.FX_MISSILE, shell ? 1.15f : 0.85f);
+            float power = blast > 0 ? blast : shell ? 3.2f : 2.6f;
+            Blast.explode(this.level(), this, at, power, false, Level.ExplosionInteraction.NONE, Blast.FX_MISSILE,
+                    getKind() == BOMB ? 1.9f : power * 0.36f);
             this.discard();
             return;
         }

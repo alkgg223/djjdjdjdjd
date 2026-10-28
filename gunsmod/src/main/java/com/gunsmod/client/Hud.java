@@ -1,7 +1,9 @@
 package com.gunsmod.client;
 
 import com.gunsmod.Reg;
+import com.gunsmod.entity.ArmoredCarEntity;
 import com.gunsmod.entity.BotEntity;
+import com.gunsmod.entity.HeliType;
 import com.gunsmod.entity.HelicopterEntity;
 import com.gunsmod.entity.JeepEntity;
 import com.gunsmod.entity.TankEntity;
@@ -24,6 +26,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 
 /** HUD layers: ammo counter, dynamic crosshair, hit marker, sniper scope, vehicle speedometer, soldier info. */
 public final class Hud {
@@ -70,6 +73,28 @@ public final class Hud {
         int cx = g.guiWidth() / 2, cy = g.guiHeight() / 2;
         if (p.getVehicle() instanceof TankEntity tank && tank.getControllingPassenger() == p) {
             tankReticle(g, mc, p, tank, cx, cy, dt.getGameTimeDeltaPartialTick(true));
+            hitMarker(g, cx, cy);
+            return;
+        }
+        float pt = dt.getGameTimeDeltaPartialTick(true);
+        if (p.getVehicle() instanceof ArmoredCarEntity car && car.getControllingPassenger() == p) {
+            carReticle(g, mc, p, car, cx, cy, pt);
+            hitMarker(g, cx, cy);
+            return;
+        }
+        if (p.getVehicle() instanceof HelicopterEntity heli && heli.firesFor(p)) {
+            heliReticle(g, mc, p, heli, cx, cy, pt);
+            hitMarker(g, cx, cy);
+            return;
+        }
+        if (p.getVehicle() instanceof JeepEntity jeep && jeep.isGunner(p) && jeep.tow) {
+            int col = jeep.towReloadFraction() > 0 ? 0xE0FFA030 : 0xE040FF60;
+            g.fill(cx - 20, cy, cx - 5, cy + 1, col);
+            g.fill(cx + 6, cy, cx + 21, cy + 1, col);
+            g.fill(cx, cy - 12, cx + 1, cy - 4, col);
+            g.fill(cx, cy + 5, cx + 1, cy + 13, col);
+            g.fill(cx - 20, cy - 8, cx - 19, cy + 9, col);
+            g.fill(cx + 20, cy - 8, cx + 21, cy + 9, col);
             hitMarker(g, cx, cy);
             return;
         }
@@ -136,9 +161,107 @@ public final class Hud {
         g.fill(gx - 3, gy + 8, gx + 4, gy + 9, col);
         g.fill(gx - 1, gy - 1, gx + 2, gy + 2, col);
         if (!loaded) {
-            float k = 1f - tank.getReload() / (float) TankEntity.RELOAD;
+            float k = 1f - tank.getReload() / (float) tank.kind.reload;
             g.fill(gx - 15, gy + 16, gx + 16, gy + 18, 0x80000000);
             g.fill(gx - 15, gy + 16, gx - 15 + (int) (31 * k), gy + 18, 0xFFFFA030);
+        }
+    }
+
+    /** screen position of a world point (small angle projection around the view centre), or null when behind */
+    private static int[] project(Minecraft mc, LocalPlayer p, Vec3 at, int cx, int cy, float pt, double guiH) {
+        Vec3 eye = p.getEyePosition(pt);
+        Vec3 d = at.subtract(eye);
+        float yaw = (float) (Mth.atan2(d.z, d.x) * Mth.RAD_TO_DEG) - 90f;
+        float pitch = (float) -(Mth.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)) * Mth.RAD_TO_DEG);
+        float dyaw = Mth.wrapDegrees(yaw - p.getViewYRot(pt)), dpitch = pitch - p.getViewXRot(pt);
+        if (Math.abs(dyaw) > 75 || Math.abs(dpitch) > 75) return null;
+        double f = (guiH / 2.0) / Math.tan(Math.toRadians(mc.options.fov().get() / 2.0));
+        return new int[]{cx + (int) Math.round(Math.tan(Math.toRadians(dyaw)) * f), cy + (int) Math.round(Math.tan(Math.toRadians(dpitch)) * f)};
+    }
+
+    /** square brackets round a target: dashed while the seeker works, solid red when locked */
+    private static void lockBox(GuiGraphics g, int x, int y, float progress, boolean blink) {
+        int r = 14 - (int) (progress * 4);
+        int col = progress >= 1f ? 0xFFFF3030 : 0xE0FFD040;
+        if (progress < 1f && blink) col = 0x80FFD040;
+        g.fill(x - r, y - r, x - r + 6, y - r + 1, col);
+        g.fill(x - r, y - r, x - r + 1, y - r + 6, col);
+        g.fill(x + r - 5, y - r, x + r + 1, y - r + 1, col);
+        g.fill(x + r, y - r, x + r + 1, y - r + 6, col);
+        g.fill(x - r, y + r, x - r + 6, y + r + 1, col);
+        g.fill(x - r, y + r - 5, x - r + 1, y + r + 1, col);
+        g.fill(x + r - 5, y + r, x + r + 1, y + r + 1, col);
+        g.fill(x + r, y + r - 5, x + r + 1, y + r + 1, col);
+        if (progress >= 1f) g.fill(x - 1, y - 1, x + 2, y + 2, col);
+    }
+
+    private static void heliReticle(GuiGraphics g, Minecraft mc, LocalPlayer p, HelicopterEntity heli, int cx, int cy, float pt) {
+        // where the gun points
+        float gunYaw = Mth.rotLerp(pt, heli.yRotO, heli.getYRot()) + Mth.lerp(pt, heli.prevChinYaw, heli.getChinYaw());
+        float dyaw = Mth.wrapDegrees(gunYaw - p.getViewYRot(pt));
+        float dpitch = Mth.lerp(pt, heli.prevChinPitch, heli.getChinPitch()) - p.getViewXRot(pt);
+        double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(mc.options.fov().get() / 2.0));
+        if (Math.abs(dyaw) < 70 && Math.abs(dpitch) < 70) {
+            int gx = cx + (int) Math.round(Math.tan(Math.toRadians(dyaw)) * f), gy = cy + (int) Math.round(Math.tan(Math.toRadians(dpitch)) * f);
+            g.fill(gx - 6, gy, gx - 2, gy + 1, 0xE0A0FFA0);
+            g.fill(gx + 3, gy, gx + 7, gy + 1, 0xE0A0FFA0);
+            g.fill(gx, gy - 6, gx + 1, gy - 2, 0xE0A0FFA0);
+            g.fill(gx, gy + 3, gx + 1, gy + 7, 0xE0A0FFA0);
+        }
+        // pilot's sight: a circle with a centre dot
+        int col = 0xC0E0FFE0;
+        for (int i = 0; i < 32; i++) {
+            double a = i * Math.PI * 2 / 32;
+            int x = cx + (int) Math.round(Math.cos(a) * 18), y = cy + (int) Math.round(Math.sin(a) * 18);
+            g.fill(x, y, x + 1, y + 1, col);
+        }
+        g.fill(cx, cy, cx + 1, cy + 1, col);
+        int lock = heli.getLockTarget();
+        if (lock >= 0 && heli.getWeapon().guide == com.gunsmod.entity.HeliType.Guide.LOCK) {
+            Entity t = mc.level.getEntity(lock);
+            if (t != null) {
+                int[] s = project(mc, p, t.getPosition(pt).add(0, t.getBbHeight() * 0.5, 0), cx, cy, pt, g.guiHeight());
+                if (s != null) lockBox(g, s[0], s[1], heli.getLockProgress() / (float) HelicopterEntity.LOCK_TICKS, (p.tickCount / 3) % 2 == 0);
+            }
+        }
+    }
+
+    private static void carReticle(GuiGraphics g, Minecraft mc, LocalPlayer p, ArmoredCarEntity car, int cx, int cy, float pt) {
+        float gunYaw = Mth.rotLerp(pt, car.yRotO, car.getYRot()) + Mth.rotLerp(pt, car.prevTurret, car.getTurretYaw());
+        float dyaw = Mth.wrapDegrees(gunYaw - p.getViewYRot(pt));
+        float dpitch = Mth.lerp(pt, car.prevGun, car.getGunPitch()) - p.getViewXRot(pt);
+        double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(mc.options.fov().get() / 2.0));
+        boolean ok = Math.abs(dyaw) < 80 && Math.abs(dpitch) < 80;
+        int gx = cx + (ok ? (int) Math.round(Math.tan(Math.toRadians(dyaw)) * f) : 0);
+        int gy = cy + (ok ? (int) Math.round(Math.tan(Math.toRadians(dpitch)) * f) : 0);
+        int col = car.getReload() > 0 ? 0xE0FFA030 : 0xE040FF60;
+        g.fill(cx, cy, cx + 1, cy + 1, 0x90FFFFFF);
+        if (car.kind.antiAir()) {
+            // anti-aircraft sight: ring with lead marks
+            for (int i = 0; i < 40; i++) {
+                double a = i * Math.PI * 2 / 40;
+                int x = gx + (int) Math.round(Math.cos(a) * 22), y = gy + (int) Math.round(Math.sin(a) * 22);
+                g.fill(x, y, x + 1, y + 1, col);
+            }
+            for (int i = 0; i < 4; i++) {
+                double a = i * Math.PI / 2;
+                int x = gx + (int) Math.round(Math.cos(a) * 11), y = gy + (int) Math.round(Math.sin(a) * 11);
+                g.fill(x - 1, y - 1, x + 1, y + 1, col);
+            }
+            int tr = car.getTrack();
+            if (tr >= 0) {
+                Entity t = mc.level.getEntity(tr);
+                if (t != null) {
+                    int[] s = project(mc, p, t.getPosition(pt).add(0, t.getBbHeight() * 0.5, 0), cx, cy, pt, g.guiHeight());
+                    if (s != null) lockBox(g, s[0], s[1], car.getLockProgress() / (float) ArmoredCarEntity.LOCK_TICKS, (p.tickCount / 3) % 2 == 0);
+                }
+            }
+        } else {
+            g.fill(gx - 14, gy, gx - 4, gy + 1, col);
+            g.fill(gx + 5, gy, gx + 15, gy + 1, col);
+            g.fill(gx, gy + 5, gx + 1, gy + 13, col);
+            for (int i = 1; i <= 3; i++) g.fill(gx - 2 - i, gy + 4 + i * 3, gx + 3 + i, gy + 5 + i * 3, col);
+            g.fill(gx - 1, gy - 1, gx + 2, gy + 2, col);
         }
     }
 
@@ -237,6 +360,10 @@ public final class Hud {
             heliHud(g, mc, heli);
             return;
         }
+        if (mc.player.getVehicle() instanceof ArmoredCarEntity car) {
+            carHud(g, mc, car);
+            return;
+        }
         if (!(mc.player.getVehicle() instanceof JeepEntity jeep)) return;
         Font f = mc.font;
         int s = 92;
@@ -273,7 +400,14 @@ public final class Hud {
         g.drawString(f, Component.translatable("gunsmod.seat." + jeep.seatOf(mc.player)), bx, by - 12, 0xFFE8D9A0, true);
         g.fill(bx, by, bx + bw, by + 4, 0x80000000);
         g.fill(bx, by, bx + (int) (bw * hp), by + 4, hp > 0.5f ? 0xFF60D060 : hp > 0.25f ? 0xFFE0B040 : 0xFFE04030);
-        if (jeep.isGunner(mc.player)) {
+        if (jeep.isGunner(mc.player) && jeep.tow) {
+            float k = jeep.towReloadFraction();
+            int hx = g.guiWidth() / 2 - 40, hy = g.guiHeight() / 2 + 22;
+            g.fill(hx, hy, hx + 80, hy + 3, 0x80000000);
+            g.fill(hx, hy, hx + (int) (80 * (1f - k)), hy + 3, k > 0 ? 0xFFFFA030 : 0xFF60FF80);
+            Component lbl = Component.translatable(k > 0 ? "gunsmod.hud.tow_loading" : "gunsmod.hud.tow_ready");
+            g.drawString(f, lbl, g.guiWidth() / 2 - f.width(lbl) / 2, hy + 5, k > 0 ? 0xFFFFA030 : 0xFF60FF80, true);
+        } else if (jeep.isGunner(mc.player)) {
             float heat = jeep.getHeat() / 100f;
             int hx = g.guiWidth() / 2 - 40, hy = g.guiHeight() / 2 + 22;
             g.fill(hx, hy, hx + 80, hy + 3, 0x80000000);
@@ -351,26 +485,105 @@ public final class Hud {
     private static void heliHud(GuiGraphics g, Minecraft mc, HelicopterEntity heli) {
         boolean pilot = heli.getControllingPassenger() == mc.player;
         int bx = gauge(g, mc, heli.airSpeed * 20 * 3.6, 120, null);
-        Component rk = heli.getRocketReload() > 0 ? Component.translatable("gunsmod.hud.rockets_loading")
-                : Component.translatable("gunsmod.hud.rockets", heli.getRockets());
-        panel(g, mc, bx, Component.translatable(pilot ? "gunsmod.seat.pilot" : "gunsmod.seat.2"), heli.getHealth() / heli.getMaxHealth(), rk,
-                heli.getRocketReload() > 0 ? 0xFFFFA030 : 0xFFFFFFFF);
+        HeliType.Weapon w = heli.getWeapon();
+        Component wpn = heli.getReload() > 0 ? Component.translatable("gunsmod.hud.weapon_loading", Component.translatable("gunsmod.weapon." + w.id))
+                : Component.translatable("gunsmod.hud.weapon_ammo", Component.translatable("gunsmod.weapon." + w.id), heli.getAmmo());
+        int seat = heli.seatOf(mc.player);
+        panel(g, mc, bx, Component.translatable(seat == 0 ? "gunsmod.seat.pilot" : seat == 1 ? "gunsmod.seat.heli_gunner" : "gunsmod.seat.passenger"),
+                heli.getHealth() / heli.getMaxHealth(), wpn, heli.getReload() > 0 ? 0xFFFFA030 : 0xFFFFFFFF);
         Font f = mc.font;
-        int x = bx + 106, y = g.guiHeight() - 56;
+        int x = bx + 106, y = g.guiHeight() - 67;
         double alt = heli.heightAboveGround();
         double vs = heli.climbRate * 20;
-        g.blitSprite(PANEL, x - 3, y - 3, 74, 50);
+        g.blitSprite(PANEL, x - 3, y - 3, 84, 61);
         g.drawString(f, Component.translatable("gunsmod.hud.altitude", String.format("%.0f", alt)), x, y, 0xFFE8E8E8, true);
         g.drawString(f, Component.translatable("gunsmod.hud.climb", String.format("%+.1f", vs)), x, y + 11, vs < -6 ? 0xFFFF6040 : 0xFFC8D8C8, true);
         g.drawString(f, Component.translatable("gunsmod.hud.rotor", Math.round(heli.rotor * 100)), x, y + 22, heli.rotor < 0.9f ? 0xFFFFC040 : 0xFF80E080, true);
-        if (alt < 6 && heli.climbRate < -0.3 && (mc.player.tickCount / 4) % 2 == 0) {
-            Component w = Component.translatable("gunsmod.hud.pull_up");
-            g.drawString(f, w, g.guiWidth() / 2 - f.width(w) / 2, g.guiHeight() / 2 + 30, 0xFFFF4030, true);
+        g.drawString(f, Component.translatable("gunsmod.hud.flares", heli.getFlares()), x, y + 33, heli.getFlares() > 0 ? 0xFFFFE0A0 : 0xFFFF6040, true);
+        int warn = heli.getWarning();
+        boolean blink = (mc.player.tickCount / 4) % 2 == 0;
+        if (warn > 0 && blink) {
+            Component wtxt = Component.translatable(warn == 2 ? "gunsmod.hud.missile_warning" : "gunsmod.hud.radar_warning");
+            g.pose().pushPose();
+            g.pose().translate(g.guiWidth() / 2f - f.width(wtxt), g.guiHeight() / 2f - 46, 0);
+            g.pose().scale(2f, 2f, 1f);
+            g.drawString(f, wtxt, 0, 0, warn == 2 ? 0xFFFF3020 : 0xFFFFC020, true);
+            g.pose().popPose();
+        }
+        if (alt < 6 && heli.climbRate < -0.3 && blink) {
+            Component wt = Component.translatable("gunsmod.hud.pull_up");
+            g.drawString(f, wt, g.guiWidth() / 2 - f.width(wt) / 2, g.guiHeight() / 2 + 30, 0xFFFF4030, true);
         }
         if (pilot) {
-            Component hint = Component.translatable("gunsmod.hud.heli_hint");
+            Component hint = Component.translatable("gunsmod.hud.heli_hint", GunClient.RELOAD.getTranslatedKeyMessage(), GunClient.FLARES.getTranslatedKeyMessage());
             g.drawString(f, hint, g.guiWidth() / 2 - f.width(hint) / 2, 6, 0xA0FFFFFF, true);
         }
+    }
+
+    private static void carHud(GuiGraphics g, Minecraft mc, ArmoredCarEntity car) {
+        boolean commander = car.getControllingPassenger() == mc.player;
+        double v = car.getDisplaySpeed();
+        int bx = gauge(g, mc, Math.abs(v) * 20 * 3.6, 80, v < -0.005 ? "R" : Math.abs(v) < 0.005 ? "N" : "D");
+        Component main;
+        int col;
+        if (car.kind.antiAir()) {
+            main = car.getReload() > 0 ? Component.translatable("gunsmod.hud.weapon_loading", Component.translatable("gunsmod.weapon.sam"))
+                    : Component.translatable("gunsmod.hud.weapon_ammo", Component.translatable("gunsmod.weapon.sam"), car.getAmmo());
+        } else {
+            main = car.getReload() > 0 ? Component.translatable("gunsmod.hud.weapon_loading", Component.translatable("gunsmod.weapon.cannon30"))
+                    : Component.translatable("gunsmod.hud.weapon_ammo", Component.translatable("gunsmod.weapon.cannon30"), car.getAmmo());
+        }
+        col = car.getReload() > 0 ? 0xFFFFA030 : 0xFFFFFFFF;
+        panel(g, mc, bx, Component.translatable(commander ? "gunsmod.seat.commander" : "gunsmod.seat.passenger"), car.getHealth() / car.getMaxHealth(), main, col);
+        if (car.kind.antiAir()) radarScope(g, mc, car, bx + 106);
+        if (commander) {
+            Component hint = Component.translatable(car.kind.antiAir() ? "gunsmod.hud.pantsir_hint" : "gunsmod.hud.btr_hint");
+            g.drawString(mc.font, hint, g.guiWidth() / 2 - mc.font.width(hint) / 2, 6, 0xA0FFFFFF, true);
+        }
+    }
+
+    /** Pantsir search radar: plan position display, vehicle heading up, helicopters as blips, the tracked one boxed */
+    private static void radarScope(GuiGraphics g, Minecraft mc, ArmoredCarEntity car, int x0) {
+        int r = 36;
+        int cx = x0 + r + 2, cy = g.guiHeight() - r - 8;
+        g.fill(cx - r - 2, cy - r - 2, cx + r + 3, cy + r + 3, 0xC0081208);
+        for (int ring = 1; ring <= 3; ring++) {
+            int rr = r * ring / 3;
+            for (int i = 0; i < 48; i++) {
+                double a = i * Math.PI * 2 / 48;
+                int x = cx + (int) Math.round(Math.cos(a) * rr), y = cy + (int) Math.round(Math.sin(a) * rr);
+                g.fill(x, y, x + 1, y + 1, 0x8030C040);
+            }
+        }
+        double sweep = Math.toRadians(car.radarAngle + car.getTurretYaw());
+        for (int i = 0; i < r; i++) {
+            int x = cx + (int) Math.round(Math.sin(sweep) * i), y = cy - (int) Math.round(Math.cos(sweep) * i);
+            g.fill(x, y, x + 1, y + 1, 0xC060FF70);
+        }
+        double range = ArmoredCarEntity.RADAR_RANGE;
+        float yaw = car.getYRot();
+        for (HelicopterEntity h : mc.level.getEntitiesOfClass(HelicopterEntity.class, car.getBoundingBox().inflate(range, range, range))) {
+            double dx = h.getX() - car.getX(), dz = h.getZ() - car.getZ();
+            double dist = Math.sqrt(dx * dx + dz * dz);
+            if (dist > range || !h.isAirborne()) continue;
+            // bearing from the hull heading: positive = to the right
+            double rel = Math.toRadians(Math.toDegrees(Math.atan2(dz, dx)) - 90 - yaw);
+            double k = dist / range * r;
+            int x = cx + (int) Math.round(Math.sin(rel) * k), y = cy - (int) Math.round(Math.cos(rel) * k);
+            boolean enemy = h.getBotTeam() != car.getBotTeam();
+            int c = enemy ? 0xFFFF4030 : 0xFF40FF60;
+            g.fill(x - 1, y - 1, x + 2, y + 2, c);
+            if (h.getId() == car.getTrack()) {
+                int bc = car.isLocked() ? 0xFFFF3030 : 0xFFFFD040;
+                g.fill(x - 4, y - 4, x + 5, y - 3, bc);
+                g.fill(x - 4, y + 4, x + 5, y + 5, bc);
+                g.fill(x - 4, y - 4, x - 3, y + 5, bc);
+                g.fill(x + 4, y - 4, x + 5, y + 5, bc);
+            }
+        }
+        g.fill(cx, cy - 3, cx + 1, cy + 4, 0xFFFFFFFF);
+        Component lbl = Component.translatable(car.isLocked() ? "gunsmod.hud.radar_locked" : car.getTrack() >= 0 ? "gunsmod.hud.radar_tracking" : "gunsmod.hud.radar_search");
+        g.drawString(mc.font, lbl, cx - mc.font.width(lbl) / 2, cy - r - 12, car.isLocked() ? 0xFFFF4030 : 0xFF80FF90, true);
     }
 
     // ------------------------------------------------------------------------------------ soldier info

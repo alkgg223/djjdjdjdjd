@@ -476,6 +476,101 @@ def heli_rocket(rng, L=1.4):
     return fade(norm(pad(out, n)), 0.001, 0.2)
 
 
+# ----------------------------------------------------------------------------------- v1.4: helicopters, missiles, air defence
+def flare_pop(rng, L=1.1):
+    """dispenser cartridge pop, then the hiss and crackle of the burning magnesium pellet"""
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    out = np.zeros(n)
+    place(out, hp(noise(0.03, rng), 800) * env_exp(int(0.03 * SR), 0.006) * 1.5, 0.0)
+    place(out, thunk(rng, 260, 0.02, 0.9), 0.0)
+    hiss = bp(noise(L, rng), 2500, 9000) * np.clip((k - 0.04) / 0.05, 0, 1) * np.exp(-np.maximum(0, k - 0.3) / 0.35) * 0.6
+    crackle = np.zeros(n)
+    for _ in range(60):
+        place(crackle, click(rng, 2000, 8000, 0.002, 0.2 + rng.random() * 0.3), 0.05 + rng.random() * (L - 0.2))
+    out += hiss + crackle * np.exp(-k / 0.6)
+    return fade(norm(reverb(out, 0.5, 4000, 0.2, rng)[:n]), 0.0005, 0.2)
+
+
+def warble(f0, f1, L, rate):
+    """alternating two-tone electronic warning"""
+    tt = t(L)
+    f = np.where((np.floor(tt * rate) % 2) == 0, f0, f1)
+    x = signal.square(2 * np.pi * np.cumsum(f) / SR) * 0.4 + np.sin(2 * np.pi * np.cumsum(f) / SR) * 0.6
+    x = lp(x, 5000) * np.minimum(1, np.minimum(np.arange(len(tt)) / 80, (len(tt) - np.arange(len(tt))) / 400))
+    return norm(x, 0.75)
+
+
+def tone(f, L, square=0.3):
+    tt = t(L)
+    x = np.sin(2 * np.pi * f * tt) * (1 - square) + signal.square(2 * np.pi * f * tt) * square
+    x = lp(x, 6000) * np.minimum(1, np.minimum(np.arange(len(tt)) / 60, (len(tt) - np.arange(len(tt))) / 300))
+    return norm(x, 0.6)
+
+
+def missile_motor(rng, L, ignition=1.2, roar_f=900, sustain=0.9, decay=0.8):
+    """ignition crack and the motor roar flying away"""
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    roar = lp(noise(L, rng), roar_f, 2) * 1.2 + bp(noise(L, rng), roar_f, roar_f * 4) * 0.6
+    crackle = np.zeros(n)
+    for _ in range(int(80 * L)):
+        place(crackle, click(rng, 900, 5000, 0.003, 0.2 + rng.random() * 0.3), rng.random() * (L - 0.1))
+    envl = np.clip(k / 0.05, 0, 1) * np.exp(-np.maximum(0, k - sustain) / decay)
+    out = (roar + crackle * 0.5) * envl
+    place(out, gunshot(rng, crack=1.0, body_f=420, body_tau=0.12, thump_f=50, thump=1.2, tail=0.5)[: int(0.8 * SR)] * ignition, 0)
+    out *= 1 + 0.1 * np.sin(2 * np.pi * 9 * k)
+    return fade(norm(reverb(sat(out, 1.8), 1.2, 2500, 0.3, rng)[:n]), 0.001, 0.4)
+
+
+def bomb_drop(rng, L=2.2):
+    """release hooks clunk, then the whistle of the falling bomb"""
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    out = np.zeros(n)
+    place(out, thunk(rng, 140, 0.05, 1.0), 0.0)
+    place(out, click(rng, 1200, 4000, 0.006, 0.8), 0.0)
+    f = 1800 * np.exp(-k / 2.5) + 400
+    whistle = np.sin(2 * np.pi * np.cumsum(f) / SR) * 0.4 + bp(noise(L, rng), 1200, 4000) * 0.25
+    out += whistle * np.clip((k - 0.25) / 0.6, 0, 1)
+    return fade(norm(out), 0.001, 0.3)
+
+
+def radar_ping(rng, L=0.6):
+    tt = t(L)
+    x = np.sin(2 * np.pi * 1750 * tt) * np.exp(-tt / 0.12) + np.sin(2 * np.pi * 2620 * tt) * np.exp(-tt / 0.06) * 0.3
+    x = reverb(x, 0.4, 5000, 0.3, rng)[: len(tt)]
+    return fade(norm(x, 0.6), 0.001, 0.1)
+
+
+def build_v14():
+    """the sounds added in 1.4 (written next to the existing ones, which stay untouched)"""
+    with open(os.path.join(ROOT, "sounds.json")) as fh:
+        sounds = json.load(fh)
+
+    def add(name, xs, subtitle=None):
+        files = []
+        for i, x in enumerate(xs):
+            fn = f"{name}_{i + 1}" if len(xs) > 1 else name
+            write_ogg(os.path.join(OUT, fn + ".ogg"), x)
+            files.append(f"gunsmod:{fn}")
+        sounds[name] = {"sounds": files, "subtitle": f"subtitles.gunsmod.{subtitle or name}"}
+
+    add("flare", [flare_pop(np.random.default_rng(140 + i)) for i in range(2)])
+    add("missile_warning", [warble(1150, 1550, 0.24, 25)])
+    add("lock_tone", [tone(880, 0.1)])
+    add("lock_on", [np.concatenate([tone(1400, 0.07), np.zeros(int(0.03 * SR)), tone(1800, 0.12)])])
+    add("atgm_launch", [missile_motor(np.random.default_rng(150 + i), 2.4, 1.3, 1100, 0.6, 0.7) for i in range(2)])
+    add("sam_launch", [missile_motor(np.random.default_rng(155), 3.5, 1.6, 650, 1.0, 1.0)])
+    add("cannon_30", [gunshot(np.random.default_rng(160 + i), crack=1.6, body_f=300, body_tau=0.12, thump_f=44, thump=1.7, tail=0.8, echo=0.3,
+                              drive=4.0, mech=0.0, length=1.0) for i in range(3)])
+    add("bomb_drop", [bomb_drop(np.random.default_rng(165))])
+    add("radar_ping", [radar_ping(np.random.default_rng(166))])
+    with open(os.path.join(ROOT, "sounds.json"), "w") as fh:
+        json.dump(sounds, fh, indent=1)
+    return sounds
+
+
 def build_all():
     rng = np.random.default_rng(7)
     sounds = {}
@@ -536,5 +631,6 @@ def build_all():
 
 
 if __name__ == "__main__":
-    s = build_all()
+    import sys
+    s = build_v14() if "v14" in sys.argv else build_all()
     print(len(s), "sound events")

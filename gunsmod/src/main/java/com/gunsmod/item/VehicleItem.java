@@ -2,10 +2,9 @@ package com.gunsmod.item;
 
 import com.gunsmod.Reg;
 import com.gunsmod.entity.BotTeam;
-import com.gunsmod.entity.HelicopterEntity;
 import com.gunsmod.entity.JeepEntity;
-import com.gunsmod.entity.TankEntity;
 import com.gunsmod.entity.VehicleEntity;
+import com.gunsmod.entity.VehicleKind;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.ChatFormatting;
@@ -20,14 +19,12 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
-/** Places a tank or a helicopter of a team. */
+/** Places a tank, helicopter or armed car of a team. */
 public class VehicleItem extends Item {
-    public enum Kind { TANK, HELICOPTER }
-
-    public final Kind kind;
+    public final VehicleKind kind;
     public final BotTeam team;
 
-    public VehicleItem(Kind kind, BotTeam team, Properties props) {
+    public VehicleItem(VehicleKind kind, BotTeam team, Properties props) {
         super(props);
         this.kind = kind;
         this.team = team;
@@ -42,9 +39,10 @@ public class VehicleItem extends Item {
             e.setTeam(j.team);
             m = e;
         } else if (stack.getItem() instanceof VehicleItem v) {
-            VehicleEntity e = v.kind == Kind.TANK ? new TankEntity(Reg.TANK.get(), level) : new HelicopterEntity(Reg.HELICOPTER.get(), level);
-            e.setTeam(v.team);
-            m = e;
+            m = v.kind.type().create(level);
+            if (m == null) return null;
+            if (m instanceof VehicleEntity e) e.setTeam(v.team);
+            else if (m instanceof JeepEntity j) j.setTeam(v.team);
         } else {
             return null;
         }
@@ -89,8 +87,12 @@ public class VehicleItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tip, TooltipFlag flag) {
-        String k = kind == Kind.TANK ? "tank" : "heli";
-        tip.add(Component.translatable("gunsmod.desc." + k).withStyle(ChatFormatting.GRAY));
+        String k = switch (kind.group) {
+            case TANK -> "tank";
+            case HELI -> "heli";
+            default -> kind.item;
+        };
+        tip.add(Component.translatable("gunsmod.desc.vehicle." + kind.item).withStyle(ChatFormatting.GRAY));
         tip.add(Component.translatable("gunsmod.tip." + k + "1").withStyle(ChatFormatting.DARK_GRAY));
         tip.add(Component.translatable("gunsmod.tip." + k + "2").withStyle(ChatFormatting.DARK_GRAY));
         tip.add(Component.translatable("gunsmod.tip.spawner_hint").withStyle(ChatFormatting.DARK_GRAY));

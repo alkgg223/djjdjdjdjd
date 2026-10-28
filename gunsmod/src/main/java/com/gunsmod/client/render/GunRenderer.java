@@ -1,6 +1,7 @@
 package com.gunsmod.client.render;
 
 import com.gunsmod.Reg;
+import com.gunsmod.client.FlashlightFx;
 import com.gunsmod.client.GunClient;
 import com.gunsmod.client.GunGeometry;
 import com.gunsmod.gun.Attachment;
@@ -251,9 +252,12 @@ public class GunRenderer extends BlockEntityWithoutLevelRenderer {
             pose.translate(0.5f, 0.5f, 0.5f);
             Minecraft.getInstance().getItemRenderer().renderStatic(as, ItemDisplayContext.NONE, light, overlay, pose, buf, Minecraft.getInstance().level, 0);
             pose.popPose();
-            if (slot == Attachment.Slot.LASER && held) {
+            if (slot == Attachment.Slot.LASER && held && a == Attachment.LASER_SIGHT) {
                 // beam from the emitter (local 11.2, 10.3, 7.55)
                 laser(pose, buf, 11.2f / 16f, 10.3f / 16f, 7.55f / 16f);
+            } else if (slot == Attachment.Slot.LASER && held && a == Attachment.FLASHLIGHT && FlashlightFx.darkAt(light)) {
+                // light cone from the lens (local 11.45, 10.3, 8.0)
+                lightBeam(pose, buf, 11.45f / 16f, 10.3f / 16f, 8.0f / 16f);
             }
             pose.popPose();
         }
@@ -269,6 +273,32 @@ public class GunRenderer extends BlockEntityWithoutLevelRenderer {
             pose.translate(0, -8 / 16f, -8 / 16f);
             BakedRender.item(stack, "fx/muzzle_flash", pose, buf, LightTexture.FULL_BRIGHT, overlay);
             pose.popPose();
+        }
+    }
+
+    /** additive cone of light along +X: a wide soft beam and a brighter core, fading with distance */
+    private static void lightBeam(PoseStack pose, MultiBufferSource buf, float x, float y, float z) {
+        VertexConsumer vc = buf.getBuffer(RenderType.lightning());
+        Matrix4f m = pose.last().pose();
+        cone(vc, m, x, y, z, 30f, 0.05f, 3.4f, 0.16f);
+        cone(vc, m, x, y, z, 18f, 0.04f, 1.2f, 0.22f);
+        // bright lens glow
+        float g = 0.09f;
+        vc.addVertex(m, x + 0.01f, y - g, z - g).setColor(1f, 0.97f, 0.88f, 0.9f);
+        vc.addVertex(m, x + 0.01f, y + g, z - g).setColor(1f, 0.97f, 0.88f, 0.9f);
+        vc.addVertex(m, x + 0.01f, y + g, z + g).setColor(1f, 0.97f, 0.88f, 0.9f);
+        vc.addVertex(m, x + 0.01f, y - g, z + g).setColor(1f, 0.97f, 0.88f, 0.9f);
+    }
+
+    private static void cone(VertexConsumer vc, Matrix4f m, float x, float y, float z, float len, float r0, float r1, float a0) {
+        int n = 12;
+        for (int i = 0; i < n; i++) {
+            double t0 = i * Math.PI * 2 / n, t1 = (i + 1) * Math.PI * 2 / n;
+            float c0 = (float) Math.cos(t0), s0 = (float) Math.sin(t0), c1 = (float) Math.cos(t1), s1 = (float) Math.sin(t1);
+            vc.addVertex(m, x, y + c0 * r0, z + s0 * r0).setColor(1f, 0.96f, 0.85f, a0);
+            vc.addVertex(m, x + len, y + c0 * r1, z + s0 * r1).setColor(1f, 0.96f, 0.85f, 0f);
+            vc.addVertex(m, x + len, y + c1 * r1, z + s1 * r1).setColor(1f, 0.96f, 0.85f, 0f);
+            vc.addVertex(m, x, y + c1 * r0, z + s1 * r0).setColor(1f, 0.96f, 0.85f, a0);
         }
     }
 

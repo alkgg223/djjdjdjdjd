@@ -315,5 +315,63 @@
    "gunsmod:heli_gun_3"
   ],
   "subtitle": "subtitles.gunsmod.heli_gun"
+ },
+ "flare": {
+  "sounds": [
+   "gunsmod:flare_1",
+   "gunsmod:flare_2"
+  ],
+  "subtitle": "subtitles.gunsmod.flare"
+ },
+ "missile_warning": {
+  "sounds": [
+   "gunsmod:missile_warning"
+  ],
+  "subtitle": "subtitles.gunsmod.missile_warning"
+ },
+ "lock_tone": {
+  "sounds": [
+   "gunsmod:lock_tone"
+  ],
+  "subtitle": "subtitles.gunsmod.lock_tone"
+ },
+ "lock_on": {
+  "sounds": [
+   "gunsmod:lock_on"
+  ],
+  "subtitle": "subtitles.gunsmod.lock_on"
+ },
+ "atgm_launch": {
+  "sounds": [
+   "gunsmod:atgm_launch_1",
+   "gunsmod:atgm_launch_2"
+  ],
+  "subtitle": "subtitles.gunsmod.atgm_launch"
+ },
+ "sam_launch": {
+  "sounds": [
+   "gunsmod:sam_launch"
+  ],
+  "subtitle": "subtitles.gunsmod.sam_launch"
+ },
+ "cannon_30": {
+  "sounds": [
+   "gunsmod:cannon_30_1",
+   "gunsmod:cannon_30_2",
+   "gunsmod:cannon_30_3"
+  ],
+  "subtitle": "subtitles.gunsmod.cannon_30"
+ },
+ "bomb_drop": {
+  "sounds": [
+   "gunsmod:bomb_drop"
+  ],
+  "subtitle": "subtitles.gunsmod.bomb_drop"
+ },
+ "radar_ping": {
+  "sounds": [
+   "gunsmod:radar_ping"
+  ],
+  "subtitle": "subtitles.gunsmod.radar_ping"
  }
 }

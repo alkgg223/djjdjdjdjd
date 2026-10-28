@@ -4,6 +4,7 @@ import com.gunsmod.GunsMod;
 import com.gunsmod.client.render.GunRenderer;
 import com.gunsmod.client.sound.FlameSound;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.ArmoredCarEntity;
 import com.gunsmod.entity.TankEntity;
 import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.item.GunItem;
@@ -30,6 +31,9 @@ public final class ClientEvents {
         GunRenderer.clientTick();
         FlameSound.clientTick();
         ClientFx.tick();
+        FlashlightFx.tick();
+        VehicleAlerts.tick();
+        ClientLights.tick();
     }
 
     /** nearby explosions shake the camera */
@@ -55,7 +59,7 @@ public final class ClientEvents {
             e.setSwingHand(false);
             return;
         }
-        if (p.getVehicle() instanceof VehicleEntity v && v.getControllingPassenger() == p && (e.isAttack() || e.isUseItem())) {
+        if (p.getVehicle() instanceof VehicleEntity v && v.firesFor(p) && (e.isAttack() || e.isUseItem())) {
             e.setCanceled(true);
             e.setSwingHand(false);
             return;
@@ -91,6 +95,7 @@ public final class ClientEvents {
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null) return;
         if (GunClient.holdingGun(p) || p.getVehicle() instanceof JeepEntity j && j.isGunner(p)
-                || p.getVehicle() instanceof TankEntity t && t.getControllingPassenger() == p) e.setCanceled(true);
+                || p.getVehicle() instanceof TankEntity t && t.getControllingPassenger() == p
+                || p.getVehicle() instanceof ArmoredCarEntity c && c.getControllingPassenger() == p) e.setCanceled(true);
     }
 }

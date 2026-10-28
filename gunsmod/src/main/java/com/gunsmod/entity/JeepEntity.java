@@ -2,7 +2,7 @@ package com.gunsmod.entity;
 
 import com.gunsmod.Reg;
 import com.gunsmod.block.VehicleSpawnerBlockEntity;
-import com.gunsmod.entity.ai.DriveAI;
+import com.gunsmod.entity.ai.GroundBotDriver;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.net.Net;
 import com.gunsmod.world.Blast;
@@ -45,7 +45,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * Military jeep with four seats (driver, turret gunner, passenger, rear). Speed builds up gradually to 40 km/h.
  * Model space: 1 unit = 0.1 block, front at -Z, +X = right side, (8, 0, 8) = entity origin.
  */
-public class JeepEntity extends Mob implements BotRideable {
+public class JeepEntity extends Mob implements BotRideable, MissileGuider {
     public static final int SEAT_DRIVER = 0, SEAT_GUNNER = 1, SEAT_PASSENGER = 2, SEAT_REAR = 3;
     /** seat positions in model units */
     public static final double[][] SEATS = {{2.6, 5.6, 4.6}, {8.0, 16.6, 17.3}, {13.4, 5.6, 4.6}, {13.4, 5.6, 12.6}};
@@ -83,8 +83,7 @@ public class JeepEntity extends Mob implements BotRideable {
     private boolean overheated;
     private int turretCooldown;
     private int lastPassengerFire;
-    @Nullable private Vec3 patrolPos;
-    private int patrolSince;
+    private final GroundBotDriver patrol = new GroundBotDriver();
     /** patrol centre (where it was placed) and the vehicle spawner that owns it */
     @Nullable public BlockPos home;
     @Nullable public BlockPos spawnerPos;
@@ -93,8 +92,18 @@ public class JeepEntity extends Mob implements BotRideable {
     private float lastYaw;
     public boolean engineStarted;
 
+    /** TOW variant: the turret carries an anti-tank missile launcher instead of the machine gun */
+    public final boolean tow;
+    public static final int TOW_RELOAD = 100;
+    private int towReload, lastTowShot = -1000, towScan;
+
     public JeepEntity(EntityType<? extends JeepEntity> type, Level level) {
+        this(type, level, false);
+    }
+
+    public JeepEntity(EntityType<? extends JeepEntity> type, Level level, boolean tow) {
         super(type, level);
+        this.tow = tow;
         this.setPersistenceRequired();
         this.noCulling = true;
         this.xpReward = 0;
@@ -356,7 +365,8 @@ public class JeepEntity extends Mob implements BotRideable {
         Entity att = source.getEntity();
         if (att != null && att.getVehicle() == this) return false;
         if (att instanceof Player p && p.getAbilities().instabuild && p.isShiftKeyDown()) {
-            this.spawnAtLocation(new ItemStack(getBotTeam() == BotTeam.RED ? Reg.RED_JEEP.get() : Reg.GREEN_JEEP.get()));
+            this.spawnAtLocation(new ItemStack(tow ? Reg.vehicleItem(VehicleKind.TOW_HUMVEE, getBotTeam())
+                    : getBotTeam() == BotTeam.RED ? Reg.RED_JEEP.get() : Reg.GREEN_JEEP.get()));
             VehicleSpawnerBlockEntity.vehicleGone(this.level(), spawnerPos, this.getUUID());
             this.discard();
             return true;
@@ -551,34 +561,16 @@ public class JeepEntity extends Mob implements BotRideable {
 
     // ------------------------------------------------------------------------------------ bot driving
     private void botDrive(BotEntity driver) {
-        Vec3 goal = null;
-        double stopDist = 6;
         LivingEntity enemy = driver.getTarget();
         Entity gunner = seatEntity(SEAT_GUNNER);
         if (enemy == null && gunner instanceof BotEntity gb) enemy = gb.getTarget();
-        if (enemy != null) {
-            // orbit the enemy so the gunner keeps shooting
-            Vec3 rel = this.position().subtract(enemy.position()).multiply(1, 0, 1);
-            if (rel.lengthSqr() < 0.01) rel = new Vec3(1, 0, 0);
-            rel = rel.normalize();
-            double a = Math.toRadians(40);
-            Vec3 rot = new Vec3(rel.x * Math.cos(a) - rel.z * Math.sin(a), 0, rel.x * Math.sin(a) + rel.z * Math.cos(a));
-            goal = enemy.position().add(rot.scale(seatEntity(SEAT_GUNNER) != null ? 16 : 10));
-            stopDist = 2;
-        }
+        if (home == null) home = this.blockPosition();
+        // a gunner on the turret: halt when the enemy is in sight so the shots land, otherwise patrol with stops
+        Vec3 goal = patrol.goal(this, enemy, gunner != null, Vec3.atBottomCenterOf(home), 96, tow ? 120 : 55, tow ? 14 : 7);
+        double stopDist = 0;
         if (goal == null) {
-            // no enemy: keep patrolling the area, one waypoint after the other, never parking
-            if (home == null) home = this.blockPosition();
-            if (patrolPos == null || patrolPos.distanceToSqr(this.position()) < 10 * 10 || this.tickCount - patrolSince > 900) {
-                patrolPos = DriveAI.groundWaypoint(this, Vec3.atBottomCenterOf(home), 96, 25, 55, 10);
-                patrolSince = this.tickCount;
-            }
-            goal = patrolPos;
-            stopDist = 0;
-        }
-        if (goal == null) {
-            throttleIn = 0.4f;
-            steerIn = 0.6f;
+            throttleIn = GroundBotDriver.brake(speed);
+            steerIn = 0;
             return;
         }
         Vec3 to = goal.subtract(this.position());
@@ -651,10 +643,82 @@ public class JeepEntity extends Mob implements BotRideable {
     }
 
     public Vec3 muzzleWorld() {
+        if (tow) return gunPivotWorld().add(0, 0.12, 0).add(turretDir().scale(1.2));
         return gunPivotWorld().add(0, 0.03, 0).add(turretDir().scale(1.55));
     }
 
+    /** TOW reload progress for the HUD: 0 = ready, 1 = just fired */
+    public float towReloadFraction() {
+        return getHeat() / 100f;
+    }
+
+    @Override
+    @Nullable
+    public Vec3[] beam() {
+        if (!tow || seatEntity(SEAT_GUNNER) == null || this.tickCount - lastTowShot > 260) return null;
+        return new Vec3[]{gunPivotWorld().add(0, 0.12, 0), turretDir()};
+    }
+
+    /** TOW: the gunner fires and then keeps the cross hairs on the target until the missile arrives */
+    private void towTick() {
+        if (towReload > 0) towReload--;
+        this.entityData.set(DATA_HEAT, towReload * 100f / TOW_RELOAD);
+        Entity gunner = seatEntity(SEAT_GUNNER);
+        if (gunner instanceof Player p) {
+            this.entityData.set(DATA_TURRET_YAW, Mth.wrapDegrees(p.getYRot() - this.getYRot()));
+            this.entityData.set(DATA_TURRET_PITCH, Mth.clamp(p.getXRot(), -35f, 20f));
+            if (gunnerFiring && towReload == 0) fireTow(p);
+        } else if (gunner instanceof BotEntity bot) {
+            if (--towScan <= 0) {
+                towScan = 10;
+                LivingEntity t = TankEntity.scan(this, bot, 150, gunPivotWorld(), bot.getTarget());
+                if (t != null) bot.setTarget(t);
+            }
+            LivingEntity t = bot.getTarget();
+            if (t != null && t.isAlive() && t.distanceToSqr(this) < 160 * 160) {
+                Vec3 pivot = gunPivotWorld();
+                Vec3 to = t.position().add(0, t.getBbHeight() * 0.5, 0).subtract(pivot);
+                float wantYaw = Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f - this.getYRot());
+                float wantPitch = (float) -(Mth.atan2(to.y, Math.sqrt(to.x * to.x + to.z * to.z)) * Mth.RAD_TO_DEG);
+                float cy = getTurretYaw(), cp = getTurretPitch();
+                this.entityData.set(DATA_TURRET_YAW, Mth.wrapDegrees(cy + Mth.clamp(Mth.wrapDegrees(wantYaw - cy), -4f, 4f)));
+                this.entityData.set(DATA_TURRET_PITCH, Mth.clamp(cp + Mth.clamp(wantPitch - cp, -3f, 3f), -35f, 20f));
+                boolean aligned = Math.abs(Mth.wrapDegrees(wantYaw - getTurretYaw())) < 1.5f && Math.abs(wantPitch - getTurretPitch()) < 1.5f;
+                boolean los = this.level().clip(new ClipContext(muzzleWorld(), t.position().add(0, t.getBbHeight() * 0.5, 0), ClipContext.Block.COLLIDER,
+                        ClipContext.Fluid.NONE, this)).getType() == HitResult.Type.MISS;
+                double d = Math.sqrt(t.distanceToSqr(this));
+                if (aligned && los && towReload == 0 && d > 12 && bot.isEnemy(t)) fireTow(bot);
+                bot.setAiming(true);
+            }
+        } else {
+            gunnerFiring = false;
+        }
+    }
+
+    private void fireTow(LivingEntity gunner) {
+        towReload = TOW_RELOAD;
+        lastTowShot = this.tickCount;
+        Vec3 at = muzzleWorld();
+        GuidedMissileEntity m = new GuidedMissileEntity(this.level(), gunner, GuidedMissileEntity.TOW).power(62f, 45f, 3.0f).guider(this);
+        m.setPos(at.x, at.y, at.z);
+        m.setDeltaMovement(turretDir().scale(1.0));
+        m.alignToMotion();
+        this.level().addFreshEntity(m);
+        this.level().playSound(null, at.x, at.y, at.z, Reg.sound("atgm_launch"), SoundSource.NEUTRAL, 6f, 0.9f + this.random.nextFloat() * 0.1f);
+        if (this.level() instanceof net.minecraft.server.level.ServerLevel sl) {
+            PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, 128, new Net.MuzzleFx(at, turretDir(), 0.7f, this.getId()));
+            // back blast behind the launcher
+            Vec3 back = at.subtract(turretDir().scale(2.6));
+            PacketDistributor.sendToPlayersNear(sl, null, back.x, back.y, back.z, 96, new Net.MuzzleFx(back, turretDir().scale(-1), 0.6f, this.getId()));
+            BotEntity.alertGunfire(sl, gunner, 96);
+        }
+    }
+
     private void turretTick() {
+        if (tow) {
+            towTick();
+            return;
+        }
         float heat = getHeat();
         if (turretCooldown > 0) turretCooldown--;
         Entity gunner = seatEntity(SEAT_GUNNER);

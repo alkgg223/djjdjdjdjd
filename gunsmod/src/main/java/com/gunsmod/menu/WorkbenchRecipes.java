@@ -1,6 +1,8 @@
 package com.gunsmod.menu;
 
 import com.gunsmod.Reg;
+import com.gunsmod.entity.BotTeam;
+import com.gunsmod.entity.VehicleKind;
 import com.gunsmod.gun.AmmoType;
 import com.gunsmod.gun.Attachment;
 import com.gunsmod.gun.GunType;
@@ -123,6 +125,7 @@ public final class WorkbenchRecipes {
                 case VERTICAL_GRIP, ANGLED_GRIP -> List.of(c(steel, 1), c(Items.BLACK_DYE, 1), c(Items.STICK, 1));
                 case LASER_SIGHT -> List.of(c(steel, 1), c(Items.REDSTONE_TORCH, 1), c(Items.GLASS_PANE, 1));
                 case EXTENDED_MAG -> List.of(c(steel, 2), c(parts, 1));
+                case FLASHLIGHT -> List.of(c(steel, 1), c(Items.GLOWSTONE_DUST, 2), c(Items.GLASS_PANE, 1));
             };
             l.add(new Recipe(Tab.ATTACHMENTS, new ItemStack(Reg.ATTACHMENT_ITEMS.get(a).get()), cost));
         }
@@ -139,10 +142,21 @@ public final class WorkbenchRecipes {
         l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.RED_SOLDIER.get()), List.of(c(steel, 4), c(Items.IRON_HELMET, 1), c(Items.EMERALD, 2), c(Items.RED_DYE, 1))));
         l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.GREEN_JEEP.get()), List.of(c(steel, 24), c(Items.IRON_BLOCK, 4), c(Items.BLACK_WOOL, 4), c(Items.REDSTONE_BLOCK, 2), c(Items.GREEN_DYE, 2))));
         l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.RED_JEEP.get()), List.of(c(steel, 24), c(Items.IRON_BLOCK, 4), c(Items.BLACK_WOOL, 4), c(Items.REDSTONE_BLOCK, 2), c(Items.RED_DYE, 2))));
-        l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.GREEN_TANK.get()), List.of(c(steel, 48), c(Items.IRON_BLOCK, 12), c(Items.REDSTONE_BLOCK, 4), c(Items.TNT, 8), c(Items.GREEN_DYE, 4))));
-        l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.RED_TANK.get()), List.of(c(steel, 48), c(Items.IRON_BLOCK, 12), c(Items.REDSTONE_BLOCK, 4), c(Items.TNT, 8), c(Items.RED_DYE, 4))));
-        l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.GREEN_HELICOPTER.get()), List.of(c(steel, 40), c(Items.IRON_BLOCK, 8), c(Items.GLASS, 8), c(Items.REDSTONE_BLOCK, 4), c(Items.GREEN_DYE, 4))));
-        l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.RED_HELICOPTER.get()), List.of(c(steel, 40), c(Items.IRON_BLOCK, 8), c(Items.GLASS, 8), c(Items.REDSTONE_BLOCK, 4), c(Items.RED_DYE, 4))));
+        for (VehicleKind k : VehicleKind.values()) {
+            for (BotTeam team : new BotTeam[]{BotTeam.GREEN, BotTeam.RED}) {
+                Item dye = team == BotTeam.RED ? Items.RED_DYE : Items.GREEN_DYE;
+                List<Cost> cost = switch (k.group) {
+                    case TANK -> List.of(c(steel, k == VehicleKind.CHALLENGER ? 56 : 48), c(Items.IRON_BLOCK, 12), c(Items.REDSTONE_BLOCK, 4), c(Items.TNT, 8), c(dye, 4));
+                    case HELI -> List.of(c(steel, k == VehicleKind.HIND ? 48 : 40), c(Items.IRON_BLOCK, 8), c(Items.GLASS, 8), c(Items.REDSTONE_BLOCK, 4),
+                            c(Items.TNT, k == VehicleKind.COBRA ? 0 : 6), c(dye, 4));
+                    case JEEP -> List.of(c(steel, 24), c(Items.IRON_BLOCK, 4), c(Items.REDSTONE_BLOCK, 2), c(Items.TNT, 6), c(dye, 2));
+                    case CAR -> k == VehicleKind.PANTSIR
+                            ? List.of(c(steel, 52), c(Items.IRON_BLOCK, 10), c(Items.REDSTONE_BLOCK, 8), c(Items.COMPASS, 2), c(Items.TNT, 10), c(dye, 4))
+                            : List.of(c(steel, 40), c(Items.IRON_BLOCK, 8), c(Items.REDSTONE_BLOCK, 4), c(Items.TNT, 6), c(dye, 4));
+                };
+                l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.vehicleItem(k, team)), cost.stream().filter(x -> x.count() > 0).toList()));
+            }
+        }
         l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.DOG_TAG.get()), List.of(c(Items.IRON_NUGGET, 4), c(Items.CHAIN, 1))));
         l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.GUN_PARTS.get(), 4), List.of(c(steel, 2), c(Items.IRON_NUGGET, 4))));
         return l;

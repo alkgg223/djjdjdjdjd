@@ -164,26 +164,31 @@ public class BotEntity extends PathfinderMob {
         if (isAiming() != aiming) this.entityData.set(DATA_AIMING, aiming);
     }
 
-    /** configure a fresh soldier with a team, a random face and a team-typical weapon */
+    /** configure a fresh soldier with a team, a random face, a random weapon and random attachments */
     public void setup(BotTeam team, RandomSource r, @Nullable GunType forced) {
         setTeam(team);
         setSkin(r.nextInt(4));
-        GunType[] pool = team == BotTeam.GREEN
-                ? new GunType[]{GunType.M4A1, GunType.M4A1, GunType.M16A4, GunType.BR17, GunType.TACTICAL_RIFLE, GunType.SMG5, GunType.PUMP_SHOTGUN, GunType.M249, GunType.M24, GunType.VORTEX}
-                : new GunType[]{GunType.AK47, GunType.AK47, GunType.AK47, GunType.SVD, GunType.MICRO_SMG, GunType.AUTO_SHOTGUN, GunType.BR77, GunType.M249, GunType.RPG7, GunType.DOUBLE_BARREL};
-        GunType g = forced != null ? forced : pool[r.nextInt(pool.length)];
+        GunType[] all = GunType.values();
+        GunType g = forced != null ? forced : all[r.nextInt(all.length)];
         ItemStack gun = GunItem.create(g);
-        GunAttachments att = GunAttachments.NONE;
-        if (g.supports(Attachment.Slot.SCOPE) && r.nextInt(3) == 0) {
-            att = att.with(Attachment.Slot.SCOPE, g.category == GunType.Category.SNIPER ? Attachment.SNIPER_SCOPE : r.nextBoolean() ? Attachment.RED_DOT : Attachment.HOLO_SIGHT);
-        }
-        if (g.supports(Attachment.Slot.GRIP) && r.nextInt(3) == 0) att = att.with(Attachment.Slot.GRIP, Attachment.VERTICAL_GRIP);
-        if (att != GunAttachments.NONE) gun.set(Reg.ATTACHMENTS.get(), att);
+        gun.set(Reg.ATTACHMENTS.get(), randomAttachments(g, r));
         this.setItemSlot(EquipmentSlot.MAINHAND, gun);
         String name = CALLSIGNS[r.nextInt(CALLSIGNS.length)] + "-" + (1 + r.nextInt(9));
         this.setCustomName(Component.translatable("gunsmod.team." + team.name().toLowerCase()).append(" " + name).withStyle(team.chat));
         this.setCustomNameVisible(false);
         this.home = this.blockPosition();
+    }
+
+    /** every slot the gun supports gets a random attachment of that slot, or stays empty */
+    public static GunAttachments randomAttachments(GunType g, RandomSource r) {
+        GunAttachments att = GunAttachments.NONE;
+        for (Attachment.Slot slot : Attachment.Slot.values()) {
+            if (!g.supports(slot) || r.nextFloat() < 0.4f) continue;
+            java.util.List<Attachment> options = new java.util.ArrayList<>();
+            for (Attachment a : Attachment.values()) if (a.slot == slot) options.add(a);
+            if (!options.isEmpty()) att = att.with(slot, options.get(r.nextInt(options.size())));
+        }
+        return att;
     }
 
     // ------------------------------------------------------------------------------------ relations
@@ -193,7 +198,7 @@ public class BotEntity extends PathfinderMob {
         if (e instanceof Player p) {
             return getBotTeam() == BotTeam.RED && !ignorePlayers && !p.isCreative() && !p.isSpectator();
         }
-        if (e instanceof JeepEntity) return false;
+        if (e instanceof JeepEntity j) return j.getBotTeam() != getBotTeam() && !j.getPassengers().isEmpty();
         if (e instanceof VehicleEntity v) return v.getBotTeam() != getBotTeam() && v.isManned();
         return e instanceof Enemy && getBotTeam() == BotTeam.GREEN && !(e instanceof net.minecraft.world.entity.monster.Creeper && distanceToSqr(e) < 9);
     }
@@ -395,8 +400,8 @@ public class BotEntity extends PathfinderMob {
             }
         }
         LivingEntity target = this.getTarget();
-        // the crew of a tank or helicopter can not be hit: fight the vehicle instead
-        if (target != null && target.getVehicle() instanceof VehicleEntity v && v.protectsCrew()) {
+        // the crew of a vehicle can not be hit: fight the vehicle instead
+        if (target != null && VehicleEntity.shieldOf(target) instanceof LivingEntity v) {
             this.setTarget(isEnemy(v) ? v : null);
             target = this.getTarget();
         }

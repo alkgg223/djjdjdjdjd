@@ -132,6 +132,23 @@ def laser_sight():
     return m
 
 
+@item("flashlight", "attachment")
+def flashlight():
+    """weapon light: rail clamp, knurled body, wide bezel and a bright lens at local (11.45, 10.3, 8) facing +X"""
+    m = Model("flashlight", density=10)
+    block(m, 6.4, 9.6, 11.4, 12.0, 1.3, "dark_paint", deco=("rail",))
+    block(m, 6.8, 9.2, 10.9, 11.4, 1.0, "dark_paint")
+    m.cyl("x", (10.3, 8.0), 0.62, 5.6, 9.8, "blued", sides=8, deco=("grip",))
+    m.cyl("x", (10.3, 8.0), 0.66, 5.4, 5.8, "gunmetal", sides=8)
+    m.cyl("x", (10.3, 8.0), 0.86, 9.8, 11.3, "blued", sides=16)
+    m.cyl("x", (10.3, 8.0), 0.92, 11.0, 11.4, "gunmetal", sides=16)
+    m.cyl("x", (10.3, 8.0), 0.7, 11.38, 11.45, "glow_white", sides=16)
+    for e in m.elements[-4:]:
+        e["light"] = True
+    m.box([5.0, 10.05, 7.75], [5.4, 10.55, 8.25], "rubber")              # tail switch
+    return m
+
+
 @item("extended_mag", "attachment")
 def extended_mag():
     m = Model("extended_mag", density=8)

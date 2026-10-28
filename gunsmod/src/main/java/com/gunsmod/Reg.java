@@ -18,13 +18,20 @@ import com.gunsmod.block.VehicleSpawnerBlock;
 import com.gunsmod.block.VehicleSpawnerBlockEntity;
 import com.gunsmod.block.WorkbenchBlock;
 import com.gunsmod.entity.BotEntity;
+import com.gunsmod.entity.ArmoredCarEntity;
 import com.gunsmod.entity.BotTeam;
+import com.gunsmod.entity.CarType;
+import com.gunsmod.entity.FlareEntity;
+import com.gunsmod.entity.GuidedMissileEntity;
 import com.gunsmod.entity.GrenadeEntity;
 import com.gunsmod.entity.HelicopterEntity;
 import com.gunsmod.entity.JeepEntity;
 import com.gunsmod.entity.MissileEntity;
 import com.gunsmod.entity.RocketEntity;
+import com.gunsmod.entity.HeliType;
 import com.gunsmod.entity.TankEntity;
+import com.gunsmod.entity.TankType;
+import com.gunsmod.entity.VehicleKind;
 import com.gunsmod.gun.AmmoType;
 import com.gunsmod.gun.Attachment;
 import com.gunsmod.gun.GunAttachments;
@@ -124,7 +131,8 @@ public final class Reg {
                 "jeep_drive", "jeep_start", "jeep_horn", "missile_launch", "missile_alarm", "cover_open", "arm_switch", "ui_beep",
                 "ui_confirm", "hitmarker", "grenade_bounce", "bullet_whiz", "turret_overheat", "heavy_launch", "explosion_big",
                 "explosion_far", "missile_incoming", "tank_idle", "tank_drive", "tank_fire", "tank_reload", "heli_rotor", "heli_start",
-                "heli_rocket", "heli_gun"}) {
+                "heli_rocket", "heli_gun", "flare", "missile_warning", "lock_tone", "lock_on", "atgm_launch", "sam_launch", "cannon_30",
+                "bomb_drop", "radar_ping"}) {
             SOUND.put(s, SOUNDS.register(s, () -> SoundEvent.createVariableRangeEvent(id(s))));
         }
     }
@@ -148,6 +156,7 @@ public final class Reg {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SHOCKWAVE = particle("shockwave");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> EMBER = particle("ember");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> BLAST_FLASH = particle("blast_flash");
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> FLARE = particle("flare");
 
     private static DeferredHolder<ParticleType<?>, SimpleParticleType> particle(String name) {
         return PARTICLES.register(name, () -> new SimpleParticleType(true));
@@ -199,17 +208,48 @@ public final class Reg {
     public static final DeferredHolder<EntityType<?>, EntityType<BotEntity>> BOT = ENTITIES.register("soldier",
             () -> EntityType.Builder.of(BotEntity::new, MobCategory.MISC).sized(0.6f, 1.8f).eyeHeight(1.62f).clientTrackingRange(10).build("soldier"));
     public static final DeferredHolder<EntityType<?>, EntityType<JeepEntity>> JEEP = ENTITIES.register("jeep",
-            () -> EntityType.Builder.of(JeepEntity::new, MobCategory.MISC).sized(2.6f, 2.0f).eyeHeight(1.4f).clientTrackingRange(12).updateInterval(1).build("jeep"));
-    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK = ENTITIES.register("tank",
-            () -> EntityType.Builder.of(TankEntity::new, MobCategory.MISC).sized(4.2f, 2.4f).eyeHeight(2.0f).clientTrackingRange(12).updateInterval(1).build("tank"));
-    public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELICOPTER = ENTITIES.register("helicopter",
-            () -> EntityType.Builder.of(HelicopterEntity::new, MobCategory.MISC).sized(3.4f, 2.6f).eyeHeight(1.8f).clientTrackingRange(16).updateInterval(1).build("helicopter"));
+            () -> EntityType.Builder.<JeepEntity>of(JeepEntity::new, MobCategory.MISC).sized(2.6f, 2.0f).eyeHeight(1.4f).clientTrackingRange(12).updateInterval(1).build("jeep"));
+    public static final DeferredHolder<EntityType<?>, EntityType<JeepEntity>> JEEP_TOW = ENTITIES.register("jeep_tow",
+            () -> EntityType.Builder.<JeepEntity>of((t, l) -> new JeepEntity(t, l, true), MobCategory.MISC).sized(2.6f, 2.0f).eyeHeight(1.4f)
+                    .clientTrackingRange(12).updateInterval(1).build("jeep_tow"));
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK = tank("tank", TankType.ABRAMS);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_LEOPARD = tank("tank_leopard", TankType.LEOPARD);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_T90 = tank("tank_t90", TankType.T90);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_CHALLENGER = tank("tank_challenger", TankType.CHALLENGER);
+    public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELICOPTER = heli("helicopter", HeliType.COBRA);
+    public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELI_APACHE = heli("heli_apache", HeliType.APACHE);
+    public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELI_HIND = heli("heli_hind", HeliType.HIND);
+    public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELI_KA52 = heli("heli_ka52", HeliType.KA52);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> BTR = car("btr82", CarType.BTR);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> PANTSIR = car("pantsir", CarType.PANTSIR);
+
+    private static DeferredHolder<EntityType<?>, EntityType<TankEntity>> tank(String id, TankType k) {
+        return ENTITIES.register(id, () -> EntityType.Builder.<TankEntity>of((t, l) -> new TankEntity(t, l, k), MobCategory.MISC)
+                .sized((float) k.geo.size()[0], (float) k.geo.size()[1]).eyeHeight(2.0f).clientTrackingRange(12).updateInterval(1).build(id));
+    }
+
+    private static DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> heli(String id, HeliType k) {
+        return ENTITIES.register(id, () -> EntityType.Builder.<HelicopterEntity>of((t, l) -> new HelicopterEntity(t, l, k), MobCategory.MISC)
+                .sized((float) k.geo.size()[0], (float) k.geo.size()[1]).eyeHeight(1.8f).clientTrackingRange(16).updateInterval(1).build(id));
+    }
+
+    private static DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> car(String id, CarType k) {
+        return ENTITIES.register(id, () -> EntityType.Builder.<ArmoredCarEntity>of((t, l) -> new ArmoredCarEntity(t, l, k), MobCategory.MISC)
+                .sized((float) k.geo.size()[0], (float) k.geo.size()[1]).eyeHeight(2.0f).clientTrackingRange(14).updateInterval(1).build(id));
+    }
+
     public static final DeferredHolder<EntityType<?>, EntityType<RocketEntity>> ROCKET = ENTITIES.register("rocket",
             () -> EntityType.Builder.<RocketEntity>of(RocketEntity::new, MobCategory.MISC).sized(0.4f, 0.4f).clientTrackingRange(8).updateInterval(1).build("rocket"));
     public static final DeferredHolder<EntityType<?>, EntityType<GrenadeEntity>> GRENADE = ENTITIES.register("grenade",
             () -> EntityType.Builder.<GrenadeEntity>of(GrenadeEntity::new, MobCategory.MISC).sized(0.3f, 0.3f).clientTrackingRange(6).updateInterval(2).build("grenade"));
     public static final DeferredHolder<EntityType<?>, EntityType<MissileEntity>> MISSILE = ENTITIES.register("missile",
             () -> EntityType.Builder.<MissileEntity>of(MissileEntity::new, MobCategory.MISC).sized(0.7f, 0.7f).clientTrackingRange(16).updateInterval(1).build("missile"));
+    public static final DeferredHolder<EntityType<?>, EntityType<GuidedMissileEntity>> GUIDED_MISSILE = ENTITIES.register("guided_missile",
+            () -> EntityType.Builder.<GuidedMissileEntity>of(GuidedMissileEntity::new, MobCategory.MISC).sized(0.4f, 0.4f).clientTrackingRange(16)
+                    .updateInterval(1).build("guided_missile"));
+    public static final DeferredHolder<EntityType<?>, EntityType<FlareEntity>> FLARE_ENTITY = ENTITIES.register("flare",
+            () -> EntityType.Builder.<FlareEntity>of(FlareEntity::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(12)
+                    .updateInterval(1).build("flare"));
 
     // ------------------------------------------------------------------------------ menus
     public static final DeferredHolder<MenuType<?>, MenuType<WorkbenchMenu>> WORKBENCH_MENU = MENUS.register("weapon_workbench",
@@ -265,14 +305,24 @@ public final class Reg {
     public static final DeferredItem<SoldierItem> RED_SOLDIER = ITEMS.register("red_soldier", () -> new SoldierItem(BotTeam.RED, new Item.Properties().stacksTo(16)));
     public static final DeferredItem<JeepItem> GREEN_JEEP = ITEMS.register("green_jeep", () -> new JeepItem(BotTeam.GREEN, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final DeferredItem<JeepItem> RED_JEEP = ITEMS.register("red_jeep", () -> new JeepItem(BotTeam.RED, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
-    public static final DeferredItem<VehicleItem> GREEN_TANK = vehicle("green_tank", VehicleItem.Kind.TANK, BotTeam.GREEN);
-    public static final DeferredItem<VehicleItem> RED_TANK = vehicle("red_tank", VehicleItem.Kind.TANK, BotTeam.RED);
-    public static final DeferredItem<VehicleItem> GREEN_HELICOPTER = vehicle("green_helicopter", VehicleItem.Kind.HELICOPTER, BotTeam.GREEN);
-    public static final DeferredItem<VehicleItem> RED_HELICOPTER = vehicle("red_helicopter", VehicleItem.Kind.HELICOPTER, BotTeam.RED);
+    public static final Map<VehicleKind, DeferredItem<VehicleItem>> GREEN_VEHICLES = new EnumMap<>(VehicleKind.class);
+    public static final Map<VehicleKind, DeferredItem<VehicleItem>> RED_VEHICLES = new EnumMap<>(VehicleKind.class);
 
-    private static DeferredItem<VehicleItem> vehicle(String name, VehicleItem.Kind kind, BotTeam team) {
+    static {
+        for (VehicleKind k : VehicleKind.values()) {
+            GREEN_VEHICLES.put(k, vehicle("green_" + k.item, k, BotTeam.GREEN));
+            RED_VEHICLES.put(k, vehicle("red_" + k.item, k, BotTeam.RED));
+        }
+    }
+
+    private static DeferredItem<VehicleItem> vehicle(String name, VehicleKind kind, BotTeam team) {
         return ITEMS.register(name, () -> new VehicleItem(kind, team, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     }
+
+    public static VehicleItem vehicleItem(VehicleKind kind, BotTeam team) {
+        return (team == BotTeam.RED ? RED_VEHICLES : GREEN_VEHICLES).get(kind).get();
+    }
+
     public static final DeferredItem<Item> STEEL_INGOT = ITEMS.register("steel_ingot", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> GUN_PARTS = ITEMS.register("gun_parts", () -> new Item(new Item.Properties()));
 
@@ -327,10 +377,10 @@ public final class Reg {
                 out.accept(RED_SOLDIER.get());
                 out.accept(GREEN_JEEP.get());
                 out.accept(RED_JEEP.get());
-                out.accept(GREEN_TANK.get());
-                out.accept(RED_TANK.get());
-                out.accept(GREEN_HELICOPTER.get());
-                out.accept(RED_HELICOPTER.get());
+                for (VehicleKind k : VehicleKind.values()) {
+                    out.accept(GREEN_VEHICLES.get(k).get());
+                    out.accept(RED_VEHICLES.get(k).get());
+                }
                 out.accept(DOG_TAG.get());
                 out.accept(ARENA_TOOL.get());
                 out.accept(STEEL_INGOT.get());

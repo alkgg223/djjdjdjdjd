@@ -2,9 +2,11 @@ package com.gunsmod;
 
 import com.gunsmod.block.ArenaBlockEntity;
 import com.gunsmod.entity.BotEntity;
+import com.gunsmod.entity.ArmoredCarEntity;
 import com.gunsmod.entity.HelicopterEntity;
 import com.gunsmod.entity.JeepEntity;
 import com.gunsmod.entity.TankEntity;
+import com.gunsmod.entity.VehicleKind;
 import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.net.Net;
 import net.minecraft.core.BlockPos;
@@ -35,13 +37,20 @@ public class GunsMod {
     private static void attributes(EntityAttributeCreationEvent e) {
         e.put(Reg.BOT.get(), BotEntity.createAttributes().build());
         e.put(Reg.JEEP.get(), JeepEntity.createAttributes().build());
-        e.put(Reg.TANK.get(), TankEntity.createAttributes().build());
-        e.put(Reg.HELICOPTER.get(), HelicopterEntity.createAttributes().build());
+        e.put(Reg.JEEP_TOW.get(), JeepEntity.createAttributes().build());
+        for (VehicleKind k : VehicleKind.values()) {
+            switch (k.group) {
+                case TANK -> e.put(k.type(), TankEntity.createAttributes(k.tank()).build());
+                case HELI -> e.put(k.type(), HelicopterEntity.createAttributes(k.heli()).build());
+                case CAR -> e.put(k.type(), ArmoredCarEntity.createAttributes(k.car()).build());
+                default -> { }
+            }
+        }
     }
 
-    /** the crew of a tank or helicopter sits behind armour: hits go to the vehicle, not to them */
+    /** the crew of any vehicle (jeep included) is protected: hits go to the vehicle until it blows up */
     private static void crewProtection(LivingIncomingDamageEvent e) {
-        if (!(e.getEntity().getVehicle() instanceof VehicleEntity v) || !v.protectsCrew() || !v.isAlive()) return;
+        if (VehicleEntity.shieldOf(e.getEntity()) == null) return;
         var src = e.getSource();
         if (src.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || src.is(DamageTypes.DROWN) || src.is(DamageTypes.STARVE)) return;
         e.setCanceled(true);

@@ -96,17 +96,24 @@ public final class GunParticles {
             Vec3 c = cam.getPosition();
             Vec3 a = tail.subtract(c), b = head.subtract(c);
             Vec3 toCam = a.add(b).scale(-0.5).normalize();
-            Vec3 side = dir.cross(toCam).normalize().scale(0.035);
+            Vec3 perp = dir.cross(toCam).normalize();
             float u0 = getU0(), u1 = getU1(), v0 = getV0(), v1 = getV1();
             int light = getLightColor(pt);
-            vertex(vc, a.subtract(side), u0, v1, light, 0.0f);
-            vertex(vc, a.add(side), u0, v0, light, 0.0f);
-            vertex(vc, b.add(side), u1, v0, light, alpha);
-            vertex(vc, b.subtract(side), u1, v1, light, alpha);
+            // glowing halo, then the white-hot core
+            Vec3 halo = perp.scale(0.11);
+            vertex(vc, a.subtract(halo), u0, v1, light, 0.0f, 1f, 0.55f, 0.15f);
+            vertex(vc, a.add(halo), u0, v0, light, 0.0f, 1f, 0.55f, 0.15f);
+            vertex(vc, b.add(halo), u1, v0, light, alpha * 0.35f, 1f, 0.55f, 0.15f);
+            vertex(vc, b.subtract(halo), u1, v1, light, alpha * 0.35f, 1f, 0.55f, 0.15f);
+            Vec3 side = perp.scale(0.04);
+            vertex(vc, a.subtract(side), u0, v1, light, 0.0f, 1f, 0.95f, 0.75f);
+            vertex(vc, a.add(side), u0, v0, light, 0.0f, 1f, 0.95f, 0.75f);
+            vertex(vc, b.add(side), u1, v0, light, alpha, 1f, 0.95f, 0.75f);
+            vertex(vc, b.subtract(side), u1, v1, light, alpha, 1f, 0.95f, 0.75f);
         }
 
-        private void vertex(VertexConsumer vc, Vec3 p, float u, float v, int light, float a) {
-            vc.addVertex((float) p.x, (float) p.y, (float) p.z).setUv(u, v).setColor(1f, 0.9f, 0.6f, a).setLight(light);
+        private void vertex(VertexConsumer vc, Vec3 p, float u, float v, int light, float a, float r, float g, float b) {
+            vc.addVertex((float) p.x, (float) p.y, (float) p.z).setUv(u, v).setColor(r, g, b, a).setLight(light);
         }
     }
 
@@ -274,7 +281,51 @@ public final class GunParticles {
         }
     }
 
+    // ------------------------------------------------------------------------------------ decoy flare: white-hot burning core
+    public static class FlareGlow extends TextureSheetParticle {
+        FlareGlow(ClientLevel l, double x, double y, double z, double dx, double dy, double dz, SpriteSet s) {
+            super(l, x, y, z, dx, dy, dz);
+            pickSprite(s);
+            xd = dx;
+            yd = dy;
+            zd = dz;
+            lifetime = 3;
+            quadSize = 0.5f + random.nextFloat() * 0.35f;
+            rCol = 1f;
+            gCol = 0.93f + random.nextFloat() * 0.07f;
+            bCol = 0.75f + random.nextFloat() * 0.2f;
+            roll = oRoll = random.nextFloat() * Mth.TWO_PI;
+            hasPhysics = false;
+            gravity = 0;
+            friction = 0.8f;
+        }
+
+        @Override
+        public void tick() {
+            super.tick();
+            quadSize *= 0.8f;
+            alpha = 1f - (float) age / lifetime * 0.5f;
+        }
+
+        @Override
+        public ParticleRenderType getRenderType() {
+            return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+        }
+
+        @Override
+        protected int getLightColor(float pt) {
+            return LightTexture.FULL_BRIGHT;
+        }
+    }
+
     // ------------------------------------------------------------------------------------ providers
+    public record FlareProvider(SpriteSet s) implements ParticleProvider<SimpleParticleType> {
+        @Override
+        public Particle createParticle(SimpleParticleType t, ClientLevel l, double x, double y, double z, double dx, double dy, double dz) {
+            return new FlareGlow(l, x, y, z, dx, dy, dz, s);
+        }
+    }
+
     public record FlashProvider(SpriteSet s) implements ParticleProvider<SimpleParticleType> {
         @Override
         public Particle createParticle(SimpleParticleType t, ClientLevel l, double x, double y, double z, double dx, double dy, double dz) {

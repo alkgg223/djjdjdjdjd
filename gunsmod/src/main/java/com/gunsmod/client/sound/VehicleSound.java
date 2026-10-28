@@ -2,6 +2,7 @@ package com.gunsmod.client.sound;
 
 import com.gunsmod.Reg;
 import com.gunsmod.client.particle.BlastParticles;
+import com.gunsmod.entity.ArmoredCarEntity;
 import com.gunsmod.entity.HelicopterEntity;
 import com.gunsmod.entity.TankEntity;
 import com.gunsmod.entity.VehicleEntity;
@@ -23,7 +24,7 @@ import net.minecraft.world.phys.Vec3;
  * turbine), following the vehicle and cross-fading with speed / rotor speed. Also exhaust, rotor wash and damage smoke.
  */
 public class VehicleSound extends AbstractTickableSoundInstance {
-    private static final int TANK_IDLE = 0, TANK_DRIVE = 1, ROTOR = 2;
+    private static final int TANK_IDLE = 0, TANK_DRIVE = 1, ROTOR = 2, CAR_IDLE = 3, CAR_DRIVE = 4;
     private static final Map<VehicleEntity, VehicleSound[]> ACTIVE = new WeakHashMap<>();
     private static final Map<VehicleEntity, Boolean> RUNNING = new WeakHashMap<>();
 
@@ -31,8 +32,13 @@ public class VehicleSound extends AbstractTickableSoundInstance {
     private final int kind;
 
     private VehicleSound(VehicleEntity v, int kind) {
-        super(Reg.sound(kind == TANK_IDLE ? "tank_idle" : kind == TANK_DRIVE ? "tank_drive" : "heli_rotor"), SoundSource.NEUTRAL,
-                SoundInstance.createUnseededRandom());
+        super(Reg.sound(switch (kind) {
+            case TANK_IDLE -> "tank_idle";
+            case TANK_DRIVE -> "tank_drive";
+            case CAR_IDLE -> "jeep_idle";
+            case CAR_DRIVE -> "jeep_drive";
+            default -> "heli_rotor";
+        }), SoundSource.NEUTRAL, SoundInstance.createUnseededRandom());
         this.vehicle = v;
         this.kind = kind;
         this.looping = true;
@@ -47,6 +53,7 @@ public class VehicleSound extends AbstractTickableSoundInstance {
     public static void tick(VehicleEntity v) {
         if (v instanceof TankEntity t) tank(t);
         else if (v instanceof HelicopterEntity h) heli(h);
+        else if (v instanceof ArmoredCarEntity c) car(c);
         damageSmoke(v);
     }
 
@@ -71,18 +78,18 @@ public class VehicleSound extends AbstractTickableSoundInstance {
         }
         if (!on) return;
         RandomSource r = t.level().random;
-        double sp = Math.abs(t.getDisplaySpeed()) / TankEntity.MAX_SPEED;
+        double sp = Math.abs(t.getDisplaySpeed()) / t.kind.maxSpeed;
         // twin exhausts at the rear, black puffs when it pulls away
         if (t.tickCount % 3 == 0) {
-            for (double ex : new double[]{5.0, 11.0}) {
-                Vec3 p = t.toWorld(ex, 5.0, 21.8);
+            for (double[] ex : t.kind.geo.exhaust()) {
+                Vec3 p = t.toWorld(ex[0], ex[1], ex[2]);
                 t.level().addParticle(sp > 0.2 ? ParticleTypes.LARGE_SMOKE : ParticleTypes.SMOKE, p.x, p.y, p.z, 0, 0.04, 0);
             }
         }
         // dust thrown up behind the tracks
         if (sp > 0.3 && t.onGround() && BlastParticles.dustSprites != null && r.nextFloat() < sp * 0.5) {
-            for (double tx : new double[]{2.5, 13.5}) {
-                Vec3 p = t.toWorld(tx, 0.4, 21.0 + r.nextDouble());
+            for (double tx : t.kind.geo.trackX()) {
+                Vec3 p = t.toWorld(tx, 0.4, t.kind.geo.sprocket()[1] + 1.0 + r.nextDouble());
                 BlockState below = t.level().getBlockState(BlockPos.containing(p.x, p.y - 0.6, p.z));
                 if (below.isAir()) continue;
                 int col = below.getMapColor(t.level(), BlockPos.containing(p.x, p.y - 0.6, p.z)).col;
@@ -90,6 +97,29 @@ public class VehicleSound extends AbstractTickableSoundInstance {
                 mc.particleEngine.add(new BlastParticles.DustCloud((net.minecraft.client.multiplayer.ClientLevel) t.level(), p.x, p.y, p.z,
                         (r.nextDouble() - 0.5) * 0.05, 0.03, (r.nextDouble() - 0.5) * 0.05, BlastParticles.dustSprites, 0.7f + r.nextFloat() * 0.4f,
                         40 + r.nextInt(30), Mth.lerp(0.5f, cr, 0.6f), Mth.lerp(0.5f, cg, 0.55f), Mth.lerp(0.5f, cb, 0.48f), 0.02f, 0.001f));
+            }
+        }
+    }
+
+    private static void car(ArmoredCarEntity c) {
+        Minecraft mc = Minecraft.getInstance();
+        boolean on = c.getControllingPassenger() != null && c.isAlive();
+        boolean was = RUNNING.getOrDefault(c, false);
+        if (on && !was) c.level().playLocalSound(c.getX(), c.getY(), c.getZ(), Reg.sound("jeep_start"), SoundSource.NEUTRAL, 2.5f, 0.7f, false);
+        RUNNING.put(c, on);
+        VehicleSound[] s = ACTIVE.get(c);
+        if (on && !playing(s)) {
+            s = new VehicleSound[]{new VehicleSound(c, CAR_IDLE), new VehicleSound(c, CAR_DRIVE)};
+            ACTIVE.put(c, s);
+            mc.getSoundManager().play(s[0]);
+            mc.getSoundManager().play(s[1]);
+        }
+        if (!on) return;
+        double sp = Math.abs(c.getDisplaySpeed()) / c.kind.maxSpeed;
+        if (c.tickCount % 3 == 0) {
+            for (double[] ex : c.geo.exhaust()) {
+                Vec3 p = c.toWorld(ex[0], ex[1], ex[2]);
+                c.level().addParticle(sp > 0.3 ? ParticleTypes.LARGE_SMOKE : ParticleTypes.SMOKE, p.x, p.y, p.z, 0, 0.05, 0);
             }
         }
     }
@@ -126,8 +156,9 @@ public class VehicleSound extends AbstractTickableSoundInstance {
         }
         // turbine exhaust heat haze
         if (on && h.tickCount % 4 == 0) {
-            for (double ex : new double[]{6.1, 9.9}) {
-                Vec3 p = h.toWorld(ex, 7.4, 9.4);
+            double[] hub = h.geo.hub();
+            for (double ex : new double[]{-2.0, 2.0}) {
+                Vec3 p = h.toWorld(hub[0] + ex, hub[1] - 3.0, hub[2] + 6.0);
                 h.level().addParticle(ParticleTypes.SMOKE, p.x, p.y, p.z, 0, 0.02, 0);
             }
         }
@@ -136,7 +167,9 @@ public class VehicleSound extends AbstractTickableSoundInstance {
     private static void damageSmoke(VehicleEntity v) {
         float hp = v.getHealth() / v.getMaxHealth();
         if (hp >= 0.5f || v.tickCount % (hp < 0.25f ? 2 : 5) != 0) return;
-        Vec3 p = v instanceof TankEntity ? v.toWorld(8, 6.2, 16) : v.toWorld(8, 8.4, 4);
+        double[] sm = v instanceof TankEntity tk ? tk.kind.geo.smoke() : v instanceof ArmoredCarEntity c ? c.geo.smoke()
+                : v instanceof HelicopterEntity h ? new double[]{h.geo.hub()[0], h.geo.hub()[1] - 2.2, h.geo.hub()[2] + 1.5} : new double[]{8, 8.4, 4};
+        Vec3 p = v.toWorld(sm[0], sm[1], sm[2]);
         v.level().addParticle(hp < 0.25f ? ParticleTypes.LARGE_SMOKE : ParticleTypes.SMOKE, p.x, p.y, p.z, 0, 0.07, 0);
         if (hp < 0.2f && v.tickCount % 6 == 0) v.level().addParticle(ParticleTypes.FLAME, p.x, p.y, p.z, 0, 0.03, 0);
     }
@@ -160,9 +193,15 @@ public class VehicleSound extends AbstractTickableSoundInstance {
                 if (this.volume <= 0.02f) this.stop();
                 return;
             }
-            double sp = Math.min(1.0, Math.abs(((TankEntity) vehicle).getDisplaySpeed()) / TankEntity.MAX_SPEED);
-            target = kind == TANK_DRIVE ? (float) (0.2 + 2.6 * sp) : (float) (2.4 - sp * 1.6);
-            this.pitch = kind == TANK_DRIVE ? (float) (0.75 + sp * 0.45) : 1.0f;
+            if (vehicle instanceof ArmoredCarEntity c) {
+                double sp = Math.min(1.0, Math.abs(c.getDisplaySpeed()) / c.kind.maxSpeed);
+                target = kind == CAR_DRIVE ? (float) (0.3 + 2.4 * sp) : (float) (2.2 - sp * 1.4);
+                this.pitch = kind == CAR_DRIVE ? (float) (0.6 + sp * 0.4) : 0.72f;
+            } else {
+                double sp = Math.min(1.0, Math.abs(((TankEntity) vehicle).getDisplaySpeed()) / ((TankEntity) vehicle).kind.maxSpeed);
+                target = kind == TANK_DRIVE ? (float) (0.2 + 2.6 * sp) : (float) (2.4 - sp * 1.6);
+                this.pitch = kind == TANK_DRIVE ? (float) (0.75 + sp * 0.45) : 1.0f;
+            }
         }
         this.x = vehicle.getX();
         this.y = vehicle.getY() + 1;

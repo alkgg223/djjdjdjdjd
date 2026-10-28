@@ -2,6 +2,7 @@ package com.gunsmod.client.render;
 
 import com.gunsmod.Reg;
 import com.gunsmod.entity.GrenadeEntity;
+import com.gunsmod.entity.GuidedMissileEntity;
 import com.gunsmod.entity.RocketEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -35,8 +36,12 @@ public class ProjectileRenderer<T extends Entity> extends EntityRenderer<T> {
             pose.mulPose(Axis.XP.rotationDegrees(Mth.lerp(pt, e.xRotO, e.getXRot())));
             pose.scale(1.6f, 1.6f, 1.6f);
             pose.translate(-0.5f, -0.5f, -0.5f);
-            BakedRender.entityCutout(r.getKind() == RocketEntity.TANK_SHELL ? "entity/vehicle_ammo/shell" : "entity/vehicle_ammo/rocket",
-                    pose, buf, light, OverlayTexture.NO_OVERLAY, 1, 1, 1);
+            String model = switch (r.getKind()) {
+                case RocketEntity.TANK_SHELL -> "entity/vehicle_ammo/shell";
+                case RocketEntity.BOMB -> "entity/vehicle_ammo/bomb";
+                default -> "entity/vehicle_ammo/rocket";
+            };
+            BakedRender.entityCutout(model, pose, buf, light, OverlayTexture.NO_OVERLAY, 1, 1, 1);
             pose.popPose();
             super.render(e, yaw, pt, pose, buf, light);
             return;
@@ -48,6 +53,16 @@ public class ProjectileRenderer<T extends Entity> extends EntityRenderer<T> {
             pose.mulPose(Axis.YP.rotationDegrees(Mth.lerp(pt, e.yRotO, e.getYRot()) - 90f));
             pose.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(pt, e.xRotO, e.getXRot())));
             if (r.getKind() == 1) pose.mulPose(Axis.ZP.rotationDegrees(-90));
+        } else if (e instanceof GuidedMissileEntity m) {
+            pose.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(pt, e.yRotO, e.getYRot()) + 180f));
+            pose.mulPose(Axis.XP.rotationDegrees(Mth.lerp(pt, e.xRotO, e.getXRot())));
+            pose.scale(1.6f, 1.6f, 1.6f);
+            pose.translate(-0.5f, -0.5f, -0.5f);
+            BakedRender.entityCutout(m.getKind() == GuidedMissileEntity.SAM ? "entity/vehicle_ammo/sam" : "entity/vehicle_ammo/atgm",
+                    pose, buf, light, OverlayTexture.NO_OVERLAY, 1, 1, 1);
+            pose.popPose();
+            super.render(e, yaw, pt, pose, buf, light);
+            return;
         } else if (e instanceof GrenadeEntity g) {
             stack = new ItemStack(g.isSmoke() ? Reg.SMOKE_GRENADE.get() : Reg.FRAG_GRENADE.get());
             scale = 0.45f;

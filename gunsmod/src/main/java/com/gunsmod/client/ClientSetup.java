@@ -5,6 +5,7 @@ import com.gunsmod.Reg;
 import com.gunsmod.client.particle.BlastParticles;
 import com.gunsmod.client.particle.GunParticles;
 import com.gunsmod.client.render.BakedRender;
+import com.gunsmod.client.render.ArmoredCarRenderer;
 import com.gunsmod.client.render.BotRenderer;
 import com.gunsmod.client.render.GunRenderer;
 import com.gunsmod.client.render.HelicopterRenderer;
@@ -24,9 +25,14 @@ import com.gunsmod.client.screen.SpawnerScreen;
 import com.gunsmod.client.screen.WorkbenchScreen;
 import com.gunsmod.client.sound.JeepSound;
 import com.gunsmod.client.sound.VehicleSound;
+import com.gunsmod.entity.CarType;
+import com.gunsmod.entity.FxHooks;
+import com.gunsmod.entity.HeliType;
 import com.gunsmod.entity.HelicopterEntity;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.TankType;
 import com.gunsmod.entity.VehicleEntity;
+import com.gunsmod.entity.VehicleKind;
 import net.minecraft.client.Minecraft;
 import com.gunsmod.gun.GunType;
 import net.minecraft.world.item.Item;
@@ -34,6 +40,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
@@ -51,6 +58,7 @@ public final class ClientSetup {
     public static void setup(FMLClientSetupEvent e) {
         JeepEntity.clientTick = JeepSound::tickJeep;
         VehicleEntity.clientTick = VehicleSound::tick;
+        FxHooks.light = (en, lvl) -> ClientLights.light(en, en.position(), lvl, 2);
         // helicopter collective: jump climbs, sneak descends
         HelicopterEntity.liftInput = () -> {
             var o = Minecraft.getInstance().options;
@@ -63,8 +71,12 @@ public final class ClientSetup {
         Item[] guns = new Item[GunType.values().length];
         for (GunType g : GunType.values()) guns[g.ordinal()] = Reg.gun(g);
         e.registerItem(GunRenderer.EXTENSIONS, guns);
-        e.registerItem(JeepItemRenderer.EXTENSIONS, Reg.GREEN_JEEP.get(), Reg.RED_JEEP.get(), Reg.GREEN_TANK.get(), Reg.RED_TANK.get(),
-                Reg.GREEN_HELICOPTER.get(), Reg.RED_HELICOPTER.get());
+        java.util.List<Item> vehicles = new java.util.ArrayList<>(java.util.List.of(Reg.GREEN_JEEP.get(), Reg.RED_JEEP.get()));
+        for (VehicleKind k : VehicleKind.values()) {
+            vehicles.add(Reg.GREEN_VEHICLES.get(k).get());
+            vehicles.add(Reg.RED_VEHICLES.get(k).get());
+        }
+        e.registerItem(JeepItemRenderer.EXTENSIONS, vehicles.toArray(new Item[0]));
     }
 
     @SubscribeEvent
@@ -79,8 +91,26 @@ public final class ClientSetup {
                 "block/heavy_launcher_erector", "fx/muzzle_flash", "entity/tank/body", "entity/tank/mark_green", "entity/tank/mark_red",
                 "entity/tank/turret", "entity/tank/gun", "entity/tank/roadwheel", "entity/tank/idler", "entity/tank/sprocket",
                 "entity/tank/track_bottom", "entity/tank/track_top", "entity/heli/body", "entity/heli/mark_green", "entity/heli/mark_red",
-                "entity/heli/chin", "entity/heli/rotor", "entity/heli/tail_rotor", "entity/vehicle_ammo/shell", "entity/vehicle_ammo/rocket"}) {
+                "entity/heli/chin", "entity/heli/rotor", "entity/heli/tail_rotor", "entity/vehicle_ammo/shell", "entity/vehicle_ammo/rocket",
+                "entity/vehicle_ammo/atgm", "entity/vehicle_ammo/sam", "entity/vehicle_ammo/bomb", "entity/jeep_tow/launcher", "entity/car/wheel"}) {
             e.register(BakedRender.id(p));
+        }
+        for (TankType t : TankType.values()) {
+            if (t == TankType.ABRAMS) continue;
+            for (String p : new String[]{"body", "mark_green", "mark_red", "turret", "gun"}) e.register(BakedRender.id("entity/" + t.geo.model() + "/" + p));
+        }
+        for (HeliType h : HeliType.values()) {
+            if (h == HeliType.COBRA) continue;
+            for (String p : new String[]{"body", "mark_green", "mark_red", "hub", "blade"}) e.register(BakedRender.id("entity/" + h.geo.model() + "/" + p));
+            if (h.geo.tail() != null) {
+                e.register(BakedRender.id("entity/" + h.geo.model() + "/tail_hub"));
+                e.register(BakedRender.id("entity/" + h.geo.model() + "/tail_blade"));
+            }
+            if (h.geo.chin() != null) e.register(BakedRender.id("entity/" + h.geo.model() + "/chin"));
+        }
+        for (CarType c : CarType.values()) {
+            for (String p : new String[]{"body", "mark_green", "mark_red", "turret", "gun"}) e.register(BakedRender.id("entity/" + c.geo.model() + "/" + p));
+            if (c.geo.radar() != null) e.register(BakedRender.id("entity/" + c.geo.model() + "/radar"));
         }
     }
 
@@ -88,8 +118,19 @@ public final class ClientSetup {
     public static void renderers(EntityRenderersEvent.RegisterRenderers e) {
         e.registerEntityRenderer(Reg.BOT.get(), BotRenderer::new);
         e.registerEntityRenderer(Reg.JEEP.get(), JeepRenderer::new);
+        e.registerEntityRenderer(Reg.JEEP_TOW.get(), JeepRenderer::new);
         e.registerEntityRenderer(Reg.TANK.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_LEOPARD.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_T90.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_CHALLENGER.get(), TankRenderer::new);
         e.registerEntityRenderer(Reg.HELICOPTER.get(), HelicopterRenderer::new);
+        e.registerEntityRenderer(Reg.HELI_APACHE.get(), HelicopterRenderer::new);
+        e.registerEntityRenderer(Reg.HELI_HIND.get(), HelicopterRenderer::new);
+        e.registerEntityRenderer(Reg.HELI_KA52.get(), HelicopterRenderer::new);
+        e.registerEntityRenderer(Reg.BTR.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.PANTSIR.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.GUIDED_MISSILE.get(), ProjectileRenderer::new);
+        e.registerEntityRenderer(Reg.FLARE_ENTITY.get(), NoopRenderer::new);
         e.registerEntityRenderer(Reg.ROCKET.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.GRENADE.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.MISSILE.get(), MissileRenderer::new);
@@ -114,6 +155,7 @@ public final class ClientSetup {
         e.registerSpriteSet(Reg.SHOCKWAVE.get(), BlastParticles.ShockwaveProvider::new);
         e.registerSpriteSet(Reg.EMBER.get(), BlastParticles.EmberProvider::new);
         e.registerSpriteSet(Reg.BLAST_FLASH.get(), BlastParticles.FlashProvider::new);
+        e.registerSpriteSet(Reg.FLARE.get(), GunParticles.FlareProvider::new);
     }
 
     @SubscribeEvent
@@ -121,6 +163,7 @@ public final class ClientSetup {
         e.register(GunClient.RELOAD);
         e.register(GunClient.SEAT);
         e.register(GunClient.HORN);
+        e.register(GunClient.FLARES);
     }
 
     @SubscribeEvent

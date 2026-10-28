@@ -1,7 +1,7 @@
 package com.gunsmod.entity;
 
 import com.gunsmod.Reg;
-import com.gunsmod.entity.ai.DriveAI;
+import com.gunsmod.entity.ai.GroundBotDriver;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.gun.GunType;
 import com.gunsmod.net.Net;
@@ -32,23 +32,17 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * Main battle tank for one soldier: the commander drives, aims the turret with the view and fires the 120 mm gun
+ * Main battle tank for one soldier: the commander drives, aims the turret with the view and fires the main gun
  * (attack) and the coaxial machine gun (use). Tracked steering (turns on the spot), slow heavy acceleration, the
  * turret traverses on its own so a soldier inside keeps driving its route and only swings the gun at enemies.
+ * The model, armour, gun and mobility come from the {@link TankType}.
  */
 public class TankEntity extends VehicleEntity {
-    // model points (units of 0.25 block, see tools/armor.py)
-    public static final double TURRET_X = 8.0, TURRET_Z = 9.0;
-    public static final double GUN_Y = 7.6, GUN_Z = 2.6, MUZZLE_Z = -14.85;
-    public static final double SEAT_X = 10.6, SEAT_Y = 6.6, SEAT_Z = 11.0;
-    public static final double MAX_SPEED = 34.0 / 3.6 / 20.0;     // 34 km/h in blocks per tick
     public static final double MAX_REVERSE = 12.0 / 3.6 / 20.0;
-    public static final float GUN_MIN = -9f, GUN_MAX = 20f;       // pitch limits (negative = up)
-    public static final int RELOAD = 90;
-    public static final double SHELL_SPEED = 4.5, SHELL_GRAVITY = 0.03;
-    /** hull corners that must stay out of blocks (above step height) */
-    private static final double[][] FRONT = {{1.6, 5.4, -5.8}, {14.4, 5.4, -5.8}, {8.0, 5.4, -6.2}};
-    private static final double[][] BACK = {{1.6, 5.4, 21.6}, {14.4, 5.4, 21.6}};
+    public static final double SHELL_GRAVITY = 0.03;
+
+    public final TankType kind;
+    private final VehicleGeo.Tank geo;
 
     private static final EntityDataAccessor<Float> DATA_TURRET = SynchedEntityData.defineId(TankEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_GUN = SynchedEntityData.defineId(TankEntity.class, EntityDataSerializers.FLOAT);
@@ -61,8 +55,8 @@ public class TankEntity extends VehicleEntity {
     private boolean fireMain, fireCoax;
     private int coaxCooldown, coaxBurst, coaxPause, scanTimer;
     @Nullable private Vec3 aimError;
-    @Nullable private Vec3 patrolPos;
-    private int patrolSince, stuckTicks, reverseTicks;
+    private final GroundBotDriver patrol = new GroundBotDriver();
+    private int stuckTicks, reverseTicks;
     private Vec3 lastPos = Vec3.ZERO;
     private float lastYaw;
     // client visuals
@@ -73,12 +67,18 @@ public class TankEntity extends VehicleEntity {
     public boolean engineOn;
 
     public TankEntity(EntityType<? extends TankEntity> type, Level level) {
-        super(type, level);
+        this(type, level, TankType.ABRAMS);
     }
 
-    public static AttributeSupplier.Builder createAttributes() {
+    public TankEntity(EntityType<? extends TankEntity> type, Level level, TankType kind) {
+        super(type, level);
+        this.kind = kind;
+        this.geo = kind.geo;
+    }
+
+    public static AttributeSupplier.Builder createAttributes(TankType kind) {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 320.0)
+                .add(Attributes.MAX_HEALTH, kind.health)
                 .add(Attributes.ARMOR, 20.0)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.3)
@@ -96,7 +96,7 @@ public class TankEntity extends VehicleEntity {
 
     @Override
     public ItemStack pickItem() {
-        return new ItemStack(getBotTeam() == BotTeam.RED ? Reg.RED_TANK.get() : Reg.GREEN_TANK.get());
+        return new ItemStack(kind.item(getBotTeam()));
     }
 
     @Override
@@ -111,7 +111,7 @@ public class TankEntity extends VehicleEntity {
 
     @Override
     public float bulletFactor() {
-        return 0.04f;
+        return kind.bulletFactor;
     }
 
     @Override
@@ -140,29 +140,33 @@ public class TankEntity extends VehicleEntity {
     /** a point of the turret (model units, turret not rotated) -> model units with the turret turned */
     public Vec3 turretModel(double mx, double my, double mz, float turretYaw) {
         float a = turretYaw * Mth.DEG_TO_RAD;
-        double dx = mx - TURRET_X, dz = mz - TURRET_Z;
-        return new Vec3(TURRET_X + Mth.cos(a) * dx - Mth.sin(a) * dz, my, TURRET_Z + Mth.sin(a) * dx + Mth.cos(a) * dz);
+        double tx = geo.turret()[0], tz = geo.turret()[1];
+        double dx = mx - tx, dz = mz - tz;
+        return new Vec3(tx + Mth.cos(a) * dx - Mth.sin(a) * dz, my, tz + Mth.sin(a) * dx + Mth.cos(a) * dz);
     }
 
     /** a point of the gun (model units, gun level) -> model units with the gun elevated and the turret turned */
     public Vec3 gunModel(double mx, double my, double mz, float turretYaw, float pitch) {
         float p = pitch * Mth.DEG_TO_RAD;
-        double dy = my - GUN_Y, dz = mz - GUN_Z;
-        return turretModel(mx, GUN_Y + Mth.cos(p) * dy + Mth.sin(p) * dz, GUN_Z - Mth.sin(p) * dy + Mth.cos(p) * dz, turretYaw);
+        double gy = geo.gun()[0], gz = geo.gun()[1];
+        double dy = my - gy, dz = mz - gz;
+        return turretModel(mx, gy + Mth.cos(p) * dy + Mth.sin(p) * dz, gz - Mth.sin(p) * dy + Mth.cos(p) * dz, turretYaw);
     }
 
     @Override
     protected Vec3 seatModel(int seat) {
-        return turretModel(SEAT_X, SEAT_Y, SEAT_Z, getTurretYaw());
+        double[] s = geo.seat();
+        return turretModel(s[0], s[1], s[2], getTurretYaw());
     }
 
     public Vec3 muzzleWorld() {
-        Vec3 m = gunModel(TURRET_X, GUN_Y, MUZZLE_Z, getTurretYaw(), getGunPitch());
+        Vec3 m = gunModel(geo.turret()[0], geo.gun()[0], geo.muzzle(), getTurretYaw(), getGunPitch());
         return toWorld(m.x, m.y, m.z);
     }
 
     public Vec3 coaxWorld() {
-        Vec3 m = gunModel(9.7, 7.2, 0.6, getTurretYaw(), getGunPitch());
+        double[] c = geo.coax();
+        Vec3 m = gunModel(c[0], c[1], c[2] - 0.2, getTurretYaw(), getGunPitch());
         return toWorld(m.x, m.y, m.z);
     }
 
@@ -171,9 +175,11 @@ public class TankEntity extends VehicleEntity {
     }
 
     // ------------------------------------------------------------------------------------ input
-    public void setTrigger(int weapon, boolean down) {
+    @Override
+    public void trigger(Entity who, int weapon, boolean down) {
+        if (who != getControllingPassenger()) return;
         if (weapon == 0) fireMain = down;
-        else fireCoax = down;
+        else if (weapon == 1) fireCoax = down;
     }
 
     @Override
@@ -205,12 +211,12 @@ public class TankEntity extends VehicleEntity {
         float thr = driver != null ? throttleIn : 0f;
         float st = driver != null ? steerIn : 0f;
         boolean water = this.isInWater();
-        double max = water ? 0.08 : MAX_SPEED;
+        double max = water ? 0.08 : kind.maxSpeed;
         if (thr > 0.05f) {
             if (speed < -0.01) speed = Math.min(0, speed + 0.025);
             else {
                 double k = speed / max;
-                speed += 0.0055 * thr * (1.0 - 0.85 * k * k);
+                speed += 0.0055 * kind.accel * thr * (1.0 - 0.85 * k * k);
             }
         } else if (thr < -0.05f) {
             if (speed > 0.01) speed = Math.max(0, speed - 0.025);
@@ -223,10 +229,11 @@ public class TankEntity extends VehicleEntity {
         speed = Mth.clamp(speed, -MAX_REVERSE, max);
         steer += (st - steer) * 0.25f;
         float yawBefore = this.getYRot();
-        boolean wasFront = blockedAfter(Vec3.ZERO, FRONT), wasBack = blockedAfter(Vec3.ZERO, BACK);
+        double[][] front = geo.front(), back = geo.back();
+        boolean wasFront = blockedAfter(Vec3.ZERO, front), wasBack = blockedAfter(Vec3.ZERO, back);
         if (this.onGround() || water) {
             // tracks turn the hull on the spot; a little slower at speed
-            float rate = 2.4f - 1.0f * (float) Math.min(1, Math.abs(speed) / MAX_SPEED);
+            float rate = kind.turnRate - 1.0f * (float) Math.min(1, Math.abs(speed) / kind.maxSpeed);
             this.setYRot(this.getYRot() + steer * rate * (speed < -0.01 ? -1 : 1));
         }
         this.yBodyRot = this.getYRot();
@@ -238,11 +245,11 @@ public class TankEntity extends VehicleEntity {
         Vec3 motion = fwd.scale(speed).add(0, vy, 0);
         // the long hull: the front or rear corners hitting a wall stop it and turning into a wall is undone
         // (a hull already touching something may always move, so it can never get stuck)
-        if (Math.abs(this.getYRot() - yawBefore) > 0.001f && (blockedAfter(Vec3.ZERO, FRONT) && !wasFront || blockedAfter(Vec3.ZERO, BACK) && !wasBack)) {
+        if (Math.abs(this.getYRot() - yawBefore) > 0.001f && (blockedAfter(Vec3.ZERO, front) && !wasFront || blockedAfter(Vec3.ZERO, back) && !wasBack)) {
             this.setYRot(yawBefore);
         }
         Vec3 h = new Vec3(motion.x, 0, motion.z);
-        double[][] lead = speed >= 0 ? FRONT : BACK;
+        double[][] lead = speed >= 0 ? front : back;
         if (blockedAfter(h, lead) && !(speed >= 0 ? wasFront : wasBack)) {
             if (Math.abs(speed) > 0.3 && !this.level().isClientSide) this.hurt(this.damageSources().flyIntoWall(), (float) (Math.abs(speed) * 10));
             speed = 0;
@@ -314,7 +321,7 @@ public class TankEntity extends VehicleEntity {
         float wantRoll = (float) Math.toDegrees(Math.atan2(hr - hl, 3.25));
         tiltPitch += (Mth.clamp(wantPitch, -22f, 22f) - tiltPitch) * 0.3f;
         tiltRoll += (Mth.clamp(wantRoll, -18f, 18f) - tiltRoll) * 0.3f;
-        int sinceShot = RELOAD - getReload();
+        int sinceShot = kind.reload - getReload();
         rock = getReload() > 0 && sinceShot < 14 ? Mth.sin(sinceShot * 0.45f) * (1f - sinceShot / 14f) * 2.2f : 0f;
     }
 
@@ -356,7 +363,7 @@ public class TankEntity extends VehicleEntity {
         LivingEntity crew = getControllingPassenger();
         if (crew instanceof Player p) {
             float want = Mth.wrapDegrees(p.getYRot() - this.getYRot());
-            traverse(want, Mth.clamp(p.getXRot(), GUN_MIN, GUN_MAX), 3.0f, 2.0f);
+            traverse(want, Mth.clamp(p.getXRot(), kind.gunMin, kind.gunMax), kind.traverse, 2.0f);
             if (fireMain && reload == 0) fireMain(p);
             if (fireCoax && coaxCooldown <= 0) fireCoax(p, null);
         } else if (crew instanceof BotEntity bot) {
@@ -371,17 +378,18 @@ public class TankEntity extends VehicleEntity {
         float dy = Mth.clamp(Mth.wrapDegrees(wantYaw - cy), -yawRate, yawRate);
         float dp = Mth.clamp(wantPitch - cp, -pitchRate, pitchRate);
         this.entityData.set(DATA_TURRET, Mth.wrapDegrees(cy + dy));
-        this.entityData.set(DATA_GUN, Mth.clamp(cp + dp, GUN_MIN, GUN_MAX));
+        this.entityData.set(DATA_GUN, Mth.clamp(cp + dp, kind.gunMin, kind.gunMax));
     }
 
     private void fireMain(@Nullable LivingEntity gunner) {
         fireMain = false;
-        this.entityData.set(DATA_RELOAD, RELOAD);
+        this.entityData.set(DATA_RELOAD, kind.reload);
         Vec3 muzzle = muzzleWorld();
         Vec3 dir = gunDir();
         RocketEntity shell = new RocketEntity(this.level(), gunner, RocketEntity.TANK_SHELL);
         shell.setPos(muzzle.x, muzzle.y, muzzle.z);
-        shell.setDeltaMovement(dir.scale(SHELL_SPEED));
+        shell.setDeltaMovement(dir.scale(kind.shellSpeed));
+        shell.setPower(kind.shellDamageArmour, kind.shellDamageSoft, kind.splash);
         shell.alignToMotion();
         this.level().addFreshEntity(shell);
         this.level().playSound(null, muzzle.x, muzzle.y, muzzle.z, Reg.sound("tank_fire"), SoundSource.NEUTRAL, 9f, 0.95f + this.random.nextFloat() * 0.1f);
@@ -414,7 +422,7 @@ public class TankEntity extends VehicleEntity {
         LivingEntity best = null;
         double bestScore = Double.MAX_VALUE;
         for (LivingEntity e : vehicle.level().getEntitiesOfClass(LivingEntity.class, vehicle.getBoundingBox().inflate(range, range * 0.6, range), bot::isEnemy)) {
-            if (e.getVehicle() instanceof VehicleEntity v && v.protectsCrew()) continue;    // shoot the vehicle, not the crew
+            if (VehicleEntity.shieldOf(e) != null) continue;    // shoot the vehicle, not the crew
             Vec3 c = e.position().add(0, e.getBbHeight() * 0.5, 0);
             if (c.distanceTo(eye) > range) continue;
             if (vehicle.level().clip(new ClipContext(eye, c, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, vehicle)).getType() != HitResult.Type.MISS) continue;
@@ -449,7 +457,7 @@ public class TankEntity extends VehicleEntity {
     private void botGunner(BotEntity bot) {
         if (--scanTimer <= 0) {
             scanTimer = 10;
-            LivingEntity t = scan(this, bot, 96, toWorld(8, 10, 9), bot.getTarget());
+            LivingEntity t = scan(this, bot, 96, toWorld(geo.turret()[0], geo.seat()[1] + 3, geo.turret()[1]), bot.getTarget());
             if (t != null && t != bot.getTarget()) {
                 bot.setTarget(t);
                 aimError = null;
@@ -465,11 +473,11 @@ public class TankEntity extends VehicleEntity {
         bot.setAiming(true);
         if (aimError == null) aimError = rollAimError(this.random);
         Vec3 muzzle = muzzleWorld();
-        Vec3 aim = lead(muzzle, t, SHELL_SPEED, SHELL_GRAVITY).add(aimError);
-        Vec3 to = aim.subtract(toWorld(TURRET_X, GUN_Y, TURRET_Z));
+        Vec3 aim = lead(muzzle, t, kind.shellSpeed, SHELL_GRAVITY).add(aimError);
+        Vec3 to = aim.subtract(toWorld(geo.turret()[0], geo.gun()[0], geo.turret()[1]));
         float wantYaw = Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f - this.getYRot());
         float wantPitch = (float) -(Mth.atan2(to.y, Math.sqrt(to.x * to.x + to.z * to.z)) * Mth.RAD_TO_DEG);
-        traverse(wantYaw, Mth.clamp(wantPitch, GUN_MIN, GUN_MAX), 2.4f, 1.6f);
+        traverse(wantYaw, Mth.clamp(wantPitch, kind.gunMin, kind.gunMax), kind.traverse * 0.8f, 1.6f);
         float errYaw = Math.abs(Mth.wrapDegrees(wantYaw - getTurretYaw())), errPitch = Math.abs(wantPitch - getGunPitch());
         boolean los = this.level().clip(new ClipContext(muzzle, t.position().add(0, t.getBbHeight() * 0.6, 0), ClipContext.Block.COLLIDER,
                 ClipContext.Fluid.NONE, this)).getType() == HitResult.Type.MISS;
@@ -494,28 +502,14 @@ public class TankEntity extends VehicleEntity {
         }
     }
 
-    /** soldiers drive it like a real crew: steady patrol route, standoff circles around enemies, never parked */
+    /** soldiers drive it like a real crew: patrol with halts, stop to fire when the enemy is in sight */
     private void botDrive(BotEntity driver) {
         LivingEntity enemy = driver.getTarget();
-        Vec3 goal;
-        if (enemy != null && enemy.isAlive()) {
-            Vec3 rel = this.position().subtract(enemy.position()).multiply(1, 0, 1);
-            if (rel.lengthSqr() < 0.01) rel = new Vec3(1, 0, 0);
-            rel = rel.normalize();
-            double a = Math.toRadians(35);
-            Vec3 rot = new Vec3(rel.x * Math.cos(a) - rel.z * Math.sin(a), 0, rel.x * Math.sin(a) + rel.z * Math.cos(a));
-            goal = enemy.position().add(rot.scale(30));
-        } else {
-            BlockPos h = home != null ? home : this.blockPosition();
-            if (patrolPos == null || patrolPos.distanceToSqr(this.position()) < 12 * 12 || this.tickCount - patrolSince > 1000) {
-                patrolPos = DriveAI.groundWaypoint(this, Vec3.atBottomCenterOf(h), 110, 28, 60, 8);
-                patrolSince = this.tickCount;
-            }
-            goal = patrolPos;
-        }
+        BlockPos h = home != null ? home : this.blockPosition();
+        Vec3 goal = patrol.goal(this, enemy, true, Vec3.atBottomCenterOf(h), 110, 95, 10);
         if (goal == null) {
-            throttleIn = 0.5f;
-            steerIn = 0.5f;
+            throttleIn = GroundBotDriver.brake(speed);
+            steerIn = 0;
             return;
         }
         Vec3 to = goal.subtract(this.position());
@@ -536,7 +530,6 @@ public class TankEntity extends VehicleEntity {
         if (stuckTicks > 40) {
             reverseTicks = 35;
             stuckTicks = 0;
-            patrolPos = null;
         }
         if (reverseTicks > 0) {
             reverseTicks--;

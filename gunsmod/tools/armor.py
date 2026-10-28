@@ -345,4 +345,31 @@ def projectiles():
     for d in ((0.55, 0), (-0.55, 0), (0, 0.55), (0, -0.55)):
         m.cbox([8 + d[0] * 0.6, 8 + d[1] * 0.6, 9.8], [0.06 if d[0] == 0 else 0.5, 0.06 if d[1] == 0 else 0.5, 0.8], "grey_metal", **r)
     m.box([7.8, 7.8, 10.2], [8.2, 8.2, 10.3], "black", **r)
+    # anti-tank guided missile (Hellfire / Vikhr / TOW / Shturm): seeker dome, body, mid wings, tail fins
+    a = dict(part="atgm")
+    m.cyl("z", (8, 8), 0.34, 5.4, 10.4, "od_paint", sides=8, **a)
+    m.cyl("z", (8, 8), 0.26, 5.0, 5.4, "steel", sides=8, **a)
+    m.box([7.86, 7.86, 4.86], [8.14, 8.14, 5.0], "lens", **a)
+    m.box([7.6, 7.6, 7.3], [8.4, 8.4, 7.4], "black", **a)
+    for d in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        m.cbox([8 + d[0] * 0.5, 8 + d[1] * 0.5, 6.6], [0.05 if d[0] == 0 else 0.4, 0.05 if d[1] == 0 else 0.4, 1.0], "od_paint", **a)
+        m.cbox([8 + d[0] * 0.45, 8 + d[1] * 0.45, 10.0], [0.05 if d[0] == 0 else 0.35, 0.05 if d[1] == 0 else 0.35, 0.7], "grey_metal", **a)
+    m.box([7.8, 7.8, 10.4], [8.2, 8.2, 10.5], "glow_orange", light=True, **a)
+    # surface-to-air missile (57E6 style): long two-stage body, canards, booster fins
+    q = dict(part="sam")
+    m.cyl("z", (8, 8), 0.3, 4.6, 8.4, "white", sides=8, **q)
+    m.cyl("z", (8, 8), 0.2, 3.8, 4.6, "white", sides=8, **q)
+    m.cyl("z", (8, 8), 0.45, 8.4, 11.6, "od_paint", sides=8, **q)
+    for d in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        m.cbox([8 + d[0] * 0.38, 8 + d[1] * 0.38, 4.4], [0.04 if d[0] == 0 else 0.3, 0.04 if d[1] == 0 else 0.3, 0.5], "white", **q)
+        m.cbox([8 + d[0] * 0.75, 8 + d[1] * 0.75, 11.0], [0.05 if d[0] == 0 else 0.6, 0.05 if d[1] == 0 else 0.6, 1.0], "od_paint", **q)
+    m.box([7.75, 7.75, 11.6], [8.25, 8.25, 11.7], "glow_orange", light=True, **q)
+    # FAB-250 free-fall bomb: ogive nose, fat body, box tail
+    b = dict(part="bomb")
+    m.cyl("z", (8, 8), 0.75, 5.6, 9.6, "od_paint", sides=8, **b)
+    m.cyl("z", (8, 8), 0.5, 4.8, 5.6, "od_paint", sides=8, **b)
+    m.cyl("z", (8, 8), 0.45, 9.6, 10.6, "od_paint", sides=8, **b)
+    m.box([7.2, 7.95, 10.2], [8.8, 8.05, 11.4], "od_paint", **b)
+    m.box([7.95, 7.2, 10.2], [8.05, 8.8, 11.4], "od_paint", **b)
+    m.box([7.0, 7.0, 6.6], [9.0, 9.0, 6.8], "yellow", **b)
     return m

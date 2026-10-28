@@ -42,6 +42,7 @@ public final class GunClient {
     public static final KeyMapping RELOAD = new KeyMapping("key.gunsmod.reload", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, CATEGORY);
     public static final KeyMapping SEAT = new KeyMapping("key.gunsmod.seat", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, CATEGORY);
     public static final KeyMapping HORN = new KeyMapping("key.gunsmod.horn", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, CATEGORY);
+    public static final KeyMapping FLARES = new KeyMapping("key.gunsmod.flares", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_X, CATEGORY);
 
     // aiming
     public static boolean aiming;
@@ -132,8 +133,11 @@ public final class GunClient {
             PacketDistributor.sendToServer(new Net.Turret(false));
             turretWas = false;
         }
-        // tank commander / helicopter pilot: attack = main gun or rockets, use = machine gun or chin gun
-        if (p.getVehicle() instanceof VehicleEntity v && v.getControllingPassenger() == p) {
+        // tank / car commander, helicopter pilot and gunner: attack = main weapon, use = machine gun or cannon,
+        // flares key = countermeasures, reload key = next weapon
+        if (p.getVehicle() instanceof VehicleEntity v && v.firesFor(p)) {
+            while (FLARES.consumeClick()) PacketDistributor.sendToServer(new Net.VehicleFire(2, true));
+            while (RELOAD.consumeClick()) PacketDistributor.sendToServer(new Net.VehicleFire(3, true));
             boolean a = !inScreen && mc.options.keyAttack.isDown(), u = !inScreen && mc.options.keyUse.isDown();
             if (a != vehAttackWas) {
                 PacketDistributor.sendToServer(new Net.VehicleFire(0, a));
@@ -279,6 +283,8 @@ public final class GunClient {
         Vec3 muzzle = eye.add(look.scale(ads ? 1.1 : 1.3)).add(right.scale(ads ? 0.0 : 0.22)).add(0, ads ? -0.08 : -0.2, 0);
         boolean suppressed = att.has(Attachment.SUPPRESSOR);
         playShot(level, t, muzzle, suppressed, true);
+        // the muzzle flash lights up the surroundings (a burst keeps one light alive)
+        ClientLights.light(p, muzzle, suppressed ? 6 : t.kind == GunType.Kind.FLAME ? 14 : 13, t.kind == GunType.Kind.FLAME ? 4 : 3);
         if (t.kind == GunType.Kind.FLAME) {
             ClientNet.flames(level, muzzle, look);
             return;

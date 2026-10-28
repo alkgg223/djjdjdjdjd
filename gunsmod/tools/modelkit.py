@@ -62,6 +62,7 @@ MATERIALS = {
     "glow_green": ("#39ff5a", "glow", 0.0, 0.0),
     "glow_orange": ("#ffa020", "glow", 0.0, 0.0),
     "glow_blue": ("#40c8ff", "glow", 0.0, 0.0),
+    "glow_white": ("#fff6dc", "glow", 0.0, 0.0),
     "orange": ("#d0701c", "matte", 0.05, 0.18),
     "red": ("#a3221c", "paint", 0.05, 0.18),
     "yellow": ("#d9b21c", "paint", 0.05, 0.18),
