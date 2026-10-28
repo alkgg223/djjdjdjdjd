@@ -4,7 +4,7 @@ license="MIT"
 
 [[mods]]
 modId="gunsmod"
-version="1.0.0"
+version="1.0.1"
 displayName="Guns & Warfare"
 description='25 detailed 3D guns, ammo boxes, attachments, smart red/green soldier bots, a military jeep with a gunner turret, a missile launch station, battlefield arenas and more.'
 
