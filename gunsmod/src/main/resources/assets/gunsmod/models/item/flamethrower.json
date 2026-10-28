@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/flamethrower"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    -0.055,
+    -0.214,
+    -0.081
+   ],
+   "scale": [
+    0.5208,
+    0.5208,
+    0.5208
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.032,
+    -0.112,
+    -0.0
+   ],
+   "scale": [
+    0.2569,
+    0.2569,
+    0.2569
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.055,
+    -0.193,
+    -0.0
+   ],
+   "scale": [
+    0.4438,
+    0.4438,
+    0.4438
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.0,
+    -0.917,
+    0.264
+   ],
+   "scale": [
+    2.1083,
+    2.1083,
+    2.1083
+   ]
+  }
+ }
+}

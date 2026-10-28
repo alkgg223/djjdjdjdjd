@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/m107"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    -0.123,
+    0.444,
+    -0.171
+   ],
+   "scale": [
+    0.3874,
+    0.3874,
+    0.3874
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.118,
+    0.195,
+    -0.076
+   ],
+   "scale": [
+    0.1895,
+    0.1895,
+    0.1895
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.205,
+    0.337,
+    -0.131
+   ],
+   "scale": [
+    0.3272,
+    0.3272,
+    0.3272
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.59,
+    1.52,
+    0.922
+   ],
+   "scale": [
+    1.4754,
+    1.4754,
+    1.4754
+   ]
+  }
+ }
+}

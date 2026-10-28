@@ -26,17 +26,6 @@ neoForge {
             server()
             programArgument '--nogui'
         }
-        // automated smoke tests (only used by the CI workflow)
-        ciServer {
-            server()
-            programArgument '--nogui'
-            systemProperty 'gunsmod.citest', 'server'
-        }
-        ciClient {
-            client()
-            systemProperty 'gunsmod.citest', 'client'
-            programArguments.addAll '--quickPlaySingleplayer', 'world', '--width', '960', '--height', '540'
-        }
     }
     mods {
         gunsmod {

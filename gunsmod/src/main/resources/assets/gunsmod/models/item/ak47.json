@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/ak47"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.685,
+    1.448,
+    0.571
+   ],
+   "scale": [
+    0.4256,
+    0.4256,
+    0.4256
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.348,
+    0.745,
+    -0.07
+   ],
+   "scale": [
+    0.2064,
+    0.2064,
+    0.2064
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.601,
+    1.286,
+    -0.121
+   ],
+   "scale": [
+    0.3566,
+    0.3566,
+    0.3566
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.344,
+    3.655,
+    -1.707
+   ],
+   "scale": [
+    1.013,
+    1.013,
+    1.013
+   ]
+  }
+ }
+}

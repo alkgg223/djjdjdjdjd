@@ -1,0 +1,12 @@
+{
+ "values": [
+  "gunsmod:weapon_workbench",
+  "gunsmod:modification_table",
+  "gunsmod:missile_launcher",
+  "gunsmod:bot_spawner",
+  "gunsmod:arena_controller",
+  "gunsmod:concrete_barrier",
+  "gunsmod:barbed_wire",
+  "gunsmod:explosive_barrel"
+ ]
+}

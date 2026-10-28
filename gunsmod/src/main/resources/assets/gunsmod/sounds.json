@@ -1,0 +1,241 @@
+{
+ "shot_pistol": {
+  "sounds": [
+   "gunsmod:shot_pistol_1",
+   "gunsmod:shot_pistol_2",
+   "gunsmod:shot_pistol_3"
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_magnum": {
+  "sounds": [
+   "gunsmod:shot_magnum_1",
+   "gunsmod:shot_magnum_2",
+   "gunsmod:shot_magnum_3"
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_smg": {
+  "sounds": [
+   "gunsmod:shot_smg_1",
+   "gunsmod:shot_smg_2",
+   "gunsmod:shot_smg_3"
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_rifle": {
+  "sounds": [
+   "gunsmod:shot_rifle_1",
+   "gunsmod:shot_rifle_2",
+   "gunsmod:shot_rifle_3"
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_carbine": {
+  "sounds": [
+   "gunsmod:shot_carbine_1",
+   "gunsmod:shot_carbine_2",
+   "gunsmod:shot_carbine_3"
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_shotgun": {
+  "sounds": [
+   "gunsmod:shot_shotgun_1",
+   "gunsmod:shot_shotgun_2",
+   "gunsmod:shot_shotgun_3"
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_sniper": {
+  "sounds": [
+   "gunsmod:shot_sniper_1",
+   "gunsmod:shot_sniper_2",
+   "gunsmod:shot_sniper_3"
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_heavy": {
+  "sounds": [
+   "gunsmod:shot_heavy_1",
+   "gunsmod:shot_heavy_2",
+   "gunsmod:shot_heavy_3"
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_lmg": {
+  "sounds": [
+   "gunsmod:shot_lmg_1",
+   "gunsmod:shot_lmg_2",
+   "gunsmod:shot_lmg_3"
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_minigun": {
+  "sounds": [
+   "gunsmod:shot_minigun_1",
+   "gunsmod:shot_minigun_2",
+   "gunsmod:shot_minigun_3"
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_turret": {
+  "sounds": [
+   "gunsmod:shot_turret_1",
+   "gunsmod:shot_turret_2",
+   "gunsmod:shot_turret_3"
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_suppressed": {
+  "sounds": [
+   "gunsmod:shot_suppressed_1",
+   "gunsmod:shot_suppressed_2"
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot_suppressed"
+ },
+ "shot_grenade_launcher": {
+  "sounds": [
+   "gunsmod:shot_grenade_launcher"
+  ],
+  "subtitle": "subtitles.gunsmod.grenade_launch"
+ },
+ "rocket_launch": {
+  "sounds": [
+   "gunsmod:rocket_launch"
+  ],
+  "subtitle": "subtitles.gunsmod.rocket_launch"
+ },
+ "flamethrower_loop": {
+  "sounds": [
+   "gunsmod:flamethrower_loop"
+  ],
+  "subtitle": "subtitles.gunsmod.flamethrower"
+ },
+ "dry_fire": {
+  "sounds": [
+   "gunsmod:dry_fire"
+  ],
+  "subtitle": "subtitles.gunsmod.dry_fire"
+ },
+ "mag_out": {
+  "sounds": [
+   "gunsmod:mag_out"
+  ],
+  "subtitle": "subtitles.gunsmod.reload"
+ },
+ "mag_in": {
+  "sounds": [
+   "gunsmod:mag_in"
+  ],
+  "subtitle": "subtitles.gunsmod.reload"
+ },
+ "bolt": {
+  "sounds": [
+   "gunsmod:bolt"
+  ],
+  "subtitle": "subtitles.gunsmod.reload"
+ },
+ "shell_insert": {
+  "sounds": [
+   "gunsmod:shell_insert"
+  ],
+  "subtitle": "subtitles.gunsmod.reload"
+ },
+ "pump": {
+  "sounds": [
+   "gunsmod:pump"
+  ],
+  "subtitle": "subtitles.gunsmod.pump"
+ },
+ "break_open": {
+  "sounds": [
+   "gunsmod:break_open"
+  ],
+  "subtitle": "subtitles.gunsmod.reload"
+ },
+ "jeep_idle": {
+  "sounds": [
+   "gunsmod:jeep_idle"
+  ],
+  "subtitle": "subtitles.gunsmod.jeep_engine"
+ },
+ "jeep_drive": {
+  "sounds": [
+   "gunsmod:jeep_drive"
+  ],
+  "subtitle": "subtitles.gunsmod.jeep_engine"
+ },
+ "jeep_start": {
+  "sounds": [
+   "gunsmod:jeep_start"
+  ],
+  "subtitle": "subtitles.gunsmod.jeep_start"
+ },
+ "jeep_horn": {
+  "sounds": [
+   "gunsmod:jeep_horn"
+  ],
+  "subtitle": "subtitles.gunsmod.jeep_horn"
+ },
+ "missile_launch": {
+  "sounds": [
+   "gunsmod:missile_launch"
+  ],
+  "subtitle": "subtitles.gunsmod.missile_launch"
+ },
+ "missile_alarm": {
+  "sounds": [
+   "gunsmod:missile_alarm"
+  ],
+  "subtitle": "subtitles.gunsmod.missile_alarm"
+ },
+ "cover_open": {
+  "sounds": [
+   "gunsmod:cover_open"
+  ],
+  "subtitle": "subtitles.gunsmod.ui_switch"
+ },
+ "arm_switch": {
+  "sounds": [
+   "gunsmod:arm_switch"
+  ],
+  "subtitle": "subtitles.gunsmod.ui_switch"
+ },
+ "ui_beep": {
+  "sounds": [
+   "gunsmod:ui_beep"
+  ],
+  "subtitle": "subtitles.gunsmod.ui_beep"
+ },
+ "ui_confirm": {
+  "sounds": [
+   "gunsmod:ui_confirm"
+  ],
+  "subtitle": "subtitles.gunsmod.ui_beep"
+ },
+ "hitmarker": {
+  "sounds": [
+   "gunsmod:hitmarker"
+  ],
+  "subtitle": "subtitles.gunsmod.hitmarker"
+ },
+ "grenade_bounce": {
+  "sounds": [
+   "gunsmod:grenade_bounce"
+  ],
+  "subtitle": "subtitles.gunsmod.grenade_bounce"
+ },
+ "bullet_whiz": {
+  "sounds": [
+   "gunsmod:bullet_whiz"
+  ],
+  "subtitle": "subtitles.gunsmod.bullet_whiz"
+ },
+ "turret_overheat": {
+  "sounds": [
+   "gunsmod:turret_overheat"
+  ],
+  "subtitle": "subtitles.gunsmod.overheat"
+ }
+}

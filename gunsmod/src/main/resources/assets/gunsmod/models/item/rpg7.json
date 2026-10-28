@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/rpg7"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.357,
+    -0.53,
+    0.188
+   ],
+   "scale": [
+    0.4472,
+    0.4472,
+    0.4472
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.225,
+    -0.236,
+    0.03
+   ],
+   "scale": [
+    0.2197,
+    0.2197,
+    0.2197
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.389,
+    -0.407,
+    0.051
+   ],
+   "scale": [
+    0.3795,
+    0.3795,
+    0.3795
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.276,
+    -2.189,
+    -2.092
+   ],
+   "scale": [
+    2.041,
+    2.041,
+    2.041
+   ]
+  }
+ }
+}

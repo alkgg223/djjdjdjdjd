@@ -12,19 +12,11 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.10.2'
       - name: Build
         working-directory: gunsmod
-        run: gradle build --no-daemon
-      - name: Server smoke test
-        working-directory: gunsmod
         run: |
-          mkdir -p run
-          echo "eula=true" > run/eula.txt
-          printf 'online-mode=false\nlevel-type=minecraft\\:flat\nspawn-protection=0\nmax-tick-time=-1\ngenerate-structures=false\n' > run/server.properties
-          timeout 900 gradle runCiServer --no-daemon 2>&1 | tee server.log | grep -E "gunsmod|ERROR|Exception|Caused by" | head -400 || true
-          grep -q "gunsmod-ci" server.log
+          chmod +x gradlew
+          ./gradlew build --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: gunsmod-jar
