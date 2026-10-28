@@ -1,5 +1,8 @@
 package com.gunsmod.entity.ai;
 
+import com.gunsmod.entity.BotEntity;
+import com.gunsmod.world.BattleMap;
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -10,10 +13,52 @@ import net.minecraft.world.phys.Vec3;
 /**
  * How soldiers drive ground vehicles: patrol from waypoint to waypoint with a stop at each one, and when an enemy is
  * in sight and in range, stop so the gunner can hit it. Too close: back off. Enemy hidden: move round until it shows.
+ * On an orchard battlefield they drive the driver's road to the enemy base instead and never leave it.
  */
 public final class GroundBotDriver {
     @Nullable private Vec3 waypoint;
     private int since, pause, hidden;
+    @Nullable private List<Vec3> route;
+    @Nullable private BattleMap routeMap;
+    private int routeLane, routeIdx = -1;
+
+    /** the driver knows the field this vehicle is on (an orchard battlefield) */
+    public static boolean onField(Entity v, BotEntity driver) {
+        return driver.battle != null && driver.battle.contains(v.position());
+    }
+
+    /**
+     * Battlefield driving: along the road to the enemy base with a halt at every crossroads, halting to fight an
+     * enemy in sight and in range. {@code reach} is how far along the way to go (1 = into the enemy base).
+     * Null: stand (brake).
+     */
+    @Nullable
+    public Vec3 road(Entity v, BotEntity driver, @Nullable LivingEntity enemy, boolean armed, double engage, double reach) {
+        BattleMap map = driver.battle;
+        if (route == null || !map.equals(routeMap) || routeLane != driver.lane) {
+            route = map.route(driver.getBotTeam(), driver.lane, 6);
+            routeMap = map;
+            routeLane = driver.lane;
+            routeIdx = -1;
+        }
+        if (routeIdx < 0 || horiz(v, route.get(routeIdx)) > 24) routeIdx = BattleMap.resume(route, v.position(), routeIdx - 1);
+        if (enemy != null && enemy.isAlive() && armed && horiz(v, enemy.position()) < engage && canSee(v, enemy)) return null;
+        if (pause > 0) {
+            pause--;
+            return null;
+        }
+        int end = Math.max(1, (int) Math.round((route.size() - 1) * reach));
+        while (routeIdx < end && horiz(v, route.get(routeIdx)) < 6) {
+            routeIdx++;
+            if (map.junction(route.get(routeIdx - 1))) {
+                // a halt at the crossroads: look down the roads, then drive on
+                pause = 40 + v.getRandom().nextInt(80);
+                return null;
+            }
+        }
+        if (routeIdx >= end && horiz(v, route.get(end)) < 8) return null;    // there: hold the road
+        return route.get(Math.min(routeIdx, end));
+    }
 
     /** where to drive now, or null to stand (brake) */
     @Nullable

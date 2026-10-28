@@ -710,7 +710,9 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider, Ai
                 face = this.position().add(forward());
             } else {
                 if (patrolPos == null || this.tickCount - patrolSince > 1200) {
-                    patrolPos = patrolPoint(Vec3.atBottomCenterOf(h));
+                    // on an orchard battlefield the pilot knows where the enemy is: patrol over the enemy half
+                    boolean field = bot.battle != null && bot.battle.contains(this.position());
+                    patrolPos = field ? patrolPoint(bot.battle.front(bot.getBotTeam()), 110) : patrolPoint(Vec3.atBottomCenterOf(h), 170);
                     patrolSince = this.tickCount;
                 }
                 if (horiz(patrolPos) < 14) {
@@ -923,8 +925,7 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider, Ai
     }
 
     /** a patrol point 60-120 blocks away, ahead with some wandering, back towards home near the edge of the area */
-    private Vec3 patrolPoint(Vec3 home) {
-        double leash = 170;
+    private Vec3 patrolPoint(Vec3 home, double leash) {
         Vec3 here = this.position();
         double fromHome = Math.sqrt(here.distanceToSqr(home.x, here.y, home.z));
         float dir;

@@ -567,7 +567,8 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
         if (enemy == null && gunner instanceof BotEntity gb) enemy = gb.getTarget();
         if (home == null) home = this.blockPosition();
         // a gunner on the turret: halt when the enemy is in sight so the shots land, otherwise patrol with stops
-        Vec3 goal = patrol.goal(this, enemy, gunner != null, Vec3.atBottomCenterOf(home), 96, tow ? 120 : 55, tow ? 14 : 7);
+        Vec3 goal = GroundBotDriver.onField(this, driver) ? patrol.road(this, driver, enemy, gunner != null, tow ? 120 : 55, 1)
+                : patrol.goal(this, enemy, gunner != null, Vec3.atBottomCenterOf(home), 96, tow ? 120 : 55, tow ? 14 : 7);
         double stopDist = 0;
         if (goal == null) {
             throttleIn = GroundBotDriver.brake(speed);

@@ -11,6 +11,7 @@ import com.gunsmod.entity.VehicleKind;
 import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.net.Net;
 import com.gunsmod.world.OrchardBuilder;
+import com.gunsmod.world.OrchardWorld;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -55,7 +56,8 @@ public class GunsMod {
 
     /** big battlefield jobs build a few rows every tick */
     private static void serverTick(ServerTickEvent.Post e) {
-        OrchardBuilder.tick();
+        OrchardWorld.tick(e.getServer());
+        OrchardBuilder.tick(e.getServer());
     }
 
     /** the crew of any vehicle (jeep included) is protected: hits go to the vehicle until it blows up */

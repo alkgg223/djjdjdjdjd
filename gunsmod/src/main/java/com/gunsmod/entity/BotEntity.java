@@ -19,6 +19,7 @@ import com.gunsmod.item.GunItem;
 import com.gunsmod.item.MissileItem;
 import com.gunsmod.item.RemoteItem;
 import com.gunsmod.menu.BotMenu;
+import com.gunsmod.world.BattleMap;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
@@ -82,6 +83,12 @@ public class BotEntity extends PathfinderMob {
     @Nullable public BlockPos home;
     @Nullable public BlockPos spawnerPos;
     @Nullable public BlockPos arenaPos;
+    /** the orchard battlefield this soldier was deployed on: it marches on the enemy base along the roads */
+    @Nullable public BattleMap battle;
+    /** which way: -1 left flank track, 0 main track, 1 right flank track */
+    public int lane;
+    /** how far along the way it has got (index into {@link BattleMap#route}) */
+    public int routeIdx = -1;
     public boolean ignorePlayers;
     public int grenades = 2;
     public int smokes = 1;
@@ -567,6 +574,11 @@ public class BotEntity extends PathfinderMob {
         if (home != null) tag.put("Home", NbtUtils.writeBlockPos(home));
         if (spawnerPos != null) tag.put("Spawner", NbtUtils.writeBlockPos(spawnerPos));
         if (arenaPos != null) tag.put("Arena", NbtUtils.writeBlockPos(arenaPos));
+        if (battle != null) {
+            tag.put("Battle", battle.save());
+            tag.putInt("Lane", lane);
+            tag.putInt("RouteIdx", routeIdx);
+        }
         ListTag rack = new ListTag();
         for (int i = 0; i < missiles.getContainerSize(); i++) {
             ItemStack s = missiles.getItem(i);
@@ -590,6 +602,9 @@ public class BotEntity extends PathfinderMob {
         home = NbtUtils.readBlockPos(tag, "Home").orElse(null);
         spawnerPos = NbtUtils.readBlockPos(tag, "Spawner").orElse(null);
         arenaPos = NbtUtils.readBlockPos(tag, "Arena").orElse(null);
+        battle = BattleMap.load(tag.getCompound("Battle"));
+        lane = tag.getInt("Lane");
+        routeIdx = battle != null ? tag.getInt("RouteIdx") : -1;
         missiles.clearContent();
         for (Tag t : tag.getList("Missiles", Tag.TAG_COMPOUND)) {
             CompoundTag e = (CompoundTag) t;

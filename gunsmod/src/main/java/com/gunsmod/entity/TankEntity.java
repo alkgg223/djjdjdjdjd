@@ -507,7 +507,8 @@ public class TankEntity extends VehicleEntity {
     private void botDrive(BotEntity driver) {
         LivingEntity enemy = driver.getTarget();
         BlockPos h = home != null ? home : this.blockPosition();
-        Vec3 goal = patrol.goal(this, enemy, true, Vec3.atBottomCenterOf(h), 110, 95, 10);
+        Vec3 goal = GroundBotDriver.onField(this, driver) ? patrol.road(this, driver, enemy, true, 95, 1)
+                : patrol.goal(this, enemy, true, Vec3.atBottomCenterOf(h), 110, 95, 10);
         if (goal == null) {
             throttleIn = GroundBotDriver.brake(speed);
             steerIn = 0;

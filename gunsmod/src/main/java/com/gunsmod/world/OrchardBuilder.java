@@ -9,11 +9,13 @@ import com.gunsmod.entity.VehicleKind;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
@@ -29,7 +31,8 @@ import net.minecraft.world.level.block.state.BlockState;
  * The orchard battlefield, 300 x 500: open country of orchards with scattered fruit trees and grass, dirt tracks,
  * a few ruined farmhouses, and at each end a team base with soldier deployment pads, two tanks, an attack helicopter,
  * a Pantsir air defence system and an F-16 on its own runway, all kept in service by vehicle spawners.
- * Far too big to build in one go: the job does a few rows every server tick.
+ * Far too big to build in one go: the job does a few rows every server tick. The soldiers deployed here know the
+ * field (see {@link BattleMap}): the way to the enemy base and the roads that lead there.
  */
 public final class OrchardBuilder {
     private OrchardBuilder() {}
@@ -40,15 +43,21 @@ public final class OrchardBuilder {
     private static final List<Job> JOBS = new ArrayList<>();
 
     public static void start(ServerLevel level, BlockPos center, Direction fwd, ServerPlayer player) {
-        JOBS.add(new Job(level, center, fwd, player.getUUID()));
+        JOBS.add(new Job(level, center, fwd, player.getUUID(), false));
+    }
+
+    /** the whole world is the battlefield (the world type picked when the world was created) */
+    public static void startWorld(ServerLevel level, BlockPos center, Direction fwd) {
+        JOBS.add(new Job(level, center, fwd, null, true));
     }
 
     public static boolean busy() {
         return !JOBS.isEmpty();
     }
 
-    /** server tick: advance the jobs */
-    public static void tick() {
+    /** server tick: advance the jobs (a job left over from a world that was closed meanwhile is dropped) */
+    public static void tick(MinecraftServer server) {
+        JOBS.removeIf(j -> j.level.getServer() != server);
         if (JOBS.isEmpty()) return;
         Job j = JOBS.get(0);
         if (j.step()) JOBS.remove(0);
@@ -58,17 +67,31 @@ public final class OrchardBuilder {
         final ServerLevel level;
         final BlockPos o;
         final Direction fwd;
-        final UUID player;
+        @Nullable final UUID player;
+        final boolean world;
+        final BattleMap map;
         final RandomSource rnd;
         final long t0 = System.currentTimeMillis();
         int stage, row = -HL;
 
-        Job(ServerLevel level, BlockPos o, Direction fwd, UUID player) {
+        Job(ServerLevel level, BlockPos o, Direction fwd, @Nullable UUID player, boolean world) {
             this.level = level;
             this.o = o;
             this.fwd = fwd;
             this.player = player;
+            this.world = world;
+            this.map = new BattleMap(o, fwd);
             this.rnd = RandomSource.create(o.asLong());
+        }
+
+        /** the player who built it, or everybody when the field is the world itself */
+        void tell(Component c, boolean bar) {
+            if (player == null) {
+                for (ServerPlayer p : level.players()) p.displayClientMessage(c, bar);
+                return;
+            }
+            ServerPlayer p = level.getServer().getPlayerList().getPlayer(player);
+            if (p != null) p.displayClientMessage(c, bar);
         }
 
         /** local (x = right, z = towards the red base) -> world */
@@ -102,8 +125,10 @@ public final class OrchardBuilder {
                     farmhouses();
                     base(-1);
                     base(1);
-                    ServerPlayer p = level.getServer().getPlayerList().getPlayer(player);
-                    if (p != null) p.displayClientMessage(Component.translatable("gunsmod.msg.orchard_done", (System.currentTimeMillis() - t0) / 1000), false);
+                    keepLoaded(-1);
+                    keepLoaded(1);
+                    if (world) OrchardWorld.built(level, map);
+                    tell(Component.translatable("gunsmod.msg.orchard_done", (System.currentTimeMillis() - t0) / 1000), false);
                     return true;
                 }
             }
@@ -112,8 +137,7 @@ public final class OrchardBuilder {
 
         void progress(int done, int total) {
             if (level.getGameTime() % 20 != 0) return;
-            ServerPlayer p = level.getServer().getPlayerList().getPlayer(player);
-            if (p != null) p.displayClientMessage(Component.translatable("gunsmod.msg.orchard_progress", done * 100 / total), true);
+            tell(Component.translatable("gunsmod.msg.orchard_progress", done * 100 / total), true);
         }
 
         // ------------------------------------------------------------------------------------ terrain
@@ -138,18 +162,18 @@ public final class OrchardBuilder {
 
         void detailRow(int z) {
             boolean base = baseZone(z);
-            boolean cross = Math.abs(z) % 100 <= 1 && !base;
             for (int x = -HW; x < HW; x++) {
-                // dirt tracks: one down the middle, cross tracks every hundred blocks
-                if (Math.abs(x) <= 2 || cross) {
-                    set(x, 0, z, Math.abs(x) == 2 && !cross ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.DIRT_PATH.defaultBlockState());
+                long h = mix(x, z);
+                int r = (int) (h & 1023);
+                // dirt tracks (the road network of the map): worn coarse dirt along the edges
+                if (BattleMap.isRoad(x, z)) {
+                    boolean edge = !BattleMap.isRoad(x + 1, z) || !BattleMap.isRoad(x - 1, z) || !BattleMap.isRoad(x, z + 1) || !BattleMap.isRoad(x, z - 1);
+                    set(x, 0, z, edge && (r & 1) == 0 ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.DIRT_PATH.defaultBlockState());
                     continue;
                 }
                 if (base || x <= -HW + 2 || x >= HW - 3) continue;
-                long h = mix(x, z);
-                int r = (int) (h & 1023);
-                // orchard rows: a tree on some of the grid spots only, so the field stays open
-                if (Math.floorMod(x, 9) == 4 && Math.floorMod(z, 8) == 3 && r < 330) {
+                // orchard rows: a tree on some of the grid spots only, so the field stays open; none close to a road
+                if (Math.floorMod(x, 9) == 4 && Math.floorMod(z, 8) == 3 && r < 330 && !BattleMap.nearRoad(x, z, 4)) {
                     tree(x, z, h);
                     continue;
                 }
@@ -231,7 +255,7 @@ public final class OrchardBuilder {
         }
 
         void farmhouses() {
-            int[][] spots = {{-60, -50}, {60, 50}, {70, -130}, {-70, 130}, {-110, 10}, {110, -10}};
+            int[][] spots = {{-60, -50}, {60, 50}, {90, -136}, {-70, 130}, {-110, 10}, {110, -10}};
             for (int[] s : spots) house(s[0], s[1]);
         }
 
@@ -304,7 +328,7 @@ public final class OrchardBuilder {
             put(s, -6, 1, 18, facingFor(Reg.AMMO_CRATE.get(), toEnemy));
             put(s, 6, 1, 18, facingFor(Reg.AMMO_CRATE.get(), toEnemy));
             put(s, -6, 1, 34, facingFor(Reg.AMMO_CRATE.get(), toEnemy));
-            for (int[] l : new int[][]{{-40, 4}, {40, 4}, {-40, 50}, {40, 50}, {0, 30}}) lamp(s, l[0], l[1]);
+            for (int[] l : new int[][]{{-40, 4}, {40, 4}, {-40, 50}, {40, 50}, {8, 42}}) lamp(s, l[0], l[1]);
             // soldiers: near the armour, near the helicopter and the air defence, and pilots by the runway
             soldiers(s, -4, 24, team, 6);
             soldiers(s, 14, 14, team, 5);
@@ -366,6 +390,7 @@ public final class OrchardBuilder {
                 be.count = count;
                 be.delay = 10;
                 be.active = true;
+                be.battle = map;
                 be.setChanged();
                 level.sendBlockUpdated(p, level.getBlockState(p), level.getBlockState(p), 3);
             }
@@ -384,6 +409,23 @@ public final class OrchardBuilder {
             root.put("gunsmod_bot", d);
             tag.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
             return tag;
+        }
+
+        /**
+         * The base stays loaded even with nobody near it, so both sides keep deploying soldiers and vehicles: the yard
+         * and the runway. Further out the battle only runs where players are, as everywhere in Minecraft.
+         */
+        void keepLoaded(int s) {
+            forceArea(posOf(s, -46, 0, 0), posOf(s, 46, 0, 60));
+            forceArea(posOf(s, -146, 0, 50), posOf(s, 44, 0, 74));
+        }
+
+        void forceArea(BlockPos a, BlockPos b) {
+            int x0 = Math.min(a.getX(), b.getX()) >> 4, x1 = Math.max(a.getX(), b.getX()) >> 4;
+            int z0 = Math.min(a.getZ(), b.getZ()) >> 4, z1 = Math.max(a.getZ(), b.getZ()) >> 4;
+            for (int cx = x0; cx <= x1; cx++) {
+                for (int cz = z0; cz <= z1; cz++) level.setChunkForced(cx, cz, true);
+            }
         }
 
         void vehiclePad(int s, int x, int d, VehicleKind kind, BotTeam team, Direction face) {

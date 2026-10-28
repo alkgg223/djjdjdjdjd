@@ -852,9 +852,11 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     /** slow patrol (50 km/h) between waypoints round home, 40 blocks above the ground */
     private void patrol(BotEntity bot) {
         BlockPos h = home != null ? home : this.blockPosition();
-        Vec3 hv = Vec3.atBottomCenterOf(h);
+        // on an orchard battlefield the pilot knows where the enemy is: patrol over the enemy half
+        boolean field = bot.battle != null && bot.battle.contains(this.position());
+        Vec3 hv = field ? bot.battle.front(bot.getBotTeam()) : Vec3.atBottomCenterOf(h);
         if (waypoint == null || horiz(waypoint) < 35 || phaseTicks > 1400) {
-            double a = this.random.nextDouble() * Math.PI * 2, r = 60 + this.random.nextDouble() * 160;
+            double a = this.random.nextDouble() * Math.PI * 2, r = field ? 30 + this.random.nextDouble() * 100 : 60 + this.random.nextDouble() * 160;
             waypoint = new Vec3(hv.x + Math.cos(a) * r, hv.y, hv.z + Math.sin(a) * r);
             phaseTicks = 0;
         }

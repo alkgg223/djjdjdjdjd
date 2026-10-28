@@ -11,9 +11,12 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Soldier combat behaviour: keeps a weapon-appropriate distance, strafes, fires bursts, falls back to cover to
  * reload or when hurt, peeks out of cover, flanks a hidden enemy and throws frag / smoke grenades.
+ * On an orchard battlefield every move stays on a road or by the roadside.
  */
 public class BotCombatGoal extends Goal {
     private enum State { ENGAGE, MOVE_COVER, IN_COVER, PEEK, FLANK }
+    /** how far from the middle of a road soldiers of an orchard battlefield go in a fight */
+    private static final double ROADSIDE = 10;
 
     private final BotEntity bot;
     private State state = State.ENGAGE;
@@ -72,8 +75,23 @@ public class BotCombatGoal extends Goal {
         repath = 0;
     }
 
+    private boolean onField() {
+        return bot.battle != null && bot.battle.contains(bot.position());
+    }
+
+    /** the spot, or the nearest one by the roadside on an orchard battlefield */
+    private Vec3 roadside(Vec3 p) {
+        return p != null && onField() ? bot.battle.keepNear(p, ROADSIDE) : p;
+    }
+
+    /** a cover or peek spot is only any use on the battlefield when it is by a road */
+    private Vec3 byRoad(Vec3 p) {
+        return p != null && onField() && bot.battle.keepNear(p, ROADSIDE) != p ? null : p;
+    }
+
     private void moveTo(Vec3 p, double speed) {
         if (repath-- <= 0) {
+            p = roadside(p);
             bot.getNavigation().moveTo(p.x, p.y, p.z, speed);
             repath = 10;
         }
@@ -119,7 +137,7 @@ public class BotCombatGoal extends Goal {
             case ENGAGE -> {
                 bot.setCrouch(bot.isReloadingGun() || gun.category == GunType.Category.SNIPER && see && dist > 20);
                 if (wantsCover) {
-                    Vec3 c = CoverFinder.findCover(bot, threatEye, 10);
+                    Vec3 c = byRoad(CoverFinder.findCover(bot, threatEye, 10));
                     coverCooldown = 40;
                     if (c != null) {
                         coverPos = c;
@@ -161,7 +179,7 @@ public class BotCombatGoal extends Goal {
                     }
                     if (lostSight > 50) {
                         Vec3 f = lastSeen == null ? null : CoverFinder.findFlank(bot, lastSeen, Mth.clamp(dist, 6, 18));
-                        movePos = f != null ? f : lastSeen;
+                        movePos = roadside(f != null ? f : lastSeen);
                         if (movePos != null) go(State.FLANK);
                     } else if (lastSeen != null && lostSight > 15) {
                         moveTo(lastSeen, BotEntity.SPEED_WALK);
@@ -194,7 +212,7 @@ public class BotCombatGoal extends Goal {
                 }
                 int wait = 30 + (lowHealth ? 50 : 0);
                 if (stateTicks > wait && !bot.isReloadingGun()) {
-                    Vec3 p = lastSeen != null ? CoverFinder.findPeek(bot, coverPos, threatEye) : null;
+                    Vec3 p = lastSeen != null ? byRoad(CoverFinder.findPeek(bot, coverPos, threatEye)) : null;
                     if (p != null) {
                         movePos = p;
                         go(State.PEEK);

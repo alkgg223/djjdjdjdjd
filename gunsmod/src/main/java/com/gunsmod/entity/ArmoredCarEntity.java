@@ -661,7 +661,10 @@ public class ArmoredCarEntity extends VehicleEntity {
         // the Pantsir only cares about aircraft: it halts for the helicopter its radar tracks, never for soldiers
         LivingEntity enemy = kind.antiAir() ? tracked() : driver.getTarget();
         BlockPos hp = home != null ? home : this.blockPosition();
-        Vec3 goal = kind.antiAir()
+        // on the battlefield the air defence covers its own half of the field from the road, the rest drive on the enemy
+        Vec3 goal = GroundBotDriver.onField(this, driver)
+                ? patrol.road(this, driver, enemy, true, kind.antiAir() ? RADAR_RANGE : 75, kind.antiAir() ? 0.3 : 1)
+                : kind.antiAir()
                 ? patrol.goal(this, enemy, true, Vec3.atBottomCenterOf(hp), 90, RADAR_RANGE, 0)
                 : patrol.goal(this, enemy, true, Vec3.atBottomCenterOf(hp), 100, 75, 9);
         if (goal == null) {

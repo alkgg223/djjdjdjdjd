@@ -4,11 +4,13 @@ import com.gunsmod.Reg;
 import com.gunsmod.entity.BotEntity;
 import com.gunsmod.entity.ai.CoverFinder;
 import com.gunsmod.item.DogTagItem;
+import com.gunsmod.world.BattleMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -44,6 +46,8 @@ public class SpawnerBlockEntity extends BlockEntity {
     public int count = 3;
     public int delay = 5;
     public boolean active = false;
+    /** set on the pads of an orchard battlefield: the soldiers know the field and march on the enemy base */
+    @Nullable public BattleMap battle;
     private final List<UUID> alive = new ArrayList<>();
     private final Map<UUID, Integer> missing = new HashMap<>();
     private int cooldown;
@@ -163,7 +167,10 @@ public class SpawnerBlockEntity extends BlockEntity {
         if (DogTagItem.data(tag()).getBoolean("random")) b.setup(b.getBotTeam(), sl.random, null);
         b.spawnerPos = worldPosition;
         b.home = worldPosition;
-        b.home = worldPosition;
+        if (battle != null) {
+            b.battle = battle;
+            b.lane = BattleMap.randomLane(sl.random);
+        }
         sl.addFreshEntity(b);
         alive.add(b.getUUID());
         sl.sendParticles(Reg.HOLO.get(), b.getX(), b.getY() + 1, b.getZ(), 12, 0.3, 0.6, 0.3, 0.02);
@@ -185,6 +192,7 @@ public class SpawnerBlockEntity extends BlockEntity {
         ListTag list = new ListTag();
         for (UUID u : alive) list.add(NbtUtils.createUUID(u));
         tag.put("Alive", list);
+        if (battle != null) tag.put("Battle", battle.save());
     }
 
     @Override
@@ -196,6 +204,7 @@ public class SpawnerBlockEntity extends BlockEntity {
         inventory.setItem(0, tag.contains("Tag") ? ItemStack.parse(reg, tag.getCompound("Tag")).orElse(ItemStack.EMPTY) : ItemStack.EMPTY);
         alive.clear();
         for (Tag t : tag.getList("Alive", Tag.TAG_INT_ARRAY)) alive.add(NbtUtils.loadUUID(t));
+        battle = BattleMap.load(tag.getCompound("Battle"));
     }
 
     @Override
