@@ -43,16 +43,25 @@ public class BotScreen extends AbstractContainerScreen<BotMenu> {
             Slot s = menu.slots.get(i);
             UiKit.slot(g, x + s.x, y + s.y);
         }
-        g.drawString(font, Component.translatable("gunsmod.ui.weapon"), x + 22, y + 42, UiKit.MUTED, false);
-        g.drawString(font, Component.translatable("gunsmod.ui.armor"), x + 48, y + 42, UiKit.MUTED, false);
+        small(g, Component.translatable("gunsmod.ui.weapon").getString(), x + 9, y + 25, UiKit.MUTED);
+        small(g, Component.translatable("gunsmod.ui.armor").getString(), x + 32, y + 25, UiKit.MUTED);
+        small(g, Component.translatable("gunsmod.ui.remote").getString(), x + 9, y + 61, UiKit.MUTED);
+        small(g, Component.translatable("gunsmod.ui.missile_rack").getString(), x + 32, y + 61, UiKit.MUTED);
+        int links = menu.data.get(4);
+        small(g, links < 0 ? Component.translatable("gunsmod.ui.no_remote").getString()
+                : Component.translatable("gunsmod.ui.artillery", links).getString(), x + 9, y + 92, links < 0 ? UiKit.MUTED : UiKit.GOOD);
         if (menu.bot != null) {
-            InventoryScreen.renderEntityInInventoryFollowsMouse(g, x + 60, y + 74, x + 128, y + 104, 18, 0.0625f, mx, my, menu.bot);
+            InventoryScreen.renderEntityInInventoryFollowsMouse(g, x + 106, y + 20, x + 131, y + 90, 26, 0.0625f, mx, my, menu.bot);
         }
         for (UiKit.Btn b : buttons()) UiKit.button(g, font, b, mx, my);
-        for (int i = 5; i < menu.slots.size(); i++) {
-            Slot s = menu.slots.get(i);
-            UiKit.slot(g, x + s.x, y + s.y);
-        }
+    }
+
+    private void small(GuiGraphics g, String s, int x, int y, int col) {
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().scale(0.75f, 0.75f, 1f);
+        g.drawString(font, s, 0, 0, col, false);
+        g.pose().popPose();
     }
 
     @Override

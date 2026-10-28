@@ -284,6 +284,70 @@ def missile_launch(rng):
     return fade(norm(sat(out, 1.8)), 0.001, 0.5)
 
 
+def explosion_big(rng, L=4.5):
+    """close heavy blast: sharp crack, sub-bass thump, roaring rumble and falling debris crackle"""
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    out = np.zeros(n)
+    f = 38 * (1 + 1.6 * np.exp(-k / 0.05))
+    out += np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-k / 0.45) * 1.6
+    out += lp(noise(L, rng), 300, 2) * np.exp(-k / 0.9) * np.clip(k / 0.01, 0, 1) * 2.0
+    out += bp(noise(L, rng), 300, 1800) * np.exp(-k / 0.35) * 1.0
+    out += hp(noise(L, rng), 2500) * np.exp(-k / 0.04) * 1.2
+    # debris crackle
+    crack = np.zeros(n)
+    for _ in range(140):
+        at = 0.25 + rng.exponential(0.9)
+        if at < L - 0.1:
+            c = click(rng, 1200, 6000, 0.004 + rng.random() * 0.01, 0.15 + rng.random() * 0.4)
+            place(crack, c, at)
+    out += crack * np.exp(-k / 2.2)
+    out = reverb(sat(out, 2.2), 1.6, 1200, 0.4, rng, 0.05)
+    return fade(norm(out[:n]), 0.0005, 0.8)
+
+
+def explosion_far(rng, L=5.0):
+    """distant blast: muffled thump and long rolling rumble (echoes)"""
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    out = lp(noise(L, rng), 160, 3) * np.exp(-k / 1.4) * np.clip(k / 0.03, 0, 1) * 3.0
+    f = 32 * (1 + 0.8 * np.exp(-k / 0.08))
+    out += np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-k / 0.6)
+    for d, a in ((0.45, 0.5), (1.1, 0.35), (1.9, 0.22)):
+        echo = np.zeros(n)
+        place(echo, out[: n - int(d * SR)] * a, d)
+        out += lp(echo, 220)
+    return fade(norm(sat(out, 1.5)), 0.01, 1.0)
+
+
+def missile_incoming(rng, L=2.6):
+    """falling whistle that drops in pitch and swells"""
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    f = 2600 * np.exp(-k / 1.6) + 500
+    tone = np.sin(2 * np.pi * np.cumsum(f) / SR)
+    air = bp(noise(L, rng), 1500, 5000) * 0.35
+    env = np.clip(k / L, 0, 1) ** 1.6
+    return fade(norm((tone * 0.7 + air) * env), 0.05, 0.05)
+
+
+def heavy_launch(rng):
+    """long heavy rocket ignition roar with crackle"""
+    L = 6.0
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    roar = lp(noise(L, rng), 450, 2) * 1.4 + bp(noise(L, rng), 400, 1800) * 0.7
+    crackle = np.zeros(n)
+    for _ in range(400):
+        at = rng.random() * (L - 0.2)
+        place(crackle, click(rng, 800, 4000, 0.003, 0.2 + rng.random() * 0.3), at)
+    envl = np.clip(k / 0.3, 0, 1) * np.exp(-np.maximum(0, k - 2.5) / 1.4)
+    out = (roar + crackle * 0.6) * envl
+    place(out, gunshot(rng, crack=1.2, body_f=220, body_tau=0.3, thump_f=32, thump=2.0, tail=0.8)[: int(1.2 * SR)] * 1.3, 0)
+    out *= 1 + 0.12 * np.sin(2 * np.pi * 5 * k)
+    return fade(norm(sat(out, 1.8)), 0.001, 0.8)
+
+
 def build_all():
     rng = np.random.default_rng(7)
     sounds = {}
@@ -316,6 +380,10 @@ def build_all():
     add("jeep_horn", [horn()], "jeep_horn")
     add("missile_launch", [missile_launch(rng)], "missile_launch")
     add("missile_alarm", [siren()], "missile_alarm")
+    add("heavy_launch", [heavy_launch(rng)], "missile_launch")
+    add("explosion_big", [explosion_big(np.random.default_rng(70 + i)) for i in range(2)], "explosion_big")
+    add("explosion_far", [explosion_far(np.random.default_rng(80 + i)) for i in range(2)], "explosion_far")
+    add("missile_incoming", [missile_incoming(rng)], "missile_incoming")
     add("cover_open", [compose([(click(rng, 1000, 4000, 0.006, 1.0), 0.0), (thunk(rng, 200, 0.04, 0.8), 0.03), (scrape(rng, 0.15, 3000, 7000, 0.15), 0.05)], 0.35)], "ui_switch")
     add("arm_switch", [compose([(click(rng, 1500, 6000, 0.003, 1.0), 0.0), (click(rng, 1000, 3000, 0.004, 0.6), 0.04)], 0.15)], "ui_switch")
     add("ui_beep", [beep(1200)], "ui_beep")

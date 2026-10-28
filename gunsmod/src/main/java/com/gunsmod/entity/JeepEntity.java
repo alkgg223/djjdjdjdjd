@@ -3,6 +3,7 @@ package com.gunsmod.entity;
 import com.gunsmod.Reg;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.net.Net;
+import com.gunsmod.world.Blast;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -34,8 +35,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Military jeep with four seats (driver, turret gunner, passenger, rear). Speed builds up gradually to 40 km/h.
@@ -44,8 +45,12 @@ import net.neoforged.neoforge.fluids.FluidType;
 public class JeepEntity extends Mob {
     public static final int SEAT_DRIVER = 0, SEAT_GUNNER = 1, SEAT_PASSENGER = 2, SEAT_REAR = 3;
     /** seat positions in model units */
-    public static final double[][] SEATS = {{2.6, 5.6, 4.6}, {8.0, 12.2, 13.0}, {13.4, 5.6, 4.6}, {13.4, 5.6, 12.6}};
+    public static final double[][] SEATS = {{2.6, 5.6, 4.6}, {8.0, 16.6, 17.3}, {13.4, 5.6, 4.6}, {13.4, 5.6, 12.6}};
     public static final double TURRET_X = 8.0, TURRET_Y = 19.3, TURRET_Z = 13.0, GUN_PIVOT_Y = 23.6;
+    /** the gun mount sits ahead of the ring centre so the gunner can stand behind the grips and see over the shield */
+    public static final double GUN_PIVOT_Z = 10.5;
+    /** gunner position: behind the ring centre (turns with the turret), eye just above the gun shield */
+    public static final double GUNNER_BACK = 4.3, GUNNER_Y = 16.6;
     public static final double MAX_SPEED = 40.0 / 3.6 / 20.0;   // 40 km/h in blocks per tick
     public static final double MAX_REVERSE = 12.0 / 3.6 / 20.0;
     private static final double WHEELBASE = 2.9;
@@ -240,8 +245,24 @@ public class JeepEntity extends Mob {
     }
 
     public Vec3 seatWorld(int seat) {
+        if (seat == SEAT_GUNNER) return turretPoint(getTurretYaw(), -GUNNER_BACK, GUNNER_Y);
         double[] s = SEATS[seat];
         return toWorld(s[0], s[1], s[2]);
+    }
+
+    /** turret yaw (relative to the hull) the gunner is aiming with; players drive it with their own view */
+    public float turretYawFor(Entity gunner) {
+        return gunner instanceof Player p ? Mth.wrapDegrees(p.getYRot() - this.getYRot()) : getTurretYaw();
+    }
+
+    /** world position of a point on the turret centre line, {@code ahead} model units in front of the ring centre */
+    public Vec3 turretPoint(float turretYaw, double ahead, double y) {
+        float a = turretYaw * Mth.DEG_TO_RAD;
+        return toWorld(TURRET_X + Mth.sin(a) * ahead, y, TURRET_Z - Mth.cos(a) * ahead);
+    }
+
+    public Vec3 gunPivotWorld() {
+        return turretPoint(getTurretYaw(), TURRET_Z - GUN_PIVOT_Z, GUN_PIVOT_Y);
     }
 
     /** model units -> world position using the current yaw */
@@ -257,8 +278,9 @@ public class JeepEntity extends Mob {
     protected void positionRider(Entity passenger, MoveFunction callback) {
         int seat = seatOf(passenger);
         if (seat < 0) seat = SEAT_REAR;
-        Vec3 p = seatWorld(seat);
-        Vec3 att = passenger.getVehicleAttachmentPoint(this);
+        Vec3 p = seat == SEAT_GUNNER ? turretPoint(turretYawFor(passenger), -GUNNER_BACK, GUNNER_Y) : seatWorld(seat);
+        // players hang 0.6 below their seat point; soldiers get the same so both sit at the same height
+        Vec3 att = passenger instanceof Player ? passenger.getVehicleAttachmentPoint(this) : new Vec3(0, 0.6, 0);
         callback.accept(passenger, p.x - att.x, p.y - att.y, p.z - att.z);
         if (passenger instanceof LivingEntity le && !(passenger instanceof Player)) {
             le.yBodyRot = this.getYRot();
@@ -347,7 +369,7 @@ public class JeepEntity extends Mob {
         if (this.level().isClientSide || this.isRemoved()) return;
         super.die(source);
         this.ejectPassengers();
-        this.level().explode(this, getX(), getY() + 1.0, getZ(), 3.2f, true, Level.ExplosionInteraction.MOB);
+        Blast.explode(this.level(), this, this.position().add(0, 1.0, 0), 3.2f, true, Level.ExplosionInteraction.MOB, Blast.FX_FIRE, 1.2f);
         this.discard();
     }
 
@@ -623,8 +645,7 @@ public class JeepEntity extends Mob {
     }
 
     public Vec3 muzzleWorld() {
-        Vec3 pivot = toWorld(TURRET_X, GUN_PIVOT_Y + 0.3, TURRET_Z);
-        return pivot.add(turretDir().scale(1.55));
+        return gunPivotWorld().add(0, 0.03, 0).add(turretDir().scale(1.55));
     }
 
     private void turretTick() {
@@ -644,7 +665,7 @@ public class JeepEntity extends Mob {
                 if (d instanceof BotEntity db) t = db.getTarget();
             }
             if (t != null && t.isAlive()) {
-                Vec3 pivot = toWorld(TURRET_X, GUN_PIVOT_Y, TURRET_Z);
+                Vec3 pivot = gunPivotWorld();
                 Vec3 to = t.position().add(0, t.getBbHeight() * 0.6, 0).subtract(pivot);
                 float wantYaw = Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f - this.getYRot());
                 float wantPitch = (float) -(Mth.atan2(to.y, Math.sqrt(to.x * to.x + to.z * to.z)) * Mth.RAD_TO_DEG);

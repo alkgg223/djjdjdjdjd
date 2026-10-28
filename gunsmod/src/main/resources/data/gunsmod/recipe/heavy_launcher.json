@@ -1,0 +1,30 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "SRS",
+  "LDL",
+  "BBB"
+ ],
+ "key": {
+  "S": {
+   "item": "gunsmod:steel_ingot"
+  },
+  "R": {
+   "item": "minecraft:redstone_block"
+  },
+  "L": {
+   "item": "gunsmod:missile_launcher"
+  },
+  "D": {
+   "item": "minecraft:dispenser"
+  },
+  "B": {
+   "item": "minecraft:iron_block"
+  }
+ },
+ "result": {
+  "id": "gunsmod:heavy_launcher",
+  "count": 1
+ }
+}

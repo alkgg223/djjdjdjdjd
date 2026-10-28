@@ -2,10 +2,12 @@ package com.gunsmod.client;
 
 import com.gunsmod.GunsMod;
 import com.gunsmod.Reg;
+import com.gunsmod.client.particle.BlastParticles;
 import com.gunsmod.client.particle.GunParticles;
 import com.gunsmod.client.render.BakedRender;
 import com.gunsmod.client.render.BotRenderer;
 import com.gunsmod.client.render.GunRenderer;
+import com.gunsmod.client.render.HeavyLauncherRenderer;
 import com.gunsmod.client.render.JeepItemRenderer;
 import com.gunsmod.client.render.JeepRenderer;
 import com.gunsmod.client.render.LauncherRenderer;
@@ -59,7 +61,8 @@ public final class ClientSetup {
             for (String part : geo.parts()) e.register(BakedRender.id("gun/" + g.id + "/" + part));
         }
         for (String p : new String[]{"entity/jeep/body", "entity/jeep/mark_green", "entity/jeep/mark_red", "entity/jeep/turret", "entity/jeep/gun",
-                "entity/jeep/wheel", "entity/gear/helmet", "entity/gear/vest", "block/launcher_erector", "fx/muzzle_flash"}) {
+                "entity/jeep/wheel", "entity/gear/helmet", "entity/gear/vest", "block/launcher_erector", "block/heavy_launcher_base",
+                "block/heavy_launcher_erector", "fx/muzzle_flash"}) {
             e.register(BakedRender.id(p));
         }
     }
@@ -72,6 +75,7 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.GRENADE.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.MISSILE.get(), MissileRenderer::new);
         e.registerBlockEntityRenderer(Reg.LAUNCHER_BE.get(), LauncherRenderer::new);
+        e.registerBlockEntityRenderer(Reg.HEAVY_LAUNCHER_BE.get(), HeavyLauncherRenderer::new);
         e.registerBlockEntityRenderer(Reg.SPAWNER_BE.get(), SpawnerRenderer::new);
     }
 
@@ -85,6 +89,11 @@ public final class ClientSetup {
         e.registerSpriteSet(Reg.SPARK.get(), GunParticles.SparkProvider::new);
         e.registerSpriteSet(Reg.SHELL.get(), GunParticles.ShellProvider::new);
         e.registerSpriteSet(Reg.HOLO.get(), GunParticles.HoloProvider::new);
+        e.registerSpriteSet(Reg.FIREBALL.get(), BlastParticles.FireballProvider::new);
+        e.registerSpriteSet(Reg.DUST_CLOUD.get(), BlastParticles.DustProvider::new);
+        e.registerSpriteSet(Reg.SHOCKWAVE.get(), BlastParticles.ShockwaveProvider::new);
+        e.registerSpriteSet(Reg.EMBER.get(), BlastParticles.EmberProvider::new);
+        e.registerSpriteSet(Reg.BLAST_FLASH.get(), BlastParticles.FlashProvider::new);
     }
 
     @SubscribeEvent
@@ -111,5 +120,6 @@ public final class ClientSetup {
         e.registerAbove(VanillaGuiLayers.HOTBAR, Reg.id("ammo"), Hud::ammo);
         e.registerAbove(VanillaGuiLayers.HOTBAR, Reg.id("vehicle"), Hud::vehicle);
         e.registerAbove(VanillaGuiLayers.CROSSHAIR, Reg.id("bot_info"), Hud::botInfo);
+        e.registerAboveAll(Reg.id("blast_flash"), Hud::flash);
     }
 }

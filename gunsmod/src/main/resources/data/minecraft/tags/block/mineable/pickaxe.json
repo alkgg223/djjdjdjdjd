@@ -7,6 +7,8 @@
   "gunsmod:arena_controller",
   "gunsmod:concrete_barrier",
   "gunsmod:barbed_wire",
-  "gunsmod:explosive_barrel"
+  "gunsmod:explosive_barrel",
+  "gunsmod:heavy_launcher",
+  "gunsmod:heavy_launcher_part"
  ]
 }

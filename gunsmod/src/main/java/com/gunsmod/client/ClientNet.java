@@ -113,10 +113,14 @@ public final class ClientNet {
 
     public static void launchStatus(Net.LaunchStatus p) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.screen instanceof LaunchScreen ls && ls.station().equals(p.station())) {
+        if (mc.screen instanceof LaunchScreen ls && ls.remote() == p.remote()) {
             ls.update(p);
         } else if (p.open()) {
             mc.setScreen(new LaunchScreen(p));
         }
+    }
+
+    public static void explosion(Net.ExplosionFx p) {
+        ClientFx.blast(p.pos(), p.style(), p.size());
     }
 }

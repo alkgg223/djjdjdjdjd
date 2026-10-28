@@ -7,6 +7,7 @@ import com.gunsmod.entity.JeepEntity;
 import com.gunsmod.item.GunItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.util.Mth;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -26,6 +27,19 @@ public final class ClientEvents {
         GunClient.tick();
         GunRenderer.clientTick();
         FlameSound.clientTick();
+        ClientFx.tick();
+    }
+
+    /** nearby explosions shake the camera */
+    @SubscribeEvent
+    public static void shake(ViewportEvent.ComputeCameraAngles e) {
+        if (ClientFx.shake <= 0) return;
+        Minecraft mc = Minecraft.getInstance();
+        float t = (mc.level != null ? mc.level.getGameTime() : 0) + (float) e.getPartialTick();
+        float s = ClientFx.shake;
+        e.setPitch(e.getPitch() + Mth.sin(t * 2.9f) * s * 0.6f);
+        e.setYaw(e.getYaw() + Mth.sin(t * 2.3f + 1.7f) * s * 0.5f);
+        e.setRoll(e.getRoll() + Mth.sin(t * 3.7f + 0.4f) * s * 0.8f);
     }
 
     /** guns use the attack key to fire and the use key to aim, so vanilla must not punch / break / use with them */

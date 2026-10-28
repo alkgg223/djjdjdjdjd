@@ -7,9 +7,9 @@ from modelkit import Model
 
 P = "paint_white"     # tinted with the team colour at runtime
 WHEELS = [(-1.0, 4.3, -8.0), (17.0, 4.3, -8.0), (-1.0, 4.3, 21.0), (17.0, 4.3, 21.0)]
-SEATS = {"driver": (2.6, 5.6, 4.6), "passenger": (13.4, 5.6, 4.6), "gunner": (8.0, 11.0, 13.0), "rear": (13.4, 5.6, 12.6)}
+SEATS = {"driver": (2.6, 5.6, 4.6), "passenger": (13.4, 5.6, 4.6), "gunner": (8.0, 16.6, 17.3), "rear": (13.4, 5.6, 12.6)}
 TURRET_PIVOT = (8.0, 19.3, 13.0)
-GUN_PIVOT = (8.0, 23.6, 13.0)
+GUN_PIVOT = (8.0, 23.6, 10.5)   # gun mount sits 2.5 units ahead of the ring centre
 
 
 def jeep():
@@ -104,13 +104,14 @@ def turret():
     m.cyl("y", (cx, cz), 4.4, cy, cy + 1.2, "dark_paint", sides=16, part="turret")
     m.cyl("y", (cx, cz), 3.8, cy + 1.2, cy + 1.6, "steel", sides=16, part="turret")
     # gun shield: front plate + angled side wings
-    m.box([3.0, cy + 1.2, cz - 4.6], [13.0, cy + 7.6, cz - 4.0], P, part="turret", deco=("rivets",))
-    m.box([6.6, cy + 4.6, cz - 4.7], [9.4, cy + 5.6, cz - 3.9], "black", part="turret")     # gun slot
-    m.box([0.6, cy + 1.2, cz - 4.4], [3.4, cy + 6.8, cz - 3.8], P, part="turret", rot=("y", 45.0, [3.0, cy + 4, cz - 4.1]))
-    m.box([12.6, cy + 1.2, cz - 4.4], [15.4, cy + 6.8, cz - 3.8], P, part="turret", rot=("y", -45.0, [13.0, cy + 4, cz - 4.1]))
-    m.box([5.0, cy + 7.6, cz - 4.6], [11.0, cy + 8.0, cz - 3.6], P, part="turret")
+    m.box([3.0, cy + 1.2, cz - 5.2], [13.0, cy + 6.2, cz - 4.6], P, part="turret", deco=("rivets",))
+    m.box([6.6, cy + 4.6, cz - 5.3], [9.4, cy + 5.6, cz - 4.5], "black", part="turret")     # gun slot
+    m.box([0.6, cy + 1.2, cz - 5.0], [3.4, cy + 5.6, cz - 4.4], P, part="turret", rot=("y", 45.0, [3.0, cy + 4, cz - 4.7]))
+    m.box([12.6, cy + 1.2, cz - 5.0], [15.4, cy + 5.6, cz - 4.4], P, part="turret", rot=("y", -45.0, [13.0, cy + 4, cz - 4.7]))
+    m.box([5.0, cy + 6.2, cz - 5.2], [11.0, cy + 6.6, cz - 4.2], P, part="turret")
     # pintle post
-    m.box([7.4, cy + 1.2, cz - 0.6], [8.6, GUN_PIVOT[1] - 0.4, cz + 0.6], "steel", part="turret")
+    gz = GUN_PIVOT[2]
+    m.box([7.4, cy + 1.2, gz - 0.6], [8.6, GUN_PIVOT[1] - 0.4, gz + 0.6], "steel", part="turret")
     return m
 
 

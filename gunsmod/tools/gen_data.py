@@ -14,7 +14,7 @@ def write(path, obj):
 
 
 BLOCKS = ["weapon_workbench", "modification_table", "ammo_crate", "missile_launcher", "bot_spawner", "arena_controller",
-          "sandbags", "sandbags_low", "concrete_barrier", "barbed_wire", "explosive_barrel"]
+          "sandbags", "sandbags_low", "concrete_barrier", "barbed_wire", "explosive_barrel", "heavy_launcher"]
 
 # ------------------------------------------------------------------------------------ loot tables
 for b in BLOCKS:
@@ -27,7 +27,8 @@ for b in BLOCKS:
 # ------------------------------------------------------------------------------------ tags
 write(os.path.join(D, "minecraft", "tags", "block", "mineable", "pickaxe.json"), {"values": [
     "gunsmod:weapon_workbench", "gunsmod:modification_table", "gunsmod:missile_launcher", "gunsmod:bot_spawner",
-    "gunsmod:arena_controller", "gunsmod:concrete_barrier", "gunsmod:barbed_wire", "gunsmod:explosive_barrel"]})
+    "gunsmod:arena_controller", "gunsmod:concrete_barrier", "gunsmod:barbed_wire", "gunsmod:explosive_barrel",
+    "gunsmod:heavy_launcher", "gunsmod:heavy_launcher_part"]})
 write(os.path.join(D, "minecraft", "tags", "block", "mineable", "axe.json"), {"values": ["gunsmod:ammo_crate"]})
 write(os.path.join(D, "minecraft", "tags", "block", "mineable", "shovel.json"), {"values": ["gunsmod:sandbags", "gunsmod:sandbags_low"]})
 
@@ -65,6 +66,8 @@ shaped("weapon_workbench", ["SSS", "ICI", "P P"], {"S": S, "I": "minecraft:iron_
 shaped("modification_table", ["GSG", "ICI", "P P"], {"G": "minecraft:glass_pane", "S": S, "I": "minecraft:iron_ingot", "C": "minecraft:smithing_table", "P": "#minecraft:planks"}, "gunsmod:modification_table")
 shaped("ammo_crate", ["PIP", "PGP", "PPP"], {"P": "#minecraft:planks", "I": "minecraft:iron_ingot", "G": "minecraft:gunpowder"}, "gunsmod:ammo_crate")
 shaped("missile_launcher", ["SRS", "SDS", "BBB"], {"S": S, "R": "minecraft:redstone_block", "D": "minecraft:dispenser", "B": "minecraft:iron_block"}, "gunsmod:missile_launcher")
+shaped("heavy_launcher", ["SRS", "LDL", "BBB"], {"S": S, "R": "minecraft:redstone_block", "L": "gunsmod:missile_launcher", "D": "minecraft:dispenser",
+                                                "B": "minecraft:iron_block"}, "gunsmod:heavy_launcher")
 shaped("bot_spawner", ["SES", "SRS", "III"], {"S": S, "E": "minecraft:emerald", "R": "minecraft:redstone_block", "I": "minecraft:iron_ingot"}, "gunsmod:bot_spawner")
 shaped("arena_controller", ["SGS", "SRS", "SCS"], {"S": S, "G": "minecraft:glass", "R": "minecraft:redstone_block", "C": "minecraft:compass"}, "gunsmod:arena_controller")
 shaped("arena_tool", ["PMP", "SCS", "PSP"], {"P": "minecraft:paper", "M": "minecraft:map", "S": S, "C": "minecraft:compass"}, "gunsmod:arena_tool")
@@ -99,6 +102,8 @@ ITEMS = {
     "vertical_grip": ("Vertical Grip", "مقبض عمودي"), "angled_grip": ("Angled Grip", "مقبض مائل"), "laser_sight": ("Laser Sight", "مؤشر ليزر"),
     "extended_mag": ("Extended Magazine", "مخزن ممتد"), "frag_grenade": ("Frag Grenade", "قنبلة يدوية"), "smoke_grenade": ("Smoke Grenade", "قنبلة دخان"),
     "missile_he": ("HE Missile", "صاروخ شديد الانفجار"), "missile_cluster": ("Cluster Missile", "صاروخ عنقودي"), "missile_incendiary": ("Incendiary Missile", "صاروخ حارق"),
+    "missile_thermobaric": ("Thermobaric Missile", "صاروخ فراغي حراري"), "missile_bunker_buster": ("Bunker Buster Missile", "صاروخ خارق للتحصينات"),
+    "missile_titan": ("Titan Strategic Missile", "صاروخ تايتان الاستراتيجي"),
     "launch_remote": ("Launch Remote", "ريموت الإطلاق"), "dog_tag": ("Soldier Dog Tag", "قلادة الجندي"), "arena_tool": ("Battlefield Deployer", "مُنشئ ساحة الحرب"),
     "green_soldier": ("Green Soldier", "جندي أخضر"), "red_soldier": ("Red Soldier", "جندي أحمر"), "green_jeep": ("Green Military Jeep", "جيب عسكري أخضر"),
     "red_jeep": ("Red Military Jeep", "جيب عسكري أحمر"), "steel_ingot": ("Steel Ingot", "سبيكة فولاذ"), "gun_parts": ("Gun Parts", "قطع أسلحة"),
@@ -109,6 +114,7 @@ BLOCKN = {
     "bot_spawner": ("Soldier Deployment Pad", "منصة نشر الجنود"), "arena_controller": ("Battle Command Console", "جهاز التحكم بالمعركة"),
     "sandbags": ("Sandbags", "أكياس رمل"), "sandbags_low": ("Low Sandbags", "أكياس رمل منخفضة"), "concrete_barrier": ("Concrete Barrier", "حاجز خرساني"),
     "barbed_wire": ("Barbed Wire", "أسلاك شائكة"), "explosive_barrel": ("Explosive Barrel", "برميل متفجر"),
+    "heavy_launcher": ("Heavy Missile Launcher (3x5)", "منصة الصواريخ الثقيلة (3×5)"), "heavy_launcher_part": ("Heavy Missile Launcher", "منصة الصواريخ الثقيلة"),
 }
 
 EN = {"itemGroup.gunsmod": "Guns & Warfare", "key.categories.gunsmod": "Guns & Warfare"}
@@ -141,7 +147,8 @@ T = {
     "gunsmod.tip.remote2": ("Use: open the launch control panel", "كليك يمين: افتح لوحة التحكم بالإطلاق"),
     "gunsmod.tip.tag_empty": ("Use on a soldier to save his loadout", "استخدمها على جندي لحفظ تعديلاته"),
     "gunsmod.tip.tag_weapon": ("Weapon: %s", "السلاح: %s"), "gunsmod.tip.tag_use": ("Put it in a Deployment Pad, or use on the ground", "ضعها في منصة النشر أو استخدمها على الأرض"),
-    "gunsmod.tip.soldier_controls": ("Give a gun: use it on him | Empty hand: follow/hold | Sneak: edit", "أعطه سلاحاً بالكليك عليه | يد فارغة: اتبعني/ابقَ | شفت: تعديل"),
+    "gunsmod.tip.soldier_controls": ("Give a gun, a launch remote or missiles: use them on him | Empty hand: follow/hold | Sneak: edit",
+                                     "أعطه سلاحاً أو ريموت أو صواريخ بالكليك عليه | يد فارغة: اتبعني/ابقَ | شفت: تعديل"),
     "gunsmod.tip.jeep1": ("Use: get in (driver first) | Sneak + use: gunner seat", "كليك يمين: اركب (السائق أولاً) | شفت + كليك: مقعد الرشاش"),
     "gunsmod.tip.jeep2": ("V: change seat | H: horn | G: order the driver | iron ingot: repair", "V: تغيير المقعد | H: البوق | G: أمر السائق | سبيكة حديد: تصليح"),
     "gunsmod.tip.arena_tool": ("Use on the ground twice to build", "استخدمه على الأرض مرتين للبناء"),
@@ -157,6 +164,39 @@ T = {
     "gunsmod.desc.frag_grenade": ("Explodes 3 seconds after the throw", "تنفجر بعد 3 ثوانٍ"), "gunsmod.desc.smoke_grenade": ("Smoke screen that blocks soldiers' vision", "ستار دخان يحجب رؤية الجنود"),
     "gunsmod.desc.missile_0": ("Huge high-explosive blast", "انفجار ضخم"), "gunsmod.desc.missile_1": ("Splits into 10 bomblets", "ينقسم إلى 10 قنابل صغيرة"),
     "gunsmod.desc.missile_2": ("Sets the target area ablaze", "يحرق منطقة الهدف"),
+    "gunsmod.desc.missile_3": ("Fuel-air blast: giant fireball and a pressure wave that flattens 28 blocks", "انفجار وقود-هواء: كرة نار عملاقة وموجة ضغط تمسح 28 بلوكة"),
+    "gunsmod.desc.missile_4": ("Drills 15 blocks into the ground, then erupts", "يحفر 15 بلوكة تحت الأرض ثم ينفجر من الأسفل"),
+    "gunsmod.desc.missile_5": ("Strategic warhead: mushroom cloud, firestorm, 64 block shockwave", "رأس استراتيجي: سحابة فطر وعاصفة نار وموجة صدمة 64 بلوكة"),
+    "gunsmod.tip.missile_heavy": ("Heavy missile: load it into a Heavy Missile Launcher", "صاروخ ثقيل: ضعه في منصة الصواريخ الثقيلة"),
+    "gunsmod.tip.linked_n": ("Linked stations: %s / %s", "المحطات المرتبطة: %s / %s"),
+    "gunsmod.tip.selected": ("Selected: #%s at %s %s %s", "المحددة: #%s عند %s %s %s"),
+    "gunsmod.tip.remote3": ("Use on a station: link it (up to 15) | Sneak: unlink", "استخدمه على محطة: اربطها (حتى 15) | شفت: فك الربط"),
+    "gunsmod.msg.remote_selected": ("Station #%s selected", "تم اختيار المحطة #%s"),
+    "gunsmod.msg.remote_full": ("This remote already controls %s stations", "هذا الريموت يتحكم بـ %s محطة بالفعل"),
+    "gunsmod.msg.remote_unlinked_station": ("Unlinked station %s %s %s", "تم فك ربط المحطة %s %s %s"),
+    "gunsmod.msg.target_set_n": ("Station #%s target: %s %s %s", "هدف المحطة #%s: %s %s %s"),
+    "gunsmod.msg.station_busy": ("The station is busy launching", "المحطة مشغولة بالإطلاق"),
+    "gunsmod.msg.missile_too_small": ("The heavy launcher only takes heavy missiles", "المنصة الثقيلة تقبل الصواريخ الثقيلة فقط"),
+    "gunsmod.msg.missile_too_big": ("Heavy missiles need the Heavy Missile Launcher", "الصواريخ الثقيلة تحتاج منصة الصواريخ الثقيلة"),
+    "gunsmod.msg.heavy_no_room": ("The heavy launcher needs a clear 3 x 5 area", "المنصة الثقيلة تحتاج مساحة فارغة 3×5"),
+    "gunsmod.msg.salvo_target": ("Salvo: %s stations targeted", "رشقة: تم توجيه %s محطة"),
+    "gunsmod.msg.salvo_armed": ("Salvo: %s stations armed", "رشقة: تم تسليح %s محطة"),
+    "gunsmod.msg.salvo_launch": ("SALVO: %s stations launching", "رشقة: %s محطة تطلق"),
+    "gunsmod.msg.salvo_disarmed": ("Salvo: %s stations disarmed", "رشقة: تم إلغاء تسليح %s محطة"),
+    "gunsmod.msg.gave_remote": ("%s took the remote (%s stations) and will call in missiles on enemy groups",
+                                "%s أخذ الريموت (%s محطة) وسيطلق الصواريخ على تجمعات العدو"),
+    "gunsmod.msg.gave_missiles": ("Gave %s missiles to %s", "أعطيت %s صواريخ إلى %s"),
+    "gunsmod.msg.rack_full": ("%s cannot carry more missiles", "%s لا يستطيع حمل صواريخ أكثر"),
+    "gunsmod.launch.set_all": ("ALL", "للكل"), "gunsmod.launch.unlink": ("UNLINK STATION", "فك ربط المحطة"),
+    "gunsmod.launch.salvo_on": ("SALVO: ON (%s)", "رشقة: تشغيل (%s)"), "gunsmod.launch.salvo_off": ("SALVO: OFF", "رشقة: إيقاف"),
+    "gunsmod.launch.stations": ("STATIONS", "المحطات"), "gunsmod.launch.missing": ("missing", "مفقودة"),
+    "gunsmod.launch.no_stations": ("No stations linked", "لا توجد محطات مرتبطة"),
+    "gunsmod.launch.station_n": ("Station #%s - %s", "المحطة #%s - %s"),
+    "gunsmod.launch.heavy": ("Heavy", "ثقيلة"), "gunsmod.launch.light": ("Standard", "عادية"),
+    "gunsmod.launch.panel_salvo": ("SALVO LAUNCH", "إطلاق رشقة"), "gunsmod.launch.fire_all": ("FIRE ALL", "أطلق الكل"),
+    "gunsmod.ui.remote": ("Remote", "ريموت"), "gunsmod.ui.missile_rack": ("Missiles", "صواريخ"),
+    "gunsmod.ui.no_remote": ("No remote: give one for artillery", "بدون ريموت: أعطه واحداً للمدفعية"),
+    "gunsmod.ui.artillery": ("Artillery: %s stations", "المدفعية: %s محطة"),
     "gunsmod.desc.green_soldier": ("Friendly soldier. Fights the red team", "جندي صديق يقاتل الفريق الأحمر"),
     "gunsmod.desc.red_soldier": ("Enemy soldier. Attacks green soldiers and survival players", "جندي عدو يهاجم الجنود الخضر واللاعب في وضع النجاة"),
     "gunsmod.desc.jeep": ("Military jeep with a turret, 40 km/h", "جيب عسكري برشاش، 40 كم/س"),
@@ -166,7 +206,7 @@ T = {
     "gunsmod.msg.order.2": ("%s: patrolling", "%s: أقوم بالدورية"), "gunsmod.msg.crate_wait": ("Resupply in %s s", "إعادة التزويد بعد %s ث"),
     "gunsmod.msg.crate_given": ("Resupplied: %s", "تم التزويد: %s"), "gunsmod.msg.crate_hint": ("Use the crate while holding a gun", "استخدم الصندوق وأنت تمسك سلاحاً"),
     "gunsmod.msg.already_loaded": ("A missile is already loaded", "يوجد صاروخ محمّل مسبقاً"), "gunsmod.msg.missile_loaded": ("Missile loaded", "تم تحميل الصاروخ"),
-    "gunsmod.msg.remote_linked": ("Remote linked to station %s %s %s", "تم ربط الريموت بالمحطة %s %s %s"),
+    "gunsmod.msg.remote_linked": ("Linked station %s %s %s (%s/%s)", "تم ربط المحطة %s %s %s (%s/%s)"),
     "gunsmod.msg.remote_given": ("You received a linked Launch Remote", "حصلت على ريموت إطلاق مرتبط بالمحطة"),
     "gunsmod.msg.target_set": ("Target set: %s %s %s", "تم تحديد الهدف: %s %s %s"), "gunsmod.msg.no_missile": ("No missile loaded", "لا يوجد صاروخ"),
     "gunsmod.msg.no_target": ("No target set", "لم يتم تحديد هدف"), "gunsmod.msg.launching": ("LAUNCH SEQUENCE STARTED", "بدأ تسلسل الإطلاق"),
@@ -239,7 +279,8 @@ SUB = {"gunshot": ("Gunshot", "إطلاق نار"), "gunshot_suppressed": ("Supp
        "ui_switch": ("Switch", "مفتاح"), "ui_beep": ("Beep", "صفارة"), "hitmarker": ("Hit", "إصابة"), "grenade_bounce": ("Grenade bounces", "ارتداد قنبلة"),
        "bullet_whiz": ("Bullet whizzes by", "رصاصة تمر بقربك"), "overheat": ("Gun overheats", "سخونة السلاح"), "mag_out": ("Magazine out", "إخراج المخزن"),
        "mag_in": ("Magazine in", "إدخال المخزن"), "bolt": ("Bolt racked", "سحب الأقسام"), "shell_insert": ("Shell inserted", "إدخال خرطوشة"),
-       "break_open": ("Action opened", "فتح السلاح")}
+       "break_open": ("Action opened", "فتح السلاح"), "explosion_big": ("Huge explosion", "انفجار ضخم"),
+       "explosion_far": ("Distant explosion", "انفجار بعيد"), "missile_incoming": ("Incoming missile!", "صاروخ قادم!")}
 sounds = json.load(open(os.path.join(A, "sounds.json")))
 for name, s in sounds.items():
     key = s["subtitle"]

@@ -1,6 +1,7 @@
 package com.gunsmod.entity;
 
 import com.gunsmod.Reg;
+import com.gunsmod.world.Blast;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -86,7 +87,7 @@ public class RocketEntity extends Projectile {
     private void detonate(Vec3 at) {
         Entity owner = this.getOwner();
         Level.ExplosionInteraction mode = owner instanceof Player ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.MOB;
-        this.level().explode(this, at.x, at.y, at.z, getKind() == 0 ? 3.6f : 2.4f, false, mode);
+        Blast.explode(this.level(), this, at, getKind() == 0 ? 3.6f : 2.4f, false, mode, Blast.FX_SMALL, getKind() == 0 ? 1.0f : 0.7f);
         this.discard();
     }
 

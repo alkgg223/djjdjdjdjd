@@ -34,6 +34,15 @@ public final class Hud {
         return mc.player == null || mc.options.hideGui || mc.screen != null && !(mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen);
     }
 
+    // ------------------------------------------------------------------------------------ blast flash
+    /** white-out after a nearby strategic missile */
+    public static void flash(GuiGraphics g, DeltaTracker dt) {
+        float f = ClientFx.flash;
+        if (f <= 0.01f) return;
+        int a = (int) (Mth.clamp(f, 0f, 1f) * 235);
+        g.fill(0, 0, g.guiWidth(), g.guiHeight(), (a << 24) | 0xFFF6E8);
+    }
+
     // ------------------------------------------------------------------------------------ scope overlay
     public static void scope(GuiGraphics g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();

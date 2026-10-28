@@ -21,7 +21,7 @@ public final class Net {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar r = event.registrar("1");
+        PayloadRegistrar r = event.registrar("2");
         r.playToServer(Shoot.TYPE, Shoot.CODEC, ServerNet::shoot);
         r.playToServer(Reload.TYPE, Reload.CODEC, ServerNet::reload);
         r.playToServer(Turret.TYPE, Turret.CODEC, ServerNet::turret);
@@ -30,6 +30,7 @@ public final class Net {
         r.playToClient(ShotFx.TYPE, ShotFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.shotFx(p));
         r.playToClient(HitMarker.TYPE, HitMarker.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.hitMarker(p));
         r.playToClient(LaunchStatus.TYPE, LaunchStatus.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.launchStatus(p));
+        r.playToClient(ExplosionFx.TYPE, ExplosionFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.explosion(p));
     }
 
     // ================================================================================ client -> server
@@ -106,13 +107,19 @@ public final class Net {
         }
     }
 
-    /** missile launch station actions. 0 = query, 1 = set target, 2 = arm, 3 = launch, 4 = disarm */
-    public record LaunchAction(BlockPos station, int action, int x, int y, int z) implements CustomPacketPayload {
+    /**
+     * missile launch station actions. remote = sent from a remote's screen (the stations are the remote's links), otherwise
+     * from a station opened by hand. actions: 0 query, 1 set target, 2 arm, 3 launch, 4 disarm, 5 select (x = index),
+     * 6 set the target of every station, 7 arm every station, 8 launch every armed station, 9 disarm all, 10 unlink.
+     */
+    public record LaunchAction(BlockPos station, int action, int x, int y, int z, boolean remote) implements CustomPacketPayload {
+        public static final int QUERY = 0, TARGET = 1, ARM = 2, LAUNCH = 3, DISARM = 4, SELECT = 5, TARGET_ALL = 6, ARM_ALL = 7,
+                LAUNCH_ALL = 8, DISARM_ALL = 9, UNLINK = 10;
         public static final Type<LaunchAction> TYPE = payloadType("launch_action");
         public static final StreamCodec<RegistryFriendlyByteBuf, LaunchAction> CODEC = CustomPacketPayload.codec(LaunchAction::write, LaunchAction::new);
 
         LaunchAction(RegistryFriendlyByteBuf b) {
-            this(b.readBlockPos(), b.readVarInt(), b.readInt(), b.readInt(), b.readInt());
+            this(b.readBlockPos(), b.readVarInt(), b.readInt(), b.readInt(), b.readInt(), b.readBoolean());
         }
 
         void write(RegistryFriendlyByteBuf b) {
@@ -121,6 +128,7 @@ public final class Net {
             b.writeInt(x);
             b.writeInt(y);
             b.writeInt(z);
+            b.writeBoolean(remote);
         }
 
         @Override
@@ -196,30 +204,82 @@ public final class Net {
         }
     }
 
-    /** status of a launch station for the launch control screen. missile: -1 none. state: 0 idle 1 armed 2 erecting 3 launching */
-    public record LaunchStatus(BlockPos station, boolean found, int missile, boolean hasTarget, int tx, int ty, int tz, int state,
-                               boolean open) implements CustomPacketPayload {
-        public static final Type<LaunchStatus> TYPE = payloadType("launch_status");
-        public static final StreamCodec<RegistryFriendlyByteBuf, LaunchStatus> CODEC = CustomPacketPayload.codec(LaunchStatus::write, LaunchStatus::new);
+    /** one launch station as shown on the launch screen. missile: -1 none. state: 0 idle 1 armed 2 erecting 3 ignition 4 lowering */
+    public record StationInfo(BlockPos pos, boolean found, boolean heavy, int missile, boolean hasTarget, int tx, int ty, int tz, int state) {
+        public static StationInfo missing(BlockPos pos) {
+            return new StationInfo(pos, false, false, -1, false, 0, 0, 0, 0);
+        }
 
-        LaunchStatus(RegistryFriendlyByteBuf b) {
-            this(b.readBlockPos(), b.readBoolean(), b.readVarInt(), b.readBoolean(), b.readInt(), b.readInt(), b.readInt(), b.readVarInt(), b.readBoolean());
+        StationInfo(RegistryFriendlyByteBuf b) {
+            this(b.readBlockPos(), b.readBoolean(), b.readBoolean(), b.readVarInt(), b.readBoolean(), b.readInt(), b.readInt(), b.readInt(), b.readVarInt());
         }
 
         void write(RegistryFriendlyByteBuf b) {
-            b.writeBlockPos(station);
+            b.writeBlockPos(pos);
             b.writeBoolean(found);
+            b.writeBoolean(heavy);
             b.writeVarInt(missile);
             b.writeBoolean(hasTarget);
             b.writeInt(tx);
             b.writeInt(ty);
             b.writeInt(tz);
             b.writeVarInt(state);
+        }
+    }
+
+    /** the stations of a remote (or the single station opened by hand) for the launch control screen */
+    public record LaunchStatus(List<StationInfo> stations, int selected, boolean remote, boolean open) implements CustomPacketPayload {
+        public static final Type<LaunchStatus> TYPE = payloadType("launch_status");
+        public static final StreamCodec<RegistryFriendlyByteBuf, LaunchStatus> CODEC = CustomPacketPayload.codec(LaunchStatus::write, LaunchStatus::new);
+
+        LaunchStatus(RegistryFriendlyByteBuf b) {
+            this(readStations(b), b.readVarInt(), b.readBoolean(), b.readBoolean());
+        }
+
+        private static List<StationInfo> readStations(RegistryFriendlyByteBuf b) {
+            int n = Math.min(b.readVarInt(), 64);
+            List<StationInfo> l = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) l.add(new StationInfo(b));
+            return l;
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(stations.size());
+            for (StationInfo s : stations) s.write(b);
+            b.writeVarInt(selected);
+            b.writeBoolean(remote);
             b.writeBoolean(open);
+        }
+
+        public StationInfo current() {
+            return stations.isEmpty() ? StationInfo.missing(BlockPos.ZERO) : stations.get(Math.floorMod(selected, stations.size()));
         }
 
         @Override
         public Type<LaunchStatus> type() {
+            return TYPE;
+        }
+    }
+
+    /** big explosion effect (see Blast for the styles) */
+    public record ExplosionFx(Vec3 pos, int style, float size) implements CustomPacketPayload {
+        public static final Type<ExplosionFx> TYPE = payloadType("explosion_fx");
+        public static final StreamCodec<RegistryFriendlyByteBuf, ExplosionFx> CODEC = CustomPacketPayload.codec(ExplosionFx::write, ExplosionFx::new);
+
+        ExplosionFx(RegistryFriendlyByteBuf b) {
+            this(new Vec3(b.readDouble(), b.readDouble(), b.readDouble()), b.readVarInt(), b.readFloat());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeDouble(pos.x);
+            b.writeDouble(pos.y);
+            b.writeDouble(pos.z);
+            b.writeVarInt(style);
+            b.writeFloat(size);
+        }
+
+        @Override
+        public Type<ExplosionFx> type() {
             return TYPE;
         }
     }

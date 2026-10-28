@@ -47,7 +47,6 @@ public class BotFollowGoal extends Goal {
     @Override
     public void stop() {
         bot.getNavigation().stop();
-        bot.setSprinting(false);
     }
 
     @Override
@@ -63,10 +62,9 @@ public class BotFollowGoal extends Goal {
                 if (t != null) bot.teleportTo(t.getX() + 0.5, t.getY(), t.getZ() + 0.5);
                 return;
             }
-            bot.setSprinting(d2 > 144);
-            bot.getNavigation().moveTo(p, d2 > 144 ? 1.35 : 1.05);
+            bot.getNavigation().moveTo(p, d2 > 144 ? BotEntity.SPEED_RUN : BotEntity.SPEED_WALK);
         } else if (bot.home != null) {
-            bot.getNavigation().moveTo(bot.home.getX() + 0.5, bot.home.getY(), bot.home.getZ() + 0.5, 1.0);
+            bot.getNavigation().moveTo(bot.home.getX() + 0.5, bot.home.getY(), bot.home.getZ() + 0.5, BotEntity.SPEED_WALK);
         }
     }
 }

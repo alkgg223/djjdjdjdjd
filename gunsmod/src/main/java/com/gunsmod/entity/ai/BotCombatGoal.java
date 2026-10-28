@@ -64,7 +64,6 @@ public class BotCombatGoal extends Goal {
         bot.setAiming(false);
         bot.getNavigation().stop();
         bot.getMoveControl().strafe(0, 0);
-        bot.setSprinting(false);
     }
 
     private void go(State s) {
@@ -78,7 +77,6 @@ public class BotCombatGoal extends Goal {
             bot.getNavigation().moveTo(p.x, p.y, p.z, speed);
             repath = 10;
         }
-        bot.setSprinting(speed > 1.15);
     }
 
     @Override
@@ -104,7 +102,7 @@ public class BotCombatGoal extends Goal {
         // no gun: melee rush
         if (gun == null) {
             bot.setCrouch(false);
-            moveTo(target.position(), 1.25);
+            moveTo(target.position(), BotEntity.SPEED_RUN);
             if (dist < 2.2 && bot.getRandom().nextInt(10) == 0) {
                 bot.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
                 bot.doHurtTarget(target);
@@ -136,11 +134,11 @@ public class BotCombatGoal extends Goal {
                 if (bot.needsReload() && !bot.isReloadingGun()) bot.startBotReload();
                 if (see) {
                     if (dist > maxD) {
-                        moveTo(target.position(), dist > maxD * 1.6 ? 1.3 : 1.05);
+                        moveTo(target.position(), dist > maxD * 1.6 ? BotEntity.SPEED_RUN : BotEntity.SPEED_WALK);
                         bot.getMoveControl().strafe(0, 0);
                     } else if (dist < minD) {
                         Vec3 away = bot.position().subtract(target.position()).multiply(1, 0, 1).normalize().scale(6);
-                        moveTo(bot.position().add(away), 1.15);
+                        moveTo(bot.position().add(away), BotEntity.SPEED_JOG);
                     } else {
                         bot.getNavigation().stop();
                         if (--strafeTicks <= 0) {
@@ -166,13 +164,13 @@ public class BotCombatGoal extends Goal {
                         movePos = f != null ? f : lastSeen;
                         if (movePos != null) go(State.FLANK);
                     } else if (lastSeen != null && lostSight > 15) {
-                        moveTo(lastSeen, 1.0);
+                        moveTo(lastSeen, BotEntity.SPEED_WALK);
                     }
                 }
             }
             case MOVE_COVER -> {
                 bot.setCrouch(false);
-                moveTo(coverPos, 1.35);
+                moveTo(coverPos, BotEntity.SPEED_RUN);
                 if (see && bot.getRandom().nextInt(3) == 0) bot.tryShoot(target, true); // suppressive fire
                 if (bot.position().distanceToSqr(coverPos) < 1.4) {
                     bot.getNavigation().stop();
@@ -183,7 +181,6 @@ public class BotCombatGoal extends Goal {
             }
             case IN_COVER -> {
                 bot.setCrouch(true);
-                bot.setSprinting(false);
                 bot.getMoveControl().strafe(0, 0);
                 if (bot.needsReload() && !bot.isReloadingGun()) bot.startBotReload();
                 if (dist < 4 && see) {
@@ -210,7 +207,7 @@ public class BotCombatGoal extends Goal {
             }
             case PEEK -> {
                 bot.setCrouch(false);
-                moveTo(movePos, 1.1);
+                moveTo(movePos, BotEntity.SPEED_JOG);
                 if (see || bot.position().distanceToSqr(movePos) < 1.2 || stateTicks > 60) {
                     bot.getNavigation().stop();
                     engageLimit = 40 + bot.getRandom().nextInt(60);
@@ -223,7 +220,7 @@ public class BotCombatGoal extends Goal {
                     go(State.ENGAGE);
                     return;
                 }
-                moveTo(movePos, 1.25);
+                moveTo(movePos, BotEntity.SPEED_RUN);
                 if (bot.position().distanceToSqr(movePos) < 2.5 || stateTicks > 140) {
                     lostSight = 0;
                     go(State.ENGAGE);

@@ -76,10 +76,10 @@ public class JeepRenderer extends EntityRenderer<JeepEntity> {
         pose.mulPose(Axis.YP.rotationDegrees(-tYaw));
         pose.translate(-px, 0, -pz);
         BakedRender.entity("entity/jeep/turret", pose, buf, light, ov, r, g, b);
-        float gy = (float) (JeepEntity.GUN_PIVOT_Y / 16);
-        pose.translate(px, gy, pz);
+        float gy = (float) (JeepEntity.GUN_PIVOT_Y / 16), gz = (float) (JeepEntity.GUN_PIVOT_Z / 16);
+        pose.translate(px, gy, gz);
         pose.mulPose(Axis.XP.rotationDegrees(-tPitch));
-        pose.translate(-px, -gy, -pz);
+        pose.translate(-px, -gy, -gz);
         BakedRender.entityCutout("entity/jeep/gun", pose, buf, light, ov, 1, 1, 1);
         pose.popPose();
         pose.popPose();

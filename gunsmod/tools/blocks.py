@@ -287,6 +287,98 @@ def launcher_erector():
     return m
 
 
+# ------------------------------------------------------------------------------- heavy launcher (3 x 5 blocks)
+# Built at HALF scale (1 unit = 1/8 block) and drawn 2x by the block entity renderer, so the whole 3 x 5 platform
+# fits the -16..32 model range. Model (8, 0, 8) is the centre of the middle block, front = -Z.
+HEAVY_HINGE = (8.0, 12.0, 23.5)        # erector hinge (half-scale units)
+ERECTOR_Y0 = -4.0                     # hinge height inside the erector model
+
+
+def heavy_launcher():
+    m = Model("heavy_launcher", density=3.5, atlas_w=512)
+    # concrete pad with hazard edge + steel deck
+    m.box([-4.0, 0.0, -12.0], [20.0, 1.6, 28.0], "concrete_dark", deco=("dirty",))
+    m.box([-4.05, 0.3, -12.05], [20.05, 1.1, 28.05], "hazard")
+    m.box([-3.0, 1.6, -11.0], [19.0, 5.0, 27.0], "dark_paint", deco=("rivets", "panel"))
+    m.box([-3.05, 3.6, -11.05], [19.05, 4.2, 27.05], "hazard")
+    # deck plating seams
+    for z in (-3.0, 5.0, 13.0, 21.0):
+        m.box([-3.0, 5.0, z], [19.0, 5.15, z + 0.3], "black")
+    # outrigger jacks at the four corners
+    for x0, x1 in ((-4.0, -2.4), (18.4, 20.0)):
+        for z0 in (-11.0, 23.0):
+            m.box([x0, 0.0, z0], [x1, 6.4, z0 + 3.0], "steel")
+            m.box([x0 - 0.2, 0.0, z0 - 0.2], [x1 + 0.2, 0.8, z0 + 3.2], "rubber")
+            m.box([x0 + 0.3, 6.4, z0 + 0.6], [x1 - 0.3, 7.6, z0 + 2.4], "chrome")
+    # armoured control cab at the front
+    m.box([-2.0, 5.0, -10.6], [18.0, 12.0, -3.5], "od_paint", deco=("panel", "rivets"))
+    m.box([-2.2, 12.0, -10.8], [18.2, 12.8, -3.3], "dark_paint")
+    m.box([0.0, 8.6, -10.7], [16.0, 11.2, -10.5], "lens", deco=("edgehl",))
+    for x in (5.2, 10.6):
+        m.box([x, 8.6, -10.75], [x + 0.4, 11.2, -10.5], "dark_paint")
+    m.box([1.0, 5.8, -10.7], [5.0, 8.0, -10.5], "screen", light=True)
+    m.box([11.0, 6.4, -10.7], [11.8, 7.2, -10.55], "glow_red", light=True)
+    m.box([12.4, 6.4, -10.7], [13.2, 7.2, -10.55], "glow_green", light=True)
+    m.box([13.8, 6.4, -10.7], [14.6, 7.2, -10.55], "glow_orange", light=True)
+    m.box([-2.05, 6.0, -9.5], [-1.95, 11.0, -4.5], "decal", deco=("stencil:LAUNCH",))
+    m.box([17.95, 6.0, -9.5], [18.05, 11.0, -4.5], "decal", deco=("stencil:CTRL",))
+    # antennae + beacon on the cab roof
+    m.box([-1.0, 12.8, -9.0], [-0.6, 24.0, -8.6], "black")
+    m.box([16.6, 12.8, -9.0], [17.0, 20.0, -8.6], "black")
+    m.cyl("y", (1.8, -6.0), 1.0, 12.8, 14.2, "glow_orange", sides=8)
+    # erector rest cradle in front of the platform middle
+    m.box([4.6, 5.0, -2.8], [11.4, 9.8, -1.4], "grey_metal")
+    m.box([5.4, 9.8, -3.0], [10.6, 10.8, -1.2], "rubber")
+    # hydraulic ram housings along the deck
+    for x in (3.0, 11.6):
+        m.box([x, 5.0, 2.0], [x + 1.4, 7.4, 21.0], "steel")
+        m.box([x + 0.2, 5.4, 0.0], [x + 1.2, 7.0, 2.0], "chrome")
+    # fuel tanks / generators along both sides
+    for x in (-1.0, 17.0):
+        m.cyl("z", (x, 8.0), 2.0, 2.0, 18.0, "grey_paint", sides=16, deco=("stencil:FUEL",))
+        m.cyl("z", (x, 8.0), 2.1, 9.6, 10.4, "black", sides=16)
+    # cable reel and junction box
+    m.cyl("x", (8.0, 25.5), 1.6, 5.2, 10.8, "rubber", sides=16)
+    m.box([4.6, 5.0, 24.0], [11.4, 7.0, 27.0], "grey_metal")
+    # hinge towers + axle at the back
+    hx, hy, hz = HEAVY_HINGE
+    for x in (1.6, 12.4):
+        m.box([x, 5.0, hz - 3.0], [x + 2.0, hy + 2.0, hz + 3.0], "grey_metal", deco=("rivets",))
+    m.cyl("x", (hy, hz), 1.3, 1.4, 14.6, "bright", sides=8)
+    # flame deflector pit behind the hinge
+    m.box([4.0, 1.6, 26.0], [12.0, 3.0, 28.0], "concrete")
+    # ladder on the left side
+    for y in (1.0, 2.6, 4.2):
+        m.box([-4.2, y, 3.0], [-3.8, y + 0.4, 6.0], "steel")
+    return m
+
+
+def heavy_launcher_erector():
+    """vertical launch rail along +Y, hinge axle at (8, ERECTOR_Y0, 8); the missile hangs on the +Z side. Half scale."""
+    m = Model("heavy_launcher_erector", density=4, atlas_w=256)
+    o = ERECTOR_Y0
+    for x in (4.4, 10.6):
+        m.box([x, o - 1.0, 6.8], [x + 1.0, o + 36.0, 9.4], "od_paint", deco=("rivets",))
+    for y in (1.0, 8.0, 15.0, 22.0, 29.0, 35.0):
+        m.box([4.4, o + y, 6.8], [11.6, o + y + 1.0, 9.4], "od_paint")
+    # diagonal lattice
+    for y in (4.0, 11.0, 18.0, 25.0):
+        m.box([5.4, o + y, 7.6], [10.6, o + y + 0.6, 8.4], "grey_metal", rot=("z", 45.0, [8.0, o + y + 2.0, 8.0]))
+    m.box([6.6, o - 1.0, 9.4], [9.4, o + 36.0, 10.0], "dark_paint", deco=("hazard",))
+    # missile clamps (open towards +Z)
+    for y in (5.0, 18.0, 30.0):
+        m.box([3.8, o + y, 9.4], [5.0, o + y + 1.6, 13.6], "steel")
+        m.box([11.0, o + y, 9.4], [12.2, o + y + 1.6, 13.6], "steel")
+        m.box([3.8, o + y, 13.6], [5.4, o + y + 1.6, 14.2], "rubber")
+        m.box([10.6, o + y, 13.6], [12.2, o + y + 1.6, 14.2], "rubber")
+    # hinge knuckles around the axle
+    m.cyl("x", (o, 8.0), 1.9, 3.8, 12.2, "steel", sides=8)
+    # ram attachment lugs
+    for x in (3.4, 11.8):
+        m.box([x, o + 10.0, 6.0], [x + 0.8, o + 13.0, 7.0], "grey_metal")
+    return m
+
+
 def missile_model(kind):
     m = Model("missile_" + kind, density=4)
     mats = {"he": ("white", "dark_paint", "yellow"), "cluster": ("od_paint", "dark_paint", "white"),

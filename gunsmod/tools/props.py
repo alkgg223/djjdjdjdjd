@@ -315,6 +315,68 @@ def missile_incendiary():
     return m
 
 
+def heavy_missile_geom(m, body_mat, nose_mat, band_mat, stencil, fin_mat=None, nose="ogive", part="body"):
+    """big strategic missile, vertical along +Y, centred x=z=8, y -14..30. Rendered ~1.65x on the heavy launcher."""
+    fin_mat = fin_mat or body_mat
+    m.cyl("y", (8, 8), 2.4, -11.0, 18.0, body_mat, sides=16, part=part, deco=("stencil:" + stencil,))
+    m.cyl("y", (8, 8), 2.45, -2.0, -0.6, band_mat, sides=16, part=part)
+    m.cyl("y", (8, 8), 2.45, 12.0, 13.2, band_mat, sides=16, part=part)
+    m.cyl("y", (8, 8), 2.5, 6.6, 7.0, "steel", sides=16, part=part)               # stage joint
+    if nose == "ogive":
+        m.cyl("y", (8, 8), 2.25, 18.0, 21.5, nose_mat, sides=16, part=part)
+        m.cyl("y", (8, 8), 1.9, 21.5, 24.5, nose_mat, sides=16, part=part)
+        m.cyl("y", (8, 8), 1.4, 24.5, 27.0, nose_mat, sides=16, part=part)
+        m.cyl("y", (8, 8), 0.8, 27.0, 28.8, nose_mat, sides=8, part=part)
+        m.cyl("y", (8, 8), 0.35, 28.8, 30.0, nose_mat, sides=8, part=part)
+    elif nose == "blunt":                                                        # bunker buster: hardened penetrator
+        m.cyl("y", (8, 8), 2.2, 18.0, 23.0, nose_mat, sides=16, part=part)
+        m.cyl("y", (8, 8), 1.6, 23.0, 26.5, nose_mat, sides=16, part=part)
+        m.cyl("y", (8, 8), 1.0, 26.5, 28.5, "chrome", sides=8, part=part)
+        m.cyl("y", (8, 8), 0.5, 28.5, 29.6, "chrome", sides=8, part=part)
+    else:                                                                        # thermobaric: rounded bulb warhead
+        m.cyl("y", (8, 8), 2.6, 18.0, 22.0, nose_mat, sides=16, part=part)
+        m.cyl("y", (8, 8), 2.3, 22.0, 25.0, nose_mat, sides=16, part=part)
+        m.cyl("y", (8, 8), 1.7, 25.0, 27.4, nose_mat, sides=16, part=part)
+        m.cyl("y", (8, 8), 0.9, 27.4, 29.2, nose_mat, sides=8, part=part)
+    # engine section + nozzle
+    m.cyl("y", (8, 8), 2.1, -13.0, -11.0, "steel", sides=16, part=part)
+    m.cyl("y", (8, 8), 1.5, -14.0, -13.0, "gunmetal", sides=16, part=part)
+    m.box([6.9, -14.05, 6.9], [9.1, -13.95, 9.1], "black", part=part)
+    # 4 big tail fins with root chord along the body
+    m.box([2.6, -12.5, 7.8], [13.4, -4.0, 8.2], fin_mat, part=part, deco=("panel",))
+    m.box([7.8, -12.5, 2.6], [8.2, -4.0, 13.4], fin_mat, part=part, deco=("panel",))
+    m.box([2.2, -12.5, 7.75], [3.0, -9.0, 8.25], "black", part=part)
+    m.box([13.0, -12.5, 7.75], [13.8, -9.0, 8.25], "black", part=part)
+    m.box([7.75, -12.5, 2.2], [8.25, -9.0, 3.0], "black", part=part)
+    m.box([7.75, -12.5, 13.0], [8.25, -9.0, 13.8], "black", part=part)
+    # mid-body strakes
+    m.box([5.4, 0.0, 7.85], [10.6, 5.0, 8.15], fin_mat, part=part)
+    m.box([7.85, 0.0, 5.4], [8.15, 5.0, 10.6], fin_mat, part=part)
+    # raceway (cable conduit) along one side
+    m.box([10.3, -10.0, 7.6], [10.7, 17.0, 8.4], "grey_metal", part=part)
+
+
+@item("missile_thermobaric", "missile")
+def missile_thermobaric():
+    m = Model("missile_thermobaric", density=4)
+    heavy_missile_geom(m, "od_paint", "orange", "yellow", "TBX-9", fin_mat="dark_paint", nose="bulb")
+    return m
+
+
+@item("missile_bunker_buster", "missile")
+def missile_bunker_buster():
+    m = Model("missile_bunker_buster", density=4)
+    heavy_missile_geom(m, "grey_paint", "dark_paint", "yellow", "GBU-X", fin_mat="dark_paint", nose="blunt")
+    return m
+
+
+@item("missile_titan", "missile")
+def missile_titan():
+    m = Model("missile_titan", density=4)
+    heavy_missile_geom(m, "white", "dark_paint", "red", "TITAN", fin_mat="black", nose="ogive")
+    return m
+
+
 # =============================================================================== TOOLS / MISC ITEMS
 @item("launch_remote")
 def launch_remote():

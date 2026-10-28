@@ -43,12 +43,11 @@ public class BotAvoidGrenadeGoal extends Goal {
     @Override
     public void start() {
         bot.setCrouch(false);
-        bot.setSprinting(true);
-        bot.getNavigation().moveTo(dest.x, dest.y, dest.z, 1.5);
+        bot.getNavigation().moveTo(dest.x, dest.y, dest.z, BotEntity.SPEED_RUN);
     }
 
     @Override
     public void stop() {
-        bot.setSprinting(false);
+        bot.getNavigation().stop();
     }
 }

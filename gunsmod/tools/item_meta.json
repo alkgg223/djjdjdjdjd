@@ -358,5 +358,41 @@
   ],
   "kind": "item",
   "elements": 11
+ },
+ "missile_thermobaric": {
+  "bounds": [
+   2.2,
+   -14.05,
+   2.2,
+   13.8,
+   29.2,
+   13.8
+  ],
+  "kind": "missile",
+  "elements": 86
+ },
+ "missile_bunker_buster": {
+  "bounds": [
+   2.2,
+   -14.05,
+   2.2,
+   13.8,
+   29.6,
+   13.8
+  ],
+  "kind": "missile",
+  "elements": 82
+ },
+ "missile_titan": {
+  "bounds": [
+   2.2,
+   -14.05,
+   2.2,
+   13.8,
+   30.0,
+   13.8
+  ],
+  "kind": "missile",
+  "elements": 90
  }
 }

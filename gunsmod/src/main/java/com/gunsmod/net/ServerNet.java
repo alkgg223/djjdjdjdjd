@@ -5,9 +5,15 @@ import com.gunsmod.entity.JeepEntity;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.item.GunItem;
 import com.gunsmod.item.RemoteItem;
+import com.gunsmod.item.RemoteLinks;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /** Server-side packet handlers (run on the server thread). */
@@ -45,23 +51,90 @@ public final class ServerNet {
 
     public static void launchAction(Net.LaunchAction p, IPayloadContext ctx) {
         if (!(ctx.player() instanceof ServerPlayer sp)) return;
-        boolean near = sp.blockPosition().distSqr(p.station()) < 12 * 12;
-        boolean linked = RemoteItem.linkedTo(sp.getMainHandItem(), p.station()) || RemoteItem.linkedTo(sp.getOffhandItem(), p.station());
-        if (!near && !linked) return;
-        // make sure the station chunk is loaded (remote launches from far away)
-        sp.serverLevel().getChunkAt(p.station());
-        BlockEntity be = sp.serverLevel().getBlockEntity(p.station());
-        if (!(be instanceof LauncherBlockEntity station)) {
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sp, new Net.LaunchStatus(p.station(), false, -1, false, 0, 0, 0, 0, false));
+        ServerLevel level = sp.serverLevel();
+        if (!p.remote()) {
+            // a station opened by hand: only usable while standing next to it
+            if (sp.blockPosition().distSqr(p.station()) > 12 * 12) return;
+            station(sp, level, p.station(), p);
+            sendStationStatus(sp, p.station(), false);
             return;
         }
+        ItemStack remote = RemoteItem.held(sp);
+        if (remote.isEmpty()) return;
+        RemoteLinks links = RemoteItem.links(remote);
         switch (p.action()) {
-            case 1 -> station.setTarget(p.x(), p.y(), p.z(), sp);
-            case 2 -> station.arm(sp);
-            case 3 -> station.launch(sp);
-            case 4 -> station.disarm();
+            case Net.LaunchAction.SELECT -> RemoteItem.setLinks(remote, links.select(p.x()));
+            case Net.LaunchAction.UNLINK -> RemoteItem.unlink(remote, p.station(), sp);
+            case Net.LaunchAction.TARGET_ALL, Net.LaunchAction.ARM_ALL, Net.LaunchAction.LAUNCH_ALL, Net.LaunchAction.DISARM_ALL -> {
+                int n = 0;
+                for (BlockPos pos : links.stations()) {
+                    LauncherBlockEntity be = LauncherBlockEntity.at(level, pos);
+                    if (be == null) continue;
+                    boolean ok = switch (p.action()) {
+                        case Net.LaunchAction.TARGET_ALL -> be.setTarget(p.x(), p.y(), p.z());
+                        case Net.LaunchAction.ARM_ALL -> be.getState() == LauncherBlockEntity.IDLE && be.arm() == null;
+                        case Net.LaunchAction.LAUNCH_ALL -> be.launch(sp);
+                        default -> {
+                            boolean armed = be.getState() == LauncherBlockEntity.ARMED;
+                            be.disarm();
+                            yield armed;
+                        }
+                    };
+                    if (ok) n++;
+                }
+                String key = switch (p.action()) {
+                    case Net.LaunchAction.TARGET_ALL -> "gunsmod.msg.salvo_target";
+                    case Net.LaunchAction.ARM_ALL -> "gunsmod.msg.salvo_armed";
+                    case Net.LaunchAction.LAUNCH_ALL -> "gunsmod.msg.salvo_launch";
+                    default -> "gunsmod.msg.salvo_disarmed";
+                };
+                sp.displayClientMessage(Component.translatable(key, n), true);
+            }
+            default -> {
+                if (links.contains(p.station())) station(sp, level, p.station(), p);
+            }
+        }
+        sendRemoteStatus(sp, remote, false);
+    }
+
+    /** an action on one station */
+    private static void station(ServerPlayer sp, ServerLevel level, BlockPos pos, Net.LaunchAction p) {
+        LauncherBlockEntity be = LauncherBlockEntity.at(level, pos);
+        if (be == null) return;
+        be.keepLoaded();
+        switch (p.action()) {
+            case Net.LaunchAction.TARGET -> sp.displayClientMessage(be.setTarget(p.x(), p.y(), p.z())
+                    ? Component.translatable("gunsmod.msg.target_set", p.x(), p.y(), p.z()) : Component.translatable("gunsmod.msg.station_busy"), true);
+            case Net.LaunchAction.ARM -> {
+                String err = be.arm();
+                if (err != null) sp.displayClientMessage(Component.translatable(err), true);
+            }
+            case Net.LaunchAction.LAUNCH -> {
+                if (be.launch(sp)) sp.displayClientMessage(Component.translatable("gunsmod.msg.launching"), true);
+            }
+            case Net.LaunchAction.DISARM -> be.disarm();
             default -> { }
         }
-        station.sendStatus(sp, false);
+    }
+
+    /** status of every station linked to the remote (keeps their chunks loaded while the screen is open) */
+    public static void sendRemoteStatus(ServerPlayer sp, ItemStack remote, boolean open) {
+        RemoteLinks links = RemoteItem.links(remote);
+        List<Net.StationInfo> list = new ArrayList<>();
+        for (BlockPos pos : links.stations()) {
+            LauncherBlockEntity be = LauncherBlockEntity.at(sp.serverLevel(), pos);
+            if (be != null) {
+                be.keepLoaded();
+                list.add(be.info());
+            } else {
+                list.add(Net.StationInfo.missing(pos));
+            }
+        }
+        PacketDistributor.sendToPlayer(sp, new Net.LaunchStatus(list, links.selected(), true, open));
+    }
+
+    public static void sendStationStatus(ServerPlayer sp, BlockPos pos, boolean open) {
+        LauncherBlockEntity be = LauncherBlockEntity.at(sp.serverLevel(), pos);
+        PacketDistributor.sendToPlayer(sp, new Net.LaunchStatus(List.of(be != null ? be.info() : Net.StationInfo.missing(pos)), 0, false, open));
     }
 }

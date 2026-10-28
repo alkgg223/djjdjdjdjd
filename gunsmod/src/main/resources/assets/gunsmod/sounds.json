@@ -190,6 +190,32 @@
   ],
   "subtitle": "subtitles.gunsmod.missile_alarm"
  },
+ "heavy_launch": {
+  "sounds": [
+   "gunsmod:heavy_launch"
+  ],
+  "subtitle": "subtitles.gunsmod.missile_launch"
+ },
+ "explosion_big": {
+  "sounds": [
+   "gunsmod:explosion_big_1",
+   "gunsmod:explosion_big_2"
+  ],
+  "subtitle": "subtitles.gunsmod.explosion_big"
+ },
+ "explosion_far": {
+  "sounds": [
+   "gunsmod:explosion_far_1",
+   "gunsmod:explosion_far_2"
+  ],
+  "subtitle": "subtitles.gunsmod.explosion_far"
+ },
+ "missile_incoming": {
+  "sounds": [
+   "gunsmod:missile_incoming"
+  ],
+  "subtitle": "subtitles.gunsmod.missile_incoming"
+ },
  "cover_open": {
   "sounds": [
    "gunsmod:cover_open"

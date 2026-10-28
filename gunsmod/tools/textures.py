@@ -97,6 +97,68 @@ def particles():
     col = np.stack([0.3 * np.ones_like(r), 0.85 * np.ones_like(r), np.ones_like(r), np.clip(ring, 0, 1)], -1)
     save(rgba(col), "particle", "holo.png")
     defs["holo"] = ["gunsmod:holo"]
+    # ---- big explosions ----
+    def billow(size, seed, lobes=7, rough=0.35):
+        """soft cauliflower-shaped cloud mask (0..1) built from overlapping blobs + noise"""
+        r0 = np.random.default_rng(seed)
+        y, x = np.mgrid[0:size, 0:size] / (size - 1) * 2 - 1
+        m = np.zeros((size, size))
+        for _ in range(lobes):
+            cx, cy = r0.uniform(-0.35, 0.35, 2)
+            rad = r0.uniform(0.35, 0.6)
+            m = np.maximum(m, np.clip(1 - np.hypot(x - cx, y - cy) / rad, 0, 1))
+        n = np.asarray(Image.fromarray((r0.random((10, 10)) * 255).astype(np.uint8)).resize((size, size), Image.BICUBIC)) / 255
+        n2 = np.asarray(Image.fromarray((r0.random((24, 24)) * 255).astype(np.uint8)).resize((size, size), Image.BICUBIC)) / 255
+        m = np.clip(m * (1 + rough * (n - 0.5) * 2) + (n2 - 0.5) * 0.15, 0, 1)
+        return np.clip(m * 1.6, 0, 1) ** 1.3, n, n2
+
+    # fireball: 8 frames, white-hot core -> orange -> dark red -> sooty smoke
+    names = []
+    for k in range(8):
+        s = 64
+        m, n, n2 = billow(s, 100 + k, lobes=8)
+        f = k / 7
+        heat = np.clip(m * (1.25 - f * 1.1) + (n - 0.5) * 0.3, 0, 1)
+        r = np.clip(0.25 + heat * 1.2, 0, 1) * (1 - f * 0.55) + 0.12 * f
+        g = np.clip(heat ** 1.4 * 1.05 - 0.05, 0, 1) * (1 - f * 0.7) + 0.1 * f
+        b = np.clip(heat ** 3 * 0.9, 0, 1) * (1 - f) + 0.09 * f
+        shade = 0.75 + 0.35 * n2
+        col = np.stack([r * shade, g * shade, b * shade, np.clip(m * (1.05 - f * 0.25), 0, 1)], -1)
+        save(rgba(col), "particle", f"fireball_{k}.png")
+        names.append(f"gunsmod:fireball_{k}")
+    defs["fireball"] = names
+    # dust / smoke clouds: neutral grey puffs, tinted at runtime (earth brown, soot, white smoke)
+    names = []
+    for k in range(8):
+        s = 64
+        m, n, n2 = billow(s, 200 + k, lobes=6 + k % 3, rough=0.45)
+        light = np.clip(0.62 + 0.38 * (np.roll(m, 3, 0) - m) * 2 + 0.25 * n2, 0.35, 1)   # top-lit rims
+        col = np.stack([light, light, light, m * 0.92], -1)
+        save(rgba(col), "particle", f"dust_{k}.png")
+        names.append(f"gunsmod:dust_{k}")
+    defs["dust_cloud"] = names
+    # shockwave: thin bright ring with a soft trailing edge
+    s = 128
+    r, a = radial(s)
+    ring = np.exp(-((r - 0.9) ** 2) / 0.0025) + np.exp(-((r - 0.82) ** 2) / 0.012) * 0.45
+    wob = 0.85 + 0.15 * np.cos(a * 9)
+    col = np.stack([np.ones_like(r), 0.95 * np.ones_like(r), 0.85 * np.ones_like(r), np.clip(ring * wob, 0, 1) * (r < 1)], -1)
+    save(rgba(col), "particle", "shockwave.png")
+    defs["shockwave"] = ["gunsmod:shockwave"]
+    # ember: tiny glowing chunk
+    s = 8
+    r, a = radial(s)
+    col = np.stack([np.ones_like(r), np.clip(0.75 - r * 0.5, 0, 1), np.clip(0.3 - r * 0.3, 0, 1), np.clip(1.15 - r, 0, 1) ** 0.6], -1)
+    save(rgba(col), "particle", "ember.png")
+    defs["ember"] = ["gunsmod:ember"]
+    # blast flash: big soft white-yellow glow with rays
+    s = 64
+    r, a = radial(s)
+    rays = 0.75 + 0.25 * np.abs(np.cos(a * 6)) ** 8
+    core = np.clip(1 - r / rays, 0, 1) ** 1.8
+    col = np.stack([np.ones_like(r), 0.92 + 0.08 * core, 0.6 + 0.4 * core, core], -1)
+    save(rgba(col), "particle", "blast_flash.png")
+    defs["blast_flash"] = ["gunsmod:blast_flash"]
     os.makedirs(os.path.join(ROOT, "particles"), exist_ok=True)
     for name, tex in defs.items():
         with open(os.path.join(ROOT, "particles", name + ".json"), "w") as fh:

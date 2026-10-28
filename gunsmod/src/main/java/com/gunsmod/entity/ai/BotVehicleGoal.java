@@ -69,15 +69,13 @@ public class BotVehicleGoal extends Goal {
     public void stop() {
         jeep = null;
         bot.getNavigation().stop();
-        bot.setSprinting(false);
     }
 
     @Override
     public void tick() {
         ticks++;
         if (ticks % 10 == 1) {
-            bot.getNavigation().moveTo(jeep, 1.3);
-            bot.setSprinting(true);
+            bot.getNavigation().moveTo(jeep, BotEntity.SPEED_JOG);
         }
         bot.getLookControl().setLookAt(jeep, 30, 30);
         if (bot.distanceToSqr(jeep) < 3.2 * 3.2) {

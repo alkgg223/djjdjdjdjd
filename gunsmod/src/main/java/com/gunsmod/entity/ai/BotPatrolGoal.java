@@ -40,6 +40,6 @@ public class BotPatrolGoal extends Goal {
 
     @Override
     public void start() {
-        bot.getNavigation().moveTo(dest.x, dest.y, dest.z, 0.9);
+        bot.getNavigation().moveTo(dest.x, dest.y, dest.z, BotEntity.SPEED_WALK * 0.9);
     }
 }

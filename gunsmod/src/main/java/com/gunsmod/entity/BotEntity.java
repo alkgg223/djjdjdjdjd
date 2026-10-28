@@ -3,10 +3,12 @@ package com.gunsmod.entity;
 import com.gunsmod.Reg;
 import com.gunsmod.block.ArenaBlockEntity;
 import com.gunsmod.block.SpawnerBlockEntity;
+import com.gunsmod.entity.ai.BotArtillery;
 import com.gunsmod.entity.ai.BotAvoidGrenadeGoal;
 import com.gunsmod.entity.ai.BotCombatGoal;
 import com.gunsmod.entity.ai.BotFollowGoal;
 import com.gunsmod.entity.ai.BotPatrolGoal;
+import com.gunsmod.entity.ai.BotReloadGoal;
 import com.gunsmod.entity.ai.BotTargetGoal;
 import com.gunsmod.entity.ai.BotVehicleGoal;
 import com.gunsmod.gun.Attachment;
@@ -15,13 +17,17 @@ import com.gunsmod.gun.GunLogic;
 import com.gunsmod.gun.GunType;
 import com.gunsmod.item.DogTagItem;
 import com.gunsmod.item.GunItem;
+import com.gunsmod.item.MissileItem;
+import com.gunsmod.item.RemoteItem;
 import com.gunsmod.menu.BotMenu;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -33,9 +39,11 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.Containers;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityDimensions;
@@ -67,6 +75,12 @@ public class BotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> DATA_AIMING = SynchedEntityData.defineId(BotEntity.class, EntityDataSerializers.BOOLEAN);
 
     public static final int ORDER_FOLLOW = 0, ORDER_HOLD = 1, ORDER_PATROL = 2;
+    /**
+     * Movement speeds as navigation multipliers of {@link #BASE_SPEED}. A mob moves at about 43 * speed^2 blocks/s, so
+     * walk = 3.9 b/s, jog = 4.7 b/s and run = 5.6 b/s, the same as a sprinting player. Soldiers never use the vanilla
+     * sprint flag, which would add another 30%.
+     */
+    public static final double BASE_SPEED = 0.3, SPEED_WALK = 1.0, SPEED_JOG = 1.1, SPEED_RUN = 1.2;
     private static final String[] CALLSIGNS = {"Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Ghost", "Hunter", "Viper", "Wolf", "Eagle", "Cobra"};
 
     @Nullable public UUID owner;
@@ -80,6 +94,9 @@ public class BotEntity extends PathfinderMob {
     @Nullable public LivingEntity lastAttacker;
     @Nullable public Vec3 lastKnownEnemyPos;
     public int vehicleCooldown;
+    /** missiles this soldier carries to reload the launch stations of its remote (off hand) */
+    public final SimpleContainer missiles = new SimpleContainer(4);
+    public final BotArtillery artillery = new BotArtillery(this);
 
     private int fireCooldown;
     private int burstLeft;
@@ -100,7 +117,7 @@ public class BotEntity extends PathfinderMob {
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 30.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.3)
+                .add(Attributes.MOVEMENT_SPEED, BASE_SPEED)
                 .add(Attributes.FOLLOW_RANGE, 64.0)
                 .add(Attributes.ATTACK_DAMAGE, 3.0)
                 .add(Attributes.ARMOR, 4.0);
@@ -121,6 +138,7 @@ public class BotEntity extends PathfinderMob {
         this.goalSelector.addGoal(1, new BotAvoidGrenadeGoal(this));
         this.goalSelector.addGoal(2, new BotVehicleGoal(this));
         this.goalSelector.addGoal(3, new BotCombatGoal(this));
+        this.goalSelector.addGoal(4, new BotReloadGoal(this));
         this.goalSelector.addGoal(5, new BotFollowGoal(this));
         this.goalSelector.addGoal(6, new BotPatrolGoal(this));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8f));
@@ -369,6 +387,7 @@ public class BotEntity extends PathfinderMob {
     public void die(DamageSource source) {
         super.die(source);
         if (!this.level().isClientSide) {
+            Containers.dropContents(this.level(), this, missiles);
             if (spawnerPos != null && this.level().getBlockEntity(spawnerPos) instanceof SpawnerBlockEntity s) s.onBotDied(this.getUUID());
             if (arenaPos != null && this.level().getBlockEntity(arenaPos) instanceof ArenaBlockEntity a) a.onBotDied(this);
         }
@@ -398,6 +417,7 @@ public class BotEntity extends PathfinderMob {
             if (this.tickCount % 40 == 0 && this.getHealth() < this.getMaxHealth()) this.heal(1.0f);
         }
         if (!isReloadingGun() && target == null && needsReload()) startBotReload();
+        artillery.tick();
     }
 
     @Override
@@ -455,6 +475,34 @@ public class BotEntity extends PathfinderMob {
                 if (owner == null) owner = player.getUUID();
                 player.displayClientMessage(Component.translatable("gunsmod.msg.gave_weapon", this.getDisplayName()), true);
                 this.playBotSound(Reg.sound("bolt"), 0.8f, 1f);
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
+        }
+        if (held.getItem() instanceof RemoteItem) {
+            if (!this.level().isClientSide) {
+                ItemStack old = this.getOffhandItem().copy();
+                this.setItemSlot(EquipmentSlot.OFFHAND, held.copyWithCount(1));
+                this.setGuaranteedDrop(EquipmentSlot.OFFHAND);
+                held.shrink(1);
+                if (!old.isEmpty() && !player.getInventory().add(old)) player.drop(old, false);
+                if (owner == null) owner = player.getUUID();
+                player.displayClientMessage(Component.translatable("gunsmod.msg.gave_remote", this.getDisplayName(),
+                        RemoteItem.links(this.getOffhandItem()).stations().size()), true);
+                this.playBotSound(Reg.sound("ui_confirm"), 0.8f, 1f);
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
+        }
+        if (held.getItem() instanceof MissileItem) {
+            if (!this.level().isClientSide) {
+                ItemStack rest = missiles.addItem(held.copy());
+                int given = held.getCount() - rest.getCount();
+                if (given > 0) {
+                    held.shrink(given);
+                    player.displayClientMessage(Component.translatable("gunsmod.msg.gave_missiles", given, this.getDisplayName()), true);
+                    this.playBotSound(Reg.sound("mag_in"), 0.8f, 0.6f);
+                } else {
+                    player.displayClientMessage(Component.translatable("gunsmod.msg.rack_full", this.getDisplayName()), true);
+                }
             }
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
@@ -535,6 +583,16 @@ public class BotEntity extends PathfinderMob {
         if (home != null) tag.put("Home", NbtUtils.writeBlockPos(home));
         if (spawnerPos != null) tag.put("Spawner", NbtUtils.writeBlockPos(spawnerPos));
         if (arenaPos != null) tag.put("Arena", NbtUtils.writeBlockPos(arenaPos));
+        ListTag rack = new ListTag();
+        for (int i = 0; i < missiles.getContainerSize(); i++) {
+            ItemStack s = missiles.getItem(i);
+            if (s.isEmpty()) continue;
+            CompoundTag e = new CompoundTag();
+            e.putByte("Slot", (byte) i);
+            e.put("Item", s.save(this.registryAccess()));
+            rack.add(e);
+        }
+        tag.put("Missiles", rack);
     }
 
     @Override
@@ -550,6 +608,14 @@ public class BotEntity extends PathfinderMob {
         home = NbtUtils.readBlockPos(tag, "Home").orElse(null);
         spawnerPos = NbtUtils.readBlockPos(tag, "Spawner").orElse(null);
         arenaPos = NbtUtils.readBlockPos(tag, "Arena").orElse(null);
+        missiles.clearContent();
+        for (Tag t : tag.getList("Missiles", Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            int slot = e.getByte("Slot");
+            if (slot >= 0 && slot < missiles.getContainerSize()) {
+                ItemStack.parse(this.registryAccess(), e.getCompound("Item")).ifPresent(s -> missiles.setItem(slot, s));
+            }
+        }
     }
 
     public void playBotSound(SoundEvent sound, float vol, float pitch) {
