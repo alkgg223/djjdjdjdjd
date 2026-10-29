@@ -7,6 +7,7 @@ import com.gunsmod.gun.GunLogic;
 import com.gunsmod.item.GunItem;
 import com.gunsmod.item.RemoteItem;
 import com.gunsmod.item.RemoteLinks;
+import com.gunsmod.world.PlayerTeam;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -25,6 +26,10 @@ public final class ServerNet {
         if (ctx.player() instanceof ServerPlayer sp && Float.isFinite(p.yaw()) && Float.isFinite(p.pitch())) {
             GunLogic.playerShoot(sp, p.yaw(), p.pitch(), p.seed(), p.aiming());
         }
+    }
+
+    public static void teamPick(Net.TeamPick p, IPayloadContext ctx) {
+        if (ctx.player() instanceof ServerPlayer sp && p.team() >= -1 && p.team() <= 1) PlayerTeam.pick(sp, p.team());
     }
 
     public static void reload(Net.Reload p, IPayloadContext ctx) {

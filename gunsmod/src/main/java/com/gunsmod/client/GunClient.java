@@ -33,6 +33,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
+import com.gunsmod.client.screen.TeamScreen;
+import net.minecraft.network.chat.Component;
 
 /** Client-side gun state: input, aiming, recoil, animation timers and local shot prediction. */
 public final class GunClient {
@@ -43,6 +45,7 @@ public final class GunClient {
     public static final KeyMapping SEAT = new KeyMapping("key.gunsmod.seat", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, CATEGORY);
     public static final KeyMapping HORN = new KeyMapping("key.gunsmod.horn", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, CATEGORY);
     public static final KeyMapping FLARES = new KeyMapping("key.gunsmod.flares", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_X, CATEGORY);
+    public static final KeyMapping TEAM = new KeyMapping("key.gunsmod.team", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, CATEGORY);
 
     // aiming
     public static boolean aiming;
@@ -113,6 +116,10 @@ public final class GunClient {
         if (cooldown > 0) cooldown--;
         if (p == null) return;
         boolean inScreen = mc.screen != null;
+        while (TEAM.consumeClick()) {
+            if (BattleHud.field()) mc.setScreen(new TeamScreen());
+            else p.displayClientMessage(Component.translatable("gunsmod.msg.no_battlefield"), true);
+        }
 
         // ---- vehicle controls
         if (p.getVehicle() instanceof JeepEntity jeep) {

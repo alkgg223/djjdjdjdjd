@@ -33,6 +33,7 @@ public final class ClientEvents {
         ClientFx.tick();
         FlashlightFx.tick();
         VehicleAlerts.tick();
+        BattleHud.tick();
         ClientLights.tick();
     }
 

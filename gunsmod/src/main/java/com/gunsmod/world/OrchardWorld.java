@@ -36,7 +36,13 @@ public final class OrchardWorld {
         checked = new WeakReference<>(server);
         ServerLevel level = server.overworld();
         BlockPos centre = new BlockPos(0, GROUND, 0);
-        if (!level.getBiome(centre).is(BIOME) || level.getBlockState(MARKER).is(Blocks.LODESTONE)) return;
+        if (!level.getBiome(centre).is(BIOME)) return;
+        if (level.getBlockState(MARKER).is(Blocks.LODESTONE)) {
+            // built by 1.6, before the battlefields were recorded
+            BattleData d = BattleData.get(level);
+            if (d.maps.isEmpty()) d.addMap(new BattleMap(centre, Direction.SOUTH));
+            return;
+        }
         OrchardBuilder.startWorld(level, centre, Direction.SOUTH);
     }
 

@@ -3,6 +3,7 @@ package com.gunsmod.entity;
 import com.gunsmod.Reg;
 import com.gunsmod.block.VehicleSpawnerBlockEntity;
 import com.gunsmod.entity.ai.DriveAI;
+import com.gunsmod.entity.ai.Sight;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.gun.GunType;
 import com.gunsmod.net.Net;
@@ -88,6 +89,9 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     private Phase phase = Phase.GROUND;
     private int phaseTicks, scanTimer, passShots;
     private float taxiYaw;
+    private double taxiLen = -1;
+    /** a take-off needs this much clear corridor (run and climb-out), blocks */
+    private static final double RUN = 120;
     @Nullable private Vec3 waypoint;
     private float evadeYaw, evadePitch;
     private Phase resume = Phase.PATROL;
@@ -356,11 +360,18 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         } else if (ground) {
             // nose wheel steering, take-off rotation once fast enough
             float steer = Mth.clamp(dYaw, -2.0f, 2.0f) * (speed < 0.4 ? 1f : 0.5f) + rudderIn * (speed < 0.4 ? 2.2f : 0.8f);
-            if (speed > 0.02 || pilot instanceof Player && Math.abs(rudderIn) > 0.1f) yaw += steer * (float) Math.min(1.0, 0.2 + speed * 3);
+            if (speed < 0.05) {
+                // standing: pivot round on the nose wheel (a soldier lines up for the take-off run or turns away from trees)
+                if (pilot instanceof Player && Math.abs(rudderIn) > 0.1f) yaw += rudderIn * 2.0f;
+                else if (pilot instanceof BotEntity && botControl) yaw += Mth.clamp(dYaw, -2.5f, 2.5f);
+            } else {
+                yaw += steer * (float) Math.min(1.0, 0.2 + speed * 3);
+            }
             float maxNose = speed > ROTATE * 0.95 ? 12f : 0f;
             pitch += Mth.clamp(Mth.clamp(wantPitch, 0f, maxNose) - pitch, -1.2f, 1.0f);
             speed += thrust - drag - 0.0015 * Math.signum(speed);
             if (pilot instanceof Player && throttle < 0.02f && throttleIn < -0.1f) speed -= 0.02;     // wheel brakes
+            if (pilot instanceof BotEntity && botControl && botThrottle <= 0f) speed -= 0.015;
             if (pilot == null) speed *= 0.96;
             speed = Math.max(0, speed);
             vy = pitch > 4 && speed > ROTATE ? speed * Math.sin(Math.toRadians(pitch)) * 0.6 : -0.08;
@@ -734,7 +745,10 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             botThrottle = 0;
             return;
         }
-        if (this.onGround() && phase != Phase.GROUND) phase = Phase.GROUND;
+        if (this.onGround() && phase != Phase.GROUND) {
+            phase = Phase.GROUND;
+            phaseTicks = 0;
+        }
         if (--scanTimer <= 0 && phase != Phase.GROUND && phase != Phase.CLIMB) {
             scanTimer = 10;
             LivingEntity t = scanVehicles(bot);
@@ -751,7 +765,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             bot.setTarget(null);
         }
         switch (phase) {
-            case GROUND -> takeOff(agl);
+            case GROUND -> takeOff(bot, agl);
             case CLIMB -> {
                 botPitch = 14;
                 botThrottle = 1;
@@ -793,10 +807,16 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         if (phase != Phase.GROUND) terrainGuard(agl);
     }
 
-    /** take-off run along a clear stretch: full power, rotate at 70 km/h, climb out */
-    private void takeOff(double agl) {
+    /**
+     * Take-off: pivot round to the heading with the longest clear corridor (the ground run and the climb-out line over
+     * trees and houses), taxi on to more open ground if there is none yet, then full power, rotate at 70 km/h and
+     * climb out steeply.
+     */
+    private void takeOff(BotEntity bot, double agl) {
+        if (taxiLen < 0 && speed >= 0.3) taxiYaw = this.getYRot();
         if (!this.onGround()) {
-            botPitch = 12;
+            botYaw = taxiYaw;
+            botPitch = agl < 18 ? 20 : 12;
             botThrottle = 1;
             botAb = true;
             if (agl > 8) {
@@ -805,48 +825,71 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             }
             return;
         }
-        if (speed < 0.3 && clearAhead(this.getYRot(), 70) < 65) {
-            // the runway ahead is blocked: taxi round to the clearest direction
-            if (phaseTicks % 20 == 1) {
-                float best = this.getYRot();
-                double bestLen = -1;
-                for (int i = 0; i < 12; i++) {
-                    float a = this.getYRot() + i * 30f;
-                    double len = clearAhead(a, 90);
-                    if (len > bestLen) {
-                        bestLen = len;
-                        best = a;
-                    }
-                }
-                taxiYaw = best;
-            }
+        botPitch = 0;
+        if (speed >= 0.3) {
+            // committed to the run: straight on at full power; abort if something turns up on the runway
             botYaw = taxiYaw;
-            botThrottle = speed < 0.15 ? 0.35f : 0f;
-            botPitch = 0;
+            botThrottle = 1;
+            botAb = true;
+            botPitch = speed >= ROTATE ? 14 : 0;
+            if (speed < ROTATE * 0.8 && corridor(this.getYRot(), 6 + speed * 25) < 6 + speed * 25) {
+                botThrottle = 0;
+                botAb = false;
+                taxiLen = -1;
+            }
             return;
         }
-        botYaw = this.getYRot();
-        botThrottle = 1;
-        botAb = true;
-        botPitch = speed >= ROTATE ? 11 : 0;
+        if (taxiLen < 0 || phaseTicks % 20 == 1) {
+            taxiLen = -1;
+            for (int i = 0; i < 24; i++) {
+                float a = this.getYRot() + i * 15f;
+                double len = corridor(a, RUN);
+                // keep the present heading on a tie: less pivoting
+                if (len > taxiLen + (i == 0 ? -1 : 2)) {
+                    taxiLen = len;
+                    taxiYaw = a;
+                }
+            }
+        }
+        botYaw = taxiYaw;
+        if (Math.abs(Mth.wrapDegrees(taxiYaw - this.getYRot())) > 6) {
+            botThrottle = 0;          // pivot first
+        } else if (taxiLen >= RUN) {
+            botThrottle = 1;          // the whole run is clear: go
+            botAb = true;
+        } else if (corridor(this.getYRot(), 16) >= 16) {
+            botThrottle = speed < 0.12 ? 0.3f : 0f;   // taxi on slowly towards open ground
+        } else {
+            botThrottle = 0;          // boxed in for now
+        }
+        // no way out at all: the pilot gives up and climbs out
+        if (phaseTicks > 1200) {
+            bot.stopRiding();
+            bot.vehicleCooldown = 2400;
+            phaseTicks = 0;
+        }
     }
 
-    private double clearAhead(float yawDeg, double len) {
+    /**
+     * How far a take-off along this heading stays clear (up to {@code len}): 55 blocks of level dry ground for the run,
+     * then nothing above the climb-out line rising 0.3 per block.
+     */
+    private double corridor(float yawDeg, double len) {
         Vec3 dir = GunLogic.dir(0, yawDeg);
-        double best = len;
-        for (double h : new double[]{1.0, 2.5, 4.5}) {
-            Vec3 from = this.position().add(0, h, 0).add(dir.scale(6));
-            HitResult hr = this.level().clip(new ClipContext(from, from.add(dir.scale(len)), ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, this));
-            if (hr.getType() != HitResult.Type.MISS) best = Math.min(best, hr.getLocation().distanceTo(from));
+        Vec3 side = new Vec3(-dir.z, 0, dir.x);
+        double y = this.getY();
+        for (double d = 3; d <= len; d += 2.5) {
+            boolean run = d < 55;
+            double line = run ? 0.6 : 0.6 + (d - 55) * 0.3;
+            if (line > 26) return len;
+            for (double sOff : new double[]{-1.7, 0, 1.7}) {
+                Vec3 p = this.position().add(dir.scale(d)).add(side.scale(sOff));
+                int top = this.level().getHeight(Heightmap.Types.MOTION_BLOCKING, Mth.floor(p.x), Mth.floor(p.z));
+                if (top - y > line) return d;
+                if (run && (y - top > 1.5 || !this.level().getFluidState(BlockPos.containing(p.x, top - 1, p.z)).isEmpty())) return d;
+            }
         }
-        // the ground must carry on (no cliff or water on the run)
-        for (double d = 8; d < best; d += 8) {
-            Vec3 p = this.position().add(dir.scale(d));
-            int top = this.level().getHeight(Heightmap.Types.MOTION_BLOCKING, Mth.floor(p.x), Mth.floor(p.z));
-            BlockPos below = BlockPos.containing(p.x, top - 1, p.z);
-            if (Math.abs(top - this.getY()) > 1.5 || !this.level().getFluidState(below).isEmpty()) return d;
-        }
-        return best;
+        return len;
     }
 
     /** slow patrol (50 km/h) between waypoints round home, 40 blocks above the ground */
@@ -951,7 +994,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             if (!bot.isEnemy(e)) continue;
             Vec3 c = e.position().add(0, e.getBbHeight() * 0.5, 0);
             double d = c.distanceTo(eye);
-            if (d > 280) continue;
+            if (d > 280 || !Sight.inCone(eye, noseDir(), Sight.JET, c)) continue;    // the pilot sees what is ahead of the nose
             boolean air = e instanceof Aircraft a && a.isAirborne();
             if (!air && this.level().clip(new ClipContext(eye, c, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)).getType() != HitResult.Type.MISS) continue;
             double score = d - (air ? 60 : 0) - (e == bot.getTarget() ? 40 : 0);

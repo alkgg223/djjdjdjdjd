@@ -3,6 +3,7 @@ package com.gunsmod.entity;
 import com.gunsmod.Reg;
 import com.gunsmod.entity.HeliType.Weapon;
 import com.gunsmod.entity.ai.DriveAI;
+import com.gunsmod.entity.ai.Sight;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.gun.GunType;
 import com.gunsmod.net.Net;
@@ -681,7 +682,8 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider, Ai
     private void botPilot(BotEntity bot) {
         if (--scanTimer <= 0) {
             scanTimer = 10;
-            LivingEntity t = TankEntity.scan(this, bot, 140, sightWorld(), bot.getTarget());
+            // the crew sees what is ahead of the cockpit (and straight below)
+            LivingEntity t = TankEntity.scan(this, bot, 140, sightWorld(), bot.getTarget(), this.getYRot(), Sight.HELI, 16);
             if (t != null && t != bot.getTarget()) {
                 bot.setTarget(t);
                 aimError = null;

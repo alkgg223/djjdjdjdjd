@@ -5,6 +5,7 @@ import com.gunsmod.block.LauncherBlockEntity;
 import com.gunsmod.entity.BotEntity;
 import com.gunsmod.entity.BotTeam;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.item.MissileItem;
 import com.gunsmod.item.RemoteItem;
 import com.gunsmod.item.RemoteLinks;
@@ -26,9 +27,11 @@ import net.minecraft.world.phys.Vec3;
  * A soldier carrying a launch remote acts as a forward observer: every second it looks for enemy groups within
  * {@link #RANGE} blocks, picks a missile that will not hit friendlies, fires from one of its linked stations and keeps
  * the empty stations near it loaded from its missile rack ({@link BotReloadGoal} walks it there).
+ * A base's missile operator ({@link BotEntity#operator}) knows where every enemy within {@link #OPERATOR_RANGE} is and
+ * never runs out of missiles.
  */
 public class BotArtillery {
-    public static final double RANGE = 160;
+    public static final double RANGE = 160, OPERATOR_RANGE = 500;
     /** stations further than this from the soldier are not reloaded by it */
     public static final double RELOAD_RANGE = 48;
 
@@ -79,13 +82,15 @@ public class BotArtillery {
         }
     }
 
-    /** rack slot holding a missile this station takes, or -1 */
+    /** rack slot holding a missile this station takes (a random one of them for an operator), or -1 */
     public int rackSlotFor(LauncherBlockEntity be) {
+        List<Integer> fits = new ArrayList<>();
         for (int i = 0; i < bot.missiles.getContainerSize(); i++) {
             ItemStack s = bot.missiles.getItem(i);
-            if (s.getItem() instanceof MissileItem m && be.accepts(m.kind)) return i;
+            if (s.getItem() instanceof MissileItem m && be.accepts(m.kind)) fits.add(i);
         }
-        return -1;
+        if (fits.isEmpty()) return -1;
+        return bot.operator ? fits.get(bot.getRandom().nextInt(fits.size())) : fits.get(0);
     }
 
     /** called by the reload goal next to the station */
@@ -94,7 +99,7 @@ public class BotArtillery {
         if (slot >= 0) {
             ItemStack s = bot.missiles.getItem(slot);
             if (be.loadMissile(((MissileItem) s.getItem()).kind)) {
-                s.shrink(1);
+                if (!bot.operator) s.shrink(1);
                 bot.missiles.setChanged();
                 bot.swing(InteractionHand.MAIN_HAND);
                 bot.level().playSound(null, be.getBlockPos(), Reg.sound("mag_in"), SoundSource.BLOCKS, 1.5f, be.isHeavy() ? 0.35f : 0.5f);
@@ -108,7 +113,8 @@ public class BotArtillery {
         List<LauncherBlockEntity> ready = new ArrayList<>();
         for (LauncherBlockEntity be : stations) if (be.hasMissile() && be.getState() == LauncherBlockEntity.IDLE) ready.add(be);
         if (ready.isEmpty()) return;
-        AABB area = bot.getBoundingBox().inflate(RANGE, 64, RANGE);
+        double range = bot.operator ? OPERATOR_RANGE : RANGE;
+        AABB area = bot.getBoundingBox().inflate(range, 96, range);
         List<LivingEntity> enemies = new ArrayList<>();
         List<LivingEntity> friends = new ArrayList<>();
         BotTeam team = bot.getBotTeam();
@@ -117,7 +123,8 @@ public class BotArtillery {
                 if (!j.getPassengers().isEmpty()) (j.getBotTeam() == team ? friends : enemies).add(j);
             } else if (bot.isEnemy(e)) {
                 enemies.add(e);
-            } else if (e instanceof BotEntity b && b.getBotTeam() == team || e instanceof Player p && team == BotTeam.GREEN && !p.isSpectator()) {
+            } else if (e instanceof BotEntity b && b.getBotTeam() == team || e instanceof Player p && BotTeam.of(p) == team && !p.isSpectator()
+                    || e instanceof VehicleEntity v && v.getBotTeam() == team && v.isManned()) {
                 friends.add(e);
             }
         }
@@ -138,7 +145,7 @@ public class BotArtillery {
             double sx = 0, sz = 0, minY = e.getY();
             for (LivingEntity o : enemies) {
                 if (o.distanceToSqr(e) < 10 * 10) {
-                    score += o instanceof JeepEntity ? 4 : o instanceof Player ? 2 : 1;
+                    score += o instanceof JeepEntity || o instanceof VehicleEntity ? 4 : o instanceof Player ? 2 : 1;
                     sx += o.getX();
                     sz += o.getZ();
                     minY = Math.min(minY, o.getY());
@@ -148,6 +155,7 @@ public class BotArtillery {
             for (LivingEntity o : enemies) if (o.distanceToSqr(e) < 10 * 10) n++;
             Vec3 centre = new Vec3(sx / n, minY, sz / n);
             if (recentlyHit(centre) && score < 4) continue;
+            if (bot.operator && score < 2) continue;    // a whole base's missiles: not for one soldier on his own
             if (score > bestScore) {
                 bestScore = score;
                 best = e;
@@ -173,7 +181,7 @@ public class BotArtillery {
         if (pick.fireAt(bot, target)) {
             recent.add(bestCentre);
             recentTime.add(now);
-            launchCooldown = MissileItem.isHeavy(pick.missileKind()) ? 400 : 120;
+            launchCooldown = MissileItem.isHeavy(pick.missileKind()) ? 400 : bot.operator ? 200 : 120;
             bot.swing(InteractionHand.OFF_HAND);
             bot.playBotSound(Reg.sound("ui_confirm"), 1f, 0.8f);
             bot.getLookControl().setLookAt(bestCentre.x, bestCentre.y + 1, bestCentre.z);

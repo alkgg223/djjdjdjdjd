@@ -79,14 +79,25 @@ public class BotCombatGoal extends Goal {
         return bot.battle != null && bot.battle.contains(bot.position());
     }
 
-    /** the spot, or the nearest one by the roadside on an orchard battlefield */
+    /** the spot, or the nearest one by the roadside on an orchard battlefield (by its stations for a missile operator) */
     private Vec3 roadside(Vec3 p) {
-        return p != null && onField() ? bot.battle.keepNear(p, ROADSIDE) : p;
+        if (p == null) return null;
+        if (bot.operator && bot.home != null) return nearHome(p);
+        return onField() ? bot.battle.keepNear(p, ROADSIDE) : p;
     }
 
-    /** a cover or peek spot is only any use on the battlefield when it is by a road */
+    /** a cover or peek spot is only any use on the battlefield when it is by a road (by the stations for an operator) */
     private Vec3 byRoad(Vec3 p) {
-        return p != null && onField() && bot.battle.keepNear(p, ROADSIDE) != p ? null : p;
+        return p != null && roadside(p) != p ? null : p;
+    }
+
+    private Vec3 nearHome(Vec3 p) {
+        Vec3 h = Vec3.atBottomCenterOf(bot.home);
+        Vec3 d = new Vec3(p.x - h.x, 0, p.z - h.z);
+        double len = d.length();
+        if (len <= BotEntity.OPERATOR_LEASH) return p;
+        d = d.scale(BotEntity.OPERATOR_LEASH / len);
+        return new Vec3(h.x + d.x, p.y, h.z + d.z);
     }
 
     private void moveTo(Vec3 p, double speed) {

@@ -74,6 +74,16 @@ public record BattleMap(BlockPos origin, Direction fwd) {
         return world(0, team == BotTeam.RED ? -BASE : BASE);
     }
 
+    /** where a player of the team (re)spawns: a free corner of the team's base yard */
+    public Vec3 spawn(BotTeam team) {
+        return team == BotTeam.RED ? world(8, HL - 1 - 44) : world(-8, -HL + 44);
+    }
+
+    /** facing the enemy */
+    public float yaw(BotTeam team) {
+        return (team == BotTeam.RED ? fwd.getOpposite() : fwd).toYRot();
+    }
+
     /** the middle of the enemy half: where the team's aircraft patrol */
     public Vec3 front(BotTeam team) {
         return world(0, team == BotTeam.RED ? -70 : 70);

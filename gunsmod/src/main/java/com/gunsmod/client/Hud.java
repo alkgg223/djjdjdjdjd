@@ -374,7 +374,7 @@ public final class Hud {
         GunType t = gun.type;
         int ammo = GunItem.ammo(st);
         int mag = GunItem.attachments(st).magSize(t);
-        int reserve = p.getAbilities().instabuild ? -1 : GunLogic.countAmmo(p, t.ammo);
+        int reserve = p.getAbilities().instabuild || BattleHud.team() >= 0 ? -1 : GunLogic.countAmmo(p, t.ammo);
         int w = 118, h = 46;
         int x = g.guiWidth() - w - 6, y = g.guiHeight() - h - 6;
         g.blitSprite(PANEL, x, y, w, h);

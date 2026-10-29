@@ -1,6 +1,7 @@
 package com.gunsmod.block;
 
 import com.gunsmod.Reg;
+import com.gunsmod.entity.BotEntity;
 import com.gunsmod.entity.MissileEntity;
 import com.gunsmod.item.MissileItem;
 import com.gunsmod.net.Net;
@@ -41,6 +42,8 @@ public class LauncherBlockEntity extends BlockEntity {
     /** extra ticks to wait fully erected before ignition (ripple salvos) */
     private int hold;
     @Nullable private UUID launcher;
+    /** fired by a soldier: the missile spares the terrain even if the soldier is dead by the time it lifts off */
+    private boolean byBot;
     /** client animation clock */
     public int clientTimer;
 
@@ -168,6 +171,7 @@ public class LauncherBlockEntity extends BlockEntity {
         timer = 0;
         hold = 0;
         launcher = by != null ? by.getUUID() : null;
+        byBot = by instanceof BotEntity;
         level.playSound(null, worldPosition, Reg.sound("missile_alarm"), SoundSource.BLOCKS, isHeavy() ? 6f : 4f, 0.9f);
         keepLoaded();
         sync();
@@ -228,6 +232,7 @@ public class LauncherBlockEntity extends BlockEntity {
         } else if (state == IGNITION && timer >= igniteTime()) {
             Entity owner = launcher != null && level instanceof ServerLevel sl ? sl.getEntity(launcher) : null;
             MissileEntity m = new MissileEntity(level, owner, launchPoint(), new BlockPos(tx, ty, tz), missile);
+            if (byBot) m.byBot = true;
             level.addFreshEntity(m);
             missile = -1;
             state = LOWERING;
@@ -277,6 +282,7 @@ public class LauncherBlockEntity extends BlockEntity {
         super.saveAdditional(tag, reg);
         tag.putInt("Missile", missile);
         tag.putBoolean("HasTarget", hasTarget);
+        tag.putBoolean("ByBot", byBot);
         tag.putInt("TX", tx);
         tag.putInt("TY", ty);
         tag.putInt("TZ", tz);
@@ -291,6 +297,7 @@ public class LauncherBlockEntity extends BlockEntity {
         super.loadAdditional(tag, reg);
         missile = tag.getInt("Missile");
         hasTarget = tag.getBoolean("HasTarget");
+        byBot = tag.getBoolean("ByBot");
         tx = tag.getInt("TX");
         ty = tag.getInt("TY");
         tz = tag.getInt("TZ");

@@ -6,10 +6,12 @@ import com.gunsmod.block.SpawnerBlockEntity;
 import com.gunsmod.entity.ai.BotArtillery;
 import com.gunsmod.entity.ai.BotAvoidGrenadeGoal;
 import com.gunsmod.entity.ai.BotCombatGoal;
+import com.gunsmod.entity.ai.BotGlanceGoal;
 import com.gunsmod.entity.ai.BotPatrolGoal;
 import com.gunsmod.entity.ai.BotReloadGoal;
 import com.gunsmod.entity.ai.BotTargetGoal;
 import com.gunsmod.entity.ai.BotVehicleGoal;
+import com.gunsmod.entity.ai.Sight;
 import com.gunsmod.gun.Attachment;
 import com.gunsmod.gun.GunAttachments;
 import com.gunsmod.gun.GunLogic;
@@ -55,7 +57,6 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.monster.Enemy;
@@ -89,12 +90,22 @@ public class BotEntity extends PathfinderMob {
     public int lane;
     /** how far along the way it has got (index into {@link BattleMap#route}) */
     public int routeIdx = -1;
+    /**
+     * A base's missile operator: stays by its launch stations ({@link #OPERATOR_LEASH} blocks), keeps them loaded from
+     * a rack that never runs out and fires at enemies anywhere within 500 blocks (see {@link BotArtillery}).
+     */
+    public boolean operator;
+    public static final double OPERATOR_LEASH = 20;
+    /** anti-vehicle mines it carries (laid somewhere along its way) */
+    public int mines = 1;
     public boolean ignorePlayers;
     public int grenades = 2;
     public int smokes = 1;
     public long lastHurtTime = -1000;
     @Nullable public LivingEntity lastAttacker;
     @Nullable public Vec3 lastKnownEnemyPos;
+    @Nullable private Vec3 heardAt;
+    private int heardTicks;
     public int vehicleCooldown;
     /** missiles this soldier carries to reload the launch stations of its remote (off hand) */
     public final SimpleContainer missiles = new SimpleContainer(4);
@@ -141,7 +152,7 @@ public class BotEntity extends PathfinderMob {
         this.goalSelector.addGoal(3, new BotCombatGoal(this));
         this.goalSelector.addGoal(4, new BotReloadGoal(this));
         this.goalSelector.addGoal(6, new BotPatrolGoal(this));
-        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8f));
+        this.goalSelector.addGoal(8, new BotGlanceGoal(this));
         this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new BotTargetGoal(this));
     }
@@ -203,7 +214,7 @@ public class BotEntity extends PathfinderMob {
         if (e == null || e == this || !e.isAlive()) return false;
         if (e instanceof BotEntity b) return b.getBotTeam() != this.getBotTeam();
         if (e instanceof Player p) {
-            return getBotTeam() == BotTeam.RED && !ignorePlayers && !p.isCreative() && !p.isSpectator();
+            return BotTeam.of(p) != getBotTeam() && !ignorePlayers && !p.isCreative() && !p.isSpectator();
         }
         if (e instanceof JeepEntity j) return j.getBotTeam() != getBotTeam() && !j.getPassengers().isEmpty();
         if (e instanceof VehicleEntity v) return v.getBotTeam() != getBotTeam() && v.isManned();
@@ -218,7 +229,7 @@ public class BotEntity extends PathfinderMob {
     @Override
     public boolean isAlliedTo(net.minecraft.world.entity.Entity other) {
         if (other instanceof BotEntity b) return b.getBotTeam() == this.getBotTeam();
-        if (other instanceof Player) return getBotTeam() == BotTeam.GREEN;
+        if (other instanceof Player p) return BotTeam.of(p) == getBotTeam();
         return super.isAlliedTo(other);
     }
 
@@ -348,33 +359,60 @@ public class BotEntity extends PathfinderMob {
         return this.level().getGameTime() - lastHurtTime < ticks;
     }
 
-    /** soldiers within the radius that are enemies of the shooter learn where the shot came from */
+    /**
+     * Soldiers within the radius that are enemies of the shooter hear where the shot came from: one that has the
+     * shooter in front of its eyes engages, the others turn their heads that way first.
+     */
     public static void alertGunfire(ServerLevel level, LivingEntity shooter, double radius) {
         List<BotEntity> bots = level.getEntitiesOfClass(BotEntity.class, shooter.getBoundingBox().inflate(radius), b -> b != shooter && b.isAlive());
         for (BotEntity b : bots) {
             if (b.isEnemy(shooter) && b.getTarget() == null) {
                 b.lastKnownEnemyPos = shooter.position();
-                if (b.canSeeTarget(shooter)) b.setTarget(shooter);
+                if (b.canSeeTarget(shooter) && Sight.soldier(b, shooter)) b.setTarget(shooter);
+                else b.hear(shooter.position());
             }
         }
+    }
+
+    /**
+     * An anti-vehicle mine at its feet: never near its own base, not next to another of the team's mines and no more
+     * than ten of them around. On an orchard battlefield that is on a road, where the vehicles drive.
+     */
+    private void layMine() {
+        if (home != null && home.distSqr(this.blockPosition()) < 40 * 40) return;
+        if (battle != null && battle.base(getBotTeam()).distanceToSqr(this.position()) < 70 * 70) return;
+        List<MineEntity> laid = this.level().getEntitiesOfClass(MineEntity.class, this.getBoundingBox().inflate(160, 32, 160), m -> m.getMineTeam() == getBotTeam());
+        if (laid.size() >= 10) return;
+        for (MineEntity m : laid) if (m.distanceToSqr(this) < 14 * 14) return;
+        this.level().addFreshEntity(new MineEntity(this.level(), getBotTeam(), this, this.position(), this.random.nextFloat() * 360f));
+        mines--;
+        this.swing(InteractionHand.MAIN_HAND);
+        playBotSound(Reg.sound("cover_open"), 0.6f, 0.6f);
+    }
+
+    /** a shot or a call heard from there: look that way for a moment */
+    public void hear(Vec3 at) {
+        heardAt = at;
+        heardTicks = 50;
     }
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
         net.minecraft.world.entity.Entity att = source.getEntity();
         if (att instanceof BotEntity b && b != this && b.getBotTeam() == this.getBotTeam()) return false;
-        if (att instanceof Player p && getBotTeam() == BotTeam.GREEN && !p.isCreative() && source.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION)) amount *= 0.25f;
+        if (att instanceof Player p && BotTeam.of(p) == getBotTeam() && !p.isCreative() && source.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION)) amount *= 0.25f;
         boolean r = super.hurt(source, amount);
         if (r && !this.level().isClientSide) {
             lastHurtTime = this.level().getGameTime();
             if (att instanceof LivingEntity le && isEnemy(le)) {
                 lastAttacker = le;
                 if (getTarget() == null) setTarget(le);
-                // call for help
+                // call for help: team mates nearby turn to where the fire comes from
                 for (BotEntity b : this.level().getEntitiesOfClass(BotEntity.class, this.getBoundingBox().inflate(24), b -> b != this && b.getBotTeam() == getBotTeam())) {
                     if (b.getTarget() == null && b.isEnemy(le)) {
-                        b.setTarget(le);
                         b.lastKnownEnemyPos = le.position();
+                        if (b.canSeeTarget(le) && Sight.soldier(b, le)) b.setTarget(le);
+                        else b.hear(le.position());
                     }
                 }
             }
@@ -398,6 +436,11 @@ public class BotEntity extends PathfinderMob {
         if (this.level().isClientSide) return;
         if (fireCooldown > 0) fireCooldown--;
         if (vehicleCooldown > 0) vehicleCooldown--;
+        if (mines > 0 && !operator && this.getTarget() == null && !this.isPassenger() && this.onGround() && this.random.nextInt(900) == 0) layMine();
+        if (heardTicks > 0 && heardAt != null) {
+            heardTicks--;
+            if (this.getTarget() == null) this.getLookControl().setLookAt(heardAt.x, heardAt.y + 1.5, heardAt.z, 20f, 20f);
+        }
         if (reloadLeft > 0 && --reloadLeft == 0) {
             ItemStack g = gun();
             GunType t = gunType();
@@ -461,7 +504,7 @@ public class BotEntity extends PathfinderMob {
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
-        boolean mayEdit = getBotTeam() == BotTeam.GREEN || player.isCreative();
+        boolean mayEdit = BotTeam.of(player) == getBotTeam() || player.isCreative();
         if (!mayEdit) return InteractionResult.PASS;
         if (held.getItem() instanceof DogTagItem) {
             if (!this.level().isClientSide) DogTagItem.save(held, this, player);
@@ -560,6 +603,12 @@ public class BotEntity extends PathfinderMob {
                 ItemStack.parse(reg, eq.getCompound(s.getName())).ifPresent(st -> this.setItemSlot(s, st));
             }
         }
+        operator = t.getBoolean("operator");
+        if (operator) {
+            // one of each missile the launch stations take; the operator's rack never empties
+            int[] kinds = {MissileItem.HE, MissileItem.CLUSTER, MissileItem.INCENDIARY};
+            for (int i = 0; i < kinds.length && i < missiles.getContainerSize(); i++) missiles.setItem(i, new ItemStack(MissileItem.byKind(kinds[i])));
+        }
     }
 
     // ------------------------------------------------------------------------------------ save
@@ -579,6 +628,8 @@ public class BotEntity extends PathfinderMob {
             tag.putInt("Lane", lane);
             tag.putInt("RouteIdx", routeIdx);
         }
+        tag.putBoolean("Operator", operator);
+        tag.putInt("Mines", mines);
         ListTag rack = new ListTag();
         for (int i = 0; i < missiles.getContainerSize(); i++) {
             ItemStack s = missiles.getItem(i);
@@ -605,6 +656,8 @@ public class BotEntity extends PathfinderMob {
         battle = BattleMap.load(tag.getCompound("Battle"));
         lane = tag.getInt("Lane");
         routeIdx = battle != null ? tag.getInt("RouteIdx") : -1;
+        operator = tag.getBoolean("Operator");
+        mines = tag.contains("Mines") ? tag.getInt("Mines") : 1;
         missiles.clearContent();
         for (Tag t : tag.getList("Missiles", Tag.TAG_COMPOUND)) {
             CompoundTag e = (CompoundTag) t;

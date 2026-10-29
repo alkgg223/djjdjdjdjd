@@ -10,6 +10,7 @@ import com.gunsmod.entity.TankEntity;
 import com.gunsmod.entity.VehicleKind;
 import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.net.Net;
+import com.gunsmod.world.BattleEvents;
 import com.gunsmod.world.OrchardBuilder;
 import com.gunsmod.world.OrchardWorld;
 import net.minecraft.core.BlockPos;
@@ -37,6 +38,9 @@ public class GunsMod {
         NeoForge.EVENT_BUS.addListener(GunsMod::onDeath);
         NeoForge.EVENT_BUS.addListener(GunsMod::crewProtection);
         NeoForge.EVENT_BUS.addListener(GunsMod::serverTick);
+        NeoForge.EVENT_BUS.addListener(BattleEvents::onRespawn);
+        NeoForge.EVENT_BUS.addListener(BattleEvents::onDrops);
+        NeoForge.EVENT_BUS.addListener(BattleEvents::onLogin);
     }
 
     private static void attributes(EntityAttributeCreationEvent e) {
@@ -58,6 +62,7 @@ public class GunsMod {
     private static void serverTick(ServerTickEvent.Post e) {
         OrchardWorld.tick(e.getServer());
         OrchardBuilder.tick(e.getServer());
+        BattleEvents.tick(e.getServer());
     }
 
     /** the crew of any vehicle (jeep included) is protected: hits go to the vehicle until it blows up */
@@ -68,8 +73,9 @@ public class GunsMod {
         e.setCanceled(true);
     }
 
-    /** a player that dies during an arena round is out of that round */
+    /** a kill on a battlefield scores; a player that dies during an arena round is out of that round */
     private static void onDeath(LivingDeathEvent e) {
+        BattleEvents.onDeath(e);
         if (!(e.getEntity() instanceof ServerPlayer sp)) return;
         ServerLevel level = sp.serverLevel();
         BlockPos center = sp.blockPosition();

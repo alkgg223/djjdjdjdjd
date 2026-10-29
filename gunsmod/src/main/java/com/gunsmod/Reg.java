@@ -22,6 +22,7 @@ import com.gunsmod.entity.ArmoredCarEntity;
 import com.gunsmod.entity.BotTeam;
 import com.gunsmod.entity.CarType;
 import com.gunsmod.entity.FlareEntity;
+import com.gunsmod.entity.MineEntity;
 import com.gunsmod.entity.GuidedMissileEntity;
 import com.gunsmod.entity.GrenadeEntity;
 import com.gunsmod.entity.HelicopterEntity;
@@ -252,6 +253,9 @@ public final class Reg {
     public static final DeferredHolder<EntityType<?>, EntityType<GuidedMissileEntity>> GUIDED_MISSILE = ENTITIES.register("guided_missile",
             () -> EntityType.Builder.<GuidedMissileEntity>of(GuidedMissileEntity::new, MobCategory.MISC).sized(0.4f, 0.4f).clientTrackingRange(16)
                     .updateInterval(1).build("guided_missile"));
+    public static final DeferredHolder<EntityType<?>, EntityType<MineEntity>> MINE = ENTITIES.register("mine",
+            () -> EntityType.Builder.<MineEntity>of(MineEntity::new, MobCategory.MISC).sized(0.6f, 0.2f).clientTrackingRange(8)
+                    .updateInterval(20).build("mine"));
     public static final DeferredHolder<EntityType<?>, EntityType<FlareEntity>> FLARE_ENTITY = ENTITIES.register("flare",
             () -> EntityType.Builder.<FlareEntity>of(FlareEntity::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(12)
                     .updateInterval(1).build("flare"));

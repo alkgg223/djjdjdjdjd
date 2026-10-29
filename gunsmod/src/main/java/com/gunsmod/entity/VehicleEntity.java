@@ -130,7 +130,7 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
     public void board(Entity e, int seat) {
         if (this.level().isClientSide || e.isPassenger() || this.getPassengers().size() >= seatCount()) return;
         e.startRiding(this, true);
-        if (e instanceof Player && this.getPassengers().size() == 1) setTeam(BotTeam.GREEN);
+        if (e instanceof Player p && this.getPassengers().size() == 1) setTeam(BotTeam.of(p));
     }
 
     @Override
@@ -273,6 +273,10 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         this.invulnerableTime = 0;
         boolean r = super.hurt(source, amount);
         this.invulnerableTime = 0;
+        // the crew knows where the hit came from and turns that way
+        if (r && att instanceof LivingEntity le) {
+            for (Entity p : this.getPassengers()) if (p instanceof BotEntity b && b.isEnemy(le)) b.lastKnownEnemyPos = le.position();
+        }
         return r;
     }
 

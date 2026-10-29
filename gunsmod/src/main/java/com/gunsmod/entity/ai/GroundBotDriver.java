@@ -12,7 +12,8 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * How soldiers drive ground vehicles: patrol from waypoint to waypoint with a stop at each one, and when an enemy is
- * in sight and in range, stop so the gunner can hit it. Too close: back off. Enemy hidden: move round until it shows.
+ * in sight and in range, fight on the move at a walking pace (closing in from far off, sideways once in range) so the
+ * gunner can hit it. Too close: back off. Enemy hidden: move round until it shows.
  * On an orchard battlefield they drive the driver's road to the enemy base instead and never leave it.
  */
 public final class GroundBotDriver {
@@ -21,6 +22,9 @@ public final class GroundBotDriver {
     @Nullable private List<Vec3> route;
     @Nullable private BattleMap routeMap;
     private int routeLane, routeIdx = -1;
+    private int side = 1, sideSince;
+    /** fighting: the vehicle should only creep along (see {@link #creep}) */
+    public boolean slow;
 
     /** the driver knows the field this vehicle is on (an orchard battlefield) */
     public static boolean onField(Entity v, BotEntity driver) {
@@ -42,7 +46,8 @@ public final class GroundBotDriver {
             routeIdx = -1;
         }
         if (routeIdx < 0 || horiz(v, route.get(routeIdx)) > 24) routeIdx = BattleMap.resume(route, v.position(), routeIdx - 1);
-        if (enemy != null && enemy.isAlive() && armed && horiz(v, enemy.position()) < engage && canSee(v, enemy)) return null;
+        // an enemy in sight and in range: roll on down the road at a walking pace while the gunner fires
+        slow = enemy != null && enemy.isAlive() && armed && horiz(v, enemy.position()) < engage && canSee(v, enemy);
         if (pause > 0) {
             pause--;
             return null;
@@ -63,6 +68,7 @@ public final class GroundBotDriver {
     /** where to drive now, or null to stand (brake) */
     @Nullable
     public Vec3 goal(Entity v, @Nullable LivingEntity enemy, boolean armed, Vec3 home, double leash, double engage, double tooClose) {
+        slow = false;
         if (enemy != null && enemy.isAlive() && armed) {
             double d = horiz(v, enemy.position());
             boolean see = canSee(v, enemy);
@@ -71,7 +77,17 @@ public final class GroundBotDriver {
             if (away.lengthSqr() < 0.01) away = new Vec3(1, 0, 0);
             away = away.normalize();
             if (d < tooClose) return v.position().add(away.scale(18));
-            if (see && d < engage) return null;                     // halt and fire
+            if (see && d < engage) {
+                // fire on the move at a walking pace: edge closer from far off, sideways once in range
+                slow = true;
+                if (v.tickCount - sideSince > 100 + v.getRandom().nextInt(80)) {
+                    side = -side;
+                    sideSince = v.tickCount;
+                }
+                Vec3 toward = away.scale(-1), lateral = new Vec3(-toward.z, 0, toward.x).scale(side);
+                Vec3 dir = d > engage * 0.6 ? toward.scale(0.8).add(lateral.scale(0.6)) : lateral;
+                return v.position().add(dir.normalize().scale(14));
+            }
             if (hidden > 60 || d >= engage) {
                 // swing round to the side and close in until it can be seen again
                 double a = Math.toRadians(35);
@@ -100,6 +116,11 @@ public final class GroundBotDriver {
             return null;
         }
         return waypoint;
+    }
+
+    /** while fighting: about a third of top speed, never more */
+    public static float creep(float thr, double speed, double max) {
+        return speed > max * 0.32 ? 0f : Math.min(thr, 0.7f);
     }
 
     /** throttle that brings the vehicle to a halt without reversing */

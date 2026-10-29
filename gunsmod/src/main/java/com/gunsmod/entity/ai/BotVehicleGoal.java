@@ -24,7 +24,7 @@ public class BotVehicleGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (bot.isPassenger() || bot.vehicleCooldown > 0) return false;
+        if (bot.isPassenger() || bot.vehicleCooldown > 0 || bot.operator) return false;
         bot.vehicleCooldown = 40 + bot.getRandom().nextInt(40);
         if (bot.getTarget() != null && bot.distanceTo(bot.getTarget()) < 14) return false;
         Entity best = null;

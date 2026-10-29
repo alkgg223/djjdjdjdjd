@@ -134,6 +134,10 @@ public final class ClientNet {
         if (R.nextInt(3) == 0) level.addParticle(Reg.SMOKE.get(), from.x + dir.x * 4, from.y + dir.y * 4 + 0.5, from.z + dir.z * 4, dir.x * 0.1, 0.08, dir.z * 0.1);
     }
 
+    public static void battleState(Net.BattleState p) {
+        BattleHud.update(p);
+    }
+
     public static void hitMarker(Net.HitMarker p) {
         GunClient.onHitMarker(p.kill());
     }

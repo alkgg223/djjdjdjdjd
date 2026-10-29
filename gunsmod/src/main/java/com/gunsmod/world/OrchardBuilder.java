@@ -6,6 +6,8 @@ import com.gunsmod.block.SpawnerBlockEntity;
 import com.gunsmod.block.VehicleSpawnerBlockEntity;
 import com.gunsmod.entity.BotTeam;
 import com.gunsmod.entity.VehicleKind;
+import com.gunsmod.item.RemoteItem;
+import com.gunsmod.item.RemoteLinks;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +21,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.Block;
@@ -127,7 +130,9 @@ public final class OrchardBuilder {
                     base(1);
                     keepLoaded(-1);
                     keepLoaded(1);
+                    BattleData.get(level).addMap(map);
                     if (world) OrchardWorld.built(level, map);
+                    for (ServerPlayer p : level.players()) BattleEvents.offerPicker(p);
                     tell(Component.translatable("gunsmod.msg.orchard_done", (System.currentTimeMillis() - t0) / 1000), false);
                     return true;
                 }
@@ -333,6 +338,7 @@ public final class OrchardBuilder {
             soldiers(s, -4, 24, team, 6);
             soldiers(s, 14, 14, team, 5);
             soldiers(s, -118, 56, team, 2);
+            missileSite(s, team, toEnemy);
             // vehicles, all facing the enemy; the jet faces down its runway
             VehicleKind tankA = s < 0 ? VehicleKind.ABRAMS : VehicleKind.T90;
             VehicleKind tankB = s < 0 ? VehicleKind.LEOPARD : VehicleKind.CHALLENGER;
@@ -382,13 +388,30 @@ public final class OrchardBuilder {
             }
         }
 
+        /** the missile site: four launch stations and the operator who keeps them busy from a remote linked to all four */
+        void missileSite(int s, BotTeam team, Direction toEnemy) {
+            RemoteLinks links = RemoteLinks.EMPTY;
+            for (int i = 0; i < 4; i++) {
+                BlockPos p = posOf(s, -36 + i * 4, 1, 10);
+                level.setBlock(p, facingFor(Reg.LAUNCHER.get(), toEnemy), Block.UPDATE_ALL);
+                links = links.with(p);
+            }
+            ItemStack remote = new ItemStack(Reg.REMOTE.get());
+            RemoteItem.setLinks(remote, links);
+            spawnPad(s, -30, 17, dogTag(team, remote), 1, 30);
+        }
+
         void soldiers(int s, int x, int d, BotTeam team, int count) {
+            spawnPad(s, x, d, dogTag(team, null), count, 10);
+        }
+
+        void spawnPad(int s, int x, int d, ItemStack tag, int count, int delay) {
             BlockPos p = posOf(s, x, 1, d);
             level.setBlock(p, Reg.SPAWNER.get().defaultBlockState(), Block.UPDATE_ALL);
             if (level.getBlockEntity(p) instanceof SpawnerBlockEntity be) {
-                be.inventory.setItem(0, dogTag(team));
+                be.inventory.setItem(0, tag);
                 be.count = count;
-                be.delay = 10;
+                be.delay = delay;
                 be.active = true;
                 be.battle = map;
                 be.setChanged();
@@ -396,15 +419,23 @@ public final class OrchardBuilder {
             }
         }
 
-        /** a dog tag that deploys soldiers of the team with a random gun and attachments each time */
-        ItemStack dogTag(BotTeam team) {
+        /**
+         * A dog tag that deploys soldiers of the team with a random gun and attachments each time; with a remote, the
+         * base's missile operator (the remote in its off hand).
+         */
+        ItemStack dogTag(BotTeam team, @Nullable ItemStack remote) {
             ItemStack tag = new ItemStack(Reg.DOG_TAG.get());
             CompoundTag d = new CompoundTag();
             d.putInt("team", team.ordinal());
             d.putInt("skin", 0);
             d.putInt("grenades", 2);
             d.putBoolean("random", true);
-            d.put("equipment", new CompoundTag());
+            CompoundTag eq = new CompoundTag();
+            if (remote != null) {
+                eq.put(EquipmentSlot.OFFHAND.getName(), remote.save(level.registryAccess()));
+                d.putBoolean("operator", true);
+            }
+            d.put("equipment", eq);
             CompoundTag root = new CompoundTag();
             root.put("gunsmod_bot", d);
             tag.set(DataComponents.CUSTOM_DATA, CustomData.of(root));

@@ -9,6 +9,7 @@ import com.gunsmod.client.render.ArmoredCarRenderer;
 import com.gunsmod.client.render.BotRenderer;
 import com.gunsmod.client.render.GunRenderer;
 import com.gunsmod.client.render.HelicopterRenderer;
+import com.gunsmod.client.render.MineRenderer;
 import com.gunsmod.client.render.HeavyLauncherRenderer;
 import com.gunsmod.client.render.JeepItemRenderer;
 import com.gunsmod.client.render.JeepRenderer;
@@ -93,7 +94,7 @@ public final class ClientSetup {
                 "entity/tank/turret", "entity/tank/gun", "entity/tank/roadwheel", "entity/tank/idler", "entity/tank/sprocket",
                 "entity/tank/track_bottom", "entity/tank/track_top", "entity/heli/body", "entity/heli/mark_green", "entity/heli/mark_red",
                 "entity/heli/chin", "entity/heli/rotor", "entity/heli/tail_rotor", "entity/vehicle_ammo/shell", "entity/vehicle_ammo/rocket",
-                "entity/vehicle_ammo/atgm", "entity/vehicle_ammo/sam", "entity/vehicle_ammo/bomb", "entity/jeep_tow/launcher", "entity/car/wheel"}) {
+                "entity/vehicle_ammo/atgm", "entity/vehicle_ammo/sam", "entity/vehicle_ammo/bomb", "entity/jeep_tow/launcher", "entity/car/wheel", "entity/mine/body"}) {
             e.register(BakedRender.id(p));
         }
         for (TankType t : TankType.values()) {
@@ -137,6 +138,7 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.F16.get(), JetRenderer::new);
         e.registerEntityRenderer(Reg.GUIDED_MISSILE.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.FLARE_ENTITY.get(), NoopRenderer::new);
+        e.registerEntityRenderer(Reg.MINE.get(), MineRenderer::new);
         e.registerEntityRenderer(Reg.ROCKET.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.GRENADE.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.MISSILE.get(), MissileRenderer::new);
@@ -170,6 +172,7 @@ public final class ClientSetup {
         e.register(GunClient.SEAT);
         e.register(GunClient.HORN);
         e.register(GunClient.FLARES);
+        e.register(GunClient.TEAM);
     }
 
     @SubscribeEvent
@@ -189,5 +192,6 @@ public final class ClientSetup {
         e.registerAbove(VanillaGuiLayers.HOTBAR, Reg.id("vehicle"), Hud::vehicle);
         e.registerAbove(VanillaGuiLayers.CROSSHAIR, Reg.id("bot_info"), Hud::botInfo);
         e.registerAboveAll(Reg.id("blast_flash"), Hud::flash);
+        e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Reg.id("battle_score"), BattleHud::render);
     }
 }

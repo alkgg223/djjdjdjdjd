@@ -2,6 +2,7 @@ package com.gunsmod.entity;
 
 import com.gunsmod.Reg;
 import com.gunsmod.entity.ai.GroundBotDriver;
+import com.gunsmod.entity.ai.Sight;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.gun.GunType;
 import com.gunsmod.net.Net;
@@ -53,7 +54,7 @@ public class TankEntity extends VehicleEntity {
     public float steer;
     private float throttleIn, steerIn;
     private boolean fireMain, fireCoax;
-    private int coaxCooldown, coaxBurst, coaxPause, scanTimer;
+    private int coaxCooldown, coaxBurst, coaxPause, scanTimer, searchTicks;
     @Nullable private Vec3 aimError;
     private final GroundBotDriver patrol = new GroundBotDriver();
     private int stuckTicks, reverseTicks;
@@ -416,19 +417,22 @@ public class TankEntity extends VehicleEntity {
     }
 
     // ------------------------------------------------------------------------------------ soldier crew
-    /** the closest visible enemy, vehicles first; seen from the turret roof */
+    /**
+     * The closest visible enemy, vehicles first, seen from {@code eye}: only within {@code half} degrees either side of
+     * the heading {@code viewYaw} (where the gun or the cockpit points), or nearer than {@code near}.
+     */
     @Nullable
-    public static LivingEntity scan(Entity vehicle, BotEntity bot, double range, Vec3 eye, @Nullable LivingEntity current) {
+    public static LivingEntity scan(Entity vehicle, BotEntity bot, double range, Vec3 eye, @Nullable LivingEntity current, float viewYaw, float half, double near) {
         LivingEntity best = null;
         double bestScore = Double.MAX_VALUE;
         for (LivingEntity e : vehicle.level().getEntitiesOfClass(LivingEntity.class, vehicle.getBoundingBox().inflate(range, range * 0.6, range), bot::isEnemy)) {
             if (VehicleEntity.shieldOf(e) != null) continue;    // shoot the vehicle, not the crew
             if (e instanceof JetEntity jet && jet.isAirborne()) continue;    // far too fast: that is the air defence's job
             Vec3 c = e.position().add(0, e.getBbHeight() * 0.5, 0);
-            if (c.distanceTo(eye) > range) continue;
+            if (c.distanceTo(eye) > range || !Sight.inView(eye, viewYaw, half, near, c)) continue;
             if (vehicle.level().clip(new ClipContext(eye, c, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, vehicle)).getType() != HitResult.Type.MISS) continue;
             double score = c.distanceTo(eye) - (e instanceof VehicleEntity || e instanceof JeepEntity ? 35 : 0) - (e == current ? 12 : 0)
-                    - (e instanceof Player && bot.getBotTeam() == BotTeam.RED ? 10 : 0);
+                    - (e instanceof Player ? 10 : 0);
             if (score < bestScore) {
                 bestScore = score;
                 best = e;
@@ -455,19 +459,36 @@ public class TankEntity extends VehicleEntity {
         return new Vec3(Math.cos(a) * d, (r.nextDouble() - 0.3) * 2.0, Math.sin(a) * d);
     }
 
+    /** nobody in the sights: turn the gun to where the enemy was last heard of, otherwise sweep the sector ahead */
+    private void search(BotEntity bot) {
+        Vec3 heard = bot.lastKnownEnemyPos;
+        if (heard != null) {
+            if (++searchTicks > 100) {
+                bot.lastKnownEnemyPos = null;
+                searchTicks = 0;
+            }
+            Vec3 to = heard.subtract(this.position());
+            traverse(Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f - this.getYRot()), 0f, 1.2f, 1f);
+            return;
+        }
+        traverse(Mth.sin(this.tickCount * 0.015f) * 75f, 0f, 1.2f, 1f);
+    }
+
     private void botGunner(BotEntity bot) {
         if (--scanTimer <= 0) {
             scanTimer = 10;
-            LivingEntity t = scan(this, bot, 96, toWorld(geo.turret()[0], geo.seat()[1] + 3, geo.turret()[1]), bot.getTarget());
+            // the gunner sees what is in his sights: near where the gun points
+            LivingEntity t = scan(this, bot, 96, toWorld(geo.turret()[0], geo.seat()[1] + 3, geo.turret()[1]), bot.getTarget(),
+                    this.getYRot() + getTurretYaw(), Sight.TURRET, 6);
             if (t != null && t != bot.getTarget()) {
                 bot.setTarget(t);
                 aimError = null;
+                searchTicks = 0;
             }
         }
         LivingEntity t = bot.getTarget();
         if (t == null || !t.isAlive() || t.distanceToSqr(this) > 110 * 110) {
-            // no enemy: gun back to the front, ready
-            traverse(0f, 0f, 1.2f, 1f);
+            search(bot);
             coaxBurst = 0;
             return;
         }
@@ -527,6 +548,7 @@ public class TankEntity extends VehicleEntity {
             st = l > r ? -1f : 1f;
             if (c < 3) thr = -0.8f;
         }
+        if (patrol.slow && thr > 0) thr = GroundBotDriver.creep(thr, speed, kind.maxSpeed);
         if (thr > 0.3f && Math.abs(speed) < 0.02) stuckTicks++;
         else stuckTicks = Math.max(0, stuckTicks - 1);
         if (stuckTicks > 40) {

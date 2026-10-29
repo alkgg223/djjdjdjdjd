@@ -3,6 +3,7 @@ package com.gunsmod.entity;
 import com.gunsmod.Reg;
 import com.gunsmod.block.VehicleSpawnerBlockEntity;
 import com.gunsmod.entity.ai.GroundBotDriver;
+import com.gunsmod.entity.ai.Sight;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.net.Net;
 import com.gunsmod.world.Blast;
@@ -234,7 +235,7 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
             }
         }
         if (seat >= 0) this.entityData.set(DATA_SEATS.get(seat), passenger.getId());
-        if (passenger instanceof Player && seat == SEAT_DRIVER) setTeam(BotTeam.GREEN);
+        if (passenger instanceof Player p && seat == SEAT_DRIVER) setTeam(BotTeam.of(p));
     }
 
     @Override
@@ -595,6 +596,7 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
             st = -Math.signum(diff);
         }
         // stuck detection
+        if (patrol.slow && thr > 0) thr = GroundBotDriver.creep(thr, speed, MAX_SPEED);
         if (thr > 0.3f && Math.abs(speed) < 0.03) stuckTicks++;
         else stuckTicks = Math.max(0, stuckTicks - 1);
         if (stuckTicks > 35) {
@@ -673,11 +675,22 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
         } else if (gunner instanceof BotEntity bot) {
             if (--towScan <= 0) {
                 towScan = 10;
-                LivingEntity t = TankEntity.scan(this, bot, 150, gunPivotWorld(), bot.getTarget());
+                // the gunner sees what is in his sights: near where the launcher points
+                LivingEntity t = TankEntity.scan(this, bot, 150, gunPivotWorld(), bot.getTarget(), this.getYRot() + getTurretYaw(), Sight.TURRET, 6);
                 if (t != null) bot.setTarget(t);
             }
             LivingEntity t = bot.getTarget();
-            if (t != null && t.isAlive() && t.distanceToSqr(this) < 160 * 160) {
+            if (t == null || !t.isAlive() || t.distanceToSqr(this) >= 160 * 160) {
+                // nobody in the sights: towards where the enemy was heard of, otherwise sweep the sector ahead
+                Vec3 heard = bot.lastKnownEnemyPos;
+                float want = Mth.sin(this.tickCount * 0.015f) * 75f;
+                if (heard != null) {
+                    Vec3 to = heard.subtract(this.position());
+                    want = Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f - this.getYRot());
+                }
+                float cy = getTurretYaw();
+                this.entityData.set(DATA_TURRET_YAW, Mth.wrapDegrees(cy + Mth.clamp(Mth.wrapDegrees(want - cy), -1.5f, 1.5f)));
+            } else {
                 Vec3 pivot = gunPivotWorld();
                 Vec3 to = t.position().add(0, t.getBbHeight() * 0.5, 0).subtract(pivot);
                 float wantYaw = Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f - this.getYRot());

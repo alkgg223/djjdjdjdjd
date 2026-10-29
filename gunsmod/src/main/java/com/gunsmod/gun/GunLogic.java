@@ -5,11 +5,13 @@ import com.gunsmod.block.ExplosiveBarrelBlock;
 import com.gunsmod.entity.BotEntity;
 import com.gunsmod.entity.BotTeam;
 import com.gunsmod.entity.JeepEntity;
+import com.gunsmod.entity.MineEntity;
 import com.gunsmod.entity.VehicleEntity;
 import com.gunsmod.entity.RocketEntity;
 import com.gunsmod.item.AmmoItem;
 import com.gunsmod.item.GunItem;
 import com.gunsmod.net.Net;
+import com.gunsmod.world.PlayerTeam;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -85,6 +87,7 @@ public final class GunLogic {
 
     public static boolean canHit(Entity shooter, Entity e) {
         if (e == shooter || !e.isAlive() || e.isSpectator() || !e.isPickable()) return false;
+        if (e instanceof MineEntity) return false;    // bullets fly over mines
         if (shooter.getVehicle() != null && (e == shooter.getVehicle() || e.getVehicle() == shooter.getVehicle())) return false;
         if (e.getVehicle() == shooter) return false;
         if (VehicleEntity.shieldOf(e) != null) return false;   // the vehicle takes the hit
@@ -286,7 +289,7 @@ public final class GunLogic {
         GunAttachments a = GunItem.attachments(stack);
         int mag = a.magSize(t);
         if (GunItem.ammo(stack) >= mag || GunItem.reloading(stack)) return;
-        if (e instanceof Player p && !p.getAbilities().instabuild && countAmmo(p, t.ammo) <= 0) {
+        if (e instanceof Player p && !PlayerTeam.freeAmmo(p) && countAmmo(p, t.ammo) <= 0) {
             p.displayClientMessage(Component.translatable("gunsmod.msg.no_ammo", Component.translatable("item.gunsmod." + t.ammo.itemId)), true);
             e.level().playSound(null, e.getX(), e.getY(), e.getZ(), Reg.sound("dry_fire"), SoundSource.PLAYERS, 0.8f, 1f);
             return;
@@ -308,7 +311,7 @@ public final class GunLogic {
         int ammo = GunItem.ammo(stack);
         int need = Math.max(0, mag - ammo);
         int got = need;
-        if (e instanceof Player p && !p.getAbilities().instabuild) got = takeAmmo(p, t.ammo, need);
+        if (e instanceof Player p && !PlayerTeam.freeAmmo(p)) got = takeAmmo(p, t.ammo, need);
         GunItem.setAmmo(stack, ammo + got);
         stack.remove(Reg.RELOAD.get());
         String snd = switch (t.category) {

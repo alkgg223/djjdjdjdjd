@@ -29,19 +29,24 @@ public enum BotTeam {
         return id == 1 ? RED : GREEN;
     }
 
-    /** team of any entity: soldiers and vehicles carry one, players fight with the green side, everything else is neutral */
+    /** team of any entity: soldiers, vehicles and mines carry one, players the side they chose (green unless they chose), everything else is neutral */
     public static BotTeam of(Entity e) {
         if (e instanceof BotEntity b) return b.getBotTeam();
         if (e instanceof JeepEntity j) return j.getBotTeam();
         if (e instanceof VehicleEntity v) return v.getBotTeam();
-        if (e instanceof Player) return GREEN;
+        if (e instanceof MineEntity m) return m.getMineTeam();
+        if (e instanceof Player p) return com.gunsmod.world.PlayerTeam.get(p);
         return null;
     }
 
     /** true when a bullet from {@code shooter} should pass through {@code target} */
     public static boolean friendly(Entity shooter, Entity target) {
         if (shooter == null || target == null) return false;
-        if (shooter instanceof Player && target instanceof Player) return false;
+        if (shooter instanceof Player pa && target instanceof Player pb) {
+            // players are only team mates once both have picked a side
+            return com.gunsmod.world.PlayerTeam.chosen(pa) && com.gunsmod.world.PlayerTeam.chosen(pb)
+                    && com.gunsmod.world.PlayerTeam.get(pa) == com.gunsmod.world.PlayerTeam.get(pb);
+        }
         BotTeam a = of(shooter), b = of(target);
         if (a == null || b == null || a != b) return false;
         // a jeep belongs to whoever is inside: never let team mates shoot their own ride

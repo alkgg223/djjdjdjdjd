@@ -91,13 +91,13 @@ public class BotPatrolGoal extends Goal {
     }
 
     private boolean marching() {
-        return bot.battle != null && bot.battle.contains(bot.position());
+        return bot.battle != null && !bot.operator && bot.battle.contains(bot.position());
     }
 
     /** the next waypoint: straight on with some wandering, turning back towards the post near the edge of the area */
     private boolean pick() {
         if (marching()) return pickRoad();
-        if (bot.lastKnownEnemyPos != null) {
+        if (bot.lastKnownEnemyPos != null && !bot.operator) {
             dest = bot.lastKnownEnemyPos;
             bot.lastKnownEnemyPos = null;
             return true;
@@ -105,7 +105,7 @@ public class BotPatrolGoal extends Goal {
         RandomSource r = bot.getRandom();
         BlockPos home = bot.home != null ? bot.home : bot.blockPosition();
         Vec3 center = Vec3.atBottomCenterOf(home);
-        double leash = bot.arenaPos != null ? 22 : bot.spawnerPos != null ? 36 : 48;
+        double leash = bot.operator ? BotEntity.OPERATOR_LEASH * 0.7 : bot.arenaPos != null ? 22 : bot.spawnerPos != null ? 36 : 48;
         double fromHome = Math.sqrt(bot.position().distanceToSqr(center.x, bot.getY(), center.z));
         for (int i = 0; i < 10; i++) {
             float dir;

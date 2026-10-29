@@ -38,6 +38,8 @@ public class MissileEntity extends Projectile {
     private boolean whistled;
     /** detonation sequence clock and impact point */
     private int boom = -1;
+    /** launched on a soldier's call */
+    public boolean byBot;
     private Vec3 blast = Vec3.ZERO;
 
     public MissileEntity(EntityType<? extends MissileEntity> type, Level level) {
@@ -264,9 +266,9 @@ public class MissileEntity extends Projectile {
         Blast.explode(level, this, new Vec3(x + 0.5, y + 0.5, z + 0.5), power, fire && !gentle(), mode(), Blast.FX_SMALL, 0.8f);
     }
 
-    /** launched on a soldier's call: no damage to the terrain */
+    /** launched on a soldier's call: no damage to the terrain (a player's missile does break blocks) */
     private boolean gentle() {
-        return this.getOwner() instanceof BotEntity;
+        return byBot || this.getOwner() instanceof BotEntity;
     }
 
     private Level.ExplosionInteraction mode() {
@@ -281,6 +283,7 @@ public class MissileEntity extends Projectile {
         tag.putInt("TY", target.getY());
         tag.putInt("TZ", target.getZ());
         tag.putInt("Phase", phase);
+        tag.putBoolean("ByBot", byBot);
         tag.putInt("T", t);
         tag.putByte("Kind", (byte) getKind());
         tag.putBoolean("Whistled", whistled);
@@ -297,6 +300,7 @@ public class MissileEntity extends Projectile {
         super.readAdditionalSaveData(tag);
         target = new BlockPos(tag.getInt("TX"), tag.getInt("TY"), tag.getInt("TZ"));
         phase = tag.getInt("Phase");
+        byBot = tag.getBoolean("ByBot");
         t = tag.getInt("T");
         whistled = tag.getBoolean("Whistled");
         this.entityData.set(DATA_KIND, tag.getByte("Kind"));

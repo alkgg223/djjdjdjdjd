@@ -2,6 +2,7 @@ package com.gunsmod.entity;
 
 import com.gunsmod.Reg;
 import com.gunsmod.entity.ai.GroundBotDriver;
+import com.gunsmod.entity.ai.Sight;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.gun.GunType;
 import com.gunsmod.net.Net;
@@ -61,7 +62,7 @@ public class ArmoredCarEntity extends VehicleEntity {
     public float steer;
     private float throttleIn, steerIn;
     private boolean fireMain, fireSecond;
-    private int mainCooldown, secondCooldown, muzzleIndex, tubeIndex, scanTimer, burst, burstPause, trackCandidate = -1, trackCount;
+    private int mainCooldown, secondCooldown, muzzleIndex, tubeIndex, scanTimer, searchTicks, burst, burstPause, trackCandidate = -1, trackCount;
     @Nullable private Vec3 aimError;
     private final GroundBotDriver patrol = new GroundBotDriver();
     private int stuckTicks, reverseTicks;
@@ -585,19 +586,36 @@ public class ArmoredCarEntity extends VehicleEntity {
         return (float) Math.toDegrees(Math.acos(Mth.clamp(to.dot(gunDir()), -1, 1)));
     }
 
+    /** nobody in the sights: turn the gun to where the enemy was last heard of, otherwise sweep the sector ahead */
+    private void search(BotEntity bot) {
+        Vec3 heard = bot.lastKnownEnemyPos;
+        if (heard != null) {
+            if (++searchTicks > 100) {
+                bot.lastKnownEnemyPos = null;
+                searchTicks = 0;
+            }
+            Vec3 to = heard.subtract(this.position());
+            traverse(Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f - this.getYRot()), 0f, 1.5f, 1f);
+            return;
+        }
+        traverse(Mth.sin(this.tickCount * 0.015f) * 75f, 0f, 1.5f, 1f);
+    }
+
     /** BTR: the gunner engages everything in range, cannon bursts at vehicles and aircraft, the machine gun at soldiers */
     private void botGunner(BotEntity bot) {
         if (--scanTimer <= 0) {
             scanTimer = 10;
-            LivingEntity t = TankEntity.scan(this, bot, 100, sightWorld(), bot.getTarget());
+            // the gunner sees what is in his sights: near where the gun points
+            LivingEntity t = TankEntity.scan(this, bot, 100, sightWorld(), bot.getTarget(), this.getYRot() + getTurretYaw(), Sight.TURRET, 6);
             if (t != null && t != bot.getTarget()) {
                 bot.setTarget(t);
                 aimError = null;
+                searchTicks = 0;
             }
         }
         LivingEntity t = bot.getTarget();
         if (t == null || !t.isAlive() || t.distanceToSqr(this) > 110 * 110) {
-            traverse(0f, 0f, 1.5f, 1f);
+            search(bot);
             burst = 0;
             return;
         }
@@ -689,6 +707,7 @@ public class ArmoredCarEntity extends VehicleEntity {
             thr = -0.8f;
             st = -Math.signum(diff);
         }
+        if (patrol.slow && thr > 0) thr = GroundBotDriver.creep(thr, speed, kind.maxSpeed);
         if (thr > 0.3f && Math.abs(speed) < 0.03) stuckTicks++;
         else stuckTicks = Math.max(0, stuckTicks - 1);
         if (stuckTicks > 35) {

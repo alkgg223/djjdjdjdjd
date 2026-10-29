@@ -28,11 +28,13 @@ public final class Net {
         r.playToServer(VehicleAction.TYPE, VehicleAction.CODEC, ServerNet::vehicleAction);
         r.playToServer(LaunchAction.TYPE, LaunchAction.CODEC, ServerNet::launchAction);
         r.playToServer(VehicleFire.TYPE, VehicleFire.CODEC, ServerNet::vehicleFire);
+        r.playToServer(TeamPick.TYPE, TeamPick.CODEC, ServerNet::teamPick);
         r.playToClient(ShotFx.TYPE, ShotFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.shotFx(p));
         r.playToClient(HitMarker.TYPE, HitMarker.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.hitMarker(p));
         r.playToClient(LaunchStatus.TYPE, LaunchStatus.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.launchStatus(p));
         r.playToClient(ExplosionFx.TYPE, ExplosionFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.explosion(p));
         r.playToClient(MuzzleFx.TYPE, MuzzleFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.muzzle(p));
+        r.playToClient(BattleState.TYPE, BattleState.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.battleState(p));
     }
 
     // ================================================================================ client -> server
@@ -205,6 +207,52 @@ public final class Net {
 
         @Override
         public Type<ShotFx> type() {
+            return TYPE;
+        }
+    }
+
+    /** the player picks a side on an orchard battlefield: 0 green, 1 red, -1 leaves the battle */
+    public record TeamPick(int team) implements CustomPacketPayload {
+        public static final Type<TeamPick> TYPE = payloadType("team_pick");
+        public static final StreamCodec<RegistryFriendlyByteBuf, TeamPick> CODEC = CustomPacketPayload.codec(TeamPick::write, TeamPick::new);
+
+        TeamPick(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(team);
+        }
+
+        @Override
+        public Type<TeamPick> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * The battle as the player's screen shows it, sent every second: both teams' kills, the player's side (-1 none),
+     * whether this dimension has a battlefield and the player is on it, and whether to open the side picker.
+     */
+    public record BattleState(int green, int red, int team, boolean field, boolean inside, boolean openPicker) implements CustomPacketPayload {
+        public static final Type<BattleState> TYPE = payloadType("battle_state");
+        public static final StreamCodec<RegistryFriendlyByteBuf, BattleState> CODEC = CustomPacketPayload.codec(BattleState::write, BattleState::new);
+
+        BattleState(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readBoolean(), b.readBoolean(), b.readBoolean());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(green);
+            b.writeVarInt(red);
+            b.writeVarInt(team);
+            b.writeBoolean(field);
+            b.writeBoolean(inside);
+            b.writeBoolean(openPicker);
+        }
+
+        @Override
+        public Type<BattleState> type() {
             return TYPE;
         }
     }
