@@ -21,11 +21,16 @@ import org.joml.Vector3f;
 
 /**
  * The Brainrot Heist map: a long red carpet (x from -96 to 96) where brainrots walk out of a portal,
- * with 4 bases on each side facing it. Each base has 10 podiums (20 after the first rebirth), a gold collect pad
- * in front of every podium, and a lock button that closes the entrance with a laser for 60 seconds.
+ * with 4 bases on each side facing it, 12 blocks back from the sidewalk with a path to each door. Each base has
+ * 10 podiums (20 after the first rebirth), a gold collect pad in front of every podium, and a lock button that closes
+ * the entrance with a laser for 60 seconds. Bases are built from their owner's skin (BrSkin).
  */
 public class BrMap {
     public static final int BASES = 8, PODIUMS = 20, ROAD_START = -94, ROAD_END = 95;
+    /** Layout version: 2 moved the bases 12 blocks away from the carpet. Worlds built with an older one are rebuilt. */
+    public static final int LAYOUT = 2;
+    /** How far the map reaches from the carpet (z) and from the middle (x). */
+    static final int HALF_Z = 54, HALF_X = 106;
     static final Block[] COLORS = {Blocks.RED_CONCRETE, Blocks.BLUE_CONCRETE, Blocks.LIME_CONCRETE, Blocks.YELLOW_CONCRETE,
             Blocks.PURPLE_CONCRETE, Blocks.ORANGE_CONCRETE, Blocks.CYAN_CONCRETE, Blocks.PINK_CONCRETE};
     static final Block[] GLASS = {Blocks.RED_STAINED_GLASS, Blocks.BLUE_STAINED_GLASS, Blocks.LIME_STAINED_GLASS, Blocks.YELLOW_STAINED_GLASS,
@@ -33,7 +38,7 @@ public class BrMap {
     public static final String[] COLOR_CODES = {"§c", "§9", "§a", "§e", "§5", "§6", "§3", "§d"};
 
     public static int cx(int i) { return -66 + (i % 4) * 44; }
-    public static int cz(int i) { return i < 4 ? -21 : 21; }
+    public static int cz(int i) { return i < 4 ? -33 : 33; }
     /** +1 when the carpet is toward +z (north bases), -1 for south bases. */
     public static int dir(int i) { return i < 4 ? 1 : -1; }
     /** z of the wall with the entrance (the side facing the carpet). */
@@ -69,7 +74,15 @@ public class BrMap {
 
     public static boolean onRoad(double x, double z) { return Math.abs(z - 0.5) < 3 && x > ROAD_START - 4 && x < ROAD_END + 4; }
 
-    public static boolean inMap(double x, double z) { return Math.abs(x) <= 108 && Math.abs(z) <= 44; }
+    public static boolean inMap(double x, double z) { return Math.abs(x) <= HALF_X + 2 && Math.abs(z) <= HALF_Z + 2; }
+
+    /** On (or right next to) the path from the sidewalk to a base door, or the shop / guide squares. */
+    static boolean nearPath(int x, int z) {
+        int az = Math.abs(z);
+        if (Math.abs(x) <= 3 && az >= 10 && az <= 18) return true;
+        for (int i = 0; i < 4; i++) if (Math.abs(x - cx(i)) <= 4 && az >= 7 && az <= Math.abs(nearZ(i))) return true;
+        return false;
+    }
 
     // ------------------------------------------------------------------ building
 
@@ -85,12 +98,18 @@ public class BrMap {
         MinecraftServer server = sl.getServer();
         BrData data = BrData.get(server);
         BlockPos.MutableBlockPos mp = new BlockPos.MutableBlockPos();
-        BlockState grass = Blocks.GRASS_BLOCK.defaultBlockState();
-        for (int x = -106; x <= 106; x++)
-            for (int z = -42; z <= 42; z++) {
+        BlockState grass = Blocks.GRASS_BLOCK.defaultBlockState(), air = Blocks.AIR.defaultBlockState();
+        // a world built with an older layout: clear the old bases (they stood 12 blocks closer to the carpet)
+        if (data.built && data.layout < 2)
+            for (int i = 0; i < BASES; i++)
+                for (int x = cx(i) - 16; x <= cx(i) + 16; x++)
+                    for (int z = (i < 4 ? -21 : 21) - 13; z <= (i < 4 ? -21 : 21) + 13; z++)
+                        for (int y = 64; y <= 70; y++) sl.setBlock(mp.set(x, y, z), air, 2);
+        for (int x = -HALF_X; x <= HALF_X; x++)
+            for (int z = -HALF_Z; z <= HALF_Z; z++) {
                 sl.setBlock(mp.set(x, 62, z), Blocks.DIRT.defaultBlockState(), 2);
                 sl.setBlock(mp.set(x, 63, z), grass, 2);
-                if (((x * 7 + z * 13) & 31) == 0 && Math.abs(z) > 8 && baseAt(x, z) < 0)
+                if (((x * 7 + z * 13) & 31) == 0 && Math.abs(z) > 8 && baseAt(x, z) < 0 && !nearPath(x, z))
                     sl.setBlock(mp.set(x, 64, z), (((x + z) & 1) == 0 ? Blocks.POPPY : Blocks.DANDELION).defaultBlockState(), 2);
             }
         // the red carpet with gold edges, and sidewalks
@@ -119,14 +138,14 @@ public class BrMap {
             for (int z = 11; z <= 17; z++) sl.setBlock(mp.set(x, 63, z), (z == 14 && x == 0 ? Blocks.GOLD_BLOCK : Blocks.QUARTZ_BRICKS).defaultBlockState(), 2);
         for (int x = -2; x <= 2; x++)
             for (int z = -17; z <= -11; z++) sl.setBlock(mp.set(x, 63, z), (z == -14 && x == 0 ? Blocks.EMERALD_BLOCK : Blocks.QUARTZ_BRICKS).defaultBlockState(), 2);
-        for (int cxk = -7; cxk <= 6; cxk++) for (int czk = -3; czk <= 2; czk++) sl.setChunkForced(cxk, czk, true);
+        for (int cxk = -7; cxk <= 6; cxk++) for (int czk = -4; czk <= 3; czk++) sl.setChunkForced(cxk, czk, true);
         sl.getWorldBorder().setCenter(0, 0);
         sl.getWorldBorder().setSize(214);
         sl.setDefaultSpawnPos(new BlockPos(0, 64, 9), 0f);
         rules(server);
         Hud.cmd(server, "kill @e[type=minecraft:text_display,tag=eggsteal]");
         Hud.summon(server, "br_title", 0.5, 74, 0.5, 4f, "§e§lBRAINROT HEIST\n§fBuy brainrots on the carpet, steal from other bases!");
-        Hud.summon(server, "br_shoplbl", 0.5, 66.8, -13.5, 1.4f, "§a§lSHOP\n§7Speed, items & rebirth");
+        Hud.summon(server, "br_shoplbl", 0.5, 66.8, -13.5, 1.4f, "§a§lSHOP\n§7Speed, items, base skins & rebirth");
         Hud.summon(server, "br_guidelbl", 0.5, 66.8, 14.5, 1.4f, "§b§lHOW TO PLAY\n§7Brainrots, mutations & chances");
         Hud.summon(server, "br_lb1", -43.5, 69, -14, 1.5f, "Loading...");
         Hud.summon(server, "br_lb2", 44.5, 69, -14, 1.5f, "Loading...");
@@ -139,6 +158,7 @@ public class BrMap {
             Hud.summon(server, "br_lk" + i, lockButton(i).getX() + 0.5, 66, lockButton(i).getZ() + 0.5, 1.1f, "§c§lLOCK BASE");
         }
         data.built = true;
+        data.layout = LAYOUT;
         data.setDirty();
     }
 
@@ -154,35 +174,49 @@ public class BrMap {
         for (int z : new int[]{-5, 5}) sl.setBlock(mp.set(x, 74, z), Blocks.SEA_LANTERN.defaultBlockState(), 2);
     }
 
-    /** Walls, floor, entrance, podiums and pads of one base (the outer podiums only after a rebirth). */
+    /**
+     * Walls, floor, entrance, the path to the carpet, podiums and pads of one base, in the owner's skin (classic when free).
+     * Walls: frame at the bottom and top, glass in between, lamps on top; pillars with lamps at the corners and the door.
+     */
     public static void buildBase(ServerLevel sl, int i, BrData.Stats owner) {
+        BrSkin sk = BrSkin.of(owner);
         int cx = cx(i), cz = cz(i), d = dir(i), nz = nearZ(i);
         BlockPos.MutableBlockPos mp = new BlockPos.MutableBlockPos();
-        BlockState air = Blocks.AIR.defaultBlockState();
+        BlockState air = Blocks.AIR.defaultBlockState(), frame = sk.frame(i), glass = sk.glass(i), carpet = sk.carpet(i), lamp = sk.lamp();
         for (int x = cx - 16; x <= cx + 16; x++)
             for (int z = cz - 13; z <= cz + 13; z++) {
-                boolean edge = Math.abs(x - cx) == 16 || Math.abs(z - cz) == 13;
-                boolean door = z == nz && Math.abs(x - cx) <= 2;
-                sl.setBlock(mp.set(x, 63, z), (edge ? COLORS[i] : ((x + z) & 1) == 0 ? Blocks.WHITE_CONCRETE : Blocks.LIGHT_GRAY_CONCRETE).defaultBlockState(), 2);
+                int ax = Math.abs(x - cx), az = Math.abs(z - cz);
+                boolean edge = ax == 16 || az == 13, ring = !edge && (ax == 15 || az == 12);
+                boolean door = z == nz && ax <= 2, corner = ax == 16 && az == 13, doorPost = z == nz && ax == 3;
+                sl.setBlock(mp.set(x, 63, z), edge ? frame : ring || ax <= 1 ? carpet : sk.floor(x, z), 2);
                 for (int y = 64; y <= 70; y++) {
                     BlockState st = air;
-                    if (edge && !(door && y <= 67)) {
-                        if (y == 64 || y == 67) st = COLORS[i].defaultBlockState();
-                        else if (y <= 66) st = GLASS[i].defaultBlockState();
-                        else if (y == 68 && ((x + z) & 3) == 0) st = Blocks.SEA_LANTERN.defaultBlockState();
-                    }
+                    if (corner || doorPost) st = y <= 68 ? frame : y == 69 ? lamp : air;
+                    else if (door) st = y == 68 ? frame : air;
+                    else if (edge) st = y == 64 || y == 67 ? frame : y <= 66 ? glass : y == 68 && ((x + z) & 3) == 0 ? lamp : air;
                     sl.setBlock(mp.set(x, y, z), st, 2);
                 }
             }
-        // the walkway from the door to the back
-        for (int z = cz - 12; z <= cz + 12; z++)
-            for (int x = cx - 1; x <= cx + 1; x++) sl.setBlock(mp.set(x, 63, z), COLORS[i].defaultBlockState(), 2);
+        // the path from the sidewalk to the door, with lamp posts
+        for (int az = 8; az < Math.abs(nz); az++) {
+            int z = -d * az;
+            for (int x = cx - 3; x <= cx + 3; x++) {
+                int ax = Math.abs(x - cx);
+                if (ax <= 2) sl.setBlock(mp.set(x, 63, z), ax == 2 ? frame : sk.floor(x, z), 2);
+                boolean post = ax == 3 && (Math.abs(nz) - 1 - az) % 4 == 2;
+                sl.setBlock(mp.set(x, 64, z), post ? frame : air, 2);
+                sl.setBlock(mp.set(x, 65, z), post ? lamp : air, 2);
+            }
+        }
         sl.setBlock(lockButton(i), Blocks.REDSTONE_BLOCK.defaultBlockState(), 2);
-        setPodiums(sl, i, capacity(owner));
+        setPodiums(sl, i, owner);
     }
 
-    /** Builds podiums 0..count-1 and removes the others. */
-    public static void setPodiums(ServerLevel sl, int i, int count) {
+    /** Builds the podiums the owner has (10, or 20 after a rebirth) in their skin and removes the others. */
+    public static void setPodiums(ServerLevel sl, int i, BrData.Stats owner) {
+        int count = capacity(owner);
+        BrSkin sk = BrSkin.of(owner);
+        BlockState ring = sk.podiumRing(), top = sk.carpet(i);
         BlockPos.MutableBlockPos mp = new BlockPos.MutableBlockPos();
         for (int idx = 0; idx < PODIUMS; idx++) {
             boolean on = idx < count;
@@ -190,9 +224,9 @@ public class BrMap {
             int px = (int) Math.floor(p.x), pz = (int) Math.floor(p.z);
             for (int x = px - 1; x <= px + 1; x++)
                 for (int z = pz - 1; z <= pz + 1; z++)
-                    sl.setBlock(mp.set(x, 64, z), on ? (x == px && z == pz ? COLORS[i] : Blocks.SMOOTH_QUARTZ).defaultBlockState() : Blocks.AIR.defaultBlockState(), 2);
+                    sl.setBlock(mp.set(x, 64, z), on ? (x == px && z == pz ? top : ring) : Blocks.AIR.defaultBlockState(), 2);
             int dx = (int) Math.floor(pd.x), dz = (int) Math.floor(pd.z);
-            sl.setBlock(mp.set(dx, 63, dz), on ? Blocks.GOLD_BLOCK.defaultBlockState() : (((dx + dz) & 1) == 0 ? Blocks.WHITE_CONCRETE : Blocks.LIGHT_GRAY_CONCRETE).defaultBlockState(), 2);
+            sl.setBlock(mp.set(dx, 63, dz), on ? Blocks.GOLD_BLOCK.defaultBlockState() : sk.floor(dx, dz), 2);
         }
     }
 

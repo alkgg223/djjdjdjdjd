@@ -69,8 +69,8 @@ public class BrBotLife {
         }
         int base = st.base;
         BrMap.Lock.reset(base);
-        BrMap.setPodiums(sl, base, 10);
         data.release(id);
+        BrMap.buildBase(sl, base, null); // back to a free classic base
         leaveAt.remove(id);
     }
 
@@ -102,7 +102,14 @@ public class BrBotLife {
         if (tier == 0) { st.money = rnd(100, 2_000); st.speed = rnd(0, 2); count = rnd(1, 3); minR = 0; maxR = 1; }
         else if (tier == 1) { st.money = rnd(5_000, 200_000); st.speed = rnd(2, 5); st.coil = Math.random() < 0.4; count = rnd(4, 8); minR = 1; maxR = 3; }
         else { st.money = rnd(2_000_000, 300_000_000); st.speed = rnd(4, 8); st.coil = true; st.rebirths = rnd(1, 3); count = rnd(9, 16); minR = 2; maxR = 6; }
-        BrMap.setPodiums(sl, base, BrMap.capacity(st));
+        // some bots arrive with a skin: mid bots a cheap one, rich bots a fancy one
+        if (tier > 0 && Math.random() < (tier == 1 ? 0.3 : 0.7)) {
+            int k = tier == 1 ? rnd(1, 7) : rnd(8, 22);
+            while (k > 1 && BrSkin.ALL[k].price > st.money) k--;
+            st.skin = k;
+            st.skins |= 1L << k;
+        }
+        BrMap.buildBase(sl, base, st);
         for (int k = 0; k < Math.min(count, BrMap.capacity(st)); k++) {
             List<Brainrot> pool = Brainrot.ofRarity(rnd(minR, maxR));
             Brainrot b = pool.get((int) (Math.random() * pool.size()));

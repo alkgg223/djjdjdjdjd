@@ -70,7 +70,7 @@ public class BrEvents {
         MinecraftServer s = p.server;
         ServerLevel sl = s.overworld();
         BrData data = BrData.get(s);
-        if (!data.built) BrMap.build(sl);
+        if (!data.built || data.layout < BrMap.LAYOUT) BrMap.build(sl);
         BrData.Stats st = data.stats(p.getUUID());
         st.name = p.getGameProfile().getName();
         st.bot = false;
@@ -78,7 +78,7 @@ public class BrEvents {
             BrBotLife.kickOne(s, sl, data);
             data.claim(p.getUUID());
         }
-        if (st.base >= 0) BrMap.setPodiums(sl, st.base, BrMap.capacity(st));
+        if (st.base >= 0) BrMap.buildBase(sl, st.base, st); // in my skin
         boolean first = !st.kit;
         if (first) {
             st.kit = true;
@@ -118,6 +118,7 @@ public class BrEvents {
         BrData data = BrData.get(s);
         if (!data.built) return;
         ServerLevel sl = s.overworld();
+        if (data.layout < BrMap.LAYOUT) BrMap.build(sl); // a world from an older version: move the bases
         int t = s.getTickCount();
         BrMap.Lock.tick(sl, data);
         BrRoad.tick(s, data);

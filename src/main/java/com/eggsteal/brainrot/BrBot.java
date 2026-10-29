@@ -33,6 +33,8 @@ import net.minecraft.world.phys.Vec3;
  * other bases, carries the loot home on its head, locks its base when somebody comes close, chases thieves, and rebirths.
  */
 public class BrBot extends PathfinderMob {
+    /** Path speed: strolling, going somewhere on purpose, chasing a thief. Mob speed grows with the square of these. */
+    static final double WALK = 1.0, RUN = 1.1, CHASE = 1.2;
     /** 0 idle, 1 go for a brainrot to buy, 2 carry loot home, 3 go to a victim, 4 press the lock, 5 stealing */
     private int phase, phaseTicks, chase, waitOff = -99, attackCool, still, wantTick = -999;
     private UUID goal;
@@ -95,7 +97,7 @@ public class BrBot extends PathfinderMob {
         if (!wants || dx * dx + dz * dz > 0.09) { still = 0; return; }
         still += 10;
         if (still == 30 || still == 90) getJumpControl().jump();
-        if (still == 60 || still == 120) { getNavigation().stop(); go(wantX, wantY, wantZ, 1.2); }
+        if (still == 60 || still == 120) { getNavigation().stop(); go(wantX, wantY, wantZ, RUN); }
         int inside = BrMap.baseAt(getX(), getZ());
         boolean caught = carrying() != null || (inside >= 0 && inside != st.base && BrMap.Lock.active(inside));
         if (still >= 160 && caught) { still = 100; return; }
@@ -121,17 +123,21 @@ public class BrBot extends PathfinderMob {
         return false;
     }
 
+    /** Only rich bots can boost: up to twice as fast as a normal bot when it really matters. */
+    private void boost(BrData.Stats st, int ticks) {
+        if (BrData.guard(st) > 0) addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, ticks, 0, false, false));
+    }
+
     private void fight(LivingEntity t, BrData.Stats st) {
         getLookControl().setLookAt(t, 30f, 30f);
         double d = distanceTo(t);
-        int g = BrData.guard(st);
         if (owesMe) {
-            addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, Math.min(4, 2 + g), false, false));
+            boost(st, 40);
             addEffect(new MobEffectInstance(MobEffects.JUMP, 40, 1, false, false));
         }
         if ((st.coil || owesMe) && d > 5) {
             equip(EggSteal.SPEED_COIL.get());
-            if (!owesMe) addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, 2, false, false));
+            boost(st, 40);
         } else equip(EggSteal.BAT.get());
         if (attackCool > 0) attackCool--;
         if (d < 2.6 && attackCool <= 0 && hasLineOfSight(t)) {
@@ -139,7 +145,7 @@ public class BrBot extends PathfinderMob {
             doHurtTarget(t);
             attackCool = owesMe ? 10 : 14;
         }
-        if (tickCount % 5 == 0 && d > 1.6) go(t.getX(), t.getY(), t.getZ(), 1.3);
+        if (tickCount % 5 == 0 && d > 1.6) go(t.getX(), t.getY(), t.getZ(), owesMe ? CHASE : RUN);
     }
 
     // ------------------------------------------------------------------ main loop
@@ -161,7 +167,7 @@ public class BrBot extends PathfinderMob {
         if (waitOff == -99) waitOff = random.nextInt(9) - 4;
         if (tickCount % 40 == 0) {
             var a = getAttribute(Attributes.MOVEMENT_SPEED);
-            if (a != null) a.setBaseValue(0.27 * (1 + 0.06 * st.speed));
+            if (a != null) a.setBaseValue(0.27 * (BrData.guard(st) > 0 ? 1 + 0.02 * st.speed : 1)); // speed levels only help rich bots
             setCustomName(Component.literal((st.rebirths > 0 ? "§d✦R" + st.rebirths + " " : "") + "§b" + st.name + " §a$" + Economy.fmt(st.money)));
             setCustomNameVisible(true);
         }
@@ -228,7 +234,7 @@ public class BrBot extends PathfinderMob {
             phase = 0;
             return;
         }
-        go(b.x, b.y, b.z, 1.3);
+        go(b.x, b.y, b.z, RUN);
     }
 
     private void idle(ServerLevel sl, BrData data, BrData.Stats st) {
@@ -243,6 +249,16 @@ public class BrBot extends PathfinderMob {
         }
         if (!st.coil && st.money >= BrShop.SPEED_COIL * 3 && random.nextFloat() < 0.2f) {
             st.money -= BrShop.SPEED_COIL; st.coil = true; data.setDirty(); return;
+        }
+        // rich bots dress up their base now and then: the best skin they can easily afford
+        if (BrData.guard(st) > 0 && random.nextFloat() < 0.01f) {
+            int best = -1;
+            for (int k = 1; k < BrSkin.ALL.length; k++) if (!BrSkin.owns(st, k) && BrSkin.ALL[k].price * 4 <= st.money) best = k;
+            if (best > st.skin && BrShop.skin(sl, data, st, best)) {
+                sl.getServer().getPlayerList().broadcastSystemMessage(Component.literal("§e" + st.name + " §fgot the "
+                        + BrSkin.ALL[best].color + "§l" + BrSkin.ALL[best].name + " §fbase skin!"), false);
+                return;
+            }
         }
         // the best brainrot I can afford on the carpet (or walking to somebody else's base)
         boolean full = !BrainrotEntity.hasRoom(sl, getUUID());
@@ -282,7 +298,7 @@ public class BrBot extends PathfinderMob {
         // otherwise wait by my door, watching the carpet
         Vec3 g = BrMap.gateOutside(st.base);
         double wx = g.x + waitOff, wz = g.z + BrMap.dir(st.base);
-        if (position().distanceToSqr(wx, 64, wz) > 6) go(wx, 64, wz, 1.0);
+        if (position().distanceToSqr(wx, 64, wz) > 6) go(wx, 64, wz, WALK);
     }
 
     /** The most valuable brainrot in an unlocked base (my own excluded). */
@@ -305,11 +321,11 @@ public class BrBot extends PathfinderMob {
         Entity e = goal == null ? null : sl.getEntity(goal);
         if (!(e instanceof BrainrotEntity b) || !b.isAlive() || (b.state() != BrainrotEntity.ROAD && b.state() != BrainrotEntity.WALK)
                 || getUUID().equals(b.buyer) || b.price > st.money) { phase = 0; return; }
-        addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 30, b.special ? 2 : 1, false, false));
-        if (distanceTo(b) < 3.6 && tryBuy(sl, data, st, b)) return;
-        go(b.getX(), 64, b.getZ(), 1.4);
-        // a good one: fight whoever else is next to it
         boolean great = b.special || b.brainrot().rarity >= 3 || b.mutation() >= 10;
+        if (great) boost(st, 30);
+        if (distanceTo(b) < 3.6 && tryBuy(sl, data, st, b)) return;
+        go(b.getX(), 64, b.getZ(), RUN);
+        // a good one: fight whoever else is next to it
         float chance = (great ? 0.18f : 0.05f) * (st.malicious ? 2f : 1f);
         if (distanceTo(b) < 8 && random.nextFloat() < chance) {
             List<LivingEntity> rivals = sl.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(4),
@@ -321,7 +337,7 @@ public class BrBot extends PathfinderMob {
     private void carryHome(BrData.Stats st) {
         if (carrying() == null) { phase = 0; return; }
         Vec3 h = BrMap.home(st.base);
-        go(h.x, h.y, h.z, 1.1);
+        go(h.x, h.y, h.z, RUN);
     }
 
     private void toVictim(ServerLevel sl) {
@@ -333,13 +349,13 @@ public class BrBot extends PathfinderMob {
             if (b.beginSteal(this) == null) { phase = 5; phaseTicks = 0; } else phase = 0;
             return;
         }
-        go(b.getX(), 64, b.getZ(), 1.1);
+        go(b.getX(), 64, b.getZ(), WALK);
     }
 
     private void stealWait(ServerLevel sl) {
         if (carrying() != null) { phase = 2; return; }
         Entity e = goal == null ? null : sl.getEntity(goal);
         if (!(e instanceof BrainrotEntity b) || !getUUID().equals(b.stealer)) { phase = 0; return; }
-        if (distanceTo(b) > 2.2) go(b.getX(), 64, b.getZ(), 1.0);
+        if (distanceTo(b) > 2.2) go(b.getX(), 64, b.getZ(), WALK);
     }
 }

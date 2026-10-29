@@ -56,7 +56,7 @@ public class BotEntity extends PathfinderMob {
     }
 
     public static AttributeSupplier.Builder attrs() {
-        return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 100).add(Attributes.MOVEMENT_SPEED, 0.25)
+        return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 100).add(Attributes.MOVEMENT_SPEED, 0.27)
                 .add(Attributes.ATTACK_DAMAGE, 1.0).add(Attributes.FOLLOW_RANGE, 128); // the arena is ~140 blocks wide: a short range left far bots without a path
     }
 
@@ -120,7 +120,7 @@ public class BotEntity extends PathfinderMob {
         if (!wants || dx * dx + dz * dz > 0.09) { still = 0; return; }
         still += 10;
         if (still == 30 || still == 90) getJumpControl().jump();
-        if (still == 60 || still == 120) { getNavigation().stop(); go(wantX, wantY, wantZ, 1.2); }
+        if (still == 60 || still == 120) { getNavigation().stop(); go(wantX, wantY, wantZ, 1.1); }
         boolean caught = carried >= 0 && carriedFrom != null; // a thief trapped by a laser must stay catchable
         int inside = Arena.baseAt(getX(), getZ());
         if (inside >= 0 && inside != st.base && Laser.active(inside)) caught = true;
@@ -151,17 +151,21 @@ public class BotEntity extends PathfinderMob {
                 (me.equals(c.owner()) && tid.equals(c.stealer())) || (tid.equals(c.owner()) && me.equals(c.stolenFrom()) && c.stolenUntil() > now)).isEmpty();
     }
 
+    /** Only rich bots can boost: up to twice as fast as a normal bot when it really matters. */
+    private void boost(Economy.Stats st, int ticks) {
+        if (Economy.guard(st) > 0) addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, ticks, 0, false, false));
+    }
+
     private void fight(LivingEntity t, Economy.Stats st) {
         getLookControl().setLookAt(t, 30f, 30f);
         double d = distanceTo(t);
-        int g = Economy.guard(st);
-        if (owesMe) { // a thief: run after it much faster (rich bots even more), and jump over things
-            addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, Math.min(4, 2 + g), false, false));
+        if (owesMe) { // a thief: run after it (rich bots much faster), and jump over things
+            boost(st, 40);
             addEffect(new MobEffectInstance(MobEffects.JUMP, 40, 1, false, false));
         }
         if ((st.coilSpeed || owesMe) && d > 5) {
             equip(EggSteal.SPEED_COIL.get());
-            if (!owesMe) addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, 2, false, false));
+            boost(st, 40);
         } else equip(weaponItem(st));
         if (attackCool > 0) attackCool--;
         if (d < 2.6 && attackCool <= 0 && hasLineOfSight(t)) {
@@ -169,7 +173,7 @@ public class BotEntity extends PathfinderMob {
             doHurtTarget(t);
             attackCool = owesMe ? 10 : 14;
         }
-        if (tickCount % 5 == 0 && d > 1.6) go(t.getX(), t.getY(), t.getZ(), 1.3);
+        if (tickCount % 5 == 0 && d > 1.6) go(t.getX(), t.getY(), t.getZ(), owesMe ? 1.2 : 1.1);
     }
 
     @Override
@@ -185,7 +189,7 @@ public class BotEntity extends PathfinderMob {
         if (waitOff == -99) waitOff = random.nextInt(9) - 4;
         if (tickCount % 40 == 0) {
             var a = getAttribute(Attributes.MOVEMENT_SPEED);
-            if (a != null) a.setBaseValue(0.25 * (1 + 0.05 * st.speed));
+            if (a != null) a.setBaseValue(0.27 * (Economy.guard(st) > 0 ? 1 + 0.02 * Math.min(10, st.speed) : 1)); // speed levels only help rich bots
             setCustomName(Component.literal(Economy.rebirthTag(st) + "§b" + st.name + " §a$" + Economy.fmt(st.money)));
             setCustomNameVisible(true);
         }
@@ -237,11 +241,11 @@ public class BotEntity extends PathfinderMob {
     private void chaseAuction(ServerLevel sl, Economy.Stats st) {
         AuctionEggEntity egg = Auction.active(sl);
         if (egg == null || getUUID().equals(egg.lastBuyer) || st.money < egg.price()) { phase = 0; return; }
-        addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 30, 1, false, false));
+        boost(st, 30);
         if (distanceTo(egg) < 3.4) {
             if (Auction.buy(egg, getUUID(), sl.getServer())) { phase = 0; return; }
         }
-        go(egg.getX(), 64, egg.getZ(), 1.5);
+        go(egg.getX(), 64, egg.getZ(), 1.1);
         if (distanceTo(egg) > 5 && random.nextFloat() < 0.05f) { // only scuffle on the way, never next to the egg
             List<LivingEntity> rivals = sl.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(3),
                     x -> x != this && ((x instanceof Player p && !p.isCreative() && !p.isSpectator()) || x instanceof BotEntity));
@@ -283,7 +287,7 @@ public class BotEntity extends PathfinderMob {
             phaseTicks = 0;
             return;
         }
-        go(b.x, b.y, b.z, 1.3);
+        go(b.x, b.y, b.z, 1.1);
     }
 
     private void idle(ServerLevel sl, Economy eco, Economy.Stats st) {
@@ -477,7 +481,7 @@ public class BotEntity extends PathfinderMob {
             phase = 0;
             return;
         }
-        go(p.x, p.y, p.z, 1.15);
+        go(p.x, p.y, p.z, 1.1);
     }
 
     private void toVictim(ServerLevel sl, Economy eco) {
@@ -490,7 +494,7 @@ public class BotEntity extends PathfinderMob {
             if (!c.isRemoved() && c.stealing()) { phase = 6; phaseTicks = 0; }
             return;
         }
-        go(c.getX(), c.getY(), c.getZ(), 1.1);
+        go(c.getX(), c.getY(), c.getZ(), 1.0);
     }
 
     /** Pack creatures take 8 seconds to steal: stand next to it until it is done (or the owner interrupts). */

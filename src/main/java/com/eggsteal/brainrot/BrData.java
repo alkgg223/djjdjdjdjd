@@ -17,11 +17,16 @@ public class BrData extends SavedData {
         public boolean bot, kit, malicious, coil;
         public double money;
         public int rebirths, speed, base = -1;
+        /** Equipped base skin (BrSkin index, 0 = classic) and the skins owned (bit k = skin k). */
+        public int skin;
+        public long skins;
     }
 
     public final Map<UUID, Stats> map = new HashMap<>();
     public final UUID[] baseOwner = new UUID[BrMap.BASES];
     public boolean built;
+    /** Version of the map layout this world was built with (old layouts are rebuilt, see BrMap.LAYOUT). */
+    public int layout;
     /** Game time when the next guaranteed rare brainrot walks onto the carpet. */
     public long nextRare;
 
@@ -82,12 +87,13 @@ public class BrData extends SavedData {
             Stats s = new Stats();
             s.name = t.getString("name"); s.bot = t.getBoolean("bot"); s.kit = t.getBoolean("kit"); s.malicious = t.getBoolean("malicious");
             s.coil = t.getBoolean("coil"); s.money = t.getDouble("money"); s.rebirths = t.getInt("rebirths"); s.speed = t.getInt("speed");
-            s.base = t.getInt("base");
+            s.base = t.getInt("base"); s.skin = t.getInt("skin"); s.skins = t.getLong("skins");
             d.map.put(t.getUUID("id"), s);
         }
         ListTag b = tag.getList("bases", Tag.TAG_COMPOUND);
         for (int i = 0; i < b.size() && i < BrMap.BASES; i++) if (b.getCompound(i).hasUUID("o")) d.baseOwner[i] = b.getCompound(i).getUUID("o");
         d.built = tag.getBoolean("built");
+        d.layout = tag.getInt("layout");
         d.nextRare = tag.getLong("nextRare");
         return d;
     }
@@ -101,7 +107,7 @@ public class BrData extends SavedData {
             t.putUUID("id", en.getKey());
             t.putString("name", s.name); t.putBoolean("bot", s.bot); t.putBoolean("kit", s.kit); t.putBoolean("malicious", s.malicious);
             t.putBoolean("coil", s.coil); t.putDouble("money", s.money); t.putInt("rebirths", s.rebirths); t.putInt("speed", s.speed);
-            t.putInt("base", s.base);
+            t.putInt("base", s.base); t.putInt("skin", s.skin); t.putLong("skins", s.skins);
             l.add(t);
         }
         tag.put("stats", l);
@@ -113,6 +119,7 @@ public class BrData extends SavedData {
         }
         tag.put("bases", b);
         tag.putBoolean("built", built);
+        tag.putInt("layout", layout);
         tag.putLong("nextRare", nextRare);
         return tag;
     }

@@ -11,8 +11,9 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 
-/** Brainrot Heist purchases: speed levels, coils, a spare bat, and rebirths (for players and bots). */
+/** Brainrot Heist purchases: speed levels, coils, a spare bat, base skins, and rebirths (for players and bots). */
 public class BrShop {
     public static final double SPEED_COIL = 2_000, JUMP_COIL = 3_000, BAT = 100;
 
@@ -53,6 +54,35 @@ public class BrShop {
         msg(p, "§aPurchased!", true);
     }
 
+    /** Buys a base skin (or equips one already owned) and rebuilds the base with it. Bots use it too. */
+    public static boolean skin(ServerLevel sl, BrData data, BrData.Stats st, int k) {
+        if (k < 0 || k >= BrSkin.ALL.length || st.base < 0) return false;
+        BrSkin sk = BrSkin.ALL[k];
+        if (!BrSkin.owns(st, k)) {
+            if (st.money < sk.price) return false;
+            st.money -= sk.price;
+            st.skins |= 1L << k;
+        }
+        st.skin = k;
+        data.setDirty();
+        BrMap.buildBase(sl, st.base, st);
+        Vec3 h = BrMap.home(st.base);
+        sl.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, h.x, h.y + 2, h.z, 80, 8, 2, 6, 0.3);
+        sl.playSound(null, h.x, h.y, h.z, SoundEvents.PLAYER_LEVELUP, SoundSource.BLOCKS, 1.5f, 1.2f);
+        return true;
+    }
+
+    public static void skin(ServerPlayer p, int k) {
+        BrData data = BrData.get(p.server);
+        BrData.Stats st = data.stats(p.getUUID());
+        if (k == st.skin) { msg(p, "§7You already use this skin.", false); return; }
+        boolean owned = BrSkin.owns(st, k);
+        if (!skin(p.serverLevel(), data, st, k)) { msg(p, "§cNot enough money! Need $" + Economy.fmt(BrSkin.ALL[k].price), false); return; }
+        BrSkin sk = BrSkin.ALL[k];
+        msg(p, (owned ? "§aEquipped " : "§a§lBought ") + sk.color + sk.name + "§a! Your base was rebuilt.", true);
+        if (!owned && k > 0) p.server.getPlayerList().broadcastSystemMessage(Component.literal("§e" + st.name + " §fgot the " + sk.color + "§l" + sk.name + " §fbase skin!"), false);
+    }
+
     /** Money starts over; every rebirth adds x0.5 money for good, and the first one adds 10 more podiums. Brainrots are kept. */
     public static boolean rebirth(ServerLevel sl, BrData data, UUID id, BrData.Stats st) {
         double cost = BrData.rebirthCost(st);
@@ -60,7 +90,7 @@ public class BrShop {
         st.rebirths++;
         st.money = 0;
         data.setDirty();
-        if (st.base >= 0) BrMap.setPodiums(sl, st.base, BrMap.capacity(st));
+        if (st.base >= 0) BrMap.setPodiums(sl, st.base, st);
         sl.getServer().getPlayerList().broadcastSystemMessage(Component.literal("§d§l✦ " + st.name + " §dREBIRTHED! §7(Rebirth " + st.rebirths
                 + " · money x" + BrData.rebirthMult(st) + (st.rebirths == 1 ? " · 10 more podiums" : "") + ")"), false);
         return true;

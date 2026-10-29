@@ -22,16 +22,19 @@ import net.minecraft.world.item.component.ItemLore;
 
 /**
  * Chest-style menus of the Brainrot Heist mode (server side only, no client screen needed).
- * The shop: speed, items, rebirth, your stats. The guide: how to play, every brainrot (with its picture),
+ * The shop: speed, items, base skins, rebirth, your stats. The guide: how to play, every brainrot (with its picture),
  * all 35 mutations with their chance and money multiplier, and the rarities.
  */
 public class BrMenu extends AbstractContainerMenu {
-    public static final int T_SPEED = 0, T_ITEMS = 1, T_REBIRTH = 2, T_INFO = 3, G_HOW = 10, G_BRAINROTS = 11, G_MUTATIONS = 12, G_RARITY = 13;
+    public static final int T_SPEED = 0, T_ITEMS = 1, T_REBIRTH = 2, T_INFO = 3, T_SKINS = 4, G_HOW = 10, G_BRAINROTS = 11, G_MUTATIONS = 12, G_RARITY = 13;
     private final ServerPlayer player;
     private final SimpleContainer box = new SimpleContainer(54);
     private final boolean guide;
     private int tab;
     private boolean armed;
+    /** A skin clicked once (buying needs a second click), or -1. */
+    private int armedSkin = -1;
+    static final int[] SKIN_SLOTS = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43, 46, 47, 48, 49, 50, 51, 52};
 
     public BrMenu(int id, Inventory inv, ServerPlayer p, boolean guide, int tab) {
         super(MenuType.GENERIC_9x6, id);
@@ -62,8 +65,8 @@ public class BrMenu extends AbstractContainerMenu {
 
     static ItemStack icon(Item item, String name, String... lore) { return icon(item, name, List.of(lore)); }
 
-    private int[] tabSlots() { return new int[]{1, 3, 5, 7}; }
-    private int[] tabIds() { return guide ? new int[]{G_HOW, G_BRAINROTS, G_MUTATIONS, G_RARITY} : new int[]{T_SPEED, T_ITEMS, T_REBIRTH, T_INFO}; }
+    private int[] tabSlots() { return guide ? new int[]{1, 3, 5, 7} : new int[]{2, 3, 4, 5, 6}; }
+    private int[] tabIds() { return guide ? new int[]{G_HOW, G_BRAINROTS, G_MUTATIONS, G_RARITY} : new int[]{T_SPEED, T_ITEMS, T_SKINS, T_REBIRTH, T_INFO}; }
 
     static String pct(double c) {
         double p = c * 100;
@@ -79,8 +82,9 @@ public class BrMenu extends AbstractContainerMenu {
         for (int i = 0; i < 54; i++) box.setItem(i, pane.copy());
         ItemStack line = icon(Items.BLACK_STAINED_GLASS_PANE, " ");
         for (int i = 9; i < 18; i++) box.setItem(i, line.copy());
-        String[] names = guide ? new String[]{"How to Play", "Brainrots", "Mutations", "Rarities"} : new String[]{"Speed", "Items", "Rebirth", "My Stats"};
-        Item[] icons = guide ? new Item[]{Items.BOOK, Items.PAINTING, Items.NETHER_STAR, Items.DIAMOND} : new Item[]{Items.SUGAR, Items.BLAZE_ROD, Items.TOTEM_OF_UNDYING, Items.PLAYER_HEAD};
+        String[] names = guide ? new String[]{"How to Play", "Brainrots", "Mutations", "Rarities"} : new String[]{"Speed", "Items", "Base Skins", "Rebirth", "My Stats"};
+        Item[] icons = guide ? new Item[]{Items.BOOK, Items.PAINTING, Items.NETHER_STAR, Items.DIAMOND}
+                : new Item[]{Items.SUGAR, Items.BLAZE_ROD, BrSkin.ALL[BrSkin.ALL.length - 1].block(BrSkin.LAMP).asItem(), Items.TOTEM_OF_UNDYING, Items.PLAYER_HEAD};
         int[] ts = tabSlots(), ids = tabIds();
         for (int i = 0; i < ts.length; i++) {
             boolean sel = ids[i] == tab;
@@ -100,6 +104,28 @@ public class BrMenu extends AbstractContainerMenu {
                 box.setItem(29, icon(EggSteal.SPEED_COIL.get(), "§eSpeed Coil", "§7Hold it to run very fast", "", cost(st, BrShop.SPEED_COIL)));
                 box.setItem(31, icon(EggSteal.JUMP_COIL.get(), "§bGravity Coil", "§7Hold it to jump very high", "", cost(st, BrShop.JUMP_COIL)));
                 box.setItem(33, icon(EggSteal.BAT.get(), "§6Bat", "§7Hit a thief: your brainrot goes home", "§7and they freeze for 3 seconds", "", cost(st, BrShop.BAT)));
+            }
+            case T_SKINS -> {
+                for (int k = 0; k < BrSkin.ALL.length; k++) {
+                    BrSkin sk = BrSkin.ALL[k];
+                    List<String> lore = new ArrayList<>();
+                    lore.add("§7" + sk.look);
+                    if (k > 0) {
+                        lore.add("§75 matching blocks: frame, glass, floor, carpet, lamp");
+                        List<String> fx = new ArrayList<>();
+                        for (int f : sk.fx) if (f != BrSkin.NONE && !fx.contains(BrSkin.fxName(f))) fx.add(BrSkin.fxName(f));
+                        if (!fx.isEmpty()) lore.add("§dParticles: §f" + String.join(", ", fx));
+                    }
+                    lore.add("");
+                    boolean on = st.skin == k;
+                    if (on) lore.add("§a§l✔ EQUIPPED");
+                    else if (BrSkin.owns(st, k)) lore.add("§eOwned - click to equip");
+                    else if (armedSkin == k) lore.add("§c§lCLICK AGAIN TO BUY: $" + Economy.fmt(sk.price));
+                    else lore.add(cost(st, sk.price));
+                    ItemStack s = icon(k == 0 ? Items.WHITE_CONCRETE : sk.block(BrSkin.FRAME).asItem(), sk.color + "§l" + sk.name, lore);
+                    if (on || armedSkin == k) s.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+                    box.setItem(SKIN_SLOTS[k], s);
+                }
             }
             case T_REBIRTH -> {
                 double c = BrData.rebirthCost(st);
@@ -202,11 +228,12 @@ public class BrMenu extends AbstractContainerMenu {
             {"§e9. Mutations", "§735 mutations change a brainrot's colours", "§7and patterns (fire burns, lightning", "§7crackles...). The rarer the mutation,", "§7the more money it makes. See the tab!"},
             {"§e10. Random events", "§7Rainbow, Galaxy, Lava, Software... make", "§7their mutation 25x more common for 90s.", "§7Look at the sky!"},
             {"§e11. Bots", "§7Bots play like real players: they buy,", "§7fight for good brainrots, steal, defend,", "§7lock their bases, sell and rebirth."},
-            {"§e12. Commands", "§7/brainrot guide · /brainrot shop", "§7/brainrot home · /brainrot top"},
+            {"§e12. Base skins", "§7Buy one of 25 skins in the shop: your", "§7whole base is rebuilt with 5 matching", "§7custom blocks, many with particles."},
+            {"§e13. Commands", "§7/brainrot guide · /brainrot shop", "§7/brainrot home · /brainrot top"},
         };
         Item[] icons = {Items.EMERALD, Items.GOLD_INGOT, Items.GOLD_BLOCK, Items.IRON_BOOTS, Items.REDSTONE_BLOCK, Items.HOPPER,
-                Items.TOTEM_OF_UNDYING, Items.CLOCK, Items.NETHER_STAR, Items.FIREWORK_ROCKET, Items.PLAYER_HEAD, Items.COMMAND_BLOCK};
-        int[] slots = {19, 20, 21, 22, 23, 24, 25, 29, 30, 31, 32, 33};
+                Items.TOTEM_OF_UNDYING, Items.CLOCK, Items.NETHER_STAR, Items.FIREWORK_ROCKET, Items.PLAYER_HEAD, Items.PAINTING, Items.COMMAND_BLOCK};
+        int[] slots = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33};
         for (int i = 0; i < pages.length; i++) {
             List<String> lore = new ArrayList<>(List.of(pages[i]).subList(1, pages[i].length));
             box.setItem(slots[i], icon(icons[i], pages[i][0], lore));
@@ -220,7 +247,18 @@ public class BrMenu extends AbstractContainerMenu {
     private void onButton(int slot) {
         if (slot == 8) { player.closeContainer(); return; }
         int[] ts = tabSlots(), ids = tabIds();
-        for (int i = 0; i < ts.length; i++) if (ts[i] == slot) { tab = ids[i]; armed = false; refresh(); return; }
+        for (int i = 0; i < ts.length; i++) if (ts[i] == slot) { tab = ids[i]; armed = false; armedSkin = -1; refresh(); return; }
+        if (tab == T_SKINS) {
+            BrData.Stats st = BrData.get(player.server).stats(player.getUUID());
+            for (int k = 0; k < BrSkin.ALL.length; k++) {
+                if (SKIN_SLOTS[k] != slot) continue;
+                boolean buy = !BrSkin.owns(st, k);
+                if (buy && armedSkin != k && st.money >= BrSkin.ALL[k].price) armedSkin = k; // confirm first: skins are expensive
+                else { armedSkin = -1; BrShop.skin(player, k); }
+            }
+            refresh();
+            return;
+        }
         if (tab == T_SPEED && slot == 31) BrShop.buySpeed(player);
         else if (tab == T_ITEMS && slot == 29) BrShop.buyItem(player, "speed");
         else if (tab == T_ITEMS && slot == 31) BrShop.buyItem(player, "jump");

@@ -86,6 +86,21 @@ public class EggSteal {
         for (com.eggsteal.brainrot.Brainrot b : com.eggsteal.brainrot.Brainrot.ALL) BR_CARDS.add(ITEMS.register("br_" + b.id, () -> new Item(new Item.Properties())));
         for (com.eggsteal.brainrot.BrMutation m : com.eggsteal.brainrot.BrMutation.ALL) BR_MUTS.add(ITEMS.register("brmut_" + m.id, () -> new Item(new Item.Properties())));
     }
+    /** The five blocks of every base skin, in BrSkin order: skin 1 frame, glass, floor, carpet, lamp, then skin 2... */
+    public static final List<DeferredBlock<Block>> BR_SKIN_BLOCKS = new ArrayList<>();
+    public static final List<DeferredItem<BlockItem>> BR_SKIN_ITEMS = new ArrayList<>();
+    static {
+        for (com.eggsteal.brainrot.BrSkin sk : com.eggsteal.brainrot.BrSkin.ALL) {
+            if (sk.index == 0) continue;
+            for (int part = 0; part < com.eggsteal.brainrot.BrSkin.PARTS.length; part++) {
+                int pt = part;
+                String n = "brskin_" + sk.id + "_" + com.eggsteal.brainrot.BrSkin.PARTS[part];
+                DeferredBlock<Block> b = BLOCKS.register(n, () -> new com.eggsteal.brainrot.BrSkinBlock(sk, pt));
+                BR_SKIN_BLOCKS.add(b);
+                BR_SKIN_ITEMS.add(ITEMS.register(n, () -> new BlockItem(b.get(), new Item.Properties())));
+            }
+        }
+    }
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> BR_TAB = TABS.register("brainrot",
             () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.eggsteal.brainrot"))
@@ -96,6 +111,7 @@ public class EggSteal {
                         out.accept(BR_GUIDE_ITEM.get());
                         for (DeferredItem<Item> c : BR_CARDS) out.accept(c.get());
                         for (DeferredItem<Item> c : BR_MUTS) out.accept(c.get());
+                        for (DeferredItem<BlockItem> b : BR_SKIN_ITEMS) out.accept(b.get());
                     }).build());
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = TABS.register("main",

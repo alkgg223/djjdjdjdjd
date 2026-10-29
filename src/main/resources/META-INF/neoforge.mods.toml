@@ -4,7 +4,7 @@ license="MIT"
 
 [[mods]]
 modId="eggsteal"
-version="1.6.0"
+version="1.7.0"
 displayName="Egg Steal"
 description='Two games: Egg Steal (eggs, creatures, belts) and Brainrot Heist (blocky brainrots on a red carpet, 35 mutations, stealing, bots).'
 
