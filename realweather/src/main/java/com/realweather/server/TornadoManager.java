@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BiomeTags;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -20,6 +21,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
@@ -233,15 +235,22 @@ public final class TornadoManager {
                 continue;
             }
             int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-            // Stronger winds closer to the centre strip deeper.
-            int depth = 1 + (t.rating >= 3 ? 1 : 0) + (t.rating >= 5 ? 1 : 0);
-            for (int k = 0; k < depth; k++) {
+            // Work down from the top: plants, trees and buildings go first; the natural ground only gets scoured.
+            for (int k = 0; k < 4; k++) {
                 BlockPos pos = new BlockPos(x, top - k, z);
                 BlockState state = level.getBlockState(pos);
                 if (state.isAir()) {
                     continue;
                 }
                 if (!state.getFluidState().isEmpty() || state.hasBlockEntity()) {
+                    break;
+                }
+                if (isTerrain(state)) {
+                    // Violent tornadoes strip the grass and soil cover, but do not dig into the land.
+                    if (t.rating >= 3 && rng.nextFloat() < 0.08F * (t.rating - 2) && (state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.PODZOL)
+                            || state.is(Blocks.MYCELIUM) || state.is(Blocks.FARMLAND) || state.is(Blocks.DIRT_PATH))) {
+                        level.setBlock(pos, Blocks.DIRT.defaultBlockState(), 3);
+                    }
                     break;
                 }
                 float hard = state.getDestroySpeed(level, pos);
@@ -256,6 +265,15 @@ public final class TornadoManager {
                 blocksDestroyed++;
             }
         }
+    }
+
+    /** Natural ground: soil, sand, gravel, stone and the like. */
+    private static boolean isTerrain(BlockState s) {
+        return s.is(BlockTags.DIRT) || s.is(BlockTags.SAND) || s.is(BlockTags.BASE_STONE_OVERWORLD) || s.is(BlockTags.TERRACOTTA)
+                || s.is(Blocks.GRAVEL) || s.is(Blocks.CLAY) || s.is(Blocks.FARMLAND) || s.is(Blocks.DIRT_PATH) || s.is(Blocks.SANDSTONE)
+                || s.is(Blocks.RED_SANDSTONE) || s.is(Blocks.SNOW_BLOCK) || s.is(Blocks.ICE) || s.is(Blocks.PACKED_ICE) || s.is(Blocks.BEDROCK)
+                || s.is(Blocks.POWDER_SNOW) || s.is(BlockTags.COAL_ORES)
+                || s.is(BlockTags.IRON_ORES) || s.is(BlockTags.COPPER_ORES);
     }
 
     private static void stormLightning(ServerLevel level, Tornado t, RandomSource rng) {

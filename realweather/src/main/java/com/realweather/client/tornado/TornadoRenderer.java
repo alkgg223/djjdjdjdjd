@@ -44,6 +44,8 @@ public final class TornadoRenderer {
     private static final float[] SHELL_SHADE = {1.0F, 0.86F, 1.08F, 0.74F};
 
     private static BufferBuilder buffer;
+    /** Tornadoes drawn in the last frame (diagnostics). */
+    public static int lastDrawn;
 
     private TornadoRenderer() {}
 
@@ -74,6 +76,7 @@ public final class TornadoRenderer {
         RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
         float fogStart = RenderSystem.getShaderFogStart();
         float fogEnd = RenderSystem.getShaderFogEnd();
+        lastDrawn = 0;
         try {
             for (ClientTornadoes.T t : ClientTornadoes.all()) {
                 double tx = t.x(pt);
@@ -88,6 +91,7 @@ public final class TornadoRenderer {
                 float time = t.age + pt;
                 drawCloud(t, tx, tz, cam, time, pt, q);
                 drawFunnel(t, tx, tz, cam, time, pt, q);
+                lastDrawn++;
                 if (q >= 2 && t.rating >= 4 && t.contact > 0.8F && t.strength > 0.6F) {
                     drawSubVortices(t, tx, tz, cam, time, pt, q);
                 }

@@ -31,6 +31,7 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(ClientWeather::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClientWeather::onLogout);
         NeoForge.EVENT_BUS.addListener(WeatherSounds::onPlaySound);
+        NeoForge.EVENT_BUS.addListener(WeatherSounds::onEntityJoin);
         NeoForge.EVENT_BUS.addListener(FogEffects::onRenderFog);
         NeoForge.EVENT_BUS.addListener(FogEffects::onFogColor);
         NeoForge.EVENT_BUS.addListener(FogEffects::onCameraAngles);

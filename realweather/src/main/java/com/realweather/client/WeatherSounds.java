@@ -117,12 +117,16 @@ public final class WeatherSounds {
             return;
         }
         ResourceLocation id = sound.getLocation();
-        boolean thunder = VANILLA_THUNDER.equals(id);
-        if (thunder || VANILLA_IMPACT.equals(id)) {
+        // Our own thunder (delayed by distance) replaces the vanilla one; it is started when the bolt appears.
+        if (VANILLA_THUNDER.equals(id) || VANILLA_IMPACT.equals(id)) {
             event.setSound(null);
-            if (thunder) {
-                strike(sound.getX(), sound.getY(), sound.getZ(), true);
-            }
+        }
+    }
+
+    /** A lightning bolt appeared: flash now, thunder when the sound gets here. */
+    public static void onEntityJoin(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide() && event.getEntity() instanceof net.minecraft.world.entity.LightningBolt bolt) {
+            strike(bolt.getX(), bolt.getY(), bolt.getZ(), true);
         }
     }
 
