@@ -187,7 +187,8 @@ public final class SelfTest {
     }
 
     private static void look(float yaw, float pitch) {
-        cmd("tp @a ~ ~ ~ " + yaw + " " + pitch);
+        // Relative to each player: the console itself sits at world spawn.
+        cmd("execute as @a at @s run tp @s ~ ~ ~ " + yaw + " " + pitch);
     }
 
     private static void goTo(String biome, float yaw, float pitch) {
