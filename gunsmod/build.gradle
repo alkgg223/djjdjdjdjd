@@ -38,3 +38,12 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.compilerArgs << '-Xmaxerrs' << '2000'
 }
+
+// compares the compiled classes with tools/stubrefs.txt (made from another build of the same sources) when it is there
+tasks.register('refCheck', Exec) {
+    dependsOn 'classes'
+    onlyIf { file('tools/stubrefs.txt').exists() }
+    commandLine 'java', 'tools/RefCheck.java', 'build/classes/java/main', 'tools/stubrefs.txt'
+    ignoreExitValue = true
+}
+tasks.named('build') { finalizedBy 'refCheck' }
