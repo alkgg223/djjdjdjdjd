@@ -2187,6 +2187,7 @@ R F net/minecraft/client/multiplayer/ClientLevel.random:Lnet/minecraft/util/Rand
 R F net/minecraft/client/particle/ParticleRenderType.PARTICLE_SHEET_OPAQUE:Lnet/minecraft/client/particle/ParticleRenderType;
 R F net/minecraft/client/particle/ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT:Lnet/minecraft/client/particle/ParticleRenderType;
 R F net/minecraft/client/player/LocalPlayer.tickCount:I
+R F net/minecraft/client/renderer/texture/OverlayTexture.NO_OVERLAY:I
 R F net/minecraft/core/BlockPos.CODEC:Lcom/mojang/serialization/Codec;
 R F net/minecraft/core/BlockPos.STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
 R F net/minecraft/core/BlockPos.ZERO:Lnet/minecraft/core/BlockPos;
@@ -2216,8 +2217,6 @@ R F net/minecraft/core/registries/Registries.ENTITY_TYPE:Lnet/minecraft/resource
 R F net/minecraft/core/registries/Registries.MENU:Lnet/minecraft/resources/ResourceKey;
 R F net/minecraft/core/registries/Registries.PARTICLE_TYPE:Lnet/minecraft/resources/ResourceKey;
 R F net/minecraft/core/registries/Registries.SOUND_EVENT:Lnet/minecraft/resources/ResourceKey;
-R F net/minecraft/nbt/Tag.TAG_COMPOUND:B
-R F net/minecraft/nbt/Tag.TAG_INT_ARRAY:B
 R F net/minecraft/network/codec/ByteBufCodecs.VAR_INT:Lnet/minecraft/network/codec/StreamCodec;
 R F net/minecraft/network/codec/ByteBufCodecs.VAR_LONG:Lnet/minecraft/network/codec/StreamCodec;
 R F net/minecraft/network/syncher/EntityDataSerializers.BOOLEAN:Lnet/minecraft/network/syncher/EntityDataSerializer;
@@ -2547,11 +2546,11 @@ R M com/mojang/blaze3d/vertex/PoseStack.pushPose:()V
 R M com/mojang/blaze3d/vertex/PoseStack.scale:(FFF)V
 R M com/mojang/blaze3d/vertex/PoseStack.translate:(DDD)V
 R M com/mojang/blaze3d/vertex/PoseStack.translate:(FFF)V
+R M com/mojang/datafixers/Products$P2.apply:(Lcom/mojang/datafixers/kinds/Applicative;Ljava/util/function/BiFunction;)Lcom/mojang/datafixers/kinds/App;
+R M com/mojang/datafixers/Products$P5.apply:(Lcom/mojang/datafixers/kinds/Applicative;Lcom/mojang/datafixers/util/Function5;)Lcom/mojang/datafixers/kinds/App;
 R M com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
-R M com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group:(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/serialization/codecs/RecordCodecBuilder$P2;
-R M com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group:(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/serialization/codecs/RecordCodecBuilder$P5;
-R M com/mojang/serialization/codecs/RecordCodecBuilder$P2.apply:(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;Ljava/util/function/BiFunction;)Lcom/mojang/datafixers/kinds/App;
-R M com/mojang/serialization/codecs/RecordCodecBuilder$P5.apply:(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;Lcom/mojang/datafixers/util/Function5;)Lcom/mojang/datafixers/kinds/App;
+R M com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group:(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P2;
+R M com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group:(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P5;
 R M com/mojang/serialization/codecs/RecordCodecBuilder.create:(Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
 R M net/minecraft/client/Camera.getPosition:()Lnet/minecraft/world/phys/Vec3;
 R M net/minecraft/client/CameraType.isFirstPerson:()Z
@@ -2698,6 +2697,7 @@ R M net/minecraft/core/BlockPos.containing:(DDD)Lnet/minecraft/core/BlockPos;
 R M net/minecraft/core/BlockPos.containing:(Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;
 R M net/minecraft/core/BlockPos.distSqr:(Lnet/minecraft/core/Vec3i;)D
 R M net/minecraft/core/BlockPos.distToCenterSqr:(DDD)D
+R M net/minecraft/core/BlockPos.equals:(Ljava/lang/Object;)Z
 R M net/minecraft/core/BlockPos.getCenter:()Lnet/minecraft/world/phys/Vec3;
 R M net/minecraft/core/BlockPos.getX:()I
 R M net/minecraft/core/BlockPos.getY:()I
@@ -2749,7 +2749,7 @@ R M net/minecraft/nbt/CompoundTag.putLong:(Ljava/lang/String;J)V
 R M net/minecraft/nbt/CompoundTag.putString:(Ljava/lang/String;Ljava/lang/String;)V
 R M net/minecraft/nbt/CompoundTag.putUUID:(Ljava/lang/String;Ljava/util/UUID;)V
 R M net/minecraft/nbt/ListTag.<init>:()V
-R M net/minecraft/nbt/ListTag.add:(Lnet/minecraft/nbt/Tag;)Z
+R M net/minecraft/nbt/ListTag.add:(Ljava/lang/Object;)Z
 R M net/minecraft/nbt/ListTag.iterator:()Ljava/util/Iterator;
 R M net/minecraft/nbt/NbtUtils.createUUID:(Ljava/util/UUID;)Lnet/minecraft/nbt/IntArrayTag;
 R M net/minecraft/nbt/NbtUtils.loadUUID:(Lnet/minecraft/nbt/Tag;)Ljava/util/UUID;
@@ -2788,6 +2788,7 @@ R M net/minecraft/network/syncher/SynchedEntityData.defineId:(Ljava/lang/Class;L
 R M net/minecraft/network/syncher/SynchedEntityData.get:(Lnet/minecraft/network/syncher/EntityDataAccessor;)Ljava/lang/Object;
 R M net/minecraft/network/syncher/SynchedEntityData.set:(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)V
 R M net/minecraft/resources/ResourceKey.create:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/resources/ResourceKey;
+R M net/minecraft/resources/ResourceLocation.equals:(Ljava/lang/Object;)Z
 R M net/minecraft/resources/ResourceLocation.fromNamespaceAndPath:(Ljava/lang/String;Ljava/lang/String;)Lnet/minecraft/resources/ResourceLocation;
 R M net/minecraft/resources/ResourceLocation.getNamespace:()Ljava/lang/String;
 R M net/minecraft/server/MinecraftServer.getPlayerList:()Lnet/minecraft/server/players/PlayerList;
