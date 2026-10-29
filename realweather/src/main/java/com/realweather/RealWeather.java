@@ -36,8 +36,8 @@ public class RealWeather {
         if (Boolean.getBoolean("realweather.selftest")) {
             // Development builds only (gradle -Pselftest): automated in-game run.
             try {
-                Class.forName("com.realweather.selftest.SelfTest").getMethod(dist.isClient() ? "init" : "initServer").invoke(null);
-            } catch (ReflectiveOperationException e) {
+                Class.forName(dist.isClient() ? "com.realweather.selftest.SelfTest" : "com.realweather.selftest.SelfTestServer").getMethod("init").invoke(null);
+            } catch (ReflectiveOperationException | RuntimeException e) {
                 LOG.warn("Self test not available", e);
             }
         }

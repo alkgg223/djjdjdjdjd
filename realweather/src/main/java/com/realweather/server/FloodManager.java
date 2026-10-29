@@ -45,8 +45,9 @@ public final class FloodManager {
                     tryFlood(level, d, player, rng, k);
                 }
             }
-        } else if (!d.floodList.isEmpty() && (!level.isRaining() || WeatherServer.rain < 0.45F || !d.flood)) {
-            int budget = 4 + d.floodList.size() / 300;
+        } else if (!d.floodList.isEmpty() && (!level.isRaining() || WeatherServer.rain < 0.45F || !d.flood) && level.getGameTime() % 2 == 0) {
+            // The water soaks away over a minute or two, top layers first.
+            int budget = 1 + d.floodList.size() / 1000;
             drain(level, d, budget);
         }
     }
