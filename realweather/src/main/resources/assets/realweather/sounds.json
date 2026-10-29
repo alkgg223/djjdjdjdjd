@@ -1,0 +1,80 @@
+{
+  "weather.rain_light": {
+    "sounds": [
+      {
+        "name": "realweather:rain_light",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.rain"
+  },
+  "weather.rain_heavy": {
+    "sounds": [
+      {
+        "name": "realweather:rain_heavy",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.rain_heavy"
+  },
+  "weather.rain_roof": {
+    "sounds": [
+      {
+        "name": "realweather:rain_roof",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.rain_roof"
+  },
+  "weather.wind": {
+    "sounds": [
+      {
+        "name": "realweather:wind",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.wind"
+  },
+  "weather.blizzard": {
+    "sounds": [
+      {
+        "name": "realweather:blizzard",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.blizzard"
+  },
+  "weather.sandstorm": {
+    "sounds": [
+      {
+        "name": "realweather:sandstorm",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.sandstorm"
+  },
+  "weather.thunder_close": {
+    "sounds": [
+      "realweather:thunder_close1",
+      "realweather:thunder_close2",
+      "realweather:thunder_close3"
+    ],
+    "subtitle": "subtitles.realweather.thunder_close"
+  },
+  "weather.thunder_mid": {
+    "sounds": [
+      "realweather:thunder_mid1",
+      "realweather:thunder_mid2",
+      "realweather:thunder_mid3"
+    ],
+    "subtitle": "subtitles.realweather.thunder"
+  },
+  "weather.thunder_far": {
+    "sounds": [
+      "realweather:thunder_far1",
+      "realweather:thunder_far2",
+      "realweather:thunder_far3"
+    ],
+    "subtitle": "subtitles.realweather.thunder_far"
+  }
+}
