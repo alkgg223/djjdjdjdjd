@@ -115,6 +115,14 @@ def limit(x, ceiling=0.97):
     return np.tanh(x / ceiling) * ceiling
 
 
+def compress(x, threshold, ratio):
+    """Envelope compressor: keeps the rumble audible after the loudest crack."""
+    x = peak_norm(x, 0.0)
+    env = np.sqrt(ss.sosfilt(sos('lowpass', 12, 1), x ** 2).clip(1e-12))
+    gain = np.where(env > threshold, (env / threshold) ** (1.0 / ratio - 1.0), 1.0)
+    return x * gain
+
+
 def fade(x, fin=0.0, fout=0.0):
     x = x.copy()
     a = int(fin * SR)
@@ -319,7 +327,8 @@ def thunder(seed, dist, length):
     cosang = np.abs(np.sum(dirs * rv, axis=1) / r)
     sin2 = 1 - cosang ** 2
     # Each segment radiates mostly perpendicular to itself (line source), with spherical spreading.
-    amp = lens * (0.08 + sin2 ** 3) / r * rng.uniform(0.6, 1.4, len(r))
+    # A long channel acts like a line source: closer to cylindrical spreading than 1/r.
+    amp = lens * (0.08 + sin2 ** 3) / r ** 0.65 * rng.uniform(0.6, 1.4, len(r))
     t = r / 343.0
     t -= t.min()
     t += 0.04
@@ -356,7 +365,10 @@ def thunder(seed, dist, length):
     wet = ss.fftconvolve(out, ir)[:n]
     out = out + rms_norm(wet, 20 * np.log10(np.sqrt(np.mean(out ** 2)) + 1e-12) - (4 if dist < 500 else 1))
     out = filt(out, 'highpass', 22, 2)
-    # Slight saturation as a real microphone/ear would hear a close strike.
+    # Body: the low boom that follows the crack, felt more than heard.
+    boom = filt(out, 'lowpass', 120, 2)
+    out = out + boom * (1.8 if dist < 500 else 1.0)
+    out = compress(out, 0.18, 3.0)
     out = peak_norm(out, -0.5)
     if dist < 500:
         out = np.tanh(out * 1.6) / np.tanh(1.6)
@@ -365,12 +377,18 @@ def thunder(seed, dist, length):
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == 'thunder':
+        return thunders()
     write('rain_light', rain(11, False))
     write('rain_heavy', rain(12, True))
     write('rain_roof', rain_roof(13))
     write('wind', wind(21))
     write('blizzard', blizzard(22))
     write('sandstorm', sandstorm(23))
+    thunders()
+
+
+def thunders():
     for i, (d, ln) in enumerate([(180, 9), (260, 10), (120, 8)]):
         write('thunder_close%d' % (i + 1), thunder(100 + i, d, ln))
     for i, (d, ln) in enumerate([(1300, 11), (2000, 12), (1600, 11)]):

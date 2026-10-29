@@ -34,8 +34,10 @@ out vec3 localPos;
 out vec3 faceNormal;
 out float waterFlag;
 
+// The water textures are grey (tinted by the biome) with alpha exactly WATER_ALPHA.
 float isWater(vec2 uv) {
-    return abs(texture(Sampler0, uv).a - WATER_ALPHA) < 0.003 ? 1.0 : 0.0;
+    vec4 c = texture(Sampler0, uv);
+    return (abs(c.a - WATER_ALPHA) < 0.003 && abs(c.r - c.g) < 0.004 && abs(c.g - c.b) < 0.004) ? 1.0 : 0.0;
 }
 
 // Sum of waves whose wavelengths divide 16 blocks, so they line up across chunk sections.

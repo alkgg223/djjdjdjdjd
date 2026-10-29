@@ -48,7 +48,8 @@ vec2 waveSlope(vec2 p, float g, float rough) {
 void main() {
     vec4 tex = texture(Sampler0, texCoord0);
     vec4 color = tex * vertexColor * ColorModulator;
-    if (waterFlag > 0.5 && RealWater.x > 0.5 && abs(tex.a - WATER_ALPHA) < 0.012 && abs(faceNormal.y) > 0.5) {
+    if (waterFlag > 0.5 && RealWater.x > 0.5 && abs(tex.a - WATER_ALPHA) < 0.012 && abs(tex.r - tex.g) < 0.02 && abs(tex.g - tex.b) < 0.02
+            && abs(faceNormal.y) > 0.5) {
         vec2 slope = waveSlope(localPos.xz, GameTime, RealWater.y) * 3.0;
         vec3 n = normalize(vec3(-slope.x, 1.0, -slope.y));
         vec3 v = normalize(-viewPos);

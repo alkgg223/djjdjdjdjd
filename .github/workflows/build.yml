@@ -17,11 +17,25 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew build --no-daemon
-      - name: Dump reference (temporary)
-        if: always()
-        working-directory: realweather
-        run: bash tools/dump.sh
       - uses: actions/upload-artifact@v4
         with:
           name: realweather-jar
           path: realweather/build/libs/*.jar
+
+  selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Virtual display
+        run: |
+          sudo apt-get update -q >/dev/null
+          sudo apt-get install -y -q xvfb libgl1-mesa-dri libglx-mesa0 mesa-utils >/dev/null
+      - name: In-game self test
+        working-directory: realweather
+        run: bash tools/selftest.sh

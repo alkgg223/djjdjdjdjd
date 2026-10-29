@@ -16,15 +16,30 @@ repositories {
     mavenLocal()
 }
 
+def selftest = project.hasProperty('selftest')
+if (selftest) {
+    // Automated in-game test, never part of a normal build.
+    sourceSets.main.java.srcDir 'src/selftest/java'
+}
+
 neoForge {
     version = project.neo_version
     runs {
         client {
             client()
+            gameDirectory = project.file('run/client')
+            if (selftest) {
+                programArguments.addAll('--quickPlaySingleplayer', 'rwtest', '--width', '1280', '--height', '720')
+                systemProperty 'realweather.selftest', 'true'
+            }
         }
         server {
             server()
             programArgument '--nogui'
+            gameDirectory = project.file('run/server')
+            if (selftest) {
+                systemProperty 'realweather.selftest', 'true'
+            }
         }
     }
     mods {

@@ -33,6 +33,14 @@ public class RealWeather {
         if (dist.isClient()) {
             com.realweather.client.ClientInit.init(modBus, container);
         }
+        if (Boolean.getBoolean("realweather.selftest")) {
+            // Development builds only (gradle -Pselftest): automated in-game run.
+            try {
+                Class.forName("com.realweather.selftest.SelfTest").getMethod(dist.isClient() ? "init" : "initServer").invoke(null);
+            } catch (ReflectiveOperationException e) {
+                LOG.warn("Self test not available", e);
+            }
+        }
     }
 
     public static ResourceLocation id(String path) {
