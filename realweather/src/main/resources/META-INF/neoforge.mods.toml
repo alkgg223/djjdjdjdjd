@@ -6,7 +6,8 @@ license="MIT"
 modId="realweather"
 version="1.0.0"
 displayName="Real Weather"
-description='Realistic rain, snow, thunder, floods, sandstorms and blizzards.'
+logoFile="realweather_logo.png"
+description='''Realistic rain, snow and thunder with real sounds, floods in heavy rain, sandstorms and blizzards, realistic water, and villagers that run home in storms. Commands: /realweather (or /rw).'''
 
 [[dependencies.realweather]]
 modId="neoforge"

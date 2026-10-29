@@ -29,6 +29,7 @@ public final class WeatherSounds {
     private static final ResourceLocation VANILLA_IMPACT = SoundEvents.LIGHTNING_BOLT_IMPACT.getLocation();
 
     private static Loop rainLight, rainHeavy, rainRoof, wind, blizzard, sandstorm;
+    private static final float[] levels = new float[6];
 
     private WeatherSounds() {}
 
@@ -48,6 +49,12 @@ public final class WeatherSounds {
         float bliz = ClientWeather.camBlizzard * (0.3F + 0.7F * open);
         float sand = ClientWeather.camSand * (0.3F + 0.7F * open);
 
+        levels[0] = outside * (1F - heavy) * 0.85F;
+        levels[1] = outside * heavy;
+        levels[2] = roof * (0.6F + 0.4F * heavy);
+        levels[3] = windLevel * 0.75F;
+        levels[4] = bliz;
+        levels[5] = sand;
         rainLight = ensure(mc, rainLight, ModContent.RAIN_LIGHT, outside * (1F - heavy) * 0.85F);
         rainHeavy = ensure(mc, rainHeavy, ModContent.RAIN_HEAVY, outside * heavy);
         rainRoof = ensure(mc, rainRoof, ModContent.RAIN_ROOF, roof * (0.6F + 0.4F * heavy));
@@ -72,6 +79,12 @@ public final class WeatherSounds {
         }
         loop.target = volume;
         return loop;
+    }
+
+    /** Target volumes of the loops, for diagnostics. */
+    public static String debug() {
+        return String.format("rainLight=%.2f rainHeavy=%.2f roof=%.2f wind=%.2f blizzard=%.2f sandstorm=%.2f",
+                levels[0], levels[1], levels[2], levels[3], levels[4], levels[5]);
     }
 
     public static void stopAll() {

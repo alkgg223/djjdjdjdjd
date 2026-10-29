@@ -21,6 +21,13 @@ jobs:
         with:
           name: realweather-jar
           path: realweather/build/libs/*.jar
+      - name: Print jar for delivery
+        if: github.event_name == 'workflow_dispatch'
+        working-directory: realweather
+        run: |
+          f=$(ls build/libs/*.jar | head -1)
+          echo "JAR $(basename "$f") $(sha256sum "$f" | cut -c1-64)"
+          base64 -w 0 "$f" | fold -w 50000 | sed 's/^/B64 /'
 
   selftest:
     runs-on: ubuntu-latest

@@ -198,9 +198,10 @@ public final class SelfTest {
                 return;
             }
             BlockPos p = found.getFirst();
-            LOG.info("going to {} at {}", biome, p);
-            server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "spreadplayers " + p.getX() + " " + p.getZ() + " 0 1 false @a");
-            server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "tp @a ~ ~ ~ " + yaw + " " + pitch);
+            level.getChunk(p.getX() >> 4, p.getZ() >> 4);
+            int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, p.getX(), p.getZ());
+            LOG.info("going to {} at {} {} {}", biome, p.getX(), y, p.getZ());
+            player.teleportTo(level, p.getX() + 0.5, y + 0.1, p.getZ() + 0.5, yaw, pitch);
         });
     }
 
@@ -216,7 +217,7 @@ public final class SelfTest {
                 label, ClientWeather.rain, ClientWeather.snow, ClientWeather.thunder, ClientWeather.wind, ClientWeather.sand, ClientWeather.blizzard,
                 ClientWeather.camRain, ClientWeather.camSnow, ClientWeather.camSand, ClientWeather.camBlizzard, ClientWeather.exposure,
                 ClientWeather.covered, ClientWeather.wetness, mc.level.getRainLevel(1F), mc.particleEngine.countParticles(),
-                mc.getSoundManager().getDebugString());
+                com.realweather.client.WeatherSounds.debug());
     }
 
     private static void villagers() {
