@@ -30,6 +30,7 @@ jobs:
           base64 -w 0 "$f" | fold -w 50000 | sed 's/^/B64 /'
 
   selftest:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

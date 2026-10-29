@@ -64,7 +64,7 @@ public final class FloodManager {
             BlockPos pos = BlockPos.of(packed);
             checked++;
             if (level.isLoaded(pos)) {
-                if (level.getFluidState(pos).getType() == ModContent.FLOOD.get()) {
+                if (isFlood(level.getFluidState(pos))) {
                     level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 }
                 d.floodList.removeLong(i);
@@ -89,7 +89,7 @@ public final class FloodManager {
     }
 
     private static boolean isFlood(FluidState f) {
-        return f.getType() == ModContent.FLOOD.get();
+        return f.getFluidType() == ModContent.FLOOD_TYPE.get();
     }
 
     private static boolean isNaturalWaterSource(FluidState f) {
@@ -121,8 +121,8 @@ public final class FloodManager {
         BlockPos below = pos.below();
         BlockState ground = level.getBlockState(below);
         FluidState groundFluid = ground.getFluidState();
-        boolean onWater = false;
-        if (isFlood(groundFluid)) {
+        boolean onFlood = isFlood(groundFluid);
+        if (onFlood) {
             int depth = 1;
             while (depth < 8 && isFlood(level.getFluidState(below.below(depth)))) {
                 depth++;
@@ -130,8 +130,9 @@ public final class FloodManager {
             if (depth >= d.floodDepth) {
                 return;
             }
-        } else if (isNaturalWaterSource(groundFluid)) {
-            onWater = true;
+        } else if (!groundFluid.isEmpty()) {
+            // Rivers and lakes are not raised directly; their banks flood instead.
+            return;
         } else {
             if (!groundFluid.isEmpty() || !ground.isFaceSturdy(level, below, Direction.UP)) {
                 return;
@@ -143,7 +144,6 @@ public final class FloodManager {
 
         boolean spills = false;
         boolean nextToWater = false;
-        boolean nextToShore = false;
         for (Direction dir : Direction.Plane.HORIZONTAL) {
             int nx = x + dir.getStepX();
             int nz = z + dir.getStepZ();
@@ -154,13 +154,11 @@ public final class FloodManager {
             if (isFlood(sameFluid) || isNaturalWaterSource(sameFluid)) {
                 nextToWater = true;
             } else if (isNaturalWaterSource(lowFluid) || isFlood(lowFluid)) {
-                // Water surface level with our ground: we are on the bank (or on the water next to another water column).
-                nextToWater |= !onWater;
+                // Water surface level with our ground: we are on the bank.
+                nextToWater = true;
             } else if (nh < h) {
                 // The neighbour is lower dry land: water placed here would hang in the air over a slope.
                 spills = true;
-            } else if (nh == h && onWater) {
-                nextToShore = true;
             }
             if (spills) {
                 return;
@@ -180,9 +178,7 @@ public final class FloodManager {
         boolean swamp = biome.is(BiomeTags.IS_RIVER) || biome.is(BiomeTags.HAS_CLOSER_WATER_FOG);
 
         float chance;
-        if (onWater) {
-            chance = nextToShore || nextToWater ? 0.5F : 0F;
-        } else if (nextToWater) {
+        if (nextToWater) {
             chance = 0.55F;
         } else if (basin) {
             chance = 0.35F;
@@ -200,7 +196,11 @@ public final class FloodManager {
         if (!level.getEntitiesOfClass(Player.class, new AABB(pos).inflate(0.8, 1.5, 0.8)).isEmpty()) {
             return;
         }
-        level.setBlock(pos, ModContent.FLOOD.get().defaultFluidState().createLegacyBlock(), 3);
+        if (onFlood) {
+            // The layer below is now under water: make it a full block so the flood reads as one body.
+            level.setBlock(below, ModContent.FLOOD.get().defaultFluidState().createLegacyBlock(), 3);
+        }
+        level.setBlock(pos, ModContent.FLOOD_FLOWING.get().getFlowing(FloodFluid.SHEET, false).createLegacyBlock(), 3);
         d.addFlood(pos.asLong());
     }
 }

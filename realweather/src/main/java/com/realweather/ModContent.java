@@ -41,8 +41,8 @@ public final class ModContent {
                     .sound(SoundActions.FLUID_VAPORIZE, SoundEvents.FIRE_EXTINGUISH)));
 
     public static final DeferredHolder<Fluid, FloodFluid> FLOOD = FLUIDS.register("flood_water", () -> new FloodFluid(floodProperties()));
-    public static final DeferredHolder<Fluid, BaseFlowingFluid.Flowing> FLOOD_FLOWING = FLUIDS.register("flowing_flood_water",
-            () -> new BaseFlowingFluid.Flowing(floodProperties()));
+    public static final DeferredHolder<Fluid, FloodFluid.Flowing> FLOOD_FLOWING = FLUIDS.register("flowing_flood_water",
+            () -> new FloodFluid.Flowing(floodProperties()));
     public static final DeferredBlock<LiquidBlock> FLOOD_BLOCK = BLOCKS.register("flood_water",
             () -> new LiquidBlock(FLOOD.get(), BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable()));
 
