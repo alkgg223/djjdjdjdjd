@@ -23,11 +23,11 @@ public class TornadoDustParticle extends TextureSheetParticle {
         this.hasPhysics = false;
         this.gravity = 0F;
         this.lifetime = 70 + random.nextInt(80);
-        this.quadSize = 1.4F + random.nextFloat() * 2.6F;
-        this.maxAlpha = 0.18F + random.nextFloat() * 0.22F;
+        this.quadSize = 2.0F + random.nextFloat() * 3.4F;
+        this.maxAlpha = 0.3F + random.nextFloat() * 0.3F;
         this.alpha = 0F;
         this.climb = 0.04F + random.nextFloat() * 0.12F;
-        float c = 0.42F + random.nextFloat() * 0.18F;
+        float c = 0.36F + random.nextFloat() * 0.16F;
         // Dust picked up from the ground: grey-brown.
         this.setColor(c * 1.08F, c, c * 0.84F);
         this.roll = random.nextFloat() * 6.283F;

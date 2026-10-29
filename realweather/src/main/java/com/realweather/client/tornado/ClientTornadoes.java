@@ -81,10 +81,12 @@ public final class ClientTornadoes {
             return Tornado.RADIUS[rating] * (0.35F + 0.65F * strength);
         }
 
-        /** Height of the funnel, ground to cloud base. */
+        /** Height of the funnel, ground to cloud base: violent wedges hang from a much lower cloud base. */
         public float height() {
-            return 95F + rating * 8F;
+            return HEIGHTS[rating];
         }
+
+        private static final float[] HEIGHTS = {110F, 110F, 105F, 100F, 88F, 78F};
 
         public float cloudBase() {
             return groundY + height();

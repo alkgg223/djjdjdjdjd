@@ -39,7 +39,7 @@ public final class TornadoRenderer {
     private static final int[] CLOUD_LAYERS = {1, 1, 2, 3};
     private static final float[] MAX_DIST = {300F, 450F, 640F, 900F};
     private static final float[] SHELL_RADIUS = {1.0F, 0.8F, 1.22F, 0.62F};
-    private static final float[] SHELL_ALPHA = {0.62F, 0.72F, 0.3F, 0.85F};
+    private static final float[] SHELL_ALPHA = {0.86F, 0.9F, 0.42F, 0.95F};
     private static final float[] SHELL_SPEED = {1.0F, 1.35F, 0.8F, 1.7F};
     private static final float[] SHELL_SHADE = {1.0F, 0.86F, 1.08F, 0.74F};
 
@@ -176,7 +176,7 @@ public final class TornadoRenderer {
 
     /** Condensation grey, browner near the ground where it is full of dust and debris. */
     private static float[] color(float f, ClientTornadoes.T t, float shade) {
-        float g = (0.5F + 0.12F * f) * shade;
+        float g = (0.4F + 0.14F * f) * shade;
         float dust = t.contact * Mth.clamp(1F - f / (0.18F + t.rating * 0.03F), 0F, 1F);
         float r = Mth.lerp(dust, g, 0.47F * shade);
         float gg = Mth.lerp(dust, g * 1.01F, 0.39F * shade);

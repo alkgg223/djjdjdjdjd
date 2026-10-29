@@ -65,7 +65,7 @@ public final class LightningFx {
     static void tick(Minecraft mc, ClientLevel level) {
         now++;
         flash *= 0.55F;
-        worldLight *= 0.5F;
+        worldLight *= 0.68F;
         shake *= 0.85F;
         for (int i = 0; i < MAX_PULSES; i++) {
             if (pulseStrength[i] > 0F && pulseTick[i] <= now) {

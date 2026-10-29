@@ -81,12 +81,13 @@ public class RealLightningRenderer extends EntityRenderer<LightningBolt> {
         Matrix4f m = pose.last().pose();
         VertexConsumer vc = buffers.getBuffer(RenderType.lightning());
 
-        glow(vc, m, top.x, top.y, top.z, 55F, 0.55F, 0.62F, 1F, 0.42F * flicker);
-        glow(vc, m, 0F, 0.3F, 0F, 9F, 0.7F, 0.75F, 1F, 0.35F * flicker);
+        glow(vc, m, top.x, top.y, top.z, 70F, 0.55F, 0.62F, 1F, 0.55F * flicker);
+        glow(vc, m, 0F, 0.3F, 0F, 12F, 0.75F, 0.8F, 1F, 0.5F * flicker);
         for (Segment s : segments) {
-            ribbon(vc, m, camLocal, s.a, s.b, 3.2F * s.width, 0.35F, 0.42F, 1F, 0.06F * s.alpha * flicker);
-            ribbon(vc, m, camLocal, s.a, s.b, 0.9F * s.width, 0.55F, 0.62F, 1F, 0.32F * s.alpha * flicker);
-            ribbon(vc, m, camLocal, s.a, s.b, 0.16F * s.width + 0.05F, 0.95F, 0.97F, 1F, 0.95F * s.alpha * flicker);
+            ribbon(vc, m, camLocal, s.a, s.b, 4.0F * s.width, 0.35F, 0.42F, 1F, 0.1F * s.alpha * flicker);
+            ribbon(vc, m, camLocal, s.a, s.b, 1.3F * s.width, 0.6F, 0.66F, 1F, 0.45F * s.alpha * flicker);
+            ribbon(vc, m, camLocal, s.a, s.b, 0.24F * s.width + 0.06F, 1F, 1F, 1F, 1F * s.alpha * flicker);
+            ribbon(vc, m, camLocal, s.a, s.b, 0.24F * s.width + 0.06F, 1F, 1F, 1F, 0.6F * s.alpha * flicker);
         }
     }
 
