@@ -57,7 +57,8 @@
     "sounds": [
       "realweather:thunder_close1",
       "realweather:thunder_close2",
-      "realweather:thunder_close3"
+      "realweather:thunder_close3",
+      "realweather:thunder_close4"
     ],
     "subtitle": "subtitles.realweather.thunder_close"
   },
@@ -65,7 +66,8 @@
     "sounds": [
       "realweather:thunder_mid1",
       "realweather:thunder_mid2",
-      "realweather:thunder_mid3"
+      "realweather:thunder_mid3",
+      "realweather:thunder_mid4"
     ],
     "subtitle": "subtitles.realweather.thunder"
   },
@@ -73,8 +75,44 @@
     "sounds": [
       "realweather:thunder_far1",
       "realweather:thunder_far2",
-      "realweather:thunder_far3"
+      "realweather:thunder_far3",
+      "realweather:thunder_far4"
     ],
     "subtitle": "subtitles.realweather.thunder_far"
+  },
+  "weather.thunder_strike": {
+    "sounds": [
+      "realweather:thunder_strike1",
+      "realweather:thunder_strike2",
+      "realweather:thunder_strike3"
+    ],
+    "subtitle": "subtitles.realweather.thunder_strike"
+  },
+  "weather.tornado_roar": {
+    "sounds": [
+      {
+        "name": "realweather:tornado_roar",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.tornado"
+  },
+  "weather.tornado_debris": {
+    "sounds": [
+      {
+        "name": "realweather:tornado_debris",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.tornado_debris"
+  },
+  "weather.tornado_far": {
+    "sounds": [
+      {
+        "name": "realweather:tornado_far",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.tornado_far"
   }
 }

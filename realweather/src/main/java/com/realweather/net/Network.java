@@ -7,7 +7,10 @@ public final class Network {
 
     public static void register(RegisterPayloadHandlersEvent event) {
         // Optional so vanilla clients (and servers without the mod) can still connect.
-        event.registrar("1").optional().playToClient(WeatherSyncPayload.TYPE, WeatherSyncPayload.CODEC,
-                (payload, context) -> context.enqueueWork(() -> com.realweather.client.ClientWeather.onSync(payload)));
+        event.registrar("1").optional()
+                .playToClient(WeatherSyncPayload.TYPE, WeatherSyncPayload.CODEC,
+                        (payload, context) -> context.enqueueWork(() -> com.realweather.client.ClientWeather.onSync(payload)))
+                .playToClient(TornadoSyncPayload.TYPE, TornadoSyncPayload.CODEC,
+                        (payload, context) -> context.enqueueWork(() -> com.realweather.client.tornado.ClientTornadoes.onSync(payload)));
     }
 }

@@ -55,6 +55,10 @@ public final class ModContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> THUNDER_CLOSE = sound("weather.thunder_close");
     public static final DeferredHolder<SoundEvent, SoundEvent> THUNDER_MID = sound("weather.thunder_mid");
     public static final DeferredHolder<SoundEvent, SoundEvent> THUNDER_FAR = sound("weather.thunder_far");
+    public static final DeferredHolder<SoundEvent, SoundEvent> THUNDER_STRIKE = sound("weather.thunder_strike");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TORNADO_ROAR = sound("weather.tornado_roar");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TORNADO_DEBRIS = sound("weather.tornado_debris");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TORNADO_FAR = sound("weather.tornado_far");
 
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SPLASH = particle("splash");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RIPPLE = particle("ripple");
@@ -63,6 +67,7 @@ public final class ModContent {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> BLIZZARD_FLAKE = particle("blizzard_flake");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> DUST = particle("dust");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SAND_GRAIN = particle("sand_grain");
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> TORNADO_DUST = particle("tornado_dust");
 
     private ModContent() {}
 

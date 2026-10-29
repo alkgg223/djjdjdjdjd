@@ -52,5 +52,22 @@
   "realweather.config.sounds": "Realistic weather sounds",
   "realweather.config.fog": "Storm visibility (fog)",
   "realweather.config.lightning_flash": "Lightning flash",
-  "realweather.config.camera_shake": "Thunder camera shake"
+  "realweather.config.camera_shake": "Thunder camera shake",
+  "subtitles.realweather.thunder_strike": "Lightning strikes nearby",
+  "subtitles.realweather.tornado": "Tornado roars",
+  "subtitles.realweather.tornado_debris": "Debris crashes",
+  "subtitles.realweather.tornado_far": "Distant tornado rumbles",
+  "death.attack.realweather.tornado": "%1$s was swept away by a tornado",
+  "death.attack.realweather.tornado.player": "%1$s was swept away by a tornado while fighting %2$s",
+  "realweather.cmd.tornado": "A %s tornado is touching down %s blocks away",
+  "realweather.cmd.tornado.stop": "The tornadoes are roping out",
+  "realweather.cmd.tornado.too_many": "There are already too many tornadoes",
+  "realweather.cmd.tornado.damage.on": "Tornadoes now tear up the ground",
+  "realweather.cmd.tornado.damage.off": "Tornadoes no longer break blocks",
+  "realweather.cmd.tornado.natural.on": "Tornadoes can form in strong thunderstorms",
+  "realweather.cmd.tornado.natural.off": "Tornadoes only come from commands",
+  "realweather.config.realistic_lightning": "Realistic lightning bolts",
+  "realweather.config.tornado": "Tornado",
+  "realweather.config.tornado_quality": "Tornado graphics",
+  "realweather.config.tornado_quality.tooltip": "LOW, MEDIUM, HIGH or ULTRA. Separate from the rain and snow detail."
 }

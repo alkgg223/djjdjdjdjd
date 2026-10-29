@@ -123,8 +123,63 @@ public final class SelfTest {
             shot("8_sandstorm");
             state("sandstorm");
         });
+        // Tornadoes.
         step(5, () -> {
             cmd("rw sandstorm stop");
+            cmd("rw clear");
+            goTo("minecraft:plains", 0, 5);
+            cmd("time set 6000");
+            quality(com.realweather.ClientConfig.TornadoQuality.ULTRA);
+        });
+        step(60, () -> cmd("execute as @p at @p run rw tornado 3"));
+        step(200, () -> lookAtTornado(-14));
+        step(5, () -> {
+            shot("10_tornado_f3_ultra");
+            tornadoState("f3");
+            quality(com.realweather.ClientConfig.TornadoQuality.LOW);
+        });
+        step(5, () -> shot("11_tornado_f3_low"));
+        step(5, () -> quality(com.realweather.ClientConfig.TornadoQuality.HIGH));
+        step(100, () -> lookAtTornado(-16));
+        step(5, () -> {
+            shot("12_tornado_f3_high");
+            tornadoState("f3 later");
+            cmd("rw tornado stop");
+        });
+        step(300, () -> lookAtTornado(-14));
+        step(5, () -> {
+            shot("13_tornado_roping_out");
+            tornadoState("roping out");
+        });
+        step(5, () -> quality(com.realweather.ClientConfig.TornadoQuality.ULTRA));
+        step(200, () -> cmd("execute as @p at @p run rw tornado 5"));
+        step(170, () -> lookAtTornado(-16));
+        step(5, () -> {
+            shot("14_tornado_f5");
+            tornadoState("f5");
+        });
+        step(100, () -> lookAtTornado(-12));
+        step(5, () -> {
+            shot("15_tornado_f5_close");
+            tornadoState("f5 close");
+            player();
+        });
+        step(120, () -> {
+            tornadoState("f5 passing");
+            player();
+        });
+        step(5, () -> {
+            cmd("rw tornado stop");
+            goTo("minecraft:plains", 0, 5);
+        });
+        step(400, () -> cmd("execute as @p at @p run rw tornado 0"));
+        step(300, () -> lookAtTornado(-12));
+        step(5, () -> {
+            shot("16_tornado_f0");
+            tornadoState("f0");
+        });
+        step(5, () -> {
+            cmd("rw clear");
             goTo("minecraft:plains", 0, 5);
             cmd("time set 18000");
         });
@@ -136,6 +191,12 @@ public final class SelfTest {
             shot("9_night_storm");
             state("night storm");
         });
+        step(5, () -> cmd("execute as @p at @p run summon minecraft:lightning_bolt ^ ^ ^45"));
+        step(2, () -> {
+            shot("17_lightning");
+            LOG.info("lightning flash={} worldLight={}", com.realweather.client.LightningFx.flash, com.realweather.client.LightningFx.worldLight);
+        });
+        step(3, () -> shot("18_lightning_restrike"));
         step(40, () -> {
             cmd("rw info");
             LOG.info("done");
@@ -254,6 +315,42 @@ public final class SelfTest {
         });
     }
 
+    private static void quality(com.realweather.ClientConfig.TornadoQuality q) {
+        com.realweather.ClientConfig.TORNADO_QUALITY.set(q);
+    }
+
+    /** Turns the player to face the nearest tornado. */
+    private static void lookAtTornado(float pitch) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            WeatherData d = WeatherData.get(server.overworld());
+            com.realweather.server.Tornado t = com.realweather.server.TornadoManager.nearest(d, p.getX(), p.getZ(), 2000);
+            if (t == null) {
+                LOG.warn("no tornado to look at");
+                return;
+            }
+            float yaw = (float) Math.toDegrees(Math.atan2(-(t.x - p.getX()), t.z - p.getZ()));
+            p.teleportTo(server.overworld(), p.getX(), p.getY(), p.getZ(), yaw, pitch);
+        });
+    }
+
+    private static void tornadoState(String label) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            WeatherData d = WeatherData.get(server.overworld());
+            for (com.realweather.server.Tornado t : d.tornadoes) {
+                LOG.info("[{}] tornado #{} F{} stage={} contact={} strength={} at {} {} {} distance={} blocksDestroyed={}", label, t.id, t.rating, t.stage,
+                        t.contact, t.strength, (int) t.x, (int) t.groundY, (int) t.z, (int) Math.sqrt(p.distanceToSqr(t.x, p.getY(), t.z)),
+                        com.realweather.server.TornadoManager.blocksDestroyed);
+            }
+        });
+        Minecraft mc = Minecraft.getInstance();
+        LOG.info("[{}] client tornadoes={} particles={} fps={} dust={}", label, com.realweather.client.tornado.ClientTornadoes.all().size(),
+                mc.particleEngine.countParticles(), mc.getFps(), ClientWeather.camSand);
+    }
+
     private static void floods() {
         MinecraftServer server = server();
         server.execute(() -> LOG.info("flood blocks: {}", WeatherData.get(server.overworld()).floodList.size()));
@@ -263,7 +360,8 @@ public final class SelfTest {
         MinecraftServer server = server();
         server.execute(() -> {
             ServerPlayer p = server.getPlayerList().getPlayers().get(0);
-            LOG.info("player frozen ticks={} / {} at {}", p.getTicksFrozen(), p.getTicksRequiredToFreeze(), p.blockPosition());
+            LOG.info("player frozen ticks={} / {} at {} velocity={} health={}", p.getTicksFrozen(), p.getTicksRequiredToFreeze(), p.blockPosition(),
+                    p.getDeltaMovement(), p.getHealth());
         });
     }
 }

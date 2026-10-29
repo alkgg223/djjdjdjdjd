@@ -19,6 +19,8 @@ public final class LightningFx {
     public static float flash;
     /** Current camera shake amount 0..1. */
     public static float shake;
+    /** How strongly the flash lights up the world right now (lightmap), 0..1. */
+    public static float worldLight;
     private static int now;
 
     private LightningFx() {}
@@ -30,6 +32,7 @@ public final class LightningFx {
         }
         strength *= 0.35F + 0.65F * ClientWeather.exposure;
         flash = Math.max(flash, strength);
+        worldLight = Math.max(worldLight, Math.min(1F, strength * 1.3F));
         // A real flash is several return strokes a few hundredths of a second apart.
         int extra = 1 + RANDOM.nextInt(3);
         int t = now;
@@ -49,6 +52,11 @@ public final class LightningFx {
         }
     }
 
+    /** Continuous ground shaking (a tornado nearby); call every tick. */
+    public static void rumble(float amount) {
+        shake = Math.max(shake, Math.min(1F, amount));
+    }
+
     static void shakeLater(int delay, float amount) {
         shakeTick = now + delay;
         shakePending = Math.max(shakePending, amount);
@@ -57,10 +65,12 @@ public final class LightningFx {
     static void tick(Minecraft mc, ClientLevel level) {
         now++;
         flash *= 0.55F;
+        worldLight *= 0.5F;
         shake *= 0.85F;
         for (int i = 0; i < MAX_PULSES; i++) {
             if (pulseStrength[i] > 0F && pulseTick[i] <= now) {
                 flash = Math.max(flash, pulseStrength[i]);
+                worldLight = Math.max(worldLight, Math.min(1F, pulseStrength[i] * 1.3F));
                 level.setSkyFlashTime(2);
                 pulseStrength[i] = 0F;
             }
@@ -81,6 +91,7 @@ public final class LightningFx {
         }
         if (!ClientConfig.LIGHTNING_FLASH.get()) {
             flash = 0F;
+            worldLight = 0F;
         }
     }
 }

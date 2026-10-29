@@ -1,5 +1,5 @@
 """Procedural textures for Real Weather (rain, snow, sand, puddles, particles, water)."""
-import json, os
+import json, os, sys
 import numpy as np
 from PIL import Image
 
@@ -289,8 +289,43 @@ def water(rng):
     save(os.path.join(BLOCK, 'water_overlay.png'), img)
 
 
+def tornado(rng):
+    """Funnel: condensation bands spiralling around the vortex. Cloud: the ragged rotating wall cloud."""
+    s = 256
+    n1 = periodic_noise(rng, (s, s), 7, aniso=(1.0, 5.0))
+    n2 = periodic_noise(rng, (s, s), 18, aniso=(1.0, 3.0))
+    n3 = periodic_noise(rng, (s, s), 90)
+    band = 0.55 * n1 + 0.3 * n2 + 0.15 * n3
+    # Shear the horizontal bands by one full tile height, so they become a seamless spiral.
+    sheared = np.stack([np.roll(band[y], int(y * s / s)) for y in range(s)])
+    alpha = np.clip(0.62 + 0.22 * sheared, 0.25, 0.95)
+    lum = np.clip(0.82 + 0.12 * sheared, 0.55, 1.0) * 255
+    img = np.zeros((s, s, 4))
+    img[..., 0] = lum
+    img[..., 1] = lum
+    img[..., 2] = lum
+    img[..., 3] = alpha * 255
+    save(os.path.join(ENV, 'tornado_funnel.png'), img, blur=True)
+    c1 = periodic_noise(rng, (s, s), 6)
+    c2 = periodic_noise(rng, (s, s), 18)
+    c3 = periodic_noise(rng, (s, s), 50)
+    c = 0.55 * c1 + 0.3 * c2 + 0.15 * c3
+    alpha = np.clip(0.6 + 0.3 * c, 0.15, 1.0)
+    lum = np.clip(0.78 + 0.16 * c, 0.5, 1.0) * 255
+    img = np.zeros((s, s, 4))
+    img[..., 0] = lum
+    img[..., 1] = lum
+    img[..., 2] = lum * 1.02
+    img[..., 3] = alpha * 255
+    save(os.path.join(ENV, 'tornado_cloud.png'), img, blur=True)
+
+
 def main():
     rng = np.random.default_rng(2026)
+    if len(sys.argv) > 1 and sys.argv[1] == 'tornado':
+        tornado(np.random.default_rng(77))
+        print('tornado textures done')
+        return
     environment(rng)
     particles(rng)
     overlay(rng)

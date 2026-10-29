@@ -6,6 +6,9 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class ClientConfig {
     public enum Quality { LOW, MEDIUM, HIGH }
 
+    /** Tornado graphics have their own setting, independent of the rest of the weather. */
+    public enum TornadoQuality { LOW, MEDIUM, HIGH, ULTRA }
+
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.EnumValue<Quality> QUALITY;
     public static final ModConfigSpec.BooleanValue CUSTOM_PRECIPITATION;
@@ -17,6 +20,8 @@ public final class ClientConfig {
     public static final ModConfigSpec.BooleanValue FOG;
     public static final ModConfigSpec.BooleanValue LIGHTNING_FLASH;
     public static final ModConfigSpec.BooleanValue CAMERA_SHAKE;
+    public static final ModConfigSpec.BooleanValue REALISTIC_LIGHTNING;
+    public static final ModConfigSpec.EnumValue<TornadoQuality> TORNADO_QUALITY;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -40,6 +45,12 @@ public final class ClientConfig {
                 .define("lightningFlash", true);
         CAMERA_SHAKE = b.comment("Slight camera shake from very close thunder.").translation("realweather.config.camera_shake")
                 .define("cameraShake", true);
+        REALISTIC_LIGHTNING = b.comment("Branching, glowing lightning bolts that light up the clouds.").translation("realweather.config.realistic_lightning")
+                .define("realisticLightning", true);
+        b.comment("Tornado graphics (separate from the rain and snow settings).").translation("realweather.config.tornado").push("tornado");
+        TORNADO_QUALITY = b.comment("LOW, MEDIUM, HIGH or ULTRA.").translation("realweather.config.tornado_quality")
+                .defineEnum("tornadoGraphics", TornadoQuality.MEDIUM);
+        b.pop();
         SPEC = b.build();
     }
 
@@ -51,5 +62,10 @@ public final class ClientConfig {
             case MEDIUM -> 0.7F;
             case HIGH -> 1.0F;
         };
+    }
+
+    /** 0 = LOW .. 3 = ULTRA. */
+    public static int tornadoQuality() {
+        return TORNADO_QUALITY.get().ordinal();
     }
 }

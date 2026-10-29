@@ -138,7 +138,12 @@ public final class WeatherSounds {
         int delay = (int) Math.round(dist / 17.15);
         SoundEvent event;
         float volume;
-        if (dist < 150) {
+        if (dist < 60 && bolt) {
+            // A strike right next to you: an explosive crack with no gap before the boom.
+            event = ModContent.THUNDER_STRIKE.get();
+            volume = 1F;
+            LightningFx.shakeLater(delay, 1F);
+        } else if (dist < 150) {
             event = ModContent.THUNDER_CLOSE.get();
             volume = 1F;
             LightningFx.shakeLater(delay, (float) (1.0 - dist / 150.0));

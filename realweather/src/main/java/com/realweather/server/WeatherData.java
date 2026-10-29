@@ -34,6 +34,10 @@ public class WeatherData extends SavedData {
     public boolean freezing = true;
     public boolean villagers = true;
     public boolean natural = true;
+    public boolean tornadoDamage = true;
+    public boolean tornadoNatural = true;
+    public int nextTornadoId = 1;
+    public final java.util.List<Tornado> tornadoes = new java.util.ArrayList<>();
 
     /** Flood water blocks placed by the mod, oldest first, so the water can drain later. */
     public final LongArrayList floodList = new LongArrayList();
@@ -65,6 +69,13 @@ public class WeatherData extends SavedData {
         d.freezing = tag.getBoolean("freezing");
         d.villagers = tag.getBoolean("villagers");
         d.natural = tag.getBoolean("natural");
+        d.tornadoDamage = !tag.contains("tornadoDamage") || tag.getBoolean("tornadoDamage");
+        d.tornadoNatural = !tag.contains("tornadoNatural") || tag.getBoolean("tornadoNatural");
+        d.nextTornadoId = Math.max(1, tag.getInt("nextTornadoId"));
+        net.minecraft.nbt.ListTag list = tag.getList("tornadoes", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for (int i = 0; i < list.size(); i++) {
+            d.tornadoes.add(Tornado.load(list.getCompound(i)));
+        }
         for (long p : tag.getLongArray("floodBlocks")) {
             if (d.floodSet.add(p)) {
                 d.floodList.add(p);
@@ -94,6 +105,14 @@ public class WeatherData extends SavedData {
         tag.putBoolean("freezing", freezing);
         tag.putBoolean("villagers", villagers);
         tag.putBoolean("natural", natural);
+        tag.putBoolean("tornadoDamage", tornadoDamage);
+        tag.putBoolean("tornadoNatural", tornadoNatural);
+        tag.putInt("nextTornadoId", nextTornadoId);
+        net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
+        for (Tornado t : tornadoes) {
+            list.add(t.save());
+        }
+        tag.put("tornadoes", list);
         tag.putLongArray("floodBlocks", floodList.toLongArray());
         return tag;
     }

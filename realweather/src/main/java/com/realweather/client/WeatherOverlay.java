@@ -30,7 +30,8 @@ public final class WeatherOverlay {
         }
         float f = LightningFx.flash;
         if (f > 0.01F) {
-            int a = (int) (Math.min(1F, f) * 0.55F * 255F);
+            // The world itself lights up (lightmap); the screen only gets a short glare on top.
+            int a = (int) (Math.min(1F, f) * 0.3F * 255F);
             g.fill(0, 0, w, h, (a << 24) | 0xE6ECFF);
         }
     }

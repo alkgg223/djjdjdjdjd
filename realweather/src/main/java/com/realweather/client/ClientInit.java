@@ -35,6 +35,12 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(FogEffects::onFogColor);
         NeoForge.EVENT_BUS.addListener(FogEffects::onCameraAngles);
         NeoForge.EVENT_BUS.addListener(WaterShader::onRenderStage);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.tornado.TornadoRenderer::onRenderStage);
+        modBus.addListener(ClientInit::onEntityRenderers);
+    }
+
+    private static void onEntityRenderers(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(net.minecraft.world.entity.EntityType.LIGHTNING_BOLT, RealLightningRenderer::new);
     }
 
     private static void onSetup(FMLClientSetupEvent event) {

@@ -24,12 +24,13 @@ public final class VillagerShelter {
 
     static void tick(ServerLevel level, WeatherData d) {
         boolean anyStorm = WeatherServer.thunder > 0.25F || WeatherServer.rain >= 0.75F && level.isRaining()
-                || WeatherServer.blizzard > 0.3F || WeatherServer.sand > 0.3F;
+                || WeatherServer.blizzard > 0.3F || WeatherServer.sand > 0.3F || !d.tornadoes.isEmpty();
         List<? extends Villager> villagers = level.getEntities(EntityType.VILLAGER, v -> v.isAlive());
         for (Villager v : villagers) {
             CompoundTag data = v.getPersistentData();
             boolean sheltering = data.getBoolean(TAG);
-            boolean danger = d.villagers && anyStorm && dangerAt(level, v.blockPosition());
+            boolean danger = d.villagers && anyStorm && (dangerAt(level, v.blockPosition())
+                    || TornadoManager.nearest(d, v.getX(), v.getZ(), 200) != null);
             Brain<Villager> brain = v.getBrain();
             Activity scheduled = brain.getSchedule().getActivityAt((int) (level.getDayTime() % 24000L));
             if (danger && scheduled != Activity.REST && !v.isSleeping()) {

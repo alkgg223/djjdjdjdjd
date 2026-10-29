@@ -38,10 +38,12 @@ public final class FogEffects {
         target = Math.min(target, Mth.lerp(snow * 0.7F, far, Math.max(22F, far * 0.3F)));
         target = Math.min(target, Mth.lerp(bliz, far, 14F));
         target = Math.min(target, Mth.lerp(sand, far, 12F));
+        float dust = tornadoDust(event.getCamera());
+        target = Math.min(target, Mth.lerp(dust, far, 10F));
         if (target >= far - 0.05F) {
             return;
         }
-        float density = Math.max(bliz, sand);
+        float density = Math.max(Math.max(bliz, sand), dust);
         float newNear;
         if (event.getMode() == FogRenderer.FogMode.FOG_SKY) {
             newNear = 0F;
@@ -78,6 +80,11 @@ public final class FogEffects {
         g = Mth.lerp(sand, g, 0.62F * bright + 0.02F);
         b = Mth.lerp(sand, b, 0.38F * bright + 0.01F);
 
+        float dust = tornadoDust(event.getCamera()) * 0.9F;
+        r = Mth.lerp(dust, r, 0.46F * bright + 0.02F);
+        g = Mth.lerp(dust, g, 0.41F * bright + 0.02F);
+        b = Mth.lerp(dust, b, 0.35F * bright + 0.02F);
+
         float f = LightningFx.flash * 0.35F;
         event.setRed(Math.min(1F, r + f));
         event.setGreen(Math.min(1F, g + f));
@@ -94,6 +101,14 @@ public final class FogEffects {
         event.setPitch(event.getPitch() + (float) Math.sin(t * 2.7) * amp);
         event.setYaw(event.getYaw() + (float) Math.sin(t * 3.3 + 1.0) * amp * 0.6F);
         event.setRoll(event.getRoll() + (float) Math.sin(t * 4.1 + 2.0) * amp * 0.5F);
+    }
+
+    private static float tornadoDust(Camera camera) {
+        if (com.realweather.client.tornado.ClientTornadoes.isEmpty()) {
+            return 0F;
+        }
+        net.minecraft.world.phys.Vec3 p = camera.getPosition();
+        return com.realweather.client.tornado.TornadoRenderer.dustAt(p.x, p.y, p.z);
     }
 
     private static float smooth(float e0, float e1, float x) {

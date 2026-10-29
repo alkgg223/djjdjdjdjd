@@ -40,6 +40,7 @@ public final class WeatherCommands {
                 .then(Commands.literal("drain").executes(WeatherCommands::drain))
                 .then(Commands.literal("depth").then(Commands.argument("blocks", IntegerArgumentType.integer(1, 4))
                         .executes(c -> floodDepth(c.getSource(), IntegerArgumentType.getInteger(c, "blocks"))))));
+        root.then(tornado());
         root.then(onOff("snowpile"));
         root.then(onOff("freezing"));
         root.then(onOff("villagers"));
@@ -50,6 +51,48 @@ public final class WeatherCommands {
 
         var node = dispatcher.register(root);
         dispatcher.register(Commands.literal("rw").requires(s -> s.hasPermission(2)).redirect(node));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> tornado() {
+        LiteralArgumentBuilder<CommandSourceStack> t = Commands.literal("tornado");
+        // /rw tornado 3, /rw tornado f3, and "here" to spawn it right where you stand.
+        t.then(Commands.argument("rating", IntegerArgumentType.integer(0, 5))
+                .executes(c -> spawnTornado(c.getSource(), IntegerArgumentType.getInteger(c, "rating"), false))
+                .then(Commands.literal("here").executes(c -> spawnTornado(c.getSource(), IntegerArgumentType.getInteger(c, "rating"), true))));
+        for (int i = 0; i <= 5; i++) {
+            int rating = i;
+            t.then(Commands.literal("f" + i).executes(c -> spawnTornado(c.getSource(), rating, false))
+                    .then(Commands.literal("here").executes(c -> spawnTornado(c.getSource(), rating, true))));
+        }
+        t.then(Commands.literal("stop").executes(c -> {
+            WeatherData d = WeatherData.get(overworld(c.getSource()));
+            d.tornadoes.forEach(Tornado::dissipate);
+            d.setDirty();
+            ok(c.getSource(), "tornado.stop");
+            return 1;
+        }));
+        t.then(Commands.literal("damage")
+                .then(Commands.literal("on").executes(c -> toggle(c, "tornado.damage", true)))
+                .then(Commands.literal("off").executes(c -> toggle(c, "tornado.damage", false))));
+        t.then(Commands.literal("natural")
+                .then(Commands.literal("on").executes(c -> toggle(c, "tornado.natural", true)))
+                .then(Commands.literal("off").executes(c -> toggle(c, "tornado.natural", false))));
+        return t;
+    }
+
+    private static int spawnTornado(CommandSourceStack src, int rating, boolean here) {
+        ServerLevel level = overworld(src);
+        WeatherData d = WeatherData.get(level);
+        if (d.tornadoes.size() >= 4) {
+            src.sendFailure(Component.translatable("realweather.cmd.tornado.too_many"));
+            return 0;
+        }
+        net.minecraft.world.phys.Vec3 pos = src.getLevel() == level ? src.getPosition() : level.getSharedSpawnPos().getCenter();
+        Tornado t = here ? TornadoManager.spawnAt(level, d, pos, rating, level.random)
+                : TornadoManager.spawnApproaching(level, d, pos, rating, 70 + level.random.nextInt(30), level.random);
+        int dist = (int) Math.sqrt((t.x - pos.x) * (t.x - pos.x) + (t.z - pos.z) * (t.z - pos.z));
+        ok(src, "tornado", "F" + rating, dist);
+        return 1;
     }
 
     private interface IntensityAction {
@@ -185,6 +228,8 @@ public final class WeatherCommands {
             case "freezing" -> d.freezing = on;
             case "villagers" -> d.villagers = on;
             case "natural" -> d.natural = on;
+            case "tornado.damage" -> d.tornadoDamage = on;
+            case "tornado.natural" -> d.tornadoNatural = on;
             default -> {
             }
         }
@@ -229,6 +274,7 @@ public final class WeatherCommands {
         d.windOverride = -1F;
         d.sandTicks = 0;
         d.blizzardTicks = 0;
+        d.tornadoes.forEach(Tornado::dissipate);
         level.setWeatherParameters(12000, 0, false, false);
         d.setDirty();
         ok(src, "clear");

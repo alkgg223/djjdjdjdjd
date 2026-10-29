@@ -286,6 +286,22 @@ def channel(rng):
         p = p + d * rng.uniform(4, 14)
         pts.append(p.copy())
     segs = [np.array(pts)]
+    # Downward branches off the lower channel add crackle.
+    for _ in range(rng.integers(2, 6)):
+        q = segs[0][rng.integers(len(segs[0]) // 6, len(segs[0]) * 2 // 3)].copy()
+        d = np.array([rng.normal(), rng.normal(), -0.6])
+        d /= np.linalg.norm(d)
+        bp = [q.copy()]
+        for _ in range(rng.integers(20, 90)):
+            d = d + rng.normal(0, 0.5, 3)
+            d[2] = -abs(d[2]) * 0.6
+            d /= np.linalg.norm(d)
+            q = q + d * rng.uniform(4, 12)
+            if q[2] < 0:
+                break
+            bp.append(q.copy())
+        if len(bp) > 2:
+            segs.append(np.array(bp))
     # Horizontal spider channels inside the cloud carry much of the rumble.
     for _ in range(rng.integers(2, 5)):
         q = segs[0][rng.integers(len(segs[0]) * 2 // 3, len(segs[0]))].copy()
@@ -363,7 +379,15 @@ def thunder(seed, dist, length):
     ir = filt(ir, 'lowpass', 900, 2)
     ir[0] = 0
     wet = ss.fftconvolve(out, ir)[:n]
-    out = out + rms_norm(wet, 20 * np.log10(np.sqrt(np.mean(out ** 2)) + 1e-12) - (4 if dist < 500 else 1))
+    level_db = 20 * np.log10(np.sqrt(np.mean(out ** 2)) + 1e-12)
+    # Distinct echoes off hills and tree lines, then the diffuse tail.
+    echoes = np.zeros(n)
+    for _ in range(rng.integers(3, 7)):
+        dly = int(rng.uniform(0.25, 2.6) * SR)
+        if dly < n:
+            e = filt(out[:n - dly], 'lowpass', rng.uniform(500, 1600), 2) * 10 ** (-rng.uniform(8, 18) / 20)
+            echoes[dly:] += e
+    out = out + echoes + rms_norm(wet, level_db - (4 if dist < 500 else 1))
     out = filt(out, 'highpass', 22, 2)
     # Body: the low boom that follows the crack, felt more than heard.
     boom = filt(out, 'lowpass', 120, 2)
@@ -376,9 +400,123 @@ def thunder(seed, dist, length):
     return peak_norm(out, -1.0)
 
 
+def strike(seed, length):
+    """Lightning hitting the ground a few dozen metres away: corona hiss, an explosive crack, a chest-deep boom."""
+    rng = np.random.default_rng(seed)
+    n = int(length * SR)
+    body = thunder(seed + 1000, rng.uniform(40, 70), length)
+    t = np.arange(n) / SR
+    pre = int(rng.uniform(0.04, 0.09) * SR)
+    sizzle = filt(white(rng, pre), 'highpass', 3500, 2) * np.linspace(0, 1, pre) ** 2 * 0.25
+    crack = filt(white(rng, int(0.025 * SR)), 'highpass', 900, 1) * np.exp(-np.arange(int(0.025 * SR)) / SR / 0.006)
+    boom = filt(white(rng, n), 'lowpass', 90, 3) * np.exp(-t / rng.uniform(1.0, 1.6))
+    boom = peak_norm(boom, -2)
+    out = np.zeros(n + pre)
+    out[:pre] += sizzle
+    out[pre:pre + len(crack)] += peak_norm(crack, 0) * 1.4
+    out[pre:] += peak_norm(body, -1) * 0.9 + boom * 0.8
+    out = np.tanh(out * 1.8) / np.tanh(1.8)
+    out = fade(out[:n], 0.0, min(2.5, length * 0.3))
+    return peak_norm(out, -0.8)
+
+
+# ---------------------------------------------------------------- tornado
+
+def tornado_roar(seed):
+    """Close tornado: the continuous 'freight train' roar, fluttering as the vortex turns."""
+    rng = np.random.default_rng(seed)
+    L, xf = 20 * SR, 3 * SR
+    n = L + xf
+    t = np.arange(n) / SR
+    rumble = rms_norm(filt(brown(rng, n), 'lowpass', 90, 3), -14) * (0.75 + 0.25 * ctrl(rng, n, 0.3))
+    flutter_rate = 3.5 + 1.5 * ctrl(rng, n, 0.2)
+    flutter = 1 + 0.35 * np.sin(2 * np.pi * np.cumsum(flutter_rate) / SR) * ctrl(rng, n, 0.4, 0.4, 1.0)
+    roar = rms_norm(filt(pink(rng, n), 'bandpass', [80, 1200], 2), -17) * flutter
+    tone = rms_norm(whistles(rng, n, rng.uniform(180, 520, 9), 18, ctrl(rng, n, 0.3, 0.4, 1.0)), -24)
+    hiss = rms_norm(filt(white(rng, n), 'bandpass', [2000, 8000], 2), -30) * ctrl(rng, n, 1.5, 0.5, 1.0)
+    x = rumble + roar + tone + hiss
+    x = filt(x, 'highpass', 25)
+    return limit(rms_norm(loopify(compress(x, 0.3, 2.5), xf), -15))
+
+
+def tornado_debris(seed):
+    """Right next to it: wood snapping, things clattering and slamming, glass breaking, in a howling rush."""
+    rng = np.random.default_rng(seed)
+    L, xf = 16 * SR, 2 * SR
+    n = L + xf
+    x = rms_norm(filt(pink(rng, n), 'bandpass', [300, 3000], 2), -24) * ctrl(rng, n, 0.8, 0.5, 1.0)
+
+    def scatter(rate, make, level):
+        out = np.zeros(n)
+        tpos = 0.0
+        while True:
+            tpos += rng.exponential(1.0 / rate)
+            i = int(tpos * SR)
+            if i >= n - SR:
+                break
+            k = make()
+            out[i:i + len(k)] += k * rng.uniform(0.3, 1.0)
+        return rms_norm(out, level)
+
+    def crack():
+        m = int(rng.uniform(0.03, 0.09) * SR)
+        tt = np.arange(m) / SR
+        k = rng.standard_normal(m) * np.exp(-tt / rng.uniform(0.008, 0.025))
+        f = rng.uniform(300, 1200)
+        return filt(k, 'bandpass', [f * 0.6, f * 2.2], 2) + np.sin(2 * np.pi * f * tt) * np.exp(-tt / 0.01) * 0.5
+
+    def clatter():
+        m = int(0.25 * SR)
+        k = np.zeros(m)
+        for _ in range(rng.integers(3, 9)):
+            j = rng.integers(0, m - 200)
+            k[j:j + 200] += burst(rng, 200 / SR * 1000, 2000, 5500, 0.6)[:200]
+        return k
+
+    def thud():
+        return burst(rng, 120, 40, rng.uniform(150, 300), rng.uniform(20, 50))
+
+    def glass():
+        k = np.zeros(int(0.3 * SR))
+        for _ in range(rng.integers(3, 7)):
+            p = plip(rng, rng.uniform(3000, 6500), rng.uniform(20, 60), 0.1)[:len(k)]
+            j = rng.integers(0, len(k) - len(p)) if len(k) > len(p) else 0
+            k[j:j + len(p)] += p
+        return k
+
+    x += scatter(4.5, crack, -24)
+    x += scatter(2.5, clatter, -28)
+    x += scatter(1.2, thud, -24)
+    x += scatter(0.35, glass, -32)
+    x = filt(x, 'highpass', 35)
+    return limit(rms_norm(loopify(x, xf), -18))
+
+
+def tornado_far(seed):
+    """A tornado a few hundred metres away: a deep, steady rumble like a distant train."""
+    rng = np.random.default_rng(seed)
+    L, xf = 22 * SR, 3 * SR
+    n = L + xf
+    rumble = rms_norm(filt(brown(rng, n), 'lowpass', 70, 3), -16)
+    body = rms_norm(filt(pink(rng, n), 'bandpass', [60, 340], 2), -18) * ctrl(rng, n, 0.25, 0.6, 1.0)
+    x = (rumble + body) * (0.8 + 0.2 * ctrl(rng, n, 0.15))
+    x = filt(x, 'highpass', 22)
+    return limit(rms_norm(loopify(x, xf), -17))
+
+
+def tornadoes():
+    write('tornado_roar', tornado_roar(41))
+    write('tornado_debris', tornado_debris(42))
+    write('tornado_far', tornado_far(43))
+
+
 def main():
-    if len(sys.argv) > 1 and sys.argv[1] == 'thunder':
-        return thunders()
+    if len(sys.argv) > 1:
+        if 'thunder' in sys.argv:
+            thunders()
+        if 'tornado' in sys.argv:
+            tornadoes()
+        return
     write('rain_light', rain(11, False))
     write('rain_heavy', rain(12, True))
     write('rain_roof', rain_roof(13))
@@ -386,15 +524,18 @@ def main():
     write('blizzard', blizzard(22))
     write('sandstorm', sandstorm(23))
     thunders()
+    tornadoes()
 
 
 def thunders():
-    for i, (d, ln) in enumerate([(180, 9), (260, 10), (120, 8)]):
+    for i, (d, ln) in enumerate([(180, 9), (260, 10), (120, 8), (220, 10)]):
         write('thunder_close%d' % (i + 1), thunder(100 + i, d, ln))
-    for i, (d, ln) in enumerate([(1300, 11), (2000, 12), (1600, 11)]):
+    for i, (d, ln) in enumerate([(1300, 11), (2000, 12), (1600, 11), (900, 11)]):
         write('thunder_mid%d' % (i + 1), thunder(200 + i, d, ln))
-    for i, (d, ln) in enumerate([(5500, 12), (8000, 13), (6500, 12)]):
+    for i, (d, ln) in enumerate([(5500, 12), (8000, 13), (6500, 12), (4200, 12)]):
         write('thunder_far%d' % (i + 1), thunder(300 + i, d, ln))
+    for i in range(3):
+        write('thunder_strike%d' % (i + 1), strike(400 + i, 8 + i))
 
 
 if __name__ == '__main__':

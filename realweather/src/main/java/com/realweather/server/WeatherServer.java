@@ -114,7 +114,9 @@ public final class WeatherServer {
         if (players.isEmpty()) {
             return;
         }
+        // (tornadoes keep their state while nobody is around)
         lightning(level, players, rng);
+        TornadoManager.tick(level, d, players, rng);
         FloodManager.tick(level, d, players, rng);
         SnowPile.tick(level, d, players, rng);
         if (t % 20 == 0) {
@@ -207,12 +209,14 @@ public final class WeatherServer {
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             PacketDistributor.sendToPlayer(player, payload());
+            PacketDistributor.sendToPlayer(player, TornadoManager.payload(WeatherData.get(player.server.overworld())));
         }
     }
 
     public static void onChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             PacketDistributor.sendToPlayer(player, payload());
+            PacketDistributor.sendToPlayer(player, TornadoManager.payload(WeatherData.get(player.server.overworld())));
         }
     }
 

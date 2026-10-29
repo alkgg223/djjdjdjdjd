@@ -69,6 +69,7 @@ public final class ClientWeather {
         camRain = camSnow = camSand = camBlizzard = 0F;
         wetness = 0F;
         WeatherSounds.stopAll();
+        com.realweather.client.tornado.ClientTornadoes.clear();
     }
 
     public static boolean active(ClientLevel level) {
@@ -129,6 +130,7 @@ public final class ClientWeather {
 
         WeatherSounds.tick(mc, level);
         LightningFx.tick(mc, level);
+        com.realweather.client.tornado.ClientTornadoes.tick(mc, level);
     }
 
     private static void sample(ClientLevel level, Vec3 cam) {

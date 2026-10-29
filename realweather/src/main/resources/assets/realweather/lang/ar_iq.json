@@ -52,5 +52,22 @@
   "realweather.config.sounds": "أصوات طقس واقعية",
   "realweather.config.fog": "انعدام الرؤية في العواصف",
   "realweather.config.lightning_flash": "وميض البرق",
-  "realweather.config.camera_shake": "اهتزاز الكاميرا من الرعد"
+  "realweather.config.camera_shake": "اهتزاز الكاميرا من الرعد",
+  "subtitles.realweather.thunder_strike": "صاعقة قريبة جداً",
+  "subtitles.realweather.tornado": "إعصار يهدر",
+  "subtitles.realweather.tornado_debris": "حطام يتطاير",
+  "subtitles.realweather.tornado_far": "هدير إعصار بعيد",
+  "death.attack.realweather.tornado": "%1$s اقتلعه الإعصار",
+  "death.attack.realweather.tornado.player": "%1$s اقتلعه الإعصار أثناء قتاله %2$s",
+  "realweather.cmd.tornado": "إعصار %s يلامس الأرض على بعد %s بلوك",
+  "realweather.cmd.tornado.stop": "الأعاصير تضعف وتتلاشى",
+  "realweather.cmd.tornado.too_many": "يوجد عدد كبير من الأعاصير بالفعل",
+  "realweather.cmd.tornado.damage.on": "الأعاصير تقتلع الأرض والبيوت",
+  "realweather.cmd.tornado.damage.off": "الأعاصير لا تكسر البلوكات",
+  "realweather.cmd.tornado.natural.on": "الأعاصير قد تتكون في العواصف الرعدية القوية",
+  "realweather.cmd.tornado.natural.off": "الأعاصير تأتي من الأوامر فقط",
+  "realweather.config.realistic_lightning": "برق واقعي",
+  "realweather.config.tornado": "الإعصار",
+  "realweather.config.tornado_quality": "جرافيك الإعصار",
+  "realweather.config.tornado_quality.tooltip": "LOW أو MEDIUM أو HIGH أو ULTRA، منفصل عن جودة المطر والثلج"
 }
