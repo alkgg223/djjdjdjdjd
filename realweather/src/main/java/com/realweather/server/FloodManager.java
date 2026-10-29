@@ -11,12 +11,14 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.AABB;
 
 import java.util.List;
 
@@ -192,6 +194,10 @@ public final class FloodManager {
         }
         chance *= 0.4F + 0.6F * k;
         if (chance <= 0F || rng.nextFloat() >= chance) {
+            return;
+        }
+        // The water rises around people, not on the very spot they stand on.
+        if (!level.getEntitiesOfClass(Player.class, new AABB(pos).inflate(0.8, 1.5, 0.8)).isEmpty()) {
             return;
         }
         level.setBlock(pos, ModContent.FLOOD.get().defaultFluidState().createLegacyBlock(), 3);

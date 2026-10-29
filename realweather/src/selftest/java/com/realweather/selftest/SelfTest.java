@@ -49,6 +49,9 @@ public final class SelfTest {
             cmd("difficulty peaceful");
             cmd("time set 6000");
             cmd("rw clear");
+            cmd("effect give @a minecraft:resistance infinite 255 true");
+            cmd("effect give @a minecraft:fire_resistance infinite 0 true");
+            cmd("effect give @a minecraft:water_breathing infinite 0 true");
             Minecraft.getInstance().options.hideGui = true;
         });
         step(20, () -> goTo("minecraft:river", 30, 10));
