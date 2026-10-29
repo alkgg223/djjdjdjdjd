@@ -3,8 +3,8 @@
 set +e
 echo "=== JARS"
 find build "$HOME/.gradle" -name '*.jar' 2>/dev/null | grep -iE 'neoforge|minecraft|client-extra' | grep -v sources | xargs ls -la 2>/dev/null | awk '{print $5, $9}' | sort -n | tail -15
-CLS=$(find build "$HOME/.gradle" -name 'neoforge-21.1.*.jar' 2>/dev/null | grep -v -e sources -e universal -e userdev -e installer | xargs ls -S 2>/dev/null | head -1)
-RES=$(find build "$HOME/.gradle" -name '*client-extra*.jar' 2>/dev/null | head -1)
+CLS=$(find "$PWD/build" "$HOME/.gradle" -name 'neoforge-21.1.*.jar' 2>/dev/null | grep -v -e sources -e universal -e userdev -e installer | xargs ls -S 2>/dev/null | head -1)
+RES=$(find "$HOME/.gradle" -name 'minecraft_1.21.1_client.jar' 2>/dev/null | head -1)
 echo "CLS=$CLS RES=$RES"
 mkdir -p /tmp/res && cd /tmp/res && unzip -q -o "$RES" 'assets/minecraft/shaders/*' 'assets/minecraft/sounds.json' 'assets/minecraft/textures/block/water*' 'assets/minecraft/textures/environment/*' 2>/dev/null; cd - >/dev/null
 for f in core/rendertype_translucent.json core/rendertype_translucent.vsh core/rendertype_translucent.fsh core/particle.json core/particle.vsh include/fog.glsl include/light.glsl; do echo "=== SHADER $f"; cat /tmp/res/assets/minecraft/shaders/$f; echo; done
@@ -19,74 +19,19 @@ echo "=== SOUNDS"; python3 -c "
 import json;d=json.load(open('/tmp/res/assets/minecraft/sounds.json'))
 for k in ['weather.rain','weather.rain.above','entity.lightning_bolt.thunder','entity.lightning_bolt.impact','ambient.underwater.loop']: print(k, json.dumps(d.get(k)))"
 J="javap -p -cp $CLS"
-for c in \
- net.minecraft.client.renderer.DimensionSpecialEffects \
- 'net.minecraft.client.renderer.DimensionSpecialEffects$OverworldEffects' \
- net.neoforged.neoforge.client.extensions.IDimensionSpecialEffectsExtension \
- net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent \
- 'net.neoforged.neoforge.client.event.ViewportEvent$RenderFog' \
- 'net.neoforged.neoforge.client.event.ViewportEvent$ComputeFogColor' \
- net.neoforged.neoforge.client.event.ViewportEvent \
- 'net.minecraft.client.renderer.FogRenderer$FogMode' \
- net.minecraft.client.renderer.ItemBlockRenderTypes \
- net.minecraft.client.particle.SingleQuadParticle \
- net.minecraft.client.particle.TextureSheetParticle \
- net.minecraft.client.particle.ParticleRenderType \
- net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent \
- net.minecraft.core.particles.SimpleParticleType \
- net.minecraft.world.level.block.LiquidBlock \
- net.neoforged.neoforge.fluids.BaseFlowingFluid \
- 'net.neoforged.neoforge.fluids.BaseFlowingFluid$Properties' \
- 'net.neoforged.neoforge.fluids.BaseFlowingFluid$Source' \
- 'net.neoforged.neoforge.fluids.FluidType$Properties' \
- net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions \
- net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent \
- net.minecraft.world.entity.ai.behavior.LocateHidingPlace \
- net.minecraft.world.entity.ai.behavior.SetHiddenState \
- net.minecraft.world.entity.ai.memory.WalkTarget \
- net.minecraft.client.resources.sounds.AbstractTickableSoundInstance \
- net.minecraft.client.resources.sounds.AbstractSoundInstance \
- net.neoforged.neoforge.client.event.sound.PlaySoundEvent \
- net.neoforged.neoforge.client.event.sound.SoundEvent \
- com.mojang.blaze3d.vertex.Tesselator \
- com.mojang.blaze3d.vertex.BufferUploader \
- net.minecraft.client.renderer.LightTexture \
- net.neoforged.neoforge.client.event.RegisterGuiLayersEvent \
- net.neoforged.neoforge.client.gui.VanillaGuiLayers \
- net.neoforged.neoforge.event.AddPackFindersEvent \
- net.minecraft.server.packs.repository.Pack \
- net.neoforged.neoforge.client.gui.ConfigurationScreen \
- net.neoforged.neoforge.client.gui.IConfigScreenFactory \
- 'net.minecraft.world.level.saveddata.SavedData$Factory' \
- net.neoforged.neoforge.network.registration.PayloadRegistrar \
- net.neoforged.neoforge.network.PacketDistributor \
- net.minecraft.world.entity.LightningBolt \
- net.neoforged.neoforge.client.event.ClientTickEvent \
- net.neoforged.neoforge.event.tick.LevelTickEvent \
- net.neoforged.neoforge.client.event.RegisterClientCommandsEvent \
- ; do echo "=== CLASS $c"; $J "$c" 2>&1 | grep -v 'private static final' | grep -v '^Compiled'; done
-echo "=== GREP big classes"
-$J net.minecraft.client.renderer.LevelRenderer | grep -iE 'rain|snow|getLightColor|ticks|weather'
-$J net.minecraft.client.renderer.GameRenderer | grep -iE 'getParticleShader|getPositionTexColorShader|getPositionColorShader|getRendertypeTranslucent'
-$J net.minecraft.client.multiplayer.ClientLevel | grep -iE 'flash|rain|thunder|effects'
-$J net.minecraft.world.level.Level | grep -iE 'rain|thunder|flash|canSeeSky|getHeight\(|getHeightmapPos|isLoaded|getSeaLevel'
-$J net.minecraft.server.level.ServerLevel | grep -iE 'weather|getEntities|isRaining|findLightning|getPoiManager|getDayTime|tickPrecipitation'
-$J net.minecraft.world.level.biome.Biome | grep -iE 'precip|snow|rain|cold|warm|temperature|getWaterColor'
-$J net.minecraft.world.entity.ai.Brain | grep -iE 'activity|memory|schedule'
-$J net.minecraft.world.entity.Entity | grep -iE 'ticksFrozen|canFreeze|isInWaterOrRain|isInRain|getEyePosition\(\)'
-$J com.mojang.blaze3d.systems.RenderSystem | grep -iE 'fog|depthMask|setShaderTexture|setShader\(|enableBlend|disableCull|setShaderColor|blendFunc|getShaderGameTime|ColorModulator'
-$J com.mojang.blaze3d.vertex.VertexConsumer | grep -iE 'addVertex|setUv|setColor|setLight|setNormal|setOverlay'
-$J com.mojang.blaze3d.vertex.BufferBuilder | grep -iE 'build|addVertex'
-$J net.minecraft.client.renderer.FogRenderer | grep -iE 'static|setupFog|levelFogColor'
-$J net.minecraft.world.level.block.SnowLayerBlock | grep -iE 'LAYERS|canSurvive'
-$J net.minecraft.client.gui.GuiGraphics | grep -iE ' fill\(|blit\(|guiWidth|guiHeight|setColor'
-$J net.minecraft.client.particle.Particle | grep -iE 'protected|public' | head -60
-$J net.minecraft.client.Camera | grep -iE 'getPosition|getFluidInCamera|getBlockPosition|getLookVector|getYRot'
-$J net.minecraft.world.entity.npc.Villager | grep -iE 'getBrain|refreshBrain|isSleeping'
-$J net.minecraft.server.level.ServerPlayer | grep -iE 'serverLevel|getCommandSenderWorld'
-$J net.minecraft.client.renderer.RenderStateShard | grep -iE 'TRANSLUCENT'
-$J 'net.neoforged.neoforge.client.event.RenderLevelStageEvent$Stage' | grep -iE 'AFTER'
-$J net.neoforged.neoforge.client.event.RenderLevelStageEvent | grep -iE 'public'
-$J net.minecraft.world.level.levelgen.Heightmap | grep -i getFirstAvailable
-$J net.minecraft.world.entity.ai.village.poi.PoiManager | grep -iE 'find|getRandom|findClosest'
+for c in net.minecraft.server.packs.repository.PackSource 'net.minecraft.world.level.biome.Biome$Precipitation' net.minecraft.client.resources.sounds.SimpleSoundInstance; do echo "=== CLASS $c"; $J "$c" 2>&1 | grep -v 'lambda\$'; done
+$J net.minecraft.client.renderer.ShaderInstance | grep -iE 'uniform|GAME_TIME'
+$J com.mojang.blaze3d.shaders.Uniform | grep -E 'public void set\('
+$J net.minecraft.client.sounds.SoundManager | grep -iE 'play|isActive|stop'
+$J net.minecraft.client.Minecraft | grep -iE 'useShaderTransparency|useFancyGraphics|getSoundManager|particleEngine|isPaused|levelRenderer|public .*options;|getCameraEntity|gameRenderer;'
+$J net.minecraft.client.particle.ParticleEngine | grep -iE ' add|createParticle'
+$J net.minecraft.client.multiplayer.ClientLevel | grep -iE 'addParticle|playLocalSound|getBiome|getSkyColor|getCloudColor'
+$J 'net.neoforged.neoforge.common.ModConfigSpec$Builder' | grep -vE 'lambda|private'
+$J net.minecraft.world.entity.ai.village.poi.PoiTypes | grep -i HOME
+$J net.minecraft.world.level.material.Fluid | grep -iE 'randomTick|isRandomlyTicking|animateTick'
+$J 'net.minecraft.world.level.block.state.BlockBehaviour$Properties' | grep -iE 'ofFullCopy|noLootTable|replaceable|liquid|noCollission|strength|pushReaction|mapColor\('
+$J net.minecraft.world.level.block.state.BlockBehaviour | grep -iE 'canBeReplaced'
+$J 'net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase' | grep -iE 'canBeReplaced|isFaceSturdy|isSolidRender|blocksMotion|is\(|getFluidState|isAir'
+$J net.minecraft.world.entity.Entity | grep -iE 'moveTo\(|isInWater\(|getBbHeight|blockPosition|level\(\)'
+$J net.minecraft.client.renderer.texture.TextureAtlasSprite | grep -iE 'getU\(|getV\(|getU0|getV0'
 echo "=== END DUMP"
