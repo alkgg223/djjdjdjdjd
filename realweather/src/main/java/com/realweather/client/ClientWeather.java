@@ -30,6 +30,8 @@ public final class ClientWeather {
     public static float exposure = 1F;
     /** True when there is a roof directly above the camera. */
     public static boolean covered;
+    /** True when the camera is inside water. */
+    public static boolean underwater;
     /** 1 near the ground, fading out when high above it. */
     public static float groundNear = 1F;
     /** How wet the ground is (puddles). */
@@ -166,9 +168,11 @@ public final class ClientWeather {
         sSand = wSand / total * sand;
         sOpen = wOpen / total;
         int camTop = level.getHeight(Heightmap.Types.MOTION_BLOCKING, cx, cz);
-        covered = camTop > cy + 1;
-        int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, cx, cz);
-        sGround = Mth.clamp(1F - (float) (cam.y - ground - 6) / 40F, 0.15F, 1F);
+        m.set(cx, cy, cz);
+        underwater = !level.getFluidState(m).isEmpty();
+        covered = camTop > cy + 1 && !underwater;
+        // Only MOTION_BLOCKING and WORLD_SURFACE heightmaps are kept up to date on the client.
+        sGround = Mth.clamp(1F - (float) (cam.y - camTop - 6) / 40F, 0.3F, 1F);
     }
 
     static float approach(float cur, float target, float step) {

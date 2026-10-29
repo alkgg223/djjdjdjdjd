@@ -105,7 +105,7 @@ public final class WeatherTicker {
                     level.addParticle(ModContent.SAND_GRAIN.get(), x, y, z, wx * speed * 1.5, (RANDOM.nextDouble() - 0.4) * 0.05, wz * speed * 1.5);
                 }
             }
-            int puffs = Math.round(sand * q * 4F);
+            int puffs = Math.round(sand * q * 1.6F);
             for (int i = 0; i < puffs; i++) {
                 double a = RANDOM.nextDouble() * Math.PI * 2;
                 double d = 2 + Math.sqrt(RANDOM.nextDouble()) * 12;

@@ -153,11 +153,11 @@ public final class PrecipitationRenderer {
         }
         if (sand > 0.002F) {
             layer(SAND, SAND_COL, r, camX, camY, camZ, time, 0.012F, 7F, 9F, 2.4F,
-                    0.6F * (float) Math.pow(sand, 0.6), 0F, wx, wz, 1F, 1F, 1F, 71, true);
+                    0.34F * (float) Math.pow(sand, 0.6), 0F, wx, wz, 1F, 1F, 1F, 71, true);
             layer(SAND, SAND_COL, r, camX, camY, camZ, time, -0.008F, 4F, 5F, 3.4F,
-                    0.45F * sand, 0F, wx, wz, 1F, 0.95F, 0.9F, 83, false);
+                    0.2F * sand, 0F, wx, wz, 1F, 0.95F, 0.9F, 83, false);
             layer(SAND_GRAINS, SAND_COL, r, camX, camY, camZ, time, 0.02F, 3F, 3F, 5.5F,
-                    0.7F * sand, 0F, wx, wz, 1F, 1F, 1F, 97, false);
+                    0.55F * sand, 0F, wx, wz, 1F, 1F, 1F, 97, false);
         }
         flush();
 
@@ -205,7 +205,7 @@ public final class PrecipitationRenderer {
                     continue;
                 }
                 float fade = 1F - smooth(r * 0.55F, r + 0.5F, dist);
-                fade *= farOnly ? smooth(r * 0.3F, r * 0.6F, dist) : smooth(0.7F, 2.2F, dist);
+                fade *= farOnly ? smooth(r * 0.3F, r * 0.6F, dist) : kind == SAND_COL ? smooth(1.5F, 4.5F, dist) : smooth(0.7F, 2.2F, dist);
                 float a = alpha * fade;
                 if (a <= 0.004F) {
                     continue;

@@ -68,6 +68,7 @@ public final class SelfTest {
             villagers();
             look(150, 20);
         });
+        step(60, () -> state("on the bank"));
         step(200, () -> {
             shot("2_rain_puddles");
             state("rain later");
@@ -94,7 +95,7 @@ public final class SelfTest {
             look(20, 40);
         });
         step(120, () -> shot("5_water_noon"));
-        step(5, () -> goTo("minecraft:snowy_plains", 30, 8));
+        step(5, () -> goTo("minecraft:snowy_plains", 30, 15));
         step(60, () -> cmd("rw blizzard 100 10"));
         step(760, () -> {
             shot("6_blizzard");
@@ -112,7 +113,7 @@ public final class SelfTest {
         });
         step(5, () -> {
             cmd("rw clear");
-            goTo("minecraft:desert", 30, 6);
+            goTo("minecraft:desert", 30, 18);
         });
         step(60, () -> cmd("rw sandstorm 100 10"));
         step(760, () -> {
@@ -198,10 +199,26 @@ public final class SelfTest {
                 return;
             }
             BlockPos p = found.getFirst();
-            level.getChunk(p.getX() >> 4, p.getZ() >> 4);
-            int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, p.getX(), p.getZ());
-            LOG.info("going to {} at {} {} {}", biome, p.getX(), y, p.getZ());
-            player.teleportTo(level, p.getX() + 0.5, y + 0.1, p.getZ() + 0.5, yaw, pitch);
+            // Stand on dry ground next to the spot (not in the river or lake itself).
+            int bx = p.getX(), bz = p.getZ();
+            search:
+            for (int r = 0; r <= 24; r += 2) {
+                for (int a = 0; a < 16; a++) {
+                    int x = p.getX() + (int) Math.round(Math.cos(a * Math.PI / 8) * r);
+                    int z = p.getZ() + (int) Math.round(Math.sin(a * Math.PI / 8) * r);
+                    level.getChunk(x >> 4, z >> 4);
+                    int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+                    if (level.getFluidState(new BlockPos(x, top - 1, z)).isEmpty()) {
+                        bx = x;
+                        bz = z;
+                        break search;
+                    }
+                }
+            }
+            level.getChunk(bx >> 4, bz >> 4);
+            int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz);
+            LOG.info("going to {} at {} {} {}", biome, bx, y, bz);
+            player.teleportTo(level, bx + 0.5, y + 0.1, bz + 0.5, yaw, pitch);
         });
     }
 
@@ -216,7 +233,8 @@ public final class SelfTest {
         LOG.info("[{}] global rain={} snow={} thunder={} wind={} sand={} blizzard={} | cam rain={} snow={} sand={} blizzard={} exposure={} covered={} wetness={} | rainLevel={} particles={} sounds={}",
                 label, ClientWeather.rain, ClientWeather.snow, ClientWeather.thunder, ClientWeather.wind, ClientWeather.sand, ClientWeather.blizzard,
                 ClientWeather.camRain, ClientWeather.camSnow, ClientWeather.camSand, ClientWeather.camBlizzard, ClientWeather.exposure,
-                ClientWeather.covered, ClientWeather.wetness, mc.level.getRainLevel(1F), mc.particleEngine.countParticles(),
+                ClientWeather.covered + " underwater=" + ClientWeather.underwater + " groundNear=" + ClientWeather.groundNear + " camY=" + (int) mc.gameRenderer.getMainCamera().getPosition().y,
+                ClientWeather.wetness, mc.level.getRainLevel(1F), mc.particleEngine.countParticles(),
                 com.realweather.client.WeatherSounds.debug());
     }
 

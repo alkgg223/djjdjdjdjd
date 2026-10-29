@@ -24,7 +24,7 @@ public final class WeatherOverlay {
         if (sand > 0.01F && mc.options.getCameraType().isFirstPerson()) {
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
-            g.setColor(1F, 1F, 1F, Math.min(0.85F, sand * 0.8F));
+            g.setColor(1F, 1F, 1F, Math.min(0.6F, sand * 0.6F));
             g.blit(SAND, 0, 0, -90, 0F, 0F, w, h, w, h);
             g.setColor(1F, 1F, 1F, 1F);
         }

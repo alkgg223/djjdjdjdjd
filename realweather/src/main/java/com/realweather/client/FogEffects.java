@@ -36,8 +36,8 @@ public final class FogEffects {
         float target = far;
         target = Math.min(target, Mth.lerp(rain * 0.6F, far, Math.max(28F, far * 0.4F)));
         target = Math.min(target, Mth.lerp(snow * 0.7F, far, Math.max(22F, far * 0.3F)));
-        target = Math.min(target, Mth.lerp(bliz, far, 10F));
-        target = Math.min(target, Mth.lerp(sand, far, 7F));
+        target = Math.min(target, Mth.lerp(bliz, far, 14F));
+        target = Math.min(target, Mth.lerp(sand, far, 12F));
         if (target >= far - 0.05F) {
             return;
         }
@@ -46,7 +46,7 @@ public final class FogEffects {
         if (event.getMode() == FogRenderer.FogMode.FOG_SKY) {
             newNear = 0F;
         } else {
-            newNear = Math.min(near, target * Mth.lerp(density, 0.3F, -0.15F));
+            newNear = Math.min(near, target * Mth.lerp(density, 0.3F, 0F));
         }
         event.setNearPlaneDistance(newNear);
         event.setFarPlaneDistance(target);

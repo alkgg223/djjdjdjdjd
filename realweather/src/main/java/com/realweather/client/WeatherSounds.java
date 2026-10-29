@@ -48,6 +48,14 @@ public final class WeatherSounds {
                 * (1F - ClientWeather.camBlizzard) * (1F - ClientWeather.camSand * 0.8F);
         float bliz = ClientWeather.camBlizzard * (0.3F + 0.7F * open);
         float sand = ClientWeather.camSand * (0.3F + 0.7F * open);
+        if (ClientWeather.underwater) {
+            // Under water the storm above is only a dull murmur.
+            outside *= 0.12F;
+            roof *= 0.12F;
+            windLevel *= 0.1F;
+            bliz *= 0.1F;
+            sand *= 0.1F;
+        }
 
         levels[0] = outside * (1F - heavy) * 0.85F;
         levels[1] = outside * heavy;
