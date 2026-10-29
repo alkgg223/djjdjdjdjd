@@ -165,7 +165,7 @@ public class CreatureRenderer extends EntityRenderer<CreatureEntity> {
             perVertex = false;
         }
         float[] d = mesh.data;
-        for (int i = 0; i < d.length; i += 7) {
+        for (int i = 0; i < d.length; i += ObjModel.STRIDE) {
             float x = d[i], yy = d[i + 1], z = d[i + 2], sh = d[i + 6];
             int col = base, l = glow ? FULL_BRIGHT : light;
             if (perVertex) {

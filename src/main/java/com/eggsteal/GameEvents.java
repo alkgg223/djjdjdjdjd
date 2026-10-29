@@ -61,7 +61,7 @@ public class GameEvents {
 
     @SubscribeEvent
     public static void login(PlayerEvent.PlayerLoggedInEvent e) {
-        if (!(e.getEntity() instanceof ServerPlayer p)) return;
+        if (!(e.getEntity() instanceof ServerPlayer p) || com.eggsteal.brainrot.BrMode.on(p.server)) return;
         MinecraftServer s = p.server;
         ServerLevel sl = s.overworld();
         Economy eco = Economy.get(s);
@@ -89,7 +89,7 @@ public class GameEvents {
 
     @SubscribeEvent
     public static void respawn(PlayerEvent.PlayerRespawnEvent e) {
-        if (!(e.getEntity() instanceof ServerPlayer p)) return;
+        if (!(e.getEntity() instanceof ServerPlayer p) || com.eggsteal.brainrot.BrMode.on(p.server)) return;
         Economy.Stats st = Economy.get(p.server).stats(p.getUUID());
         if (st.base >= 0) {
             Vec3 h = Arena.home(st.base);
@@ -171,7 +171,7 @@ public class GameEvents {
     /** Right-click your own conveyor belt (the block next to an egg) to buy that egg. */
     @SubscribeEvent
     public static void beltClick(PlayerInteractEvent.RightClickBlock e) {
-        if (e.getLevel().isClientSide() || e.getHand() != InteractionHand.MAIN_HAND || !(e.getEntity() instanceof ServerPlayer p)) return;
+        if (e.getLevel().isClientSide() || e.getHand() != InteractionHand.MAIN_HAND || !(e.getEntity() instanceof ServerPlayer p) || com.eggsteal.brainrot.BrMode.on(p.server)) return;
         Economy eco = Economy.get(p.server);
         Economy.Stats st = eco.stats(p.getUUID());
         if (st.base < 0) return;
@@ -210,7 +210,7 @@ public class GameEvents {
 
     @SubscribeEvent
     public static void hurt(LivingIncomingDamageEvent e) {
-        if (e.getEntity().level().isClientSide) return;
+        if (e.getEntity().level().isClientSide || com.eggsteal.brainrot.BrMode.on(e.getEntity().getServer())) return;
         if (e.getSource().getEntity() instanceof LivingEntity attacker) {
             LivingEntity target = e.getEntity();
             Steal.onHit(target, attacker);
@@ -254,7 +254,7 @@ public class GameEvents {
                 .then(Commands.literal("top").executes(c -> { Hud.leaderboard(c.getSource().getServer()); return 1; }))
                 .then(Commands.literal("rebirth").executes(c -> { Shop.open(c.getSource().getPlayerOrException(), false, ShopMenu.TAB_REBIRTH); return 1; }))
                 .then(eventCommand())
-                .then(Commands.literal("arena").requires(s -> s.hasPermission(2)).executes(c -> {
+                .then(Commands.literal("arena").requires(s -> s.hasPermission(2) && !com.eggsteal.brainrot.BrMode.on(s.getServer())).executes(c -> {
                     Arena.build(c.getSource().getServer().overworld());
                     return 1;
                 })));

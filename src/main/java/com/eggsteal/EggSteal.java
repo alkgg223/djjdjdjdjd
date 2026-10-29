@@ -68,6 +68,36 @@ public class EggSteal {
     public static final DeferredHolder<EntityType<?>, EntityType<EventMarkerEntity>> EVENT_MARKER = ENTITIES.register("event_marker",
             () -> EntityType.Builder.<EventMarkerEntity>of(EventMarkerEntity::new, MobCategory.MISC).sized(0.2f, 0.2f).clientTrackingRange(16).updateInterval(20).build("event_marker"));
 
+    // ---------------- Brainrot Heist mode
+    public static final DeferredHolder<EntityType<?>, EntityType<com.eggsteal.brainrot.BrainrotEntity>> BRAINROT = ENTITIES.register("brainrot",
+            () -> EntityType.Builder.<com.eggsteal.brainrot.BrainrotEntity>of(com.eggsteal.brainrot.BrainrotEntity::new, MobCategory.MISC).sized(0.9f, 1.9f).clientTrackingRange(10).updateInterval(2).build("brainrot"));
+    public static final DeferredHolder<EntityType<?>, EntityType<com.eggsteal.brainrot.BrBot>> BR_BOT = ENTITIES.register("brainrot_bot",
+            () -> EntityType.Builder.of(com.eggsteal.brainrot.BrBot::new, MobCategory.MISC).sized(0.6f, 1.8f).clientTrackingRange(10).build("brainrot_bot"));
+    public static final DeferredBlock<com.eggsteal.brainrot.BrStationBlock> BR_SHOP = BLOCKS.register("brainrot_shop",
+            () -> new com.eggsteal.brainrot.BrStationBlock(BlockBehaviour.Properties.of().strength(-1f, 3600000f).lightLevel(s -> 12).sound(SoundType.METAL), false));
+    public static final DeferredItem<BlockItem> BR_SHOP_ITEM = ITEMS.register("brainrot_shop", () -> new BlockItem(BR_SHOP.get(), new Item.Properties()));
+    public static final DeferredBlock<com.eggsteal.brainrot.BrStationBlock> BR_GUIDE = BLOCKS.register("brainrot_guide_station",
+            () -> new com.eggsteal.brainrot.BrStationBlock(BlockBehaviour.Properties.of().strength(-1f, 3600000f).lightLevel(s -> 10).sound(SoundType.WOOD), true));
+    public static final DeferredItem<BlockItem> BR_GUIDE_ITEM = ITEMS.register("brainrot_guide_station", () -> new BlockItem(BR_GUIDE.get(), new Item.Properties()));
+    public static final DeferredItem<com.eggsteal.brainrot.BrGuideItem> BR_GUIDE_BOOK = ITEMS.register("brainrot_guide", com.eggsteal.brainrot.BrGuideItem::new);
+    /** Picture cards of every brainrot and every mutation (shown in the guide). */
+    public static final List<DeferredItem<Item>> BR_CARDS = new ArrayList<>(), BR_MUTS = new ArrayList<>();
+    static {
+        for (com.eggsteal.brainrot.Brainrot b : com.eggsteal.brainrot.Brainrot.ALL) BR_CARDS.add(ITEMS.register("br_" + b.id, () -> new Item(new Item.Properties())));
+        for (com.eggsteal.brainrot.BrMutation m : com.eggsteal.brainrot.BrMutation.ALL) BR_MUTS.add(ITEMS.register("brmut_" + m.id, () -> new Item(new Item.Properties())));
+    }
+
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> BR_TAB = TABS.register("brainrot",
+            () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.eggsteal.brainrot"))
+                    .icon(() -> new ItemStack(BR_CARDS.get(0).get()))
+                    .displayItems((p, out) -> {
+                        out.accept(BR_GUIDE_BOOK.get());
+                        out.accept(BR_SHOP_ITEM.get());
+                        out.accept(BR_GUIDE_ITEM.get());
+                        for (DeferredItem<Item> c : BR_CARDS) out.accept(c.get());
+                        for (DeferredItem<Item> c : BR_MUTS) out.accept(c.get());
+                    }).build());
+
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = TABS.register("main",
             () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.eggsteal"))
                     .icon(() -> new ItemStack(EGG_ITEMS.get(0).get()))
@@ -92,5 +122,6 @@ public class EggSteal {
     private static void attributes(EntityAttributeCreationEvent e) {
         e.put(CREATURE.get(), CreatureEntity.attrs().build());
         e.put(BOT.get(), BotEntity.attrs().build());
+        e.put(BR_BOT.get(), com.eggsteal.brainrot.BrBot.attrs().build());
     }
 }

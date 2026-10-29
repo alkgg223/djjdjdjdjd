@@ -70,9 +70,23 @@ public class RandomEvents {
         return active != null && active.mutation != Mutation.NONE && r.nextFloat() < 0.6f ? active.mutation.ordinal() : 0;
     }
 
+    /** The description in the current game mode (eggs on belts, or brainrots on the carpet). */
+    static String desc(MinecraftServer s, Kind k) {
+        if (!com.eggsteal.brainrot.BrMode.on(s)) return k.desc;
+        return switch (k) {
+            case RAINBOW -> "A rainbow over the map! Rainbow brainrots are 25x more common";
+            case SOFTWARE -> "The map got hacked! Glitch brainrots are 25x more common";
+            case LAVA -> "The ground is boiling! Lava brainrots are 25x more common";
+            case GALAXY -> "Night falls... Galaxy brainrots are 25x more common";
+            case SPEED -> "Everybody runs fast and the carpet goes double speed!";
+            case LUCKY -> "Rare brainrots are much more common + a bonus rare one!";
+            default -> k.desc;
+        };
+    }
+
     public static String status(MinecraftServer s) {
         long now = s.getTickCount();
-        if (active != null) return active.title + "\n§f" + active.desc + "\n§7" + Math.max(0, (endAt - now) / 20) + "s left";
+        if (active != null) return active.title + "\n§f" + desc(s, active) + "\n§7" + Math.max(0, (endAt - now) / 20) + "s left";
         return "§e§lRANDOM EVENTS\n§7Next event in §f" + Math.max(0, (nextAt - now) / 20) + "s";
     }
 
@@ -84,11 +98,14 @@ public class RandomEvents {
         nextAt = endAt + 4800 + (long) (Math.random() * 3600);
         bar = new ServerBossEvent(Component.literal(k.title), k.color, BossEvent.BossBarOverlay.PROGRESS);
         for (ServerPlayer p : s.getPlayerList().getPlayers()) bar.addPlayer(p);
-        Hud.announce(s, k.title, "§f" + k.desc);
+        Hud.announce(s, k.title, "§f" + desc(s, k));
         ServerLevel sl = s.overworld();
         for (ServerPlayer p : s.getPlayerList().getPlayers()) p.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.MASTER, 1f, 0.7f);
         if (k.time >= 0) sl.setDayTime(k.time);
-        if (k == Kind.LUCKY) Auction.spawn(s);
+        if (k == Kind.LUCKY) {
+            if (com.eggsteal.brainrot.BrMode.on(s)) com.eggsteal.brainrot.BrRoad.spawnSpecial(s, false);
+            else Auction.spawn(s);
+        }
         syncMarker(s);
     }
 
@@ -158,6 +175,7 @@ public class RandomEvents {
     static List<LivingEntity> everybody(MinecraftServer s, ServerLevel sl) {
         List<LivingEntity> l = new java.util.ArrayList<>(s.getPlayerList().getPlayers());
         l.addAll(sl.getEntities(EntityTypeTest.forClass(BotEntity.class), b -> true));
+        l.addAll(sl.getEntities(EntityTypeTest.forClass(com.eggsteal.brainrot.BrBot.class), b -> true));
         return l;
     }
 

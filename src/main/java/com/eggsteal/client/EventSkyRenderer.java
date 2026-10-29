@@ -56,6 +56,21 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
         return (x >>> 40) / (float) (1L << 24);
     }
 
+    /** Quads of one texture, collected until {@link Fx#flush()} (see there). */
+    static final class Batch {
+        final ResourceLocation tex;
+        final boolean solid;
+        float[] d = new float[9 * 64];
+        int n;
+
+        Batch(ResourceLocation tex, boolean solid) { this.tex = tex; this.solid = solid; }
+
+        void add(float x, float y, float z, float u, float v, int r, int g, int b, int a) {
+            if (n + 9 > d.length) d = java.util.Arrays.copyOf(d, d.length * 2);
+            d[n++] = x; d[n++] = y; d[n++] = z; d[n++] = u; d[n++] = v; d[n++] = r; d[n++] = g; d[n++] = b; d[n++] = a;
+        }
+    }
+
     /** Helpers for camera-facing sprites and free quads, all relative to the camera position. */
     static final class Fx {
         final PoseStack.Pose pose;
@@ -82,32 +97,49 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
         Vector3f s(Vector3f v) { return s(v.x, v.y, v.z); }
 
         /** Glowing sprites: additive, so brightness is the strength. */
-        VertexConsumer vc(ResourceLocation t) { solid = false; return buf.getBuffer(RenderType.eyes(t)); }
+        /**
+         * Quads are collected per texture and written in one go by {@link #flush()}: the game's buffer source closes a buffer as soon as
+         * another render type is requested, so writing to two of them in turn would crash.
+         */
+        final java.util.Map<String, Batch> batches = new java.util.LinkedHashMap<>();
+
+        /** Glowing sprites: additive, so brightness is the strength. */
+        Batch vc(ResourceLocation t) { return batches.computeIfAbsent("g" + t, k -> new Batch(t, false)); }
 
         /** Solid sprites: normal transparency, the strength fades them out. */
-        VertexConsumer solidVc(ResourceLocation t) { solid = true; return buf.getBuffer(RenderType.entityTranslucent(t)); }
+        Batch solidVc(ResourceLocation t) { return batches.computeIfAbsent("s" + t, k -> new Batch(t, true)); }
 
-        boolean solid;
+        /** Writes every collected quad, one render type after the other. */
+        void flush() {
+            for (Batch b : batches.values()) {
+                if (b.n == 0) continue;
+                VertexConsumer vc = buf.getBuffer(b.solid ? RenderType.entityTranslucent(b.tex) : RenderType.eyes(b.tex));
+                for (int i = 0; i < b.n; i += 9) {
+                    vc.addVertex(pose, b.d[i], b.d[i + 1], b.d[i + 2])
+                            .setColor((int) b.d[i + 5], (int) b.d[i + 6], (int) b.d[i + 7], (int) b.d[i + 8])
+                            .setUv(b.d[i + 3], b.d[i + 4])
+                            .setOverlay(OverlayTexture.NO_OVERLAY)
+                            .setLight(FULL_BRIGHT)
+                            .setNormal(pose, 0f, 1f, 0f);
+                }
+            }
+            batches.clear();
+        }
 
-        void v(VertexConsumer vc, float x, float y, float z, float u, float w, int rgb, float k) {
+        void v(Batch vc, float x, float y, float z, float u, float w, int rgb, float k) {
             k = Mth.clamp(k * fade, 0f, 1f);
-            float c = solid ? 1f : k;
-            vc.addVertex(pose, x, y, z)
-                    .setColor((int) (((rgb >> 16) & 255) * c), (int) (((rgb >> 8) & 255) * c), (int) ((rgb & 255) * c), solid ? (int) (255 * k) : 255)
-                    .setUv(u, w)
-                    .setOverlay(OverlayTexture.NO_OVERLAY)
-                    .setLight(FULL_BRIGHT)
-                    .setNormal(pose, 0f, 1f, 0f);
+            float c = vc.solid ? 1f : k;
+            vc.add(x, y, z, u, w, (int) (((rgb >> 16) & 255) * c), (int) (((rgb >> 8) & 255) * c), (int) ((rgb & 255) * c), vc.solid ? (int) (255 * k) : 255);
         }
 
         /** A quad from four corners, drawn from both sides; each corner may have its own colour strength. */
-        void quad(VertexConsumer vc, Vector3f a, Vector3f b, Vector3f c, Vector3f d, float u0, float v0, float u1, float v1, int rgb, float ka, float kb, float kc, float kd) {
+        void quad(Batch vc, Vector3f a, Vector3f b, Vector3f c, Vector3f d, float u0, float v0, float u1, float v1, int rgb, float ka, float kb, float kc, float kd) {
             v(vc, a.x, a.y, a.z, u0, v0, rgb, ka); v(vc, b.x, b.y, b.z, u1, v0, rgb, kb); v(vc, c.x, c.y, c.z, u1, v1, rgb, kc); v(vc, d.x, d.y, d.z, u0, v1, rgb, kd);
             v(vc, d.x, d.y, d.z, u0, v1, rgb, kd); v(vc, c.x, c.y, c.z, u1, v1, rgb, kc); v(vc, b.x, b.y, b.z, u1, v0, rgb, kb); v(vc, a.x, a.y, a.z, u0, v0, rgb, ka);
         }
 
         /** A camera-facing square sprite (optionally spun by angle, squashed horizontally by sx, and using a part of the texture). */
-        void sprite(VertexConsumer vc, float x, float y, float z, float size, int rgb, float k, float angle, float sx, float u0, float v0, float u1, float v1) {
+        void sprite(Batch vc, float x, float y, float z, float size, int rgb, float k, float angle, float sx, float u0, float v0, float u1, float v1) {
             float c = Mth.cos(angle), s = Mth.sin(angle);
             Vector3f r = new Vector3f(right).mul(c).add(new Vector3f(up).mul(s)).mul(size * sx);
             Vector3f u = new Vector3f(up).mul(c).sub(new Vector3f(right).mul(s)).mul(size);
@@ -115,12 +147,12 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
             quad(vc, new Vector3f(p).sub(r).sub(u), new Vector3f(p).add(r).sub(u), new Vector3f(p).add(r).add(u), new Vector3f(p).sub(r).add(u), u0, v1, u1, v0, rgb, k, k, k, k);
         }
 
-        void sprite(VertexConsumer vc, float x, float y, float z, float size, int rgb, float k) { sprite(vc, x, y, z, size, rgb, k, 0f, 1f, 0f, 0f, 1f, 1f); }
+        void sprite(Batch vc, float x, float y, float z, float size, int rgb, float k) { sprite(vc, x, y, z, size, rgb, k, 0f, 1f, 0f, 0f, 1f, 1f); }
 
-        void sprite(VertexConsumer vc, Vector3f p, float size, int rgb, float k) { sprite(vc, p.x, p.y, p.z, size, rgb, k); }
+        void sprite(Batch vc, Vector3f p, float size, int rgb, float k) { sprite(vc, p.x, p.y, p.z, size, rgb, k); }
 
         /** A glowing line from a to b, width w, facing the camera as well as possible. */
-        void beam(VertexConsumer vc, Vector3f a, Vector3f b, float w, int rgb, float ka, float kb) {
+        void beam(Batch vc, Vector3f a, Vector3f b, float w, int rgb, float ka, float kb) {
             Vector3f dir = new Vector3f(b).sub(a);
             Vector3f side = new Vector3f(dir).cross(new Vector3f(right).cross(up)); // perpendicular to the line and the view direction
             if (side.lengthSquared() < 1e-6f) side.set(right);
@@ -155,6 +187,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
             case LUCKY -> lucky(fx, t);
             case MOON -> moon(fx, t);
         }
+        fx.flush();
         ps.popPose();
     }
 
@@ -162,7 +195,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
 
     /** A dome of twinkling stars. */
     static void stars(Fx fx, float t, int n, float k) {
-        VertexConsumer vc = fx.vc(STAR);
+        Batch vc = fx.vc(STAR);
         for (int i = 0; i < n; i++) {
             float az = h(i, 1) * Mth.TWO_PI, el = 0.15f + 1.35f * h(i, 2);
             float x = Mth.cos(el) * Mth.cos(az) * 46, y = Mth.sin(el) * 46, z = Mth.cos(el) * Mth.sin(az) * 46;
@@ -174,7 +207,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
 
     /** Small glowing motes drifting around the camera (rising when speed > 0, falling when speed < 0). */
     static void motes(Fx fx, float t, int n, ResourceLocation texture, float minR, float maxR, float height, float speed, float size, int color, float k, boolean hueCycle) {
-        VertexConsumer vc = fx.vc(texture);
+        Batch vc = fx.vc(texture);
         for (int i = 0; i < n; i++) {
             float a = h(i, 11) * Mth.TWO_PI, r = minR + (maxR - minR) * h(i, 12);
             float sp = speed * (0.6f + 0.8f * h(i, 13));
@@ -195,7 +228,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
         Vector3f a = fx.s(new Vector3f(1f, 0.12f, 0.3f).normalize());
         Vector3f b = fx.s(-0.25f, 0.6f, 0.75f);
         b.sub(new Vector3f(a).mul(a.dot(b))).normalize();
-        VertexConsumer glow = fx.vc(GLOW), star = fx.vc(STAR);
+        Batch glow = fx.vc(GLOW), star = fx.vc(STAR);
         float spin = t * 0.0035f;
         // bright core
         fx.sprite(glow, c, 26f, 0x5a3cff, 0.35f);
@@ -234,7 +267,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
 
     /** A giant shimmering double rainbow with sparkles running along it, and rainbow motes around the player. */
     static void rainbow(Fx fx, float t) {
-        VertexConsumer glow = fx.vc(GLOW), star = fx.vc(STAR);
+        Batch glow = fx.vc(GLOW), star = fx.vc(STAR);
         arc(fx, glow, t, 36f, 2f, false, 0.62f);
         arc(fx, glow, t, 46f, 1.5f, true, 0.25f);
         for (int i = 0; i < 70; i++) {
@@ -247,7 +280,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
         motes(fx, t, 60, GLOW, 2.5f, 9f, 8f, 0.02f, 0.18f, 0, 0.9f, true);
     }
 
-    static void arc(Fx fx, VertexConsumer vc, float t, float radius, float band, boolean reversed, float k) {
+    static void arc(Fx fx, Batch vc, float t, float radius, float band, boolean reversed, float k) {
         int segs = 56;
         for (int bnd = 0; bnd < RAINBOW.length; bnd++) {
             int col = RAINBOW[reversed ? RAINBOW.length - 1 - bnd : bnd];
@@ -265,7 +298,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
 
     /** "Hacked" arena: rain of glowing green code around the player, a scrolling digital grid in the sky and glitch flashes. */
     static void software(Fx fx, float t) {
-        VertexConsumer code = fx.vc(CODE), glow = fx.vc(GLOW), white = fx.vc(WHITE);
+        Batch code = fx.vc(CODE), glow = fx.vc(GLOW), white = fx.vc(WHITE);
         for (int i = 0; i < 80; i++) {
             float a = h(i, 1) * Mth.TWO_PI, r = 4f + 22f * h(i, 2);
             float x = Mth.cos(a) * r, z = Mth.sin(a) * r;
@@ -300,7 +333,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
 
     /** Spinning gold coins falling all around, a golden sun with turning rays and sparkles. */
     static void money(Fx fx, float t) {
-        VertexConsumer coin = fx.solidVc(COIN_SOLID);
+        Batch coin = fx.solidVc(COIN_SOLID);
         for (int i = 0; i < 120; i++) {
             float a = h(i, 1) * Mth.TWO_PI, r = 1.5f + 17f * h(i, 2);
             float sp = 0.1f + 0.15f * h(i, 3);
@@ -309,7 +342,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
             float edge = Math.min(1f, (y + 6f) / 2f);
             fx.sprite(coin, Mth.cos(a) * r, y, Mth.sin(a) * r, 0.32f, 0xffffff, Math.max(0f, edge), 0f, spinW, 0f, 0f, 1f, 1f);
         }
-        VertexConsumer glow = fx.vc(GLOW);
+        Batch glow = fx.vc(GLOW);
         Vector3f sun = fx.s(0, 36, -38);
         float pulse = 0.85f + 0.15f * Mth.sin(t * 0.08f);
         fx.sprite(glow, sun, 30f, 0xff9a20, 0.25f * pulse);
@@ -325,7 +358,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
 
     /** A burning red sky: a blood-red sun, glowing horizon, meteors with fiery tails and embers rising around the player. */
     static void lava(Fx fx, float t) {
-        VertexConsumer glow = fx.vc(GLOW), star = fx.vc(STAR);
+        Batch glow = fx.vc(GLOW), star = fx.vc(STAR);
         for (int k = 0; k < 6; k++) {
             float az = k * Mth.TWO_PI / 6f;
             fx.sprite(glow, Mth.cos(az) * 40, 4, Mth.sin(az) * 40, 28f, 0xff3a00, 0.22f * (0.85f + 0.15f * Mth.sin(t * 0.04f + k)));
@@ -352,7 +385,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
 
     /** Warp speed: light streaks rush past the player along the view direction, and lightning bolts flash in the sky. */
     static void speed(Fx fx, float t, Vector3f look) {
-        VertexConsumer glow = fx.vc(GLOW), star = fx.vc(STAR);
+        Batch glow = fx.vc(GLOW), star = fx.vc(STAR);
         Vector3f l = new Vector3f(look).normalize();
         Vector3f p1 = new Vector3f(l).cross(Math.abs(l.y) < 0.9f ? new Vector3f(0, 1, 0) : new Vector3f(1, 0, 0)).normalize();
         Vector3f p2 = new Vector3f(l).cross(p1).normalize();
@@ -383,7 +416,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
 
     /** Northern lights waving across the sky, four-leaf clovers drifting down and golden sparkles. */
     static void lucky(Fx fx, float t) {
-        VertexConsumer white = fx.vc(WHITE);
+        Batch white = fx.vc(WHITE);
         for (int c = 0; c < 3; c++) {
             float z0 = -42 + c * 7f;
             Vector3f pb = null, pt = null;
@@ -402,7 +435,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
                 pb = b; pt = top; kb = k;
             }
         }
-        VertexConsumer clover = fx.solidVc(CLOVER_SOLID);
+        Batch clover = fx.solidVc(CLOVER_SOLID);
         for (int i = 0; i < 70; i++) {
             float a = h(i, 1) * Mth.TWO_PI, r = 1.5f + 13f * h(i, 2);
             float y = 12f - ((t * (0.025f + 0.03f * h(i, 3)) + h(i, 4) * 100f) % 16f);
@@ -417,7 +450,7 @@ public class EventSkyRenderer extends EntityRenderer<EventMarkerEntity> {
     /** A huge glowing moon with little planets orbiting it, a starry sky and moon dust floating up around the player. */
     static void moon(Fx fx, float t) {
         stars(fx, t, 240, 0.85f);
-        VertexConsumer glow = fx.vc(GLOW);
+        Batch glow = fx.vc(GLOW);
         Vector3f m = fx.s(12, 22, -34);
         fx.sprite(glow, m, 42f, 0x3040c0, 0.18f);
         fx.sprite(glow, m, 22f, 0x90a8ff, 0.3f);

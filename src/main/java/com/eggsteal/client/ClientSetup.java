@@ -14,5 +14,7 @@ public class ClientSetup {
         e.registerEntityRenderer(EggSteal.BOT.get(), BotRenderer::new);
         e.registerEntityRenderer(EggSteal.AUCTION.get(), AuctionEggRenderer::new);
         e.registerEntityRenderer(EggSteal.EVENT_MARKER.get(), EventSkyRenderer::new);
+        e.registerEntityRenderer(EggSteal.BRAINROT.get(), BrainrotRenderer::new);
+        e.registerEntityRenderer(EggSteal.BR_BOT.get(), BrBotRenderer::new);
     }
 }

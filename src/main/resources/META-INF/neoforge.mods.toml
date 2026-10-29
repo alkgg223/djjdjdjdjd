@@ -4,9 +4,9 @@ license="MIT"
 
 [[mods]]
 modId="eggsteal"
-version="1.5.0"
+version="1.6.0"
 displayName="Egg Steal"
-description='Steal an Egg arena: eggs, 16 creatures, upgradeable bots, conveyor belts, stealing and leaderboards.'
+description='Two games: Egg Steal (eggs, creatures, belts) and Brainrot Heist (blocky brainrots on a red carpet, 35 mutations, stealing, bots).'
 
 [[dependencies.eggsteal]]
 modId="neoforge"
