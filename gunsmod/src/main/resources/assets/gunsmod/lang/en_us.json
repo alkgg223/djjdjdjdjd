@@ -154,6 +154,7 @@
  "gunsmod.hud.rockets_loading": "Rockets: reloading",
  "gunsmod.hud.rotor": "ROTOR %s%%",
  "gunsmod.hud.seat_hint": "[%s] change seat  [%s] horn",
+ "gunsmod.hud.sight_zoom": "Mouse wheel: sight zoom  |  F5: outside view",
  "gunsmod.hud.stall": "STALL",
  "gunsmod.hud.tank_hint": "WASD drive  |  Attack: 120 mm  |  Use: machine gun",
  "gunsmod.hud.tow_loading": "TOW: reloading",

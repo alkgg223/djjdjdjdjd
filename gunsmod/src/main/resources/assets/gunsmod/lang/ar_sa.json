@@ -154,6 +154,7 @@
  "gunsmod.hud.rockets_loading": "الصواريخ: تعبئة",
  "gunsmod.hud.rotor": "المروحة %s%%",
  "gunsmod.hud.seat_hint": "[%s] تغيير المقعد  [%s] البوق",
+ "gunsmod.hud.sight_zoom": "عجلة الماوس: تكبير المنظار  |  F5: المنظور الخارجي",
  "gunsmod.hud.stall": "انهيار السرعة!",
  "gunsmod.hud.tank_hint": "WASD قيادة  |  ضغط: مدفع  |  كليك يمين: رشاش",
  "gunsmod.hud.tow_loading": "TOW: تعبئة",

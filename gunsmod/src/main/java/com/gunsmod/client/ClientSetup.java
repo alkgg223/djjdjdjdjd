@@ -60,6 +60,7 @@ public final class ClientSetup {
     public static void setup(FMLClientSetupEvent e) {
         JeepEntity.clientTick = JeepSound::tickJeep;
         VehicleEntity.clientTick = VehicleSound::tick;
+        VehicleCamera.init();
         FxHooks.light = (en, lvl) -> ClientLights.light(en, en.position(), lvl, 2);
         // helicopter collective: jump climbs, sneak descends
         HelicopterEntity.liftInput = () -> {

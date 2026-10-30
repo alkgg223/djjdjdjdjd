@@ -28,6 +28,7 @@ public class TankRenderer extends EntityRenderer<TankEntity> {
 
     @Override
     public void render(TankEntity tank, float yaw, float pt, PoseStack pose, MultiBufferSource buf, int light) {
+        if (com.gunsmod.client.VehicleCamera.hidden(tank)) return;      // first person: looking out through the sight
         pose.pushPose();
         pose.mulPose(Axis.YP.rotationDegrees(180f - Mth.rotLerp(pt, tank.yRotO, tank.getYRot())));
         pose.mulPose(Axis.XP.rotationDegrees(Mth.lerp(pt, tank.prevTiltPitch, tank.tiltPitch) + Mth.lerp(pt, tank.prevRock, tank.rock)));

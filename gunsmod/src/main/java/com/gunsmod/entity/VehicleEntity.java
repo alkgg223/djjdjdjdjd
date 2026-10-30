@@ -43,6 +43,8 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
     @Nullable public BlockPos spawnerPos;
     /** client hook (sounds, exhaust and damage smoke) installed by the client setup */
     public static Consumer<VehicleEntity> clientTick = v -> { };
+    /** client: true for the local player looking through the vehicle's sight (first person) */
+    public static java.util.function.Predicate<Entity> sightView = e -> false;
 
     protected VehicleEntity(EntityType<? extends VehicleEntity> type, Level level) {
         super(type, level);
@@ -150,9 +152,23 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         return toWorld(s.x, s.y, s.z);
     }
 
+    /** where the gunner's eye goes when he looks through the sight in first person; null = his seat */
+    @Nullable
+    public Vec3 sightEye() {
+        return null;
+    }
+
     @Override
     protected void positionRider(Entity passenger, MoveFunction callback) {
         int seat = Math.max(0, seatOf(passenger));
+        if (seat == 0 && this.level().isClientSide && sightView.test(passenger)) {
+            // first person: the eye sits at the gunner's sight beside the gun (the vehicle is not drawn then)
+            Vec3 eye = sightEye();
+            if (eye != null) {
+                callback.accept(passenger, eye.x, eye.y - passenger.getEyeHeight(), eye.z);
+                return;
+            }
+        }
         Vec3 p = seatWorld(seat);
         // players hang 0.6 below their seat point; soldiers get the same so both sit at the same height
         Vec3 att = passenger instanceof Player ? passenger.getVehicleAttachmentPoint(this) : new Vec3(0, 0.6, 0);

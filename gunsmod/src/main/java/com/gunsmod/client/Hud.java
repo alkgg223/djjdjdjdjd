@@ -80,16 +80,27 @@ public final class Hud {
     // ------------------------------------------------------------------------------------ crosshair + hit marker
     public static void crosshair(GuiGraphics g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
-        if (hidden(mc) || !mc.options.getCameraType().isFirstPerson()) return;
+        if (hidden(mc)) return;
+        if (!mc.options.getCameraType().isFirstPerson()) {
+            // outside view: where the gun is laid
+            VehicleCamera.thirdPersonAim(g, mc, dt.getGameTimeDeltaPartialTick(true));
+            return;
+        }
         LocalPlayer p = mc.player;
         int cx = g.guiWidth() / 2, cy = g.guiHeight() / 2;
         if (p.getVehicle() instanceof TankEntity tank && tank.getControllingPassenger() == p) {
+            VehicleCamera.sightFrame(g, mc);
             tankReticle(g, mc, p, tank, cx, cy, dt.getGameTimeDeltaPartialTick(true));
             hitMarker(g, cx, cy);
             return;
         }
         float pt = dt.getGameTimeDeltaPartialTick(true);
         if (p.getVehicle() instanceof ArmoredCarEntity car && car.getControllingPassenger() == p) {
+            VehicleCamera.sightFrame(g, mc);
+            if (car.kind.artillery()) {
+                VehicleCamera.thirdPersonAim(g, mc, pt);
+                return;
+            }
             carReticle(g, mc, p, car, cx, cy, pt);
             hitMarker(g, cx, cy);
             return;
@@ -163,7 +174,7 @@ public final class Hud {
         float gunYaw = Mth.rotLerp(pt, tank.yRotO, tank.getYRot()) + Mth.rotLerp(pt, tank.prevTurret, tank.getTurretYaw());
         float dyaw = Mth.wrapDegrees(gunYaw - p.getViewYRot(pt));
         float dpitch = Mth.lerp(pt, tank.prevGun, tank.getGunPitch()) - p.getViewXRot(pt);
-        double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(mc.options.fov().get() / 2.0));
+        double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(VehicleCamera.fovDeg(mc) / 2.0));
         boolean ok = Math.abs(dyaw) < 80 && Math.abs(dpitch) < 80;
         int gx = cx + (ok ? (int) Math.round(Math.tan(Math.toRadians(dyaw)) * f) : 0);
         int gy = cy + (ok ? (int) Math.round(Math.tan(Math.toRadians(dpitch)) * f) : 0);
@@ -192,7 +203,7 @@ public final class Hud {
         float pitch = (float) -(Mth.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)) * Mth.RAD_TO_DEG);
         float dyaw = Mth.wrapDegrees(yaw - p.getViewYRot(pt)), dpitch = pitch - p.getViewXRot(pt);
         if (Math.abs(dyaw) > 75 || Math.abs(dpitch) > 75) return null;
-        double f = (guiH / 2.0) / Math.tan(Math.toRadians(mc.options.fov().get() / 2.0));
+        double f = (guiH / 2.0) / Math.tan(Math.toRadians(VehicleCamera.fovDeg(mc) / 2.0));
         return new int[]{cx + (int) Math.round(Math.tan(Math.toRadians(dyaw)) * f), cy + (int) Math.round(Math.tan(Math.toRadians(dpitch)) * f)};
     }
 
@@ -217,7 +228,7 @@ public final class Hud {
         float gunYaw = Mth.rotLerp(pt, heli.yRotO, heli.getYRot()) + Mth.lerp(pt, heli.prevChinYaw, heli.getChinYaw());
         float dyaw = Mth.wrapDegrees(gunYaw - p.getViewYRot(pt));
         float dpitch = Mth.lerp(pt, heli.prevChinPitch, heli.getChinPitch()) - p.getViewXRot(pt);
-        double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(mc.options.fov().get() / 2.0));
+        double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(VehicleCamera.fovDeg(mc) / 2.0));
         if (Math.abs(dyaw) < 70 && Math.abs(dpitch) < 70) {
             int gx = cx + (int) Math.round(Math.tan(Math.toRadians(dyaw)) * f), gy = cy + (int) Math.round(Math.tan(Math.toRadians(dpitch)) * f);
             g.fill(gx - 6, gy, gx - 2, gy + 1, 0xE0A0FFA0);
@@ -246,7 +257,7 @@ public final class Hud {
     /** F-16 head-up display: pitch ladder, flight path marker / gun pipper, heading tape, missile lock box */
     private static void jetReticle(GuiGraphics g, Minecraft mc, LocalPlayer p, JetEntity jet, int cx, int cy, float pt) {
         int col = 0xD040FF70;
-        double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(mc.options.fov().get() / 2.0));
+        double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(VehicleCamera.fovDeg(mc) / 2.0));
         float viewX = p.getViewXRot(pt), viewY = p.getViewYRot(pt);
         // pitch ladder every 10 degrees (dashed below the horizon)
         for (int k = -60; k <= 60; k += 10) {
@@ -312,7 +323,7 @@ public final class Hud {
         float gunYaw = Mth.rotLerp(pt, car.yRotO, car.getYRot()) + Mth.rotLerp(pt, car.prevTurret, car.getTurretYaw());
         float dyaw = Mth.wrapDegrees(gunYaw - p.getViewYRot(pt));
         float dpitch = Mth.lerp(pt, car.prevGun, car.getGunPitch()) - p.getViewXRot(pt);
-        double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(mc.options.fov().get() / 2.0));
+        double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(VehicleCamera.fovDeg(mc) / 2.0));
         boolean ok = Math.abs(dyaw) < 80 && Math.abs(dpitch) < 80;
         int gx = cx + (ok ? (int) Math.round(Math.tan(Math.toRadians(dyaw)) * f) : 0);
         int gy = cy + (ok ? (int) Math.round(Math.tan(Math.toRadians(dpitch)) * f) : 0);

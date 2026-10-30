@@ -232,6 +232,11 @@ public class ArmoredCarEntity extends VehicleEntity {
         return GunLogic.dir(getGunPitch(), this.getYRot() + getTurretYaw());
     }
 
+    @Override
+    public Vec3 sightEye() {
+        return sightWorld();
+    }
+
     /** where the radar and the sights look from */
     public Vec3 sightWorld() {
         return toWorld(geo.turret()[0], geo.gun()[0] + 2, geo.turret()[1]);

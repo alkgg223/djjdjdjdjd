@@ -33,6 +33,7 @@ public class HelicopterRenderer extends EntityRenderer<HelicopterEntity> {
 
     @Override
     public void render(HelicopterEntity heli, float yaw, float pt, PoseStack pose, MultiBufferSource buf, int light) {
+        if (com.gunsmod.client.VehicleCamera.hidden(heli)) return;      // first person: looking out through the sight
         VehicleGeo.Heli geo = heli.geo;
         float pivotY = (float) geo.pivotY(), pivotZ = (float) ((8 - geo.hub()[2]) * 0.25);
         pose.pushPose();

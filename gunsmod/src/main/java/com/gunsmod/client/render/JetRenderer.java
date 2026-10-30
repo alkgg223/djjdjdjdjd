@@ -25,6 +25,7 @@ public class JetRenderer extends EntityRenderer<JetEntity> {
 
     @Override
     public void render(JetEntity jet, float yaw, float pt, PoseStack pose, MultiBufferSource buf, int light) {
+        if (com.gunsmod.client.VehicleCamera.hidden(jet)) return;      // first person: looking out through the sight
         float py = (float) jet.geo.pivotY(), pz = (float) ((JetEntity.PIVOT_Z - 8) * JetEntity.JET_UNIT);
         pose.pushPose();
         pose.mulPose(Axis.YP.rotationDegrees(180f - Mth.rotLerp(pt, jet.yRotO, jet.getYRot())));

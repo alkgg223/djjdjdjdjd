@@ -26,6 +26,7 @@ public class ArmoredCarRenderer extends EntityRenderer<ArmoredCarEntity> {
 
     @Override
     public void render(ArmoredCarEntity car, float yaw, float pt, PoseStack pose, MultiBufferSource buf, int light) {
+        if (com.gunsmod.client.VehicleCamera.hidden(car)) return;      // first person: looking out through the sight
         pose.pushPose();
         pose.mulPose(Axis.YP.rotationDegrees(180f - Mth.rotLerp(pt, car.yRotO, car.getYRot())));
         pose.mulPose(Axis.XP.rotationDegrees(-Mth.lerp(pt, car.prevTiltPitch, car.tiltPitch)));

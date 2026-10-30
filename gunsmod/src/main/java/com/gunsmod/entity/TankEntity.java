@@ -100,6 +100,13 @@ public class TankEntity extends VehicleEntity {
         return new ItemStack(kind.item(getBotTeam()));
     }
 
+    @Override
+    public Vec3 sightEye() {
+        // the gunner's primary sight, on the turret roof left of the gun
+        Vec3 m = turretModel(geo.turret()[0] - 1.6, geo.gun()[0] + 1.4, geo.gun()[1] + 0.8, getTurretYaw());
+        return toWorld(m.x, m.y, m.z);
+    }
+
     /** the super-heavy tanks are built on a bigger scale */
     @Override
     public double unit() {
