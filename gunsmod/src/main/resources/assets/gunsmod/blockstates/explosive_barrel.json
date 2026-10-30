@@ -1,0 +1,19 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "gunsmod:block/explosive_barrel"
+  },
+  "facing=east": {
+   "model": "gunsmod:block/explosive_barrel",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "gunsmod:block/explosive_barrel",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "gunsmod:block/explosive_barrel",
+   "y": 270
+  }
+ }
+}

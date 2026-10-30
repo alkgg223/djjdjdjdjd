@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/smg5"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.53,
+    1.121,
+    0.477
+   ],
+   "scale": [
+    0.5534,
+    0.5534,
+    0.5534
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.28,
+    0.584,
+    -0.041
+   ],
+   "scale": [
+    0.2705,
+    0.2705,
+    0.2705
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.484,
+    1.01,
+    -0.07
+   ],
+   "scale": [
+    0.4673,
+    0.4673,
+    0.4673
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.166,
+    2.389,
+    -1.145
+   ],
+   "scale": [
+    1.1059,
+    1.1059,
+    1.1059
+   ]
+  }
+ }
+}

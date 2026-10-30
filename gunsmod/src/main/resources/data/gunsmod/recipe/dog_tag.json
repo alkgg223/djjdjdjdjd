@@ -1,0 +1,19 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "minecraft:iron_nugget"
+  },
+  {
+   "item": "minecraft:iron_nugget"
+  },
+  {
+   "item": "minecraft:chain"
+  }
+ ],
+ "result": {
+  "id": "gunsmod:dog_tag",
+  "count": 1
+ }
+}

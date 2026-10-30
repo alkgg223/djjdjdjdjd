@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/tank/idler.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "paint_dark": "gunsmod:item/vehicle/mesh/paint_dark",
+  "steel": "gunsmod:item/vehicle/mesh/steel",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

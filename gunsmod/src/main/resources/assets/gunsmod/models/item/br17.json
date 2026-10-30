@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/br17"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.917,
+    0.783,
+    0.964
+   ],
+   "scale": [
+    0.5211,
+    0.5211,
+    0.5211
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.581,
+    0.471,
+    0.086
+   ],
+   "scale": [
+    0.2541,
+    0.2541,
+    0.2541
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.003,
+    0.814,
+    0.148
+   ],
+   "scale": [
+    0.4389,
+    0.4389,
+    0.4389
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.392,
+    2.152,
+    -2.651
+   ],
+   "scale": [
+    1.1604,
+    1.1604,
+    1.1604
+   ]
+  }
+ }
+}

@@ -1,0 +1,19 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/leopard/body.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "glow": "gunsmod:item/vehicle/mesh/glow",
+  "lens": "gunsmod:item/vehicle/mesh/lens",
+  "paint": "gunsmod:item/vehicle/mesh/paint",
+  "paint_mid": "gunsmod:item/vehicle/mesh/paint_mid",
+  "red_light": "gunsmod:item/vehicle/mesh/red_light",
+  "steel": "gunsmod:item/vehicle/mesh/steel",
+  "track": "gunsmod:item/vehicle/mesh/track",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

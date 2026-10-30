@@ -1,0 +1,27 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "SGS",
+  "SRS",
+  "SCS"
+ ],
+ "key": {
+  "S": {
+   "item": "gunsmod:steel_ingot"
+  },
+  "G": {
+   "item": "minecraft:glass"
+  },
+  "R": {
+   "item": "minecraft:redstone_block"
+  },
+  "C": {
+   "item": "minecraft:compass"
+  }
+ },
+ "result": {
+  "id": "gunsmod:arena_controller",
+  "count": 1
+ }
+}

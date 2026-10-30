@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/minigun"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    -1.251,
+    0.833,
+    -0.977
+   ],
+   "scale": [
+    0.4707,
+    0.4707,
+    0.4707
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.837,
+    0.309,
+    -0.148
+   ],
+   "scale": [
+    0.2375,
+    0.2375,
+    0.2375
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -1.446,
+    0.533,
+    -0.256
+   ],
+   "scale": [
+    0.4103,
+    0.4103,
+    0.4103
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.763,
+    1.586,
+    4.302
+   ],
+   "scale": [
+    1.2203,
+    1.2203,
+    1.2203
+   ]
+  }
+ }
+}

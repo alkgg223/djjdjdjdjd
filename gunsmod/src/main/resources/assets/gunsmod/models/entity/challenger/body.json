@@ -1,0 +1,18 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/challenger/body.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "glow": "gunsmod:item/vehicle/mesh/glow",
+  "lens": "gunsmod:item/vehicle/mesh/lens",
+  "light_grey": "gunsmod:item/vehicle/mesh/light_grey",
+  "paint": "gunsmod:item/vehicle/mesh/paint",
+  "red_light": "gunsmod:item/vehicle/mesh/red_light",
+  "track": "gunsmod:item/vehicle/mesh/track",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

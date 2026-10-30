@@ -1,0 +1,27 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "SES",
+  "SRS",
+  "III"
+ ],
+ "key": {
+  "S": {
+   "item": "gunsmod:steel_ingot"
+  },
+  "E": {
+   "item": "minecraft:emerald"
+  },
+  "R": {
+   "item": "minecraft:redstone_block"
+  },
+  "I": {
+   "item": "minecraft:iron_ingot"
+  }
+ },
+ "result": {
+  "id": "gunsmod:bot_spawner",
+  "count": 1
+ }
+}

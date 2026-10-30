@@ -1,0 +1,19 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/pantsir/gun.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "black": "gunsmod:item/vehicle/mesh/black",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "gunmetal": "gunsmod:item/vehicle/mesh/gunmetal",
+  "olive": "gunsmod:item/vehicle/mesh/olive",
+  "paint": "gunsmod:item/vehicle/mesh/paint",
+  "paint_dark": "gunsmod:item/vehicle/mesh/paint_dark",
+  "steel": "gunsmod:item/vehicle/mesh/steel",
+  "white": "gunsmod:item/vehicle/mesh/white",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

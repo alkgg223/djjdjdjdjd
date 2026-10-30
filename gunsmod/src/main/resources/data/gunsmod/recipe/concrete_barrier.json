@@ -1,0 +1,17 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "C C",
+  "CCC"
+ ],
+ "key": {
+  "C": {
+   "item": "minecraft:gray_concrete"
+  }
+ },
+ "result": {
+  "id": "gunsmod:concrete_barrier",
+  "count": 3
+ }
+}

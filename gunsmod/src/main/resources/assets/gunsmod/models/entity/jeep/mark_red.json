@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/jeep/mark_red.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "red_mark": "gunsmod:item/vehicle/mesh/red_mark",
+  "white_mark": "gunsmod:item/vehicle/mesh/white_mark",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

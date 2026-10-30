@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/tank/track_bottom.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "steel": "gunsmod:item/vehicle/mesh/steel",
+  "track": "gunsmod:item/vehicle/mesh/track",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

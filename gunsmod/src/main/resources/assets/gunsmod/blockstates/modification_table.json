@@ -1,0 +1,19 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "gunsmod:block/modification_table"
+  },
+  "facing=east": {
+   "model": "gunsmod:block/modification_table",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "gunsmod:block/modification_table",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "gunsmod:block/modification_table",
+   "y": 270
+  }
+ }
+}

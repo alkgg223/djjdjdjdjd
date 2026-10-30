@@ -1,0 +1,41 @@
+newmtl black
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #black
+
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl lens
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #lens
+
+newmtl olive
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #olive
+
+newmtl red
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #red
+
+newmtl rubber
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #rubber
+
+newmtl steel
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #steel

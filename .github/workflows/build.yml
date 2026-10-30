@@ -12,17 +12,12 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.10.2'
-      - name: Unpack and build
+      - name: Build
+        working-directory: gunsmod
         run: |
-          unzip -q eggsteal-mod-src-v3.zip -d proj
-          find proj -maxdepth 3 | head -30
-          D=$(dirname "$(find proj -name build.gradle | head -1)")
-          echo "Building in: $D"
-          cd "$D"
-          gradle build --no-daemon
+          chmod +x gradlew
+          ./gradlew build --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: gunsmod-jar
-          path: proj/**/build/libs/*.jar
+          path: gunsmod/build/libs/*.jar

@@ -1,0 +1,16 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "gunsmod:block/heavy_launcher"
+  },
+  "facing=east": {
+   "model": "gunsmod:block/heavy_launcher"
+  },
+  "facing=south": {
+   "model": "gunsmod:block/heavy_launcher"
+  },
+  "facing=west": {
+   "model": "gunsmod:block/heavy_launcher"
+  }
+ }
+}

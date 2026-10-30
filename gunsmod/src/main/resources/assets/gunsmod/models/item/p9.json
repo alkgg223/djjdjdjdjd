@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/p9"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    4.447,
+    1.565,
+    3.173
+   ],
+   "scale": [
+    1.3326,
+    1.3326,
+    1.3326
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    3.151,
+    1.317,
+    -0.0
+   ],
+   "scale": [
+    0.8009,
+    0.8009,
+    0.8009
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    5.443,
+    2.274,
+    -0.0
+   ],
+   "scale": [
+    1.3834,
+    1.3834,
+    1.3834
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    2.154,
+    -5.157
+   ],
+   "scale": [
+    1.3106,
+    1.3106,
+    1.3106
+   ]
+  }
+ }
+}

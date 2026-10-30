@@ -1,0 +1,19 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "gunsmod:block/sandbags_low"
+  },
+  "facing=east": {
+   "model": "gunsmod:block/sandbags_low",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "gunsmod:block/sandbags_low",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "gunsmod:block/sandbags_low",
+   "y": 270
+  }
+ }
+}

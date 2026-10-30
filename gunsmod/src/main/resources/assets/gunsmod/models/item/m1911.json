@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/m1911"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    4.002,
+    1.134,
+    2.777
+   ],
+   "scale": [
+    1.3809,
+    1.3809,
+    1.3809
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    2.733,
+    0.979,
+    -0.01
+   ],
+   "scale": [
+    0.8015,
+    0.8015,
+    0.8015
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    4.721,
+    1.691,
+    -0.017
+   ],
+   "scale": [
+    1.3843,
+    1.3843,
+    1.3843
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.017,
+    1.701,
+    -4.748
+   ],
+   "scale": [
+    1.3922,
+    1.3922,
+    1.3922
+   ]
+  }
+ }
+}
