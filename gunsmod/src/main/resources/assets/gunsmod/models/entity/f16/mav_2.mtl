@@ -1,0 +1,17 @@
+newmtl lens
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #lens
+
+newmtl olive
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #olive
+
+newmtl yellow
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #yellow

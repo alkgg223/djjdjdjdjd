@@ -1,0 +1,79 @@
+newmtl black
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #black
+
+newmtl canvas
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #canvas
+
+newmtl canvas_green
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #canvas_green
+
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl glass_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #glass_dark
+
+newmtl glow
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #glow
+
+newmtl grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #grey
+
+newmtl olive
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #olive
+
+newmtl paint
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint
+neoforge_TintIndex 0
+
+newmtl paint_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint_dark
+neoforge_TintIndex 0
+
+newmtl red_light
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #red_light
+
+newmtl rubber
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #rubber
+
+newmtl steel
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #steel

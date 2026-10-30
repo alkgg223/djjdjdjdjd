@@ -1,1 +1,12 @@
-{"textures":{"0":"gunsmod:item/vehicle/leopard","particle":"gunsmod:item/vehicle/leopard"},"elements":[{"from":[0.2,1.7,4.0],"to":[0.25,3.6,6.8],"faces":{"north":{"uv":[5.76562,7.4375,5.78125,7.78125],"texture":"#0"},"south":{"uv":[5.8125,7.4375,5.82812,7.78125],"texture":"#0"},"east":{"uv":[1.82812,7.4375,2.09375,7.78125],"texture":"#0"},"west":{"uv":[2.125,7.4375,2.39062,7.78125],"texture":"#0"},"up":{"uv":[8.39062,5.84375,8.40625,6.375],"texture":"#0"},"down":{"uv":[8.4375,5.84375,8.45312,6.375],"texture":"#0"}}},{"from":[15.75,1.7,4.0],"to":[15.8,3.6,6.8],"faces":{"north":{"uv":[5.95312,7.4375,5.96875,7.78125],"texture":"#0"},"south":{"uv":[6.0,7.4375,6.01562,7.78125],"texture":"#0"},"east":{"uv":[3.01562,7.4375,3.28125,7.78125],"texture":"#0"},"west":{"uv":[3.3125,7.4375,3.57812,7.78125],"texture":"#0"},"up":{"uv":[8.57812,5.84375,8.59375,6.375],"texture":"#0"},"down":{"uv":[8.625,5.84375,8.64062,6.375],"texture":"#0"}}},{"from":[2.95,6.4,9.5],"to":[3.0,8.4,12.0],"faces":{"north":{"uv":[2.59375,7.0,2.60938,7.375],"texture":"#0"},"south":{"uv":[2.64062,7.0,2.65625,7.375],"texture":"#0"},"east":{"uv":[15.1875,6.4375,15.42188,6.8125],"texture":"#0"},"west":{"uv":[15.45312,6.4375,15.6875,6.8125],"texture":"#0"},"up":{"uv":[9.15625,6.4375,9.17188,6.90625],"texture":"#0"},"down":{"uv":[9.20312,6.4375,9.21875,6.90625],"texture":"#0"}}},{"from":[13.0,6.4,9.5],"to":[13.05,8.4,12.0],"faces":{"north":{"uv":[2.6875,7.0,2.70312,7.375],"texture":"#0"},"south":{"uv":[2.73438,7.0,2.75,7.375],"texture":"#0"},"east":{"uv":[15.71875,6.4375,15.95312,6.8125],"texture":"#0"},"west":{"uv":[0.01562,7.0,0.25,7.375],"texture":"#0"},"up":{"uv":[9.25,6.4375,9.26562,6.90625],"texture":"#0"},"down":{"uv":[9.29688,6.4375,9.3125,6.90625],"texture":"#0"}}}]}
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/leopard/mark_green.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "white_mark": "gunsmod:item/vehicle/mesh/white_mark",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

@@ -1,1 +1,14 @@
-{"textures":{"0":"gunsmod:item/vehicle/heli_ka52","particle":"gunsmod:item/vehicle/heli_ka52"},"elements":[{"from":[9.0,7.93,7.67],"to":[25.0,8.07,8.33],"faces":{"north":{"uv":[2.26562,9.625,3.76562,9.6875],"texture":"#0"},"south":{"uv":[3.79688,9.625,5.29688,9.6875],"texture":"#0"},"east":{"uv":[13.07812,9.625,13.14062,9.6875],"texture":"#0"},"west":{"uv":[13.17188,9.625,13.23438,9.6875],"texture":"#0"},"up":{"uv":[8.82812,8.125,10.32812,8.375],"texture":"#0"},"down":{"uv":[10.35938,8.125,11.85938,8.375],"texture":"#0"}}},{"from":[25.0,7.92,7.72],"to":[26.0,8.08,8.33],"faces":{"north":{"uv":[11.17188,9.625,11.26562,9.6875],"texture":"#0"},"south":{"uv":[11.29688,9.625,11.39062,9.6875],"texture":"#0"},"east":{"uv":[13.26562,9.625,13.32812,9.6875],"texture":"#0"},"west":{"uv":[13.35938,9.625,13.42188,9.6875],"texture":"#0"},"up":{"uv":[9.70312,8.6875,9.79688,8.9375],"texture":"#0"},"down":{"uv":[9.82812,8.6875,9.92188,8.9375],"texture":"#0"}}},{"from":[8.7,7.88,7.8],"to":[9.6,8.12,8.2],"faces":{"north":{"uv":[12.29688,9.625,12.375,9.6875],"texture":"#0"},"south":{"uv":[12.40625,9.625,12.48438,9.6875],"texture":"#0"},"east":{"uv":[2.14062,9.875,2.17188,9.9375],"texture":"#0"},"west":{"uv":[2.20312,9.875,2.23438,9.9375],"texture":"#0"},"up":{"uv":[8.32812,9.375,8.40625,9.5],"texture":"#0"},"down":{"uv":[8.4375,9.375,8.51562,9.5],"texture":"#0"}}}]}
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/heli_ka52/blade.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "steel": "gunsmod:item/vehicle/mesh/steel",
+  "yellow": "gunsmod:item/vehicle/mesh/yellow",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

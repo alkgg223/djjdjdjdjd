@@ -77,6 +77,7 @@ public class TankRenderer extends EntityRenderer<TankEntity> {
         pose.mulPose(Axis.YP.rotationDegrees(-turretYaw));
         pose.translate(-px, 0, -pz);
         BakedRender.entity(dir + "turret", pose, buf, light, ov, r, gr, b);
+        BakedRender.entity(dir + (team == BotTeam.GREEN ? "tmark_green" : "tmark_red"), pose, buf, light, ov, 1, 1, 1);
         float gy = (float) (g.gun()[0] / 16), gz = (float) (g.gun()[1] / 16);
         pose.translate(px, gy, gz);
         pose.mulPose(Axis.XP.rotationDegrees(-gunPitch));

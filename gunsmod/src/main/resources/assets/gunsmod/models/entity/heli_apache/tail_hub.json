@@ -1,1 +1,13 @@
-{"textures":{"0":"gunsmod:item/vehicle/heli_apache","particle":"gunsmod:item/vehicle/heli_apache"},"elements":[{"from":[7.8,7.7,7.8757],"to":[8.3,8.3,8.1243],"faces":{"north":{"uv":[5.64062,8.8125,5.6875,9.0625],"texture":"#0"},"south":{"uv":[5.71875,8.8125,5.76562,9.0625],"texture":"#0"},"east":{"uv":[7.32812,8.8125,7.34375,9.0625],"texture":"#0"},"west":{"uv":[7.375,8.8125,7.39062,9.0625],"texture":"#0"},"up":{"uv":[8.90625,10.25,8.95312,10.3125],"texture":"#0"},"down":{"uv":[8.98438,10.25,9.03125,10.3125],"texture":"#0"}}},{"from":[7.812,7.8757,7.7],"to":[8.288,8.1243,8.3],"faces":{"north":{"uv":[9.0625,10.25,9.10938,10.3125],"texture":"#0"},"south":{"uv":[9.14062,10.25,9.1875,10.3125],"texture":"#0"},"east":{"uv":[4.78125,10.25,4.84375,10.3125],"texture":"#0"},"west":{"uv":[4.875,10.25,4.9375,10.3125],"texture":"#0"},"up":{"uv":[5.79688,8.8125,5.84375,9.0625],"texture":"#0"},"down":{"uv":[5.875,8.8125,5.92188,9.0625],"texture":"#0"}}},{"from":[7.824,7.7,7.8757],"to":[8.276,8.3,8.1243],"rotation":{"angle":45.0,"axis":"x","origin":[8.05,8.0,8.0]},"faces":{"north":{"uv":[5.95312,8.8125,6.0,9.0625],"texture":"#0"},"south":{"uv":[6.03125,8.8125,6.07812,9.0625],"texture":"#0"},"east":{"uv":[7.42188,8.8125,7.4375,9.0625],"texture":"#0"},"west":{"uv":[7.46875,8.8125,7.48438,9.0625],"texture":"#0"},"up":{"uv":[9.21875,10.25,9.26562,10.3125],"texture":"#0"},"down":{"uv":[9.29688,10.25,9.34375,10.3125],"texture":"#0"}}},{"from":[7.836,7.8757,7.7],"to":[8.264,8.1243,8.3],"rotation":{"angle":45.0,"axis":"x","origin":[8.05,8.0,8.0]},"faces":{"north":{"uv":[9.375,10.25,9.42188,10.3125],"texture":"#0"},"south":{"uv":[9.45312,10.25,9.5,10.3125],"texture":"#0"},"east":{"uv":[4.96875,10.25,5.03125,10.3125],"texture":"#0"},"west":{"uv":[5.0625,10.25,5.125,10.3125],"texture":"#0"},"up":{"uv":[6.10938,8.8125,6.15625,9.0625],"texture":"#0"},"down":{"uv":[6.1875,8.8125,6.23438,9.0625],"texture":"#0"}}}]}
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/heli_apache/tail_hub.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "bright": "gunsmod:item/vehicle/mesh/bright",
+  "steel": "gunsmod:item/vehicle/mesh/steel",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

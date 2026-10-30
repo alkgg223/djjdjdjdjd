@@ -1,1 +1,12 @@
-{"textures":{"0":"gunsmod:item/vehicle/challenger","particle":"gunsmod:item/vehicle/challenger"},"elements":[{"from":[-0.05,1.8,0.4],"to":[0.0,3.6,3.4],"faces":{"north":{"uv":[15.92188,7.28125,15.9375,7.625],"texture":"#0"},"south":{"uv":[15.96875,7.28125,15.98438,7.625],"texture":"#0"},"east":{"uv":[11.51562,7.28125,11.79688,7.625],"texture":"#0"},"west":{"uv":[11.82812,7.28125,12.10938,7.625],"texture":"#0"},"up":{"uv":[9.45312,4.96875,9.46875,5.53125],"texture":"#0"},"down":{"uv":[9.5,4.96875,9.51562,5.53125],"texture":"#0"}}},{"from":[16.05,1.8,0.4],"to":[16.1,3.6,3.4],"faces":{"north":{"uv":[0.10938,7.6875,0.125,8.03125],"texture":"#0"},"south":{"uv":[0.15625,7.6875,0.17188,8.03125],"texture":"#0"},"east":{"uv":[12.76562,7.28125,13.04688,7.625],"texture":"#0"},"west":{"uv":[13.07812,7.28125,13.35938,7.625],"texture":"#0"},"up":{"uv":[9.64062,4.96875,9.65625,5.53125],"texture":"#0"},"down":{"uv":[9.6875,4.96875,9.70312,5.53125],"texture":"#0"}}},{"from":[1.95,6.6,10.0],"to":[2.0,8.2,13.6],"faces":{"north":{"uv":[5.35938,7.6875,5.375,8.0],"texture":"#0"},"south":{"uv":[5.40625,7.6875,5.42188,8.0],"texture":"#0"},"east":{"uv":[0.29688,7.6875,0.64062,8.0],"texture":"#0"},"west":{"uv":[0.67188,7.6875,1.01562,8.0],"texture":"#0"},"up":{"uv":[14.42188,0.03125,14.4375,0.71875],"texture":"#0"},"down":{"uv":[14.46875,0.03125,14.48438,0.71875],"texture":"#0"}}},{"from":[14.05,6.6,10.0],"to":[14.1,8.2,13.6],"faces":{"north":{"uv":[5.45312,7.6875,5.46875,8.0],"texture":"#0"},"south":{"uv":[5.5,7.6875,5.51562,8.0],"texture":"#0"},"east":{"uv":[1.04688,7.6875,1.39062,8.0],"texture":"#0"},"west":{"uv":[1.42188,7.6875,1.76562,8.0],"texture":"#0"},"up":{"uv":[14.51562,0.03125,14.53125,0.71875],"texture":"#0"},"down":{"uv":[14.5625,0.03125,14.57812,0.71875],"texture":"#0"}}}]}
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/challenger/mark_green.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "white_mark": "gunsmod:item/vehicle/mesh/white_mark",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

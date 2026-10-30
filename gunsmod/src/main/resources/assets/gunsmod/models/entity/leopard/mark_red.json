@@ -1,1 +1,13 @@
-{"textures":{"0":"gunsmod:item/vehicle/leopard","particle":"gunsmod:item/vehicle/leopard"},"elements":[{"from":[0.2,1.7,4.0],"to":[0.25,3.6,6.8],"faces":{"north":{"uv":[5.85938,7.4375,5.875,7.78125],"texture":"#0"},"south":{"uv":[5.90625,7.4375,5.92188,7.78125],"texture":"#0"},"east":{"uv":[2.42188,7.4375,2.6875,7.78125],"texture":"#0"},"west":{"uv":[2.71875,7.4375,2.98438,7.78125],"texture":"#0"},"up":{"uv":[8.48438,5.84375,8.5,6.375],"texture":"#0"},"down":{"uv":[8.53125,5.84375,8.54688,6.375],"texture":"#0"}}},{"from":[15.75,1.7,4.0],"to":[15.8,3.6,6.8],"faces":{"north":{"uv":[6.04688,7.4375,6.0625,7.78125],"texture":"#0"},"south":{"uv":[6.09375,7.4375,6.10938,7.78125],"texture":"#0"},"east":{"uv":[3.60938,7.4375,3.875,7.78125],"texture":"#0"},"west":{"uv":[3.90625,7.4375,4.17188,7.78125],"texture":"#0"},"up":{"uv":[8.67188,5.84375,8.6875,6.375],"texture":"#0"},"down":{"uv":[8.71875,5.84375,8.73438,6.375],"texture":"#0"}}},{"from":[2.95,7.1,8.5],"to":[3.0,7.7,13.0],"faces":{"north":{"uv":[12.20312,8.15625,12.21875,8.28125],"texture":"#0"},"south":{"uv":[12.25,8.15625,12.26562,8.28125],"texture":"#0"},"east":{"uv":[0.98438,8.15625,1.40625,8.28125],"texture":"#0"},"west":{"uv":[1.4375,8.15625,1.85938,8.28125],"texture":"#0"},"up":{"uv":[10.82812,0.03125,10.84375,0.875],"texture":"#0"},"down":{"uv":[10.875,0.03125,10.89062,0.875],"texture":"#0"}}},{"from":[13.0,7.1,8.5],"to":[13.05,7.7,13.0],"faces":{"north":{"uv":[12.29688,8.15625,12.3125,8.28125],"texture":"#0"},"south":{"uv":[12.34375,8.15625,12.35938,8.28125],"texture":"#0"},"east":{"uv":[1.89062,8.15625,2.3125,8.28125],"texture":"#0"},"west":{"uv":[2.34375,8.15625,2.76562,8.28125],"texture":"#0"},"up":{"uv":[10.92188,0.03125,10.9375,0.875],"texture":"#0"},"down":{"uv":[10.96875,0.03125,10.98438,0.875],"texture":"#0"}}}]}
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/leopard/mark_red.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "red_mark": "gunsmod:item/vehicle/mesh/red_mark",
+  "white_mark": "gunsmod:item/vehicle/mesh/white_mark",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

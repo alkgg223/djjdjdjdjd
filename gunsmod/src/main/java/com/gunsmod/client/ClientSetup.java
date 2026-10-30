@@ -98,6 +98,8 @@ public final class ClientSetup {
             e.register(BakedRender.id(p));
         }
         for (TankType t : TankType.values()) {
+            e.register(BakedRender.id("entity/" + t.geo.model() + "/tmark_green"));
+            e.register(BakedRender.id("entity/" + t.geo.model() + "/tmark_red"));
             if (t == TankType.ABRAMS) continue;
             for (String p : new String[]{"body", "mark_green", "mark_red", "turret", "gun"}) e.register(BakedRender.id("entity/" + t.geo.model() + "/" + p));
         }

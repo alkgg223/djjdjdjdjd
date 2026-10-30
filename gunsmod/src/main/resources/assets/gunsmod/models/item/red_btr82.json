@@ -2,7 +2,7 @@
  "parent": "builtin/entity",
  "gui_light": "side",
  "textures": {
-  "particle": "gunsmod:item/vehicle/btr82"
+  "particle": "gunsmod:item/vehicle/mesh/paint"
  },
  "display": {
   "gui": {
