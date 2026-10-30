@@ -41,6 +41,8 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
 
     @Nullable public BlockPos home;
     @Nullable public BlockPos spawnerPos;
+    /** a route set with the route planner: whoever of the soldiers drives follows it (null = none) */
+    @Nullable public com.gunsmod.entity.ai.Waypoints waypoints;
     /** client hook (sounds, exhaust and damage smoke) installed by the client setup */
     public static Consumer<VehicleEntity> clientTick = v -> { };
     /** client: true for the local player looking through the vehicle's sight (first person) */
@@ -353,6 +355,7 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
     @Override
     public void tick() {
         if (!this.level().isClientSide && home == null && this.tickCount > 1) home = this.blockPosition();
+        if (!this.level().isClientSide && routeActive()) com.gunsmod.entity.ai.Waypoints.keepLoaded(this);
         super.tick();
         if (this.level().isClientSide) clientTick.accept(this);
     }
@@ -364,6 +367,22 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         tag.putInt("Team", getBotTeam().ordinal());
         if (home != null) tag.put("Home", NbtUtils.writeBlockPos(home));
         if (spawnerPos != null) tag.put("Spawner", NbtUtils.writeBlockPos(spawnerPos));
+        if (waypoints != null) tag.put("Waypoints", waypoints.save());
+    }
+
+    /** a soldier drives and there is route left to follow */
+    public boolean routeActive() {
+        return waypoints != null && waypoints.active() && getControllingPassenger() instanceof BotEntity;
+    }
+
+    /** where a soldier driver goes on the route (null = no route or it is done) */
+    @Nullable
+    public Vec3 routeGoal(double reach) {
+        if (!routeActive()) return null;
+        BlockPos last = waypoints.points.get(waypoints.at);
+        Vec3 g = waypoints.goal(this, reach);
+        if (g == null) home = last;           // the end of the route: patrol round there from now on
+        return g;
     }
 
     @Override
@@ -372,5 +391,6 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         setTeam(BotTeam.byId(tag.getInt("Team")));
         home = NbtUtils.readBlockPos(tag, "Home").orElse(null);
         spawnerPos = NbtUtils.readBlockPos(tag, "Spawner").orElse(null);
+        waypoints = com.gunsmod.entity.ai.Waypoints.read(tag, "Waypoints");
     }
 }

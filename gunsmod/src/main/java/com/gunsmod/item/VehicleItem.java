@@ -46,6 +46,12 @@ public class VehicleItem extends Item {
         } else {
             return null;
         }
+        // a route planned for this vehicle (set at its garage): soldiers who drive it follow the route
+        com.gunsmod.entity.ai.Waypoints w = RouteToolItem.read(stack);
+        if (w != null) {
+            if (m instanceof VehicleEntity e) e.waypoints = w.fresh();
+            else if (m instanceof JeepEntity j) j.waypoints = w.fresh();
+        }
         m.moveTo(x, y, z, yaw, 0);
         m.setYHeadRot(yaw);
         m.setYBodyRot(yaw);
@@ -97,5 +103,7 @@ public class VehicleItem extends Item {
         tip.add(Component.translatable("gunsmod.tip." + k + "1").withStyle(ChatFormatting.DARK_GRAY));
         tip.add(Component.translatable("gunsmod.tip." + k + "2").withStyle(ChatFormatting.DARK_GRAY));
         tip.add(Component.translatable("gunsmod.tip.spawner_hint").withStyle(ChatFormatting.DARK_GRAY));
+        com.gunsmod.entity.ai.Waypoints w = RouteToolItem.read(stack);
+        if (w != null) tip.add(Component.translatable("gunsmod.tip.route_points", w.points.size()).withStyle(ChatFormatting.YELLOW));
     }
 }

@@ -151,6 +151,7 @@ public class BotEntity extends PathfinderMob {
         this.goalSelector.addGoal(2, new BotVehicleGoal(this));
         this.goalSelector.addGoal(3, new BotCombatGoal(this));
         this.goalSelector.addGoal(4, new BotReloadGoal(this));
+        this.goalSelector.addGoal(5, new com.gunsmod.entity.ai.BotRouteGoal(this));
         this.goalSelector.addGoal(6, new BotPatrolGoal(this));
         this.goalSelector.addGoal(8, new BotGlanceGoal(this));
         this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
@@ -434,6 +435,7 @@ public class BotEntity extends PathfinderMob {
     public void tick() {
         super.tick();
         if (this.level().isClientSide) return;
+        if (waypoints != null && waypoints.active() && !this.isPassenger()) com.gunsmod.entity.ai.Waypoints.keepLoaded(this);
         if (fireCooldown > 0) fireCooldown--;
         if (vehicleCooldown > 0) vehicleCooldown--;
         if (mines > 0 && !operator && this.getTarget() == null && !this.isPassenger() && this.onGround() && this.random.nextInt(900) == 0) layMine();
@@ -572,8 +574,13 @@ public class BotEntity extends PathfinderMob {
     }
 
     // ------------------------------------------------------------------------------------ dog tag loadout
+    /** a route set with the route planner (null = none) */
+    @Nullable
+    public com.gunsmod.entity.ai.Waypoints waypoints;
+
     public CompoundTag saveLoadout() {
         CompoundTag t = new CompoundTag();
+        if (waypoints != null) t.put("waypoints", waypoints.fresh().save());
         t.putInt("team", getBotTeam().ordinal());
         t.putInt("skin", getSkin());
         t.putInt("grenades", grenades);
@@ -589,6 +596,8 @@ public class BotEntity extends PathfinderMob {
     }
 
     public void applyLoadout(CompoundTag t) {
+        com.gunsmod.entity.ai.Waypoints w = com.gunsmod.entity.ai.Waypoints.read(t, "waypoints");
+        if (w != null) waypoints = w.fresh();
         setTeam(BotTeam.byId(t.getInt("team")));
         setSkin(t.getInt("skin"));
         grenades = t.contains("grenades") ? t.getInt("grenades") : 2;
@@ -620,6 +629,7 @@ public class BotEntity extends PathfinderMob {
         tag.putInt("Grenades", grenades);
         tag.putInt("Smokes", smokes);
         tag.putBoolean("IgnorePlayers", ignorePlayers);
+        if (waypoints != null) tag.put("Waypoints", waypoints.save());
         if (home != null) tag.put("Home", NbtUtils.writeBlockPos(home));
         if (spawnerPos != null) tag.put("Spawner", NbtUtils.writeBlockPos(spawnerPos));
         if (arenaPos != null) tag.put("Arena", NbtUtils.writeBlockPos(arenaPos));
@@ -650,6 +660,7 @@ public class BotEntity extends PathfinderMob {
         grenades = tag.getInt("Grenades");
         smokes = tag.getInt("Smokes");
         ignorePlayers = tag.getBoolean("IgnorePlayers");
+        waypoints = com.gunsmod.entity.ai.Waypoints.read(tag, "Waypoints");
         home = NbtUtils.readBlockPos(tag, "Home").orElse(null);
         spawnerPos = NbtUtils.readBlockPos(tag, "Spawner").orElse(null);
         arenaPos = NbtUtils.readBlockPos(tag, "Arena").orElse(null);

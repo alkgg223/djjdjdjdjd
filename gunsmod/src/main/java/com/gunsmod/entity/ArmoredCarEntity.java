@@ -990,7 +990,9 @@ public class ArmoredCarEntity extends VehicleEntity {
         LivingEntity enemy = kind.antiAir() ? tracked() : kind.artillery() ? null : driver.getTarget();
         BlockPos hp = home != null ? home : this.blockPosition();
         // on the battlefield the air defence covers its own half of the field from the road, the rest drive on the enemy
-        Vec3 goal = GroundBotDriver.onField(this, driver)
+        Vec3 goal = routeGoal(5.0);
+        if (goal != null) patrol.slow = enemy != null;
+        else goal = GroundBotDriver.onField(this, driver)
                 ? patrol.road(this, driver, enemy, true, standOff ? RADAR_RANGE : 75, standOff ? 0.3 : 1)
                 : standOff
                 ? patrol.goal(this, enemy, true, Vec3.atBottomCenterOf(hp), 90, RADAR_RANGE, 0)

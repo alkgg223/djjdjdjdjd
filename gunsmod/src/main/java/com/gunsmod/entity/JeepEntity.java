@@ -88,6 +88,8 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
     /** patrol centre (where it was placed) and the vehicle spawner that owns it */
     @Nullable public BlockPos home;
     @Nullable public BlockPos spawnerPos;
+    /** a route set with the route planner: a soldier driver follows it (null = none) */
+    @Nullable public com.gunsmod.entity.ai.Waypoints waypoints;
     private int stuckTicks, reverseTicks;
     private Vec3 lastPos = Vec3.ZERO;
     private float lastYaw;
@@ -567,8 +569,17 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
         Entity gunner = seatEntity(SEAT_GUNNER);
         if (enemy == null && gunner instanceof BotEntity gb) enemy = gb.getTarget();
         if (home == null) home = this.blockPosition();
-        // a gunner on the turret: halt when the enemy is in sight so the shots land, otherwise patrol with stops
-        Vec3 goal = GroundBotDriver.onField(this, driver) ? patrol.road(this, driver, enemy, gunner != null, tow ? 120 : 55, 1)
+        // a route from the route planner comes first (the gunner fights on the move);
+        // otherwise with a gunner on the turret: halt when the enemy is in sight so the shots land, else patrol with stops
+        Vec3 goal = null;
+        if (waypoints != null && waypoints.active()) {
+            com.gunsmod.entity.ai.Waypoints.keepLoaded(this);
+            BlockPos last = waypoints.points.get(waypoints.at);
+            goal = waypoints.goal(this, 3.5);
+            if (goal == null) home = last;
+            else patrol.slow = enemy != null;
+        }
+        if (goal == null) goal = GroundBotDriver.onField(this, driver) ? patrol.road(this, driver, enemy, gunner != null, tow ? 120 : 55, 1)
                 : patrol.goal(this, enemy, gunner != null, Vec3.atBottomCenterOf(home), 96, tow ? 120 : 55, tow ? 14 : 7);
         double stopDist = 0;
         if (goal == null) {
@@ -811,6 +822,7 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
         super.addAdditionalSaveData(tag);
         tag.putInt("Team", getBotTeam().ordinal());
         if (home != null) tag.put("Home", NbtUtils.writeBlockPos(home));
+        if (waypoints != null) tag.put("Waypoints", waypoints.save());
         if (spawnerPos != null) tag.put("Spawner", NbtUtils.writeBlockPos(spawnerPos));
     }
 
@@ -819,6 +831,7 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
         super.readAdditionalSaveData(tag);
         setTeam(BotTeam.byId(tag.getInt("Team")));
         home = NbtUtils.readBlockPos(tag, "Home").orElse(null);
+        waypoints = com.gunsmod.entity.ai.Waypoints.read(tag, "Waypoints");
         spawnerPos = NbtUtils.readBlockPos(tag, "Spawner").orElse(null);
     }
 

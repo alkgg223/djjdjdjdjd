@@ -61,6 +61,15 @@ public class VehicleSpawnerBlockEntity extends BlockEntity {
         return old;
     }
 
+    /** a route from the route planner for every vehicle sent out from here (null takes it away) */
+    public void setRoute(@javax.annotation.Nullable com.gunsmod.entity.ai.Waypoints w) {
+        if (vehicle.isEmpty()) return;
+        ItemStack v = vehicle.copy();
+        com.gunsmod.item.RouteToolItem.write(v, w);
+        vehicle = v;
+        changed();
+    }
+
     public ItemStack takeVehicle() {
         ItemStack old = vehicle;
         vehicle = ItemStack.EMPTY;
