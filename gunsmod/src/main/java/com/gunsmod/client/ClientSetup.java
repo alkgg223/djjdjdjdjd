@@ -133,12 +133,17 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.TANK_LEOPARD.get(), TankRenderer::new);
         e.registerEntityRenderer(Reg.TANK_T90.get(), TankRenderer::new);
         e.registerEntityRenderer(Reg.TANK_CHALLENGER.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_MAUS.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_OBJ279.get(), TankRenderer::new);
         e.registerEntityRenderer(Reg.HELICOPTER.get(), HelicopterRenderer::new);
         e.registerEntityRenderer(Reg.HELI_APACHE.get(), HelicopterRenderer::new);
         e.registerEntityRenderer(Reg.HELI_HIND.get(), HelicopterRenderer::new);
         e.registerEntityRenderer(Reg.HELI_KA52.get(), HelicopterRenderer::new);
         e.registerEntityRenderer(Reg.BTR.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.PANTSIR.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.HIMARS.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.GRAD.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.CRAM.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.F16.get(), JetRenderer::new);
         e.registerEntityRenderer(Reg.GUIDED_MISSILE.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.FLARE_ENTITY.get(), NoopRenderer::new);

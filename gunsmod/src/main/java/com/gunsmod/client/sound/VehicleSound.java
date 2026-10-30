@@ -117,7 +117,7 @@ public class VehicleSound extends AbstractTickableSoundInstance {
             mc.getSoundManager().play(s[1]);
         }
         if (!on) return;
-        double sp = Math.abs(c.getDisplaySpeed()) / c.kind.maxSpeed;
+        double sp = c.kind.maxSpeed > 0 ? Math.abs(c.getDisplaySpeed()) / c.kind.maxSpeed : 0;
         if (c.tickCount % 3 == 0) {
             for (double[] ex : c.geo.exhaust()) {
                 Vec3 p = c.toWorld(ex[0], ex[1], ex[2]);
@@ -197,7 +197,7 @@ public class VehicleSound extends AbstractTickableSoundInstance {
                 return;
             }
             if (vehicle instanceof ArmoredCarEntity c) {
-                double sp = Math.min(1.0, Math.abs(c.getDisplaySpeed()) / c.kind.maxSpeed);
+                double sp = c.kind.maxSpeed > 0 ? Math.min(1.0, Math.abs(c.getDisplaySpeed()) / c.kind.maxSpeed) : 0;
                 target = kind == CAR_DRIVE ? (float) (0.3 + 2.4 * sp) : (float) (2.2 - sp * 1.4);
                 this.pitch = kind == CAR_DRIVE ? (float) (0.6 + sp * 0.4) : 0.72f;
             } else {
