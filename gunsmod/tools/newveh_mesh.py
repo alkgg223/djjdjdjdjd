@@ -186,7 +186,7 @@ def himars():
              coax=(8.0, 9.6, 1.0), radar=None, wheels=[(x, 2.2, z) for z in axles for x in (2.9, 13.1)], wheelR=2.2, steerAxles=1,
              seats=[(5.6, 4.6, -8.2), (10.4, 4.6, -8.2)],
              front=[(3.0, 5.0, -12.8), (13.0, 5.0, -12.8), (8.0, 5.0, -13.2)], back=[(3.0, 5.0, 16.4), (13.0, 5.0, 16.4)],
-             exhaust=[(12.9, 10.8, -4.4)], smoke=(8.0, 7.0, 4.0), size=(2.9, 3.2), gunMin=-60.0, gunMax=0.0)
+             exhaust=[(12.9, 10.8, -4.4)], smoke=(8.0, 7.0, 4.0), size=(2.9, 3.2), gunMin=0.0, gunMax=60.0)
     GEO["himars"] = g
     body, tur, gun = Mesh(), Mesh(), Mesh()
     _cab(body, -12.4, -4.6)
@@ -225,7 +225,7 @@ def grad():
              wheels=[(x, 2.4, z) for z in axles for x in (3.0, 13.0)], wheelR=2.4, steerAxles=1,
              seats=[(5.8, 5.0, -6.4), (10.2, 5.0, -6.4)],
              front=[(3.0, 5.0, -15.6), (13.0, 5.0, -15.6), (8.0, 5.0, -16.0)], back=[(3.0, 5.0, 17.4), (13.0, 5.0, 17.4)],
-             exhaust=[(3.2, 4.0, -8.6)], smoke=(8.0, 7.0, 5.0), size=(2.9, 3.2), gunMin=-55.0, gunMax=0.0)
+             exhaust=[(3.2, 4.0, -8.6)], smoke=(8.0, 7.0, 5.0), size=(2.9, 3.2), gunMin=0.0, gunMax=55.0)
     GEO["grad"] = g
     body, tur, gun = Mesh(), Mesh(), Mesh()
     # Ural-375: long bonnet with its grille and round wings, the cab, the launcher bed
@@ -268,7 +268,7 @@ def cram():
              wheels=[(x, 1.6, z) for z in (8.4, 11.8) for x in (2.6, 13.4)], wheelR=1.6, steerAxles=0,
              seats=[(12.8, 3.2, 1.0)],
              front=[(3.0, 3.0, -6.6), (13.0, 3.0, -6.6)], back=[(3.0, 3.0, 14.6), (13.0, 3.0, 14.6)],
-             exhaust=[(12.6, 5.6, 13.0)], smoke=(8.0, 6.0, 10.0), size=(2.8, 3.4), gunMin=-85.0, gunMax=12.0)
+             exhaust=[(12.6, 5.6, 13.0)], smoke=(8.0, 6.0, 10.0), size=(2.8, 3.4), gunMin=-12.0, gunMax=85.0)
     GEO["cram"] = g
     body, tur, gun = Mesh(), Mesh(), Mesh()
     # flatbed trailer, drawbar, levelling jacks, generator and fire control boxes
