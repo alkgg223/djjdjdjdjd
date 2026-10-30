@@ -575,6 +575,7 @@ public class ArmoredCarEntity extends VehicleEntity {
             }
             dir = spread(dir, 0.7f);
             GunLogic.Trace tr = GunLogic.trace(this.level(), shooter, muzzle, dir, 260);
+            if (h instanceof JetEntity jet) jet.underFire(this);       // rounds streaming past: the pilot throws the jet about
             VehicleEntity hit = tr.entity() instanceof VehicleEntity he && he instanceof Aircraft ? he : flak(muzzle, tr.end(), gunner);
             if (hit != null) {
                 hit.invulnerableTime = 0;
@@ -843,6 +844,7 @@ public class ArmoredCarEntity extends VehicleEntity {
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, new Net.ShotFx(this.getId(), -8, muzzle, ends, new byte[2], false));
         this.entityData.set(DATA_AMMO, Math.max(0, getAmmo() - 4));
         if (target != null) {
+            if (target instanceof JetEntity jet) jet.underFire(this);
             cramHit(target, target.distanceTo(this) < 60 ? 0.3f : 0.18f, gunner);
             return;
         }

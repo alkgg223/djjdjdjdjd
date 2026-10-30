@@ -67,6 +67,8 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     private static final EntityDataAccessor<Integer> DATA_LOCK = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Byte> DATA_LOCK_PROGRESS = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> DATA_WARN = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.BYTE);
+    /** extra roll of an aerobatic manoeuvre (barrel roll, inverted), on top of the bank into turns */
+    private static final EntityDataAccessor<Float> DATA_STUNT = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.FLOAT);
 
     public final VehicleGeo.Jet geo = VehicleGeo.F16;
 
@@ -86,6 +88,10 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     private int warnMissile, warnRadar, flaredFor = -1;
     // soldier pilot
     private enum Phase { GROUND, CLIMB, PATROL, ATTACK, EXTEND, EVADE }
+    private enum Stunt { NONE, BARREL_ROLL, BREAK_TURN, SCISSORS, SPLIT_S }
+    private Stunt stunt = Stunt.NONE;
+    private int stuntCooldown, stuntSide = 1;
+    private float stuntYaw;
     private Phase phase = Phase.GROUND;
     private int phaseTicks, scanTimer, passShots;
     private float taxiYaw;
@@ -135,6 +141,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         b.define(DATA_LOCK, -1);
         b.define(DATA_LOCK_PROGRESS, (byte) 0);
         b.define(DATA_WARN, (byte) 0);
+        b.define(DATA_STUNT, 0f);
     }
 
     @Override
@@ -470,7 +477,16 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         if (isCrashing()) roll += 9f;
         else {
             float want = this.onGround() ? 0f : Mth.clamp(dYaw * 16f, -80f, 80f);
-            roll += (want - roll) * 0.15f;
+            float stuntRoll = getStuntRoll();
+            roll += Mth.wrapDegrees(want + stuntRoll - roll) * (stuntRoll != 0f ? 0.45f : 0.15f);
+        }
+        // keep the angle in range without a jump between the last two frames
+        if (roll > 180f) {
+            roll -= 360f;
+            prevRoll -= 360f;
+        } else if (roll < -180f) {
+            roll += 360f;
+            prevRoll += 360f;
         }
         visPitch = pitch();
         boolean up = isGearUp();
@@ -508,7 +524,95 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (isCrashing()) return false;
-        return super.hurt(source, amount);
+        boolean hit = super.hurt(source, amount);
+        if (hit && !this.level().isClientSide && source.getEntity() != null) underFire(source.getEntity());
+        return hit;
+    }
+
+    public float getStuntRoll() {
+        return this.entityData.get(DATA_STUNT);
+    }
+
+    /**
+     * A soldier pilot under fire (hit, or rounds from guns and air defence passing close) throws the jet about:
+     * a barrel roll, a hard break across the attacker's line, scissors, or with height a split-S.
+     */
+    public void underFire(@Nullable Entity from) {
+        if (this.level().isClientSide || !(getControllingPassenger() instanceof BotEntity) || !isAirborne() || isCrashing() || stuntCooldown > 0) return;
+        if (phase == Phase.GROUND || phase == Phase.CLIMB) return;
+        double agl = heightAboveGround();
+        float bearing = this.getYRot();
+        if (from != null) {
+            Vec3 d = from.position().subtract(this.position());
+            bearing = (float) (Mth.atan2(d.z, d.x) * Mth.RAD_TO_DEG) - 90f;
+        }
+        stuntSide = this.random.nextBoolean() ? 1 : -1;
+        int pick = this.random.nextInt(agl > 75 ? 4 : 3);
+        stunt = pick == 0 ? Stunt.BARREL_ROLL : pick == 1 ? Stunt.BREAK_TURN : pick == 2 ? Stunt.SCISSORS : Stunt.SPLIT_S;
+        stuntYaw = stunt == Stunt.BREAK_TURN ? bearing + 90f * stuntSide : this.getYRot();
+        if (phase != Phase.EVADE) resume = phase;
+        phase = Phase.EVADE;
+        phaseTicks = 0;
+        stuntCooldown = 140 + this.random.nextInt(80);
+        if (this.random.nextInt(3) == 0) dropFlares();
+    }
+
+    /** one tick of the manoeuvre; returns false when it is over */
+    private boolean stuntStep() {
+        int t = phaseTicks;
+        botThrottle = 1;
+        botAb = true;
+        float extra;
+        int len;
+        switch (stunt) {
+            case BARREL_ROLL -> {
+                // a full roll round the flight path, the nose drawing a circle
+                len = 36;
+                float a = t * (360f / len);
+                extra = a * stuntSide;
+                botYaw = stuntYaw + Mth.sin(a * Mth.DEG_TO_RAD) * 18f * stuntSide;
+                botPitch = 6f + Mth.cos(a * Mth.DEG_TO_RAD) * 10f;
+            }
+            case BREAK_TURN -> {
+                // all the g it has across the attacker's line, wings near vertical
+                len = 45;
+                extra = 12f * stuntSide * Math.min(1f, t / 8f);
+                botYaw = stuntYaw;
+                botPitch = 4f;
+            }
+            case SCISSORS -> {
+                // hard reversals, rolling from one wing to the other
+                len = 64;
+                int side = ((t / 16) % 2 == 0 ? 1 : -1) * stuntSide;
+                extra = 15f * side;
+                botYaw = stuntYaw + side * 55f;
+                botPitch = 3f;
+            }
+            default -> {
+                // split-S: half roll to inverted, pull down through a half loop, roll out the other way round
+                len = 62;
+                if (t < 12) {
+                    extra = 180f * t / 12f * stuntSide;
+                    botYaw = stuntYaw;
+                    botPitch = 3f;
+                } else if (t < 44) {
+                    extra = 180f * stuntSide;
+                    botYaw = stuntYaw + 180f * (t - 12) / 32f * stuntSide;
+                    botPitch = -48f;
+                } else {
+                    extra = 180f * stuntSide * (1f - (t - 44) / 18f);
+                    botYaw = stuntYaw + 180f * stuntSide;
+                    botPitch = 10f;
+                }
+            }
+        }
+        if (t >= len) {
+            stunt = Stunt.NONE;
+            this.entityData.set(DATA_STUNT, 0f);
+            return false;
+        }
+        this.entityData.set(DATA_STUNT, Mth.wrapDegrees(extra));
+        return true;
     }
 
     @Override
@@ -735,6 +839,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     private void botPilot(BotEntity bot) {
         botControl = true;
         phaseTicks++;
+        if (stuntCooldown > 0) stuntCooldown--;
         double agl = heightAboveGround();
         float yaw = this.getYRot();
         botYaw = yaw;
@@ -794,6 +899,13 @@ public class JetEntity extends VehicleEntity implements Aircraft {
                 }
             }
             case EVADE -> {
+                if (stunt != Stunt.NONE) {
+                    if (!stuntStep()) {
+                        phase = resume;
+                        phaseTicks = 0;
+                    }
+                    break;
+                }
                 botYaw = evadeYaw + Mth.sin(phaseTicks * 0.4f) * 10f;
                 botPitch = evadePitch;
                 botThrottle = 1;
