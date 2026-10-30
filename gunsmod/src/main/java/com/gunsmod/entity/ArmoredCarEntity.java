@@ -11,6 +11,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -45,6 +46,9 @@ public class ArmoredCarEntity extends VehicleEntity {
     public static final double MAX_REVERSE = 14.0 / 3.6 / 20.0;
     public static final double RADAR_RANGE = 240;
     public static final int LOCK_TICKS = 30;
+    /** rocket artillery: launcher elevation, gravity on the rockets, fastest launch; C-RAM reach and round speed */
+    public static final float ARTY_PITCH = 40f;
+    public static final double ARTY_GRAVITY = 0.03, ARTY_MAX_SPEED = 3.2, CRAM_RANGE = 110, CRAM_ROUND_SPEED = 50;
 
     private static final EntityDataAccessor<Float> DATA_TURRET = SynchedEntityData.defineId(ArmoredCarEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_GUN = SynchedEntityData.defineId(ArmoredCarEntity.class, EntityDataSerializers.FLOAT);
@@ -54,6 +58,7 @@ public class ArmoredCarEntity extends VehicleEntity {
     private static final EntityDataAccessor<Integer> DATA_RELOAD = SynchedEntityData.defineId(ArmoredCarEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TRACK = SynchedEntityData.defineId(ArmoredCarEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Byte> DATA_LOCK = SynchedEntityData.defineId(ArmoredCarEntity.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Float> DATA_RANGE = SynchedEntityData.defineId(ArmoredCarEntity.class, EntityDataSerializers.FLOAT);
 
     public final CarType kind;
     public final VehicleGeo.Car geo;
@@ -65,6 +70,10 @@ public class ArmoredCarEntity extends VehicleEntity {
     private int mainCooldown, secondCooldown, muzzleIndex, tubeIndex, scanTimer, searchTicks, burst, burstPause, trackCandidate = -1, trackCount;
     @Nullable private Vec3 aimError;
     private final GroundBotDriver patrol = new GroundBotDriver();
+    /** artillery: the point the salvo goes to, rockets still to fire, pause between fire missions */
+    @Nullable private Vec3 artyAim;
+    private int salvoLeft, missionCooldown, cramScan;
+    @Nullable private Entity cramTarget;
     private int stuckTicks, reverseTicks;
     private Vec3 lastPos = Vec3.ZERO;
     private float lastYaw;
@@ -103,6 +112,7 @@ public class ArmoredCarEntity extends VehicleEntity {
         b.define(DATA_RELOAD, 0);
         b.define(DATA_TRACK, -1);
         b.define(DATA_LOCK, (byte) 0);
+        b.define(DATA_RANGE, -1f);
     }
 
     @Override
@@ -160,6 +170,26 @@ public class ArmoredCarEntity extends VehicleEntity {
         return this.entityData.get(DATA_LOCK);
     }
 
+    /** artillery: distance to the aim point in blocks, or -1 */
+    public float getArtyRange() {
+        return this.entityData.get(DATA_RANGE);
+    }
+
+    private void setRange(double r) {
+        float f = r < 0 ? -1f : (float) Math.round(r);
+        if (getArtyRange() != f) this.entityData.set(DATA_RANGE, f);
+    }
+
+    public int getSalvoLeft() {
+        return salvoLeft;
+    }
+
+    @Override
+    public boolean fitForBots() {
+        // the C-RAM works by itself
+        return !kind.cram() && super.fitForBots();
+    }
+
     public boolean isLocked() {
         return getTrack() >= 0 && getLockProgress() >= LOCK_TICKS;
     }
@@ -195,7 +225,7 @@ public class ArmoredCarEntity extends VehicleEntity {
     @Override
     protected Vec3 seatModel(int seat) {
         double[] s = geo.seats()[Math.min(seat, geo.seats().length - 1)];
-        return seat == 0 ? turretModel(s[0], s[1], s[2], getTurretYaw()) : new Vec3(s[0], s[1], s[2]);
+        return seat == 0 && kind.turretSeat() ? turretModel(s[0], s[1], s[2], getTurretYaw()) : new Vec3(s[0], s[1], s[2]);
     }
 
     public Vec3 gunDir() {
@@ -240,6 +270,15 @@ public class ArmoredCarEntity extends VehicleEntity {
     }
 
     private void physics() {
+        if (kind.maxSpeed <= 0) {
+            // the C-RAM trailer is towed into place, it does not drive
+            speed = 0;
+            Vec3 fall = new Vec3(0, this.onGround() ? -0.08 : (this.getDeltaMovement().y - 0.08) * 0.98, 0);
+            this.setDeltaMovement(fall);
+            this.move(MoverType.SELF, fall);
+            this.fallDistance = 0;
+            return;
+        }
         Entity driver = getControllingPassenger();
         float thr = driver != null ? throttleIn : 0f;
         float st = driver != null ? steerIn : 0f;
@@ -402,6 +441,14 @@ public class ArmoredCarEntity extends VehicleEntity {
             }
         }
         LivingEntity crew = getControllingPassenger();
+        if (kind.cram()) {
+            cramTick(crew instanceof Player p ? p : null);
+            return;
+        }
+        if (kind.artillery()) {
+            artilleryTick(crew);
+            return;
+        }
         if (crew instanceof Player p) {
             traverse(Mth.wrapDegrees(p.getYRot() - this.getYRot()), p.getXRot(), kind.traverse, kind.elevate);
             if (kind.antiAir()) radarTrack(p, p.getEyePosition(), p.getLookAngle(), 1);
@@ -573,6 +620,256 @@ public class ArmoredCarEntity extends VehicleEntity {
         if (this.level() instanceof ServerLevel sl) PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, 160, new Net.MuzzleFx(at, dir, size, this.getId()));
     }
 
+    // ------------------------------------------------------------------------------------ rocket artillery
+    private float yawTo(Vec3 at) {
+        Vec3 to = at.subtract(toWorld(geo.turret()[0], geo.gun()[0], geo.turret()[1]));
+        return Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f - this.getYRot());
+    }
+
+    private void artilleryTick(@Nullable LivingEntity crew) {
+        if (missionCooldown > 0) missionCooldown--;
+        if (crew instanceof Player p) {
+            // fire control: the launcher lays itself at 40 degrees towards the point under the crosshair
+            Vec3 eye = p.getEyePosition();
+            HitResult hr = this.level().clip(new ClipContext(eye, eye.add(p.getLookAngle().scale(400)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+            Vec3 at = hr.getType() == HitResult.Type.MISS ? null : hr.getLocation();
+            if (salvoLeft <= 0) artyAim = at;
+            Vec3 lay = salvoLeft > 0 ? artyAim : at;
+            traverse(lay != null ? yawTo(lay) : Mth.wrapDegrees(p.getYRot() - this.getYRot()), -ARTY_PITCH, kind.traverse, kind.elevate);
+            setRange(lay != null ? lay.distanceTo(this.position()) : -1);
+            // attack: the whole salvo, use: a single rocket
+            boolean salvo = fireMain, single = fireSecond;
+            fireMain = fireSecond = false;
+            if (salvo || single) {
+                if (artyAim == null) p.displayClientMessage(Component.translatable("gunsmod.msg.arty_no_target"), true);
+                else if (salvoLeft <= 0 && getReload() == 0 && getAmmo() > 0) {
+                    if (ballistic(gunPoint(geo.muzzles()[0]), artyAim, ARTY_PITCH) == null) {
+                        p.displayClientMessage(Component.translatable("gunsmod.msg.arty_range"), true);
+                    } else {
+                        salvoLeft = single ? 1 : getAmmo();
+                    }
+                }
+            }
+            salvoTick(p);
+        } else if (crew instanceof BotEntity bot) {
+            botArtillery(bot);
+            salvoTick(bot);
+        } else {
+            salvoLeft = 0;
+            fireMain = fireSecond = false;
+            setRange(-1);
+        }
+    }
+
+    /** one rocket at a time once the launcher is laid on the aim point */
+    private void salvoTick(LivingEntity gunner) {
+        if (salvoLeft <= 0 || artyAim == null) {
+            salvoLeft = 0;
+            return;
+        }
+        if (mainCooldown > 0) return;
+        if (getAmmo() <= 0 || getReload() > 0) {
+            salvoLeft = 0;
+            return;
+        }
+        if (Math.abs(Mth.wrapDegrees(yawTo(artyAim) - getTurretYaw())) > 3f || getGunPitch() > -ARTY_PITCH + 2f) return;
+        launchRocket(gunner);
+        salvoLeft--;
+        mainCooldown = kind == CarType.HIMARS ? 14 : 2;
+    }
+
+    private void launchRocket(LivingEntity gunner) {
+        double[][] tubes = geo.muzzles();
+        Vec3 at = gunPoint(tubes[Math.floorMod(kind.ammo - getAmmo(), tubes.length)]);
+        boolean grad = kind == CarType.GRAD;
+        double spread = grad ? 5.5 : 1.2;
+        Vec3 aim = artyAim.add(this.random.nextGaussian() * spread, 0, this.random.nextGaussian() * spread);
+        Vec3 v = ballistic(at, aim, -getGunPitch());
+        if (v == null) {
+            salvoLeft = 0;
+            return;
+        }
+        RocketEntity r = new RocketEntity(this.level(), gunner, RocketEntity.ARTY);
+        if (grad) r.setPower(48f, 40f, 3.4f);
+        else r.setPower(95f, 70f, 5.6f);
+        r.setPos(at.x, at.y, at.z);
+        r.setDeltaMovement(v);
+        r.alignToMotion();
+        this.level().addFreshEntity(r);
+        this.entityData.set(DATA_AMMO, getAmmo() - 1);
+        this.level().playSound(null, at.x, at.y, at.z, Reg.sound("sam_launch"), SoundSource.NEUTRAL, grad ? 7f : 10f,
+                grad ? 1.2f + this.random.nextFloat() * 0.15f : 0.85f);
+        muzzleFx(at, v.normalize(), grad ? 1.0f : 1.6f);
+        if (this.level() instanceof ServerLevel sl) BotEntity.alertGunfire(sl, gunner, 120);
+    }
+
+    /** launch velocity that drops a rocket from {@code from} onto {@code to} when fired at the given elevation; null when out of reach */
+    @Nullable
+    public static Vec3 ballistic(Vec3 from, Vec3 to, double elevDeg) {
+        Vec3 d = to.subtract(from);
+        double dx = Math.sqrt(d.x * d.x + d.z * d.z), dy = d.y;
+        if (dx < 8) return null;
+        double th = Math.toRadians(elevDeg), c = Math.cos(th), t = Math.tan(th);
+        double denom = 2 * c * c * (dx * t - dy);
+        if (denom <= 0) return null;
+        double v = Math.sqrt(ARTY_GRAVITY * dx * dx / denom);
+        // gravity is added before every step: over n ticks the rocket drops g*n/2 more than the smooth arc
+        double n = dx / (v * c);
+        denom = 2 * c * c * (dx * t - dy - ARTY_GRAVITY * n / 2);
+        if (denom <= 0) return null;
+        v = Math.sqrt(ARTY_GRAVITY * dx * dx / denom);
+        if (v > ARTY_MAX_SPEED) return null;
+        return new Vec3(d.x / dx * c * v, Math.sin(th) * v, d.z / dx * c * v);
+    }
+
+    /** a fire mission every so often on the biggest group of enemies a team mate is fighting, never close to our own */
+    private void botArtillery(BotEntity bot) {
+        if (salvoLeft > 0 && artyAim != null) {
+            bot.setAiming(true);
+            traverse(yawTo(artyAim), -ARTY_PITCH, kind.traverse, kind.elevate);
+            return;
+        }
+        if (missionCooldown > 0 || getReload() > 0 || getAmmo() <= 0) {
+            traverse(0f, 0f, kind.traverse * 0.5f, kind.elevate * 0.5f);
+            setRange(-1);
+            return;
+        }
+        if (this.tickCount % 20 != 0) return;
+        List<BotEntity> friends = this.level().getEntitiesOfClass(BotEntity.class, this.getBoundingBox().inflate(340, 140, 340),
+                b -> b.isAlive() && b.getBotTeam() == getBotTeam());
+        LivingEntity best = null;
+        double bestScore = 0;
+        for (BotEntity f : friends) {
+            LivingEntity t = f.getTarget();
+            if (t == null || !t.isAlive() || !bot.isEnemy(t)) continue;
+            double d = t.distanceTo(this);
+            if (d < 40 || d > 320) continue;
+            boolean ours = false;
+            for (BotEntity o : friends) {
+                if (o.distanceToSqr(t) < 14 * 14) {
+                    ours = true;
+                    break;
+                }
+            }
+            if (ours) continue;
+            double score = t instanceof VehicleEntity || t instanceof JeepEntity ? 3 : 1;
+            score += this.level().getEntitiesOfClass(LivingEntity.class, t.getBoundingBox().inflate(7), bot::isEnemy).size();
+            if (score > bestScore) {
+                bestScore = score;
+                best = t;
+            }
+        }
+        if (best == null) {
+            setRange(-1);
+            return;
+        }
+        Vec3 aim = best.position().add(best.getDeltaMovement().scale(30));
+        if (ballistic(gunPoint(geo.muzzles()[0]), aim, ARTY_PITCH) == null) return;
+        artyAim = aim;
+        salvoLeft = Math.min(getAmmo(), kind == CarType.HIMARS ? 2 : 20);
+        missionCooldown = 300 + this.random.nextInt(300);
+        setRange(aim.distanceTo(this.position()));
+    }
+
+    // ------------------------------------------------------------------------------------ C-RAM
+    private void cramTick(@Nullable Player p) {
+        Vec3 muzzle = gunPoint(geo.muzzles()[0]);
+        if (p != null) {
+            // manned: the gun follows the operator's view and fires while attack is held
+            traverse(Mth.wrapDegrees(p.getYRot() - this.getYRot()), p.getXRot(), kind.traverse, kind.elevate);
+            if (fireMain && getAmmo() > 0 && getReload() == 0) cramFire(null, muzzle.add(gunDir().scale(CRAM_RANGE)), p);
+            return;
+        }
+        fireMain = fireSecond = false;
+        if (--cramScan <= 0) {
+            cramScan = 3;
+            cramTarget = cramPick();
+        }
+        Entity t = cramTarget;
+        if (t == null || t.isRemoved() || !cramThreat(t)) {
+            cramTarget = null;
+            // search: the mount sweeps slowly, the gun raised
+            traverse(getTurretYaw() + 2.5f, -25f, 2.5f, 2f);
+            return;
+        }
+        Vec3 c = t.position().add(0, t.getBbHeight() * 0.5, 0);
+        Vec3 aim = c.add(t.getDeltaMovement().scale(c.distanceTo(muzzle) / CRAM_ROUND_SPEED));
+        aimAt(aim, 1f);
+        if (offAim(aim) < 6f && getAmmo() > 0 && getReload() == 0) cramFire(t, aim, null);
+    }
+
+    /** the closest rocket, shell or missile of the other side in sight; aircraft come after them */
+    @Nullable
+    private Entity cramPick() {
+        Vec3 eye = sightWorld();
+        Entity best = null;
+        double bestD = CRAM_RANGE;
+        for (Entity e : this.level().getEntities(this, this.getBoundingBox().inflate(CRAM_RANGE), this::cramThreat)) {
+            double d = e.distanceTo(this) + (e instanceof VehicleEntity ? 40 : 0);
+            if (d >= bestD) continue;
+            if (this.level().clip(new ClipContext(eye, e.position(), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)).getType() != HitResult.Type.MISS) continue;
+            bestD = d;
+            best = e;
+        }
+        return best;
+    }
+
+    private boolean cramThreat(Entity e) {
+        if (!e.isAlive() || e.distanceTo(this) > CRAM_RANGE) return false;
+        if (e instanceof RocketEntity || e instanceof MissileEntity || e instanceof GuidedMissileEntity) {
+            if (e instanceof MissileEntity m && m.isDetonating()) return false;
+            Entity owner = ((net.minecraft.world.entity.projectile.Projectile) e).getOwner();
+            if (owner != null && BotTeam.of(owner) == getBotTeam()) return false;
+            Vec3 v = e.getDeltaMovement();
+            return v.lengthSqr() > 0.04 && (e.getY() > this.getY() + 2 || v.dot(this.position().subtract(e.position())) > 0);
+        }
+        return e instanceof VehicleEntity h && h instanceof Aircraft a && a.isAirborne() && h.getBotTeam() != getBotTeam()
+                && !h.getPassengers().isEmpty() && h.distanceTo(this) < CRAM_RANGE * 0.8;
+    }
+
+    /** one tick of 20 mm fire (about four rounds): two glowing tracers, a chance to kill what it is aimed at */
+    private void cramFire(@Nullable Entity target, Vec3 aim, @Nullable LivingEntity gunner) {
+        Vec3 muzzle = gunPoint(geo.muzzles()[0]);
+        List<Vec3> ends = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            Vec3 dir = spread(aim.subtract(muzzle).normalize(), 0.6f);
+            ends.add(dir.scale(Math.min(CRAM_RANGE + 20, aim.distanceTo(muzzle) + 3 + this.random.nextDouble() * 12)));
+        }
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, new Net.ShotFx(this.getId(), -8, muzzle, ends, new byte[2], false));
+        this.entityData.set(DATA_AMMO, Math.max(0, getAmmo() - 4));
+        if (target != null) {
+            cramHit(target, target.distanceTo(this) < 60 ? 0.3f : 0.18f, gunner);
+            return;
+        }
+        // manned: anything flying close to the stream of rounds can be hit
+        Vec3 end = muzzle.add(ends.get(0));
+        Vec3 ab = end.subtract(muzzle);
+        double len2 = ab.lengthSqr();
+        for (Entity e : this.level().getEntities(this, new AABB(muzzle, end).inflate(3), this::cramThreat)) {
+            Vec3 c = e.position().add(0, e.getBbHeight() * 0.5, 0);
+            double t = Mth.clamp(c.subtract(muzzle).dot(ab) / len2, 0, 1);
+            if (muzzle.add(ab.scale(t)).distanceTo(c) < e.getBbWidth() * 0.5 + 1.5) cramHit(e, 0.35f, gunner);
+        }
+    }
+
+    private void cramHit(Entity e, float chance, @Nullable LivingEntity gunner) {
+        if (e instanceof VehicleEntity h) {
+            if (this.random.nextFloat() < 0.5f) {
+                h.invulnerableTime = 0;
+                h.hurt(this.damageSources().explosion(this, gunner), 2.2f);
+                h.invulnerableTime = 0;
+            }
+            return;
+        }
+        if (this.random.nextFloat() >= chance) return;
+        Vec3 at = e.position();
+        if (e instanceof RocketEntity r) r.intercept();
+        else if (e instanceof MissileEntity m) m.intercept();
+        else if (e instanceof GuidedMissileEntity g) g.intercept();
+        this.level().playSound(null, at.x, at.y, at.z, Reg.sound("explosion_far"), SoundSource.NEUTRAL, 6f, 1.3f);
+        cramTarget = null;
+    }
+
     // ------------------------------------------------------------------------------------ soldier crew
     private void aimAt(Vec3 aim, float rate) {
         Vec3 to = aim.subtract(toWorld(geo.turret()[0], geo.gun()[0], geo.turret()[1]));
@@ -677,12 +974,18 @@ public class ArmoredCarEntity extends VehicleEntity {
     /** patrol with halts; stop to fight when the enemy is in sight */
     private void botDrive(BotEntity driver) {
         // the Pantsir only cares about aircraft: it halts for the helicopter its radar tracks, never for soldiers
-        LivingEntity enemy = kind.antiAir() ? tracked() : driver.getTarget();
+        if (kind.artillery() && salvoLeft > 0) {
+            throttleIn = GroundBotDriver.brake(speed);
+            steerIn = 0;
+            return;
+        }
+        boolean standOff = kind.antiAir() || kind.artillery();
+        LivingEntity enemy = kind.antiAir() ? tracked() : kind.artillery() ? null : driver.getTarget();
         BlockPos hp = home != null ? home : this.blockPosition();
         // on the battlefield the air defence covers its own half of the field from the road, the rest drive on the enemy
         Vec3 goal = GroundBotDriver.onField(this, driver)
-                ? patrol.road(this, driver, enemy, true, kind.antiAir() ? RADAR_RANGE : 75, kind.antiAir() ? 0.3 : 1)
-                : kind.antiAir()
+                ? patrol.road(this, driver, enemy, true, standOff ? RADAR_RANGE : 75, standOff ? 0.3 : 1)
+                : standOff
                 ? patrol.goal(this, enemy, true, Vec3.atBottomCenterOf(hp), 90, RADAR_RANGE, 0)
                 : patrol.goal(this, enemy, true, Vec3.atBottomCenterOf(hp), 100, 75, 9);
         if (goal == null) {

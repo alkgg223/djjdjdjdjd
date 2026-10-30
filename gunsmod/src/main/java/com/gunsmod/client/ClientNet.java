@@ -41,21 +41,28 @@ public final class ClientNet {
         if (!p.suppressed()) ClientLights.light(shooter != null ? shooter : (Object) p.shooter(), muzzle, t == null ? 14 : 13, 3);
         if (t == null) {
             // vehicle guns: -1 jeep turret, -2 coaxial machine gun, -3 20 mm chin gun, -4 30 mm cannon, -5 12.7 mm gatling,
-            // -6 anti-aircraft twin 30 mm
+            // -6 anti-aircraft twin 30 mm, -7 jet cannon, -8 C-RAM
             int id = p.gun();
             String snd = switch (id) {
                 case -2 -> "shot_lmg";
                 case -3 -> "heli_gun";
                 case -4, -6 -> "cannon_30";
                 case -5 -> "shot_minigun";
-                case -7 -> "jet_cannon";
+                case -7, -8 -> "jet_cannon";
                 default -> "shot_turret";
             };
-            float pitch = id == -6 ? 1.15f : 0.95f;
-            // the M61 fires 100 rounds a second: one burst sample covers several ticks
-            if (id != -7 || level.getGameTime() % 4 == 0) level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound(snd), SoundSource.HOSTILE, id <= -3 ? 10f : 7f, pitch + R.nextFloat() * 0.1f, true);
+            float pitch = id == -6 ? 1.15f : id == -8 ? 1.3f : 0.95f;
+            // the M61 and the C-RAM fire 75-100 rounds a second: one burst sample covers several ticks
+            if (id > -7 || level.getGameTime() % 4 == 0) level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound(snd), SoundSource.HOSTILE, id <= -3 ? 10f : 7f, pitch + R.nextFloat() * 0.1f, true);
             level.addParticle(Reg.MUZZLE_FLASH.get(), muzzle.x, muzzle.y, muzzle.z, 0, 0, 0);
             level.addParticle(Reg.SMOKE.get(), muzzle.x, muzzle.y, muzzle.z, 0, 0.02, 0);
+            if (id == -8) {
+                // C-RAM: a white-hot muzzle and a bright glow round the mount
+                ClientLights.light(shooter != null ? shooter : (Object) p.shooter(), muzzle, 15, 2);
+                for (int k = 0; k < 2; k++) {
+                    level.addParticle(Reg.SPARK.get(), muzzle.x, muzzle.y, muzzle.z, R.nextGaussian() * 0.1, R.nextGaussian() * 0.1, R.nextGaussian() * 0.1);
+                }
+            }
             if (id == -4 || id == -6) {
                 // 30 mm high explosive: a bright burst where it hits
                 for (int i = 0; i < p.ends().size(); i++) {

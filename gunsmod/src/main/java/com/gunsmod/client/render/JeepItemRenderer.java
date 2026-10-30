@@ -56,7 +56,7 @@ public class JeepItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static void renderVehicle(VehicleItem v, ItemDisplayContext ctx, PoseStack pose, MultiBufferSource buf, int light) {
         VehicleKind.Group grp = v.kind.group;
         boolean heli = grp == VehicleKind.Group.HELI;
-        boolean longOne = v.kind == VehicleKind.PANTSIR;
+        boolean longOne = v.kind == VehicleKind.PANTSIR || v.kind == VehicleKind.HIMARS || v.kind == VehicleKind.GRAD;
         if (grp == VehicleKind.Group.JET) {
             pose.pushPose();
             pose.translate(0.5f, 0.1f, 0.5f);
@@ -71,6 +71,7 @@ public class JeepItemRenderer extends BlockEntityWithoutLevelRenderer {
         pose.pushPose();
         pose.translate(0.5f, heli ? 0.08f : 0.14f, 0.5f);
         float s = ctx == ItemDisplayContext.GUI ? (heli ? 0.085f : longOne ? 0.085f : 0.115f) : ctx == ItemDisplayContext.NONE ? 0.2f : (heli ? 0.07f : 0.09f);
+        if (grp == VehicleKind.Group.TANK) s /= v.kind.tank().scale;
         pose.scale(s, s, s);
         if (ctx == ItemDisplayContext.GUI) pose.translate(0, heli ? 1.4f : 0.6f, 0);
         pose.mulPose(Axis.YP.rotationDegrees(180));

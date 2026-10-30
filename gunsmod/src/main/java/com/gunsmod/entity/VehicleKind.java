@@ -10,6 +10,8 @@ public enum VehicleKind {
     LEOPARD("leopard", Group.TANK),
     T90("t90", Group.TANK),
     CHALLENGER("challenger", Group.TANK),
+    MAUS("maus", Group.TANK),
+    OBJ279("object279", Group.TANK),
     COBRA("helicopter", Group.HELI),
     APACHE("apache", Group.HELI),
     HIND("hind", Group.HELI),
@@ -17,6 +19,9 @@ public enum VehicleKind {
     TOW_HUMVEE("tow_humvee", Group.JEEP),
     BTR("btr82", Group.CAR),
     PANTSIR("pantsir", Group.CAR),
+    HIMARS("himars", Group.CAR),
+    GRAD("grad", Group.CAR),
+    CRAM("cram", Group.CAR),
     F16("f16", Group.JET);
 
     public enum Group { TANK, HELI, JEEP, CAR, JET }
@@ -35,6 +40,8 @@ public enum VehicleKind {
             case LEOPARD -> Reg.TANK_LEOPARD.get();
             case T90 -> Reg.TANK_T90.get();
             case CHALLENGER -> Reg.TANK_CHALLENGER.get();
+            case MAUS -> Reg.TANK_MAUS.get();
+            case OBJ279 -> Reg.TANK_OBJ279.get();
             case COBRA -> Reg.HELICOPTER.get();
             case APACHE -> Reg.HELI_APACHE.get();
             case HIND -> Reg.HELI_HIND.get();
@@ -42,6 +49,9 @@ public enum VehicleKind {
             case TOW_HUMVEE -> Reg.JEEP_TOW.get();
             case BTR -> Reg.BTR.get();
             case PANTSIR -> Reg.PANTSIR.get();
+            case HIMARS -> Reg.HIMARS.get();
+            case GRAD -> Reg.GRAD.get();
+            case CRAM -> Reg.CRAM.get();
             case F16 -> Reg.F16.get();
         };
     }
@@ -51,6 +61,8 @@ public enum VehicleKind {
             case LEOPARD -> TankType.LEOPARD;
             case T90 -> TankType.T90;
             case CHALLENGER -> TankType.CHALLENGER;
+            case MAUS -> TankType.MAUS;
+            case OBJ279 -> TankType.OBJ279;
             default -> TankType.ABRAMS;
         };
     }
@@ -65,6 +77,12 @@ public enum VehicleKind {
     }
 
     public CarType car() {
-        return this == PANTSIR ? CarType.PANTSIR : CarType.BTR;
+        return switch (this) {
+            case PANTSIR -> CarType.PANTSIR;
+            case HIMARS -> CarType.HIMARS;
+            case GRAD -> CarType.GRAD;
+            case CRAM -> CarType.CRAM;
+            default -> CarType.BTR;
+        };
     }
 }

@@ -100,6 +100,12 @@ public class TankEntity extends VehicleEntity {
         return new ItemStack(kind.item(getBotTeam()));
     }
 
+    /** the super-heavy tanks are built on a bigger scale */
+    @Override
+    public double unit() {
+        return UNIT * kind.scale;
+    }
+
     @Override
     public int seatCount() {
         return 1;

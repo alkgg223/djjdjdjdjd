@@ -347,6 +347,10 @@ public final class OrchardBuilder {
             vehiclePad(s, -16, 30, tankB, team, toEnemy);
             vehiclePad(s, 18, 30, VehicleKind.PANTSIR, team, toEnemy);
             vehiclePad(s, 30, 14, heli, team, toEnemy);
+            // v1.8: a super-heavy tank, rocket artillery at the back and the C-RAM guarding the middle of the base
+            vehiclePad(s, -28, 44, s < 0 ? VehicleKind.MAUS : VehicleKind.OBJ279, team, toEnemy);
+            vehiclePad(s, 32, 42, s < 0 ? VehicleKind.HIMARS : VehicleKind.GRAD, team, toEnemy);
+            vehiclePad(s, 8, 44, VehicleKind.CRAM, team, toEnemy);
             runway(s);
             vehiclePad(s, -132, 66, VehicleKind.F16, team, runwayDir);
         }

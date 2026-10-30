@@ -71,6 +71,13 @@ public class MissileEntity extends Projectile {
         return MissileItem.isHeavy(getKind());
     }
 
+    /** shot down in the air (C-RAM): the warhead breaks up without going off */
+    public void intercept() {
+        if (this.isRemoved() || isDetonating()) return;
+        Blast.fx(this.level(), this.position(), Blast.FX_MISSILE, isHeavy() ? 1.6f : 1.2f);
+        this.discard();
+    }
+
     public boolean isDetonating() {
         return this.entityData.get(DATA_DETONATING);
     }

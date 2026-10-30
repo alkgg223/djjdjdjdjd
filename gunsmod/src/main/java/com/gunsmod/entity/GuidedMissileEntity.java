@@ -235,6 +235,13 @@ public class GuidedMissileEntity extends Projectile {
         e.invulnerableTime = 0;
     }
 
+    /** shot down in the air (C-RAM) */
+    public void intercept() {
+        if (this.isRemoved()) return;
+        Blast.fx(this.level(), this.position(), Blast.FX_MISSILE, 0.8f);
+        this.discard();
+    }
+
     private void detonate(Vec3 at) {
         if (antiAir()) {
             // fragmentation burst: only aircraft are hurt

@@ -219,12 +219,17 @@ public final class Reg {
     public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_LEOPARD = tank("tank_leopard", TankType.LEOPARD);
     public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_T90 = tank("tank_t90", TankType.T90);
     public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_CHALLENGER = tank("tank_challenger", TankType.CHALLENGER);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_MAUS = tank("tank_maus", TankType.MAUS);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_OBJ279 = tank("tank_obj279", TankType.OBJ279);
     public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELICOPTER = heli("helicopter", HeliType.COBRA);
     public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELI_APACHE = heli("heli_apache", HeliType.APACHE);
     public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELI_HIND = heli("heli_hind", HeliType.HIND);
     public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELI_KA52 = heli("heli_ka52", HeliType.KA52);
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> BTR = car("btr82", CarType.BTR);
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> PANTSIR = car("pantsir", CarType.PANTSIR);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> HIMARS = car("himars", CarType.HIMARS);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> GRAD = car("grad", CarType.GRAD);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> CRAM = car("cram", CarType.CRAM);
     public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> F16 = ENTITIES.register("f16",
             () -> EntityType.Builder.<JetEntity>of(JetEntity::new, MobCategory.MISC).sized(3.0f, 2.2f).eyeHeight(1.8f).clientTrackingRange(24)
                     .updateInterval(1).build("f16"));

@@ -49,14 +49,16 @@ public class TankRenderer extends EntityRenderer<TankEntity> {
         int ov = OverlayTexture.NO_OVERLAY;
         float r = team.r, gr = team.g, b = team.b;
         pose.pushPose();
-        pose.scale(S, S, S);
+        float sc = S * kind.scale;
+        pose.scale(sc, sc, sc);
         pose.translate(-0.5f, 0f, -0.5f);
         BakedRender.entity(dir + "body", pose, buf, light, ov, r, gr, b);
         BakedRender.entity(dir + (team == BotTeam.GREEN ? "mark_green" : "mark_red"), pose, buf, light, ov, 1, 1, 1);
         float wheelY = (float) g.wheel()[0], wheelR = (float) g.wheel()[1];
-        for (int side = 0; side < 2; side++) {
-            float tx = (float) g.trackX()[side], travel = side == 0 ? trackL : trackR;
-            float units = travel / 0.25f;
+        for (int i = 0; i < g.trackX().length; i++) {
+            // two tracks a side on the Object 279
+            float tx = (float) g.trackX()[i], travel = tx < 8f ? trackL : trackR;
+            float units = travel / (0.25f * kind.scale);
             wheel(pose, buf, light, "entity/tank/idler", tx, (float) g.idler()[0], (float) g.idler()[1], units / (float) g.idler()[2], 1f, r, gr, b);
             wheel(pose, buf, light, "entity/tank/sprocket", tx, (float) g.sprocket()[0], (float) g.sprocket()[1], units / (float) g.sprocket()[2], 1f, r, gr, b);
             for (double z : g.wheelsZ()) wheel(pose, buf, light, "entity/tank/roadwheel", tx, wheelY, (float) z, units / wheelR, wheelR / GEAR_WHEEL_R, r, gr, b);

@@ -15,7 +15,11 @@ public enum TankType {
     /** T-90A: 125 mm hits hardest, slow autoloader, poor gun depression, light and agile */
     T90(VehicleGeo.T90, "t90", 280, 0.05f, 34, 0.95f, 2.7f, 140, 4.3, 66f, 46f, 3.6f, 2.1f, -14f, 5f),
     /** Challenger 2: the heaviest armour, slowest, rifled gun firing HESH with a big blast */
-    CHALLENGER(VehicleGeo.CHALLENGER, "challenger", 390, 0.03f, 30, 0.8f, 2.1f, 110, 4.4, 50f, 44f, 4.4f, 2.5f, -20f, 10f);
+    CHALLENGER(VehicleGeo.CHALLENGER, "challenger", 390, 0.03f, 30, 0.8f, 2.1f, 110, 4.4, 50f, 44f, 4.4f, 2.5f, -20f, 10f),
+    /** Panzer VIII Maus: 188 tonnes, a 128 mm gun and armour nothing light gets through; crawls and turns slowly */
+    MAUS(VehicleGeo.MAUS, "maus", 760, 0.012f, 20, 0.45f, 1.2f, 150, 4.2, 85f, 62f, 5.2f, 1.5f, -20f, 7f, 1.4f),
+    /** Object 279: four tracks under a saucer hull built to survive a nuclear blast, 130 mm gun */
+    OBJ279(VehicleGeo.OBJ279, "obj279", 640, 0.016f, 32, 0.6f, 1.6f, 130, 4.6, 78f, 56f, 4.6f, 2.0f, -18f, 6f, 1.4f);
 
     public final VehicleGeo.Tank geo;
     public final String id;
@@ -23,9 +27,18 @@ public enum TankType {
     public final float health, bulletFactor, accel, turnRate, shellDamageArmour, shellDamageSoft, splash, traverse, gunMin, gunMax;
     public final double maxSpeed, shellSpeed;
     public final int reload;
+    /** how much bigger than the standard tank the model is drawn and the crew points are placed */
+    public final float scale;
 
     TankType(VehicleGeo.Tank geo, String id, float health, float bulletFactor, double kmh, float accel, float turnRate, int reload,
              double shellSpeed, float shellDamageArmour, float shellDamageSoft, float splash, float traverse, float gunMin, float gunMax) {
+        this(geo, id, health, bulletFactor, kmh, accel, turnRate, reload, shellSpeed, shellDamageArmour, shellDamageSoft, splash, traverse, gunMin,
+                gunMax, 1f);
+    }
+
+    TankType(VehicleGeo.Tank geo, String id, float health, float bulletFactor, double kmh, float accel, float turnRate, int reload,
+             double shellSpeed, float shellDamageArmour, float shellDamageSoft, float splash, float traverse, float gunMin, float gunMax, float scale) {
+        this.scale = scale;
         this.geo = geo;
         this.id = id;
         this.health = health;
@@ -49,6 +62,8 @@ public enum TankType {
             case LEOPARD -> VehicleKind.LEOPARD;
             case T90 -> VehicleKind.T90;
             case CHALLENGER -> VehicleKind.CHALLENGER;
+            case MAUS -> VehicleKind.MAUS;
+            case OBJ279 -> VehicleKind.OBJ279;
         };
     }
 

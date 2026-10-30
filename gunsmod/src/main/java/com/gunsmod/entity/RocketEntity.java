@@ -21,7 +21,7 @@ import net.minecraft.world.phys.Vec3;
 
 /** RPG rocket, 40 mm grenade, tank shell, helicopter rocket or aircraft bomb. Vehicle rounds hurt but never break blocks. */
 public class RocketEntity extends Projectile {
-    public static final int RPG = 0, GRENADE = 1, TANK_SHELL = 2, HELI_ROCKET = 3, BOMB = 4;
+    public static final int RPG = 0, GRENADE = 1, TANK_SHELL = 2, HELI_ROCKET = 3, BOMB = 4, ARTY = 5;
     private static final EntityDataAccessor<Byte> DATA_KIND = SynchedEntityData.defineId(RocketEntity.class, EntityDataSerializers.BYTE);
     private int life;
     /** vehicle rounds: direct hit damage against armour / everything else and the blast power (set by the vehicle) */
@@ -96,6 +96,7 @@ public class RocketEntity extends Projectile {
                 v = v.add(0, -0.006, 0);
             }
             case TANK_SHELL -> v = v.add(0, -0.03, 0);
+            case ARTY -> v = v.add(0, -ArmoredCarEntity.ARTY_GRAVITY, 0);
             case BOMB -> v = v.scale(0.995).add(0, -0.04, 0);
             case HELI_ROCKET -> {
                 if (v.length() < 4.2) v = v.scale(1.06);
@@ -111,6 +112,14 @@ public class RocketEntity extends Projectile {
                 // glowing tracer base and a thin smoke line
                 this.level().addParticle(Reg.TRACER.get(), getX(), getY(), getZ(), v.x, v.y, v.z);
                 if (life % 2 == 0) this.level().addParticle(Reg.SMOKE.get(), getX() - v.x * 0.5, getY() - v.y * 0.5, getZ() - v.z * 0.5, 0, 0.005, 0);
+            } else if (getKind() == ARTY) {
+                // a long white smoke trail behind a bright motor flame
+                for (int i = 0; i < 6; i++) {
+                    double f = i / 6.0;
+                    this.level().addParticle(Reg.MISSILE_SMOKE.get(), getX() - v.x * f, getY() - v.y * f, getZ() - v.z * f, 0, 0.01, 0);
+                }
+                this.level().addParticle(Reg.FLAME.get(), getX() - v.x * 0.1, getY() - v.y * 0.1, getZ() - v.z * 0.1, -v.x * 0.05, -v.y * 0.05, -v.z * 0.05);
+                FxHooks.light.accept(this, 14);
             } else if (getKind() == HELI_ROCKET) {
                 for (int i = 0; i < 4; i++) {
                     double f = i / 4.0;
@@ -130,11 +139,18 @@ public class RocketEntity extends Projectile {
             } else if (life % 2 == 0) {
                 this.level().addParticle(ParticleTypes.SMOKE, getX(), getY(), getZ(), 0, 0, 0);
             }
-        } else if (isVehicleRound() && life > (getKind() == BOMB ? 400 : 110)) {
+        } else if (isVehicleRound() && life > (getKind() == BOMB || getKind() == ARTY ? 400 : 110)) {
             this.discard();
         } else if (life > 240 || this.isInWater() && getKind() == 1) {
             detonate(this.position());
         }
+    }
+
+    /** shot down in the air (C-RAM): a small burst, no damage on the ground */
+    public void intercept() {
+        if (this.isRemoved()) return;
+        Blast.fx(this.level(), this.position(), Blast.FX_SMALL, getKind() == ARTY ? 1.0f : 0.6f);
+        this.discard();
     }
 
     /** the round itself hits hard before it bursts: tanks need a few hits, soldiers do not survive one */
