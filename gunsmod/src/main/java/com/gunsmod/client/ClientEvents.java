@@ -65,6 +65,13 @@ public final class ClientEvents {
             e.setSwingHand(false);
             return;
         }
+        if (e.isAttack() && p.getMainHandItem().getItem() instanceof com.gunsmod.item.ConvoyToolItem) {
+            // the convoy planner: attack rolls the convoy out
+            e.setCanceled(true);
+            e.setSwingHand(false);
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.gunsmod.net.Net.ConvoySpawn(0));
+            return;
+        }
         if (e.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND || !(p.getMainHandItem().getItem() instanceof GunItem)) return;
         if (e.isAttack()) {
             e.setCanceled(true);

@@ -705,7 +705,19 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider, Ai
             setLock(-1, 0);
             phase = Phase.PATROL;
             BlockPos h = home != null ? home : this.blockPosition();
-            if (hoverLeft > 0) {
+            Entity esc = com.gunsmod.entity.ai.Convoy.ahead(this, escort);
+            if (esc == null && escort != null) {
+                escort = null;
+                home = this.blockPosition();
+            }
+            if (esc != null) {
+                // convoy escort: over the column a little behind its head, looking the way it drives
+                Vec3 f = com.gunsmod.entity.ai.Convoy.forward(esc);
+                goal = esc.position().subtract(f.scale(14));
+                face = esc.position().add(f.scale(40));
+                if (horiz(goal) < 6) goal = null;
+                com.gunsmod.entity.ai.Waypoints.keepLoaded(this);
+            } else if (hoverLeft > 0) {
                 // a stop: hang in the air and look around
                 hoverLeft--;
                 goal = null;
@@ -943,9 +955,13 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider, Ai
     }
 
     // ------------------------------------------------------------------------------------ save
+    /** convoy: the vehicle at the head of the column this helicopter flies cover for (null = none) */
+    @Nullable public java.util.UUID escort;
+
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        if (escort != null) tag.putUUID("Escort", escort);
         tag.putIntArray("Ammo", ammo.clone());
         tag.putIntArray("Reloads", reload.clone());
         tag.putInt("Flares", getFlares());
@@ -955,6 +971,7 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider, Ai
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        escort = tag.hasUUID("Escort") ? tag.getUUID("Escort") : null;
         int[] a = tag.getIntArray("Ammo"), r = tag.getIntArray("Reloads");
         for (int i = 0; i < ammo.length; i++) {
             if (i < a.length) ammo[i] = Mth.clamp(a[i], 0, kind.weapons[i].ammo);

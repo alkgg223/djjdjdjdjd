@@ -32,6 +32,22 @@ public final class ServerNet {
         if (ctx.player() instanceof ServerPlayer sp && p.team() >= -1 && p.team() <= 1) PlayerTeam.pick(sp, p.team());
     }
 
+    /** the convoy planner in the hand gets the column from its screen */
+    public static void convoySave(Net.ConvoySave p, IPayloadContext ctx) {
+        if (!(ctx.player() instanceof ServerPlayer sp) || p.team() < 0 || p.team() > 1) return;
+        ItemStack st = sp.getMainHandItem().getItem() instanceof com.gunsmod.item.ConvoyToolItem ? sp.getMainHandItem() : sp.getOffhandItem();
+        if (!(st.getItem() instanceof com.gunsmod.item.ConvoyToolItem)) return;
+        java.util.List<Integer> ok = new java.util.ArrayList<>();
+        for (int k : p.kinds()) if (com.gunsmod.item.ConvoyToolItem.valid(k) && ok.size() < com.gunsmod.item.ConvoyToolItem.MAX) ok.add(k);
+        com.gunsmod.item.ConvoyToolItem.write(st, p.team(), ok.stream().mapToInt(Integer::intValue).toArray());
+    }
+
+    public static void convoySpawn(Net.ConvoySpawn p, IPayloadContext ctx) {
+        if (!(ctx.player() instanceof ServerPlayer sp) || !sp.getAbilities().mayBuild) return;
+        ItemStack st = sp.getMainHandItem();
+        if (st.getItem() instanceof com.gunsmod.item.ConvoyToolItem) com.gunsmod.item.ConvoyToolItem.spawn(sp, st);
+    }
+
     public static void reload(Net.Reload p, IPayloadContext ctx) {
         if (ctx.player() instanceof ServerPlayer sp) {
             ItemStack st = sp.getMainHandItem();

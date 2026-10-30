@@ -21,7 +21,7 @@ public final class Net {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar r = event.registrar("3");
+        PayloadRegistrar r = event.registrar("4");
         r.playToServer(Shoot.TYPE, Shoot.CODEC, ServerNet::shoot);
         r.playToServer(Reload.TYPE, Reload.CODEC, ServerNet::reload);
         r.playToServer(Turret.TYPE, Turret.CODEC, ServerNet::turret);
@@ -29,6 +29,8 @@ public final class Net {
         r.playToServer(LaunchAction.TYPE, LaunchAction.CODEC, ServerNet::launchAction);
         r.playToServer(VehicleFire.TYPE, VehicleFire.CODEC, ServerNet::vehicleFire);
         r.playToServer(TeamPick.TYPE, TeamPick.CODEC, ServerNet::teamPick);
+        r.playToServer(ConvoySave.TYPE, ConvoySave.CODEC, ServerNet::convoySave);
+        r.playToServer(ConvoySpawn.TYPE, ConvoySpawn.CODEC, ServerNet::convoySpawn);
         r.playToClient(ShotFx.TYPE, ShotFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.shotFx(p));
         r.playToClient(HitMarker.TYPE, HitMarker.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.hitMarker(p));
         r.playToClient(LaunchStatus.TYPE, LaunchStatus.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.launchStatus(p));
@@ -226,6 +228,53 @@ public final class Net {
 
         @Override
         public Type<TeamPick> type() {
+            return TYPE;
+        }
+    }
+
+    /** the convoy planner screen: the side and the vehicles of the column, head first */
+    public record ConvoySave(int team, int[] kinds) implements CustomPacketPayload {
+        public static final Type<ConvoySave> TYPE = payloadType("convoy_save");
+        public static final StreamCodec<RegistryFriendlyByteBuf, ConvoySave> CODEC = CustomPacketPayload.codec(ConvoySave::write, ConvoySave::new);
+
+        ConvoySave(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt(), readInts(b));
+        }
+
+        private static int[] readInts(RegistryFriendlyByteBuf b) {
+            int n = Math.min(16, Math.max(0, b.readVarInt()));
+            int[] k = new int[n];
+            for (int i = 0; i < n; i++) k[i] = b.readVarInt();
+            return k;
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(team);
+            b.writeVarInt(kinds.length);
+            for (int k : kinds) b.writeVarInt(k);
+        }
+
+        @Override
+        public Type<ConvoySave> type() {
+            return TYPE;
+        }
+    }
+
+    /** attack with the convoy planner: roll the convoy out */
+    public record ConvoySpawn(int hand) implements CustomPacketPayload {
+        public static final Type<ConvoySpawn> TYPE = payloadType("convoy_spawn");
+        public static final StreamCodec<RegistryFriendlyByteBuf, ConvoySpawn> CODEC = CustomPacketPayload.codec(ConvoySpawn::write, ConvoySpawn::new);
+
+        ConvoySpawn(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(hand);
+        }
+
+        @Override
+        public Type<ConvoySpawn> type() {
             return TYPE;
         }
     }

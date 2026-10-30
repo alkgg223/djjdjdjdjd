@@ -61,6 +61,7 @@ public final class ClientSetup {
         JeepEntity.clientTick = JeepSound::tickJeep;
         VehicleEntity.clientTick = VehicleSound::tick;
         VehicleCamera.init();
+        com.gunsmod.item.ConvoyToolItem.openScreen = s -> net.minecraft.client.Minecraft.getInstance().setScreen(new com.gunsmod.client.screen.ConvoyScreen(s));
         FxHooks.light = (en, lvl) -> ClientLights.light(en, en.position(), lvl, 2);
         // helicopter collective: jump climbs, sneak descends
         HelicopterEntity.liftInput = () -> {

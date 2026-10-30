@@ -541,11 +541,12 @@ public class TankEntity extends VehicleEntity {
     private void botDrive(BotEntity driver) {
         LivingEntity enemy = driver.getTarget();
         BlockPos h = home != null ? home : this.blockPosition();
-        // a route from the route planner comes first; the gunner still fights on the move
-        Vec3 goal = routeGoal(5.0);
-        if (goal == null) goal = GroundBotDriver.onField(this, driver) ? patrol.road(this, driver, enemy, true, 95, 1)
+        // a convoy keeps its column, then a route from the route planner; the gunner still fights on the move
+        Vec3 goal = convoyGoal();
+        if (goal == null && !convoyWait) goal = routeGoal(5.0);
+        if (goal != null) patrol.slow = enemy != null;
+        else if (!convoyWait) goal = GroundBotDriver.onField(this, driver) ? patrol.road(this, driver, enemy, true, 95, 1)
                 : patrol.goal(this, enemy, true, Vec3.atBottomCenterOf(h), 110, 95, 10);
-        else patrol.slow = enemy != null;
         if (goal == null) {
             throttleIn = GroundBotDriver.brake(speed);
             steerIn = 0;

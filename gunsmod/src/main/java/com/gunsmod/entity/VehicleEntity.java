@@ -43,6 +43,11 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
     @Nullable public BlockPos spawnerPos;
     /** a route set with the route planner: whoever of the soldiers drives follows it (null = none) */
     @Nullable public com.gunsmod.entity.ai.Waypoints waypoints;
+    /** convoy: the vehicle ahead in the column and the distance kept to it (null = not in a column) */
+    @Nullable public java.util.UUID convoyAhead;
+    public float convoyGap = 12f;
+    /** convoy: closed up on the vehicle ahead, wait */
+    public boolean convoyWait;
     /** client hook (sounds, exhaust and damage smoke) installed by the client setup */
     public static Consumer<VehicleEntity> clientTick = v -> { };
     /** client: true for the local player looking through the vehicle's sight (first person) */
@@ -368,6 +373,28 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         if (home != null) tag.put("Home", NbtUtils.writeBlockPos(home));
         if (spawnerPos != null) tag.put("Spawner", NbtUtils.writeBlockPos(spawnerPos));
         if (waypoints != null) tag.put("Waypoints", waypoints.save());
+        if (convoyAhead != null) {
+            tag.putUUID("ConvoyAhead", convoyAhead);
+            tag.putFloat("ConvoyGap", convoyGap);
+        }
+    }
+
+    /** column driving: the place behind the vehicle ahead (null = not in a column, or wait when convoyWait is set) */
+    @Nullable
+    public Vec3 convoyGoal() {
+        convoyWait = false;
+        if (convoyAhead == null) return null;
+        Entity a = com.gunsmod.entity.ai.Convoy.ahead(this, convoyAhead);
+        if (a == null) {
+            // the vehicle ahead is gone: lead on along the route from here
+            convoyAhead = null;
+            com.gunsmod.entity.ai.Convoy.rejoin(this, waypoints);
+            return null;
+        }
+        com.gunsmod.entity.ai.Waypoints.keepLoaded(this);
+        Vec3 s = com.gunsmod.entity.ai.Convoy.slot(this, a, convoyGap);
+        if (s == null) convoyWait = true;
+        return s;
     }
 
     /** a soldier drives and there is route left to follow */
@@ -392,5 +419,7 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         home = NbtUtils.readBlockPos(tag, "Home").orElse(null);
         spawnerPos = NbtUtils.readBlockPos(tag, "Spawner").orElse(null);
         waypoints = com.gunsmod.entity.ai.Waypoints.read(tag, "Waypoints");
+        convoyAhead = tag.hasUUID("ConvoyAhead") ? tag.getUUID("ConvoyAhead") : null;
+        if (tag.contains("ConvoyGap")) convoyGap = tag.getFloat("ConvoyGap");
     }
 }

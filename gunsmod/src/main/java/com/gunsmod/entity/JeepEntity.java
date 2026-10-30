@@ -90,6 +90,11 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
     @Nullable public BlockPos spawnerPos;
     /** a route set with the route planner: a soldier driver follows it (null = none) */
     @Nullable public com.gunsmod.entity.ai.Waypoints waypoints;
+    /** convoy: the vehicle ahead in the column and the distance kept to it (null = not in a column) */
+    @Nullable public java.util.UUID convoyAhead;
+    public float convoyGap = 12f;
+    /** convoy: closed up on the vehicle ahead, wait */
+    public boolean convoyWait;
     private int stuckTicks, reverseTicks;
     private Vec3 lastPos = Vec3.ZERO;
     private float lastYaw;
@@ -564,6 +569,24 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
     }
 
     // ------------------------------------------------------------------------------------ bot driving
+    /** column driving: the place behind the vehicle ahead (null = not in a column, or wait when convoyWait is set) */
+    @Nullable
+    public Vec3 convoyGoal() {
+        convoyWait = false;
+        if (convoyAhead == null) return null;
+        Entity a = com.gunsmod.entity.ai.Convoy.ahead(this, convoyAhead);
+        if (a == null) {
+            // the vehicle ahead is gone: lead on along the route from here
+            convoyAhead = null;
+            com.gunsmod.entity.ai.Convoy.rejoin(this, waypoints);
+            return null;
+        }
+        com.gunsmod.entity.ai.Waypoints.keepLoaded(this);
+        Vec3 s = com.gunsmod.entity.ai.Convoy.slot(this, a, convoyGap);
+        if (s == null) convoyWait = true;
+        return s;
+    }
+
     private void botDrive(BotEntity driver) {
         LivingEntity enemy = driver.getTarget();
         Entity gunner = seatEntity(SEAT_GUNNER);
@@ -571,15 +594,16 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
         if (home == null) home = this.blockPosition();
         // a route from the route planner comes first (the gunner fights on the move);
         // otherwise with a gunner on the turret: halt when the enemy is in sight so the shots land, else patrol with stops
-        Vec3 goal = null;
-        if (waypoints != null && waypoints.active()) {
+        Vec3 goal = convoyGoal();
+        if (goal != null) patrol.slow = enemy != null;
+        if (goal == null && !convoyWait && waypoints != null && waypoints.active()) {
             com.gunsmod.entity.ai.Waypoints.keepLoaded(this);
             BlockPos last = waypoints.points.get(waypoints.at);
             goal = waypoints.goal(this, 3.5);
             if (goal == null) home = last;
             else patrol.slow = enemy != null;
         }
-        if (goal == null) goal = GroundBotDriver.onField(this, driver) ? patrol.road(this, driver, enemy, gunner != null, tow ? 120 : 55, 1)
+        if (goal == null && !convoyWait) goal = GroundBotDriver.onField(this, driver) ? patrol.road(this, driver, enemy, gunner != null, tow ? 120 : 55, 1)
                 : patrol.goal(this, enemy, gunner != null, Vec3.atBottomCenterOf(home), 96, tow ? 120 : 55, tow ? 14 : 7);
         double stopDist = 0;
         if (goal == null) {
@@ -823,6 +847,10 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
         tag.putInt("Team", getBotTeam().ordinal());
         if (home != null) tag.put("Home", NbtUtils.writeBlockPos(home));
         if (waypoints != null) tag.put("Waypoints", waypoints.save());
+        if (convoyAhead != null) {
+            tag.putUUID("ConvoyAhead", convoyAhead);
+            tag.putFloat("ConvoyGap", convoyGap);
+        }
         if (spawnerPos != null) tag.put("Spawner", NbtUtils.writeBlockPos(spawnerPos));
     }
 
@@ -832,6 +860,8 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
         setTeam(BotTeam.byId(tag.getInt("Team")));
         home = NbtUtils.readBlockPos(tag, "Home").orElse(null);
         waypoints = com.gunsmod.entity.ai.Waypoints.read(tag, "Waypoints");
+        convoyAhead = tag.hasUUID("ConvoyAhead") ? tag.getUUID("ConvoyAhead") : null;
+        if (tag.contains("ConvoyGap")) convoyGap = tag.getFloat("ConvoyGap");
         spawnerPos = NbtUtils.readBlockPos(tag, "Spawner").orElse(null);
     }
 

@@ -318,6 +318,8 @@ public final class Reg {
     public static final DeferredItem<ArenaToolItem> ARENA_TOOL = ITEMS.register("arena_tool", () -> new ArenaToolItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final DeferredItem<OrchardToolItem> ORCHARD_TOOL = ITEMS.register("orchard_tool", () -> new OrchardToolItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final DeferredItem<RouteToolItem> ROUTE_TOOL = ITEMS.register("route_planner", () -> new RouteToolItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+    public static final DeferredItem<com.gunsmod.item.ConvoyToolItem> CONVOY_TOOL = ITEMS.register("convoy_planner",
+            () -> new com.gunsmod.item.ConvoyToolItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final DeferredItem<SoldierItem> GREEN_SOLDIER = ITEMS.register("green_soldier", () -> new SoldierItem(BotTeam.GREEN, new Item.Properties().stacksTo(16)));
     public static final DeferredItem<SoldierItem> RED_SOLDIER = ITEMS.register("red_soldier", () -> new SoldierItem(BotTeam.RED, new Item.Properties().stacksTo(16)));
     public static final DeferredItem<JeepItem> GREEN_JEEP = ITEMS.register("green_jeep", () -> new JeepItem(BotTeam.GREEN, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
@@ -402,6 +404,7 @@ public final class Reg {
                 out.accept(ARENA_TOOL.get());
                 out.accept(ORCHARD_TOOL.get());
                 out.accept(ROUTE_TOOL.get());
+                out.accept(CONVOY_TOOL.get());
                 out.accept(STEEL_INGOT.get());
                 out.accept(GUN_PARTS.get());
                 for (DeferredItem<BlockItem> b : BLOCK_ITEMS.values()) out.accept(b.get());
