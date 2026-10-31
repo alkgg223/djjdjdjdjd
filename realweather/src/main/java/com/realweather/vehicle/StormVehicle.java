@@ -356,8 +356,8 @@ public class StormVehicle extends Mob {
 
     @Override
     public void remove(RemovalReason reason) {
-        if (!level().isClientSide && (reason == RemovalReason.KILLED || reason == RemovalReason.DISCARDED)) {
-            com.realweather.RealWeather.LOG.info("{} removed ({}) at {} health {}", kind.id, reason, blockPosition(), getHealth());
+        if (!level().isClientSide && (reason == RemovalReason.KILLED || reason == RemovalReason.DISCARDED || Boolean.getBoolean("realweather.selftest"))) {
+            com.realweather.RealWeather.LOG.info("{} removed ({}) at {} health {}", kind.id, reason, position(), getHealth());
         }
         super.remove(reason);
     }
@@ -543,6 +543,19 @@ public class StormVehicle extends Mob {
         if (env.flood > 0.8F) {
             vy = Math.max(vy, -0.02) + Math.min(0.03, (env.flood - 0.8F) * 0.04);
         }
+        if (!Double.isFinite(vx) || !Double.isFinite(vz) || !Double.isFinite(vy)) {
+            vx = 0;
+            vz = 0;
+            vy = 0;
+            speed = 0;
+        }
+        double cap = kind.maxSpeed() * 1.6 + 0.5;
+        double hs = Math.sqrt(vx * vx + vz * vz);
+        if (hs > cap) {
+            vx *= cap / hs;
+            vz *= cap / hs;
+        }
+        vy = Mth.clamp(vy, -3.0, 2.0);
         Vec3 motion = new Vec3(vx, vy, vz);
         double before = Math.sqrt(vx * vx + vz * vz);
         setDeltaMovement(motion);

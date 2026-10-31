@@ -780,7 +780,26 @@ public final class SelfTest {
 
 
     // ------------------------------------------------------------------------------------ vehicles
-    private static final int[] VEHICLE_IDS = new int[3];
+    private static final java.util.UUID[] VEHICLE_IDS = new java.util.UUID[3];
+
+    private static net.minecraft.world.entity.Entity serverVehicle(MinecraftServer server, int index) {
+        java.util.UUID id = VEHICLE_IDS[index];
+        return id == null ? null : server.overworld().getEntity(id);
+    }
+
+    private static com.realweather.vehicle.StormVehicle clientVehicle(int index) {
+        java.util.UUID id = VEHICLE_IDS[index];
+        Minecraft mc = Minecraft.getInstance();
+        if (id == null || mc.level == null) {
+            return null;
+        }
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+            if (e instanceof com.realweather.vehicle.StormVehicle v && id.equals(e.getUUID())) {
+                return v;
+            }
+        }
+        return null;
+    }
 
     private static void vehicleSuite() {
         step(5, () -> {
@@ -791,12 +810,12 @@ public final class SelfTest {
         });
         step(40, SelfTest::testPad);
         step(20, SelfTest::spawnVehicles);
-        step(60, () -> lookAt(VEHICLE_IDS[1], 14));
+        step(60, () -> lookAt(1, 14));
         step(40, () -> {
             shot("40_vehicles");
             vehicleState("parked");
         });
-        step(5, () -> ride(VEHICLE_IDS[1]));
+        step(5, () -> ride(1));
         step(30, () -> {
             Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
             turnClient(0F, 24F);
@@ -833,8 +852,8 @@ public final class SelfTest {
         step(20, () -> {
             shot("43_blizzard_windshield");
             vehicleState("blizzard");
-            vehicleAction(VEHICLE_IDS[1], 1);
-            vehicleAction(VEHICLE_IDS[1], 1);
+            vehicleAction(1, 1);
+            vehicleAction(1, 1);
         });
         step(50, () -> {
             shot("44_wipers");
@@ -845,10 +864,10 @@ public final class SelfTest {
             cmd("rw clear");
             dismount();
         });
-        step(20, () -> ride(VEHICLE_IDS[2]));
+        step(20, () -> ride(2));
         step(20, () -> {
-            vehicleAction(VEHICLE_IDS[2], 4);
-            tornadoNearVehicle(VEHICLE_IDS[2], 3, 70);
+            vehicleAction(2, 4);
+            tornadoNearVehicle(2, 3, 70);
         });
         step(300, () -> {
             Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
@@ -941,7 +960,7 @@ public final class SelfTest {
                 v.moveTo(x, y, z, 200F + i * 15F, 0F);
                 v.setColor(kinds[i].colors[0]);
                 level.addFreshEntity(v);
-                VEHICLE_IDS[i] = v.getId();
+                VEHICLE_IDS[i] = v.getUUID();
                 // A block under one wheel of the sedan, to see it lean.
                 if (i == 0) {
                     level.setBlockAndUpdate(new BlockPos(net.minecraft.util.Mth.floor(x + 0.8), y, net.minecraft.util.Mth.floor(z - 1.2)),
@@ -952,13 +971,13 @@ public final class SelfTest {
         });
     }
 
-    private static void lookAt(int entityId, float pitch) {
+    private static void lookAt(int index, float pitch) {
         MinecraftServer server = server();
         server.execute(() -> {
             ServerPlayer p = server.getPlayerList().getPlayers().get(0);
-            net.minecraft.world.entity.Entity e = server.overworld().getEntity(entityId);
+            net.minecraft.world.entity.Entity e = serverVehicle(server, index);
             if (e == null) {
-                LOG.warn("no entity {}", entityId);
+                LOG.warn("no vehicle {}", index);
                 return;
             }
             float yaw = (float) Math.toDegrees(Math.atan2(-(e.getX() - p.getX()), e.getZ() - p.getZ()));
@@ -966,11 +985,11 @@ public final class SelfTest {
         });
     }
 
-    private static void ride(int entityId) {
+    private static void ride(int index) {
         MinecraftServer server = server();
         server.execute(() -> {
             ServerPlayer p = server.getPlayerList().getPlayers().get(0);
-            net.minecraft.world.entity.Entity e = server.overworld().getEntity(entityId);
+            net.minecraft.world.entity.Entity e = serverVehicle(server, index);
             if (e != null) {
                 p.startRiding(e, true);
                 LOG.info("riding {} : {}", e.getName().getString(), p.getVehicle() == e);
@@ -997,21 +1016,21 @@ public final class SelfTest {
         };
     }
 
-    private static void vehicleAction(int entityId, int action) {
+    private static void vehicleAction(int index, int action) {
         MinecraftServer server = server();
         server.execute(() -> {
             ServerPlayer p = server.getPlayerList().getPlayers().get(0);
-            if (server.overworld().getEntity(entityId) instanceof com.realweather.vehicle.StormVehicle v) {
+            if (serverVehicle(server, index) instanceof com.realweather.vehicle.StormVehicle v) {
                 v.applyInput(p, 0F, 0F, false, action);
             }
         });
     }
 
-    private static void tornadoNearVehicle(int entityId, int rating, double dist) {
+    private static void tornadoNearVehicle(int index, int rating, double dist) {
         MinecraftServer server = server();
         server.execute(() -> {
             ServerLevel level = server.overworld();
-            net.minecraft.world.entity.Entity e = level.getEntity(entityId);
+            net.minecraft.world.entity.Entity e = serverVehicle(server, index);
             if (e == null) {
                 return;
             }
@@ -1029,15 +1048,17 @@ public final class SelfTest {
         MinecraftServer server = server();
         server.execute(() -> {
             ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
-            for (int id : VEHICLE_IDS) {
-                net.minecraft.world.entity.Entity e = server.overworld().getEntity(id);
-                LOG.info("[{}] server vehicle {}: {}", label, id, e == null ? "missing" : e.getName().getString() + " at " + e.blockPosition()
-                        + " health=" + ((net.minecraft.world.entity.LivingEntity) e).getHealth() + " passengers=" + e.getPassengers().size());
+            for (int i = 0; i < VEHICLE_IDS.length; i++) {
+                net.minecraft.world.entity.Entity e = serverVehicle(server, i);
+                LOG.info("[{}] server vehicle {}: {}", label, i, e == null ? "missing" : e.getName().getString() + " at " + e.position()
+                        + " health=" + ((net.minecraft.world.entity.LivingEntity) e).getHealth() + " passengers=" + e.getPassengers().size()
+                        + " removed=" + e.getRemovalReason());
             }
             LOG.info("[{}] server player at {} vehicle={}", label, sp.blockPosition(), sp.getVehicle() == null ? "none" : sp.getVehicle().getId());
         });
-        for (int id : VEHICLE_IDS) {
-            if (mc.level != null && mc.level.getEntity(id) instanceof com.realweather.vehicle.StormVehicle v) {
+        for (int i = 0; i < VEHICLE_IDS.length; i++) {
+            com.realweather.vehicle.StormVehicle v = clientVehicle(i);
+            if (v != null) {
                 LOG.info("[{}] {} speed={} km/h steer={} gear={} pitch={} roll={} lift={} spikes={} wipers={} glass={} bodySnow={} rpm={} wind={} riding={}",
                         label, v.kind.id, Math.round(v.displaySpeed() * 72), v.displaySteer(), v.gear(), v.pitch, v.roll, v.lift, v.spikeDeploy, v.wipers(),
                         com.realweather.client.vehicle.VehicleClient.glassCover(v), v.bodySnow, Math.round(v.rpm), v.measuredWind,
