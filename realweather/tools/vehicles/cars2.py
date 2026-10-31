@@ -236,7 +236,7 @@ def rear_bench(m, car, floor_y, zr, t, xr):
 
 
 def interior2(v, m, car, W, floor_y, belt, rear, trim="dark", accent="piano", sport=False, driver_x=-0.37, front_z=1.0, rear_z=1.85,
-              mats=True):
+              mats=True, seat_drop=0.0):
     """dashboard with instrument binnacle, touch screen, vents and climate panel; console with the selector and an
     armrest; seats, rear bench, headliner, sun visors, mirror, dome light and seat belts"""
     t = TRIMS[trim]
@@ -309,7 +309,8 @@ def interior2(v, m, car, W, floor_y, belt, rear, trim="dark", accent="piano", sp
     seats = [(driver_x, zw0 + front_z), (-driver_x, zw0 + front_z)]
     for x, z in seats:
         seat(m, car, x, floor_y, z, t, sport)
-    g["seats"] = [(x, floor_y + 0.06, z) for x, z in seats]
+    # Where the occupants sit (a low sports car seats them lower, so their heads clear the roof).
+    g["seats"] = [(x, floor_y + 0.06 - seat_drop, z) for x, z in seats]
     zr = zw0 + rear_z
     if rear:
         xr = min(inner(zr), inner(zr + 0.3)) - 0.02
@@ -330,7 +331,7 @@ def interior2(v, m, car, W, floor_y, belt, rear, trim="dark", accent="piano", sp
     yh = rows[0][2][1]
     zv = car.zw1 + 0.04
     for s in (-1, 1):
-        K.rbox((s * 0.12, rows[1][1][1] - 0.035, zv), (s * 0.58, rows[1][1][1] - 0.012, zv + 0.17), 0.01, "headliner", seg=1, m=m)
+        K.rbox((s * 0.16, rows[1][1][1] - 0.022, zv), (s * 0.54, rows[1][1][1] - 0.008, zv + 0.13), 0.006, "headliner", seg=1, m=m)
     # Rear-view mirror at the top of the windshield, dome light.
     K.tube([v3(0, yh - 0.005, car.zw1 - 0.03), v3(0, yh - 0.07, car.zw1 + 0.01)], 0.012, "dark", n=6, m=m)
     K.rbox((-0.12, yh - 0.12, car.zw1 - 0.005), (0.12, yh - 0.06, car.zw1 + 0.03), 0.015, "dark", seg=1, m=m)
@@ -564,7 +565,7 @@ def coupe():
     K.rbox((-0.75, 0.18, h - 0.22), (0.75, 0.26, h + 0.05), 0.01, "trim", seg=1, m=det)
     C.mirror(det, car, zw0 + 0.1)
     door_parts(v, car, W, [0.6], 0.92, trim="red")
-    interior2(v, det, car, W, 0.2, 0.94, False, trim="red", accent="alu", sport=True, front_z=1.05)
+    interior2(v, det, car, W, 0.2, 0.94, False, trim="red", accent="alu", sport=True, front_z=1.05, seat_drop=0.12)
     ex = tips(det, [-0.52, -0.42, 0.42, 0.52], 0.24, h + 0.06, 0.04)
     body.extend(det)
     finish(v, car, body, glass, W, 0.98, 0.56, 0.84, wheel(b.wheel_r, 0.27, "rim_sport", caliper="red"), [(-0.72, 0.58, -h), (0.72, 0.58, -h)], ex)

@@ -56,7 +56,7 @@ public final class VehicleGeometry {
 
     public static final Geo COUPE = new Geo(
             new float[][]{new float[]{-0.8400F, 0.3600F, -1.4200F}, new float[]{0.8400F, 0.3600F, -1.4200F}, new float[]{-0.8400F, 0.3600F, 1.4200F}, new float[]{0.8400F, 0.3600F, 1.4200F}}, 0.3600F,
-            new float[][]{new float[]{-0.3700F, 0.2600F, 0.5700F}, new float[]{0.3700F, 0.2600F, 0.5700F}},
+            new float[][]{new float[]{-0.3700F, 0.1400F, 0.5700F}, new float[]{0.3700F, 0.1400F, 0.5700F}},
             new float[]{-0.3700F, 0.9000F, 0.1200F}, new float[][]{new float[]{-0.2200F, 0.6400F, -0.3800F}, new float[]{-0.3900F, 0.6400F, -0.3800F}}, new float[]{0.0000F, 0.5000F, 0.1600F},
             new float[]{-0.4700F, 0.8700F, -0.0010F, 0.0600F}, new float[]{-0.2700F, 0.8700F, -0.0010F, 0.0530F},
             new float[][]{new float[]{-0.7477F, 1.0130F, -0.4100F}, new float[]{0.7477F, 1.0130F, -0.4100F}, new float[]{0.5573F, 1.2980F, 0.1600F}, new float[]{-0.5573F, 1.2980F, 0.1600F}},
