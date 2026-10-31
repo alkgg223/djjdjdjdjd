@@ -79,7 +79,7 @@ final class CloudField {
                 float inside = around / 4F;
                 float fade = 1F - smooth(radius * 0.7F, radius, dist);
                 // A continuous grey-white underside joins the cells of a mass when seen from below.
-                float under = (0.7F + 0.1F * hash(gx * 31L + gz, 5) - 0.12F * overcast) * grey * 1.1F;
+                float under = (0.76F + 0.1F * hash(gx * 31L + gz, 5) - 0.14F * overcast) * grey * 1.1F;
                 SkyBillboards.cell(SkyBillboards.FLAT, SkyBillboards.BASE + ((gx + gz) & 1), (float) dx, base + 1F - (float) cam.y, (float) dz,
                         CELL * (0.62F + 0.2F * inside), CELL * (0.62F + 0.2F * inside), (gx * 7 + gz * 13) * 0.7F,
                         SkyLight.r * under, SkyLight.g * under, SkyLight.b * under * 1.03F, (0.55F + 0.4F * overcast) * fade * (0.5F + 0.5F * inside),
@@ -95,7 +95,7 @@ final class CloudField {
                     float pz = (float) (cz + p.dz * CELL - cam.z);
                     float py = base + size * 0.42F + p.lift * height - (float) cam.y;
                     float h01 = Mth.clamp(p.lift * (0.5F + s), 0F, 1F);
-                    float shade = (0.86F + 0.16F * h01 + SkyLight.silver(p.dx, h01 - 0.3F, p.dz)) * grey;
+                    float shade = (0.92F + 0.16F * h01 + SkyLight.silver(p.dx, h01 - 0.3F, p.dz)) * grey;
                     boolean flat = overcast > 0.5F && i % 2 == 0;
                     SkyBillboards.cell(SkyBillboards.SPHERE, flat ? SkyBillboards.STRATUS : p.cell, px, py, pz, size, size * (flat ? 0.45F : 0.8F),
                             flat ? 0F : p.rot, SkyLight.r * shade, SkyLight.g * shade, SkyLight.b * shade * 1.02F, 0.95F * fade * puffAlpha, 0.72F,
