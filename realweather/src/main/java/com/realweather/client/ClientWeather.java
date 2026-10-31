@@ -85,6 +85,7 @@ public final class ClientWeather {
         ClientLevel level = mc.level;
         if (level == null) {
             WeatherSounds.stopAll();
+            com.realweather.client.radar.RadarClient.tick(mc, null);
             return;
         }
         if (mc.isPaused()) {
@@ -139,6 +140,7 @@ public final class ClientWeather {
         LightningFx.tick(mc, level);
         com.realweather.client.tornado.ClientTornadoes.tick(mc, level);
         com.realweather.client.sky.SkyRenderer.tick();
+        com.realweather.client.radar.RadarClient.tick(mc, level);
         com.realweather.client.hail.HailCoverage.tick(mc, level);
         com.realweather.client.hail.Footprints.tick(mc, level);
     }

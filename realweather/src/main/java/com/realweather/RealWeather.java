@@ -20,6 +20,7 @@ public class RealWeather {
 
     public RealWeather(IEventBus modBus, ModContainer container, Dist dist) {
         ModContent.register(modBus);
+        com.realweather.device.ModDevices.register(modBus);
         modBus.addListener(Network::register);
         container.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
 

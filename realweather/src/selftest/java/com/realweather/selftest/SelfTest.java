@@ -69,7 +69,7 @@ public final class SelfTest {
         step(40, () -> Minecraft.getInstance().stop());
     }
 
-    /** Clouds at every quality, sunset, overcast, a supercell with its tornado, lone tornadoes, and hail. */
+    /** Clouds at every quality, sunset, overcast, a supercell with its tornado, lone tornadoes, radar and hail. */
     private static void skySuite() {
         step(20, () -> goTo("minecraft:plains", 0, -8));
         step(40, SelfTest::platform);
@@ -82,7 +82,7 @@ public final class SelfTest {
             shot("20_clouds_fair_ultra");
             skyState("fair ultra");
         });
-        step(5, () -> look(90, -40));
+        step(5, () -> look(90, -50));
         step(40, () -> shot("21_clouds_up"));
         step(5, () -> {
             look(0, -8);
@@ -102,14 +102,14 @@ public final class SelfTest {
             shot("22c_clouds_fair_low");
             skyState("fair low");
             weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
-            cmd("time set 12600");
+            cmd("time set 12500");
             look(90, -6);
         });
         step(100, () -> shot("23_clouds_sunset"));
         step(5, () -> {
             cmd("time set 6000");
             cmd("rw rain 60 20");
-            look(0, -8);
+            look(0, -25);
         });
         step(500, () -> {
             shot("24_overcast_rain");
@@ -117,17 +117,31 @@ public final class SelfTest {
         });
         step(5, () -> {
             cmd("rw clear");
-            cmd("execute as @p at @p run rw supercell 20");
+            supercellBeside(260);
         });
-        step(200, () -> lookAtStorm(-10));
+        step(200, () -> lookAtStorm(-12));
         step(5, () -> {
-            shot("25_supercell_far");
-            skyState("supercell far");
+            shot("25_supercell");
+            skyState("supercell");
         });
-        step(500, () -> lookAtStorm(-14));
+        step(5, SelfTest::placeRadar);
+        step(60, () -> look(180, 25));
+        step(5, () -> shot("34_radar_monitor"));
+        step(5, () -> com.realweather.client.radar.RadarClient.openRadar(radarPos));
         step(5, () -> {
-            shot("26_supercell_near");
-            skyState("supercell near");
+            if (Minecraft.getInstance().screen instanceof com.realweather.client.radar.RadarScreen rs) {
+                rs.setRange(2);
+            }
+        });
+        step(60, () -> shot("35_radar_ref"));
+        step(5, () -> {
+            if (Minecraft.getInstance().screen instanceof com.realweather.client.radar.RadarScreen rs) {
+                rs.setProduct(1);
+            }
+        });
+        step(30, () -> {
+            shot("36_radar_vel");
+            Minecraft.getInstance().setScreen(null);
         });
         step(5, () -> tornadoAtUpdraft(3));
         step(400, () -> lookAtTornado(-8));
@@ -148,6 +162,23 @@ public final class SelfTest {
             shot("28b_supercell_tornado_f3_medium");
             quality(com.realweather.ClientConfig.TornadoQuality.ULTRA);
             weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+            com.realweather.client.radar.RadarClient.openRadar(radarPos);
+        });
+        step(60, () -> {
+            if (Minecraft.getInstance().screen instanceof com.realweather.client.radar.RadarScreen rs) {
+                rs.setRange(1);
+                rs.setProduct(1);
+            }
+        });
+        step(60, () -> shot("37_radar_tornado_vel"));
+        step(5, () -> {
+            if (Minecraft.getInstance().screen instanceof com.realweather.client.radar.RadarScreen rs) {
+                rs.setProduct(3);
+            }
+        });
+        step(60, () -> {
+            shot("38_radar_tornado_cc");
+            Minecraft.getInstance().setScreen(null);
         });
         step(5, () -> {
             cmd("rw clear");
@@ -155,7 +186,6 @@ public final class SelfTest {
         });
         step(40, SelfTest::platform);
         step(20, () -> tornadoBeside(5, 170, 0.04F));
-        step(5, () -> cmd("rw thunder 50 20"));
         step(420, () -> lookAtTornado(-8));
         step(5, () -> {
             shot("29_tornado_f5_wedge");
@@ -163,7 +193,7 @@ public final class SelfTest {
             skyState("f5");
         });
         step(5, () -> sendTornadoAtPlayer(0.3F));
-        step(220, () -> lookAtTornado(-6));
+        step(200, () -> lookAtTornado(-6));
         step(5, () -> {
             shot("29b_tornado_f5_close");
             tornadoState("f5 close");
@@ -174,13 +204,12 @@ public final class SelfTest {
         });
         step(40, SelfTest::platform);
         step(20, () -> tornadoBeside(1, 80, 0.04F));
-        step(5, () -> cmd("rw rain 30 20"));
         step(420, () -> lookAtTornado(-6));
         step(5, () -> {
             shot("30_tornado_f1_rope");
             tornadoState("f1");
         });
-        // Hail on the ground, on animals, packed into hail-snow with footprints.
+        // Hail on the ground and on animals, then packed hail-snow with footprints.
         step(5, () -> {
             cmd("rw clear");
             goTo("minecraft:plains", 0, 40);
@@ -192,23 +221,84 @@ public final class SelfTest {
             cmd("execute as @p at @p run rw hailstorm 100 10");
         });
         step(700, () -> {
+            look(0, 35);
             shot("31_hail_ground");
             hailState("hail 700");
         });
-        step(600, () -> {
-            shot("32_hail_more");
-            hailState("hail 1300");
-        });
-        step(5, SelfTest::hailSnowPatch);
+        step(5, SelfTest::snowField);
         step(20, () -> walk(0));
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 9; i++) {
             final int k = i;
-            step(4, () -> walk(k));
+            step(5, () -> walk(k));
         }
-        step(10, () -> look(180, 45));
-        step(30, () -> {
+        step(10, () -> look(0, 55));
+        step(40, () -> {
             shot("33_hail_snow_footprints");
             hailState("snow");
+        });
+    }
+
+    private static BlockPos radarPos = BlockPos.ZERO;
+
+    /** A radar tower and a monitor on the viewing platform. */
+    private static void placeRadar() {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            ServerLevel level = server.overworld();
+            BlockPos at = p.blockPosition();
+            radarPos = at.offset(2, 0, -2);
+            level.setBlockAndUpdate(radarPos, com.realweather.device.ModDevices.WEATHER_RADAR.get().defaultBlockState());
+            level.setBlockAndUpdate(at.offset(0, 0, -2), com.realweather.device.ModDevices.RADAR_MONITOR.get().defaultBlockState()
+                    .setValue(com.realweather.device.MonitorBlock.FACING, net.minecraft.core.Direction.SOUTH));
+            level.setBlockAndUpdate(at.offset(-1, 0, -2), com.realweather.device.ModDevices.RADAR_MONITOR.get().defaultBlockState()
+                    .setValue(com.realweather.device.MonitorBlock.FACING, net.minecraft.core.Direction.SOUTH)
+                    .setValue(com.realweather.device.MonitorBlock.MODE, 1));
+            LOG.info("radar at {}", radarPos);
+        });
+    }
+
+    /** A supercell whose updraft is {@code dist} blocks east of the player, moving north: we watch from the clear inflow side. */
+    private static void supercellBeside(double dist) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            ServerLevel level = server.overworld();
+            WeatherData d = WeatherData.get(level);
+            com.realweather.server.StormCell c = com.realweather.server.StormManager.spawnFor(level, d, p.position(),
+                    com.realweather.server.StormCell.SUPERCELL, 1F, 20, level.random);
+            c.vx = 0F;
+            c.vz = -0.08F;
+            c.x = p.getX() + dist;
+            c.z = p.getZ();
+            double[] u = com.realweather.server.StormField.updraft(c);
+            c.x += p.getX() + dist - u[0];
+            c.z += p.getZ() - u[1];
+            com.realweather.server.StormManager.sync(level, d);
+            LOG.info("supercell #{} placed, rain at player={}", c.id, com.realweather.server.StormField.rain(c, p.getX(), p.getZ()));
+        });
+    }
+
+    /** A flat field of packed hail-snow around the player (to see footprints). */
+    private static void snowField() {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            ServerLevel level = server.overworld();
+            BlockPos c = p.blockPosition();
+            net.minecraft.world.level.block.state.BlockState snow = com.realweather.ModContent.HAIL_SNOW.get().defaultBlockState()
+                    .setValue(com.realweather.server.CoverBlock.LAYERS, 3);
+            for (int dx = -7; dx <= 7; dx++) {
+                for (int dz = -12; dz <= 4; dz++) {
+                    for (int dy = 0; dy <= 6; dy++) {
+                        level.setBlockAndUpdate(c.offset(dx, dy, dz), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+                    }
+                    level.setBlockAndUpdate(c.offset(dx, -1, dz), net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState());
+                    level.setBlockAndUpdate(c.offset(dx, 0, dz), snow);
+                }
+            }
+            p.teleportTo(level, c.getX() + 0.5, c.getY() + 0.4, c.getZ() + 3.5, 180F, 30F);
+            level.getEntities(EntityType.COW, e -> true).forEach(e -> e.teleportTo(c.getX() + 3.5, c.getY() + 0.4, c.getZ() - 6.5));
         });
     }
 
@@ -680,11 +770,7 @@ public final class SelfTest {
         server.execute(() -> {
             ServerPlayer p = server.getPlayerList().getPlayers().get(0);
             ServerLevel level = server.overworld();
-            double x = p.getX();
-            double z = p.getZ() - 0.8;
-            int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, net.minecraft.util.Mth.floor(x),
-                    net.minecraft.util.Mth.floor(z));
-            p.teleportTo(level, x, y, z, 180F, 30F);
+            p.teleportTo(level, p.getX(), p.getY(), p.getZ() - 0.8, 180F, 30F);
         });
     }
 

@@ -294,6 +294,8 @@ public final class WeatherCommands {
         d.sandTicks = 0;
         d.blizzardTicks = 0;
         d.tornadoes.forEach(Tornado::dissipate);
+        d.storms.clear();
+        StormManager.sync(level, d);
         level.setWeatherParameters(12000, 0, false, false);
         d.setDirty();
         ok(src, "clear");

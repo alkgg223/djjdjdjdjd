@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "realweather:weather_radar",
+    "realweather:radar_monitor"
+  ]
+}

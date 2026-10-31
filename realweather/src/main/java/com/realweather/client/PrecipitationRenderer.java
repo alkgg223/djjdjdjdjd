@@ -127,25 +127,27 @@ public final class PrecipitationRenderer {
         float snow = Math.max(ClientWeather.snow, ClientWeather.blizzard) * rainLevel;
         float bliz = ClientWeather.blizzard * rainLevel;
 
+        // More columns are drawn at higher quality: keep the overall density the same so the view stays open.
+        float norm = Math.min(1F, 10F / r);
         if (rain > 0.001F) {
             // Main streaks; they lean with the wind.
             layer(RAIN, RAIN_COL, r, camX, camY, camZ, time, 0.58F + 0.12F * rain, 3.5F, 1.6F, 0F,
-                    0.55F * (float) Math.pow(rain, 0.55), 0.3F + 0.35F * ClientWeather.wind, wx, wz, 0.95F, 0.97F, 1F, 11, false);
+                    0.5F * norm * (float) Math.pow(rain, 0.55), 0.3F + 0.35F * ClientWeather.wind, wx, wz, 0.95F, 0.97F, 1F, 11, false);
             if (rain > 0.3F) {
                 layer(RAIN_DENSE, RAIN_COL, r, camX, camY, camZ, time, 0.66F + 0.1F * rain, 2.6F, 1.3F, 0F,
-                        0.6F * (rain - 0.3F) / 0.7F * Math.min(1F, q + 0.3F), 0.3F + 0.35F * ClientWeather.wind, wx, wz, 0.9F, 0.94F, 1F, 23, false);
+                        0.42F * norm * (rain - 0.3F) / 0.7F * Math.min(1F, q + 0.3F), 0.3F + 0.35F * ClientWeather.wind, wx, wz, 0.9F, 0.94F, 1F, 23, false);
             }
             if (rain > 0.55F && q > 0.5F) {
                 // Distant curtains of a downpour.
                 layer(RAIN_MIST, RAIN_COL, r, camX, camY, camZ, time, 0.75F, 6F, 4F, 0F,
-                        0.42F * (rain - 0.55F) / 0.45F, 0.3F + 0.35F * ClientWeather.wind, wx, wz, 0.85F, 0.88F, 0.92F, 37, true);
+                        0.26F * norm * (rain - 0.55F) / 0.45F, 0.3F + 0.35F * ClientWeather.wind, wx, wz, 0.85F, 0.88F, 0.92F, 37, true);
             }
         }
         float hail = ClientWeather.camHail;
         if (hail > 0.01F) {
             // Hailstones fall faster and straighter than rain, as bright pellets.
             layer(HAIL, RAIN_COL, r, camX, camY, camZ, time, 1.05F, 3F, 1.5F, 0F,
-                    0.85F * (float) Math.pow(hail, 0.6), 0.12F, wx, wz, 1F, 1F, 1F, 131, false);
+                    0.75F * norm * (float) Math.pow(hail, 0.6), 0.12F, wx, wz, 1F, 1F, 1F, 131, false);
         }
         if (snow > 0.001F) {
             float drift = 0.6F + bliz * 1.8F;

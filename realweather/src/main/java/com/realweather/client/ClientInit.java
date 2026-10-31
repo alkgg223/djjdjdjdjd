@@ -44,6 +44,8 @@ public final class ClientInit {
 
     private static void onEntityRenderers(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(net.minecraft.world.entity.EntityType.LIGHTNING_BOLT, RealLightningRenderer::new);
+        event.registerBlockEntityRenderer(com.realweather.device.ModDevices.MONITOR_BE.get(), com.realweather.client.radar.MonitorRenderer::new);
+        event.registerBlockEntityRenderer(com.realweather.device.ModDevices.RADAR_BE.get(), com.realweather.client.radar.RadarDishRenderer::new);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
