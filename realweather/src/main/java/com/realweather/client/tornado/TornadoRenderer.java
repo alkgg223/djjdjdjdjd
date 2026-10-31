@@ -1,162 +1,111 @@
 package com.realweather.client.tornado;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.realweather.ClientConfig;
-import com.realweather.RealWeather;
-import com.realweather.client.ClientWeather;
+import com.realweather.client.ClientStorms;
+import com.realweather.client.sky.SkyBillboards;
+import com.realweather.client.sky.StormClouds;
 import com.realweather.server.Tornado;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import org.joml.Matrix4fStack;
 
 /**
- * Draws each tornado: a rotating condensation funnel made of several translucent shells (a thin rope for F0/F1,
- * a cone for F2/F3, a wide wedge for F4/F5), the dark rotating wall cloud it hangs from, and for violent
- * tornadoes the small suction vortices that orbit inside the debris cloud. Detail follows the tornado graphics
- * setting (LOW, MEDIUM, HIGH, ULTRA).
+ * Each tornado as soft, sorted sprites that blend with the storm clouds: a smooth condensation funnel built from
+ * many thin horizontal slices (round-shaded, lit on the sun side, with spiral streaks that turn with the wind), the
+ * lowered wall cloud it hangs from, a rotating skirt of dust and debris around the base, an outer debris sheath
+ * on strong tornadoes and orbiting suction vortices on violent ones. Ropes for F0/F1, cones for F2/F3, wide
+ * wedges for F4/F5. Detail follows the tornado graphics setting (LOW, MEDIUM, HIGH, ULTRA).
  */
 public final class TornadoRenderer {
-    private static final ResourceLocation FUNNEL = RealWeather.id("textures/environment/tornado_funnel.png");
-    private static final ResourceLocation CLOUD = RealWeather.id("textures/environment/tornado_cloud.png");
-    private static final int LIGHT = LightTexture.FULL_SKY;
+    private static final float[] MAX_DIST = {420F, 640F, 900F, 1300F};
+    private static final int[] SLICES = {22, 38, 60, 90};
+    private static final int[] WALL = {8, 14, 24, 36};
+    private static final int[] DUST = {6, 12, 22, 36};
+    private static final int[] SHEATH = {0, 10, 18, 30};
 
-    private static final int[] SEGMENTS = {12, 20, 32, 48};
-    private static final int[] SLICES = {10, 16, 28, 40};
-    private static final int[] SHELLS = {1, 2, 3, 4};
-    private static final int[] CLOUD_RINGS = {4, 6, 8, 12};
-    private static final int[] CLOUD_LAYERS = {1, 1, 2, 3};
-    private static final float[] MAX_DIST = {300F, 450F, 640F, 900F};
-    private static final float[] SHELL_RADIUS = {1.0F, 0.8F, 1.22F, 0.62F};
-    private static final float[] SHELL_ALPHA = {0.86F, 0.9F, 0.42F, 0.95F};
-    private static final float[] SHELL_SPEED = {1.0F, 1.35F, 0.8F, 1.7F};
-    private static final float[] SHELL_SHADE = {1.0F, 0.86F, 1.08F, 0.74F};
-
-    private static BufferBuilder buffer;
     /** Tornadoes drawn in the last frame (diagnostics). */
     public static int lastDrawn;
 
     private TornadoRenderer() {}
 
-    public static void onRenderStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_WEATHER || ClientTornadoes.isEmpty()) {
-            return;
-        }
-        Minecraft mc = Minecraft.getInstance();
-        ClientLevel level = mc.level;
-        if (!ClientWeather.active(level)) {
-            return;
-        }
-        int q = ClientConfig.tornadoQuality();
-        float pt = event.getPartialTick().getGameTimeDeltaPartialTick(false);
-        Vec3 cam = event.getCamera().getPosition();
-        Matrix4fStack mv = RenderSystem.getModelViewStack();
-        mv.pushMatrix();
-        mv.set(event.getModelViewMatrix());
-        RenderSystem.applyModelViewMatrix();
-        LightTexture light = mc.gameRenderer.lightTexture();
-        light.turnOnLightLayer();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(false);
-        RenderSystem.disableCull();
-        RenderSystem.setShader(GameRenderer::getParticleShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        float fogStart = RenderSystem.getShaderFogStart();
-        float fogEnd = RenderSystem.getShaderFogEnd();
+    public static void collect(ClientLevel level, Vec3 cam, float pt, int q, float lr, float lg, float lb, float sunSide) {
         lastDrawn = 0;
-        try {
-            for (ClientTornadoes.T t : ClientTornadoes.all()) {
-                double tx = t.x(pt);
-                double tz = t.z(pt);
-                double dist = Math.sqrt((tx - cam.x) * (tx - cam.x) + (tz - cam.z) * (tz - cam.z));
-                if (dist > MAX_DIST[q] || t.strength <= 0.01F) {
-                    continue;
-                }
-                // A tornado stands out against the rain as a dark column: let it show through the fog as a hazy silhouette.
-                RenderSystem.setShaderFogStart(fogStart);
-                RenderSystem.setShaderFogEnd(Math.max(fogEnd, Math.min((float) dist + 160F, fogEnd * 3F + 60F)));
-                float time = t.age + pt;
-                drawCloud(t, tx, tz, cam, time, pt, q);
-                drawFunnel(t, tx, tz, cam, time, pt, q);
-                lastDrawn++;
-                if (q >= 2 && t.rating >= 4 && t.contact > 0.8F && t.strength > 0.6F) {
-                    drawSubVortices(t, tx, tz, cam, time, pt, q);
-                }
+        float deck = StormClouds.deckY(level);
+        for (ClientTornadoes.T t : ClientTornadoes.all()) {
+            double tx = t.x(pt);
+            double tz = t.z(pt);
+            double dist = Math.sqrt((tx - cam.x) * (tx - cam.x) + (tz - cam.z) * (tz - cam.z));
+            if (dist > MAX_DIST[q] || t.strength <= 0.01F) {
+                continue;
             }
-        } finally {
-            flush();
-            RenderSystem.setShaderFogStart(fogStart);
-            RenderSystem.setShaderFogEnd(fogEnd);
-            RenderSystem.depthMask(true);
-            RenderSystem.enableCull();
-            RenderSystem.disableBlend();
-            light.turnOffLightLayer();
-            mv.popMatrix();
-            RenderSystem.applyModelViewMatrix();
+            lastDrawn++;
+            float time = t.age + pt;
+            float height = Mth.clamp(deck - 6F - t.groundY, 24F, t.height());
+            RandomSource rnd = RandomSource.create(t.seed);
+            wallCloud(t, tx, tz, cam, time, pt, q, height, deck, lr, lg, lb, sunSide, rnd);
+            funnel(t, tx, tz, cam, time, pt, q, height, lr, lg, lb, sunSide);
+            if (t.contact > 0.05F) {
+                dust(t, tx, tz, cam, time, pt, q, height, lr, lg, lb, sunSide, rnd);
+            }
+            if (q >= 2 && t.rating >= 4 && t.contact > 0.8F && t.strength > 0.6F) {
+                subVortices(t, tx, tz, cam, time, pt, q, lr, lg, lb, sunSide);
+            }
         }
     }
 
-    private static void drawFunnel(ClientTornadoes.T t, double tx, double tz, Vec3 cam, float time, float pt, int q) {
-        int n = SEGMENTS[q];
-        int m = SLICES[q];
-        int shells = SHELLS[q];
-        float height = t.height();
+    private static void funnel(ClientTornadoes.T t, double tx, double tz, Vec3 cam, float time, float pt, int q, float height,
+                               float lr, float lg, float lb, float sunSide) {
+        int n = SLICES[q];
         float gap = t.rating == 0 ? 0.3F : t.rating == 1 ? 0.12F : 0F;
         // While the funnel is still coming down, only the part below the cloud is condensed.
         float bottom = Math.max((1F - t.contact) * 0.85F, gap * t.contact);
         float spin = t.spin(pt);
-        float rise = time * 0.02F * (1F + t.rating * 0.2F);
-        begin(FUNNEL);
-        for (int s = 0; s < shells; s++) {
-            float rs = SHELL_RADIUS[s];
-            float speed = SHELL_SPEED[s];
-            float shade = SHELL_SHADE[s];
-            float baseAlpha = SHELL_ALPHA[s] * (0.3F + 0.7F * t.strength);
-            float vRepeat = height / 24F;
+        float rise = time * 0.012F * (1F + t.rating * 0.15F);
+        float step = (1F - bottom) / n;
+        float sliceH = height * step * 1.35F;
+        float baseAlpha = (0.55F + 0.12F * Math.min(3, t.rating)) * (0.3F + 0.7F * t.strength);
+        for (int j = 0; j <= n; j++) {
+            float f = bottom + step * j;
+            float rad = t.radiusAt(f) * tip(f, bottom);
+            if (rad < 0.15F) {
+                continue;
+            }
+            float px = (float) (tx + t.offsetX(f, time) - cam.x);
+            float pz = (float) (tz + t.offsetZ(f, time) - cam.z);
+            float py = (float) (t.groundY + f * height - cam.y);
+            float alpha = baseAlpha * fade(f, bottom);
+            // Condensation is pale grey; near the ground it is full of brown dust.
+            float grey = 0.66F + 0.1F * f;
+            float dust = t.contact * Mth.clamp(1F - f / (0.16F + t.rating * 0.035F), 0F, 1F);
+            float r = Mth.lerp(dust, grey, 0.52F) * lr;
+            float g = Mth.lerp(dust, grey * 1.01F, 0.44F) * lg;
+            float b = Mth.lerp(dust, grey * 1.04F, 0.35F) * lb;
+            // The streak texture wraps around the funnel: wider funnels show more streaks, all turning together.
+            float uScale = Mth.clamp(rad / 10F, 0.35F, 2.2F);
+            float u0 = spin * 1.6F + f * 0.35F;
+            float v0 = f * height / 26F - rise;
+            float v1 = v0 + sliceH / 26F;
+            SkyBillboards.add(SkyBillboards.TEX_STREAKS, SkyBillboards.FUNNEL, px, py, pz, rad, sliceH * 0.5F, 0F,
+                    u0, v0, u0 + uScale, v1, r, g, b, alpha, 0.94F, sunSide);
+        }
+        // A fainter, wider sheath of debris and spray on strong tornadoes.
+        if (t.rating >= 2 && t.contact > 0.3F && SHEATH[q] > 0) {
+            int m = SHEATH[q];
+            float top = 0.18F + t.rating * 0.06F;
             for (int j = 0; j < m; j++) {
-                float f0 = bottom + (1F - bottom) * j / m;
-                float f1 = bottom + (1F - bottom) * (j + 1) / m;
-                float r0 = t.radiusAt(f0) * rs * tip(f0, bottom);
-                float r1 = t.radiusAt(f1) * rs * tip(f1, bottom);
-                float cx0 = (float) (tx + t.offsetX(f0, time) - cam.x);
-                float cz0 = (float) (tz + t.offsetZ(f0, time) - cam.z);
-                float cx1 = (float) (tx + t.offsetX(f1, time) - cam.x);
-                float cz1 = (float) (tz + t.offsetZ(f1, time) - cam.z);
-                float y0 = (float) (t.groundY + f0 * height - cam.y);
-                float y1 = (float) (t.groundY + f1 * height - cam.y);
-                float a0 = baseAlpha * fade(f0, bottom);
-                float a1 = baseAlpha * fade(f1, bottom);
-                float[] c0 = color(f0, t, shade);
-                float[] c1 = color(f1, t, shade);
-                float v0 = f0 * vRepeat - rise * speed;
-                float v1 = f1 * vRepeat - rise * speed;
-                for (int i = 0; i < n; i++) {
-                    float ang0 = (float) (i * Math.PI * 2 / n);
-                    float ang1 = (float) ((i + 1) * Math.PI * 2 / n);
-                    float u0 = i * 3F / n + spin * speed * 3F;
-                    float u1 = (i + 1) * 3F / n + spin * speed * 3F;
-                    float cos0 = Mth.cos(ang0), sin0 = Mth.sin(ang0), cos1 = Mth.cos(ang1), sin1 = Mth.sin(ang1);
-                    vertex(cx0 + cos0 * r0, y0, cz0 + sin0 * r0, u0, v0, c0, a0);
-                    vertex(cx0 + cos1 * r0, y0, cz0 + sin1 * r0, u1, v0, c0, a0);
-                    vertex(cx1 + cos1 * r1, y1, cz1 + sin1 * r1, u1, v1, c1, a1);
-                    vertex(cx1 + cos0 * r1, y1, cz1 + sin0 * r1, u0, v1, c1, a1);
-                }
+                float f = top * j / (m - 1F);
+                float rad = t.radiusAt(f) * (1.35F + 0.25F * f / top) + 1.5F;
+                float px = (float) (tx + t.offsetX(f, time) - cam.x);
+                float pz = (float) (tz + t.offsetZ(f, time) - cam.z);
+                float py = (float) (t.groundY + f * height - cam.y);
+                float a = 0.28F * t.contact * t.strength * (1F - f / top);
+                float u0 = spin * 2.4F;
+                float sh = top * height / m * 1.6F;
+                SkyBillboards.add(SkyBillboards.TEX_STREAKS, SkyBillboards.FUNNEL, px, py, pz, rad, sh * 0.5F, 0F,
+                        u0, f * 2F - rise * 1.5F, u0 + 1.5F, f * 2F - rise * 1.5F + 0.3F,
+                        0.5F * lr, 0.43F * lg, 0.35F * lb, a, 0.9F, sunSide * 0.6F);
             }
         }
-        flush();
     }
 
     /** Narrows the funnel to a point while it is still aloft. */
@@ -165,123 +114,110 @@ public final class TornadoRenderer {
             return 1F;
         }
         float t = Mth.clamp((f - bottom) / 0.15F, 0F, 1F);
-        return 0.15F + 0.85F * t * t * (3F - 2F * t);
+        return 0.12F + 0.88F * t * t * (3F - 2F * t);
     }
 
     private static float fade(float f, float bottom) {
-        float top = f > 0.86F ? (1F - f) / 0.14F : 1F;
-        float low = bottom > 0.001F ? Mth.clamp((f - bottom) / 0.05F, 0F, 1F) : 1F;
+        float top = f > 0.9F ? (1F - f) / 0.1F * 0.6F + 0.4F : 1F;
+        float low = bottom > 0.001F ? Mth.clamp((f - bottom) / 0.06F, 0F, 1F) : 1F;
         return Mth.clamp(top, 0F, 1F) * low;
     }
 
-    /** Condensation grey, browner near the ground where it is full of dust and debris. */
-    private static float[] color(float f, ClientTornadoes.T t, float shade) {
-        float g = (0.4F + 0.14F * f) * shade;
-        float dust = t.contact * Mth.clamp(1F - f / (0.18F + t.rating * 0.03F), 0F, 1F);
-        float r = Mth.lerp(dust, g, 0.47F * shade);
-        float gg = Mth.lerp(dust, g * 1.01F, 0.39F * shade);
-        float b = Mth.lerp(dust, g * 1.05F, 0.3F * shade);
-        return new float[]{r, gg, b};
-    }
-
-    private static void drawCloud(ClientTornadoes.T t, double tx, double tz, Vec3 cam, float time, float pt, int q) {
-        int rings = CLOUD_RINGS[q];
-        int segs = SEGMENTS[q];
-        int layers = CLOUD_LAYERS[q];
+    /** The dark, lowered and rotating wall cloud right above the funnel, rising into the storm base. */
+    private static void wallCloud(ClientTornadoes.T t, double tx, double tz, Vec3 cam, float time, float pt, int q, float height,
+                                  float deck, float lr, float lg, float lb, float sunSide, RandomSource rnd) {
+        int n = WALL[q];
         float rc = Math.max(2F, t.coreRadius());
-        float spin = t.spin(pt);
-        float cxw = (float) (tx + t.offsetX(1F, time));
-        float czw = (float) (tz + t.offsetZ(1F, time));
-        begin(CLOUD);
-        for (int l = 0; l < layers; l++) {
-            // The rotating wall cloud, with a lower, tighter and faster ring under it.
-            float radius = (rc * 6F + 34F) * (1F - l * 0.28F);
-            float y = (float) (t.cloudBase() - 2F - l * 5F - cam.y);
-            float rot = spin * (0.9F + l * 0.6F) * (float) (Math.PI * 2) * 0.12F;
-            float shade = 0.36F - l * 0.05F;
-            float alpha = (0.82F - l * 0.15F) * (0.35F + 0.65F * t.strength);
-            for (int k = 0; k < rings; k++) {
-                float ra = radius * k / rings;
-                float rb = radius * (k + 1) / rings;
-                float aa = alpha * (1F - (ra / radius) * (ra / radius));
-                float ab = alpha * (1F - (rb / radius) * (rb / radius));
-                for (int i = 0; i < segs; i++) {
-                    float a0 = (float) (i * Math.PI * 2 / segs);
-                    float a1 = (float) ((i + 1) * Math.PI * 2 / segs);
-                    cloudVertex(cxw, czw, cam, ra, a0, y, rot, shade, aa);
-                    cloudVertex(cxw, czw, cam, ra, a1, y, rot, shade, aa);
-                    cloudVertex(cxw, czw, cam, rb, a1, y, rot, shade, ab);
-                    cloudVertex(cxw, czw, cam, rb, a0, y, rot, shade, ab);
-                }
-            }
+        float spin = t.spin(pt) * Mth.TWO_PI * 0.08F;
+        float cx = (float) (tx + t.offsetX(1F, time));
+        float cz = (float) (tz + t.offsetZ(1F, time));
+        float base = t.groundY + height;
+        float wallR = rc * 2.4F + 22F + t.rating * 4F;
+        float fade = 0.35F + 0.65F * t.strength;
+        for (int i = 0; i < n; i++) {
+            float a = rnd.nextFloat() * Mth.TWO_PI - spin * (0.8F + rnd.nextFloat() * 0.4F);
+            float r = (0.25F + 0.75F * Mth.sqrt(rnd.nextFloat())) * wallR;
+            float px = cx + Mth.cos(a) * r - (float) cam.x;
+            float pz = cz + Mth.sin(a) * r - (float) cam.z;
+            // Lowest in the middle, stepping up toward the storm base at the edges.
+            float k = r / wallR;
+            float py = Mth.lerp(k * k, base - 2F, deck - 1F) + rnd.nextFloat() * 3F - (float) cam.y;
+            float w = wallR * (0.32F + rnd.nextFloat() * 0.22F);
+            float shade = 0.34F + 0.08F * k + rnd.nextFloat() * 0.05F;
+            SkyBillboards.cell(SkyBillboards.SPHERE, SkyBillboards.WALL + (i & 1), px, py, pz, w, w * 0.5F, a,
+                    lr * shade, lg * shade, lb * shade * 1.04F, 0.92F * fade, 0.72F, sunSide * 0.4F);
         }
-        flush();
+        // The collar where the funnel meets the cloud.
+        int collar = Math.max(3, n / 4);
+        for (int i = 0; i < collar; i++) {
+            float a = (float) i / collar * Mth.TWO_PI - spin * 1.6F;
+            float r = t.radiusAt(1F) * 0.9F + 3F;
+            float px = cx + Mth.cos(a) * r - (float) cam.x;
+            float pz = cz + Mth.sin(a) * r - (float) cam.z;
+            float w = t.radiusAt(1F) * 0.9F + 6F;
+            float shade = 0.4F;
+            SkyBillboards.cell(SkyBillboards.SPHERE, SkyBillboards.SCUD + (i & 1), px, base - 2F - (float) cam.y, pz, w, w * 0.45F, a,
+                    lr * shade, lg * shade, lb * shade * 1.04F, 0.85F * fade, 0.75F, sunSide * 0.5F);
+        }
+        // Inflow scud streaming into the wall cloud (the parent supercell, if any, supplies its own).
+        ClientStorms.Cell parent = StormClouds.parentOf(t);
+        if (parent == null && q >= 1) {
+            float hx = Mth.sin(t.heading);
+            float hz = -Mth.cos(t.heading);
+            StormClouds.tail(cam, q, time, deck, 220F + t.rating * 25F, cx, cz, hx, hz, -hz, hx, 0.42F, fade, rnd);
+        }
     }
 
-    private static void cloudVertex(float cx, float cz, Vec3 cam, float r, float a, float y, float rot, float shade, float alpha) {
-        float x = cx + Mth.cos(a) * r;
-        float z = cz + Mth.sin(a) * r;
-        // Texture coordinates rotate with the cloud (counter-clockwise from above).
-        float u = Mth.cos(a + rot) * r / 48F;
-        float v = Mth.sin(a + rot) * r / 48F;
-        buffer.addVertex((float) (x - cam.x), y, (float) (z - cam.z)).setUv(u, v).setColor(shade, shade, shade * 1.05F, alpha).setLight(LIGHT);
+    /** Rotating skirt of dust and debris around the base, and a dusty ring spreading on the ground. */
+    private static void dust(ClientTornadoes.T t, double tx, double tz, Vec3 cam, float time, float pt, int q, float height,
+                             float lr, float lg, float lb, float sunSide, RandomSource rnd) {
+        int n = Math.round(DUST[q] * (0.6F + t.rating * 0.18F));
+        float rc = Math.max(2F, t.coreRadius());
+        float spin = t.spin(pt) * Mth.TWO_PI;
+        float amount = t.contact * (0.35F + 0.65F * t.strength);
+        float gx = (float) (tx - cam.x);
+        float gz = (float) (tz - cam.z);
+        float gy = t.groundY - (float) cam.y;
+        float cloudTop = Math.min(height * 0.4F, 6F + t.rating * 6F);
+        for (int i = 0; i < n; i++) {
+            float h = rnd.nextFloat();
+            float a = rnd.nextFloat() * Mth.TWO_PI - spin * (0.5F + 0.3F * (1F - h));
+            float r = rc * (0.8F + rnd.nextFloat() * 1.3F + h * 0.6F);
+            float px = gx + Mth.cos(a) * r;
+            float pz = gz + Mth.sin(a) * r;
+            float w = rc * (0.55F + rnd.nextFloat() * 0.5F) + 3F;
+            float py = gy + w * 0.35F + h * cloudTop;
+            float shade = 0.52F + rnd.nextFloat() * 0.1F;
+            float alpha = 0.6F * amount * (1F - h * 0.5F);
+            SkyBillboards.cell(SkyBillboards.SPHERE, SkyBillboards.DUST, px, py, pz, w, w * 0.8F, a,
+                    lr * shade * 1.05F, lg * shade * 0.92F, lb * shade * 0.75F, alpha, 0.75F, sunSide * 0.5F);
+        }
+        float ring = rc * 3.2F + 10F;
+        SkyBillboards.cell(SkyBillboards.FLAT, SkyBillboards.RING, gx, gy + 0.3F, gz, ring, ring, -spin * 0.3F,
+                lr * 0.5F, lg * 0.44F, lb * 0.36F, 0.5F * amount, 1F, 0F);
     }
 
-    private static void drawSubVortices(ClientTornadoes.T t, double tx, double tz, Vec3 cam, float time, float pt, int q) {
+    /** Suction vortices orbiting inside violent tornadoes. */
+    private static void subVortices(ClientTornadoes.T t, double tx, double tz, Vec3 cam, float time, float pt, int q,
+                                    float lr, float lg, float lb, float sunSide) {
         int count = q >= 3 ? 5 : 3;
         float rc = t.coreRadius();
         float spin = t.spin(pt);
-        float height = t.height() * 0.22F;
-        int n = 10;
+        float h = 14F + t.rating * 3F;
         int m = 6;
-        begin(FUNNEL);
         for (int k = 0; k < count; k++) {
             float orbit = (float) (-spin * Math.PI * 2 * 1.3F + k * Math.PI * 2 / count);
-            float ox = (float) (tx + Mth.cos(orbit) * rc * 0.75F - cam.x);
-            float oz = (float) (tz + Mth.sin(orbit) * rc * 0.75F - cam.z);
-            float rs = rc * 0.13F;
+            float ox = (float) (tx + Mth.cos(orbit) * rc * 0.8F - cam.x);
+            float oz = (float) (tz + Mth.sin(orbit) * rc * 0.8F - cam.z);
+            float rs = rc * 0.12F + 1F;
             for (int j = 0; j < m; j++) {
-                float f0 = (float) j / m;
-                float f1 = (float) (j + 1) / m;
-                float r0 = rs * (0.6F + f0 * 0.9F);
-                float r1 = rs * (0.6F + f1 * 0.9F);
-                float y0 = (float) (t.groundY + f0 * height - cam.y);
-                float y1 = (float) (t.groundY + f1 * height - cam.y);
-                float a0 = 0.5F * (1F - f0);
-                float a1 = 0.5F * (1F - f1);
-                float[] c = {0.4F, 0.34F, 0.27F};
-                for (int i = 0; i < n; i++) {
-                    float ang0 = (float) (i * Math.PI * 2 / n);
-                    float ang1 = (float) ((i + 1) * Math.PI * 2 / n);
-                    float u0 = (float) i / n + spin * 6F;
-                    float u1 = (float) (i + 1) / n + spin * 6F;
-                    vertex(ox + Mth.cos(ang0) * r0, y0, oz + Mth.sin(ang0) * r0, u0, f0 - time * 0.05F, c, a0);
-                    vertex(ox + Mth.cos(ang1) * r0, y0, oz + Mth.sin(ang1) * r0, u1, f0 - time * 0.05F, c, a0);
-                    vertex(ox + Mth.cos(ang1) * r1, y1, oz + Mth.sin(ang1) * r1, u1, f1 - time * 0.05F, c, a1);
-                    vertex(ox + Mth.cos(ang0) * r1, y1, oz + Mth.sin(ang0) * r1, u0, f1 - time * 0.05F, c, a1);
-                }
+                float f = (j + 0.5F) / m;
+                float py = (float) (t.groundY + f * h - cam.y);
+                float a = 0.45F * (1F - f) * t.contact;
+                SkyBillboards.add(SkyBillboards.TEX_STREAKS, SkyBillboards.FUNNEL, ox, py, oz, rs * (0.7F + f), h / m * 0.8F, 0F,
+                        spin * 5F, f - time * 0.04F, spin * 5F + 0.5F, f - time * 0.04F + 0.2F,
+                        0.46F * lr, 0.4F * lg, 0.33F * lb, a, 0.9F, sunSide * 0.5F);
             }
-        }
-        flush();
-    }
-
-    private static void vertex(float x, float y, float z, float u, float v, float[] c, float a) {
-        buffer.addVertex(x, y, z).setUv(u, v).setColor(c[0], c[1], c[2], a).setLight(LIGHT);
-    }
-
-    private static void begin(ResourceLocation texture) {
-        flush();
-        RenderSystem.setShaderTexture(0, texture);
-        buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
-    }
-
-    private static void flush() {
-        if (buffer != null) {
-            MeshData mesh = buffer.build();
-            if (mesh != null) {
-                BufferUploader.drawWithShader(mesh);
-            }
-            buffer = null;
         }
     }
 

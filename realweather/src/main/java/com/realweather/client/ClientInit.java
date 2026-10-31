@@ -36,7 +36,7 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(FogEffects::onFogColor);
         NeoForge.EVENT_BUS.addListener(FogEffects::onCameraAngles);
         NeoForge.EVENT_BUS.addListener(WaterShader::onRenderStage);
-        NeoForge.EVENT_BUS.addListener(com.realweather.client.tornado.TornadoRenderer::onRenderStage);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.SkyRenderer::onRenderStage);
         modBus.addListener(ClientInit::onEntityRenderers);
         modBus.addListener(ClientInit::onAddLayers);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.hail.Footprints::onRenderStage);

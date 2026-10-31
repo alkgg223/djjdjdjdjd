@@ -4,7 +4,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 /** Visual and audio settings, editable from the Mods screen (Config button). */
 public final class ClientConfig {
-    public enum Quality { LOW, MEDIUM, HIGH }
+    public enum Quality { LOW, MEDIUM, HIGH, ULTRA }
 
     /** Tornado graphics have their own setting, independent of the rest of the weather. */
     public enum TornadoQuality { LOW, MEDIUM, HIGH, ULTRA }
@@ -22,11 +22,14 @@ public final class ClientConfig {
     public static final ModConfigSpec.BooleanValue CAMERA_SHAKE;
     public static final ModConfigSpec.BooleanValue REALISTIC_LIGHTNING;
     public static final ModConfigSpec.EnumValue<TornadoQuality> TORNADO_QUALITY;
+    public static final ModConfigSpec.BooleanValue CLOUDS;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
-        QUALITY = b.comment("Weather detail. LOW is best for phones and weak PCs.").translation("realweather.config.quality")
-                .defineEnum("quality", Quality.MEDIUM);
+        QUALITY = b.comment("Weather detail: LOW, MEDIUM, HIGH or ULTRA. Lower settings use fewer particles and clouds; LOW is best for phones and weak PCs.")
+                .translation("realweather.config.quality").defineEnum("quality", Quality.MEDIUM);
+        CLOUDS = b.comment("Realistic 3D clouds: fair-weather cumulus, overcast decks and storm clouds (replaces the vanilla clouds).")
+                .translation("realweather.config.clouds").define("realisticClouds", true);
         CUSTOM_PRECIPITATION = b.comment("Draw the realistic rain, snow and sandstorm instead of the vanilla weather.")
                 .translation("realweather.config.custom_precipitation").define("customPrecipitation", true);
         RAIN_DROPS_3D = b.comment("Individual falling drops close to the camera.").translation("realweather.config.rain_drops_3d")
@@ -58,10 +61,16 @@ public final class ClientConfig {
 
     public static float qualityScale() {
         return switch (QUALITY.get()) {
-            case LOW -> 0.4F;
-            case MEDIUM -> 0.7F;
-            case HIGH -> 1.0F;
+            case LOW -> 0.35F;
+            case MEDIUM -> 0.6F;
+            case HIGH -> 0.85F;
+            case ULTRA -> 1.0F;
         };
+    }
+
+    /** Weather quality, 0 = LOW .. 3 = ULTRA. */
+    public static int quality() {
+        return QUALITY.get().ordinal();
     }
 
     /** 0 = LOW .. 3 = ULTRA. */

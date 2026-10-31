@@ -138,6 +138,7 @@ public final class ClientWeather {
         WeatherSounds.tick(mc, level);
         LightningFx.tick(mc, level);
         com.realweather.client.tornado.ClientTornadoes.tick(mc, level);
+        com.realweather.client.sky.SkyRenderer.tick();
         com.realweather.client.hail.HailCoverage.tick(mc, level);
         com.realweather.client.hail.Footprints.tick(mc, level);
     }

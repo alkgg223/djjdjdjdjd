@@ -43,7 +43,7 @@
   "realweather.configuration.section.realweather.client.toml": "الطقس الواقعي",
   "realweather.configuration.section.realweather.client.toml.title": "إعدادات الطقس الواقعي",
   "realweather.config.quality": "تفاصيل الطقس",
-  "realweather.config.quality.tooltip": "LOW الأفضل للجوال والأجهزة الضعيفة",
+  "realweather.config.quality.tooltip": "منخفض أو متوسط أو عالي أو فائق. كلما قل الإعداد قلت الجزيئات والغيوم؛ المنخفض أفضل للأجهزة الضعيفة.",
   "realweather.config.custom_precipitation": "مطر وثلج وغبار واقعي",
   "realweather.config.rain_drops_3d": "قطرات مطر قريبة",
   "realweather.config.splashes": "رذاذ وتموجات",
@@ -80,5 +80,7 @@
   "realweather.cmd.hail.off": "البَرَد لم يعد يتراكم أو يؤذي",
   "realweather.cmd.storm.1": "عاصفة رعدية تتكون فوقك",
   "realweather.cmd.storm.2": "عاصفة بَرَد (%s%%) قادمة لمدة %s دقيقة",
-  "realweather.cmd.storm.3": "خلية عملاقة (سوبرسل) تقترب (%s%%، %s دقيقة) - راقب السحابة الجدارية"
+  "realweather.cmd.storm.3": "خلية عملاقة (سوبرسل) تقترب (%s%%، %s دقيقة) - راقب السحابة الجدارية",
+  "realweather.config.clouds": "غيوم واقعية",
+  "realweather.config.clouds.tooltip": "غيوم ركامية ثلاثية الأبعاد في الأيام الصافية، وغطاء رمادي وقت المطر، وسحب عاصفة شاهقة مع أعمدة المطر والسحابة الجدارية. تستبدل غيوم ماينكرافت."
 }

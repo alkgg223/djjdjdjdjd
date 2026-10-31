@@ -36,6 +36,13 @@ public class RealOverworldEffects extends DimensionSpecialEffects.OverworldEffec
         }
     }
 
+    /** The realistic clouds replace the vanilla cloud layer. */
+    @Override
+    public boolean renderClouds(ClientLevel level, int ticks, float partialTick, com.mojang.blaze3d.vertex.PoseStack poseStack,
+                                double camX, double camY, double camZ, org.joml.Matrix4f modelViewMatrix, org.joml.Matrix4f projectionMatrix) {
+        return ClientConfig.CLOUDS.get() && !com.realweather.client.sky.SkyRenderer.failed();
+    }
+
     @Override
     public boolean tickRain(ClientLevel level, int ticks, Camera camera) {
         if (failed || !ClientConfig.CUSTOM_PRECIPITATION.get()) {

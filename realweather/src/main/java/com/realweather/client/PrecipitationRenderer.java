@@ -76,7 +76,7 @@ public final class PrecipitationRenderer {
             return true;
         }
         float q = ClientConfig.qualityScale();
-        int r = q < 0.5F ? 8 : q < 0.8F ? 11 : 15;
+        int r = q < 0.5F ? 8 : q < 0.7F ? 11 : q < 0.95F ? 14 : 17;
         double time = (ticks % 240000) + partialTick;
 
         lightTexture.turnOnLightLayer();

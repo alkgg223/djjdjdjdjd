@@ -439,11 +439,135 @@ def hail(rng):
         save(os.path.join(ENTITY, name + '.png'), img)
 
 
+def _smooth(e0, e1, x):
+    t = np.clip((x - e0) / (e1 - e0), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def _fbm(rng, s, scales=(5, 12, 28), weights=(0.55, 0.3, 0.15), aniso=(1.0, 1.0)):
+    out = np.zeros((s, s))
+    for sc, w in zip(scales, weights):
+        out += w * periodic_noise(rng, (s, s), sc, aniso=aniso)
+    return out
+
+
+def _cloud_cell(rng, s, lobes, spread, rmin, rmax, flat=0.24, elong=1.0, rough=0.35, thresh=(0.25, 0.8),
+                light=1.4, lo=0.5, contrast=1.0, alpha_max=0.97):
+    """A soft cloud sprite: overlapping lobes, fractal edges, self-shadowed so tops are bright and bottoms grey."""
+    yy, xx = (np.mgrid[0:s, 0:s] + 0.5) / s - 0.5
+    dens = np.zeros((s, s))
+    for _ in range(lobes):
+        cx = rng.normal(0, spread) * elong
+        cy = rng.uniform(-0.17, 0.06)
+        r = rng.uniform(rmin, rmax)
+        dens += np.exp(-(((xx - cx) / elong) ** 2 + (yy - cy) ** 2) / (2 * r * r))
+    n = _fbm(rng, s)
+    dens = dens * (1 + rough * n)
+    if flat is not None:
+        dens *= _smooth(flat + 0.1, flat - 0.04, yy)
+    dens *= _smooth(0.5, 0.36, np.abs(xx)) * _smooth(0.5, 0.36, np.abs(yy))
+    alpha = _smooth(thresh[0], thresh[1], dens) * alpha_max
+    # Light from above: the more cloud lies above a pixel, the darker it is.
+    depth = np.cumsum(np.clip(dens, 0, None), axis=0) / s
+    lum = lo + (1 - lo) * np.exp(-depth * light)
+    # Each billow is lit on its top and shaded underneath where it overhangs the next one.
+    above = np.roll(dens, 7, axis=0)
+    edge = np.clip(dens - above, -1.5, 1.5)
+    lum = lum + 0.18 * contrast * np.tanh(edge * 1.5)
+    lum = lum * (1 + 0.05 * contrast * _fbm(rng, s, scales=(10, 24, 60)))
+    return alpha, np.clip(lum, 0, 1)
+
+
+def sky(rng):
+    """Atlas of cloud sprites (4 x 4 cells of 256) and the tileable streak texture of tornado funnels."""
+    s = 256
+    atlas = np.zeros((4 * s, 4 * s, 4))
+
+    def put(idx, alpha, lum, tint=(1.0, 1.0, 1.0)):
+        r, c = divmod(idx, 4)
+        cell = atlas[r * s:(r + 1) * s, c * s:(c + 1) * s]
+        for k in range(3):
+            cell[..., k] = np.clip(lum * tint[k], 0, 1) * 255
+        cell[..., 3] = np.clip(alpha, 0, 1) * 255
+
+    # 0-5: cumulus puffs.
+    for i in range(6):
+        a, l = _cloud_cell(rng, s, lobes=6 + i, spread=0.1, rmin=0.06, rmax=0.13, flat=0.2 + 0.03 * (i % 3), rough=0.3,
+                           light=1.3, lo=0.42)
+        put(i, a, l)
+    # 6-7: ragged scud.
+    for i in range(2):
+        a, l = _cloud_cell(rng, s, lobes=9, spread=0.13, rmin=0.04, rmax=0.09, flat=None, elong=1.6, rough=0.9,
+                           thresh=(0.3, 0.95), light=0.8, lo=0.6, alpha_max=0.85)
+        put(6 + i, a, l)
+    # 8-9: dark storm base (seen from below and from the side): mottled, nearly uniform.
+    yy, xx = (np.mgrid[0:s, 0:s] + 0.5) / s - 0.5
+    for i in range(2):
+        rr = np.sqrt(xx ** 2 + yy ** 2)
+        n = _fbm(rng, s, scales=(4, 10, 26))
+        edge = _smooth(0.5, 0.18, rr + 0.06 * n)
+        a = edge * np.clip(0.9 + 0.1 * n, 0, 1)
+        l = np.clip(0.86 + 0.12 * _fbm(rng, s, scales=(8, 20, 50)), 0.6, 1)
+        put(8 + i, a, l)
+    # 10: stratus / anvil sheet: a long soft layer with horizontal streaks.
+    n = _fbm(rng, s, scales=(4, 10, 24), aniso=(1.0, 4.0))
+    a = _smooth(0.5, 0.08, np.abs(yy) * 2.2 + 0.1 * n) * _smooth(0.5, 0.3, np.abs(xx) + 0.05 * n) * 0.95
+    l = np.clip(0.88 + 0.1 * n - 0.15 * _smooth(-0.05, 0.25, yy), 0.5, 1)
+    put(10, a, l)
+    # 11: dust puff (billowy, softer).
+    a, l = _cloud_cell(rng, s, lobes=10, spread=0.12, rmin=0.06, rmax=0.13, flat=0.3, rough=0.6, thresh=(0.2, 0.9),
+                       light=0.9, lo=0.6, alpha_max=0.9)
+    put(11, a, l)
+    # 12: rain shaft: vertical streaks, soft sides, ragged bottom.
+    streaks = periodic_noise(rng, (s, s), 10, aniso=(8.0, 1.0))
+    streaks2 = periodic_noise(rng, (s, s), 30, aniso=(6.0, 1.0))
+    side = np.exp(-(xx / 0.21) ** 2)
+    bottom = _smooth(0.5, 0.3, yy + 0.06 * periodic_noise(rng, (s, s), 6))
+    top = _smooth(-0.5, -0.46, yy)
+    a = np.clip(side * bottom * top * (0.82 + 0.1 * streaks + 0.06 * streaks2), 0, 1)
+    l = np.clip(0.92 + 0.04 * streaks, 0, 1)
+    put(12, a, l)
+    # 13: dust ring on the ground, with spiral arms.
+    rr = np.sqrt(xx ** 2 + yy ** 2) * 2
+    ang = np.arctan2(yy, xx)
+    arms = 0.5 + 0.5 * np.sin(ang * 5 + rr * 9)
+    n = _fbm(rng, s, scales=(6, 14, 30))
+    a = _smooth(1.0, 0.55, rr + 0.08 * n) * (0.45 + 0.35 * arms + 0.2 * n) * _smooth(0.0, 0.25, rr)
+    a = np.clip(a, 0, 1) * 0.9
+    l = np.clip(0.85 + 0.1 * n, 0, 1)
+    put(13, a, l)
+    # 14-15: wall cloud blocks: lumpy, darker, more contrast.
+    for i in range(2):
+        a, l = _cloud_cell(rng, s, lobes=11, spread=0.11, rmin=0.06, rmax=0.12, flat=0.22, rough=0.5, light=1.6, lo=0.5,
+                           contrast=1.6)
+        put(14 + i, a, l)
+    save(os.path.join(ENV, 'sky_atlas.png'), atlas, blur=True)
+
+    # Funnel streaks: condensation bands spiralling round the vortex (tileable both ways).
+    n1 = periodic_noise(rng, (s, s), 9, aniso=(1.0, 7.0))
+    n2 = periodic_noise(rng, (s, s), 22, aniso=(1.0, 4.0))
+    n3 = periodic_noise(rng, (s, s), 60)
+    band = 0.55 * n1 + 0.3 * n2 + 0.15 * n3
+    band = np.stack([np.roll(band[y], y // 2 * 0 + y) for y in range(s)])
+    lum = np.clip(0.88 + 0.11 * band, 0.6, 1.0)
+    alpha = np.clip(0.9 + 0.1 * band, 0.65, 1.0)
+    img = np.zeros((s, s, 4))
+    img[..., 0] = lum * 255
+    img[..., 1] = lum * 255
+    img[..., 2] = lum * 255
+    img[..., 3] = alpha * 255
+    save(os.path.join(ENV, 'tornado_streaks.png'), img, blur=True)
+
+
 def main():
     rng = np.random.default_rng(2026)
     if len(sys.argv) > 1 and sys.argv[1] == 'hail':
         hail(np.random.default_rng(91))
         print('hail textures done')
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == 'sky':
+        sky(np.random.default_rng(1234))
+        print('sky textures done')
         return
     if len(sys.argv) > 1 and sys.argv[1] == 'tornado':
         tornado(np.random.default_rng(77))

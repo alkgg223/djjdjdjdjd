@@ -43,7 +43,7 @@
   "realweather.configuration.section.realweather.client.toml": "Real Weather",
   "realweather.configuration.section.realweather.client.toml.title": "Real Weather settings",
   "realweather.config.quality": "Weather detail",
-  "realweather.config.quality.tooltip": "LOW is best for phones and weak PCs",
+  "realweather.config.quality.tooltip": "LOW, MEDIUM, HIGH or ULTRA. Lower settings draw fewer particles and clouds; LOW is best for phones and weak PCs.",
   "realweather.config.custom_precipitation": "Realistic rain, snow and sand",
   "realweather.config.rain_drops_3d": "Close-up raindrops",
   "realweather.config.splashes": "Splashes and ripples",
@@ -80,5 +80,7 @@
   "realweather.cmd.hail.off": "Hail no longer piles up or hurts",
   "realweather.cmd.storm.1": "A thunderstorm is building overhead",
   "realweather.cmd.storm.2": "A hailstorm (%s%%) is coming for %s minutes",
-  "realweather.cmd.storm.3": "A supercell is approaching (%s%%, %s minutes) - watch the wall cloud"
+  "realweather.cmd.storm.3": "A supercell is approaching (%s%%, %s minutes) - watch the wall cloud",
+  "realweather.config.clouds": "Realistic clouds",
+  "realweather.config.clouds.tooltip": "3D cumulus on fair days, grey overcast in rain, and towering storm clouds with rain shafts and wall clouds. Replaces the vanilla clouds."
 }

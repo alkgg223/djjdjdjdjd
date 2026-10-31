@@ -86,7 +86,7 @@ public final class ClientTornadoes {
             return HEIGHTS[rating];
         }
 
-        private static final float[] HEIGHTS = {110F, 110F, 105F, 100F, 88F, 78F};
+        private static final float[] HEIGHTS = {84F, 84F, 80F, 76F, 70F, 64F};
 
         public float cloudBase() {
             return groundY + height();
