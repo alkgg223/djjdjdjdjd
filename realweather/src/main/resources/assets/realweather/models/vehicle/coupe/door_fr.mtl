@@ -16,6 +16,18 @@ Ka 0 0 0
 d 1.0
 map_Kd #dash
 
+newmtl door_card_red
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #door_card_red
+
+newmtl leather_red
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #leather_red
+
 newmtl paint
 Kd 1 1 1
 Ka 0 0 0
@@ -23,11 +35,11 @@ d 1.0
 map_Kd #paint
 neoforge_TintIndex 0
 
-newmtl seat
+newmtl switch_panel
 Kd 1 1 1
-Ka 0 0 0
+Ka 1 1 1
 d 1.0
-map_Kd #seat
+map_Kd #switch_panel
 
 newmtl trim
 Kd 1 1 1

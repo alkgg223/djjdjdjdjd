@@ -9,8 +9,9 @@
   "black": "realweather:item/vehicle/black",
   "chrome": "realweather:item/vehicle/chrome",
   "dash": "realweather:item/vehicle/dash",
+  "door_card_tan": "realweather:item/vehicle/door_card_tan",
   "paint": "realweather:item/vehicle/paint",
-  "seat": "realweather:item/vehicle/seat",
+  "seat_tan": "realweather:item/vehicle/seat_tan",
   "trim": "realweather:item/vehicle/trim",
   "particle": "realweather:item/vehicle/paint"
  }

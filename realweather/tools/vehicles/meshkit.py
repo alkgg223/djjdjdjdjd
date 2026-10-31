@@ -51,6 +51,11 @@ MATS = {
     "snow": ((0.97, 0.98, 1.0), "snow", False),
     "hydraulic": ((0.78, 0.8, 0.82), "metal", False),
     "decal": ((0.95, 0.95, 0.95), "plain", False),
+    "headliner": ((0.58, 0.57, 0.54), "fabric", False),
+    "leather_red": ((0.12, 0.12, 0.13), "fabric", False),
+    "alu": ((0.72, 0.74, 0.77), "metal", False),
+    "wood": ((0.36, 0.22, 0.12), "plastic", False),
+    "piano": ((0.025, 0.025, 0.03), "plain", False),
 }
 TEXTURES = ["paint", "metal", "rubber", "glass", "plastic", "fabric", "plain", "gauge", "snow"]
 EMISSIVE = {"head_light", "tail_light", "amber", "blue_light", "screen"}

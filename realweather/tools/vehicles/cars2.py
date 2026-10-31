@@ -44,7 +44,7 @@ def wheel(r, width, rim="rim_alloy", caliper="dark", rim_r=0.68, tyre_n=24):
     return m
 
 
-def door_parts(v, car, W, handle_zs, card_top, handle_mat="chrome"):
+def door_parts(v, car, W, handle_zs, card_top, handle_mat="chrome", trim="dark"):
     """doors (hinged at their front edge) with handles, panel gaps and inner door cards; each door window rides
     on its door"""
     C.seams(car, None, car.sill(0) + car.rocker - 0.01, lin_belt(car, 0) + 0.015)
@@ -60,11 +60,18 @@ def door_parts(v, car, W, handle_zs, card_top, handle_mat="chrome"):
             xo = s * (x + 0.004)
             K.rbox((min(xo, xo + s * 0.024), y - 0.018, zh - 0.08), (max(xo, xo + s * 0.024), y + 0.018, zh + 0.08), 0.008, handle_mat,
                    seg=1, m=d)
-            # Door card inside.
+            # Door card inside: textured panel, armrest with the window switches, chrome pull.
             xi = s * (W / 2 - 0.09)
-            K.rbox((xi - 0.025, car.sill(0) + 0.12, z0 + 0.05), (xi + 0.025, card_top, z1 - 0.05), 0.02, "dash", seg=1, m=d)
-            K.rbox((xi - s * 0.04 - 0.03, card_top - 0.16, z0 + 0.15), (xi - s * 0.04 + 0.03, card_top - 0.1, z1 - 0.15), 0.015,
-                   "seat", seg=1, m=d)
+            y0c = car.sill(0) + 0.12
+            K.rbox((xi - 0.025, y0c, z0 + 0.05), (xi + 0.025, card_top, z1 - 0.05), 0.02, "dash", seg=1, m=d)
+            Q(d, TRIMS[trim]["card"], (xi - s * 0.0255, (y0c + card_top) / 2, (z0 + z1) / 2), (0, 0, s * ((z1 - z0) / 2 - 0.07)),
+              (0, (card_top - y0c) / 2 - 0.01, 0), flip=s < 0)
+            K.rbox((xi - s * 0.05 - 0.035, card_top - 0.24, z0 + 0.18), (xi - s * 0.05 + 0.035, card_top - 0.17, z1 - 0.15), 0.02,
+                   TRIMS[trim]["seat"], seg=1, m=d)
+            if i == 0:
+                Q(d, "switch_panel", (xi - s * 0.05, card_top - 0.168, z0 + 0.32), (0, 0, 0.065), (0.03, 0, 0))
+            K.rbox((xi - s * 0.03 - 0.01, card_top - 0.14, z0 + 0.12), (xi - s * 0.03 + 0.01, card_top - 0.11, z0 + 0.2), 0.006, "chrome",
+                   seg=1, m=d)
             v.part(name, d.translate((-s * W / 2, 0, -z0)))
             g = car.door_glass.get(name + "_glass")
             if g is not None:
@@ -161,6 +168,187 @@ def front_rear(car, det, hl, tl, grille, hl_box, tl_box, grille_box, plate_f, pl
         C.sides(sk, det, "marker_amber", y - 0.01, y + 0.025, zf - 0.07, zf + 0.03, offset=0.006)
 
 
+# ------------------------------------------------------------------------------------------------ interiors
+TRIMS = {
+    "dark": dict(seat="seat", quilt="quilt_dark", card="door_card_dark"),
+    "tan": dict(seat="seat_tan", quilt="quilt_tan", card="door_card_tan"),
+    "red": dict(seat="leather_red", quilt="quilt_red", card="door_card_red"),
+}
+Q = V.facing_quad
+
+
+def seat(m, car, x, floor_y, z, t, sport=False):
+    """front seat: base and rails, cushion with side bolsters and a quilted insert, reclined backrest with bolsters,
+    headrest on two posts (or a one-piece sports back)"""
+    mat, quilt = t["seat"], t["quilt"]
+    K.rbox((x - 0.19, floor_y, z - 0.2), (x + 0.19, floor_y + 0.1, z + 0.18), 0.02, "dark", seg=1, m=m)
+    for s in (-1, 1):
+        K.box((x + s * 0.15 - 0.015, floor_y, z - 0.3), (x + s * 0.15 + 0.015, floor_y + 0.03, z + 0.25), "steel", m=m)
+    K.rbox((x - 0.19, floor_y + 0.1, z - 0.27), (x + 0.19, floor_y + 0.2, z + 0.2), 0.045, mat, m=m)
+    bol = 0.3 if sport else 0.26
+    for s in (-1, 1):
+        K.rbox((x + s * 0.21 - 0.05, floor_y + 0.11, z - 0.26), (x + s * 0.21 + 0.05, floor_y + bol, z + 0.18), 0.04, mat, m=m)
+    Q(m, quilt, (x, floor_y + 0.202, z - 0.04), (0.14, 0, 0), (0, 0, -0.2))
+    back = Mesh()
+    top = floor_y + (1.02 if sport else 0.86)
+    top = min(top, car.top_y(z + 0.3, abs(x)) - 0.12 - (0 if sport else 0.2))
+    K.rbox((x - 0.19, floor_y + 0.21, z + 0.18), (x + 0.19, top, z + 0.29), 0.05, mat, m=back)
+    K.rbox((x - 0.2, floor_y + 0.24, z + 0.285), (x + 0.2, top - 0.02, z + 0.31), 0.015, "dark", seg=1, m=back)
+    for s in (-1, 1):
+        K.rbox((x + s * 0.21 - 0.05, floor_y + 0.24, z + 0.13), (x + s * 0.21 + 0.05, top - (0.05 if sport else 0.08), z + 0.3), 0.04, mat,
+               m=back)
+    Q(back, quilt, (x, (floor_y + 0.26 + top - 0.1) / 2, z + 0.177), (-0.14, 0, 0), (0, (top - floor_y - 0.36) / 2, 0))
+    if sport:
+        # One-piece back: a slot for the harness, the headrest moulded in.
+        K.rbox((x - 0.13, top - 0.02, z + 0.19), (x + 0.13, top + 0.12, z + 0.29), 0.05, mat, m=back)
+        K.box((x - 0.06, top - 0.04, z + 0.175), (x - 0.03, top + 0.02, z + 0.3), "black", m=back)
+        K.box((x + 0.03, top - 0.04, z + 0.175), (x + 0.06, top + 0.02, z + 0.3), "black", m=back)
+    else:
+        hr = min(top + 0.2, car.top_y(z + 0.25, abs(x)) - 0.07)
+        K.rbox((x - 0.13, hr - 0.17, z + 0.19), (x + 0.13, hr, z + 0.29), 0.045, mat, m=back)
+        for s in (-1, 1):
+            K.box((x + s * 0.07 - 0.008, top - 0.03, z + 0.235), (x + s * 0.07 + 0.008, hr - 0.15, z + 0.245), "chrome", m=back)
+    back.rotate("x", -11, origin=(0, floor_y + 0.21, z + 0.24))
+    m.extend(back)
+
+
+def rear_bench(m, car, floor_y, zr, t, xr):
+    mat, quilt = t["seat"], t["quilt"]
+    K.rbox((-xr, floor_y, zr - 0.25), (xr, floor_y + 0.1, zr + 0.2), 0.02, "dark", seg=1, m=m)
+    K.rbox((-xr, floor_y + 0.08, zr - 0.29), (xr, floor_y + 0.23, zr + 0.2), 0.05, mat, m=m)
+    for x in (-0.4, 0.4):
+        Q(m, quilt, (x, floor_y + 0.232, zr - 0.05), (0.15, 0, 0), (0, 0, -0.18))
+    back = Mesh()
+    top = min(floor_y + 0.84, min(car.top_y(zr + 0.32, x) for x in (0.0, 0.5)) - 0.16)
+    K.rbox((-xr, floor_y + 0.22, zr + 0.2), (xr, top, zr + 0.33), 0.05, mat, m=back)
+    for x in (-0.4, 0.4):
+        Q(back, quilt, (x, (floor_y + 0.3 + top - 0.06) / 2, zr + 0.197), (-0.15, 0, 0), (0, (top - floor_y - 0.36) / 2, 0))
+    for x, w in ((-0.42, 0.12), (0.0, 0.09), (0.42, 0.12)):
+        hr = min(top + 0.17, car.top_y(zr + 0.28, abs(x)) - 0.08)
+        if hr - top > 0.07:
+            K.rbox((x - w, hr - 0.14, zr + 0.21), (x + w, hr, zr + 0.3), 0.04, mat, m=back)
+            for s in (-1, 1):
+                K.box((x + s * w * 0.5 - 0.007, top - 0.02, zr + 0.25), (x + s * w * 0.5 + 0.007, hr - 0.12, zr + 0.26), "chrome", m=back)
+    # Centre armrest folded down, with cupholders.
+    K.rbox((-0.12, floor_y + 0.23, zr - 0.08), (0.12, floor_y + 0.33, zr + 0.22), 0.04, mat, m=back)
+    back.rotate("x", -9, origin=(0, floor_y + 0.22, zr + 0.26))
+    m.extend(back)
+
+
+def interior2(v, m, car, W, floor_y, belt, rear, trim="dark", accent="piano", sport=False, driver_x=-0.37, front_z=1.0, rear_z=1.85,
+              mats=True):
+    """dashboard with instrument binnacle, touch screen, vents and climate panel; console with the selector and an
+    armrest; seats, rear bench, headliner, sun visors, mirror, dome light and seat belts"""
+    t = TRIMS[trim]
+    zw0 = car.zw0
+    g = {}
+    zl = zw0 + 0.44
+    yb = belt
+
+    def inner(z):
+        return C.lin(car.plan, z) - 0.11
+
+    def ws(z):
+        return car.top_y(z, 0.3) - 0.035
+    xi = min(inner(zw0 + 0.05), inner(zl))
+    # Floor, transmission tunnel, mats.
+    z_end = zw0 + (rear_z + 0.45 if rear else front_z + 0.45)
+    K.box((-xi, floor_y - 0.03, zw0 - 0.1), (xi, floor_y, z_end), "carpet", m=m)
+    K.rbox((-0.14, floor_y - 0.01, zw0 + 0.1), (0.14, floor_y + 0.1, z_end - 0.35), 0.03, "carpet", seg=1, m=m)
+    if mats:
+        for x in (-0.4, 0.4):
+            Q(m, "floor_mat", (x, floor_y + 0.003, zw0 + 0.45), (0.2, 0, 0), (0, 0, -0.2))
+            if rear:
+                Q(m, "floor_mat", (x, floor_y + 0.003, zw0 + rear_z - 0.45), (0.2, 0, 0), (0, 0, -0.17))
+    # Dashboard: an extruded profile under the windshield.
+    zf = zw0 + 0.05
+    prof = [(zf, min(yb, ws(zf))), (zw0 + 0.22, min(yb + 0.03, ws(zw0 + 0.22))), (zl, min(yb - 0.01, ws(zl))), (zl + 0.03, yb - 0.05),
+            (zl, yb - 0.1), (zl - 0.03, yb - 0.26), (zl - 0.06, floor_y + 0.5), (zw0 + 0.1, floor_y + 0.52), (zf, floor_y + 0.5)]
+    K.prism(prof, "x", -xi, xi, "dash", bevel=0.012, m=m)
+    # Accent strip across the face, glovebox seam.
+    K.box((-xi + 0.04, yb - 0.135, zl - 0.012), (xi - 0.04, yb - 0.112, zl + 0.008), accent, m=m)
+    K.box((0.28, yb - 0.27, zl - 0.04), (0.66, yb - 0.262, zl - 0.02), "black", m=m)
+    # Instrument binnacle with the cluster and the two dials.
+    xd = driver_x
+    K.rbox((xd - 0.23, yb - 0.17, zl - 0.12), (xd + 0.23, yb + 0.03, zl + 0.03), 0.03, "dash", m=m)
+    K.rbox((xd - 0.24, yb + 0.01, zl - 0.12), (xd + 0.24, yb + 0.055, zl + 0.085), 0.02, "dash", m=m)
+    Q(m, "cluster", (xd, yb - 0.07, zl + 0.033), (0.2, 0, 0), (0, 0.075, 0))
+    gz = zl + 0.036
+    m.extend(V.disc_face((xd - 0.1, yb - 0.07, gz), 0.06, "z", 1, "gauge"))
+    m.extend(V.disc_face((xd + 0.1, yb - 0.07, gz), 0.053, "z", 1, "gauge_rpm"))
+    g["speedo"] = (xd - 0.1, yb - 0.07, gz + 0.003, 0.06)
+    g["tacho"] = (xd + 0.1, yb - 0.07, gz + 0.003, 0.053)
+    # Touch screen on top of the dash (the radar screen on the chase vehicles).
+    zs = zl - 0.05
+    K.rbox((-0.175, yb - 0.01, zs - 0.03), (0.175, yb + 0.155, zs), 0.012, "piano", seg=1, m=m)
+    Q(m, "infotainment", (0, yb + 0.073, zs + 0.002), (0.158, 0, 0), (0, 0.068, 0))
+    g["screen"] = [(-0.158, yb + 0.005, zs + 0.002), (0.158, yb + 0.005, zs + 0.002), (0.158, yb + 0.141, zs + 0.002),
+                   (-0.158, yb + 0.141, zs + 0.002)]
+    # Centre stack: vents, climate panel; vents at the outer ends of the dash.
+    K.rbox((-0.15, floor_y + 0.12, zl - 0.12), (0.15, yb - 0.1, zl + 0.02), 0.02, "dash", m=m)
+    K.box((-0.152, yb - 0.32, zl + 0.0), (0.152, yb - 0.31, zl + 0.022), accent, m=m)
+    for x in (-0.075, 0.075):
+        Q(m, "vent", (x, yb - 0.16, zl + 0.023), (0.062, 0, 0), (0, 0.031, 0))
+    Q(m, "climate", (0, yb - 0.25, zl + 0.023), (0.13, 0, 0), (0, 0.048, 0))
+    for x in (-(xi - 0.11), xi - 0.11):
+        Q(m, "vent", (x, yb - 0.175, zl - 0.004), (0.075, 0, 0), (0, 0.036, 0))
+    # Steering column.
+    sw = (xd, yb - 0.04, zw0 + 0.6)
+    K.tube([v3(xd, yb - 0.15, zl - 0.02), v3(xd, yb - 0.085, zw0 + 0.53)], 0.04, "dash", n=10, m=m)
+    g["steer"] = sw
+    g["pedals"] = [(xd + 0.15, floor_y + 0.44, zw0 + 0.1), (xd - 0.02, floor_y + 0.44, zw0 + 0.1)]
+    # Console with the selector panel, armrest and rear vents.
+    zc1 = zw0 + front_z + 0.22
+    K.rbox((-0.13, floor_y, zl - 0.06), (0.13, floor_y + 0.3, zc1), 0.03, "dash", m=m)
+    Q(m, "gear_panel", (0, floor_y + 0.302, zw0 + 0.75), (0.095, 0, 0), (0, 0, -0.19))
+    g["gear"] = (0.0, floor_y + 0.3, zw0 + 0.64)
+    K.rbox((-0.13, floor_y + 0.3, zw0 + front_z - 0.12), (0.13, floor_y + 0.38, zc1), 0.035, t["seat"], m=m)
+    if rear:
+        Q(m, "vent", (0, floor_y + 0.2, zc1 + 0.002), (0.07, 0, 0), (0, 0.035, 0))
+    # Seats.
+    seats = [(driver_x, zw0 + front_z), (-driver_x, zw0 + front_z)]
+    for x, z in seats:
+        seat(m, car, x, floor_y, z, t, sport)
+    g["seats"] = [(x, floor_y + 0.06, z) for x, z in seats]
+    zr = zw0 + rear_z
+    if rear:
+        xr = min(inner(zr), inner(zr + 0.3)) - 0.02
+        rear_bench(m, car, floor_y, zr, t, xr)
+        g["seats"] += [(-0.4, floor_y + 0.02, zr), (0.4, floor_y + 0.02, zr)]
+    # Headliner under the roof, down to the top of the side windows.
+    zs_h = [car.zw1 + 0.02 + (car.zr1 - car.zw1 - 0.04) * k / 8 for k in range(9)]
+    rows = []
+    for z in zs_h:
+        sec = car.section(z)
+        x6, y6 = sec[6]
+        yt = sec[-1][1]
+        rows.append([v3(-x6 + 0.015, y6 + 0.01, z), v3(-x6 * 0.5, min(y6 + 0.035, yt - 0.04), z), v3(0, min(y6 + 0.045, yt - 0.035), z),
+                     v3(x6 * 0.5, min(y6 + 0.035, yt - 0.04), z), v3(x6 - 0.015, y6 + 0.01, z)])
+    for a in range(len(rows) - 1):
+        for j in range(4):
+            m.add_oriented([rows[a][j], rows[a][j + 1], rows[a + 1][j + 1], rows[a + 1][j]], "headliner", v3(0, -1, 0), smooth=False)
+    yh = rows[0][2][1]
+    zv = car.zw1 + 0.04
+    for s in (-1, 1):
+        K.rbox((s * 0.12, rows[1][1][1] - 0.035, zv), (s * 0.58, rows[1][1][1] - 0.012, zv + 0.17), 0.01, "headliner", seg=1, m=m)
+    # Rear-view mirror at the top of the windshield, dome light.
+    K.tube([v3(0, yh - 0.005, car.zw1 - 0.03), v3(0, yh - 0.07, car.zw1 + 0.01)], 0.012, "dark", n=6, m=m)
+    K.rbox((-0.12, yh - 0.12, car.zw1 - 0.005), (0.12, yh - 0.06, car.zw1 + 0.03), 0.015, "dark", seg=1, m=m)
+    Q(m, "chrome", (0, yh - 0.09, car.zw1 + 0.031), (0.11, 0, 0), (0, 0.026, 0))
+    Q(m, "dome_light", (0, rows[3][2][1] - 0.003, zs_h[3]), (0.06, 0, 0), (0, 0, 0.03))
+    # Seat belts from the B-pillars.
+    if len(car.windows) > 1:
+        zB = (car.windows[0][1] + car.windows[1][0]) / 2
+    else:
+        zB = car.windows[0][1] + 0.04
+    for x, z in seats:
+        s = 1 if x > 0 else -1
+        x6, y6 = car.section(zB)[6]
+        K.tube([v3(s * (x6 - 0.04), y6 - 0.06, zB), v3(s * (abs(x) + 0.23), floor_y + 0.28, z + 0.2)], 0.012, "black", n=4, m=m)
+    v.geo.update(g)
+    return g
+
+
 # ------------------------------------------------------------------------------------------------ family sedan
 def sedan():
     v = V.Vehicle("sedan")
@@ -188,7 +376,7 @@ def sedan():
     fin(det, car, 1.0)
     C.mirror(det, car, zw0 + 0.1)
     door_parts(v, car, W, [0.2, 1.05], 0.9)
-    V.interior(v, det, W, zw0, 0.22, 0.93, True, screen=True)
+    interior2(v, det, car, W, 0.22, 0.93, True, trim="dark", accent="piano")
     ex = tips(det, [0.52], 0.27, h + 0.04, 0.035)
     body.extend(det)
     finish(v, car, body, glass, W, 0.95, 0.56, 0.79, wheel(b.wheel_r, 0.23, "rim_alloy"), [(-0.62, 0.6, -h), (0.62, 0.6, -h)], ex)
@@ -256,7 +444,7 @@ def pickup():
     for z in (h - 0.55, h - 0.95):
         K.sphere((0.42, fy, z), 0.2, 0.14, 0.2, "orange", n=14, rows=7, m=det, top_only=True)
     door_parts(v, car, W, [-0.12, 0.62], 1.18, handle_mat="trim")
-    V.interior(v, det, W, zw0, 0.5, 1.2, True, screen=True, front_z=0.95, rear_z=1.6)
+    interior2(v, det, car, W, 0.5, 1.2, True, trim="dark", accent="dash", front_z=0.95, rear_z=1.6)
     ex = tips(det, [0.62], 0.46, h + 0.04, 0.045, mat="steel")
     body.extend(det)
     finish(v, car, body, glass, W, 1.3, 0.62, 0.86, wheel(b.wheel_r, 0.3, "rim_offroad", tyre_n=28), [(-0.8, 1.03, -h), (0.8, 1.03, -h)], ex)
@@ -299,11 +487,15 @@ def suv():
     K.box((-0.2, 1.93, zr1 + 0.055), (0.2, 1.955, zr1 + 0.062), "tail_light", m=det)
     fin(det, car, 2.2)
     C.mirror(det, car, zw0 + 0.09)
-    door_parts(v, car, W, [0.0, 1.08], 1.2)
-    V.interior(v, det, W, zw0, 0.52, 1.24, True, screen=True, front_z=1.0, rear_z=1.9)
+    door_parts(v, car, W, [0.0, 1.08], 1.2, trim="tan")
+    interior2(v, det, car, W, 0.52, 1.24, True, trim="tan", accent="wood", front_z=1.0, rear_z=1.9)
     # Third-row bench.
-    K.rbox((-W / 2 + 0.15, 0.6, 1.85), (W / 2 - 0.15, 0.74, 2.25), 0.04, "seat", seg=1, m=det)
-    K.rbox((-W / 2 + 0.15, 0.74, 2.2), (W / 2 - 0.15, 1.25, 2.33), 0.04, "seat", seg=1, m=det)
+    K.rbox((-W / 2 + 0.17, 0.6, 1.95), (W / 2 - 0.17, 0.74, 2.3), 0.04, "seat_tan", seg=1, m=det)
+    K.rbox((-W / 2 + 0.17, 0.74, 2.26), (W / 2 - 0.17, 1.25, 2.38), 0.04, "seat_tan", seg=1, m=det)
+    for x in (-0.45, 0.45):
+        Q(det, "quilt_tan", (x, 0.742, 2.12), (0.18, 0, 0), (0, 0, -0.15))
+        K.rbox((x - 0.12, 1.3, 2.28), (x + 0.12, 1.45, 2.37), 0.04, "seat_tan", seg=1, m=det)
+    K.box((-W / 2 + 0.12, 0.52, 2.38), (W / 2 - 0.12, 0.55, h - 0.12), "carpet", m=det)
     ex = tips(det, [-0.65, 0.65], 0.48, h + 0.06, 0.045)
     body.extend(det)
     finish(v, car, body, glass, W, 1.35, 0.64, 0.87, wheel(b.wheel_r, 0.3, "rim_multi", tyre_n=28), [(-0.82, 1.08, -h), (0.82, 1.08, -h)], ex)
@@ -371,8 +563,8 @@ def coupe():
     K.rbox((-0.76, 0.17, -h - 0.04), (0.76, 0.2, -h + 0.25), 0.01, "trim", seg=1, m=det)
     K.rbox((-0.75, 0.18, h - 0.22), (0.75, 0.26, h + 0.05), 0.01, "trim", seg=1, m=det)
     C.mirror(det, car, zw0 + 0.1)
-    door_parts(v, car, W, [0.6], 0.92)
-    V.interior(v, det, W, zw0, 0.2, 0.94, False, screen=True, front_z=1.05)
+    door_parts(v, car, W, [0.6], 0.92, trim="red")
+    interior2(v, det, car, W, 0.2, 0.94, False, trim="red", accent="alu", sport=True, front_z=1.05)
     ex = tips(det, [-0.52, -0.42, 0.42, 0.52], 0.24, h + 0.06, 0.04)
     body.extend(det)
     finish(v, car, body, glass, W, 0.98, 0.56, 0.84, wheel(b.wheel_r, 0.27, "rim_sport", caliper="red"), [(-0.72, 0.58, -h), (0.72, 0.58, -h)], ex)
@@ -418,8 +610,8 @@ def sport():
     K.rbox((-0.64, yd - 0.005, h - 0.14), (0.64, yd + 0.03, h - 0.02), 0.01, "paint", seg=1, m=det)
     fin(det, car, 1.15)
     C.mirror(det, car, zw0 + 0.1)
-    door_parts(v, car, W, [0.2, 1.1], 0.9)
-    V.interior(v, det, W, zw0, 0.22, 0.94, True, screen=True, seat_mat="seat_tan")
+    door_parts(v, car, W, [0.2, 1.1], 0.9, trim="tan")
+    interior2(v, det, car, W, 0.22, 0.94, True, trim="tan", accent="alu", sport=True)
     ex = tips(det, [-0.62, -0.5, 0.5, 0.62], 0.25, h + 0.07, 0.04)
     body.extend(det)
     finish(v, car, body, glass, W, 0.96, 0.58, 0.84, wheel(b.wheel_r, 0.27, "rim_sport", caliper="blue_light"), [(-0.68, 0.62, -h), (0.68, 0.62, -h)], ex)

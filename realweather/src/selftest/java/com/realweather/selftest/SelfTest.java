@@ -891,9 +891,18 @@ public final class SelfTest {
             dismount();
             Minecraft.getInstance().options.hideGui = true;
         });
-        step(10, () -> placeVehicle(4, 9, 26, 0F));
+        step(10, () -> placeVehicle(4, 11, 6, 0F));
         step(20, () -> ride(4));
-        step(40, () -> {
+        step(30, () -> {
+            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            turnClient(0F, 18F);
+        });
+        step(20, () -> shot("51_coupe_interior"));
+        step(5, () -> turnClient(-60F, 22F));
+        step(20, () -> shot("51b_coupe_door_card"));
+        step(5, () -> turnClient(160F, 18F));
+        step(20, () -> shot("51c_coupe_seats"));
+        step(10, () -> {
             Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
             turnClient(0F, 12F);
             vehicleState("coupe started");
@@ -987,6 +996,11 @@ public final class SelfTest {
                 }
             }
             p.teleportTo(level, c.getX() + 0.5, c.getY(), c.getZ() + 0.5, 0F, 14F);
+            // Keep animals out of the pictures.
+            for (net.minecraft.world.entity.animal.Animal a : level.getEntitiesOfClass(net.minecraft.world.entity.animal.Animal.class,
+                    new net.minecraft.world.phys.AABB(c).inflate(64))) {
+                a.discard();
+            }
         });
     }
 

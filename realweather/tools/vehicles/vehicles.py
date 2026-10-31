@@ -199,15 +199,31 @@ def wheel(r, width, style):
     return m
 
 
+def facing_quad(m, mat, c, u, v, flip=False):
+    """a textured quad centred on c: u = half-width toward the picture's right, v = half-height toward its top; it
+    faces u x v"""
+    c, u, v = (np.asarray(a, dtype=float) for a in (c, u, v))
+    n = K.norm(np.cross(u, v))
+    pts = [c - u - v, c + u - v, c + u + v, c - u + v]
+    uv = [(0, 1), (1, 1), (1, 0), (0, 0)]
+    if flip:
+        uv = [(1 - a, b) for a, b in uv]
+    m.add(pts, mat, [n] * 4, smooth=False, uv=uv)
+    return m
+
+
 def steering_wheel(r=0.19):
-    """in the XY plane, axis along +Z toward the driver"""
+    """in the XY plane, axis along +Z toward the driver: thick leather rim, three spokes, airbag hub with buttons"""
     m = Mesh()
-    K.torus("z", (0, 0), 0.0, r, 0.02, "dark", n=28, k=8, m=m)
-    for a in (-90, 30, 150):
-        ar = math.radians(a)
-        K.tube([v3(0, 0, -0.01), v3(math.cos(ar) * (r - 0.01), math.sin(ar) * (r - 0.01), 0)], 0.014, "dark", n=6, m=m)
-    K.cylinder("z", (0, 0), 0.06, -0.04, 0.02, "dash", n=16, m=m)
-    K.cylinder("z", (0, 0), 0.03, 0.02, 0.025, "chrome", n=12, m=m)
+    K.torus("z", (0, 0), 0.0, r, 0.024, "dark", n=32, k=10, m=m)
+    for a, w in ((180, 0.055), (0, 0.055), (-90, 0.04)):
+        spoke = Mesh()
+        K.rbox((0.06, -w / 2, -0.02), (r - 0.012, w / 2, 0.004), 0.008, "dash", seg=1, m=spoke)
+        spoke.rotate("z", a)
+        m.extend(spoke)
+    K.rbox((-0.088, -0.072, -0.045), (0.088, 0.062, 0.012), 0.03, "dash", m=m)
+    facing_quad(m, "airbag", (0, -0.005, 0.0135), (0.082, 0, 0), (0, 0.064, 0))
+    K.cylinder("z", (0, -0.005), 0.045, -0.12, -0.045, "dash", n=12, m=m)
     return m
 
 

@@ -349,6 +349,7 @@ def generate(res_dir):
     for n in ("fog_light", "marker_amber", "badge", "vent_mesh"):
         simple(n).save(os.path.join(out, n + ".png"))
     flames(res_dir)
+    interior_textures(out)
 
 
 def flames(res_dir):
@@ -378,3 +379,221 @@ def flames(res_dir):
     img = np.stack([np.clip(gl * 1.2, 0, 1), np.clip(gl ** 1.5 * 0.7 + core * 0.4, 0, 1), np.clip(core * 0.9 + gl ** 3 * 0.2, 0, 1), np.ones_like(gl)],
                    axis=-1)
     Image.fromarray((img * 255).astype(np.uint8), "RGBA").save(os.path.join(out, "backfire_glow.png"))
+
+
+# ------------------------------------------------------------------------------------------------ interior
+INTERIOR = [reg("cluster", True), reg("infotainment", True), reg("climate", True), reg("vent"), reg("gear_panel"), reg("door_card_dark"),
+            reg("door_card_tan"), reg("door_card_red"), reg("quilt_dark"), reg("quilt_tan"), reg("quilt_red"), reg("airbag"),
+            reg("switch_panel", True), reg("floor_mat"), reg("dome_light", True)]
+
+
+def _seg_text(d, text, x, y, w, h, col, gap=6):
+    """digits and a few letters drawn with bars (no font needed)"""
+    t = max(2, w // 5)
+    for ch in text:
+        seg = _SEG.get(ch, "")
+        boxes = {"a": (x, y, x + w, y + t), "b": (x + w - t, y, x + w, y + h // 2), "c": (x + w - t, y + h // 2, x + w, y + h),
+                 "d": (x, y + h - t, x + w, y + h), "e": (x, y + h // 2, x + t, y + h), "f": (x, y, x + t, y + h // 2),
+                 "g": (x, y + h // 2 - t // 2, x + w, y + h // 2 + t // 2)}
+        for s in seg:
+            d.rectangle(boxes[s], fill=col)
+        x += w + gap
+
+
+def cluster():
+    """instrument panel behind the two dials: dark face, chrome rings where the dials sit, a colour display between them"""
+    w, h = 256, 128
+    im, d = _canvas(w, h)
+    _rounded(d, (0, 0, w - 1, h - 1), 26, fill=(18, 19, 22, 255), outline=(70, 74, 80, 255), width=3)
+    for cx, r in ((64, 52), (192, 46)):
+        d.ellipse((cx - r - 5, 64 - r - 5, cx + r + 5, 64 + r + 5), outline=(165, 170, 178, 255), width=4)
+    # Centre display: gear, trip bars, fuel and temperature.
+    _rounded(d, (108, 22, 148, 106), 6, fill=(10, 22, 34, 255), outline=(60, 90, 120, 255), width=2)
+    _seg_text(d, "4", 119, 32, 18, 30, (120, 220, 255, 255))
+    for k in range(5):
+        d.rectangle((114, 72 + k * 6, 114 + 10 + k * 4, 75 + k * 6), fill=(80, 200, 120, 255))
+    d.rectangle((136, 72, 142, 100), fill=(230, 160, 40, 255))
+    return im
+
+
+def infotainment():
+    """touch screen: a map with the route, a top bar and a row of buttons"""
+    w, h = 256, 160
+    im, d = _canvas(w, h)
+    d.rectangle((0, 0, w - 1, h - 1), fill=(14, 18, 24, 255))
+    d.rectangle((8, 24, 176, 150), fill=(36, 44, 40, 255))
+    rng = np.random.default_rng(3)
+    for k in range(9):
+        y = rng.integers(26, 148)
+        d.line([(8, y), (176, y + rng.integers(-30, 30))], fill=(92, 100, 96, 255), width=int(rng.integers(2, 5)))
+    for k in range(6):
+        x = rng.integers(10, 174)
+        d.line([(x, 24), (x + rng.integers(-40, 40), 150)], fill=(92, 100, 96, 255), width=int(rng.integers(2, 4)))
+    d.polygon([(30, 36), (60, 30), (70, 52), (40, 60)], fill=(54, 84, 60, 255))
+    d.line([(40, 140), (70, 110), (110, 104), (130, 70), (160, 50)], fill=(60, 150, 255, 255), width=6)
+    d.polygon([(36, 146), (44, 130), (52, 146)], fill=(255, 255, 255, 255))
+    d.rectangle((0, 0, w - 1, 18), fill=(24, 28, 34, 255))
+    _seg_text(d, "1245", 200, 3, 7, 12, (230, 232, 236, 255), gap=3)
+    for k in range(4):
+        _rounded(d, (186, 28 + k * 31, 248, 52 + k * 31), 6, fill=(40, 46, 56, 255), outline=(80, 140, 220, 255), width=2)
+        d.ellipse((194, 34 + k * 31, 206, 46 + k * 31), fill=(120, 180, 255, 255))
+    return im
+
+
+def climate():
+    """climate panel: two temperature read-outs with knobs and a row of buttons"""
+    w, h = 256, 96
+    im, d = _canvas(w, h)
+    _rounded(d, (0, 0, w - 1, h - 1), 10, fill=(22, 23, 26, 255), outline=(150, 156, 165, 255), width=3)
+    for cx in (40, 216):
+        d.ellipse((cx - 26, 22, cx + 26, 74), fill=(60, 63, 68, 255), outline=(190, 195, 202, 255), width=4)
+        d.ellipse((cx - 12, 36, cx + 12, 60), fill=(34, 36, 40, 255))
+    d.rectangle((84, 14, 172, 46), fill=(8, 14, 22, 255))
+    _seg_text(d, "21", 96, 19, 12, 22, (120, 210, 255, 255), gap=4)
+    _seg_text(d, "22", 138, 19, 12, 22, (255, 150, 90, 255), gap=4)
+    for k in range(5):
+        _rounded(d, (80 + k * 20, 56, 94 + k * 20, 82), 4, fill=(48, 50, 56, 255))
+        d.rectangle((84 + k * 20, 60, 90 + k * 20, 63), fill=(255, 170, 60, 255) if k in (1, 3) else (90, 94, 100, 255))
+    return im
+
+
+def vent():
+    w, h = 128, 64
+    im, d = _canvas(w, h)
+    _rounded(d, (0, 0, w - 1, h - 1), 14, fill=(26, 27, 30, 255), outline=(170, 175, 182, 255), width=4)
+    for y in range(12, h - 8, 8):
+        d.line([(10, y), (w - 10, y + 2)], fill=(64, 66, 72, 255), width=4)
+        d.line([(10, y + 3), (w - 10, y + 5)], fill=(12, 12, 14, 255), width=2)
+    d.rectangle((w // 2 - 6, 8, w // 2 + 6, h - 8), fill=(150, 154, 160, 255))
+    return im
+
+
+def gear_panel():
+    """console top: selector gate with P R N D, two cupholders, a drive-mode knob"""
+    w, h = 128, 256
+    im, d = _canvas(w, h)
+    _rounded(d, (0, 0, w - 1, h - 1), 14, fill=(20, 21, 24, 255), outline=(120, 124, 130, 255), width=3)
+    _rounded(d, (48, 16, 80, 120), 10, fill=(8, 8, 9, 255), outline=(90, 94, 100, 255), width=2)
+    for k, ch in enumerate("PRND"):
+        y = 22 + k * 24
+        col = (230, 232, 236, 255) if ch != "D" else (120, 220, 255, 255)
+        if ch == "P":
+            d.rectangle((88, y, 92, y + 14), fill=col)
+            d.rectangle((88, y, 100, y + 3), fill=col)
+            d.rectangle((96, y, 100, y + 8), fill=col)
+            d.rectangle((88, y + 6, 100, y + 9), fill=col)
+        elif ch == "R":
+            d.rectangle((88, y, 92, y + 14), fill=col)
+            d.rectangle((88, y, 100, y + 3), fill=col)
+            d.rectangle((96, y, 100, y + 7), fill=col)
+            d.rectangle((88, y + 6, 100, y + 9), fill=col)
+            d.line([(93, y + 8), (100, y + 14)], fill=col, width=3)
+        elif ch == "N":
+            d.rectangle((88, y, 92, y + 14), fill=col)
+            d.rectangle((97, y, 101, y + 14), fill=col)
+            d.line([(90, y + 1), (99, y + 13)], fill=col, width=3)
+        else:
+            d.rectangle((88, y, 92, y + 14), fill=col)
+            d.arc((82, y, 102, y + 14), -90, 90, fill=col, width=4)
+    for cy in (160, 214):
+        d.ellipse((24, cy - 24, 104, cy + 24), fill=(8, 8, 9, 255), outline=(110, 114, 120, 255), width=3)
+    d.ellipse((14, 120, 40, 146), fill=(60, 62, 68, 255), outline=(170, 175, 182, 255), width=3)
+    return im
+
+
+def door_card(base, insert, stitch):
+    """inside of a door: hard upper trim, soft insert, armrest line, chrome pull, speaker grille, map pocket"""
+    w, h = 256, 128
+    im, d = _canvas(w, h)
+    d.rectangle((0, 0, w - 1, h - 1), fill=base + (255,))
+    d.rectangle((0, 0, w - 1, 16), fill=tuple(int(c * 0.7) for c in base) + (255,))
+    _rounded(d, (24, 22, 232, 62), 10, fill=insert + (255,))
+    for x in range(30, 228, 6):
+        d.line([(x, 25), (x + 2, 25)], fill=stitch + (255,))
+        d.line([(x, 59), (x + 2, 59)], fill=stitch + (255,))
+    d.rectangle((24, 64, 232, 68), fill=(170, 175, 182, 255))
+    _rounded(d, (40, 30, 90, 46), 6, fill=(30, 31, 34, 255), outline=(200, 205, 210, 255), width=3)
+    d.ellipse((150, 76, 210, 120), fill=(26, 27, 30, 255), outline=(150, 154, 160, 255), width=3)
+    for yy in range(82, 116, 5):
+        for xx in range(156, 206, 5):
+            if (xx - 180) ** 2 / 26 ** 2 + (yy - 98) ** 2 / 20 ** 2 < 1:
+                d.point((xx, yy), fill=(70, 72, 78, 255))
+    d.line([(20, 110), (130, 110)], fill=tuple(int(c * 0.55) for c in base) + (255,), width=4)
+    return im
+
+
+def quilt(leather, stitch):
+    """seat centre panel: quilted leather with stitching and perforations"""
+    s = 128
+    im, d = _canvas(s, s)
+    d.rectangle((0, 0, s - 1, s - 1), fill=leather + (255,))
+    dark = tuple(int(c * 0.72) for c in leather) + (255,)
+    for k in range(-8, 9):
+        d.line([(k * 16, 0), (k * 16 + s, s)], fill=dark, width=3)
+        d.line([(k * 16 + s, 0), (k * 16, s)], fill=dark, width=3)
+    for k in range(-8, 9):
+        for t in range(0, s, 6):
+            d.point((k * 16 + t + 2, t), fill=stitch + (255,))
+            d.point((k * 16 + s - t - 2, t), fill=stitch + (255,))
+    for y in range(4, s, 8):
+        for x in range(4 + (y // 8 % 2) * 4, s, 8):
+            d.point((x, y), fill=tuple(int(c * 0.5) for c in leather) + (255,))
+    return im
+
+
+def airbag():
+    s = 128
+    im, d = _canvas(s, s)
+    _rounded(d, (2, 8, s - 3, s - 9), 34, fill=(30, 31, 34, 255), outline=(60, 62, 68, 255), width=4)
+    d.ellipse((40, 40, 88, 88), outline=(200, 205, 212, 255), width=5)
+    d.line([(52, 76), (64, 50), (76, 76)], fill=(200, 205, 212, 255), width=5)
+    for x in (10, 106):
+        for k in range(3):
+            d.ellipse((x, 46 + k * 14, x + 12, 56 + k * 14), fill=(70, 74, 80, 255), outline=(150, 154, 160, 255))
+    return im
+
+
+def switch_panel():
+    w, h = 128, 64
+    im, d = _canvas(w, h)
+    _rounded(d, (0, 0, w - 1, h - 1), 10, fill=(160, 164, 170, 255))
+    _rounded(d, (4, 4, w - 5, h - 5), 8, fill=(20, 21, 24, 255))
+    for k in range(4):
+        _rounded(d, (10 + k * 28, 14, 30 + k * 28, 50), 5, fill=(46, 48, 54, 255), outline=(100, 104, 110, 255))
+        d.rectangle((16 + k * 28, 18, 24 + k * 28, 20), fill=(255, 255, 255, 255))
+    return im
+
+
+def floor_mat():
+    w, h = 128, 128
+    im, d = _canvas(w, h)
+    _rounded(d, (2, 2, w - 3, h - 3), 14, fill=(16, 16, 18, 255), outline=(150, 154, 160, 255), width=3)
+    for y in range(12, h - 10, 6):
+        d.line([(10, y), (w - 10, y)], fill=(30, 30, 33, 255), width=2)
+    return im
+
+
+def dome_light():
+    w, h = 64, 32
+    im, d = _canvas(w, h)
+    _rounded(d, (0, 0, w - 1, h - 1), 8, fill=(170, 172, 168, 255))
+    _rounded(d, (6, 6, w - 7, h - 7), 5, fill=(245, 240, 220, 255))
+    return im
+
+
+def interior_textures(out):
+    cluster().save(os.path.join(out, "cluster.png"))
+    infotainment().save(os.path.join(out, "infotainment.png"))
+    climate().save(os.path.join(out, "climate.png"))
+    vent().save(os.path.join(out, "vent.png"))
+    gear_panel().save(os.path.join(out, "gear_panel.png"))
+    door_card((38, 39, 43), (62, 63, 68), (120, 122, 128)).save(os.path.join(out, "door_card_dark.png"))
+    door_card((40, 36, 32), (176, 146, 110), (230, 220, 200)).save(os.path.join(out, "door_card_tan.png"))
+    door_card((24, 24, 27), (44, 44, 48), (200, 30, 30)).save(os.path.join(out, "door_card_red.png"))
+    quilt((52, 53, 58), (110, 112, 118)).save(os.path.join(out, "quilt_dark.png"))
+    quilt((176, 146, 110), (235, 225, 205)).save(os.path.join(out, "quilt_tan.png"))
+    quilt((30, 30, 33), (210, 30, 30)).save(os.path.join(out, "quilt_red.png"))
+    airbag().save(os.path.join(out, "airbag.png"))
+    switch_panel().save(os.path.join(out, "switch_panel.png"))
+    floor_mat().save(os.path.join(out, "floor_mat.png"))
+    dome_light().save(os.path.join(out, "dome_light.png"))

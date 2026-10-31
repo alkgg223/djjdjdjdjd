@@ -28,11 +28,41 @@ Ka 0 0 0
 d 1.0
 map_Kd #chrome
 
+newmtl climate
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #climate
+
+newmtl cluster
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #cluster
+
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
 newmtl dash
 Kd 1 1 1
 Ka 0 0 0
 d 1.0
 map_Kd #dash
+
+newmtl dome_light
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #dome_light
+
+newmtl floor_mat
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #floor_mat
 
 newmtl fog_light
 Kd 1 1 1
@@ -52,17 +82,35 @@ Ka 0 0 0
 d 1.0
 map_Kd #gauge_rpm
 
+newmtl gear_panel
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #gear_panel
+
 newmtl gr_cascade
 Kd 1 1 1
 Ka 0 0 0
 d 1.0
 map_Kd #gr_cascade
 
+newmtl headliner
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #headliner
+
 newmtl hl_slim
 Kd 1 1 1
 Ka 1 1 1
 d 1.0
 map_Kd #hl_slim
+
+newmtl infotainment
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #infotainment
 
 newmtl marker_amber
 Kd 1 1 1
@@ -77,6 +125,12 @@ d 1.0
 map_Kd #paint
 neoforge_TintIndex 0
 
+newmtl piano
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #piano
+
 newmtl plate_front
 Kd 1 1 1
 Ka 0 0 0
@@ -89,11 +143,23 @@ Ka 0 0 0
 d 1.0
 map_Kd #plate_rear
 
+newmtl quilt_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #quilt_dark
+
 newmtl seat
 Kd 1 1 1
 Ka 0 0 0
 d 1.0
 map_Kd #seat
+
+newmtl steel
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #steel
 
 newmtl tl_sport
 Kd 1 1 1
@@ -106,6 +172,12 @@ Kd 1 1 1
 Ka 0 0 0
 d 1.0
 map_Kd #trim
+
+newmtl vent
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #vent
 
 newmtl vent_mesh
 Kd 1 1 1

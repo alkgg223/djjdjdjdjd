@@ -6,7 +6,7 @@
  "emissive_ambient": true,
  "shade_quads": true,
  "textures": {
-  "chrome": "realweather:item/vehicle/chrome",
+  "airbag": "realweather:item/vehicle/airbag",
   "dark": "realweather:item/vehicle/dark",
   "dash": "realweather:item/vehicle/dash",
   "particle": "realweather:item/vehicle/paint"
