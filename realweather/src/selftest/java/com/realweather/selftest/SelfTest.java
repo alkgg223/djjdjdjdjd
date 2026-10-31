@@ -59,6 +59,9 @@ public final class SelfTest {
         if (suite.contains("sky")) {
             skySuite();
         }
+        if (suite.contains("vehicles")) {
+            vehicleSuite();
+        }
         if (suite.contains("all")) {
             weatherSuite();
         }
@@ -773,6 +776,205 @@ public final class SelfTest {
             ServerLevel level = server.overworld();
             p.teleportTo(level, p.getX(), p.getY(), p.getZ() - 0.8, 180F, 30F);
         });
+    }
+
+
+    // ------------------------------------------------------------------------------------ vehicles
+    private static final int[] VEHICLE_IDS = new int[3];
+
+    private static void vehicleSuite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 6000");
+            goTo("minecraft:plains", 0, 15);
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+        });
+        step(60, SelfTest::spawnVehicles);
+        step(60, () -> lookAt(VEHICLE_IDS[1], 12));
+        step(40, () -> {
+            shot("40_vehicles");
+            vehicleState("parked");
+        });
+        step(5, () -> ride(VEHICLE_IDS[1]));
+        step(40, () -> {
+            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            look(0, 18);
+        });
+        step(30, () -> shot("41_pickup_interior"));
+        step(5, () -> {
+            Minecraft.getInstance().options.hideGui = false;
+            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+            drive(1F, 0F);
+        });
+        step(80, () -> {
+            shot("42_pickup_driving_hud");
+            vehicleState("driving");
+            drive(1F, 1F);
+        });
+        step(30, () -> {
+            shot("42b_pickup_turning");
+            vehicleState("turning");
+            drive(-1F, 0F);
+        });
+        step(60, () -> {
+            drive(0F, 0F);
+            cmd("rw blizzard 100 10");
+        });
+        step(400, () -> {
+            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            look(0, 5);
+        });
+        step(20, () -> {
+            shot("43_blizzard_windshield");
+            vehicleState("blizzard");
+            vehicleAction(VEHICLE_IDS[1], 1);
+            vehicleAction(VEHICLE_IDS[1], 1);
+        });
+        step(50, () -> {
+            shot("44_wipers");
+            vehicleState("wipers");
+        });
+        step(5, () -> {
+            cmd("rw blizzard stop");
+            cmd("rw clear");
+            dismount();
+        });
+        step(20, () -> ride(VEHICLE_IDS[2]));
+        step(20, () -> {
+            vehicleAction(VEHICLE_IDS[2], 4);
+            tornadoNearVehicle(VEHICLE_IDS[2], 3, 70);
+        });
+        step(300, () -> {
+            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+            lookAtTornado(-4);
+        });
+        step(20, () -> {
+            shot("45_intercept_anchored");
+            vehicleState("intercept");
+            tornadoState("intercept");
+        });
+        step(5, () -> {
+            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+        });
+        step(20, () -> shot("46_intercept_interior"));
+        step(5, () -> {
+            cmd("rw clear");
+            dismount();
+            Minecraft.getInstance().options.hideGui = true;
+        });
+        step(20, () -> {
+            Minecraft.getInstance().player.input = new net.minecraft.client.player.KeyboardInput(Minecraft.getInstance().options);
+        });
+    }
+
+    private static void spawnVehicles() {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            ServerLevel level = server.overworld();
+            com.realweather.vehicle.VehicleType[] kinds = com.realweather.vehicle.VehicleType.values();
+            for (int i = 0; i < kinds.length; i++) {
+                double x = p.getX() - 6 + i * 6;
+                double z = p.getZ() + 10;
+                int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, net.minecraft.util.Mth.floor(x),
+                        net.minecraft.util.Mth.floor(z));
+                com.realweather.vehicle.StormVehicle v = com.realweather.vehicle.VehicleRegistry.type(kinds[i]).create(level);
+                v.moveTo(x, y, z, 200F + i * 15F, 0F);
+                v.setColor(kinds[i].colors[0]);
+                level.addFreshEntity(v);
+                VEHICLE_IDS[i] = v.getId();
+                // A block under one wheel of the sedan, to see it lean.
+                if (i == 0) {
+                    level.setBlockAndUpdate(new BlockPos(net.minecraft.util.Mth.floor(x + 0.8), y, net.minecraft.util.Mth.floor(z - 1.2)),
+                            net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+                }
+            }
+            LOG.info("vehicles spawned {} {} {}", VEHICLE_IDS[0], VEHICLE_IDS[1], VEHICLE_IDS[2]);
+        });
+    }
+
+    private static void lookAt(int entityId, float pitch) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            net.minecraft.world.entity.Entity e = server.overworld().getEntity(entityId);
+            if (e == null) {
+                LOG.warn("no entity {}", entityId);
+                return;
+            }
+            float yaw = (float) Math.toDegrees(Math.atan2(-(e.getX() - p.getX()), e.getZ() - p.getZ()));
+            p.teleportTo(server.overworld(), p.getX(), p.getY(), p.getZ(), yaw, pitch);
+        });
+    }
+
+    private static void ride(int entityId) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            net.minecraft.world.entity.Entity e = server.overworld().getEntity(entityId);
+            if (e != null) {
+                p.startRiding(e, true);
+                LOG.info("riding {} : {}", e.getName().getString(), p.getVehicle() == e);
+            }
+        });
+    }
+
+    private static void dismount() {
+        MinecraftServer server = server();
+        server.execute(() -> server.getPlayerList().getPlayers().get(0).stopRiding());
+    }
+
+    /** Holds the driver's pedals and steering (the vehicle physics read them like the keyboard). */
+    private static void drive(float forward, float right) {
+        net.minecraft.client.player.LocalPlayer p = Minecraft.getInstance().player;
+        p.input = new net.minecraft.client.player.Input() {
+            @Override
+            public void tick(boolean sneaking, float speed) {
+                this.forwardImpulse = forward;
+                this.leftImpulse = -right;
+                this.up = forward > 0;
+                this.down = forward < 0;
+            }
+        };
+    }
+
+    private static void vehicleAction(int entityId, int action) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            if (server.overworld().getEntity(entityId) instanceof com.realweather.vehicle.StormVehicle v) {
+                v.applyInput(p, 0F, 0F, false, action);
+            }
+        });
+    }
+
+    private static void tornadoNearVehicle(int entityId, int rating, double dist) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerLevel level = server.overworld();
+            net.minecraft.world.entity.Entity e = level.getEntity(entityId);
+            if (e == null) {
+                return;
+            }
+            WeatherData d = WeatherData.get(level);
+            com.realweather.server.Tornado t = com.realweather.server.TornadoManager.spawnAt(level, d,
+                    new net.minecraft.world.phys.Vec3(e.getX() + dist, e.getY(), e.getZ() + 20), rating, level.random);
+            t.heading = (float) Math.atan2(e.getX() - t.x, -(e.getZ() - t.z));
+            t.speed = 0.06F;
+            LOG.info("tornado F{} near the intercept vehicle", rating);
+        });
+    }
+
+    private static void vehicleState(String label) {
+        Minecraft mc = Minecraft.getInstance();
+        for (int id : VEHICLE_IDS) {
+            if (mc.level != null && mc.level.getEntity(id) instanceof com.realweather.vehicle.StormVehicle v) {
+                LOG.info("[{}] {} speed={} km/h steer={} gear={} pitch={} roll={} lift={} spikes={} wipers={} glass={} bodySnow={} rpm={} wind={} riding={}",
+                        label, v.kind.id, Math.round(v.displaySpeed() * 72), v.displaySteer(), v.gear(), v.pitch, v.roll, v.lift, v.spikeDeploy, v.wipers(),
+                        com.realweather.client.vehicle.VehicleClient.glassCover(v), v.bodySnow, Math.round(v.rpm), v.measuredWind,
+                        mc.player != null && mc.player.getVehicle() == v);
+            }
+        }
     }
 
     private static void floods() {
