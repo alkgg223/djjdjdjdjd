@@ -7,7 +7,6 @@
  "shade_quads": true,
  "textures": {
   "glass": "realweather:item/vehicle/glass",
-  "glass_dark": "realweather:item/vehicle/glass_dark",
   "particle": "realweather:item/vehicle/paint"
  }
 }

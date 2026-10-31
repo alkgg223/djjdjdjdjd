@@ -49,8 +49,8 @@ public final class VehicleGeometry {
     public static final float[] INTERCEPT_GEAR = {0.0000F, 0.9400F, -0.5000F};
     public static final float[] INTERCEPT_SPEEDO = {-0.5400F, 1.3600F, -0.7540F, 0.0720F};
     public static final float[] INTERCEPT_TACHO = {-0.3600F, 1.3600F, -0.7540F, 0.0600F};
-    public static final float[][] INTERCEPT_WINDSHIELD = {{-1.0635F, 1.5460F, -1.1810F}, {1.0635F, 1.5460F, -1.1810F}, {0.9531F, 2.0260F, -0.9110F}, {-0.9531F, 2.0260F, -0.9110F}};
-    public static final float[][] INTERCEPT_WIPERS = {{-0.3800F, 1.5660F, -1.2010F}, {0.2200F, 1.5660F, -1.2010F}};
+    public static final float[][] INTERCEPT_WINDSHIELD = {{-1.0844F, 1.5060F, -1.1885F}, {1.0844F, 1.5060F, -1.1885F}, {0.9486F, 2.0900F, -0.8600F}, {-0.9486F, 2.0900F, -0.8600F}};
+    public static final float[][] INTERCEPT_WIPERS = {{-0.3800F, 1.5260F, -1.2085F}, {0.2200F, 1.5260F, -1.2085F}};
     public static final float INTERCEPT_WIPER_LEN = 0.4500F;
     public static final float[] INTERCEPT_SIZE = {2.4000F, 2.6500F, 6.0000F};
     public static final float[][] INTERCEPT_LIGHTS = {{-0.8500F, 1.1200F, -2.7200F}, {0.8500F, 1.1200F, -2.7200F}};

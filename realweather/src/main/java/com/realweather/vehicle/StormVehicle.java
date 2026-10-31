@@ -51,6 +51,15 @@ public class StormVehicle extends Mob {
     private static final EntityDataAccessor<Byte> DATA_FLAGS = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> DATA_WIPERS = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> DATA_HORN = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.INT);
+    /** Which doors stand open (bit per door: front-left, front-right, rear-left, rear-right). */
+    private static final EntityDataAccessor<Byte> DATA_DOORS = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.BYTE);
+    /** Who sits where: entity id per seat (-1 = empty). Seat 0 is the driver's. */
+    private static final EntityDataAccessor<Integer> DATA_SEAT0 = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_SEAT1 = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_SEAT2 = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_SEAT3 = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.INT);
+    @SuppressWarnings("unchecked")
+    private static final EntityDataAccessor<Integer>[] DATA_SEATS = new EntityDataAccessor[]{DATA_SEAT0, DATA_SEAT1, DATA_SEAT2, DATA_SEAT3};
 
     public static final int FLAG_LIGHTS = 1, FLAG_HANDBRAKE = 2, FLAG_GLASS_BROKEN = 4, FLAG_DOORS_OPEN = 8, FLAG_SPIKES = 16, FLAG_BRAKE = 32;
 
@@ -81,6 +90,10 @@ public class StormVehicle extends Mob {
     public float turretYaw, prevTurretYaw;
     public float dishSpin, prevDishSpin;
     public float doorOpen, prevDoorOpen;
+    /** Swing of each door, 0 shut .. 1 open (animation). */
+    public final float[] doorAngle = new float[4], prevDoorAngle = new float[4];
+    private final int[] doorTimer = new int[4];
+    private int pendingSeat = -1;
     public float rpm = 800F;
     /** Client: per-cell snow and sand on the windshield (see the client windshield logic). */
     public float[] glassSnow, glassSand;
@@ -119,6 +132,10 @@ public class StormVehicle extends Mob {
         b.define(DATA_FLAGS, (byte) FLAG_LIGHTS);
         b.define(DATA_WIPERS, (byte) 0);
         b.define(DATA_HORN, 0);
+        b.define(DATA_DOORS, (byte) 0);
+        for (EntityDataAccessor<Integer> seat : DATA_SEATS) {
+            b.define(seat, -1);
+        }
     }
 
     // ------------------------------------------------------------------------------------ synced state
@@ -235,17 +252,95 @@ public class StormVehicle extends Mob {
         return 0.3F;
     }
 
-    // ------------------------------------------------------------------------------------ seats
+    // ------------------------------------------------------------------------------------ seats and doors
+    public int doorCount() {
+        return Math.min(4, kind.doorRows.length * 2);
+    }
+
+    public boolean doorOpen(int door) {
+        return (entityData.get(DATA_DOORS) & (1 << door)) != 0;
+    }
+
+    private void setDoor(int door, boolean open) {
+        byte b = entityData.get(DATA_DOORS);
+        entityData.set(DATA_DOORS, (byte) (open ? b | (1 << door) : b & ~(1 << door)));
+    }
+
+    public int seatOf(Entity e) {
+        for (int i = 0; i < DATA_SEATS.length; i++) {
+            if (entityData.get(DATA_SEATS[i]) == e.getId()) {
+                return i;
+            }
+        }
+        return Math.max(0, getPassengers().indexOf(e));
+    }
+
+    private boolean seatFree(int seat) {
+        int id = entityData.get(DATA_SEATS[seat]);
+        if (id < 0) {
+            return true;
+        }
+        for (Entity p : getPassengers()) {
+            if (p.getId() == id) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     protected boolean canAddPassenger(Entity passenger) {
         return getPassengers().size() < kind.seats;
     }
 
+    @Override
+    protected void addPassenger(Entity passenger) {
+        super.addPassenger(passenger);
+        if (!level().isClientSide) {
+            int seat = pendingSeat >= 0 && pendingSeat < kind.seats && seatFree(pendingSeat) ? pendingSeat : -1;
+            for (int i = 0; seat < 0 && i < kind.seats; i++) {
+                if (seatFree(i)) {
+                    seat = i;
+                }
+            }
+            if (seat >= 0) {
+                entityData.set(DATA_SEATS[seat], passenger.getId());
+            }
+            pendingSeat = -1;
+        }
+    }
+
+    @Override
+    protected void removePassenger(Entity passenger) {
+        super.removePassenger(passenger);
+        if (!level().isClientSide) {
+            for (int i = 0; i < DATA_SEATS.length; i++) {
+                if (entityData.get(DATA_SEATS[i]) == passenger.getId()) {
+                    entityData.set(DATA_SEATS[i], -1);
+                    // Getting out: the door opens, then swings shut behind you.
+                    if (i < doorCount()) {
+                        if (!doorOpen(i)) {
+                            level().playSound(null, getX(), getY(), getZ(), ModContent.VEHICLE_DOOR.get(), SoundSource.NEUTRAL, 0.6F, 1.35F);
+                        }
+                        setDoor(i, true);
+                        doorTimer[i] = 30;
+                    }
+                }
+            }
+        }
+    }
+
     @Nullable
     @Override
     public LivingEntity getControllingPassenger() {
-        Entity d = getFirstPassenger();
-        return d instanceof Player p ? p : null;
+        int id = entityData.get(DATA_SEAT0);
+        for (Entity p : getPassengers()) {
+            if (p.getId() == id && p instanceof Player player) {
+                return player;
+            }
+        }
+        // Before the seats are synced, the first passenger is the driver.
+        return id < 0 && getFirstPassenger() instanceof Player player && seatOf(player) == 0 ? player : null;
     }
 
     /** Model point (metres) to world, with the current heading. */
@@ -257,18 +352,26 @@ public class StormVehicle extends Mob {
         return new Vec3(getX() + rx * mx + fx * fwd, getY() + my + lift, getZ() + rz * mx + fz * fwd);
     }
 
+    /** Model point to world following the body exactly as it is drawn: heading, pitch and roll on a slope. */
+    public Vec3 bodyToWorld(float mx, float my, float mz) {
+        org.joml.Quaternionf q = new org.joml.Quaternionf().rotationY((180F - getYRot()) * Mth.DEG_TO_RAD)
+                .rotateX(pitch * Mth.DEG_TO_RAD).rotateZ(-roll * Mth.DEG_TO_RAD);
+        org.joml.Vector3f p = q.transform(new org.joml.Vector3f(mx, my, mz));
+        return new Vec3(getX() + p.x, getY() + lift + p.y, getZ() + p.z);
+    }
+
     @Override
     protected void positionRider(Entity passenger, MoveFunction callback) {
-        int seat = Math.max(0, getPassengers().indexOf(passenger));
+        int seat = seatOf(passenger);
         float[] s = kind.seatPoints[Math.min(seat, kind.seatPoints.length - 1)];
-        Vec3 p = toWorld(s[0], s[1], s[2]);
+        Vec3 p = bodyToWorld(s[0], s[1], s[2]);
         Vec3 att = passenger.getVehicleAttachmentPoint(this);
         callback.accept(passenger, p.x - att.x, p.y - att.y, p.z - att.z);
     }
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
-        int seat = Math.max(0, getPassengers().indexOf(passenger));
+        int seat = seatOf(passenger);
         float[] s = kind.seatPoints[Math.min(seat, kind.seatPoints.length - 1)];
         double side = (s[0] < 0 ? -1 : 1) * (kind.size[0] / 2 + 0.7);
         double[][] tries = {{side, s[2]}, {-side, s[2]}, {0, -kind.size[2] / 2 - 1.2}, {0, kind.size[2] / 2 + 1.2}};
@@ -314,11 +417,78 @@ public class StormVehicle extends Mob {
         if (player.isPassenger()) {
             return InteractionResult.PASS;
         }
-        if (!level().isClientSide && getPassengers().size() < kind.seats) {
-            player.startRiding(this);
-            level().playSound(null, getX(), getY(), getZ(), ModContent.VEHICLE_DOOR.get(), SoundSource.NEUTRAL, 0.8F, 1F);
+        if (!level().isClientSide) {
+            useDoor(player, lastHit != null ? lastHit : player.position().subtract(position()));
         }
+        lastHit = null;
         return InteractionResult.sidedSuccess(level().isClientSide);
+    }
+
+    /** Where on the body the player clicked (relative to the vehicle), to pick the door. */
+    @Nullable
+    private Vec3 lastHit;
+
+    @Override
+    public InteractionResult interactAt(Player player, Vec3 local, InteractionHand hand) {
+        lastHit = local;
+        return InteractionResult.PASS;
+    }
+
+    /** The door nearest to a point (relative to the vehicle, world axes). */
+    private int nearestDoor(Vec3 local) {
+        float yr = getYRot() * Mth.DEG_TO_RAD;
+        double fx = -Mth.sin(yr), fz = Mth.cos(yr);
+        double rx = -fz, rz = fx;
+        double mx = local.x * rx + local.z * rz;
+        double mz = -(local.x * fx + local.z * fz);
+        int best = 0;
+        double bd = Double.MAX_VALUE;
+        for (int i = 0; i < doorCount(); i++) {
+            float[] hinge = kind.doorRows[i / 2];
+            double cx = (i % 2 == 0 ? -1 : 1) * hinge[0];
+            double cz = hinge[2] + 0.5;
+            double d = (mx - cx) * (mx - cx) + (mz - cz) * (mz - cz);
+            if (d < bd) {
+                bd = d;
+                best = i;
+            }
+        }
+        return best;
+    }
+
+    /** First click opens the door you are standing at; click the open door to get in through it. */
+    private void useDoor(Player player, Vec3 local) {
+        if (doorCount() == 0) {
+            pendingSeat = -1;
+            player.startRiding(this);
+            return;
+        }
+        int door = nearestDoor(local);
+        if (!doorOpen(door)) {
+            setDoor(door, true);
+            doorTimer[door] = 140;
+            level().playSound(null, getX(), getY(), getZ(), ModContent.VEHICLE_DOOR.get(), SoundSource.NEUTRAL, 0.6F, 1.35F);
+            return;
+        }
+        int seat = Math.min(door, kind.seats - 1);
+        if (!seatFree(seat)) {
+            player.displayClientMessage(Component.translatable("realweather.vehicle.seat_taken"), true);
+            return;
+        }
+        pendingSeat = seat;
+        if (player.startRiding(this)) {
+            doorTimer[door] = 12;
+        }
+        pendingSeat = -1;
+    }
+
+    private void tickDoors() {
+        for (int i = 0; i < doorCount(); i++) {
+            if (doorTimer[i] > 0 && --doorTimer[i] == 0 && doorOpen(i)) {
+                setDoor(i, false);
+                level().playSound(null, getX(), getY(), getZ(), ModContent.VEHICLE_DOOR.get(), SoundSource.NEUTRAL, 0.8F, 1F);
+            }
+        }
     }
 
     // ------------------------------------------------------------------------------------ damage
@@ -605,6 +775,11 @@ public class StormVehicle extends Mob {
         prevTurretYaw = turretYaw;
         prevDishSpin = dishSpin;
         prevDoorOpen = doorOpen;
+        for (int i = 0; i < 4; i++) {
+            prevDoorAngle[i] = doorAngle[i];
+            float target = i < doorCount() && doorOpen(i) ? 1F : 0F;
+            doorAngle[i] += Mth.clamp(target - doorAngle[i], -0.14F, 0.14F);
+        }
         if (!level().isClientSide && getControllingPassenger() == null) {
             throttleIn = 0F;
             steerIn = 0F;
@@ -624,6 +799,7 @@ public class StormVehicle extends Mob {
                 entityData.set(DATA_HORN, hornTicks() - 1);
             }
             floodCheck();
+            tickDoors();
         }
         // Passengers turn with the vehicle.
         float dy = Mth.wrapDegrees(getYRot() - lastYaw);

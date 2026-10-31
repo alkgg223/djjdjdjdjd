@@ -182,5 +182,7 @@
   "subtitles.realweather.vehicle.door": "باب سيارة",
   "subtitles.realweather.vehicle.beep": "صفير الأجهزة",
   "subtitles.realweather.vehicle.wind_buffet": "الرياح تضرب المركبة",
-  "realweather.vehicle.probe.peak": "أقوى هبة: %s كم/س"
+  "realweather.vehicle.probe.peak": "أقوى هبة: %s كم/س",
+  "realweather.vehicle.seat_taken": "هذا المقعد مشغول",
+  "realweather.vehicle.door_hint": "اضغط على الباب لفتحه ثم اضغط مرة أخرى للركوب"
 }

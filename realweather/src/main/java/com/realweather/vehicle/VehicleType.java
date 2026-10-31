@@ -3,13 +3,14 @@ package com.realweather.vehicle;
 /** What each vehicle is like: size, performance, how much wind it takes, and its equipment. */
 public enum VehicleType {
     SEDAN("sedan", 1400F, 150F, 0.0105F, 0.026F, 34F, 2.75F, 1.56F, 0.05F, 0.48F, 60F, 4, false, false,
-            VehicleGeometry.SEDAN_WHEELS, VehicleGeometry.SEDAN_WHEEL_R, VehicleGeometry.SEDAN_SEATS, VehicleGeometry.SEDAN_SIZE,
+            VehicleGeometry.SEDAN_WHEELS, VehicleGeometry.SEDAN_WHEEL_R, VehicleGeometry.SEDAN_SEATS, VehicleGeometry.SEDAN_SIZE, VehicleGeometry.SEDAN_DOORS,
             new int[]{0xB3261E, 0x1E4FA8, 0xE8E8E2, 0x2B2D30, 0x8A9096, 0x2E6B3A}),
     PICKUP("pickup", 2300F, 140F, 0.0095F, 0.024F, 33F, 3.3F, 1.72F, 0.04F, 0.64F, 80F, 2, true, false,
-            VehicleGeometry.PICKUP_WHEELS, VehicleGeometry.PICKUP_WHEEL_R, VehicleGeometry.PICKUP_SEATS, VehicleGeometry.PICKUP_SIZE,
+            VehicleGeometry.PICKUP_WHEELS, VehicleGeometry.PICKUP_WHEEL_R, VehicleGeometry.PICKUP_SEATS, VehicleGeometry.PICKUP_SIZE, VehicleGeometry.PICKUP_DOORS,
             new int[]{0xF2F2EE, 0x23262A, 0xA02018, 0x2B4F7A, 0x6E7468}),
     INTERCEPT("intercept", 6800F, 115F, 0.0072F, 0.02F, 30F, 3.6F, 2.0F, 0.025F, 0.82F, 160F, 2, true, true,
             VehicleGeometry.INTERCEPT_WHEELS, VehicleGeometry.INTERCEPT_WHEEL_R, VehicleGeometry.INTERCEPT_SEATS, VehicleGeometry.INTERCEPT_SIZE,
+            VehicleGeometry.INTERCEPT_DOORS,
             new int[]{0x5C5F5C});
 
     public final String id;
@@ -37,11 +38,13 @@ public enum VehicleType {
     public final float wheelRadius;
     public final float[][] seatPoints;
     public final float[] size;
+    /** Door hinges, one row (front, rear) per entry; each row has a left and a right door. */
+    public final float[][] doorRows;
     public final int[] colors;
 
     VehicleType(String id, float mass, float topSpeedKmh, float accel, float brake, float maxSteerDeg, float wheelbase, float track, float windGrip,
                 float liftWind, float health, int seats, boolean instruments, boolean spikes, float[][] wheels, float wheelRadius, float[][] seatPoints,
-                float[] size, int[] colors) {
+                float[] size, float[][] doorRows, int[] colors) {
         this.id = id;
         this.mass = mass;
         this.topSpeedKmh = topSpeedKmh;
@@ -60,6 +63,7 @@ public enum VehicleType {
         this.wheelRadius = wheelRadius;
         this.seatPoints = seatPoints;
         this.size = size;
+        this.doorRows = doorRows;
         this.colors = colors;
     }
 

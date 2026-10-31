@@ -18,10 +18,8 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class TornadoRenderer {
     private static final float[] MAX_DIST = {420F, 640F, 900F, 1300F};
-    private static final int[] SLICES = {22, 38, 60, 90};
     private static final int[] WALL = {8, 14, 24, 36};
     private static final int[] DUST = {6, 12, 22, 36};
-    private static final int[] SHEATH = {0, 10, 18, 30};
 
     /** Tornadoes drawn in the last frame (diagnostics). */
     public static int lastDrawn;
@@ -53,57 +51,137 @@ public final class TornadoRenderer {
         }
     }
 
+    private static final int[] SEGMENTS = {14, 22, 32, 44};
+    private static final int[] RINGS = {16, 26, 40, 56};
+
+    /**
+     * The funnel as a real 3D surface: a tube round the vortex axis (following its bends), lit by the sun on one
+     * side and shaded on the other, its silhouette soft where the surface turns away from you, with a second
+     * looser shell of spray and dust round the lower part. Streaks in the texture turn with the wind.
+     */
     private static void funnel(ClientTornadoes.T t, double tx, double tz, Vec3 cam, float time, float pt, int q, float height,
                                float lr, float lg, float lb, float sunSide) {
-        int n = SLICES[q];
+        int n = SEGMENTS[q];
+        int m = RINGS[q];
         float gap = t.rating == 0 ? 0.3F : t.rating == 1 ? 0.12F : 0F;
         // While the funnel is still coming down, only the part below the cloud is condensed.
         float bottom = Math.max((1F - t.contact) * 0.85F, gap * t.contact);
-        float spin = t.spin(pt);
+        float spinTurns = t.spin(pt);
         float rise = time * 0.012F * (1F + t.rating * 0.15F);
-        float step = (1F - bottom) / n;
-        float sliceH = height * step * 1.35F;
-        float baseAlpha = (0.55F + 0.12F * Math.min(3, t.rating)) * (0.3F + 0.7F * t.strength);
-        for (int j = 0; j <= n; j++) {
-            float f = bottom + step * j;
-            float rad = t.radiusAt(f) * tip(f, bottom);
-            if (rad < 0.15F) {
-                continue;
-            }
-            float px = (float) (tx + t.offsetX(f, time) - cam.x);
-            float pz = (float) (tz + t.offsetZ(f, time) - cam.z);
-            float py = (float) (t.groundY + f * height - cam.y);
-            float alpha = baseAlpha * fade(f, bottom);
-            // Condensation is pale grey (wedges, fed with rain and debris, are darker); near the ground it is full of dust.
-            float grey = (t.rating >= 4 ? 0.5F : t.rating >= 2 ? 0.6F : 0.68F) + 0.12F * f;
+        float[] cx = new float[m + 1], cy = new float[m + 1], cz = new float[m + 1], rad = new float[m + 1], fs = new float[m + 1];
+        float[][] col = new float[m + 1][3];
+        float[] ringAlpha = new float[m + 1];
+        float strength = 0.3F + 0.7F * t.strength;
+        for (int j = 0; j <= m; j++) {
+            float f = bottom + (1F - bottom) * j / m;
+            fs[j] = f;
+            cx[j] = (float) (tx + t.offsetX(f, time) - cam.x);
+            cz[j] = (float) (tz + t.offsetZ(f, time) - cam.z);
+            cy[j] = (float) (t.groundY + f * height - cam.y);
+            rad[j] = Math.max(0.2F, t.radiusAt(f) * tip(f, bottom));
+            float grey = (t.rating >= 4 ? 0.52F : t.rating >= 2 ? 0.62F : 0.7F) + 0.12F * f;
             float dust = t.contact * Mth.clamp(1F - f / (0.08F + t.rating * 0.02F), 0F, 1F);
-            float r = Mth.lerp(dust, grey, 0.52F) * lr;
-            float g = Mth.lerp(dust, grey * 1.01F, 0.44F) * lg;
-            float b = Mth.lerp(dust, grey * 1.04F, 0.35F) * lb;
-            // The streak texture wraps around the funnel: wider funnels show more streaks, all turning together.
-            float uScale = Mth.clamp(rad / 10F, 0.35F, 2.2F);
-            float u0 = spin * 1.6F + f * 0.35F;
-            float v0 = f * height / 26F - rise;
-            float v1 = v0 + sliceH / 26F;
-            SkyBillboards.add(SkyBillboards.TEX_STREAKS, SkyBillboards.FUNNEL, px, py, pz, rad, sliceH * 0.5F, 0F,
-                    u0, v0, u0 + uScale, v1, r, g, b, alpha, 0.94F, sunSide);
+            col[j][0] = Mth.lerp(dust, grey, 0.55F) * lr;
+            col[j][1] = Mth.lerp(dust, grey * 1.01F, 0.46F) * lg;
+            col[j][2] = Mth.lerp(dust, grey * 1.04F, 0.36F) * lb;
+            ringAlpha[j] = fade(f, bottom) * strength;
         }
-        // A fainter, wider sheath of debris and spray on strong tornadoes.
-        if (t.rating >= 2 && t.contact > 0.3F && SHEATH[q] > 0) {
-            int m = SHEATH[q];
-            float top = 0.18F + t.rating * 0.06F;
-            for (int j = 0; j < m; j++) {
-                float f = top * j / (m - 1F);
-                float rad = t.radiusAt(f) * (1.35F + 0.25F * f / top) + 1.5F;
-                float px = (float) (tx + t.offsetX(f, time) - cam.x);
-                float pz = (float) (tz + t.offsetZ(f, time) - cam.z);
-                float py = (float) (t.groundY + f * height - cam.y);
-                float a = 0.28F * t.contact * t.strength * (1F - f / top);
-                float u0 = spin * 2.4F;
-                float sh = top * height / m * 1.6F;
-                SkyBillboards.add(SkyBillboards.TEX_STREAKS, SkyBillboards.FUNNEL, px, py, pz, rad, sh * 0.5F, 0F,
-                        u0, f * 2F - rise * 1.5F, u0 + 1.5F, f * 2F - rise * 1.5F + 0.3F,
-                        0.5F * lr, 0.43F * lg, 0.35F * lb, a, 0.9F, sunSide * 0.6F);
+        float seed = (t.seed & 1023) * 0.37F;
+        float uRepeat = Mth.clamp(rad[m] / 6F, 1F, 5F);
+        tube(n, m, cx, cy, cz, rad, col, ringAlpha, 1.0F, 0.06F + 0.02F * Math.min(3, t.rating), 0.95F, spinTurns, uRepeat,
+                height / 22F, rise, time, seed, 0.18F);
+        if (q >= 1 && t.rating >= 1 && t.contact > 0.2F) {
+            // Loose outer shell: spray, rain and debris wrapped round the lower funnel.
+            float top = Math.min(1F, 0.25F + t.rating * 0.12F);
+            float[] outerA = new float[m + 1];
+            float[][] dustCol = new float[m + 1][3];
+            for (int j = 0; j <= m; j++) {
+                float k = Mth.clamp(1F - (fs[j] - bottom) / Math.max(0.05F, top), 0F, 1F);
+                outerA[j] = 0.34F * t.contact * t.strength * k * k;
+                dustCol[j][0] = 0.56F * lr;
+                dustCol[j][1] = 0.49F * lg;
+                dustCol[j][2] = 0.4F * lb;
+            }
+            tube(Math.max(10, n * 3 / 4), m, cx, cy, cz, rad, dustCol, outerA, 1.32F, 0.16F, 0.7F, spinTurns * 1.4F, uRepeat * 1.3F,
+                    height / 14F, rise * 1.6F, time, seed + 3F, 0.3F);
+        }
+    }
+
+    private static final float[] QX = new float[4], QY = new float[4], QZ = new float[4], QL = new float[4], QA = new float[4];
+
+    /**
+     * Skins a tube through the rings. {@code scale} widens the rings, {@code rag} roughens the outline (it boils in
+     * time), {@code opacity} is the alpha where the surface faces you.
+     */
+    static void tube(int n, int m, float[] cx, float[] cy, float[] cz, float[] rad, float[][] col, float[] ringAlpha, float scale, float rag,
+                     float opacity, float spinTurns, float uRepeat, float vRepeat, float rise, float time, float seed, float edge) {
+        float sx = com.realweather.client.sky.SkyLight.sunX, sy = com.realweather.client.sky.SkyLight.sunY;
+        float sz = com.realweather.client.sky.SkyLight.sunZ;
+        float day = com.realweather.client.sky.SkyLight.day;
+        float[][] px = new float[m + 1][n + 1], py = new float[m + 1][n + 1], pz = new float[m + 1][n + 1];
+        float[][] light = new float[m + 1][n + 1], alpha = new float[m + 1][n + 1];
+        for (int j = 0; j <= m; j++) {
+            float slope = 0F;
+            if (j > 0 && j < m) {
+                float dy = cy[j + 1] - cy[j - 1];
+                slope = Math.abs(dy) > 1.0E-3F ? -(rad[j + 1] - rad[j - 1]) / dy : 0F;
+            }
+            float fj = (float) j / m;
+            for (int i = 0; i <= n; i++) {
+                float a = (float) i / n * Mth.TWO_PI;
+                float ca = Mth.cos(a), sa = Mth.sin(a);
+                // Ragged, boiling outline.
+                float noise = 0.55F * Mth.sin(3F * a + 7F * fj + time * 0.05F + seed)
+                        + 0.3F * Mth.sin(5F * a - 13F * fj + time * 0.083F + seed * 1.7F)
+                        + 0.15F * Mth.sin(11F * a + 23F * fj - time * 0.12F);
+                float r = rad[j] * scale * (1F + rag * noise);
+                float x = cx[j] + ca * r, y = cy[j], z = cz[j] + sa * r;
+                px[j][i] = x;
+                py[j][i] = y;
+                pz[j][i] = z;
+                // Normal of the surface (round, tilted by how fast the radius changes with height).
+                float nx = ca, ny = slope, nz = sa;
+                float nl = Mth.sqrt(nx * nx + ny * ny + nz * nz);
+                nx /= nl;
+                ny /= nl;
+                nz /= nl;
+                float vl = Mth.sqrt(x * x + y * y + z * z) + 1.0E-4F;
+                float facing = Math.abs(-(nx * x + ny * y + nz * z) / vl);
+                float soft = Mth.clamp((facing - edge * 0.25F) / edge, 0F, 1F);
+                alpha[j][i] = opacity * ringAlpha[j] * soft * soft * (3F - 2F * soft);
+                float sun = Math.max(0F, nx * sx + ny * sy + nz * sz) * day;
+                light[j][i] = 0.62F + 0.5F * sun - 0.12F * (1F - facing);
+            }
+        }
+        float u0base = -spinTurns * uRepeat;
+        for (int j = 0; j < m; j++) {
+            float v0 = (float) j / m * vRepeat - rise;
+            float v1 = (float) (j + 1) / m * vRepeat - rise;
+            float r = (col[j][0] + col[j + 1][0]) * 0.5F, g = (col[j][1] + col[j + 1][1]) * 0.5F, b = (col[j][2] + col[j + 1][2]) * 0.5F;
+            for (int i = 0; i < n; i++) {
+                QX[0] = px[j][i];
+                QY[0] = py[j][i];
+                QZ[0] = pz[j][i];
+                QX[1] = px[j][i + 1];
+                QY[1] = py[j][i + 1];
+                QZ[1] = pz[j][i + 1];
+                QX[2] = px[j + 1][i + 1];
+                QY[2] = py[j + 1][i + 1];
+                QZ[2] = pz[j + 1][i + 1];
+                QX[3] = px[j + 1][i];
+                QY[3] = py[j + 1][i];
+                QZ[3] = pz[j + 1][i];
+                QL[0] = light[j][i];
+                QL[1] = light[j][i + 1];
+                QL[2] = light[j + 1][i + 1];
+                QL[3] = light[j + 1][i];
+                QA[0] = alpha[j][i];
+                QA[1] = alpha[j][i + 1];
+                QA[2] = alpha[j + 1][i + 1];
+                QA[3] = alpha[j + 1][i];
+                float u0 = u0base + (float) i / n * uRepeat;
+                float u1 = u0base + (float) (i + 1) / n * uRepeat;
+                SkyBillboards.quad(SkyBillboards.TEX_STREAKS, QX, QY, QZ, u0, v1, u1, v0, r, g, b, QL, QA);
             }
         }
     }
@@ -197,27 +275,32 @@ public final class TornadoRenderer {
                 lr * 0.5F, lg * 0.44F, lb * 0.36F, 0.5F * amount, 1F, 0F);
     }
 
-    /** Suction vortices orbiting inside violent tornadoes. */
+    /** Suction vortices orbiting inside violent tornadoes: short, dusty 3D tubes. */
     private static void subVortices(ClientTornadoes.T t, double tx, double tz, Vec3 cam, float time, float pt, int q,
                                     float lr, float lg, float lb, float sunSide) {
         int count = q >= 3 ? 5 : 3;
         float rc = t.coreRadius();
         float spin = t.spin(pt);
         float h = 14F + t.rating * 3F;
-        int m = 6;
+        int m = 5;
+        float[] cx = new float[m + 1], cy = new float[m + 1], cz = new float[m + 1], rad = new float[m + 1], alpha = new float[m + 1];
+        float[][] col = new float[m + 1][3];
         for (int k = 0; k < count; k++) {
             float orbit = (float) (-spin * Math.PI * 2 * 1.3F + k * Math.PI * 2 / count);
             float ox = (float) (tx + Mth.cos(orbit) * rc * 0.8F - cam.x);
             float oz = (float) (tz + Mth.sin(orbit) * rc * 0.8F - cam.z);
-            float rs = rc * 0.12F + 1F;
-            for (int j = 0; j < m; j++) {
-                float f = (j + 0.5F) / m;
-                float py = (float) (t.groundY + f * h - cam.y);
-                float a = 0.45F * (1F - f) * t.contact;
-                SkyBillboards.add(SkyBillboards.TEX_STREAKS, SkyBillboards.FUNNEL, ox, py, oz, rs * (0.7F + f), h / m * 0.8F, 0F,
-                        spin * 5F, f - time * 0.04F, spin * 5F + 0.5F, f - time * 0.04F + 0.2F,
-                        0.46F * lr, 0.4F * lg, 0.33F * lb, a, 0.9F, sunSide * 0.5F);
+            for (int j = 0; j <= m; j++) {
+                float f = (float) j / m;
+                cx[j] = ox + Mth.sin(time * 0.1F + k + f * 3F) * 0.8F;
+                cz[j] = oz + Mth.cos(time * 0.1F + k + f * 3F) * 0.8F;
+                cy[j] = (float) (t.groundY + f * h - cam.y);
+                rad[j] = (rc * 0.12F + 1F) * (0.7F + f);
+                alpha[j] = 0.55F * (1F - f) * t.contact;
+                col[j][0] = 0.48F * lr;
+                col[j][1] = 0.42F * lg;
+                col[j][2] = 0.34F * lb;
             }
+            tube(10, m, cx, cy, cz, rad, col, alpha, 1F, 0.12F, 0.9F, spin * 4F, 1F, 0.6F, time * 0.04F, time, k * 2.3F, 0.3F);
         }
     }
 

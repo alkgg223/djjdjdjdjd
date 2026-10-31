@@ -815,10 +815,16 @@ public final class SelfTest {
             shot("40_vehicles");
             vehicleState("parked");
         });
-        step(5, () -> ride(1));
+        step(5, () -> clickDoor(1, 0));
+        step(30, () -> {
+            shot("48_door_open");
+            vehicleState("door open");
+        });
+        step(5, () -> clickDoor(1, 0));
         step(30, () -> {
             Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
             turnClient(0F, 24F);
+            vehicleState("entered by door");
         });
         step(30, () -> {
             shot("41_pickup_interior");
@@ -861,9 +867,11 @@ public final class SelfTest {
         });
         step(5, () -> {
             Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
-            turnClient(0F, 6F);
+            turnClient(0F, 4F);
         });
         step(20, () -> shot("46_intercept_interior"));
+        step(5, () -> turnClient(-70F, 4F));
+        step(20, () -> shot("46b_intercept_side_window"));
         // A blizzard (they only happen where it is cold enough): snow on the glass, then the wipers.
         step(5, () -> {
             cmd("rw clear");
@@ -891,6 +899,23 @@ public final class SelfTest {
             turnClient(150F, 25F);
         });
         step(20, () -> shot("47_snowy_sedan"));
+        step(5, () -> {
+            cmd("rw blizzard stop");
+            dismount();
+        });
+        step(10, () -> stepUnderFront(0));
+        step(40, () -> ride(0));
+        step(30, () -> {
+            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            turnClient(0F, 10F);
+            vehicleState("on a step");
+        });
+        step(20, () -> shot("49_slope_seat"));
+        step(5, () -> {
+            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+            turnClient(60F, 15F);
+        });
+        step(20, () -> shot("49b_slope_outside"));
         step(5, () -> {
             cmd("rw blizzard stop");
             cmd("rw clear");
@@ -1074,6 +1099,46 @@ public final class SelfTest {
                         mc.player != null && mc.player.getVehicle() == v);
             }
         }
+    }
+
+
+    /** Clicks a vehicle door like a player would (the hit point picks the door). */
+    private static void clickDoor(int index, int door) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            if (!(serverVehicle(server, index) instanceof com.realweather.vehicle.StormVehicle v)) {
+                return;
+            }
+            float[] hinge = v.kind.doorRows[door / 2];
+            float mx = (door % 2 == 0 ? -1 : 1) * hinge[0];
+            float mz = hinge[2] + 0.5F;
+            net.minecraft.world.phys.Vec3 hit = v.toWorld(mx, 1.0, mz).subtract(v.position());
+            v.interactAt(p, hit, net.minecraft.world.InteractionHand.MAIN_HAND);
+            net.minecraft.world.InteractionResult r = p.interactOn(v, net.minecraft.world.InteractionHand.MAIN_HAND);
+            LOG.info("clicked door {} of {}: {} open={} riding={}", door, v.kind.id, r, v.doorOpen(door), p.getVehicle() == v);
+        });
+    }
+
+    /** Lifts the front of a vehicle onto a block step (the wheels sit on different heights). */
+    private static void stepUnderFront(int index) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerLevel level = server.overworld();
+            if (!(serverVehicle(server, index) instanceof com.realweather.vehicle.StormVehicle v)) {
+                return;
+            }
+            for (int w = 0; w < 2; w++) {
+                float[] wp = v.kind.wheels[w];
+                net.minecraft.world.phys.Vec3 at = v.toWorld(wp[0], 0, wp[2]);
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        level.setBlockAndUpdate(BlockPos.containing(at.x + dx, v.getY(), at.z + dz), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+                    }
+                }
+            }
+            LOG.info("step under the front of {}", v.kind.id);
+        });
     }
 
     private static void floods() {

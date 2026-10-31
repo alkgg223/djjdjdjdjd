@@ -27,6 +27,8 @@ public final class SkyBillboards {
     public static final int FUNNEL = 2;
     /** Lies flat on the ground (dust skirt). */
     public static final int FLAT = 3;
+    /** A true 3D quad with its own four corners, brightness and alpha (the tornado's funnel surface). */
+    public static final int QUAD = 4;
 
     public static final int TEX_ATLAS = 0;
     public static final int TEX_STREAKS = 1;
@@ -34,13 +36,19 @@ public final class SkyBillboards {
             RealWeather.id("textures/environment/sky_atlas.png"),
             RealWeather.id("textures/environment/tornado_streaks.png")};
 
-    private static final int MAX = 14000;
+    private static final int MAX = 30000;
     private static final float[] X = new float[MAX], Y = new float[MAX], Z = new float[MAX];
     private static final float[] HW = new float[MAX], HH = new float[MAX], ROT = new float[MAX];
     private static final float[] U0 = new float[MAX], V0 = new float[MAX], U1 = new float[MAX], V1 = new float[MAX];
     private static final float[] R = new float[MAX], G = new float[MAX], B = new float[MAX], A = new float[MAX];
     private static final float[] BOTTOM = new float[MAX], SIDE = new float[MAX], DIST = new float[MAX];
     private static final int[] TEX = new int[MAX], TYPE = new int[MAX], ORDER = new int[MAX];
+    /** Quads: index of their corners in the corner arrays. */
+    private static final int[] QI = new int[MAX];
+    private static final int QMAX = 16000;
+    private static final float[] QX = new float[QMAX * 4], QY = new float[QMAX * 4], QZ = new float[QMAX * 4];
+    private static final float[] QL = new float[QMAX * 4], QA = new float[QMAX * 4];
+    private static int quads;
     private static int count;
     private static int split;
     private static boolean sorted;
@@ -64,6 +72,7 @@ public final class SkyBillboards {
      */
     public static void begin(Camera camera, float limit, float[] fog, float visibility, float fadeEnd) {
         count = 0;
+        quads = 0;
         sorted = false;
         Vector3f look = camera.getLookVector();
         lookX = look.x;
@@ -149,6 +158,55 @@ public final class SkyBillboards {
     }
 
     /**
+     * A 3D quad given by its four camera-relative corners (in order round the quad), with a brightness and an alpha
+     * per corner over a base colour. Sorted with the sprites by its centre, so a translucent solid (the funnel)
+     * draws its far side first and blends properly with the clouds and dust around it.
+     */
+    public static void quad(int tex, float[] cx, float[] cy, float[] cz, float u0, float v0, float u1, float v1,
+                            float r, float g, float b, float[] light, float[] alpha) {
+        if (count >= MAX || quads >= QMAX) {
+            return;
+        }
+        float mx = (cx[0] + cx[1] + cx[2] + cx[3]) * 0.25F;
+        float my = (cy[0] + cy[1] + cy[2] + cy[3]) * 0.25F;
+        float mz = (cz[0] + cz[1] + cz[2] + cz[3]) * 0.25F;
+        float d2 = mx * mx + my * my + mz * mz;
+        float d = (float) Math.sqrt(d2);
+        float amax = Math.max(Math.max(alpha[0], alpha[1]), Math.max(alpha[2], alpha[3]));
+        if (amax <= 0.004F) {
+            return;
+        }
+        float fade = 1F;
+        if (d > fadeEnd * 0.75F) {
+            float t = Math.min(1F, (d - fadeEnd * 0.75F) / (fadeEnd * 0.25F));
+            fade = 1F - t * t * (3F - 2F * t);
+        }
+        float haze = (1F - (float) Math.exp(-d / visibility)) * 0.92F;
+        float k = d > limit ? limit / d : 1F;
+        int q = quads++;
+        for (int c = 0; c < 4; c++) {
+            QX[q * 4 + c] = cx[c] * k;
+            QY[q * 4 + c] = cy[c] * k;
+            QZ[q * 4 + c] = cz[c] * k;
+            QL[q * 4 + c] = light[c];
+            QA[q * 4 + c] = alpha[c] * fade;
+        }
+        int i = count++;
+        TEX[i] = tex;
+        TYPE[i] = QUAD;
+        QI[i] = q;
+        U0[i] = u0;
+        V0[i] = v0;
+        U1[i] = u1;
+        V1[i] = v1;
+        R[i] = r + (fogR - r) * haze;
+        G[i] = g + (fogG - g) * haze;
+        B[i] = b + (fogB - b) * haze;
+        DIST[i] = d2;
+        ORDER[i] = i;
+    }
+
+    /**
      * Draws either the far sprites (beyond {@code splitDist}, drawn right after the sky so the terrain covers them)
      * or the near ones (drawn later, depth-tested against the world).
      */
@@ -189,6 +247,17 @@ public final class SkyBillboards {
             float x = X[i], y = Y[i], z = Z[i];
             float r = R[i], g = G[i], b = B[i], a = A[i];
             float rb = r * BOTTOM[i], gb = g * BOTTOM[i], bb = b * BOTTOM[i];
+            if (TYPE[i] == QUAD) {
+                int q = QI[i] * 4;
+                float[] us = {U0[i], U1[i], U1[i], U0[i]};
+                float[] vs = {V0[i], V0[i], V1[i], V1[i]};
+                for (int c = 0; c < 4; c++) {
+                    float l = QL[q + c];
+                    buf.addVertex(QX[q + c], QY[q + c], QZ[q + c]).setUv(us[c], vs[c])
+                            .setColor(k(R[i] * l), k(G[i] * l), k(B[i] * l), k(QA[q + c])).setLight(light);
+                }
+                continue;
+            }
             switch (TYPE[i]) {
                 case SPHERE -> {
                     float c = (float) Math.cos(ROT[i]), s = (float) Math.sin(ROT[i]);

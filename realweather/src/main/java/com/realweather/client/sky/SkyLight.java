@@ -7,11 +7,11 @@ import net.minecraft.util.Mth;
 import org.joml.Vector3f;
 
 /** Light on the clouds this frame: their sunlit colour, where the sun is, and which side of a sprite faces it. */
-final class SkyLight {
+public final class SkyLight {
     static float r, g, b;
-    static float sunX, sunY, sunZ;
+    public static float sunX, sunY, sunZ;
     /** 1 by day, 0 at night. */
-    static float day;
+    public static float day;
     /** -1..1: how much the sun lights the right side of an upright sprite (as seen by the camera). */
     static float sunSide;
 

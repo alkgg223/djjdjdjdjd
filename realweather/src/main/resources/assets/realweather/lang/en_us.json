@@ -182,5 +182,7 @@
   "subtitles.realweather.vehicle.door": "Car door",
   "subtitles.realweather.vehicle.beep": "Instrument beeps",
   "subtitles.realweather.vehicle.wind_buffet": "Wind buffets the vehicle",
-  "realweather.vehicle.probe.peak": "Peak gust: %s km/h"
+  "realweather.vehicle.probe.peak": "Peak gust: %s km/h",
+  "realweather.vehicle.seat_taken": "That seat is taken",
+  "realweather.vehicle.door_hint": "Click a door to open it, click again to get in"
 }

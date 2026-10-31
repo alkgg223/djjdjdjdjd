@@ -57,13 +57,17 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
         }
         VehicleModels.solid(base + "body", pose, buf, light, overlay, r, g, b);
         // Doors, swung open when the flood has forced them.
-        float open = Mth.lerp(pt, v.prevDoorOpen, v.doorOpen);
+        float flood = Mth.lerp(pt, v.prevDoorOpen, v.doorOpen);
         float[][] doors = doors(k);
         for (int i = 0; i < doors.length; i++) {
             for (int side = -1; side <= 1; side += 2) {
+                int door = i * 2 + (side < 0 ? 0 : 1);
+                float swing = door < 4 ? Mth.lerp(pt, v.prevDoorAngle[door], v.doorAngle[door]) : 0F;
+                swing = swing * swing * (3F - 2F * swing);
+                float open = Math.max(flood, swing * 0.95F);
                 pose.pushPose();
                 pose.translate(side * doors[i][0], doors[i][1], doors[i][2]);
-                pose.mulPose(Axis.YP.rotationDegrees(side * open * 52F));
+                pose.mulPose(Axis.YP.rotationDegrees(side * open * 62F));
                 VehicleModels.solid(base + "door_" + (i == 0 ? "f" : "r") + (side > 0 ? "r" : "l"), pose, buf, light, overlay, r, g, b);
                 pose.popPose();
             }

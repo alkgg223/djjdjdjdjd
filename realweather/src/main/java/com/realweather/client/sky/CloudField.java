@@ -12,11 +12,12 @@ import net.minecraft.world.phys.Vec3;
  * comes. Clouds are anchored to the moving air, so they drift across the sky with the wind.
  */
 final class CloudField {
-    private static final int CELL = 96;
-    private static final float[] RADIUS = {560F, 820F, 1100F, 1450F};
-    private static final int[] PUFFS = {3, 5, 7, 10};
+    private static final int CELL = 64;
+    private static final float[] RADIUS = {450F, 650F, 900F, 1200F};
+    /** Puffs per cloudy cell. Each one overlaps the next cells, so neighbouring cloud joins into one mass. */
+    private static final int[] PUFFS = {1, 2, 3, 5};
 
-    private record Puff(float dx, float dy, float dz, float size, int cell, float rot, float shade) {}
+    private record Puff(float dx, float dz, float size, int cell, float rot, float lift) {}
 
     private static final Long2ObjectOpenHashMap<Puff[]> LAYOUT = new Long2ObjectOpenHashMap<>();
     static double driftX, driftZ;
@@ -31,7 +32,7 @@ final class CloudField {
         // Upper winds move the clouds a few metres per second.
         driftX += ClientWeather.windX * 0.25 + 0.03;
         driftZ += ClientWeather.windZ * 0.25 + 0.01;
-        if (LAYOUT.size() > 6000) {
+        if (LAYOUT.size() > 8000) {
             LAYOUT.clear();
         }
     }
@@ -40,13 +41,12 @@ final class CloudField {
         float radius = RADIUS[q];
         int maxPuffs = PUFFS[q];
         long dayIndex = Math.floorDiv(level.getDayTime(), 24000L);
-        // Some days are almost clear, others full of fair-weather cumulus.
-        float clear = 0.28F + 0.3F * (hash(dayIndex, 11) * 0.5F + 0.5F);
-        float cover = Mth.lerp(Mth.clamp(rainLevel * 1.3F, 0F, 1F), clear, 0.97F);
-        // The field is roughly normal around 0.5; pick the cut that leaves about 'cover' of the sky clouded.
-        float threshold = 0.5F + (0.5F - cover) * 0.44F;
+        // Even fair days carry a good deal of cumulus that clumps into large masses with gaps of blue between.
+        float clear = 0.45F + 0.17F * (hash(dayIndex, 11) * 0.5F + 0.5F);
+        float cover = Mth.lerp(Mth.clamp(rainLevel * 1.3F, 0F, 1F), clear, 0.98F);
+        float threshold = 0.5F + (0.5F - cover) * 0.5F;
         float overcast = Mth.clamp((rainLevel - 0.15F) / 0.55F, 0F, 1F);
-        float base = Mth.lerp(overcast, 178F, 152F);
+        float base = Mth.lerp(overcast, 176F, 152F);
         double ox = cam.x - driftX;
         double oz = cam.z - driftZ;
         int gx0 = Mth.floor((ox - radius) / CELL);
@@ -54,7 +54,7 @@ final class CloudField {
         int gz0 = Mth.floor((oz - radius) / CELL);
         int gz1 = Mth.floor((oz + radius) / CELL);
         float grey = 1F - 0.4F * overcast;
-        float puffAlpha = 1F - 0.55F * overcast;
+        float puffAlpha = 1F - 0.5F * overcast;
         for (int gx = gx0; gx <= gx1; gx++) {
             for (int gz = gz0; gz <= gz1; gz++) {
                 double cx = (gx + 0.5) * CELL + driftX;
@@ -69,31 +69,37 @@ final class CloudField {
                 if (n < threshold) {
                     continue;
                 }
-                float s = Mth.clamp((n - threshold) / 0.18F, 0F, 1F);
+                // How deep inside a mass this cell is: the middle of a big cloud grows tall, its edges stay low.
+                float s = Mth.clamp((n - threshold) / 0.16F, 0F, 1F);
+                int around = 0;
+                around += field(gx + 1, gz) >= threshold ? 1 : 0;
+                around += field(gx - 1, gz) >= threshold ? 1 : 0;
+                around += field(gx, gz + 1) >= threshold ? 1 : 0;
+                around += field(gx, gz - 1) >= threshold ? 1 : 0;
+                float inside = around / 4F;
                 float fade = 1F - smooth(radius * 0.7F, radius, dist);
-                if (overcast > 0.3F) {
-                    // A continuous grey deck seen from below.
-                    float deck = smooth(0.3F, 0.75F, overcast) * fade;
-                    float shade = (0.6F + 0.08F * hash(gx * 31L + gz, 5)) * grey * 1.15F;
-                    SkyBillboards.cell(SkyBillboards.FLAT, SkyBillboards.BASE + ((gx + gz) & 1), (float) (dx), base + 2F - (float) cam.y,
-                            (float) (dz), CELL * 0.9F, CELL * 0.9F, (gx * 7 + gz * 13) * 0.7F,
-                            SkyLight.r * shade, SkyLight.g * shade, SkyLight.b * shade * 1.03F, 0.94F * deck, 1F, 0F);
-                }
+                // A continuous grey-white underside joins the cells of a mass when seen from below.
+                float under = (0.7F + 0.1F * hash(gx * 31L + gz, 5) - 0.12F * overcast) * grey * 1.1F;
+                SkyBillboards.cell(SkyBillboards.FLAT, SkyBillboards.BASE + ((gx + gz) & 1), (float) dx, base + 1F - (float) cam.y, (float) dz,
+                        CELL * (0.62F + 0.2F * inside), CELL * (0.62F + 0.2F * inside), (gx * 7 + gz * 13) * 0.7F,
+                        SkyLight.r * under, SkyLight.g * under, SkyLight.b * under * 1.03F, (0.55F + 0.4F * overcast) * fade * (0.5F + 0.5F * inside),
+                        1F, 0F);
                 long key = (long) gx << 32 ^ (gz & 0xFFFFFFFFL);
                 Puff[] puffs = LAYOUT.computeIfAbsent(key, k -> layout(k));
-                float scale = 0.6F + 0.75F * s;
+                float height = (8F + 40F * s * (0.4F + 0.6F * inside)) * (1F - 0.7F * overcast);
                 int use = Math.min(maxPuffs, puffs.length);
                 for (int i = 0; i < use; i++) {
                     Puff p = puffs[i];
-                    float px = (float) (cx + p.dx * scale - cam.x);
-                    float py = (float) (base + p.dy * scale * (0.6F + 0.6F * s) * (1F - 0.6F * overcast) - cam.y);
-                    float pz = (float) (cz + p.dz * scale - cam.z);
-                    float size = p.size * scale * (1F + 0.4F * overcast);
-                    float shade = (0.9F + 0.14F * p.shade + SkyLight.silver(p.dx, p.dy, p.dz)) * grey;
+                    float size = CELL * p.size * (q == 0 ? 1.25F : q == 1 ? 1.05F : 1F) * (0.75F + 0.35F * inside + 0.25F * s) * (1F + 0.3F * overcast);
+                    float px = (float) (cx + p.dx * CELL - cam.x);
+                    float pz = (float) (cz + p.dz * CELL - cam.z);
+                    float py = base + size * 0.42F + p.lift * height - (float) cam.y;
+                    float h01 = Mth.clamp(p.lift * (0.5F + s), 0F, 1F);
+                    float shade = (0.86F + 0.16F * h01 + SkyLight.silver(p.dx, h01 - 0.3F, p.dz)) * grey;
                     boolean flat = overcast > 0.5F && i % 2 == 0;
-                    int cell = flat ? SkyBillboards.STRATUS : p.cell;
-                    SkyBillboards.cell(SkyBillboards.SPHERE, cell, px, py, pz, size, size * (flat ? 0.45F : 0.82F), flat ? 0F : p.rot,
-                            SkyLight.r * shade, SkyLight.g * shade, SkyLight.b * shade * 1.02F, 0.95F * fade * puffAlpha, 0.74F, SkyLight.sunSide);
+                    SkyBillboards.cell(SkyBillboards.SPHERE, flat ? SkyBillboards.STRATUS : p.cell, px, py, pz, size, size * (flat ? 0.45F : 0.8F),
+                            flat ? 0F : p.rot, SkyLight.r * shade, SkyLight.g * shade, SkyLight.b * shade * 1.02F, 0.95F * fade * puffAlpha, 0.72F,
+                            SkyLight.sunSide);
                 }
             }
         }
@@ -101,24 +107,22 @@ final class CloudField {
 
     private static Puff[] layout(long key) {
         RandomSource rnd = RandomSource.create(key * 0x9E3779B97F4A7C15L);
-        Puff[] puffs = new Puff[10];
-        float jx = (rnd.nextFloat() - 0.5F) * CELL * 0.6F;
-        float jz = (rnd.nextFloat() - 0.5F) * CELL * 0.6F;
-        // A broad base first, then smaller turrets on top (kept upright: cumulus have flat bottoms).
-        puffs[0] = new Puff(jx, 8F, jz, 42F + rnd.nextFloat() * 14F, rnd.nextInt(6), (rnd.nextFloat() - 0.5F) * 0.4F, 0.25F);
-        for (int i = 1; i < puffs.length; i++) {
-            float a = rnd.nextFloat() * Mth.TWO_PI;
-            float rr = (float) Math.sqrt(rnd.nextFloat()) * 42F;
-            float h = (1F - rr / 48F) * (10F + rnd.nextFloat() * 34F);
-            puffs[i] = new Puff(jx + Mth.cos(a) * rr, h, jz + Mth.sin(a) * rr, 20F + rnd.nextFloat() * 20F, rnd.nextInt(6),
-                    (rnd.nextFloat() - 0.5F) * 0.5F, Mth.clamp(h / 36F, 0F, 1F));
+        Puff[] puffs = new Puff[5];
+        // Spread over the whole cell (and a little past it) so neighbouring cells overlap.
+        float[][] spots = {{0F, 0F}, {-0.3F, -0.25F}, {0.3F, 0.25F}, {0.28F, -0.3F}, {-0.28F, 0.3F}};
+        for (int i = 0; i < puffs.length; i++) {
+            float jx = spots[i][0] + (rnd.nextFloat() - 0.5F) * 0.3F;
+            float jz = spots[i][1] + (rnd.nextFloat() - 0.5F) * 0.3F;
+            float size = i == 0 ? 0.78F + rnd.nextFloat() * 0.2F : 0.52F + rnd.nextFloat() * 0.22F;
+            float lift = i == 0 ? 0.15F : rnd.nextFloat();
+            puffs[i] = new Puff(jx, jz, size, rnd.nextInt(6), (rnd.nextFloat() - 0.5F) * 0.4F, lift);
         }
         return puffs;
     }
 
     /** Smooth cloudiness 0..1 over the grid. */
     private static float field(int gx, int gz) {
-        return Mth.clamp(0.6F * noise(gx / 3.2, gz / 3.2, 1) + 0.4F * noise(gx / 1.4, gz / 1.4, 2), 0F, 1F);
+        return Mth.clamp(0.55F * noise(gx / 6.0, gz / 6.0, 1) + 0.3F * noise(gx / 2.6, gz / 2.6, 2) + 0.15F * noise(gx / 1.2, gz / 1.2, 3), 0F, 1F);
     }
 
     private static float noise(double x, double z, int salt) {

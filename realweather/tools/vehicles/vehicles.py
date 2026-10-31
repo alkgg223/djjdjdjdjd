@@ -636,37 +636,47 @@ def intercept():
     # Armoured cab: sloped plates up to the roof; small slit windows.
     zf0, zf1, zr0 = -1.2, -0.75, half - 0.15
     xb, xr = W / 2 - 0.02, W / 2 - 0.22
-    plates = [
-        ([(-xb, belt, zf0), (xb, belt, zf0), (xr, roof, zf1), (-xr, roof, zf1)], "armor"),
-        ([(-xr, roof, zf1), (xr, roof, zf1), (xr, roof, zr0), (-xr, roof, zr0)], "armor"),
-        ([(-xr, roof, zr0), (xr, roof, zr0), (xb, belt, half - 0.1), (-xb, belt, half - 0.1)], "armor"),
-    ]
-    for pts, mat in plates:
-        K.plate([v3(*p) for p in pts], 0.06, mat, m=body)
-    for s in (-1, 1):
-        K.plate([v3(s * xb, belt, zf0), v3(s * xr, roof, zf1), v3(s * xr, roof, zr0), v3(s * xb, belt, half - 0.1)], 0.06, "armor", m=body)
+    # Roof and rear slope.
+    K.plate([v3(-xr, roof, zf1), v3(xr, roof, zf1), v3(xr, roof, zr0), v3(-xr, roof, zr0)], 0.06, "armor", m=body)
+    K.plate([v3(-xr, roof, zr0), v3(xr, roof, zr0), v3(xb, belt, half - 0.1), v3(-xb, belt, half - 0.1)], 0.06, "armor", m=body)
     glass = Mesh()
-    # Windshield slit in the front plate, side slits.
-    t0, t1 = 0.12, 0.72
 
-    def lerp3(a, b2, t):
-        return tuple(a[i] + (b2[i] - a[i]) * t for i in range(3))
-    fl, fr = (-xb, belt, zf0), (xb, belt, zf0)
-    tl, tr = (-xr, roof, zf1), (xr, roof, zf1)
-    ws = [lerp3(fl, tl, t0), lerp3(fr, tr, t0), lerp3(fr, tr, t1), lerp3(fl, tl, t1)]
-    ws = [(p[0] * 0.92, p[1], p[2] - 0.035) for p in ws]
-    K.plate([v3(*p) for p in ws], 0.03, "glass", m=glass)
-    K.plate([v3(p[0] * 1.03, p[1], p[2] + 0.005) for p in [(ws[0][0] - 0.05, ws[0][1] - 0.05, ws[0][2] + 0.02),
-                                                           (ws[1][0] + 0.05, ws[1][1] - 0.05, ws[1][2] + 0.02),
-                                                           (ws[2][0] + 0.05, ws[2][1] + 0.05, ws[2][2] + 0.02),
-                                                           (ws[3][0] - 0.05, ws[3][1] + 0.05, ws[3][2] + 0.02)]], 0.02, "armor_dark", m=body)
+    # Front slope with a real opening for the armoured windshield (u across -1..1, t up 0..1).
+    def front(u, t):
+        half_w = xb + (xr - xb) * t
+        return v3(u * half_w, belt + (roof - belt) * t, zf0 + (zf1 - zf0) * t)
+    T0, T1, U = 0.07, 0.8, 0.93
+    for (u0, u1, t0_, t1_) in ((-1, 1, 0, T0), (-1, 1, T1, 1), (-1, -U, T0, T1), (U, 1, T0, T1)):
+        K.plate([front(u0, t0_), front(u1, t0_), front(u1, t1_), front(u0, t1_)], 0.06, "armor", m=body)
+    # Frame bars round the opening.
+    for (u0, u1, t0_, t1_) in ((-U, U, T0, T0 + 0.025), (-U, U, T1 - 0.025, T1), (-U, -U + 0.03, T0, T1), (U - 0.03, U, T0, T1)):
+        K.plate([front(u0, t0_) + v3(0, 0, -0.04), front(u1, t0_) + v3(0, 0, -0.04), front(u1, t1_) + v3(0, 0, -0.04),
+                 front(u0, t1_) + v3(0, 0, -0.04)], 0.03, "armor_dark", m=body)
+    ws = [tuple(front(-U, T0) + v3(0, 0, -0.02)), tuple(front(U, T0) + v3(0, 0, -0.02)), tuple(front(U, T1) + v3(0, 0, -0.02)),
+          tuple(front(-U, T1) + v3(0, 0, -0.02))]
+    K.plate([v3(*p) for p in ws], 0.025, "glass", m=glass)
+
+    # Sides with two window slits each (t up, z along; the front and rear edges lean in).
+    TS0, TS1 = 0.3, 0.76
+    slits = ((-0.75, 0.2), (0.45, 1.6))
     for s in (-1, 1):
-        for z0, z1 in ((-0.6, 0.2), (0.45, 1.6)):
-            y0, y1 = belt + 0.3, belt + 0.55
-            def sp(y, z):
-                t = (y - belt) / (roof - belt)
-                return v3(s * (xb + (xr - xb) * t + 0.035), y, z)
-            K.plate([sp(y0, z0), sp(y1, z0), sp(y1, z1), sp(y0, z1)], 0.02, "glass_dark", m=glass)
+        def side(t, z):
+            return v3(s * (xb + (xr - xb) * t), belt + (roof - belt) * t, z)
+
+        def zf(t):
+            return zf0 + (zf1 - zf0) * t
+
+        def zr(t):
+            return (half - 0.1) + (zr0 - (half - 0.1)) * t
+        pieces = [(0, TS0, None, None), (TS1, 1, None, None), (TS0, TS1, None, slits[0][0]), (TS0, TS1, slits[0][1], slits[1][0]),
+                  (TS0, TS1, slits[1][1], None)]
+        for t0_, t1_, z0, z1 in pieces:
+            pts = [side(t0_, zf(t0_) if z0 is None else z0), side(t0_, zr(t0_) if z1 is None else z1),
+                   side(t1_, zr(t1_) if z1 is None else z1), side(t1_, zf(t1_) if z0 is None else z0)]
+            K.plate(pts, 0.06, "armor", m=body)
+        for z0, z1 in slits:
+            K.plate([side(TS0, z0) + v3(s * 0.01, 0, 0), side(TS0, z1) + v3(s * 0.01, 0, 0), side(TS1, z1) + v3(s * 0.01, 0, 0),
+                     side(TS1, z0) + v3(s * 0.01, 0, 0)], 0.02, "glass", m=glass)
     # Ram plate, lights, steps, rooftop gear.
     K.plate([v3(-W / 2 + 0.1, 0.45, -half - 0.12), v3(W / 2 - 0.1, 0.45, -half - 0.12), v3(W / 2 - 0.1, 0.95, -half + 0.05),
              v3(-W / 2 + 0.1, 0.95, -half + 0.05)], 0.06, "armor_dark", m=body)

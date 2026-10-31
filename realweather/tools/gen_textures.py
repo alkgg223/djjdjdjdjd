@@ -543,14 +543,15 @@ def sky(rng):
         put(14 + i, a, l)
     save(os.path.join(ENV, 'sky_atlas.png'), atlas, blur=True)
 
-    # Funnel streaks: condensation bands spiralling round the vortex (tileable both ways).
-    n1 = periodic_noise(rng, (s, s), 9, aniso=(1.0, 7.0))
-    n2 = periodic_noise(rng, (s, s), 22, aniso=(1.0, 4.0))
-    n3 = periodic_noise(rng, (s, s), 60)
-    band = 0.55 * n1 + 0.3 * n2 + 0.15 * n3
-    band = np.stack([np.roll(band[y], y // 2 * 0 + y) for y in range(s)])
-    lum = np.clip(0.88 + 0.11 * band, 0.6, 1.0)
-    alpha = np.clip(0.9 + 0.1 * band, 0.65, 1.0)
+    # Funnel streaks: smooth condensation with fine striations spiralling up round the vortex (tileable both ways).
+    n1 = periodic_noise(rng, (s, s), 14, aniso=(5.0, 1.0))
+    n2 = periodic_noise(rng, (s, s), 30, aniso=(3.0, 1.0))
+    n3 = periodic_noise(rng, (s, s), 6)
+    band = 0.5 * n1 + 0.3 * n2 + 0.2 * n3
+    # Lean the striations by a whole tile over the height, so they wrap seamlessly into a helix.
+    band = np.stack([np.roll(band[y], y) for y in range(s)])
+    lum = np.clip(0.9 + 0.07 * band, 0.72, 1.0)
+    alpha = np.clip(0.94 + 0.06 * band, 0.8, 1.0)
     img = np.zeros((s, s, 4))
     img[..., 0] = lum * 255
     img[..., 1] = lum * 255
