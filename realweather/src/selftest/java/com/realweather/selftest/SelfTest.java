@@ -780,7 +780,7 @@ public final class SelfTest {
 
 
     // ------------------------------------------------------------------------------------ vehicles
-    private static final java.util.UUID[] VEHICLE_IDS = new java.util.UUID[3];
+    private static final java.util.UUID[] VEHICLE_IDS = new java.util.UUID[6];
 
     private static net.minecraft.world.entity.Entity serverVehicle(MinecraftServer server, int index) {
         java.util.UUID id = VEHICLE_IDS[index];
@@ -814,6 +814,19 @@ public final class SelfTest {
         step(40, () -> {
             shot("40_vehicles");
             vehicleState("parked");
+            standAt(0, 27.5, 180F, 12F);
+        });
+        step(30, () -> {
+            shot("40b_new_cars_front");
+            standAt(11, 12, 45F, 14F);
+        });
+        step(30, () -> {
+            shot("40c_new_cars_rear");
+            standAt(0, 3.5, 0F, 6F);
+        });
+        step(30, () -> {
+            shot("40d_through_glass");
+            standAt(0, 0, 0F, 14F);
         });
         step(5, () -> clickDoor(1, 0));
         step(30, () -> {
@@ -872,6 +885,39 @@ public final class SelfTest {
         step(20, () -> shot("46_intercept_interior"));
         step(5, () -> turnClient(-70F, 4F));
         step(20, () -> shot("46b_intercept_side_window"));
+        // The muscle coupe: start-up, then lift off the throttle at high revs for the backfire.
+        step(5, () -> {
+            cmd("rw clear");
+            dismount();
+            Minecraft.getInstance().options.hideGui = true;
+        });
+        step(10, () -> placeVehicle(4, 9, 26, 0F));
+        step(20, () -> ride(4));
+        step(40, () -> {
+            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+            turnClient(0F, 12F);
+            vehicleState("coupe started");
+            drive(1F, 0F);
+        });
+        step(26, () -> {
+            vehicleState("coupe flat out");
+            drive(0F, 0F);
+        });
+        step(2, () -> {
+            com.realweather.vehicle.StormVehicle v = clientVehicle(4);
+            LOG.info("backfire after lift: pops left={} flame={} rpm={}", v == null ? -1 : v.backfirePops, v == null ? -1 : v.flame,
+                    v == null ? -1 : Math.round(v.rpm));
+            shot("50_backfire");
+        });
+        step(10, () -> {
+            com.realweather.client.vehicle.Backfire.debugHold = 30;
+            vehicleState("coupe coasting");
+        });
+        step(5, () -> shot("50b_backfire_flame"));
+        step(30, () -> {
+            drive(-1F, 0F);
+        });
+        step(30, () -> drive(0F, 0F));
         // A blizzard (they only happen where it is cold enough): snow on the glass, then the wipers.
         step(5, () -> {
             cmd("rw clear");
@@ -984,14 +1030,17 @@ public final class SelfTest {
         server.execute(() -> {
             ServerPlayer p = server.getPlayerList().getPlayers().get(0);
             ServerLevel level = server.overworld();
+            padX = p.getX();
+            padZ = p.getZ();
             com.realweather.vehicle.VehicleType[] kinds = com.realweather.vehicle.VehicleType.values();
             for (int i = 0; i < (sedanOnly ? 1 : kinds.length); i++) {
-                double x = p.getX() - 7 + i * 7;
-                double z = p.getZ() + 9;
+                // Two rows: sedan, pickup, intercept facing the camera; SUV, coupe, sport sedan behind them facing away.
+                double x = p.getX() - 7 + (i % 3) * 7;
+                double z = p.getZ() + (i < 3 ? 9 : 17);
                 int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, net.minecraft.util.Mth.floor(x),
                         net.minecraft.util.Mth.floor(z));
                 com.realweather.vehicle.StormVehicle v = com.realweather.vehicle.VehicleRegistry.type(kinds[i]).create(level);
-                v.moveTo(x, y, z, 200F + i * 15F, 0F);
+                v.moveTo(x, y, z, i < 3 ? 200F + i * 15F : -15F + (i - 3) * 15F, 0F);
                 v.setColor(kinds[i].colors[0]);
                 level.addFreshEntity(v);
                 VEHICLE_IDS[i] = v.getUUID();
@@ -1001,7 +1050,29 @@ public final class SelfTest {
                             net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
                 }
             }
-            LOG.info("vehicles spawned {} {} {}", VEHICLE_IDS[0], VEHICLE_IDS[1], VEHICLE_IDS[2]);
+            LOG.info("vehicles spawned {}", java.util.Arrays.toString(VEHICLE_IDS));
+        });
+    }
+
+    /** Moves the test player to a spot relative to the pad origin (where the vehicles were spawned from). */
+    private static double padX, padZ;
+
+    private static void standAt(double dx, double dz, float yaw, float pitch) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            p.teleportTo(server.overworld(), padX + dx, p.getY(), padZ + dz, yaw, pitch);
+        });
+    }
+
+    private static void placeVehicle(int index, double dx, double dz, float yaw) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            net.minecraft.world.entity.Entity e = serverVehicle(server, index);
+            if (e != null) {
+                e.moveTo(padX + dx, e.getY(), padZ + dz, yaw, 0F);
+                LOG.info("moved {} to {}", e.getName().getString(), e.position());
+            }
         });
     }
 

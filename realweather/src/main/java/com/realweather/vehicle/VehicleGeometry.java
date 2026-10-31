@@ -4,61 +4,76 @@ package com.realweather.vehicle;
 public final class VehicleGeometry {
     private VehicleGeometry() {}
 
-    // sedan
-    public static final float[][] SEDAN_WHEELS = {{-0.7800F, 0.3300F, -1.3800F}, {0.7800F, 0.3300F, -1.3800F}, {-0.7800F, 0.3300F, 1.3700F}, {0.7800F, 0.3300F, 1.3700F}};
-    public static final float SEDAN_WHEEL_R = 0.3300F;
-    public static final float[][] SEDAN_SEATS = {{-0.3700F, 0.2800F, 0.3800F}, {0.3700F, 0.2800F, 0.3800F}, {-0.4000F, 0.2400F, 1.2300F}, {0.4000F, 0.2400F, 1.2300F}};
-    public static final float[] SEDAN_STEER = {-0.3700F, 0.9300F, -0.1000F};
-    public static final float[][] SEDAN_PEDALS = {{-0.2200F, 0.6400F, -0.6000F}, {-0.3900F, 0.6400F, -0.6000F}};
-    public static final float[] SEDAN_GEAR = {0.0000F, 0.5400F, 0.0000F};
-    public static final float[] SEDAN_SPEEDO = {-0.4600F, 0.9100F, -0.2540F, 0.0720F};
-    public static final float[] SEDAN_TACHO = {-0.2800F, 0.9100F, -0.2540F, 0.0600F};
-    public static final float[][] SEDAN_WINDSHIELD = {{-0.8400F, 0.9400F, -0.6000F}, {0.8400F, 0.9400F, -0.6000F}, {0.7100F, 1.4200F, 0.1150F}, {-0.7100F, 1.4200F, 0.1150F}};
-    public static final float[][] SEDAN_WIPERS = {{-0.4200F, 0.9500F, -0.5700F}, {0.1800F, 0.9500F, -0.5700F}};
-    public static final float SEDAN_WIPER_LEN = 0.5500F;
-    public static final float[] SEDAN_SIZE = {1.8200F, 1.4500F, 4.7000F};
-    public static final float[][] SEDAN_LIGHTS = {{-0.6200F, 0.6400F, -2.3500F}, {0.6200F, 0.6400F, -2.3500F}};
-    public static final float[][] SEDAN_SCREEN = {{0.0000F, 0.0000F, 0.0000F}, {0.0000F, 0.0000F, 0.0000F}, {0.0000F, 0.0000F, 0.0000F}, {0.0000F, 0.0000F, 0.0000F}};
-    public static final float[][] SEDAN_DOORS = {{0.9100F, 0.0000F, -0.6080F}, {0.9100F, 0.0000F, 0.4280F}};
+    /** Where everything sits on one vehicle. Optional equipment is null. */
+    public record Geo(float[][] wheels, float wheelR, float[][] seats, float[] steer, float[][] pedals, float[] gear, float[] speedo,
+                      float[] tacho, float[][] windshield, float[][] wipers, float wiperLen, float[] size, float[][] lights, float[][] screen,
+                      float[][] doors, float[][] exhausts, float[] anemometer, float[] dish, float[] turret, float[][] spikes,
+                      float[][] skirts) {}
 
-    // pickup
-    public static final float[][] PICKUP_WHEELS = {{-0.8600F, 0.4200F, -1.6200F}, {0.8600F, 0.4200F, -1.6200F}, {-0.8600F, 0.4200F, 1.6800F}, {0.8600F, 0.4200F, 1.6800F}};
-    public static final float PICKUP_WHEEL_R = 0.4200F;
-    public static final float[][] PICKUP_SEATS = {{-0.3700F, 0.5100F, 0.2200F}, {0.3700F, 0.5100F, 0.2200F}};
-    public static final float[] PICKUP_STEER = {-0.3700F, 1.1800F, -0.2600F};
-    public static final float[][] PICKUP_PEDALS = {{-0.2200F, 0.8700F, -0.7600F}, {-0.3900F, 0.8700F, -0.7600F}};
-    public static final float[] PICKUP_GEAR = {0.0000F, 0.7700F, -0.1600F};
-    public static final float[] PICKUP_SPEEDO = {-0.4600F, 1.1600F, -0.4140F, 0.0720F};
-    public static final float[] PICKUP_TACHO = {-0.2800F, 1.1600F, -0.4140F, 0.0600F};
-    public static final float[][] PICKUP_WINDSHIELD = {{-0.9300F, 1.2100F, -0.7600F}, {0.9300F, 1.2100F, -0.7600F}, {0.8300F, 1.8700F, -0.1250F}, {-0.8300F, 1.8700F, -0.1250F}};
-    public static final float[][] PICKUP_WIPERS = {{-0.4800F, 1.2200F, -0.7300F}, {0.2000F, 1.2200F, -0.7300F}};
-    public static final float PICKUP_WIPER_LEN = 0.6000F;
-    public static final float[] PICKUP_SIZE = {2.0000F, 2.1000F, 5.5000F};
-    public static final float[][] PICKUP_LIGHTS = {{-0.7200F, 0.9800F, -2.7500F}, {0.7200F, 0.9800F, -2.7500F}};
-    public static final float[][] PICKUP_SCREEN = {{-0.1400F, 1.0700F, -0.4780F}, {0.1400F, 1.0700F, -0.4780F}, {0.1400F, 1.2300F, -0.4780F}, {-0.1400F, 1.2300F, -0.4780F}};
-    public static final float[] PICKUP_ANEMOMETER = {0.6200F, 2.7800F, 0.9800F};
-    public static final float[] PICKUP_DISH = {-0.3000F, 0.6600F, 1.3500F};
-    public static final float[][] PICKUP_DOORS = {{1.0000F, 0.0000F, -0.7680F}};
+    public static final Geo SEDAN = new Geo(
+            new float[][]{new float[]{-0.7900F, 0.3400F, -1.4500F}, new float[]{0.7900F, 0.3400F, -1.4500F}, new float[]{-0.7900F, 0.3400F, 1.4200F}, new float[]{0.7900F, 0.3400F, 1.4200F}}, 0.3400F,
+            new float[][]{new float[]{-0.3700F, 0.2800F, 0.2000F}, new float[]{0.3700F, 0.2800F, 0.2000F}, new float[]{-0.4000F, 0.2400F, 1.0500F}, new float[]{0.4000F, 0.2400F, 1.0500F}},
+            new float[]{-0.3700F, 0.9100F, -0.2800F}, new float[][]{new float[]{-0.2200F, 0.6400F, -0.7800F}, new float[]{-0.3900F, 0.6400F, -0.7800F}}, new float[]{0.0000F, 0.5400F, -0.1800F},
+            new float[]{-0.4600F, 0.8900F, -0.4340F, 0.0720F}, new float[]{-0.2800F, 0.8900F, -0.4340F, 0.0600F},
+            new float[][]{new float[]{-0.7240F, 0.9800F, -0.7300F}, new float[]{0.7240F, 0.9800F, -0.7300F}, new float[]{0.5648F, 1.3820F, -0.0600F}, new float[]{-0.5648F, 1.3820F, -0.0600F}},
+            new float[][]{new float[]{-0.4200F, 0.9500F, -0.8300F}, new float[]{0.1600F, 0.9500F, -0.8300F}}, 0.5600F, new float[]{1.8400F, 1.4480F, 4.8000F},
+            new float[][]{new float[]{-0.6200F, 0.6000F, -2.4000F}, new float[]{0.6200F, 0.6000F, -2.4000F}}, new float[][]{new float[]{-0.1400F, 0.8000F, -0.4980F}, new float[]{0.1400F, 0.8000F, -0.4980F}, new float[]{0.1400F, 0.9600F, -0.4980F}, new float[]{-0.1400F, 0.9600F, -0.4980F}},
+            new float[][]{new float[]{0.9200F, 0.0000F, -0.7400F}, new float[]{0.9200F, 0.0000F, 0.4000F}}, new float[][]{new float[]{0.5200F, 0.2700F, 2.4400F}},
+            null, null, null, null, null);
 
-    // intercept
-    public static final float[][] INTERCEPT_WHEELS = {{-1.0000F, 0.5000F, -1.8000F}, {1.0000F, 0.5000F, -1.8000F}, {-1.0000F, 0.5000F, 1.8000F}, {1.0000F, 0.5000F, 1.8000F}};
-    public static final float INTERCEPT_WHEEL_R = 0.5000F;
-    public static final float[][] INTERCEPT_SEATS = {{-0.4500F, 0.6800F, -0.1200F}, {0.4500F, 0.6800F, -0.1200F}};
-    public static final float[] INTERCEPT_STEER = {-0.4500F, 1.3800F, -0.6000F};
-    public static final float[][] INTERCEPT_PEDALS = {{-0.3000F, 1.0400F, -1.1000F}, {-0.4700F, 1.0400F, -1.1000F}};
-    public static final float[] INTERCEPT_GEAR = {0.0000F, 0.9400F, -0.5000F};
-    public static final float[] INTERCEPT_SPEEDO = {-0.5400F, 1.3600F, -0.7540F, 0.0720F};
-    public static final float[] INTERCEPT_TACHO = {-0.3600F, 1.3600F, -0.7540F, 0.0600F};
-    public static final float[][] INTERCEPT_WINDSHIELD = {{-1.0844F, 1.5060F, -1.1885F}, {1.0844F, 1.5060F, -1.1885F}, {0.9486F, 2.0900F, -0.8600F}, {-0.9486F, 2.0900F, -0.8600F}};
-    public static final float[][] INTERCEPT_WIPERS = {{-0.3800F, 1.5260F, -1.2085F}, {0.2200F, 1.5260F, -1.2085F}};
-    public static final float INTERCEPT_WIPER_LEN = 0.4500F;
-    public static final float[] INTERCEPT_SIZE = {2.4000F, 2.6500F, 6.0000F};
-    public static final float[][] INTERCEPT_LIGHTS = {{-0.8500F, 1.1200F, -2.7200F}, {0.8500F, 1.1200F, -2.7200F}};
-    public static final float[][] INTERCEPT_SCREEN = {{-0.1400F, 1.2700F, -0.8180F}, {0.1400F, 1.2700F, -0.8180F}, {0.1400F, 1.4300F, -0.8180F}, {-0.1400F, 1.4300F, -0.8180F}};
-    public static final float[] INTERCEPT_ANEMOMETER = {-0.7000F, 3.1800F, 2.6000F};
-    public static final float[] INTERCEPT_TURRET = {0.3500F, 2.2500F, -0.0500F};
-    public static final float[][] INTERCEPT_DOORS = {{1.2000F, 0.0000F, -0.8880F}};
-    public static final float[][] INTERCEPT_SPIKES = {{-0.9500F, 0.9500F, -1.1500F}, {0.9500F, 0.9500F, -1.1500F}, {-0.9500F, 0.9500F, 1.1500F}, {0.9500F, 0.9500F, 1.1500F}};
-    public static final float[][] INTERCEPT_SKIRTS = {{-1.2300F, 0.5000F, 0.0000F}, {1.2300F, 0.5000F, 0.0000F}};
+    public static final Geo PICKUP = new Geo(
+            new float[][]{new float[]{-0.8600F, 0.4200F, -1.7500F}, new float[]{0.8600F, 0.4200F, -1.7500F}, new float[]{-0.8600F, 0.4200F, 1.7000F}, new float[]{0.8600F, 0.4200F, 1.7000F}}, 0.4200F,
+            new float[][]{new float[]{-0.3700F, 0.5600F, -0.0500F}, new float[]{0.3700F, 0.5600F, -0.0500F}, new float[]{-0.4000F, 0.5200F, 0.6000F}, new float[]{0.4000F, 0.5200F, 0.6000F}},
+            new float[]{-0.3700F, 1.1800F, -0.4800F}, new float[][]{new float[]{-0.2200F, 0.9200F, -0.9800F}, new float[]{-0.3900F, 0.9200F, -0.9800F}}, new float[]{0.0000F, 0.8200F, -0.3800F},
+            new float[]{-0.4600F, 1.1600F, -0.6340F, 0.0720F}, new float[]{-0.2800F, 1.1600F, -0.6340F, 0.0600F},
+            new float[][]{new float[]{-0.8226F, 1.3726F, -0.9300F}, new float[]{0.8226F, 1.3726F, -0.9300F}, new float[]{0.7294F, 1.8526F, -0.4100F}, new float[]{-0.7294F, 1.8526F, -0.4100F}},
+            new float[][]{new float[]{-0.4200F, 1.3000F, -1.0300F}, new float[]{0.1600F, 1.3000F, -1.0300F}}, 0.6200F, new float[]{2.0200F, 1.9277F, 5.6000F},
+            new float[][]{new float[]{-0.8000F, 1.0300F, -2.8000F}, new float[]{0.8000F, 1.0300F, -2.8000F}}, new float[][]{new float[]{-0.1400F, 1.0700F, -0.6980F}, new float[]{0.1400F, 1.0700F, -0.6980F}, new float[]{0.1400F, 1.2300F, -0.6980F}, new float[]{-0.1400F, 1.2300F, -0.6980F}},
+            new float[][]{new float[]{1.0100F, 0.0000F, -0.9500F}, new float[]{1.0100F, 0.0000F, 0.1200F}}, new float[][]{new float[]{0.6200F, 0.4600F, 2.8400F}},
+            new float[]{0.6200F, 2.7800F, 1.2700F}, new float[]{-0.3000F, 0.8300F, 1.3500F}, null, null, null);
+
+    public static final Geo INTERCEPT = new Geo(
+            new float[][]{new float[]{-1.0000F, 0.5000F, -1.8000F}, new float[]{1.0000F, 0.5000F, -1.8000F}, new float[]{-1.0000F, 0.5000F, 1.8000F}, new float[]{1.0000F, 0.5000F, 1.8000F}}, 0.5000F,
+            new float[][]{new float[]{-0.4500F, 0.6800F, -0.1200F}, new float[]{0.4500F, 0.6800F, -0.1200F}},
+            new float[]{-0.4500F, 1.3800F, -0.6000F}, new float[][]{new float[]{-0.3000F, 1.0400F, -1.1000F}, new float[]{-0.4700F, 1.0400F, -1.1000F}}, new float[]{0.0000F, 0.9400F, -0.5000F},
+            new float[]{-0.5400F, 1.3600F, -0.7540F, 0.0720F}, new float[]{-0.3600F, 1.3600F, -0.7540F, 0.0600F},
+            new float[][]{new float[]{-1.0844F, 1.5060F, -1.1885F}, new float[]{1.0844F, 1.5060F, -1.1885F}, new float[]{0.9486F, 2.0900F, -0.8600F}, new float[]{-0.9486F, 2.0900F, -0.8600F}},
+            new float[][]{new float[]{-0.3800F, 1.5260F, -1.2085F}, new float[]{0.2200F, 1.5260F, -1.2085F}}, 0.4500F, new float[]{2.4000F, 2.6500F, 6.0000F},
+            new float[][]{new float[]{-0.8500F, 1.1200F, -2.7200F}, new float[]{0.8500F, 1.1200F, -2.7200F}}, new float[][]{new float[]{-0.1400F, 1.2700F, -0.8180F}, new float[]{0.1400F, 1.2700F, -0.8180F}, new float[]{0.1400F, 1.4300F, -0.8180F}, new float[]{-0.1400F, 1.4300F, -0.8180F}},
+            new float[][]{new float[]{1.2000F, 0.0000F, -0.8880F}}, new float[][]{new float[]{0.8000F, 0.5000F, 3.0200F}},
+            new float[]{-0.7000F, 3.1800F, 2.6000F}, null, new float[]{0.3500F, 2.2500F, -0.0500F}, new float[][]{new float[]{-0.9500F, 0.9500F, -1.1500F}, new float[]{0.9500F, 0.9500F, -1.1500F}, new float[]{-0.9500F, 0.9500F, 1.1500F}, new float[]{0.9500F, 0.9500F, 1.1500F}}, new float[][]{new float[]{-1.2300F, 0.5000F, 0.0000F}, new float[]{1.2300F, 0.5000F, 0.0000F}});
+
+    public static final Geo SUV = new Geo(
+            new float[][]{new float[]{-0.8700F, 0.4200F, -1.8500F}, new float[]{0.8700F, 0.4200F, -1.8500F}, new float[]{-0.8700F, 0.4200F, 1.7000F}, new float[]{0.8700F, 0.4200F, 1.7000F}}, 0.4200F,
+            new float[][]{new float[]{-0.3700F, 0.5800F, 0.0000F}, new float[]{0.3700F, 0.5800F, 0.0000F}, new float[]{-0.4000F, 0.5400F, 0.9000F}, new float[]{0.4000F, 0.5400F, 0.9000F}},
+            new float[]{-0.3700F, 1.2200F, -0.4800F}, new float[][]{new float[]{-0.2200F, 0.9400F, -0.9800F}, new float[]{-0.3900F, 0.9400F, -0.9800F}}, new float[]{0.0000F, 0.8400F, -0.3800F},
+            new float[]{-0.4600F, 1.2000F, -0.6340F, 0.0720F}, new float[]{-0.2800F, 1.2000F, -0.6340F, 0.0600F},
+            new float[][]{new float[]{-0.8449F, 1.3910F, -0.9300F}, new float[]{0.8449F, 1.3910F, -0.9300F}, new float[]{0.7452F, 1.9040F, -0.3600F}, new float[]{-0.7452F, 1.9040F, -0.3600F}},
+            new float[][]{new float[]{-0.4200F, 1.3500F, -1.0300F}, new float[]{0.1600F, 1.3500F, -1.0300F}}, 0.6400F, new float[]{2.0600F, 1.9690F, 5.7000F},
+            new float[][]{new float[]{-0.8200F, 1.0800F, -2.8500F}, new float[]{0.8200F, 1.0800F, -2.8500F}}, new float[][]{new float[]{-0.1400F, 1.1100F, -0.6980F}, new float[]{0.1400F, 1.1100F, -0.6980F}, new float[]{0.1400F, 1.2700F, -0.6980F}, new float[]{-0.1400F, 1.2700F, -0.6980F}},
+            new float[][]{new float[]{1.0300F, 0.0000F, -0.9500F}, new float[]{1.0300F, 0.0000F, 0.2500F}}, new float[][]{new float[]{-0.6500F, 0.4800F, 2.9100F}, new float[]{0.6500F, 0.4800F, 2.9100F}},
+            null, null, null, null, null);
+
+    public static final Geo COUPE = new Geo(
+            new float[][]{new float[]{-0.8400F, 0.3600F, -1.4200F}, new float[]{0.8400F, 0.3600F, -1.4200F}, new float[]{-0.8400F, 0.3600F, 1.4200F}, new float[]{0.8400F, 0.3600F, 1.4200F}}, 0.3600F,
+            new float[][]{new float[]{-0.3700F, 0.2600F, 0.5700F}, new float[]{0.3700F, 0.2600F, 0.5700F}},
+            new float[]{-0.3700F, 0.9200F, 0.0400F}, new float[][]{new float[]{-0.2200F, 0.6200F, -0.4600F}, new float[]{-0.3900F, 0.6200F, -0.4600F}}, new float[]{0.0000F, 0.5200F, 0.1400F},
+            new float[]{-0.4600F, 0.9000F, -0.1140F, 0.0720F}, new float[]{-0.2800F, 0.9000F, -0.1140F, 0.0600F},
+            new float[][]{new float[]{-0.7477F, 1.0130F, -0.4100F}, new float[]{0.7477F, 1.0130F, -0.4100F}, new float[]{0.5573F, 1.2980F, 0.1600F}, new float[]{-0.5573F, 1.2980F, 0.1600F}},
+            new float[][]{new float[]{-0.4200F, 0.9800F, -0.5100F}, new float[]{0.1600F, 0.9800F, -0.5100F}}, 0.5600F, new float[]{1.9400F, 1.3300F, 4.8000F},
+            new float[][]{new float[]{-0.7200F, 0.5800F, -2.4000F}, new float[]{0.7200F, 0.5800F, -2.4000F}}, new float[][]{new float[]{-0.1400F, 0.8100F, -0.1780F}, new float[]{0.1400F, 0.8100F, -0.1780F}, new float[]{0.1400F, 0.9700F, -0.1780F}, new float[]{-0.1400F, 0.9700F, -0.1780F}},
+            new float[][]{new float[]{0.9700F, 0.0000F, -0.5000F}}, new float[][]{new float[]{-0.5200F, 0.2400F, 2.4600F}, new float[]{-0.4200F, 0.2400F, 2.4600F}, new float[]{0.4200F, 0.2400F, 2.4600F}, new float[]{0.5200F, 0.2400F, 2.4600F}},
+            null, null, null, null, null);
+
+    public static final Geo SPORT = new Geo(
+            new float[][]{new float[]{-0.8400F, 0.3600F, -1.5000F}, new float[]{0.8400F, 0.3600F, -1.5000F}, new float[]{-0.8400F, 0.3600F, 1.4800F}, new float[]{0.8400F, 0.3600F, 1.4800F}}, 0.3600F,
+            new float[][]{new float[]{-0.3700F, 0.2800F, 0.2500F}, new float[]{0.3700F, 0.2800F, 0.2500F}, new float[]{-0.4000F, 0.2400F, 1.1000F}, new float[]{0.4000F, 0.2400F, 1.1000F}},
+            new float[]{-0.3700F, 0.9200F, -0.2300F}, new float[][]{new float[]{-0.2200F, 0.6400F, -0.7300F}, new float[]{-0.3900F, 0.6400F, -0.7300F}}, new float[]{0.0000F, 0.5400F, -0.1300F},
+            new float[]{-0.4600F, 0.9000F, -0.3840F, 0.0720F}, new float[]{-0.2800F, 0.9000F, -0.3840F, 0.0600F},
+            new float[][]{new float[]{-0.7599F, 0.9900F, -0.6800F}, new float[]{0.7599F, 0.9900F, -0.6800F}, new float[]{0.5871F, 1.3920F, -0.0100F}, new float[]{-0.5871F, 1.3920F, -0.0100F}},
+            new float[][]{new float[]{-0.4200F, 0.9600F, -0.7800F}, new float[]{0.1600F, 0.9600F, -0.7800F}}, 0.5800F, new float[]{1.9400F, 1.4485F, 5.0000F},
+            new float[][]{new float[]{-0.6800F, 0.6200F, -2.5000F}, new float[]{0.6800F, 0.6200F, -2.5000F}}, new float[][]{new float[]{-0.1400F, 0.8100F, -0.4480F}, new float[]{0.1400F, 0.8100F, -0.4480F}, new float[]{0.1400F, 0.9700F, -0.4480F}, new float[]{-0.1400F, 0.9700F, -0.4480F}},
+            new float[][]{new float[]{0.9700F, 0.0000F, -0.7000F}, new float[]{0.9700F, 0.0000F, 0.4200F}}, new float[][]{new float[]{-0.6200F, 0.2500F, 2.5700F}, new float[]{-0.5000F, 0.2500F, 2.5700F}, new float[]{0.5000F, 0.2500F, 2.5700F}, new float[]{0.6200F, 0.2500F, 2.5700F}},
+            null, null, null, null, null);
 
 }

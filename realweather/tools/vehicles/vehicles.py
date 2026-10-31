@@ -183,12 +183,15 @@ def wheel(r, width, style):
     K.cylinder("x", (0, 0), rim_r, -rw * 0.75, rw * 0.72, "rim", n=24, caps=(True, False), m=m)
     face = rw * 0.72
     K.cylinder("x", (0, 0), rim_r * 0.9, face - 0.02, face + 0.005, "dark", n=24, caps=(False, True), m=m)
-    spokes = 5 if style != "steel" else 8
+    spokes = 8 if style == "steel" else 10 if style == "multi" else 5
+    if style == "sport":
+        # Brake caliper behind the spokes.
+        K.rbox((face - 0.06, rim_r * 0.35, -0.1), (face - 0.02, rim_r * 0.82, 0.1), 0.02, "red", m=m)
     for s in range(spokes):
         a = 2 * math.pi * s / spokes
         p0 = v3(face + 0.008, 0.06 * math.sin(a), 0.06 * math.cos(a))
         p1 = v3(face - 0.004, rim_r * 0.88 * math.sin(a), rim_r * 0.88 * math.cos(a))
-        K.tube([p0, p1], 0.024 if style != "steel" else 0.012, "rim" if style != "offroad" else "dark", n=6, m=m)
+        K.tube([p0, p1], 0.012 if style in ("steel", "multi") else 0.024, "dark" if style in ("offroad", "sport") else "rim", n=6, m=m)
     K.cylinder("x", (0, 0), 0.07, face, face + 0.025, "chrome" if style == "alloy" else "dark", n=16, m=m)
     for s in range(5):
         a = 2 * math.pi * s / 5 + 0.3
@@ -300,12 +303,13 @@ class Vehicle:
         self.name = name
         self.parts = {}
         self.geo = {}
+        self.side_windows = []
 
     def part(self, name, mesh):
         self.parts[name] = mesh
 
 
-def cabin_glass(body, zw0, zw1, zr1, zb, belt_f, belt_r, roof, xb, xr, zB, frame_mat, m, glass):
+def cabin_glass(body, zw0, zw1, zr1, zb, belt_f, belt_r, roof, xb, xr, zB, frame_mat, m, glass, v=None, zC=None):
     """pillars, roof and glass of a passenger cabin; returns the windshield corners"""
     # Roof panel, slightly crowned.
     rings = []
@@ -337,20 +341,34 @@ def cabin_glass(body, zw0, zw1, zr1, zb, belt_f, belt_r, roof, xb, xr, zB, frame
         def side_pt(y, z):
             t = (y - belt_f) / (roof - belt_f)
             return v3(s * (xb + (xr - xb) * t), y, z)
-        fw = [side_pt(belt_f + 0.01, zw0 + 0.08), side_pt(roof - 0.04, zw1 + 0.05), side_pt(roof - 0.04, zB - 0.05), side_pt(belt_f + 0.01, zB - 0.05)]
-        K.plate(fw, 0.01, "glass", m=glass)
-        rw = [side_pt(belt_r + 0.01, zB + 0.05), side_pt(roof - 0.04, zB + 0.05), side_pt(roof - 0.04, zr1 - 0.22),
-              side_pt(belt_r + 0.01, zb - 0.4)]
-        K.plate(rw, 0.01, "glass", m=glass)
+        windows = [[side_pt(belt_f + 0.01, zw0 + 0.08), side_pt(roof - 0.04, zw1 + 0.05), side_pt(roof - 0.04, zB - 0.05),
+                    side_pt(belt_f + 0.01, zB - 0.05)]]
+        if zC is None:
+            windows.append([side_pt(belt_r + 0.01, zB + 0.05), side_pt(roof - 0.04, zB + 0.05), side_pt(roof - 0.04, zr1 - 0.22),
+                            side_pt(belt_r + 0.01, zb - 0.4)])
+        else:
+            K.tube([v3(s * (xb - 0.01), belt_r, zC), v3(s * (xr - 0.01), roof - 0.01, zC)], 0.05, frame_mat, n=8, m=m)
+            windows.append([side_pt(belt_r + 0.01, zB + 0.05), side_pt(roof - 0.04, zB + 0.05), side_pt(roof - 0.04, zC - 0.05),
+                            side_pt(belt_r + 0.01, zC - 0.05)])
+            windows.append([side_pt(belt_r + 0.01, zC + 0.05), side_pt(roof - 0.04, zC + 0.05), side_pt(roof - 0.04, zr1 - 0.22),
+                            side_pt(belt_r + 0.01, zb - 0.4)])
+        for w in windows:
+            pane = K.plate(w, 0.01, "glass")
+            if v is not None:
+                zc = sum(p[2] for p in w) / len(w)
+                v.side_windows.append((s, zc, pane))
+            else:
+                glass.extend(pane)
     return ws
 
 
-def interior(v, m, W, zw0, floor_y, belt, seats_rear, driver_x=-0.37, screen=False, seat_mat="seat"):
+def interior(v, m, W, zw0, floor_y, belt, seats_rear, driver_x=-0.37, screen=False, seat_mat="seat", front_z=1.0, rear_z=1.85):
     """floor, dashboard with instrument binnacle, console, seats; returns the points the renderer animates"""
     g = {}
-    K.box((-W / 2 + 0.05, floor_y - 0.03, zw0 - 0.25), (W / 2 - 0.05, floor_y, zw0 + 2.3 if seats_rear else zw0 + 1.45), "carpet", m=m)
+    K.box((-W / 2 + 0.05, floor_y - 0.03, zw0 - 0.25), (W / 2 - 0.05, floor_y, zw0 + rear_z + 0.45 if seats_rear else zw0 + front_z + 0.45),
+          "carpet", m=m)
     # Dashboard: a padded top under the windshield and a lower panel.
-    K.rbox((-W / 2 + 0.06, belt - 0.32, zw0 - 0.2), (W / 2 - 0.06, belt - 0.02, zw0 + 0.3), 0.05, "dash", m=m)
+    K.rbox((-W / 2 + 0.1, belt - 0.32, zw0 + 0.03), (W / 2 - 0.1, belt - 0.05, zw0 + 0.3), 0.05, "dash", m=m)
     K.rbox((-W / 2 + 0.08, floor_y + 0.15, zw0 - 0.1), (W / 2 - 0.08, belt - 0.3, zw0 + 0.18), 0.03, "dash", m=m)
     # Instrument binnacle in front of the driver.
     K.rbox((driver_x - 0.2, belt - 0.12, zw0 + 0.18), (driver_x + 0.2, belt + 0.06, zw0 + 0.36), 0.04, "dash", m=m)
@@ -378,12 +396,12 @@ def interior(v, m, W, zw0, floor_y, belt, seats_rear, driver_x=-0.37, screen=Fal
     g["steer"] = sw
     g["pedals"] = [(driver_x + 0.15, floor_y + 0.42, zw0 + 0.02), (driver_x - 0.02, floor_y + 0.42, zw0 + 0.02)]
     # Seats.
-    seats = [(driver_x, zw0 + 1.0), (-driver_x, zw0 + 1.0)]
+    seats = [(driver_x, zw0 + front_z), (-driver_x, zw0 + front_z)]
     for x, z in seats:
         bucket(m, x, floor_y, z, seat_mat)
     g["seats"] = [(x, floor_y + 0.06, z) for x, z in seats]
     if seats_rear:
-        zr = zw0 + 1.85
+        zr = zw0 + rear_z
         K.rbox((-W / 2 + 0.12, floor_y + 0.1, zr - 0.25), (W / 2 - 0.12, floor_y + 0.24, zr + 0.25), 0.05, seat_mat, m=m)
         back = Mesh()
         K.rbox((-W / 2 + 0.12, floor_y + 0.24, zr + 0.2), (W / 2 - 0.12, floor_y + 0.8, zr + 0.34), 0.05, seat_mat, m=back)
@@ -454,6 +472,26 @@ def doors(v, b, top, W, thick, mat, spans, fixed, handle_y, body):
         v.part("door_" + name + "l", left)
         hinges.append((W / 2, 0.0, z0))
     v.geo["doors"] = hinges
+    v.door_spans = list(spans)
+    v.door_w = W
+
+
+def attach_door_glass(v, glass):
+    """each side window rides on the door it sits in (it swings open with the door); the rest stays in the body glass"""
+    for s, zc, pane in v.side_windows:
+        placed = False
+        for i, (z0, z1) in enumerate(getattr(v, "door_spans", [])):
+            if z0 <= zc <= z1:
+                name = "door_" + ["f", "r"][i] + ("r" if s > 0 else "l") + "_glass"
+                moved = pane.copy().translate((-s * v.door_w / 2, 0, -z0))
+                if name in v.parts:
+                    v.parts[name].extend(moved)
+                else:
+                    v.parts[name] = moved
+                placed = True
+                break
+        if not placed:
+            glass.extend(pane)
 
 
 def door_lines(m, body, x, zs, y0, y1):
@@ -509,7 +547,8 @@ def sedan():
     wheel_wells(body, b, body)
     glass = Mesh()
     xb, xr = W / 2 - 0.03, W / 2 - 0.17
-    ws = cabin_glass(b, zw0, zw1, zr1, zb, 0.93, 0.96, roof, xb, xr, 0.42, "paint", body, glass)
+    ws = cabin_glass(b, zw0, zw1, zr1, zb, 0.93, 0.96, roof, xb, xr, 0.42, "paint", body, glass, v)
+    attach_door_glass(v, glass)
     front_details(body, b, -half, 0.5, W, 0.72, 0.16, 0.64, 0.34)
     rear_details(body, half, W, 0.82, 0.55)
     mirrors(body, W, 0.98, zw0 + 0.12)
@@ -524,7 +563,8 @@ def sedan():
                           (-W / 2 + 0.12, 0.99, half - 0.3)])))
     v.geo.update(wheels=[(-0.78, b.wheel_r, b.wz_f), (0.78, b.wheel_r, b.wz_f), (-0.78, b.wheel_r, b.wz_r), (0.78, b.wheel_r, b.wz_r)],
                  wheel_r=b.wheel_r, windshield=ws, wipers=[(-0.42, 0.95, zw0 + 0.05), (0.18, 0.95, zw0 + 0.05)], wiper_len=0.55,
-                 size=(W, roof, b.length), lights_front=[(-0.62, 0.64, -half), (0.62, 0.64, -half)])
+                 size=(W, roof, b.length), lights_front=[(-0.62, 0.64, -half), (0.62, 0.64, -half)],
+                 exhausts=[(0.5, 0.26, half + 0.02)])
     return v
 
 
@@ -564,7 +604,8 @@ def pickup():
     wheel_wells(body, b, body, 0.3)
     glass = Mesh()
     xb, xr = W / 2 - 0.03, W / 2 - 0.14
-    ws = cabin_glass(b, zw0, zw1, zr1, zb, 1.2, 1.22, roof, xb, xr, -0.05, "paint", body, glass)
+    ws = cabin_glass(b, zw0, zw1, zr1, zb, 1.2, 1.22, roof, xb, xr, -0.05, "paint", body, glass, v)
+    attach_door_glass(v, glass)
     front_details(body, b, -half, 0.84, W, 1.05, 0.34, 0.98, 0.3)
     rear_details(body, half, W, 1.0, 0.7)
     mirrors(body, W, 1.32, zw0 + 0.12)
@@ -611,7 +652,7 @@ def pickup():
     v.geo.update(wheels=[(-0.86, b.wheel_r, b.wz_f), (0.86, b.wheel_r, b.wz_f), (-0.86, b.wheel_r, b.wz_r), (0.86, b.wheel_r, b.wz_r)],
                  wheel_r=b.wheel_r, windshield=ws, wipers=[(-0.48, 1.22, zw0 + 0.05), (0.2, 1.22, zw0 + 0.05)], wiper_len=0.6,
                  size=(W, roof + 0.2, b.length), anemometer=(mast[0], 2.78, mast[2]), dish=(-0.3, 0.66, half - 1.4),
-                 lights_front=[(-0.72, 0.98, -half), (0.72, 0.98, -half)])
+                 lights_front=[(-0.72, 0.98, -half), (0.72, 0.98, -half)], exhausts=[(0.6, 0.42, half + 0.04)])
     return v
 
 
@@ -716,8 +757,214 @@ def intercept():
                  wheel_r=b.wheel_r, windshield=ws, wipers=[(-0.38, ws[0][1] + 0.02, ws[0][2] - 0.02), (0.22, ws[0][1] + 0.02, ws[0][2] - 0.02)],
                  wiper_len=0.45, size=(W, roof + 0.4, b.length), spikes=spikes, skirts=[(-W / 2 - 0.03, 0.5, 0.0), (W / 2 + 0.03, 0.5, 0.0)],
                  turret=(0.35, roof, zf1 + 0.7), anemometer=(mast[0], roof + 0.93, mast[2]),
-                 lights_front=[(-0.85, 1.12, -half + 0.28), (0.85, 1.12, -half + 0.28)])
+                 lights_front=[(-0.85, 1.12, -half + 0.28), (0.85, 1.12, -half + 0.28)], exhausts=[(0.8, 0.5, half + 0.02)])
     return v
+
+
+# ------------------------------------------------------------------------------------------------ shared detail pieces
+def exhaust_tips(m, xs, y, z_rear, r=0.045, length=0.14):
+    tips = []
+    for x in xs:
+        K.cylinder("z", (x, y), r, z_rear - length, z_rear + 0.02, "chrome", n=14, caps=(False, False), m=m)
+        K.cylinder("z", (x, y), r * 0.78, z_rear - length, z_rear + 0.015, "black", n=14, caps=(True, False), m=m)
+        tips.append((x, y, z_rear + 0.03))
+    return tips
+
+
+def stripe(m, top, x0, x1, z0, z1, mat="black", lift=0.006, step=0.08):
+    """a flat stripe following the top line of the body"""
+    zs = frange(z0, z1, step)
+    for a, b2 in zip(zs, zs[1:]):
+        ya, yb = interp(top, a) + lift, interp(top, b2) + lift
+        m.add_oriented([v3(x0, ya, a), v3(x1, ya, a), v3(x1, yb, b2), v3(x0, yb, b2)], mat, v3(0, 1, 0))
+
+
+def led_strip(m, pts, mat="blue_light", w=0.012):
+    for a, b2 in zip(pts, pts[1:]):
+        K.tube([v3(*a), v3(*b2)], w, mat, n=6, m=m)
+
+
+# ------------------------------------------------------------------------------------------------ full-size SUV
+def suv():
+    """large three-box SUV: tall flat hood, huge chrome grille, LED lights, long greenhouse with a third side window"""
+    v = Vehicle("suv")
+    W = 2.06
+    b = Body(length=5.7, width=W, sill=0.38, bumper_low=0.4, over_f=0.95, over_r=1.15, wz_f=-1.75, wz_r=1.85, wheel_r=0.42)
+    half = b.length / 2
+    zw0, zw1, zr1, zb = -0.95, -0.26, 2.42, 2.6
+    roof = 1.95
+    top = [(-half, 1.02), (-half + 0.12, 1.13), (zw0 - 0.5, 1.18), (zw0, 1.22), (zb, 1.25), (half - 0.1, 1.24), (half, 1.12)]
+    body = Mesh()
+    K.prism(b.profile(-half, zw0, top), "x", -W / 2, W / 2, "paint", bevel=0.05, m=body)
+    K.prism(b.profile(zb - 0.02, half, top), "x", -W / 2, W / 2, "paint", bevel=0.05, m=body)
+    doors(v, b, top, W, 0.05, "paint", [(zw0 + 0.012, 0.276), (0.296, 1.35)],
+          [(zw0 - 0.02, zw0 + 0.004), (0.28, 0.292), (1.354, zb)], 1.12, body)
+    # Cargo floor, rear seats wall.
+    K.box((-W / 2 + 0.05, 0.6, 1.4), (W / 2 - 0.05, 0.64, zb), "carpet", m=body)
+    b.taper(body, 0.05, 0.5)
+    wheel_wells(body, b, body, 0.3)
+    glass = Mesh()
+    xb, xr = W / 2 - 0.03, W / 2 - 0.12
+    ws = cabin_glass(b, zw0, zw1, zr1, zb, 1.22, 1.25, roof, xb, xr, 0.29, "black", body, glass, v, zC=1.38)
+    attach_door_glass(v, glass)
+    # Huge chrome grille with bars, slim LED headlights over it, fog lamps, chrome bumper insert.
+    zf = -half
+    K.rbox((-0.62, 0.62, zf - 0.04), (0.62, 1.1, zf + 0.06), 0.03, "chrome", m=body)
+    K.rbox((-0.56, 0.66, zf - 0.05), (0.56, 1.06, zf + 0.02), 0.02, "trim", m=body)
+    for i in range(6):
+        y = 0.69 + i * 0.065
+        K.box((-0.55, y, zf - 0.065), (0.55, y + 0.022, zf - 0.04), "chrome", m=body)
+    K.box((-0.17, 0.83, zf - 0.08), (0.17, 0.9, zf - 0.06), "red", m=body)
+    for sgn in (-1, 1):
+        lamp(body, (sgn * 0.84, 1.03, zf + 0.06), 0.34, 0.1, 0.08, "lens", "head_light", -1)
+        led_strip(body, [(sgn * 0.68, 0.98, zf + 0.0), (sgn * 1.0, 0.98, zf + 0.12)], "head_light", 0.01)
+        led_strip(body, [(sgn * 0.68, 0.92, zf + 0.0), (sgn * 0.68, 0.62, zf + 0.0)], "head_light", 0.012)
+        lamp(body, (sgn * 0.82, 0.55, zf + 0.04), 0.14, 0.08, 0.06, "lens", "head_light", -1)
+        # Tall rear lights.
+        lamp(body, (sgn * (W / 2 - 0.1), 1.05, half - 0.03), 0.12, 0.42, 0.08, "lens", "tail_light", 1)
+        # Running boards and roof rails.
+        K.rbox((sgn * (W / 2 + 0.02) - 0.1, 0.36, zw0 + 0.1), (sgn * (W / 2 + 0.02) + 0.1, 0.42, 1.3), 0.02, "trim", m=body)
+        K.rbox((sgn * (xr - 0.05) - 0.025, roof + 0.02, zw1 + 0.2), (sgn * (xr - 0.05) + 0.025, roof + 0.07, zr1 - 0.1), 0.012, "trim", m=body)
+    K.rbox((-W / 2 + 0.03, 0.38, zf - 0.08), (W / 2 - 0.03, 0.62, zf + 0.15), 0.05, "paint", m=body)
+    K.rbox((-W / 2 + 0.03, 0.4, half - 0.08), (W / 2 - 0.03, 0.62, half + 0.06), 0.05, "paint", m=body)
+    K.box((-0.26, 0.48, half + 0.06), (0.26, 0.58, half + 0.08), "plate", m=body)
+    K.box((-0.14, 1.12, half + 0.001), (0.14, 1.18, half + 0.02), "chrome", m=body)
+    tips = exhaust_tips(body, [-0.62, 0.62], 0.42, half + 0.05, 0.05)
+    mirrors(body, W, 1.34, zw0 + 0.12)
+    interior(v, body, W, zw0, 0.5, 1.22, True, screen=True, seat_mat="seat")
+    v.part("body", body)
+    v.part("glass", glass)
+    v.part("wheel", wheel(b.wheel_r, 0.3, "multi"))
+    v.part("cover", cover([(-xr, roof + 0.03, zw1 + 0.1), (xr, roof + 0.03, zw1 + 0.1), (xr, roof + 0.03, zr1 - 0.1), (-xr, roof + 0.03, zr1 - 0.1)])
+           .extend(cover([(-W / 2 + 0.12, 1.16, -half + 0.3), (W / 2 - 0.12, 1.16, -half + 0.3), (W / 2 - 0.12, 1.22, zw0 - 0.05),
+                          (-W / 2 + 0.12, 1.22, zw0 - 0.05)])))
+    v.geo.update(wheels=[(-0.88, b.wheel_r, b.wz_f), (0.88, b.wheel_r, b.wz_f), (-0.88, b.wheel_r, b.wz_r), (0.88, b.wheel_r, b.wz_r)],
+                 wheel_r=b.wheel_r, windshield=ws, wipers=[(-0.5, 1.23, zw0 + 0.05), (0.2, 1.23, zw0 + 0.05)], wiper_len=0.62,
+                 size=(W, roof, b.length), lights_front=[(-0.84, 1.03, -half), (0.84, 1.03, -half)], exhausts=tips)
+    return v
+
+
+# ------------------------------------------------------------------------------------------------ muscle coupe
+def coupe():
+    """long-hood fastback coupe: hood bulge and vents, racing stripes, slim lights, spoiler, quad exhaust"""
+    v = Vehicle("coupe")
+    W = 1.92
+    b = Body(length=4.85, width=W, sill=0.18, bumper_low=0.2, over_f=0.95, over_r=0.9, wz_f=-1.42, wz_r=1.42, wheel_r=0.36)
+    half = b.length / 2
+    zw0, zw1, zr1, zb = -0.42, 0.28, 0.78, 1.72
+    roof = 1.32
+    top = [(-half, 0.6), (-half + 0.12, 0.76), (-half + 0.6, 0.83), (zw0, 0.9), (zb, 0.93), (half - 0.15, 0.99), (half, 0.9)]
+    body = Mesh()
+    K.prism(b.profile(-half, zw0, top), "x", -W / 2, W / 2, "paint", bevel=0.07, m=body)
+    K.prism(b.profile(zb - 0.02, half, top), "x", -W / 2, W / 2, "paint", bevel=0.07, m=body)
+    doors(v, b, top, W, 0.05, "paint", [(zw0 + 0.012, 0.95)], [(zw0 - 0.02, zw0 + 0.004), (0.954, zb)], 0.84, body)
+    K.rbox((-W / 2 + 0.03, 0.22, -half - 0.04), (W / 2 - 0.03, 0.42, -half + 0.14), 0.05, "paint", m=body)
+    K.rbox((-W / 2 + 0.03, 0.24, half - 0.12), (W / 2 - 0.03, 0.44, half + 0.02), 0.05, "paint", m=body)
+    # Front splitter and rear diffuser.
+    K.box((-W / 2 + 0.08, 0.17, -half - 0.08), (W / 2 - 0.08, 0.2, -half + 0.2), "trim", m=body)
+    K.box((-0.7, 0.18, half - 0.2), (0.7, 0.24, half + 0.05), "trim", m=body)
+    b.taper(body, 0.09, 0.8)
+    wheel_wells(body, b, body)
+    glass = Mesh()
+    xb, xr = W / 2 - 0.04, W / 2 - 0.22
+    ws = cabin_glass(b, zw0, zw1, zr1, zb, 0.9, 0.93, roof, xb, xr, 0.9, "paint", body, glass, v)
+    attach_door_glass(v, glass)
+    # Hood bulge and vents.
+    K.rbox((-0.3, interp(top, -1.4) - 0.02, -1.75), (0.3, interp(top, -0.6) + 0.05, -0.55), 0.05, "paint", m=body)
+    for sgn in (-1, 1):
+        K.box((sgn * 0.55 - 0.12, interp(top, -1.0) + 0.005, -1.15), (sgn * 0.55 + 0.12, interp(top, -1.0) + 0.02, -0.9), "black", m=body)
+    # Racing stripes over the hood, roof and boot.
+    for x0 in (-0.26, 0.08):
+        stripe(body, top, x0, x0 + 0.18, -half + 0.05, zw0 - 0.02, lift=0.012)
+        stripe(body, [(zb + 0.05, 0.93), (half, 0.99)], x0, x0 + 0.18, zb + 0.05, half - 0.05, lift=0.065)
+        K.box((x0, roof + 0.035, zw1 + 0.02), (x0 + 0.18, roof + 0.042, zr1 - 0.02), "black", m=body)
+    # Black grille with slim lights, splitter, bonnet line.
+    zf = -half
+    K.rbox((-0.62, 0.42, zf - 0.03), (0.62, 0.6, zf + 0.05), 0.02, "black", m=body)
+    for i in range(3):
+        K.box((-0.58, 0.45 + i * 0.05, zf - 0.04), (0.58, 0.465 + i * 0.05, zf - 0.03), "trim", m=body)
+    for sgn in (-1, 1):
+        lamp(body, (sgn * 0.74, 0.66, zf + 0.08), 0.32, 0.06, 0.08, "lens", "head_light", -1)
+        led_strip(body, [(sgn * 0.6, 0.62, zf + 0.04), (sgn * 0.88, 0.63, zf + 0.12)], "head_light", 0.008)
+        lamp(body, (sgn * (W / 2 - 0.22), 0.88, half - 0.02), 0.34, 0.08, 0.06, "lens", "tail_light", 1)
+        K.box((sgn * (W / 2 + 0.002) - 0.004, 0.42, 1.6), (sgn * (W / 2 + 0.002) + 0.004, 0.6, 1.95), "black", m=body)
+    # Spoiler on the boot lid.
+    ys = 0.99
+    for x in (-0.6, 0.6):
+        K.box((x - 0.03, ys, half - 0.28), (x + 0.03, ys + 0.1, half - 0.2), "black", m=body)
+    K.rbox((-0.78, ys + 0.1, half - 0.33), (0.78, ys + 0.13, half - 0.12), 0.012, "paint", m=body)
+    K.box((-0.26, 0.48, half + 0.02), (0.26, 0.6, half + 0.04), "plate", m=body)
+    tips = exhaust_tips(body, [-0.5, -0.38, 0.38, 0.5], 0.25, half + 0.04, 0.045)
+    mirrors(body, W, 0.95, zw0 + 0.15)
+    interior(v, body, W, zw0, 0.2, 0.9, False, screen=True, seat_mat="seat")
+    v.part("body", body)
+    v.part("glass", glass)
+    v.part("wheel", wheel(b.wheel_r, 0.27, "sport"))
+    v.part("cover", cover([(-xr, roof + 0.03, zw1 + 0.05), (xr, roof + 0.03, zw1 + 0.05), (xr, roof + 0.03, zr1 - 0.05), (-xr, roof + 0.03, zr1 - 0.05)])
+           .extend(cover([(-W / 2 + 0.15, 0.85, -half + 0.4), (W / 2 - 0.15, 0.85, -half + 0.4), (W / 2 - 0.15, 0.92, zw0 - 0.05),
+                          (-W / 2 + 0.15, 0.92, zw0 - 0.05)])))
+    v.geo.update(wheels=[(-0.82, b.wheel_r, b.wz_f), (0.82, b.wheel_r, b.wz_f), (-0.82, b.wheel_r, b.wz_r), (0.82, b.wheel_r, b.wz_r)],
+                 wheel_r=b.wheel_r, windshield=ws, wipers=[(-0.42, 0.91, zw0 + 0.05), (0.16, 0.91, zw0 + 0.05)], wiper_len=0.55,
+                 size=(W, roof, b.length), lights_front=[(-0.74, 0.66, -half), (0.74, 0.66, -half)], exhausts=tips)
+    return v
+
+
+# ------------------------------------------------------------------------------------------------ sport sedan
+def sport():
+    """fast four-door: wide dark grille with a chrome frame, blue LED light signatures, quad exhaust, diffuser"""
+    v = Vehicle("sport")
+    W = 1.92
+    b = Body(length=5.0, width=W, sill=0.17, bumper_low=0.2, over_f=0.92, over_r=1.05, wz_f=-1.5, wz_r=1.5, wheel_r=0.36)
+    half = b.length / 2
+    zw0, zw1, zr1, zb = -0.68, 0.06, 1.05, 1.62
+    roof = 1.45
+    top = [(-half, 0.62), (-half + 0.12, 0.76), (-half + 0.5, 0.81), (zw0, 0.93), (zb, 0.97), (half - 0.2, 1.0), (half, 0.88)]
+    body = Mesh()
+    K.prism(b.profile(-half, zw0, top), "x", -W / 2, W / 2, "paint", bevel=0.07, m=body)
+    K.prism(b.profile(zb - 0.02, half, top), "x", -W / 2, W / 2, "paint", bevel=0.07, m=body)
+    doors(v, b, top, W, 0.05, "paint", [(zw0 + 0.012, 0.408), (0.428, zb - 0.062)],
+          [(zw0 - 0.02, zw0 + 0.004), (0.412, 0.424), (zb - 0.058, zb)], 0.86, body)
+    K.rbox((-W / 2 + 0.03, 0.22, -half - 0.04), (W / 2 - 0.03, 0.46, -half + 0.14), 0.05, "paint", m=body)
+    K.rbox((-W / 2 + 0.03, 0.24, half - 0.12), (W / 2 - 0.03, 0.46, half + 0.02), 0.05, "paint", m=body)
+    K.box((-0.75, 0.17, half - 0.25), (0.75, 0.24, half + 0.06), "trim", m=body)
+    b.taper(body, 0.08, 0.8)
+    wheel_wells(body, b, body)
+    glass = Mesh()
+    xb, xr = W / 2 - 0.03, W / 2 - 0.18
+    ws = cabin_glass(b, zw0, zw1, zr1, zb, 0.93, 0.97, roof, xb, xr, 0.42, "paint", body, glass, v)
+    attach_door_glass(v, glass)
+    # Wide dark grille in a chrome frame, big lower intakes, LED signatures.
+    zf = -half
+    K.rbox((-0.42, 0.5, zf - 0.04), (0.42, 0.72, zf + 0.05), 0.04, "chrome", m=body)
+    K.rbox((-0.39, 0.52, zf - 0.05), (0.39, 0.7, zf + 0.02), 0.03, "black", m=body)
+    for i in range(9):
+        x = -0.34 + i * 0.085
+        K.box((x - 0.006, 0.53, zf - 0.06), (x + 0.006, 0.69, zf - 0.05), "trim", m=body)
+    for sgn in (-1, 1):
+        lamp(body, (sgn * 0.7, 0.7, zf + 0.08), 0.36, 0.08, 0.08, "lens", "head_light", -1)
+        led_strip(body, [(sgn * 0.52, 0.66, zf + 0.04), (sgn * 0.88, 0.67, zf + 0.12)], "blue_light", 0.01)
+        led_strip(body, [(sgn * 0.52, 0.74, zf + 0.04), (sgn * 0.88, 0.75, zf + 0.12)], "blue_light", 0.008)
+        K.rbox((sgn * 0.72 - 0.16, 0.26, zf - 0.03), (sgn * 0.72 + 0.16, 0.42, zf + 0.05), 0.03, "black", m=body)
+        led_strip(body, [(sgn * 0.58, 0.27, zf - 0.035), (sgn * 0.58, 0.41, zf - 0.035)], "blue_light", 0.008)
+        lamp(body, (sgn * (W / 2 - 0.2), 0.86, half - 0.03), 0.36, 0.09, 0.08, "lens", "tail_light", 1)
+        # Blue light along the sills.
+        led_strip(body, [(sgn * (W / 2 + 0.005), 0.2, -0.6), (sgn * (W / 2 + 0.005), 0.2, 1.4)], "blue_light", 0.006)
+    K.rbox((-0.62, 0.99, half - 0.24), (0.62, 1.02, half - 0.12), 0.01, "paint", m=body)
+    K.box((-0.26, 0.5, half + 0.02), (0.26, 0.62, half + 0.04), "plate", m=body)
+    tips = exhaust_tips(body, [-0.62, -0.5, 0.5, 0.62], 0.25, half + 0.06, 0.04)
+    mirrors(body, W, 0.99, zw0 + 0.12)
+    interior(v, body, W, zw0, 0.21, 0.94, True, screen=True, seat_mat="seat")
+    v.part("body", body)
+    v.part("glass", glass)
+    v.part("wheel", wheel(b.wheel_r, 0.27, "sport"))
+    v.part("cover", cover([(-xr, roof + 0.03, zw1 + 0.05), (xr, roof + 0.03, zw1 + 0.05), (xr, roof + 0.03, zr1 - 0.05), (-xr, roof + 0.03, zr1 - 0.05)])
+           .extend(cover([(-W / 2 + 0.12, 0.85, -half + 0.4), (W / 2 - 0.12, 0.85, -half + 0.4), (W / 2 - 0.12, 0.95, zw0 - 0.05),
+                          (-W / 2 + 0.12, 0.95, zw0 - 0.05)])))
+    v.geo.update(wheels=[(-0.82, b.wheel_r, b.wz_f), (0.82, b.wheel_r, b.wz_f), (-0.82, b.wheel_r, b.wz_r), (0.82, b.wheel_r, b.wz_r)],
+                 wheel_r=b.wheel_r, windshield=ws, wipers=[(-0.45, 0.95, zw0 + 0.05), (0.18, 0.95, zw0 + 0.05)], wiper_len=0.57,
+                 size=(W, roof, b.length), lights_front=[(-0.7, 0.7, -half), (0.7, 0.7, -half)], exhausts=tips)
+    return v
+
 
 
 # ------------------------------------------------------------------------------------------------ output
@@ -734,35 +981,36 @@ def java(vehicles):
         return f"{x:.4f}F"
 
     def vec(p):
-        return "{" + ", ".join(f(c) for c in p) + "}"
+        return "new float[]{" + ", ".join(f(c) for c in p) + "}"
+
+    def arr(ps):
+        if ps is None:
+            return "null"
+        return "new float[][]{" + ", ".join(vec(p) for p in ps) + "}"
+
+    def one(p):
+        return "null" if p is None else vec(p)
     lines = ["package com.realweather.vehicle;", "",
              "/** Generated by tools/vehicles/vehicles.py: points of each vehicle model in metres (front -Z, +X right). */",
-             "public final class VehicleGeometry {", "    private VehicleGeometry() {}", ""]
+             "public final class VehicleGeometry {", "    private VehicleGeometry() {}", "",
+             "    /** Where everything sits on one vehicle. Optional equipment is null. */",
+             "    public record Geo(float[][] wheels, float wheelR, float[][] seats, float[] steer, float[][] pedals, float[] gear, float[] speedo,",
+             "                      float[] tacho, float[][] windshield, float[][] wipers, float wiperLen, float[] size, float[][] lights, float[][] screen,",
+             "                      float[][] doors, float[][] exhausts, float[] anemometer, float[] dish, float[] turret, float[][] spikes,",
+             "                      float[][] skirts) {}", ""]
     for v in vehicles:
         g = v.geo
         n = v.name.upper()
-        lines.append(f"    // {v.name}")
-        lines.append(f"    public static final float[][] {n}_WHEELS = {{{', '.join(vec(p) for p in g['wheels'])}}};")
-        lines.append(f"    public static final float {n}_WHEEL_R = {f(g['wheel_r'])};")
-        lines.append(f"    public static final float[][] {n}_SEATS = {{{', '.join(vec(p) for p in g['seats'])}}};")
-        lines.append(f"    public static final float[] {n}_STEER = {vec(g['steer'])};")
-        lines.append(f"    public static final float[][] {n}_PEDALS = {{{', '.join(vec(p) for p in g['pedals'])}}};")
-        lines.append(f"    public static final float[] {n}_GEAR = {vec(g['gear'])};")
-        lines.append(f"    public static final float[] {n}_SPEEDO = {vec(g['speedo'])};")
-        lines.append(f"    public static final float[] {n}_TACHO = {vec(g['tacho'])};")
-        lines.append(f"    public static final float[][] {n}_WINDSHIELD = {{{', '.join(vec(p) for p in g['windshield'])}}};")
-        lines.append(f"    public static final float[][] {n}_WIPERS = {{{', '.join(vec(p) for p in g['wipers'])}}};")
-        lines.append(f"    public static final float {n}_WIPER_LEN = {f(g['wiper_len'])};")
-        lines.append(f"    public static final float[] {n}_SIZE = {vec(g['size'])};")
-        lines.append(f"    public static final float[][] {n}_LIGHTS = {{{', '.join(vec(p) for p in g['lights_front'])}}};")
-        lines.append(f"    public static final float[][] {n}_SCREEN = {{{', '.join(vec(p) for p in g.get('screen', [(0, 0, 0)] * 4))}}};")
-        for key in ("anemometer", "dish", "turret"):
-            if key in g:
-                lines.append(f"    public static final float[] {n}_{key.upper()} = {vec(g[key])};")
-        lines.append(f"    public static final float[][] {n}_DOORS = {{{', '.join(vec(p) for p in g.get('doors', []))}}};")
-        for key in ("spikes", "skirts"):
-            if key in g:
-                lines.append(f"    public static final float[][] {n}_{key.upper()} = {{{', '.join(vec(p) for p in g[key])}}};")
+        lines.append(f"    public static final Geo {n} = new Geo(")
+        lines.append(f"            {arr(g['wheels'])}, {f(g['wheel_r'])},")
+        lines.append(f"            {arr(g['seats'])},")
+        lines.append(f"            {vec(g['steer'])}, {arr(g['pedals'])}, {vec(g['gear'])},")
+        lines.append(f"            {vec(g['speedo'])}, {vec(g['tacho'])},")
+        lines.append(f"            {arr(g['windshield'])},")
+        lines.append(f"            {arr(g['wipers'])}, {f(g['wiper_len'])}, {vec(g['size'])},")
+        lines.append(f"            {arr(g['lights_front'])}, {arr(g.get('screen'))},")
+        lines.append(f"            {arr(g.get('doors', []))}, {arr(g.get('exhausts', []))},")
+        lines.append(f"            {one(g.get('anemometer'))}, {one(g.get('dish'))}, {one(g.get('turret'))}, {arr(g.get('spikes'))}, {arr(g.get('skirts'))});")
         lines.append("")
     lines.append("}")
     os.makedirs(os.path.dirname(JAVA), exist_ok=True)
@@ -795,15 +1043,22 @@ def icons(vehicles):
     out = os.path.join(RES, "textures", "item")
     os.makedirs(out, exist_ok=True)
     for v in vehicles:
-        tint = (0.75, 0.12, 0.1) if v.name == "sedan" else (0.95, 0.95, 0.95) if v.name == "pickup" else None
+        tint = {"sedan": (0.75, 0.12, 0.1), "pickup": (0.95, 0.95, 0.95), "suv": (0.95, 0.95, 0.95), "coupe": (0.95, 0.75, 0.1),
+                "sport": (0.12, 0.13, 0.15)}.get(v.name)
         meshes = [(v.parts["body"], tint), (v.parts["glass"], None)]
+        for name, m in v.parts.items():
+            if name.startswith("door_"):
+                side = 1 if name[6] == "r" else -1
+                hinge = v.geo["doors"][0 if name[5] == "f" else 1]
+                meshes.append((m.copy().translate((side * hinge[0], hinge[1], hinge[2])), tint))
         for (x, y, z) in v.geo["wheels"]:
             w = v.parts["wheel"].copy()
             if x < 0:
                 w.rotate("y", 180)
             w.translate((x, y, z))
             meshes.append((w, None))
-        im = K.render(meshes, yaw=215, pitch=22, size=(256, 256), bg=(0, 0, 0), zoom=1.15).convert("RGBA")
+        im = K.render(meshes, yaw=215, pitch=22, size=(256, 256), bg=(0, 0, 0), zoom=1.15,
+                      tex_dir=os.path.join(RES, "textures", "item", "vehicle")).convert("RGBA")
         px = im.load()
         for yy in range(im.size[1]):
             for xx in range(im.size[0]):
@@ -816,8 +1071,13 @@ def icons(vehicles):
 
 
 if __name__ == "__main__":
-    vs = [sedan(), pickup(), intercept()]
+    import cars2
+    import decals
+    import shutil
+    vs = [cars2.sedan(), cars2.pickup(), intercept(), cars2.suv(), cars2.coupe(), cars2.sport()]
     K.make_textures(RES)
+    decals.generate(RES)
+    shutil.rmtree(os.path.join(RES, "models", "vehicle"), ignore_errors=True)
     for v in vs:
         write(v)
     shared = Vehicle("parts")

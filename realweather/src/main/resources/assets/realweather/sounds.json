@@ -240,5 +240,85 @@
       }
     ],
     "subtitle": "subtitles.realweather.vehicle.wind_buffet"
+  },
+  "vehicle.engine_v8": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_engine_v8",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.engine_v8"
+  },
+  "vehicle.engine_muscle": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_engine_muscle",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.engine_muscle"
+  },
+  "vehicle.engine_sport": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_engine_sport",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.engine_sport"
+  },
+  "vehicle.start_v8": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_start_v8",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.start_v8"
+  },
+  "vehicle.start_muscle": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_start_muscle",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.start_muscle"
+  },
+  "vehicle.start_sport": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_start_sport",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.start_sport"
+  },
+  "vehicle.start_diesel": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_start_diesel",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.start_diesel"
+  },
+  "vehicle.backfire": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_backfire1",
+        "stream": false
+      },
+      {
+        "name": "realweather:vehicle_backfire2",
+        "stream": false
+      },
+      {
+        "name": "realweather:vehicle_backfire3",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.backfire"
   }
 }

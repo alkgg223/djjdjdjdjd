@@ -7,7 +7,6 @@ import com.realweather.RealWeather;
 import com.realweather.client.hail.HailCoverage;
 import com.realweather.client.radar.RadarCanvas;
 import com.realweather.vehicle.StormVehicle;
-import com.realweather.vehicle.VehicleGeometry;
 import com.realweather.vehicle.VehicleType;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -56,7 +55,8 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
             pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin((v.hurtTime - pt) * 2F) * 1.2F));
         }
         VehicleModels.solid(base + "body", pose, buf, light, overlay, r, g, b);
-        // Doors, swung open when the flood has forced them.
+        boolean glass = !v.flag(StormVehicle.FLAG_GLASS_BROKEN);
+        // Doors (their windows ride on them), swung open by the occupants or forced open by a flood.
         float flood = Mth.lerp(pt, v.prevDoorOpen, v.doorOpen);
         float[][] doors = doors(k);
         for (int i = 0; i < doors.length; i++) {
@@ -68,7 +68,11 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
                 pose.pushPose();
                 pose.translate(side * doors[i][0], doors[i][1], doors[i][2]);
                 pose.mulPose(Axis.YP.rotationDegrees(side * open * 62F));
-                VehicleModels.solid(base + "door_" + (i == 0 ? "f" : "r") + (side > 0 ? "r" : "l"), pose, buf, light, overlay, r, g, b);
+                String door_ = base + "door_" + (i == 0 ? "f" : "r") + (side > 0 ? "r" : "l");
+                VehicleModels.solid(door_, pose, buf, light, overlay, r, g, b);
+                if (glass) {
+                    VehicleModels.glass(door_ + "_glass", pose, buf, light, overlay);
+                }
                 pose.popPose();
             }
         }
@@ -94,10 +98,11 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
         }
         controls(v, k, pose, buf, light, overlay, pt, steer);
         equipment(v, k, base, pose, buf, light, overlay, pt);
+        Backfire.render(v, k, pose, buf, pt);
 
         // Glass, the snow and sand on it, and the wipers.
-        if (!v.flag(StormVehicle.FLAG_GLASS_BROKEN)) {
-            VehicleModels.translucent(base + "glass", pose, buf, light, overlay, 1F);
+        if (glass) {
+            VehicleModels.glass(base + "glass", pose, buf, light, overlay);
             windshieldCover(v, k, pose, buf, light);
         }
         wipers(v, k, pose, buf, light, overlay, pt);
@@ -185,11 +190,7 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
     }
 
     private static void equipment(StormVehicle v, VehicleType k, String base, PoseStack pose, MultiBufferSource buf, int light, int overlay, float pt) {
-        float[] an = switch (k) {
-            case PICKUP -> VehicleGeometry.PICKUP_ANEMOMETER;
-            case INTERCEPT -> VehicleGeometry.INTERCEPT_ANEMOMETER;
-            default -> null;
-        };
+        float[] an = k.geo.anemometer();
         if (an != null) {
             pose.pushPose();
             pose.translate(an[0], an[1], an[2]);
@@ -197,16 +198,16 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
             VehicleModels.solid(base + "anemometer", pose, buf, light, overlay, 1F, 1F, 1F);
             pose.popPose();
         }
-        if (k == VehicleType.PICKUP) {
-            float[] d = VehicleGeometry.PICKUP_DISH;
+        if (k.geo.dish() != null) {
+            float[] d = k.geo.dish();
             pose.pushPose();
             pose.translate(d[0], d[1], d[2]);
             pose.mulPose(Axis.YP.rotationDegrees(Mth.lerp(pt, v.prevDishSpin, v.dishSpin)));
             VehicleModels.solid(base + "dish", pose, buf, light, overlay, 1F, 1F, 1F);
             pose.popPose();
         }
-        if (k == VehicleType.INTERCEPT) {
-            float[] t = VehicleGeometry.INTERCEPT_TURRET;
+        if (k.geo.turret() != null) {
+            float[] t = k.geo.turret();
             pose.pushPose();
             pose.translate(t[0], t[1], t[2]);
             pose.mulPose(Axis.YP.rotationDegrees(Mth.lerp(pt, v.prevTurretYaw, v.turretYaw)));
@@ -214,13 +215,13 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
             pose.popPose();
             float deploy = Mth.lerp(pt, v.prevSpikeDeploy, v.spikeDeploy);
             float ease = deploy * deploy * (3F - 2F * deploy);
-            for (float[] s : VehicleGeometry.INTERCEPT_SPIKES) {
+            for (float[] s : k.geo.spikes()) {
                 pose.pushPose();
                 pose.translate(s[0], s[1] - ease * 0.62F, s[2]);
                 VehicleModels.solid(base + "spike", pose, buf, light, overlay, 1F, 1F, 1F);
                 pose.popPose();
             }
-            for (float[] s : VehicleGeometry.INTERCEPT_SKIRTS) {
+            for (float[] s : k.geo.skirts()) {
                 pose.pushPose();
                 pose.translate(s[0], s[1] + (1F - ease) * 0.38F, s[2]);
                 VehicleModels.solid(base + "skirt", pose, buf, light, overlay, 1F, 1F, 1F);
@@ -304,83 +305,43 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
 
     // ------------------------------------------------------------------------------------ geometry by type
     static float[][] windshield(VehicleType k) {
-        return switch (k) {
-            case SEDAN -> VehicleGeometry.SEDAN_WINDSHIELD;
-            case PICKUP -> VehicleGeometry.PICKUP_WINDSHIELD;
-            case INTERCEPT -> VehicleGeometry.INTERCEPT_WINDSHIELD;
-        };
+        return k.geo.windshield();
     }
 
     static float[][] wipers(VehicleType k) {
-        return switch (k) {
-            case SEDAN -> VehicleGeometry.SEDAN_WIPERS;
-            case PICKUP -> VehicleGeometry.PICKUP_WIPERS;
-            case INTERCEPT -> VehicleGeometry.INTERCEPT_WIPERS;
-        };
+        return k.geo.wipers();
     }
 
     static float wiperLength(VehicleType k) {
-        return switch (k) {
-            case SEDAN -> VehicleGeometry.SEDAN_WIPER_LEN;
-            case PICKUP -> VehicleGeometry.PICKUP_WIPER_LEN;
-            case INTERCEPT -> VehicleGeometry.INTERCEPT_WIPER_LEN;
-        };
+        return k.geo.wiperLen();
     }
 
     static float[] steerPoint(VehicleType k) {
-        return switch (k) {
-            case SEDAN -> VehicleGeometry.SEDAN_STEER;
-            case PICKUP -> VehicleGeometry.PICKUP_STEER;
-            case INTERCEPT -> VehicleGeometry.INTERCEPT_STEER;
-        };
+        return k.geo.steer();
     }
 
     static float[][] pedals(VehicleType k) {
-        return switch (k) {
-            case SEDAN -> VehicleGeometry.SEDAN_PEDALS;
-            case PICKUP -> VehicleGeometry.PICKUP_PEDALS;
-            case INTERCEPT -> VehicleGeometry.INTERCEPT_PEDALS;
-        };
+        return k.geo.pedals();
     }
 
     static float[] gearPoint(VehicleType k) {
-        return switch (k) {
-            case SEDAN -> VehicleGeometry.SEDAN_GEAR;
-            case PICKUP -> VehicleGeometry.PICKUP_GEAR;
-            case INTERCEPT -> VehicleGeometry.INTERCEPT_GEAR;
-        };
+        return k.geo.gear();
     }
 
     static float[] speedo(VehicleType k) {
-        return switch (k) {
-            case SEDAN -> VehicleGeometry.SEDAN_SPEEDO;
-            case PICKUP -> VehicleGeometry.PICKUP_SPEEDO;
-            case INTERCEPT -> VehicleGeometry.INTERCEPT_SPEEDO;
-        };
+        return k.geo.speedo();
     }
 
     static float[] tacho(VehicleType k) {
-        return switch (k) {
-            case SEDAN -> VehicleGeometry.SEDAN_TACHO;
-            case PICKUP -> VehicleGeometry.PICKUP_TACHO;
-            case INTERCEPT -> VehicleGeometry.INTERCEPT_TACHO;
-        };
+        return k.geo.tacho();
     }
 
     static float[][] doors(VehicleType k) {
-        return switch (k) {
-            case SEDAN -> VehicleGeometry.SEDAN_DOORS;
-            case PICKUP -> VehicleGeometry.PICKUP_DOORS;
-            case INTERCEPT -> VehicleGeometry.INTERCEPT_DOORS;
-        };
+        return k.geo.doors();
     }
 
     static float[][] screen(VehicleType k) {
-        return switch (k) {
-            case SEDAN -> null;
-            case PICKUP -> VehicleGeometry.PICKUP_SCREEN;
-            case INTERCEPT -> VehicleGeometry.INTERCEPT_SCREEN;
-        };
+        return k.instruments ? k.geo.screen() : null;
     }
 
     @Override

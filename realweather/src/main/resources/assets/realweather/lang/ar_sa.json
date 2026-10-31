@@ -184,5 +184,22 @@
   "subtitles.realweather.vehicle.wind_buffet": "الرياح تضرب المركبة",
   "realweather.vehicle.probe.peak": "أقوى هبة: %s كم/س",
   "realweather.vehicle.seat_taken": "هذا المقعد مشغول",
-  "realweather.vehicle.door_hint": "اضغط على الباب لفتحه ثم اضغط مرة أخرى للركوب"
+  "realweather.vehicle.door_hint": "اضغط على الباب لفتحه ثم اضغط مرة أخرى للركوب",
+  "entity.realweather.suv": "سيارة دفع رباعي كبيرة",
+  "item.realweather.suv": "سيارة دفع رباعي كبيرة",
+  "item.realweather.suv.desc": "سيارة كبيرة بثلاثة صفوف ومحرك V8. ثقيلة لكن الإعصار يرفعها رغم ذلك.",
+  "entity.realweather.coupe": "سيارة رياضية كوبيه",
+  "item.realweather.coupe": "سيارة رياضية كوبيه",
+  "item.realweather.coupe.desc": "كوبيه V8 بدفع خلفي: تشغيل قوي، طقطقة العادم، 250 كم/س.",
+  "entity.realweather.sport": "سيدان رياضية",
+  "item.realweather.sport": "سيدان رياضية",
+  "item.realweather.sport.desc": "سيدان بأربعة أبواب ومحرك توربو مزدوج: 250 كم/س، فرقعة ونار من العادم.",
+  "subtitles.realweather.vehicle.engine_v8": "هدير محرك V8",
+  "subtitles.realweather.vehicle.engine_muscle": "قرقرة محرك رياضي",
+  "subtitles.realweather.vehicle.engine_sport": "زمجرة محرك رياضي",
+  "subtitles.realweather.vehicle.start_v8": "تشغيل محرك V8",
+  "subtitles.realweather.vehicle.start_muscle": "تشغيل السيارة الرياضية",
+  "subtitles.realweather.vehicle.start_sport": "تشغيل المحرك الرياضي",
+  "subtitles.realweather.vehicle.start_diesel": "تشغيل محرك الديزل",
+  "subtitles.realweather.vehicle.backfire": "فرقعة العادم"
 }

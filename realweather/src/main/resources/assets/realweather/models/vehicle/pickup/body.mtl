@@ -4,6 +4,12 @@ Ka 1 1 1
 d 1.0
 map_Kd #amber
 
+newmtl badge
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #badge
+
 newmtl black
 Kd 1 1 1
 Ka 0 0 0
@@ -34,6 +40,12 @@ Ka 0 0 0
 d 1.0
 map_Kd #dash
 
+newmtl fog_light
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #fog_light
+
 newmtl gauge
 Kd 1 1 1
 Ka 0 0 0
@@ -45,6 +57,12 @@ Kd 1 1 1
 Ka 0 0 0
 d 1.0
 map_Kd #gauge_rpm
+
+newmtl gr_truck
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #gr_truck
 
 newmtl grey
 Kd 1 1 1
@@ -58,11 +76,17 @@ Ka 1 1 1
 d 1.0
 map_Kd #head_light
 
-newmtl lens
+newmtl hl_truck
 Kd 1 1 1
-Ka 0 0 0
+Ka 1 1 1
 d 1.0
-map_Kd #lens
+map_Kd #hl_truck
+
+newmtl marker_amber
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #marker_amber
 
 newmtl orange
 Kd 1 1 1
@@ -77,11 +101,17 @@ d 1.0
 map_Kd #paint
 neoforge_TintIndex 0
 
-newmtl plate
+newmtl plate_front
 Kd 1 1 1
 Ka 0 0 0
 d 1.0
-map_Kd #plate
+map_Kd #plate_front
+
+newmtl plate_rear
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #plate_rear
 
 newmtl seat
 Kd 1 1 1
@@ -95,17 +125,23 @@ Ka 0 0 0
 d 1.0
 map_Kd #steel
 
-newmtl tail_light
+newmtl tl_tall
 Kd 1 1 1
 Ka 1 1 1
 d 1.0
-map_Kd #tail_light
+map_Kd #tl_tall
 
 newmtl trim
 Kd 1 1 1
 Ka 0 0 0
 d 1.0
 map_Kd #trim
+
+newmtl vent_mesh
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #vent_mesh
 
 newmtl white
 Kd 1 1 1

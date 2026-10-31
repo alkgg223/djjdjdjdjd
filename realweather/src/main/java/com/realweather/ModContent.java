@@ -83,6 +83,14 @@ public final class ModContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_DOOR = sound("vehicle.door");
     public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_BEEP = sound("vehicle.beep");
     public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_WIND_BUFFET = sound("vehicle.wind_buffet");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_ENGINE_V8 = sound("vehicle.engine_v8");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_ENGINE_MUSCLE = sound("vehicle.engine_muscle");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_ENGINE_SPORT = sound("vehicle.engine_sport");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_START_V8 = sound("vehicle.start_v8");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_START_MUSCLE = sound("vehicle.start_muscle");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_START_SPORT = sound("vehicle.start_sport");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_START_DIESEL = sound("vehicle.start_diesel");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_BACKFIRE = sound("vehicle.backfire");
 
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SPLASH = particle("splash");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RIPPLE = particle("ripple");

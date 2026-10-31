@@ -184,5 +184,22 @@
   "subtitles.realweather.vehicle.wind_buffet": "Wind buffets the vehicle",
   "realweather.vehicle.probe.peak": "Peak gust: %s km/h",
   "realweather.vehicle.seat_taken": "That seat is taken",
-  "realweather.vehicle.door_hint": "Click a door to open it, click again to get in"
+  "realweather.vehicle.door_hint": "Click a door to open it, click again to get in",
+  "entity.realweather.suv": "Full-Size SUV",
+  "item.realweather.suv": "Full-Size SUV",
+  "item.realweather.suv.desc": "Big three-row SUV with a V8. Heavy, but a tornado still lifts it.",
+  "entity.realweather.coupe": "Muscle Coupe",
+  "item.realweather.coupe": "Muscle Coupe",
+  "item.realweather.coupe.desc": "Rear-drive V8 coupe: loud start, crackling exhaust, 250 km/h.",
+  "entity.realweather.sport": "Sport Sedan",
+  "item.realweather.sport": "Sport Sedan",
+  "item.realweather.sport.desc": "Twin-turbo four-door: 250 km/h, pops and flames on the overrun.",
+  "subtitles.realweather.vehicle.engine_v8": "V8 rumbles",
+  "subtitles.realweather.vehicle.engine_muscle": "Muscle car burbles",
+  "subtitles.realweather.vehicle.engine_sport": "Sports engine growls",
+  "subtitles.realweather.vehicle.start_v8": "V8 starts",
+  "subtitles.realweather.vehicle.start_muscle": "Muscle car fires up",
+  "subtitles.realweather.vehicle.start_sport": "Sports engine fires up",
+  "subtitles.realweather.vehicle.start_diesel": "Diesel starts",
+  "subtitles.realweather.vehicle.backfire": "Exhaust pops"
 }

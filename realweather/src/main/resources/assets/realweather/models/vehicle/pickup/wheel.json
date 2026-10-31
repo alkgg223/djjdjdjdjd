@@ -6,10 +6,11 @@
  "emissive_ambient": true,
  "shade_quads": true,
  "textures": {
+  "brake_disc": "realweather:item/vehicle/brake_disc",
   "dark": "realweather:item/vehicle/dark",
-  "rim": "realweather:item/vehicle/rim",
+  "rim_offroad": "realweather:item/vehicle/rim_offroad",
   "rubber": "realweather:item/vehicle/rubber",
-  "steel": "realweather:item/vehicle/steel",
+  "tyre_side": "realweather:item/vehicle/tyre_side",
   "particle": "realweather:item/vehicle/paint"
  }
 }

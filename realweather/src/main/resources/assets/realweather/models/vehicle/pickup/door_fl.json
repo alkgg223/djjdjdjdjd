@@ -6,9 +6,11 @@
  "emissive_ambient": true,
  "shade_quads": true,
  "textures": {
-  "chrome": "realweather:item/vehicle/chrome",
+  "black": "realweather:item/vehicle/black",
   "dash": "realweather:item/vehicle/dash",
   "paint": "realweather:item/vehicle/paint",
+  "seat": "realweather:item/vehicle/seat",
+  "trim": "realweather:item/vehicle/trim",
   "particle": "realweather:item/vehicle/paint"
  }
 }

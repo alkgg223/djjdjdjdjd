@@ -871,7 +871,7 @@ def make_textures(res_dir, size=128):
         if f.endswith(".png"):
             os.remove(os.path.join(out, f))
     for mat, (rgb, tex, tint) in MATS.items():
-        if tex == "gauge":
+        if tex in ("gauge", "decal"):
             continue
         base = fam[tex]
         if mat in EMISSIVE:
@@ -888,8 +888,19 @@ LIGHT0 = norm(v3(0.2, 1.0, -0.7))
 LIGHT1 = norm(v3(-0.2, 1.0, 0.7))
 
 
-def render(meshes, yaw=30, pitch=20, size=(640, 400), tints=None, bg=(52, 58, 66), zoom=1.0):
-    """software render of meshes (list of (mesh, tint rgb or None)) with Minecraft-like entity lighting"""
+_TEX_CACHE = {}
+
+
+def _texture(mat, tex_dir):
+    if mat not in _TEX_CACHE:
+        path = os.path.join(tex_dir, mat + ".png")
+        _TEX_CACHE[mat] = np.asarray(Image.open(path).convert("RGBA"), dtype=float) / 255 if os.path.exists(path) else None
+    return _TEX_CACHE[mat]
+
+
+def render(meshes, yaw=30, pitch=20, size=(640, 400), tints=None, bg=(52, 58, 66), zoom=1.0, tex_dir=None, centre=None, extent=None):
+    """software render of meshes (list of (mesh, tint rgb or None)) with Minecraft-like entity lighting; with tex_dir,
+    polygons with their own UVs (decals, dials) show their texture, cut out where it is transparent"""
     W, H = size
     tris = []
     for mesh, tint in meshes:
@@ -899,19 +910,22 @@ def render(meshes, yaw=30, pitch=20, size=(640, 400), tints=None, bg=(52, 58, 66
             if MATS[p["mat"]][2] and tint is not None:
                 rgb = rgb * np.array(tint)
             pts = p["pts"]
+            tex = _texture(p["mat"], tex_dir) if (tex_dir and p.get("uv")) else None
+            uv = p.get("uv")
             for i in range(1, len(pts) - 1):
-                tris.append((pts[0], pts[i], pts[i + 1], ns[0], ns[i], ns[i + 1], rgb))
+                t = None if tex is None else (tex, uv[0], uv[i], uv[i + 1])
+                tris.append((pts[0], pts[i], pts[i + 1], ns[0], ns[i], ns[i + 1], rgb, t, p["mat"] in EMISSIVE))
     if not tris:
         return Image.new("RGB", size, bg)
     R = rot_matrix("x", pitch) @ rot_matrix("y", yaw)
     allp = np.array([q for t in tris for q in t[:3]])
-    c = (allp.min(0) + allp.max(0)) / 2
-    ext = np.linalg.norm(allp.max(0) - allp.min(0))
+    c = (allp.min(0) + allp.max(0)) / 2 if centre is None else np.asarray(centre, dtype=float)
+    ext = np.linalg.norm(allp.max(0) - allp.min(0)) if extent is None else extent
     sc = min(W, H) / ext * 0.95 * zoom
     img = np.zeros((H, W, 3))
     img[:] = np.array(bg) / 255
     zb = np.full((H, W), -1e9)
-    for a, b, cc, na, nb, nc, rgb in tris:
+    for a, b, cc, na, nb, nc, rgb, tx, emissive in tris:
         P = [(R @ (q - c)) * sc for q in (a, b, cc)]
         xs = [W / 2 + p[0] for p in P]
         ys = [H / 2 - p[1] for p in P]
@@ -937,10 +951,25 @@ def render(meshes, yaw=30, pitch=20, size=(640, 400), tints=None, bg=(52, 58, 66
         upd = inside & (z > sub)
         if not upd.any():
             continue
+        base = np.broadcast_to(np.asarray(rgb, dtype=float), upd.shape + (3,))
+        if tx is not None:
+            tex, ua, ub, uc = tx
+            th, tw = tex.shape[:2]
+            u = w0 * ua[0] + w1 * ub[0] + w2 * uc[0]
+            vv = w0 * ua[1] + w1 * ub[1] + w2 * uc[1]
+            px = np.clip((u * tw).astype(int), 0, tw - 1)
+            py = np.clip((vv * th).astype(int), 0, th - 1)
+            texel = tex[py, px]
+            upd = upd & (texel[..., 3] > 0.1)
+            if not upd.any():
+                continue
+            base = texel[..., :3] * np.asarray(rgb, dtype=float)
         n = (w0[..., None] * na + w1[..., None] * nb + w2[..., None] * nc)
         n /= np.linalg.norm(n, axis=-1, keepdims=True) + 1e-9
         lit = 0.4 + 0.6 * (np.clip(n @ LIGHT0, 0, 1) + np.clip(n @ LIGHT1, 0, 1)) * 0.6
-        col = np.clip(lit[..., None] * rgb, 0, 1)
+        if emissive:
+            lit = np.ones_like(lit)
+        col = np.clip(lit[..., None] * base, 0, 1)
         sub[upd] = z[upd]
         img[y0:y1 + 1, x0:x1 + 1][upd] = col[upd]
     return Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8))

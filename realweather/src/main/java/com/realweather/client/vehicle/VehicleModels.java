@@ -7,6 +7,7 @@ import com.realweather.vehicle.VehicleType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
@@ -19,7 +20,7 @@ import java.util.Map;
 /** The vehicle part models (OBJ, loaded as standalone models) and drawing them as entity geometry. */
 public final class VehicleModels {
     private static final String[] PARTS = {"body", "glass", "wheel", "cover", "anemometer", "dish", "spike", "skirt", "turret", "door_fl", "door_fr",
-            "door_rl", "door_rr"};
+            "door_rl", "door_rr", "door_fl_glass", "door_fr_glass", "door_rl_glass", "door_rr_glass"};
     private static final String[] SHARED = {"steering", "pedal", "pedal_wide", "gear", "wiper"};
     private static final Map<String, ModelResourceLocation> IDS = new HashMap<>();
 
@@ -61,7 +62,21 @@ public final class VehicleModels {
                 .renderModel(ps.last(), buf.getBuffer(rt), null, m, r, g, b, light, overlay, ModelData.EMPTY, rt);
     }
 
-    /** See-through parts (glass, snow cover) with an extra alpha. */
+    /**
+     * Window glass. It goes into the shared translucent sheet that the level draws once after every entity, so the
+     * glass never hides another vehicle (or anything else) that happens to be drawn after this one.
+     */
+    public static void glass(String path, PoseStack ps, MultiBufferSource buf, int light, int overlay) {
+        BakedModel m = model(path);
+        if (missing(m)) {
+            return;
+        }
+        RenderType rt = Sheets.translucentCullBlockSheet();
+        Minecraft.getInstance().getBlockRenderer().getModelRenderer()
+                .renderModel(ps.last(), buf.getBuffer(rt), null, m, 1F, 1F, 1F, light, overlay, ModelData.EMPTY, rt);
+    }
+
+    /** See-through parts (snow cover) with an extra alpha. */
     public static void translucent(String path, PoseStack ps, MultiBufferSource buf, int light, int overlay, float alpha) {
         BakedModel m = model(path);
         if (missing(m) || alpha <= 0.01F) {

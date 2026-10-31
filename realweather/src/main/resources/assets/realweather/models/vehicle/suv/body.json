@@ -1,0 +1,32 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/suv/body.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "amber": "realweather:item/vehicle/amber",
+  "badge": "realweather:item/vehicle/badge",
+  "black": "realweather:item/vehicle/black",
+  "carpet": "realweather:item/vehicle/carpet",
+  "chrome": "realweather:item/vehicle/chrome",
+  "dash": "realweather:item/vehicle/dash",
+  "fog_light": "realweather:item/vehicle/fog_light",
+  "gauge": "realweather:item/vehicle/gauge",
+  "gauge_rpm": "realweather:item/vehicle/gauge_rpm",
+  "gr_truck": "realweather:item/vehicle/gr_truck",
+  "hl_truck": "realweather:item/vehicle/hl_truck",
+  "marker_amber": "realweather:item/vehicle/marker_amber",
+  "paint": "realweather:item/vehicle/paint",
+  "plate_front": "realweather:item/vehicle/plate_front",
+  "plate_rear": "realweather:item/vehicle/plate_rear",
+  "seat": "realweather:item/vehicle/seat",
+  "steel": "realweather:item/vehicle/steel",
+  "tail_light": "realweather:item/vehicle/tail_light",
+  "tl_tall": "realweather:item/vehicle/tl_tall",
+  "trim": "realweather:item/vehicle/trim",
+  "vent_mesh": "realweather:item/vehicle/vent_mesh",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}

@@ -95,8 +95,7 @@ public final class VehicleClient {
             actions |= 8;
         }
         if ((actions & 2) != 0) {
-            mc.getSoundManager().play(new SimpleSoundInstance(v.kind == VehicleType.SEDAN ? ModContent.VEHICLE_HORN.get() : ModContent.VEHICLE_HORN_TRUCK.get(),
-                    SoundSource.NEUTRAL, 1F, 1F, RandomSource.create(), v.getX(), v.getY(), v.getZ()));
+            mc.getSoundManager().play(new SimpleSoundInstance(horn(v.kind), SoundSource.NEUTRAL, 1F, 1F, RandomSource.create(), v.getX(), v.getY(), v.getZ()));
         }
         sendTimer++;
         if (actions != 0 || handbrake != lastHandbrake || Math.abs(v.throttleIn - lastThrottle) > 0.05F || Math.abs(v.steerIn - lastSteer) > 0.05F
@@ -135,6 +134,7 @@ public final class VehicleClient {
             target = 850F + Math.max(0F, v.displayThrottle()) * 2500F;
         }
         v.rpm += (target - v.rpm) * 0.2F;
+        Backfire.tick(v, level, gear);
         // Instruments: anemometer cups follow the wind, the dish and turret turn.
         float wind = (float) (ClientWeather.wind * 10F + Math.abs(speed) * 20F) + localWind(v) * 20F;
         v.anemometer += Math.min(60F, wind * 3F);
@@ -347,11 +347,14 @@ public final class VehicleClient {
         EngineSound s = ENGINES.get(v.getId());
         boolean running = v.getControllingPassenger() != null && v.isAlive();
         if (running && (s == null || s.isStopped()) && v.distanceToSqr(mc.player) < 48 * 48) {
+            int delay = 0;
             if (s == null) {
-                mc.getSoundManager().play(new SimpleSoundInstance(ModContent.VEHICLE_START.get(), SoundSource.NEUTRAL, 0.9F, 1F, RandomSource.create(),
-                        v.getX(), v.getY(), v.getZ()));
+                // Starter, catch and a blip of the throttle; the running note takes over as it settles.
+                mc.getSoundManager().play(new SimpleSoundInstance(startSound(v.kind), SoundSource.NEUTRAL, 1F, 1F, RandomSource.create(),
+                        v.getX(), v.getY() + 0.6, v.getZ()));
+                delay = startDelay(v.kind);
             }
-            s = new EngineSound(v);
+            s = new EngineSound(v, delay);
             ENGINES.put(v.getId(), s);
             mc.getSoundManager().play(s);
         } else if (!running && s != null) {
@@ -359,8 +362,8 @@ public final class VehicleClient {
             ENGINES.remove(v.getId());
         }
         if (v.hornTicks() == 11 && v.getControllingPassenger() != mc.player) {
-            mc.getSoundManager().play(new SimpleSoundInstance(v.kind == VehicleType.SEDAN ? ModContent.VEHICLE_HORN.get() : ModContent.VEHICLE_HORN_TRUCK.get(),
-                    SoundSource.NEUTRAL, 1F, 1F, RandomSource.create(), v.getX(), v.getY(), v.getZ()));
+            mc.getSoundManager().play(new SimpleSoundInstance(horn(v.kind), SoundSource.NEUTRAL, 1F, 1F, RandomSource.create(), v.getX(), v.getY(),
+                    v.getZ()));
         }
         if (v.sliding && v.onGround() && Math.abs(v.displaySpeed()) > 0.25 && v.tickCount % 6 == 0) {
             v.level().playLocalSound(v.getX(), v.getY(), v.getZ(), ModContent.VEHICLE_SKID.get(), SoundSource.NEUTRAL, 0.5F,
@@ -368,16 +371,52 @@ public final class VehicleClient {
         }
     }
 
-    /** Engine note following the revs; heavier diesel for the pickup and the intercept vehicle. */
+    static net.minecraft.sounds.SoundEvent horn(VehicleType k) {
+        return k.engine == VehicleType.Engine.PETROL || k.engine.backfire ? ModContent.VEHICLE_HORN.get() : ModContent.VEHICLE_HORN_TRUCK.get();
+    }
+
+    static net.minecraft.sounds.SoundEvent startSound(VehicleType k) {
+        return switch (k.engine) {
+            case PETROL -> ModContent.VEHICLE_START.get();
+            case DIESEL -> ModContent.VEHICLE_START_DIESEL.get();
+            case V8 -> ModContent.VEHICLE_START_V8.get();
+            case MUSCLE -> ModContent.VEHICLE_START_MUSCLE.get();
+            case SPORT -> ModContent.VEHICLE_START_SPORT.get();
+        };
+    }
+
+    /** Ticks from the starter to the engine catching (when the running loop starts). */
+    static int startDelay(VehicleType k) {
+        return switch (k.engine) {
+            case PETROL -> 18;
+            case DIESEL -> 26;
+            case V8 -> 19;
+            case MUSCLE -> 21;
+            case SPORT -> 14;
+        };
+    }
+
+    static net.minecraft.sounds.SoundEvent engineLoop(VehicleType k) {
+        return switch (k.engine) {
+            case PETROL -> ModContent.VEHICLE_ENGINE.get();
+            case DIESEL -> ModContent.VEHICLE_DIESEL.get();
+            case V8 -> ModContent.VEHICLE_ENGINE_V8.get();
+            case MUSCLE -> ModContent.VEHICLE_ENGINE_MUSCLE.get();
+            case SPORT -> ModContent.VEHICLE_ENGINE_SPORT.get();
+        };
+    }
+
+    /** Engine note following the revs: four-cylinder, diesel, V8, lumpy muscle V8 or twin-turbo sport V8. */
     static final class EngineSound extends AbstractTickableSoundInstance {
         private final StormVehicle v;
+        private int age;
 
-        EngineSound(StormVehicle v) {
-            super(v.kind == VehicleType.SEDAN ? ModContent.VEHICLE_ENGINE.get() : ModContent.VEHICLE_DIESEL.get(), SoundSource.NEUTRAL, RandomSource.create());
+        EngineSound(StormVehicle v, int delay) {
+            super(engineLoop(v.kind), SoundSource.NEUTRAL, RandomSource.create());
             this.v = v;
             this.looping = true;
-            this.delay = 0;
-            this.volume = 0.6F;
+            this.delay = delay;
+            this.volume = delay > 0 ? 0.05F : 0.6F;
             this.x = v.getX();
             this.y = v.getY();
             this.z = v.getZ();
@@ -397,7 +436,9 @@ public final class VehicleClient {
             y = v.getY() + 0.8;
             z = v.getZ();
             pitch = Mth.clamp(0.55F + v.rpm / 5200F, 0.5F, 2F);
-            volume = 0.45F + 0.4F * Math.max(0F, v.displayThrottle());
+            float fadeIn = delay > 0 ? Math.min(1F, ++age / 25F) : 1F;
+            float loud = v.kind.engine.backfire || v.kind.engine == VehicleType.Engine.V8 ? 0.55F : 0.45F;
+            volume = (loud + 0.45F * Math.max(0F, v.displayThrottle())) * fadeIn;
         }
     }
 }

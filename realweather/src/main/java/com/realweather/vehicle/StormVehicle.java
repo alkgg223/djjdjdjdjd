@@ -95,6 +95,10 @@ public class StormVehicle extends Mob {
     private final int[] doorTimer = new int[4];
     private int pendingSeat = -1;
     public float rpm = 800F;
+    /** Client only: exhaust flame brightness, pops still to come, ticks to the next one, throttle and gear last tick. */
+    public float flame, prevFlame;
+    public int backfirePops, backfireTimer, lastGear;
+    public float lastThrottleSeen;
     /** Client: per-cell snow and sand on the windshield (see the client windshield logic). */
     public float[] glassSnow, glassSand;
     /** Client: snow lying on the roof and hood, 0..1. */

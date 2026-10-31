@@ -1,8 +1,8 @@
-newmtl chrome
+newmtl black
 Kd 1 1 1
 Ka 0 0 0
 d 1.0
-map_Kd #chrome
+map_Kd #black
 
 newmtl dash
 Kd 1 1 1
@@ -16,3 +16,15 @@ Ka 0 0 0
 d 1.0
 map_Kd #paint
 neoforge_TintIndex 0
+
+newmtl seat
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #seat
+
+newmtl trim
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #trim
