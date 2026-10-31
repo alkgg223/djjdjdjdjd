@@ -18,7 +18,8 @@ import java.util.Map;
 
 /** The vehicle part models (OBJ, loaded as standalone models) and drawing them as entity geometry. */
 public final class VehicleModels {
-    private static final String[] PARTS = {"body", "glass", "wheel", "cover", "anemometer", "dish", "spike", "skirt", "turret"};
+    private static final String[] PARTS = {"body", "glass", "wheel", "cover", "anemometer", "dish", "spike", "skirt", "turret", "door_fl", "door_fr",
+            "door_rl", "door_rr"};
     private static final String[] SHARED = {"steering", "pedal", "pedal_wide", "gear", "wiper"};
     private static final Map<String, ModelResourceLocation> IDS = new HashMap<>();
 

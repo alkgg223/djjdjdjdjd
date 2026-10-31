@@ -103,6 +103,15 @@ def simplify(poly, eps=1e-4):
     return pts
 
 
+def wheel_wells(body, b, m, inset=0.26):
+    """dark inner wheel wells between the wheels, so the arches don't show straight through the body"""
+    ra = b.wheel_r + 0.06
+    for zw in (b.wz_f, b.wz_r):
+        for s in (-1, 1):
+            x = s * (b.width / 2 - inset)
+            K.cylinder("x", (b.wheel_r, zw), ra, x - 0.03, x + 0.03, "trim", n=18, m=m)
+
+
 def mirror(m):
     return m.mirrored_x(0.0)
 
@@ -425,6 +434,28 @@ def mirrors(m, W, y, z):
         K.box((s * (W / 2 + 0.07) - 0.0 * s, y - 0.05, z + 0.051), (s * (W / 2 + 0.19), y + 0.06, z + 0.056), "chrome", m=m)
 
 
+def doors(v, b, top, W, thick, mat, spans, fixed, handle_y, body):
+    """door skins as separate parts hinged at their front edge (they swing open when a flood forces them);
+    the fixed pieces of the side between and around them stay in the body"""
+    for z0, z1 in fixed:
+        for s in (-1, 1):
+            sm = side_plate(b, z0, z1, top, W / 2, thick, mat)
+            body.extend(sm if s > 0 else mirror(sm))
+    hinges = []
+    for i, (z0, z1) in enumerate(spans):
+        d = side_plate(b, z0, z1, top, W / 2, thick, mat)
+        handles(d, W / 2, [z1 - 0.18], handle_y)
+        # Inner door card.
+        K.box((W / 2 - thick - 0.03, b.sill + 0.12, z0 + 0.05), (W / 2 - thick, interp(top, z0) - 0.06, z1 - 0.05), "dash", m=d)
+        right = d.copy().translate((-W / 2, 0, -z0))
+        left = mirror(d).translate((W / 2, 0, -z0))
+        name = ["f", "r"][i]
+        v.part("door_" + name + "r", right)
+        v.part("door_" + name + "l", left)
+        hinges.append((W / 2, 0.0, z0))
+    v.geo["doors"] = hinges
+
+
 def door_lines(m, body, x, zs, y0, y1):
     for z in zs:
         K.box((x - 0.005, y0, z - 0.004), (x + 0.004, y1, z + 0.004), "trim", m=m)
@@ -469,22 +500,19 @@ def sedan():
     body = Mesh()
     K.prism(b.profile(-half, zw0, top), "x", -W / 2, W / 2, "paint", bevel=0.07, m=body)
     K.prism(b.profile(zb - 0.02, half, top), "x", -W / 2, W / 2, "paint", bevel=0.07, m=body)
-    for s in (-1, 1):
-        sidem = side_plate(b, zw0 - 0.02, zb, top, W / 2, 0.05, "paint")
-        body.extend(sidem if s > 0 else mirror(sidem))
+    doors(v, b, top, W, 0.05, "paint", [(zw0 + 0.012, 0.408), (0.428, zb - 0.062)],
+          [(zw0 - 0.02, zw0 + 0.004), (0.412, 0.424), (zb - 0.058, zb)], 0.86, body)
     # Bumpers and a sill under the doors.
     K.rbox((-W / 2 + 0.03, 0.24, -half - 0.02), (W / 2 - 0.03, 0.46, -half + 0.12), 0.06, "paint_dark", m=body)
     K.rbox((-W / 2 + 0.03, 0.26, half - 0.12), (W / 2 - 0.03, 0.48, half + 0.02), 0.06, "paint_dark", m=body)
     b.taper(body, 0.08, 0.8)
+    wheel_wells(body, b, body)
     glass = Mesh()
     xb, xr = W / 2 - 0.03, W / 2 - 0.17
     ws = cabin_glass(b, zw0, zw1, zr1, zb, 0.93, 0.96, roof, xb, xr, 0.42, "paint", body, glass)
     front_details(body, b, -half, 0.5, W, 0.72, 0.16, 0.64, 0.34)
     rear_details(body, half, W, 0.82, 0.55)
     mirrors(body, W, 0.98, zw0 + 0.12)
-    for s in (-1, 1):
-        door_lines(body, b, s * (W / 2 + 0.001), [zw0 + 0.02, 0.42, zb - 0.05], 0.3, 0.92)
-        handles(body, s * (W / 2), [0.25, 1.15], 0.86)
     interior(v, body, W, zw0, 0.22, 0.95, True)
     v.part("body", body)
     v.part("glass", glass)
@@ -511,9 +539,7 @@ def pickup():
     top = [(-half, 0.95), (-half + 0.1, 1.1), (zw0 - 0.3, 1.16), (zw0, 1.2), (zb + 0.05, 1.22), (half, 1.22)]
     body = Mesh()
     K.prism(b.profile(-half, zw0, top), "x", -W / 2, W / 2, "paint", bevel=0.06, m=body)
-    for s in (-1, 1):
-        sidem = side_plate(b, zw0 - 0.02, zb + 0.05, top, W / 2, 0.05, "paint")
-        body.extend(sidem if s > 0 else mirror(sidem))
+    doors(v, b, top, W, 0.05, "paint", [(zw0 + 0.012, zb - 0.072)], [(zw0 - 0.02, zw0 + 0.004), (zb - 0.066, zb + 0.05)], 1.12, body)
     # Cab back wall.
     K.box((-W / 2 + 0.03, 0.4, zb), (W / 2 - 0.03, 1.22, zb + 0.06), "paint", m=body)
     # Bed: floor, sides and tailgate.
@@ -535,15 +561,13 @@ def pickup():
     for s in (-1, 1):
         K.rbox((s * (W / 2 + 0.02) - 0.08, 0.4, zw0 + 0.05), (s * (W / 2 + 0.02) + 0.08, 0.45, zb), 0.02, "trim", m=body)
     b.taper(body, 0.06, 0.6)
+    wheel_wells(body, b, body, 0.3)
     glass = Mesh()
     xb, xr = W / 2 - 0.03, W / 2 - 0.14
     ws = cabin_glass(b, zw0, zw1, zr1, zb, 1.2, 1.22, roof, xb, xr, -0.05, "paint", body, glass)
     front_details(body, b, -half, 0.84, W, 1.05, 0.34, 0.98, 0.3)
     rear_details(body, half, W, 1.0, 0.7)
     mirrors(body, W, 1.32, zw0 + 0.12)
-    for s in (-1, 1):
-        door_lines(body, b, s * (W / 2 + 0.001), [zw0 + 0.02, zb - 0.06], 0.45, 1.2)
-        handles(body, s * (W / 2), [0.35], 1.12)
     # Chase gear: roof rack with a light bar, antennas, GPS dome and a camera.
     for z in (zw1 + 0.1, zr1 - 0.1):
         K.rbox((-xr, roof + 0.03, z - 0.03), (xr, roof + 0.07, z + 0.03), 0.01, "trim", m=body)
@@ -606,10 +630,9 @@ def intercept():
     lowp = b.profile(-half, half, [(z, y) for z, y in hull if True])
     K.prism(b.profile(-half, -0.95, hull), "x", -W / 2, W / 2, "armor", bevel=0.04, m=body)
     K.prism(b.profile(0.75, half, hull), "x", -W / 2, W / 2, "armor", bevel=0.04, m=body)
-    for s in (-1, 1):
-        sidem = side_plate(b, -0.97, 0.77, hull, W / 2, 0.08, "armor")
-        body.extend(sidem if s > 0 else mirror(sidem))
+    doors(v, b, hull, W, 0.08, "armor", [(-0.888, 0.188)], [(-0.97, -0.9), (0.2, 0.77)], 1.2, body)
     del lowp
+    wheel_wells(body, b, body, 0.36)
     # Armoured cab: sloped plates up to the roof; small slit windows.
     zf0, zf1, zr0 = -1.2, -0.75, half - 0.15
     xb, xr = W / 2 - 0.02, W / 2 - 0.22
@@ -726,6 +749,7 @@ def java(vehicles):
         for key in ("anemometer", "dish", "turret"):
             if key in g:
                 lines.append(f"    public static final float[] {n}_{key.upper()} = {vec(g[key])};")
+        lines.append(f"    public static final float[][] {n}_DOORS = {{{', '.join(vec(p) for p in g.get('doors', []))}}};")
         for key in ("spikes", "skirts"):
             if key in g:
                 lines.append(f"    public static final float[][] {n}_{key.upper()} = {{{', '.join(vec(p) for p in g[key])}}};")

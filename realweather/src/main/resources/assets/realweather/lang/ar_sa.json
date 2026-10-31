@@ -181,5 +181,6 @@
   "subtitles.realweather.vehicle.crash": "اصطدام مركبة",
   "subtitles.realweather.vehicle.door": "باب سيارة",
   "subtitles.realweather.vehicle.beep": "صفير الأجهزة",
-  "subtitles.realweather.vehicle.wind_buffet": "الرياح تضرب المركبة"
+  "subtitles.realweather.vehicle.wind_buffet": "الرياح تضرب المركبة",
+  "realweather.vehicle.probe.peak": "أقوى هبة: %s كم/س"
 }

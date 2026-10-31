@@ -74,9 +74,9 @@ public final class TornadoRenderer {
             float pz = (float) (tz + t.offsetZ(f, time) - cam.z);
             float py = (float) (t.groundY + f * height - cam.y);
             float alpha = baseAlpha * fade(f, bottom);
-            // Condensation is pale grey; near the ground it is full of brown dust.
-            float grey = 0.66F + 0.1F * f;
-            float dust = t.contact * Mth.clamp(1F - f / (0.16F + t.rating * 0.035F), 0F, 1F);
+            // Condensation is pale grey (wedges, fed with rain and debris, are darker); near the ground it is full of dust.
+            float grey = (t.rating >= 4 ? 0.5F : t.rating >= 2 ? 0.6F : 0.68F) + 0.12F * f;
+            float dust = t.contact * Mth.clamp(1F - f / (0.08F + t.rating * 0.02F), 0F, 1F);
             float r = Mth.lerp(dust, grey, 0.52F) * lr;
             float g = Mth.lerp(dust, grey * 1.01F, 0.44F) * lg;
             float b = Mth.lerp(dust, grey * 1.04F, 0.35F) * lb;
@@ -178,21 +178,21 @@ public final class TornadoRenderer {
         float gx = (float) (tx - cam.x);
         float gz = (float) (tz - cam.z);
         float gy = t.groundY - (float) cam.y;
-        float cloudTop = Math.min(height * 0.4F, 6F + t.rating * 6F);
+        float cloudTop = Math.min(height * 0.22F, 4F + t.rating * 3F);
         for (int i = 0; i < n; i++) {
             float h = rnd.nextFloat();
             float a = rnd.nextFloat() * Mth.TWO_PI - spin * (0.5F + 0.3F * (1F - h));
-            float r = rc * (0.8F + rnd.nextFloat() * 1.3F + h * 0.6F);
+            float r = rc * (0.95F + rnd.nextFloat() * 0.7F + h * 0.4F);
             float px = gx + Mth.cos(a) * r;
             float pz = gz + Mth.sin(a) * r;
-            float w = rc * (0.55F + rnd.nextFloat() * 0.5F) + 3F;
-            float py = gy + w * 0.35F + h * cloudTop;
-            float shade = 0.52F + rnd.nextFloat() * 0.1F;
-            float alpha = 0.6F * amount * (1F - h * 0.5F);
+            float w = rc * (0.3F + rnd.nextFloat() * 0.3F) + 2.5F;
+            float py = gy + w * 0.3F + h * cloudTop;
+            float shade = 0.5F + rnd.nextFloat() * 0.1F;
+            float alpha = 0.42F * amount * (1F - h * 0.6F);
             SkyBillboards.cell(SkyBillboards.SPHERE, SkyBillboards.DUST, px, py, pz, w, w * 0.8F, a,
                     lr * shade * 1.05F, lg * shade * 0.92F, lb * shade * 0.75F, alpha, 0.75F, sunSide * 0.5F);
         }
-        float ring = rc * 3.2F + 10F;
+        float ring = rc * 2.4F + 8F;
         SkyBillboards.cell(SkyBillboards.FLAT, SkyBillboards.RING, gx, gy + 0.3F, gz, ring, ring, -spin * 0.3F,
                 lr * 0.5F, lg * 0.44F, lb * 0.36F, 0.5F * amount, 1F, 0F);
     }

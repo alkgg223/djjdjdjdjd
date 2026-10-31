@@ -789,21 +789,26 @@ public final class SelfTest {
             goTo("minecraft:plains", 0, 15);
             weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
         });
-        step(60, SelfTest::spawnVehicles);
-        step(60, () -> lookAt(VEHICLE_IDS[1], 12));
+        step(40, SelfTest::testPad);
+        step(20, SelfTest::spawnVehicles);
+        step(60, () -> lookAt(VEHICLE_IDS[1], 14));
         step(40, () -> {
             shot("40_vehicles");
             vehicleState("parked");
         });
         step(5, () -> ride(VEHICLE_IDS[1]));
-        step(40, () -> {
+        step(30, () -> {
             Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
-            look(0, 18);
+            turnClient(0F, 24F);
         });
-        step(30, () -> shot("41_pickup_interior"));
+        step(30, () -> {
+            shot("41_pickup_interior");
+            vehicleState("seated");
+        });
         step(5, () -> {
             Minecraft.getInstance().options.hideGui = false;
             Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+            turnClient(0F, 15F);
             drive(1F, 0F);
         });
         step(80, () -> {
@@ -818,11 +823,12 @@ public final class SelfTest {
         });
         step(60, () -> {
             drive(0F, 0F);
+            vehicleState("braked");
             cmd("rw blizzard 100 10");
         });
         step(400, () -> {
             Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
-            look(0, 5);
+            turnClient(0F, 8F);
         });
         step(20, () -> {
             shot("43_blizzard_windshield");
@@ -846,7 +852,7 @@ public final class SelfTest {
         });
         step(300, () -> {
             Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
-            lookAtTornado(-4);
+            faceTornadoClient(-4F);
         });
         step(20, () -> {
             shot("45_intercept_anchored");
@@ -855,16 +861,69 @@ public final class SelfTest {
         });
         step(5, () -> {
             Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            faceTornadoClient(6F);
         });
         step(20, () -> shot("46_intercept_interior"));
         step(5, () -> {
             cmd("rw clear");
             dismount();
             Minecraft.getInstance().options.hideGui = true;
-        });
-        step(20, () -> {
             Minecraft.getInstance().player.input = new net.minecraft.client.player.KeyboardInput(Minecraft.getInstance().options);
         });
+    }
+
+    /** A flat stone pad south of the player for the vehicles. */
+    private static void testPad() {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            ServerLevel level = server.overworld();
+            BlockPos c = p.blockPosition();
+            for (int dx = -14; dx <= 14; dx++) {
+                for (int dz = -4; dz <= 40; dz++) {
+                    for (int dy = 0; dy <= 6; dy++) {
+                        level.setBlock(c.offset(dx, dy, dz), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+                    }
+                    level.setBlock(c.offset(dx, -1, dz), net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState(), 2);
+                }
+            }
+            p.teleportTo(level, c.getX() + 0.5, c.getY(), c.getZ() + 0.5, 0F, 14F);
+        });
+    }
+
+    /** Turns the local player's view without a teleport (a teleport would pull a passenger out of the vehicle). */
+    private static void turnClient(float yaw, float pitch) {
+        net.minecraft.client.player.LocalPlayer p = Minecraft.getInstance().player;
+        if (p.getVehicle() != null) {
+            yaw += p.getVehicle().getYRot();
+        }
+        p.setYRot(yaw);
+        p.setYHeadRot(yaw);
+        p.yRotO = yaw;
+        p.setXRot(pitch);
+        p.xRotO = pitch;
+    }
+
+    private static void faceTornadoClient(float pitch) {
+        net.minecraft.client.player.LocalPlayer p = Minecraft.getInstance().player;
+        com.realweather.client.tornado.ClientTornadoes.T best = null;
+        double bd = Double.MAX_VALUE;
+        for (com.realweather.client.tornado.ClientTornadoes.T t : com.realweather.client.tornado.ClientTornadoes.all()) {
+            double d = Math.hypot(t.x - p.getX(), t.z - p.getZ());
+            if (d < bd) {
+                bd = d;
+                best = t;
+            }
+        }
+        if (best == null) {
+            return;
+        }
+        float yaw = (float) Math.toDegrees(Math.atan2(-(best.x - p.getX()), best.z - p.getZ()));
+        p.setYRot(yaw);
+        p.setYHeadRot(yaw);
+        p.yRotO = yaw;
+        p.setXRot(pitch);
+        p.xRotO = pitch;
     }
 
     private static void spawnVehicles() {
@@ -874,8 +933,8 @@ public final class SelfTest {
             ServerLevel level = server.overworld();
             com.realweather.vehicle.VehicleType[] kinds = com.realweather.vehicle.VehicleType.values();
             for (int i = 0; i < kinds.length; i++) {
-                double x = p.getX() - 6 + i * 6;
-                double z = p.getZ() + 10;
+                double x = p.getX() - 7 + i * 7;
+                double z = p.getZ() + 9;
                 int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, net.minecraft.util.Mth.floor(x),
                         net.minecraft.util.Mth.floor(z));
                 com.realweather.vehicle.StormVehicle v = com.realweather.vehicle.VehicleRegistry.type(kinds[i]).create(level);

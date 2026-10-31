@@ -118,7 +118,7 @@ final class CloudField {
 
     /** Smooth cloudiness 0..1 over the grid. */
     private static float field(int gx, int gz) {
-        return Mth.clamp(0.62F * noise(gx / 5.0, gz / 5.0, 1) + 0.38F * noise(gx / 1.8, gz / 1.8, 2), 0F, 1F);
+        return Mth.clamp(0.6F * noise(gx / 3.2, gz / 3.2, 1) + 0.4F * noise(gx / 1.4, gz / 1.4, 2), 0F, 1F);
     }
 
     private static float noise(double x, double z, int salt) {

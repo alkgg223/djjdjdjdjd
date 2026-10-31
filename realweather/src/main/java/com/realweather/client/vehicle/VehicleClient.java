@@ -199,6 +199,7 @@ public final class VehicleClient {
         if (t == null) {
             v.measuredTornado = -1;
             v.measuredWind *= 0.9F;
+            v.measuredPeak = 0F;
             return;
         }
         float peak = RadarProducts.peakWind(t);
@@ -209,8 +210,13 @@ public final class VehicleClient {
             // In-situ probe: what the wind actually does at the vehicle (only with the spikes down and the mast up).
             v.measuredWind += (localWindMps(v, t) - v.measuredWind) * 0.25F;
         }
+        boolean reading = v.kind == VehicleType.PICKUP || v.spikeDeploy > 0.9F;
+        if (reading) {
+            v.measuredPeak = Math.max(v.measuredPeak, v.measuredWind);
+        }
         if (v.measuredTornado != t.id) {
             v.measuredTornado = t.id;
+            v.measuredPeak = 0F;
             if (v.getControllingPassenger() == Minecraft.getInstance().player) {
                 Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(ModContent.VEHICLE_BEEP.get(), 1F, 0.8F));
             }

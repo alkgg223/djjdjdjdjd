@@ -56,6 +56,18 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
             pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin((v.hurtTime - pt) * 2F) * 1.2F));
         }
         VehicleModels.solid(base + "body", pose, buf, light, overlay, r, g, b);
+        // Doors, swung open when the flood has forced them.
+        float open = Mth.lerp(pt, v.prevDoorOpen, v.doorOpen);
+        float[][] doors = doors(k);
+        for (int i = 0; i < doors.length; i++) {
+            for (int side = -1; side <= 1; side += 2) {
+                pose.pushPose();
+                pose.translate(side * doors[i][0], doors[i][1], doors[i][2]);
+                pose.mulPose(Axis.YP.rotationDegrees(side * open * 52F));
+                VehicleModels.solid(base + "door_" + (i == 0 ? "f" : "r") + (side > 0 ? "r" : "l"), pose, buf, light, overlay, r, g, b);
+                pose.popPose();
+            }
+        }
 
         // Wheels.
         float spin = Mth.lerp(pt, v.prevWheelSpin, v.wheelSpin) * Mth.RAD_TO_DEG;
@@ -348,6 +360,14 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
             case SEDAN -> VehicleGeometry.SEDAN_TACHO;
             case PICKUP -> VehicleGeometry.PICKUP_TACHO;
             case INTERCEPT -> VehicleGeometry.INTERCEPT_TACHO;
+        };
+    }
+
+    static float[][] doors(VehicleType k) {
+        return switch (k) {
+            case SEDAN -> VehicleGeometry.SEDAN_DOORS;
+            case PICKUP -> VehicleGeometry.PICKUP_DOORS;
+            case INTERCEPT -> VehicleGeometry.INTERCEPT_DOORS;
         };
     }
 

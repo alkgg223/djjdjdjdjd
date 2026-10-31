@@ -44,7 +44,7 @@ timeout 1500 xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew runClient -Pselfte
 echo "client exit $?"
 echo "::endgroup::"
 echo "=== SELFTEST LOG"
-grep "RW-SELFTEST" /tmp/client.log | sed 's/^.*RW-SELFTEST[^:]*: //' | head -100
+grep "RW-SELFTEST" /tmp/client.log | sed 's/^.*RW-SELFTEST[^:]*: //' | head -260
 echo "=== PROBLEMS"
 grep -nE "Exception|Caused by|\[ERROR\]|ERROR\]|/ERROR|FATAL|Failed to|Couldn't|shader" /tmp/client.log | grep -v "^\s*at " | head -80
 echo "=== OPENGL"

@@ -80,6 +80,7 @@ public class StormVehicle extends Mob {
     public float anemometer, prevAnemometer;
     public float turretYaw, prevTurretYaw;
     public float dishSpin, prevDishSpin;
+    public float doorOpen, prevDoorOpen;
     public float rpm = 800F;
     /** Client: per-cell snow and sand on the windshield (see the client windshield logic). */
     public float[] glassSnow, glassSand;
@@ -87,6 +88,8 @@ public class StormVehicle extends Mob {
     public float bodySnow;
     /** Client: last wind measured by the instruments, m/s, and the tornado it belongs to. */
     public float measuredWind;
+    /** Client: the strongest wind measured in this encounter, m/s. */
+    public float measuredPeak;
     public int measuredTornado = -1;
 
     public StormVehicle(EntityType<? extends StormVehicle> type, Level level, VehicleType kind) {
@@ -578,6 +581,7 @@ public class StormVehicle extends Mob {
         prevAnemometer = anemometer;
         prevTurretYaw = turretYaw;
         prevDishSpin = dishSpin;
+        prevDoorOpen = doorOpen;
         if (!level().isClientSide && getControllingPassenger() == null) {
             throttleIn = 0F;
             steerIn = 0F;
@@ -622,6 +626,8 @@ public class StormVehicle extends Mob {
                 prevWiperPhase = 0F;
             }
         }
+        float doorTarget = flag(FLAG_DOORS_OPEN) ? 0.85F + 0.15F * Mth.sin(tickCount * 0.07F) : 0F;
+        doorOpen += Mth.clamp(doorTarget - doorOpen, -0.06F, 0.06F);
         tilt();
         if (level().isClientSide) {
             clientTick.accept(this);

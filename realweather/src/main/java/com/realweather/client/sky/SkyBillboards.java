@@ -198,13 +198,13 @@ public final class SkyBillboards {
                     // Lit on top, shaded underneath (the bottom edge of the sprite is darker).
                     float shadeL = 1F - SIDE[i] * 0.12F, shadeR = 1F + SIDE[i] * 0.12F;
                     buf.addVertex(x - rx * w - ux * h, y - ry * w - uy * h, z - rz * w - uz * h).setUv(U0[i], V1[i])
-                            .setColor(rb * shadeL, gb * shadeL, bb * shadeL, a).setLight(light);
+                            .setColor(k(rb * shadeL), k(gb * shadeL), k(bb * shadeL), k(a)).setLight(light);
                     buf.addVertex(x + rx * w - ux * h, y + ry * w - uy * h, z + rz * w - uz * h).setUv(U1[i], V1[i])
-                            .setColor(rb * shadeR, gb * shadeR, bb * shadeR, a).setLight(light);
+                            .setColor(k(rb * shadeR), k(gb * shadeR), k(bb * shadeR), k(a)).setLight(light);
                     buf.addVertex(x + rx * w + ux * h, y + ry * w + uy * h, z + rz * w + uz * h).setUv(U1[i], V0[i])
-                            .setColor(r * shadeR, g * shadeR, b * shadeR, a).setLight(light);
+                            .setColor(k(r * shadeR), k(g * shadeR), k(b * shadeR), k(a)).setLight(light);
                     buf.addVertex(x - rx * w + ux * h, y - ry * w + uy * h, z - rz * w + uz * h).setUv(U0[i], V0[i])
-                            .setColor(r * shadeL, g * shadeL, b * shadeL, a).setLight(light);
+                            .setColor(k(r * shadeL), k(g * shadeL), k(b * shadeL), k(a)).setLight(light);
                 }
                 case CYLINDER, FUNNEL -> {
                     float hx = -z, hz = x;
@@ -218,10 +218,10 @@ public final class SkyBillboards {
                     }
                     float w = HW[i], h = HH[i];
                     if (TYPE[i] == CYLINDER) {
-                        buf.addVertex(x - hx * w, y - h, z - hz * w).setUv(U0[i], V1[i]).setColor(rb, gb, bb, a).setLight(light);
-                        buf.addVertex(x + hx * w, y - h, z + hz * w).setUv(U1[i], V1[i]).setColor(rb, gb, bb, a).setLight(light);
-                        buf.addVertex(x + hx * w, y + h, z + hz * w).setUv(U1[i], V0[i]).setColor(r, g, b, a * 0.8F).setLight(light);
-                        buf.addVertex(x - hx * w, y + h, z - hz * w).setUv(U0[i], V0[i]).setColor(r, g, b, a * 0.8F).setLight(light);
+                        buf.addVertex(x - hx * w, y - h, z - hz * w).setUv(U0[i], V1[i]).setColor(k(rb), k(gb), k(bb), k(a)).setLight(light);
+                        buf.addVertex(x + hx * w, y - h, z + hz * w).setUv(U1[i], V1[i]).setColor(k(rb), k(gb), k(bb), k(a)).setLight(light);
+                        buf.addVertex(x + hx * w, y + h, z + hz * w).setUv(U1[i], V0[i]).setColor(k(r), k(g), k(b), k(a * 0.8F)).setLight(light);
+                        buf.addVertex(x - hx * w, y + h, z - hz * w).setUv(U0[i], V0[i]).setColor(k(r), k(g), k(b), k(a * 0.8F)).setLight(light);
                     } else {
                         funnelSlice(buf, x, y, z, hx, hz, w, h, i, light);
                     }
@@ -230,10 +230,10 @@ public final class SkyBillboards {
                     float w = HW[i];
                     float c = (float) Math.cos(ROT[i]), s = (float) Math.sin(ROT[i]);
                     float ax = c * w, az = s * w, bx = -s * w, bz = c * w;
-                    buf.addVertex(x - ax - bx, y, z - az - bz).setUv(U0[i], V1[i]).setColor(r, g, b, a).setLight(light);
-                    buf.addVertex(x + ax - bx, y, z + az - bz).setUv(U1[i], V1[i]).setColor(r, g, b, a).setLight(light);
-                    buf.addVertex(x + ax + bx, y, z + az + bz).setUv(U1[i], V0[i]).setColor(r, g, b, a).setLight(light);
-                    buf.addVertex(x - ax + bx, y, z - az + bz).setUv(U0[i], V0[i]).setColor(r, g, b, a).setLight(light);
+                    buf.addVertex(x - ax - bx, y, z - az - bz).setUv(U0[i], V1[i]).setColor(k(r), k(g), k(b), k(a)).setLight(light);
+                    buf.addVertex(x + ax - bx, y, z + az - bz).setUv(U1[i], V1[i]).setColor(k(r), k(g), k(b), k(a)).setLight(light);
+                    buf.addVertex(x + ax + bx, y, z + az + bz).setUv(U1[i], V0[i]).setColor(k(r), k(g), k(b), k(a)).setLight(light);
+                    buf.addVertex(x - ax + bx, y, z - az + bz).setUv(U0[i], V0[i]).setColor(k(r), k(g), k(b), k(a)).setLight(light);
                 }
             }
         }
@@ -257,16 +257,21 @@ public final class SkyBillboards {
             float x1 = x + hx * w * p1, z1 = z + hz * w * p1;
             float u0 = U0[i] + du * (p0 + 1F) * 0.5F, u1 = U0[i] + du * (p1 + 1F) * 0.5F;
             float bot = BOTTOM[i];
-            buf.addVertex(x0, y - h, z0).setUv(u0, V1[i]).setColor(R[i] * s0 * bot, G[i] * s0 * bot, B[i] * s0 * bot, a0).setLight(light);
-            buf.addVertex(x1, y - h, z1).setUv(u1, V1[i]).setColor(R[i] * s1 * bot, G[i] * s1 * bot, B[i] * s1 * bot, a1).setLight(light);
-            buf.addVertex(x1, y + h, z1).setUv(u1, V0[i]).setColor(R[i] * s1, G[i] * s1, B[i] * s1, a1).setLight(light);
-            buf.addVertex(x0, y + h, z0).setUv(u0, V0[i]).setColor(R[i] * s0, G[i] * s0, B[i] * s0, a0).setLight(light);
+            buf.addVertex(x0, y - h, z0).setUv(u0, V1[i]).setColor(k(R[i] * s0 * bot), k(G[i] * s0 * bot), k(B[i] * s0 * bot), k(a0)).setLight(light);
+            buf.addVertex(x1, y - h, z1).setUv(u1, V1[i]).setColor(k(R[i] * s1 * bot), k(G[i] * s1 * bot), k(B[i] * s1 * bot), k(a1)).setLight(light);
+            buf.addVertex(x1, y + h, z1).setUv(u1, V0[i]).setColor(k(R[i] * s1), k(G[i] * s1), k(B[i] * s1), k(a1)).setLight(light);
+            buf.addVertex(x0, y + h, z0).setUv(u0, V0[i]).setColor(k(R[i] * s0), k(G[i] * s0), k(B[i] * s0), k(a0)).setLight(light);
         }
     }
 
     private static float shade(float p, float side) {
         float round = 0.78F + 0.22F * (float) Math.sqrt(Math.max(0F, 1F - p * p));
         return round * (1F + side * p * 0.28F);
+    }
+
+    /** Vertex colours are packed into bytes: anything over 1 would spill into the next channel. */
+    private static float k(float v) {
+        return v < 0F ? 0F : v > 1F ? 1F : v;
     }
 
     private static void draw(BufferBuilder buf) {

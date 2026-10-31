@@ -181,5 +181,6 @@
   "subtitles.realweather.vehicle.crash": "Vehicle crashes",
   "subtitles.realweather.vehicle.door": "Car door",
   "subtitles.realweather.vehicle.beep": "Instrument beeps",
-  "subtitles.realweather.vehicle.wind_buffet": "Wind buffets the vehicle"
+  "subtitles.realweather.vehicle.wind_buffet": "Wind buffets the vehicle",
+  "realweather.vehicle.probe.peak": "Peak gust: %s km/h"
 }

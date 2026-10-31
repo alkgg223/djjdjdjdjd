@@ -107,8 +107,9 @@ public final class VehicleHud {
                         .withStyle(ChatFormatting.GOLD));
             } else {
                 float mps = v.measuredWind;
-                int ef = RadarProducts.ratingFor(probe ? RadarProducts.peakWind(t) * Math.min(1F, mps / Math.max(1F, RadarProducts.peakWind(t)) * 1.6F) : mps);
+                int ef = RadarProducts.ratingFor(v.measuredPeak);
                 lines.add(Component.translatable("realweather.vehicle.probe.wind", Math.round(mps * 3.6F), Math.round(mps)).withStyle(ChatFormatting.WHITE));
+                lines.add(Component.translatable("realweather.vehicle.probe.peak", Math.round(v.measuredPeak * 3.6F)).withStyle(ChatFormatting.WHITE));
                 lines.add(Component.translatable("realweather.vehicle.probe.rating", "EF" + ef).withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
                 lines.add(Component.translatable("realweather.vehicle.probe.motion", Math.round(t.speed * 20F * 3.6F),
                         Math.floorMod(Math.round((float) Math.toDegrees(t.heading)), 360)).withStyle(ChatFormatting.GRAY));

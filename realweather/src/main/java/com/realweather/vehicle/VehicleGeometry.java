@@ -19,6 +19,7 @@ public final class VehicleGeometry {
     public static final float[] SEDAN_SIZE = {1.8200F, 1.4500F, 4.7000F};
     public static final float[][] SEDAN_LIGHTS = {{-0.6200F, 0.6400F, -2.3500F}, {0.6200F, 0.6400F, -2.3500F}};
     public static final float[][] SEDAN_SCREEN = {{0.0000F, 0.0000F, 0.0000F}, {0.0000F, 0.0000F, 0.0000F}, {0.0000F, 0.0000F, 0.0000F}, {0.0000F, 0.0000F, 0.0000F}};
+    public static final float[][] SEDAN_DOORS = {{0.9100F, 0.0000F, -0.6080F}, {0.9100F, 0.0000F, 0.4280F}};
 
     // pickup
     public static final float[][] PICKUP_WHEELS = {{-0.8600F, 0.4200F, -1.6200F}, {0.8600F, 0.4200F, -1.6200F}, {-0.8600F, 0.4200F, 1.6800F}, {0.8600F, 0.4200F, 1.6800F}};
@@ -37,6 +38,7 @@ public final class VehicleGeometry {
     public static final float[][] PICKUP_SCREEN = {{-0.1400F, 1.0700F, -0.4700F}, {0.1400F, 1.0700F, -0.4700F}, {0.1400F, 1.2300F, -0.5300F}, {-0.1400F, 1.2300F, -0.5300F}};
     public static final float[] PICKUP_ANEMOMETER = {0.6200F, 2.7800F, 0.9800F};
     public static final float[] PICKUP_DISH = {-0.3000F, 0.6600F, 1.3500F};
+    public static final float[][] PICKUP_DOORS = {{1.0000F, 0.0000F, -0.7680F}};
 
     // intercept
     public static final float[][] INTERCEPT_WHEELS = {{-1.0000F, 0.5000F, -1.8000F}, {1.0000F, 0.5000F, -1.8000F}, {-1.0000F, 0.5000F, 1.8000F}, {1.0000F, 0.5000F, 1.8000F}};
@@ -55,6 +57,7 @@ public final class VehicleGeometry {
     public static final float[][] INTERCEPT_SCREEN = {{-0.1400F, 1.2700F, -0.8100F}, {0.1400F, 1.2700F, -0.8100F}, {0.1400F, 1.4300F, -0.8700F}, {-0.1400F, 1.4300F, -0.8700F}};
     public static final float[] INTERCEPT_ANEMOMETER = {-0.7000F, 3.1800F, 2.6000F};
     public static final float[] INTERCEPT_TURRET = {0.3500F, 2.2500F, -0.0500F};
+    public static final float[][] INTERCEPT_DOORS = {{1.2000F, 0.0000F, -0.8880F}};
     public static final float[][] INTERCEPT_SPIKES = {{-0.9500F, 0.9500F, -1.1500F}, {0.9500F, 0.9500F, -1.1500F}, {-0.9500F, 0.9500F, 1.1500F}, {0.9500F, 0.9500F, 1.1500F}};
     public static final float[][] INTERCEPT_SKIRTS = {{-1.2300F, 0.5000F, 0.0000F}, {1.2300F, 0.5000F, 0.0000F}};
 
