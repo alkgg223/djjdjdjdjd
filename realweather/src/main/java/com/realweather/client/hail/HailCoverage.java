@@ -20,6 +20,11 @@ public final class HailCoverage {
         return COVER.get(entityId);
     }
 
+    /** Diagnostics: coverage per entity id. */
+    public static String debug() {
+        return COVER.toString();
+    }
+
     public static void tick(Minecraft mc, ClientLevel level) {
         if (!ClientWeather.active(level)) {
             COVER.clear();

@@ -2,6 +2,8 @@
 # Runs the mod for real: a dedicated server creates a world and runs the commands, then the
 # client plays through every weather scene under a virtual display and takes screenshots.
 set -u
+export RW_SUITE="${RW_SUITE:-$(cat tools/selftest_suite 2>/dev/null || echo all)}"
+echo "suite: $RW_SUITE"
 chmod +x gradlew
 mkdir -p run/server run/client/saves
 echo "eula=true" > run/server/eula.txt
