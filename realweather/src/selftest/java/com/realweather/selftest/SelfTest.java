@@ -466,7 +466,8 @@ public final class SelfTest {
 
     private static void onTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null || mc.getSingleplayerServer() == null || mc.screen != null) {
+        if (mc.level == null || mc.player == null || mc.getSingleplayerServer() == null
+                || (mc.screen != null && !(mc.screen instanceof com.realweather.client.radar.RadarScreen))) {
             return;
         }
         if (ready < 120) {

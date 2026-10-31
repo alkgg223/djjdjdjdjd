@@ -1,0 +1,24 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/sedan/body.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "amber": "realweather:item/vehicle/amber",
+  "carpet": "realweather:item/vehicle/carpet",
+  "chrome": "realweather:item/vehicle/chrome",
+  "dash": "realweather:item/vehicle/dash",
+  "gauge": "realweather:item/vehicle/gauge",
+  "gauge_rpm": "realweather:item/vehicle/gauge_rpm",
+  "head_light": "realweather:item/vehicle/head_light",
+  "paint": "realweather:item/vehicle/paint",
+  "paint_dark": "realweather:item/vehicle/paint_dark",
+  "plate": "realweather:item/vehicle/plate",
+  "seat": "realweather:item/vehicle/seat",
+  "tail_light": "realweather:item/vehicle/tail_light",
+  "trim": "realweather:item/vehicle/trim",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}

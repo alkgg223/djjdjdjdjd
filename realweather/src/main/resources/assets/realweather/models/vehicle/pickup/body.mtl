@@ -1,0 +1,114 @@
+newmtl amber
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #amber
+
+newmtl black
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #black
+
+newmtl carpet
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #carpet
+
+newmtl chrome
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #chrome
+
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl dash
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dash
+
+newmtl gauge
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #gauge
+
+newmtl gauge_rpm
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #gauge_rpm
+
+newmtl grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #grey
+
+newmtl head_light
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #head_light
+
+newmtl lens
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #lens
+
+newmtl orange
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #orange
+
+newmtl paint
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint
+neoforge_TintIndex 0
+
+newmtl plate
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #plate
+
+newmtl seat
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #seat
+
+newmtl steel
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #steel
+
+newmtl tail_light
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #tail_light
+
+newmtl trim
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #trim
+
+newmtl white
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #white

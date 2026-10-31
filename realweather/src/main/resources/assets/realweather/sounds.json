@@ -132,5 +132,113 @@
       }
     ],
     "subtitle": "subtitles.realweather.hail_roof"
+  },
+  "vehicle.engine": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_engine",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.engine"
+  },
+  "vehicle.diesel": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_diesel",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.diesel"
+  },
+  "vehicle.start": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_start",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.start"
+  },
+  "vehicle.horn": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_horn",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.horn"
+  },
+  "vehicle.horn_truck": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_horn_truck",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.horn_truck"
+  },
+  "vehicle.wiper": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_wiper",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.wiper"
+  },
+  "vehicle.hydraulic": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_hydraulic",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.hydraulic"
+  },
+  "vehicle.skid": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_skid",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.skid"
+  },
+  "vehicle.crash": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_crash",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.crash"
+  },
+  "vehicle.door": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_door",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.door"
+  },
+  "vehicle.beep": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_beep",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.beep"
+  },
+  "vehicle.wind_buffet": {
+    "sounds": [
+      {
+        "name": "realweather:vehicle_wind_buffet",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.vehicle.wind_buffet"
   }
 }

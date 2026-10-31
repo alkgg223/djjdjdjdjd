@@ -38,6 +38,10 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(WaterShader::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.SkyRenderer::onRenderStage);
         modBus.addListener(ClientInit::onEntityRenderers);
+        modBus.addListener(com.realweather.client.vehicle.VehicleModels::register);
+        modBus.addListener(com.realweather.client.vehicle.VehicleClient::onKeys);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.vehicle.VehicleClient::onClientTick);
+        com.realweather.client.vehicle.VehicleClient.init();
         modBus.addListener(ClientInit::onAddLayers);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.hail.Footprints::onRenderStage);
     }
@@ -46,6 +50,9 @@ public final class ClientInit {
         event.registerEntityRenderer(net.minecraft.world.entity.EntityType.LIGHTNING_BOLT, RealLightningRenderer::new);
         event.registerBlockEntityRenderer(com.realweather.device.ModDevices.MONITOR_BE.get(), com.realweather.client.radar.MonitorRenderer::new);
         event.registerBlockEntityRenderer(com.realweather.device.ModDevices.RADAR_BE.get(), com.realweather.client.radar.RadarDishRenderer::new);
+        for (com.realweather.vehicle.VehicleType kind : com.realweather.vehicle.VehicleType.values()) {
+            event.registerEntityRenderer(com.realweather.vehicle.VehicleRegistry.type(kind), com.realweather.client.vehicle.VehicleRenderer::new);
+        }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -75,6 +82,7 @@ public final class ClientInit {
 
     private static void onGuiLayers(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.CAMERA_OVERLAYS, RealWeather.id("weather_overlay"), WeatherOverlay::render);
+        event.registerAbove(VanillaGuiLayers.HOTBAR, RealWeather.id("vehicle_hud"), com.realweather.client.vehicle.VehicleHud::render);
     }
 
     private static void onClientExtensions(RegisterClientExtensionsEvent event) {

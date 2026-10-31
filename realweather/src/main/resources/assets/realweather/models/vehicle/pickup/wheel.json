@@ -1,0 +1,15 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/pickup/wheel.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "dark": "realweather:item/vehicle/dark",
+  "rim": "realweather:item/vehicle/rim",
+  "rubber": "realweather:item/vehicle/rubber",
+  "steel": "realweather:item/vehicle/steel",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}

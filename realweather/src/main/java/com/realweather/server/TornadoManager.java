@@ -162,7 +162,8 @@ public final class TornadoManager {
         }
         AABB box = new AABB(t.x - reach, t.groundY - 8, t.z - reach, t.x + reach, t.groundY + 70, t.z + reach);
         List<Entity> list = level.getEntities((Entity) null, box, e -> e.isAlive() && !e.isSpectator() && !e.isPassenger()
-                && !(e instanceof Player p && (p.isCreative() || p.isSpectator())) && !(e instanceof LightningBolt));
+                && !(e instanceof Player p && (p.isCreative() || p.isSpectator())) && !(e instanceof LightningBolt)
+                && !(e instanceof com.realweather.vehicle.StormVehicle));
         float lift = Tornado.LIFT[t.rating];
         boolean hurt = level.getGameTime() % 10 == 0;
         for (Entity e : list) {

@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/intercept/glass.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "glass": "realweather:item/vehicle/glass",
+  "glass_dark": "realweather:item/vehicle/glass_dark",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}

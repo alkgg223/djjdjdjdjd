@@ -13,6 +13,7 @@ public final class Network {
                 .playToClient(StormSyncPayload.TYPE, StormSyncPayload.CODEC,
                         (payload, context) -> context.enqueueWork(() -> com.realweather.client.ClientStorms.onSync(payload)))
                 .playToClient(TornadoSyncPayload.TYPE, TornadoSyncPayload.CODEC,
-                        (payload, context) -> context.enqueueWork(() -> com.realweather.client.tornado.ClientTornadoes.onSync(payload)));
+                        (payload, context) -> context.enqueueWork(() -> com.realweather.client.tornado.ClientTornadoes.onSync(payload)))
+                .playToServer(VehicleInputPayload.TYPE, VehicleInputPayload.CODEC, VehicleInputPayload::handle);
     }
 }

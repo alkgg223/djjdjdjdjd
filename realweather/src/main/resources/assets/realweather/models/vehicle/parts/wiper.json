@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/parts/wiper.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "rubber": "realweather:item/vehicle/rubber",
+  "trim": "realweather:item/vehicle/trim",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}

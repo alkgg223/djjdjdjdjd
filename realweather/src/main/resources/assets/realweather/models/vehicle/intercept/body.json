@@ -1,0 +1,27 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/intercept/body.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "amber": "realweather:item/vehicle/amber",
+  "armor": "realweather:item/vehicle/armor",
+  "armor_dark": "realweather:item/vehicle/armor_dark",
+  "carpet": "realweather:item/vehicle/carpet",
+  "chrome": "realweather:item/vehicle/chrome",
+  "dash": "realweather:item/vehicle/dash",
+  "gauge": "realweather:item/vehicle/gauge",
+  "gauge_rpm": "realweather:item/vehicle/gauge_rpm",
+  "head_light": "realweather:item/vehicle/head_light",
+  "orange": "realweather:item/vehicle/orange",
+  "plate": "realweather:item/vehicle/plate",
+  "seat_tan": "realweather:item/vehicle/seat_tan",
+  "steel": "realweather:item/vehicle/steel",
+  "tail_light": "realweather:item/vehicle/tail_light",
+  "trim": "realweather:item/vehicle/trim",
+  "yellow": "realweather:item/vehicle/yellow",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}

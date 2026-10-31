@@ -1,0 +1,17 @@
+newmtl armor_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #armor_dark
+
+newmtl hydraulic
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #hydraulic
+
+newmtl steel
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #steel

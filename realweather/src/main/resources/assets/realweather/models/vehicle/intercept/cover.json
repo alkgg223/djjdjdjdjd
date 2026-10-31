@@ -1,0 +1,12 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/intercept/cover.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "snow": "realweather:item/vehicle/snow",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}

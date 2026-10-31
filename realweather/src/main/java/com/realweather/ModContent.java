@@ -71,6 +71,18 @@ public final class ModContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> TORNADO_FAR = sound("weather.tornado_far");
     public static final DeferredHolder<SoundEvent, SoundEvent> HAIL = sound("weather.hail");
     public static final DeferredHolder<SoundEvent, SoundEvent> HAIL_ROOF = sound("weather.hail_roof");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_ENGINE = sound("vehicle.engine");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_DIESEL = sound("vehicle.diesel");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_START = sound("vehicle.start");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_HORN = sound("vehicle.horn");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_HORN_TRUCK = sound("vehicle.horn_truck");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_WIPER = sound("vehicle.wiper");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_HYDRAULIC = sound("vehicle.hydraulic");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_SKID = sound("vehicle.skid");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_CRASH = sound("vehicle.crash");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_DOOR = sound("vehicle.door");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_BEEP = sound("vehicle.beep");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_WIND_BUFFET = sound("vehicle.wind_buffet");
 
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SPLASH = particle("splash");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RIPPLE = particle("ripple");
