@@ -43,6 +43,10 @@ public final class HailCoverage {
             }
             float c = COVER.get(e.getId());
             float hail = any ? ClientStorms.hailAt(e.getX(), e.getZ()) * rainLevel : 0F;
+            if (e.getVehicle() instanceof com.realweather.vehicle.StormVehicle) {
+                // Inside a car: nothing lands on you.
+                hail = 0F;
+            }
             boolean exposed = level.canSeeSky(BlockPos.containing(e.getX(), e.getY() + e.getBbHeight() + 0.2, e.getZ()));
             if (exposed && hail > 0.1F) {
                 c = Math.min(1F, c + 0.0028F * hail);

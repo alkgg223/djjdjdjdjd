@@ -111,7 +111,8 @@ public final class HailManager {
             if (e instanceof Player p && (p.isCreative() || p.isSpectator())) {
                 continue;
             }
-            if (!level.canSeeSky(BlockPos.containing(e.getX(), e.getEyeY(), e.getZ()))) {
+            if (!level.canSeeSky(BlockPos.containing(e.getX(), e.getEyeY(), e.getZ())) || WeatherServer.insideVehicle(e)
+                    || e instanceof com.realweather.vehicle.StormVehicle) {
                 continue;
             }
             float h = StormManager.hailAt(WeatherData.get(level), e.getX(), e.getZ());

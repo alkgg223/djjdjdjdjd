@@ -220,7 +220,8 @@ public class StormVehicle extends Mob {
         super.tickRidden(player, input);
         if (level().isClientSide) {
             throttleIn = Mth.clamp(player.zza / 0.98F, -1F, 1F);
-            steerIn = Mth.clamp(player.xxa / 0.98F, -1F, 1F);
+            // xxa is positive for "left": steering is positive to the right.
+            steerIn = Mth.clamp(-player.xxa / 0.98F, -1F, 1F);
         }
     }
 

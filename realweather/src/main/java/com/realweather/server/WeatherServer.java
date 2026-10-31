@@ -193,7 +193,7 @@ public final class WeatherServer {
             return;
         }
         BlockPos head = BlockPos.containing(player.getEyePosition());
-        if (!level.canSeeSky(head)) {
+        if (!level.canSeeSky(head) || insideVehicle(player)) {
             return;
         }
         Holder<Biome> biome = level.getBiome(head);
@@ -206,6 +206,11 @@ public final class WeatherServer {
         if (cur < cap) {
             player.setTicksFrozen(Math.min(cap, cur + 3));
         }
+    }
+
+    /** Sitting in a vehicle with its windows intact keeps the cold and the hail off. */
+    public static boolean insideVehicle(net.minecraft.world.entity.Entity e) {
+        return e.getVehicle() instanceof com.realweather.vehicle.StormVehicle v && !v.flag(com.realweather.vehicle.StormVehicle.FLAG_GLASS_BROKEN);
     }
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
