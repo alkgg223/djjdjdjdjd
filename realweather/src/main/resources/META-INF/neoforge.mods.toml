@@ -4,7 +4,7 @@ license="MIT"
 
 [[mods]]
 modId="realweather"
-version="1.1.0"
+version="1.2.0"
 displayName="Real Weather"
 logoFile="realweather_logo.png"
 description='''Realistic rain, snow and thunder with real sounds, floods in heavy rain, sandstorms and blizzards, realistic water, and villagers that run home in storms. Commands: /realweather (or /rw).'''

@@ -327,7 +327,8 @@ public class StormVehicle extends Mob {
         if (att != null && att.getVehicle() == this) {
             return false;
         }
-        if (source.is(DamageTypeTags.IS_FALL) || source.is(DamageTypeTags.IS_DROWNING) || source.is(DamageTypeTags.IS_FREEZING)) {
+        if (source.is(DamageTypeTags.IS_FALL) || source.is(DamageTypeTags.IS_DROWNING) || source.is(DamageTypeTags.IS_FREEZING)
+                || source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL) || source.is(net.minecraft.world.damagesource.DamageTypes.CRAMMING)) {
             return false;
         }
         if (source.getDirectEntity() instanceof Player && !source.is(DamageTypeTags.IS_EXPLOSION)) {

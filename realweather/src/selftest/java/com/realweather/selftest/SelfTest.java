@@ -925,13 +925,13 @@ public final class SelfTest {
     }
 
     /** Holds the driver's pedals and steering (the vehicle physics read them like the keyboard). */
-    private static void drive(float forward, float right) {
+    private static void drive(float forward, float turnRight) {
         net.minecraft.client.player.LocalPlayer p = Minecraft.getInstance().player;
         p.input = new net.minecraft.client.player.Input() {
             @Override
             public void tick(boolean sneaking, float speed) {
                 this.forwardImpulse = forward;
-                this.leftImpulse = -right;
+                this.leftImpulse = -turnRight;
                 this.up = forward > 0;
                 this.down = forward < 0;
             }
