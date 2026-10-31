@@ -504,6 +504,46 @@ def tornado_far(seed):
     return limit(rms_norm(loopify(x, xf), -17))
 
 
+def hail_ground(seed):
+    """Hailstones hitting the ground: hard clicks and little bounces over a rattling bed."""
+    rng = np.random.default_rng(seed)
+    L, xf = 12 * SR, 2 * SR
+    n = L + xf
+    clicks = [burst(rng, 3, lo, lo * 2.5, rng.uniform(0.3, 0.9)) for lo in rng.uniform(1800, 6000, 16)]
+    taps = [burst(rng, 12, 300, rng.uniform(900, 2200), rng.uniform(2, 5)) for _ in range(8)]
+    x = rms_norm(drops(rng, n, 520, clicks, 2.0), -22)
+    # Each stone bounces once or twice: echo the clicks a few hundredths of a second later, quieter.
+    for dly, g in ((0.045, 0.35), (0.09, 0.15)):
+        k = int(dly * SR)
+        x[k:] += x[:-k] * g
+    x += rms_norm(drops(rng, n, 140, taps, 2.4), -27)
+    x += rms_norm(filt(white(rng, n), 'bandpass', [2500, 9000], 2), -34)
+    x *= 0.85 + 0.15 * ctrl(rng, n, 0.5)
+    x = filt(x, 'highpass', 120)
+    return limit(rms_norm(loopify(x, xf), -19))
+
+
+def hail_roof(seed):
+    """Hail on a roof heard from inside: loud knocking on wood and metal sheet."""
+    rng = np.random.default_rng(seed)
+    L, xf = 12 * SR, 2 * SR
+    n = L + xf
+    knocks = []
+    for _ in range(14):
+        m = int(0.06 * SR)
+        t = np.arange(m) / SR
+        f = rng.uniform(380, 1500)
+        k = np.sin(2 * np.pi * f * t) * np.exp(-t / rng.uniform(0.006, 0.02)) + rng.standard_normal(m) * np.exp(-t / 0.003) * 0.6
+        knocks.append(k / np.max(np.abs(k)))
+    pings = [plip(rng, rng.uniform(2500, 4200), rng.uniform(10, 30), 0.05) for _ in range(6)]
+    x = rms_norm(drops(rng, n, 380, knocks, 2.1), -19)
+    x += rms_norm(drops(rng, n, 40, pings, 2.5), -30)
+    x += rms_norm(filt(brown(rng, n), 'lowpass', 300, 2), -30)
+    x = filt(x, 'lowpass', 5000, 2)
+    x = filt(x, 'highpass', 60)
+    return limit(rms_norm(loopify(x, xf), -18))
+
+
 def tornadoes():
     write('tornado_roar', tornado_roar(41))
     write('tornado_debris', tornado_debris(42))
@@ -516,6 +556,9 @@ def main():
             thunders()
         if 'tornado' in sys.argv:
             tornadoes()
+        if 'hail' in sys.argv:
+            write('hail', hail_ground(51))
+            write('hail_roof', hail_roof(52))
         return
     write('rain_light', rain(11, False))
     write('rain_heavy', rain(12, True))
@@ -525,6 +568,8 @@ def main():
     write('sandstorm', sandstorm(23))
     thunders()
     tornadoes()
+    write('hail', hail_ground(51))
+    write('hail_roof', hail_roof(52))
 
 
 def thunders():

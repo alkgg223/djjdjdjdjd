@@ -116,7 +116,9 @@ public final class WeatherServer {
         }
         // (tornadoes keep their state while nobody is around)
         lightning(level, players, rng);
+        StormManager.tick(level, d, players, rng);
         TornadoManager.tick(level, d, players, rng);
+        HailManager.tick(level, d, players, rng);
         FloodManager.tick(level, d, players, rng);
         SnowPile.tick(level, d, players, rng);
         if (t % 20 == 0) {
@@ -210,6 +212,7 @@ public final class WeatherServer {
         if (event.getEntity() instanceof ServerPlayer player) {
             PacketDistributor.sendToPlayer(player, payload());
             PacketDistributor.sendToPlayer(player, TornadoManager.payload(WeatherData.get(player.server.overworld())));
+            PacketDistributor.sendToPlayer(player, StormManager.payload(WeatherData.get(player.server.overworld())));
         }
     }
 
@@ -217,6 +220,7 @@ public final class WeatherServer {
         if (event.getEntity() instanceof ServerPlayer player) {
             PacketDistributor.sendToPlayer(player, payload());
             PacketDistributor.sendToPlayer(player, TornadoManager.payload(WeatherData.get(player.server.overworld())));
+            PacketDistributor.sendToPlayer(player, StormManager.payload(WeatherData.get(player.server.overworld())));
         }
     }
 
@@ -224,6 +228,11 @@ public final class WeatherServer {
         if (event.getEntity() instanceof ServerPlayer player) {
             PacketDistributor.sendToPlayer(player, payload());
         }
+    }
+
+    /** Local rain rate at a point (storm cells plus light rain between them), 0 when it is not raining. */
+    public static float rainAt(ServerLevel level, double x, double z) {
+        return level.isRaining() ? StormManager.rainAt(WeatherData.get(level), x, z) : 0F;
     }
 
     public static boolean isDryBiome(Biome biome) {

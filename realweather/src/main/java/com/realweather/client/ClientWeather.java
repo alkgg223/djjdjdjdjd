@@ -25,7 +25,9 @@ public final class ClientWeather {
     public static float windX, windZ;
 
     // What the camera experiences right now (biomes around it, rain level, shelter).
-    public static float camRain, camSnow, camSand, camBlizzard;
+    public static float camRain, camSnow, camSand, camBlizzard, camHail;
+    /** Rain rate where the camera is (storm cells), before biome and rain-level factors. */
+    public static float localRain;
     /** 0 = deep indoors, 1 = open sky all around. */
     public static float exposure = 1F;
     /** True when there is a roof directly above the camera. */
@@ -38,7 +40,7 @@ public final class ClientWeather {
     public static float wetness;
     public static int ticks;
 
-    private static float sRain, sSnow, sSand, sBlizzard, sOpen = 1F, sGround = 1F;
+    private static float sRain, sSnow, sSand, sBlizzard, sHail, sLocal, sOpen = 1F, sGround = 1F;
 
     private ClientWeather() {}
 
@@ -66,10 +68,12 @@ public final class ClientWeather {
         synced = false;
         tRain = tSnow = tThunder = tWind = tSand = tBlizzard = 0F;
         rain = snow = thunder = wind = sand = blizzard = 0F;
-        camRain = camSnow = camSand = camBlizzard = 0F;
+        camRain = camSnow = camSand = camBlizzard = camHail = 0F;
+        ClientStorms.clear();
         wetness = 0F;
         WeatherSounds.stopAll();
         com.realweather.client.tornado.ClientTornadoes.clear();
+        com.realweather.client.hail.Footprints.clear();
     }
 
     public static boolean active(ClientLevel level) {
@@ -112,9 +116,12 @@ public final class ClientWeather {
             sample(level, camera.getPosition());
         }
         if (!ow) {
-            sRain = sSnow = sSand = sBlizzard = 0F;
+            sRain = sSnow = sSand = sBlizzard = sHail = 0F;
         }
+        ClientStorms.tick();
         camRain = approach(camRain, sRain, 0.02F);
+        camHail = approach(camHail, sHail, 0.02F);
+        localRain = approach(localRain, ClientStorms.synced ? sLocal : rain, 0.02F);
         camSnow = approach(camSnow, sSnow, 0.02F);
         camSand = approach(camSand, sSand, 0.01F);
         camBlizzard = approach(camBlizzard, sBlizzard, 0.01F);
@@ -131,6 +138,8 @@ public final class ClientWeather {
         WeatherSounds.tick(mc, level);
         LightningFx.tick(mc, level);
         com.realweather.client.tornado.ClientTornadoes.tick(mc, level);
+        com.realweather.client.hail.HailCoverage.tick(mc, level);
+        com.realweather.client.hail.Footprints.tick(mc, level);
     }
 
     private static void sample(ClientLevel level, Vec3 cam) {
@@ -164,7 +173,11 @@ public final class ClientWeather {
                 total += w;
             }
         }
-        sRain = wRain / total * rainLevel * rain;
+        // Under the storm cells the rain is heavy, between them it is light.
+        float local = ClientStorms.synced ? ClientStorms.rainAt(cam.x, cam.z) : rain;
+        sLocal = local;
+        sHail = ClientStorms.synced ? wRain / total * rainLevel * ClientStorms.hailAt(cam.x, cam.z) : 0F;
+        sRain = wRain / total * rainLevel * local;
         sSnow = wSnow / total * rainLevel * Math.max(snow, blizzard);
         sBlizzard = wSnow / total * rainLevel * blizzard;
         sSand = wSand / total * sand;

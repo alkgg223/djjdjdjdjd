@@ -114,5 +114,23 @@
       }
     ],
     "subtitle": "subtitles.realweather.tornado_far"
+  },
+  "weather.hail": {
+    "sounds": [
+      {
+        "name": "realweather:hail",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.hail"
+  },
+  "weather.hail_roof": {
+    "sounds": [
+      {
+        "name": "realweather:hail_roof",
+        "stream": true
+      }
+    ],
+    "subtitle": "subtitles.realweather.hail_roof"
   }
 }

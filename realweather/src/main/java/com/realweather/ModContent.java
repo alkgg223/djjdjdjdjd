@@ -46,6 +46,16 @@ public final class ModContent {
     public static final DeferredBlock<LiquidBlock> FLOOD_BLOCK = BLOCKS.register("flood_water",
             () -> new LiquidBlock(FLOOD.get(), BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable()));
 
+    public static final DeferredBlock<com.realweather.server.CoverBlock> HAIL_COVER = BLOCKS.register("hail",
+            () -> new com.realweather.server.CoverBlock(BlockBehaviour.Properties.of().mapColor(net.minecraft.world.level.material.MapColor.SNOW)
+                    .replaceable().noCollission().strength(0.1F).sound(net.minecraft.world.level.block.SoundType.POWDER_SNOW).noOcclusion()
+                    .randomTicks().noLootTable().pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY), true));
+    public static final DeferredBlock<com.realweather.server.CoverBlock> HAIL_SNOW = BLOCKS.register("hail_snow",
+            () -> new com.realweather.server.CoverBlock(BlockBehaviour.Properties.of().mapColor(net.minecraft.world.level.material.MapColor.SNOW)
+                    .replaceable().forceSolidOff().strength(0.1F).sound(net.minecraft.world.level.block.SoundType.SNOW).randomTicks()
+                    .noLootTable().pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY)
+                    .isViewBlocking((s, l, p) -> s.getValue(com.realweather.server.CoverBlock.LAYERS) >= 8), false));
+
     public static final DeferredHolder<SoundEvent, SoundEvent> RAIN_LIGHT = sound("weather.rain_light");
     public static final DeferredHolder<SoundEvent, SoundEvent> RAIN_HEAVY = sound("weather.rain_heavy");
     public static final DeferredHolder<SoundEvent, SoundEvent> RAIN_ROOF = sound("weather.rain_roof");
@@ -59,6 +69,8 @@ public final class ModContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> TORNADO_ROAR = sound("weather.tornado_roar");
     public static final DeferredHolder<SoundEvent, SoundEvent> TORNADO_DEBRIS = sound("weather.tornado_debris");
     public static final DeferredHolder<SoundEvent, SoundEvent> TORNADO_FAR = sound("weather.tornado_far");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAIL = sound("weather.hail");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAIL_ROOF = sound("weather.hail_roof");
 
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SPLASH = particle("splash");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RIPPLE = particle("ripple");
@@ -68,6 +80,7 @@ public final class ModContent {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> DUST = particle("dust");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SAND_GRAIN = particle("sand_grain");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> TORNADO_DUST = particle("tornado_dust");
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HAILSTONE = particle("hailstone");
 
     private ModContent() {}
 

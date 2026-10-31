@@ -41,7 +41,16 @@ public final class WeatherCommands {
                 .then(Commands.literal("depth").then(Commands.argument("blocks", IntegerArgumentType.integer(1, 4))
                         .executes(c -> floodDepth(c.getSource(), IntegerArgumentType.getInteger(c, "blocks"))))));
         root.then(tornado());
+        root.then(Commands.literal("hailstorm").then(Commands.argument("percent", IntegerArgumentType.integer(1, 100))
+                .executes(c -> storm(c.getSource(), StormCell.HAIL, IntegerArgumentType.getInteger(c, "percent"), 8))
+                .then(Commands.argument("minutes", IntegerArgumentType.integer(1, 120))
+                        .executes(c -> storm(c.getSource(), StormCell.HAIL, IntegerArgumentType.getInteger(c, "percent"), IntegerArgumentType.getInteger(c, "minutes"))))));
+        root.then(Commands.literal("supercell").executes(c -> storm(c.getSource(), StormCell.SUPERCELL, 100, 20))
+                .then(Commands.argument("minutes", IntegerArgumentType.integer(1, 120))
+                        .executes(c -> storm(c.getSource(), StormCell.SUPERCELL, 100, IntegerArgumentType.getInteger(c, "minutes")))));
+        root.then(Commands.literal("thunderstorm").executes(c -> storm(c.getSource(), StormCell.STORM, 90, 12)));
         root.then(onOff("snowpile"));
+        root.then(onOff("hail"));
         root.then(onOff("freezing"));
         root.then(onOff("villagers"));
         root.then(onOff("natural"));
@@ -78,6 +87,15 @@ public final class WeatherCommands {
                 .then(Commands.literal("on").executes(c -> toggle(c, "tornado.natural", true)))
                 .then(Commands.literal("off").executes(c -> toggle(c, "tornado.natural", false))));
         return t;
+    }
+
+    private static int storm(CommandSourceStack src, int type, int percent, int minutes) {
+        ServerLevel level = overworld(src);
+        WeatherData d = WeatherData.get(level);
+        net.minecraft.world.phys.Vec3 pos = src.getLevel() == level ? src.getPosition() : level.getSharedSpawnPos().getCenter();
+        StormManager.spawnFor(level, d, pos, type, percent / 100F, minutes, level.random);
+        ok(src, "storm." + type, percent, minutes);
+        return 1;
     }
 
     private static int spawnTornado(CommandSourceStack src, int rating, boolean here) {
@@ -229,6 +247,7 @@ public final class WeatherCommands {
             case "villagers" -> d.villagers = on;
             case "natural" -> d.natural = on;
             case "tornado.damage" -> d.tornadoDamage = on;
+            case "hail" -> d.hail = on;
             case "tornado.natural" -> d.tornadoNatural = on;
             default -> {
             }

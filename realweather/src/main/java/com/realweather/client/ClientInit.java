@@ -38,10 +38,26 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(WaterShader::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.tornado.TornadoRenderer::onRenderStage);
         modBus.addListener(ClientInit::onEntityRenderers);
+        modBus.addListener(ClientInit::onAddLayers);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.hail.Footprints::onRenderStage);
     }
 
     private static void onEntityRenderers(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(net.minecraft.world.entity.EntityType.LIGHTNING_BOLT, RealLightningRenderer::new);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void onAddLayers(net.neoforged.neoforge.client.event.EntityRenderersEvent.AddLayers event) {
+        for (net.minecraft.world.entity.EntityType<?> type : event.getEntityTypes()) {
+            if (event.getRenderer(type) instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer r) {
+                r.addLayer(new com.realweather.client.hail.HailLayer(r));
+            }
+        }
+        for (net.minecraft.client.resources.PlayerSkin.Model skin : event.getSkins()) {
+            if (event.getSkin(skin) instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer r) {
+                r.addLayer(new com.realweather.client.hail.HailLayer(r));
+            }
+        }
     }
 
     private static void onSetup(FMLClientSetupEvent event) {

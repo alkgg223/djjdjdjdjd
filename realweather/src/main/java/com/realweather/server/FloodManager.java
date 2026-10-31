@@ -33,21 +33,32 @@ public final class FloodManager {
     private FloodManager() {}
 
     static boolean growing(ServerLevel level, WeatherData d) {
-        return d.flood && level.isRaining() && WeatherServer.rain >= 0.55F;
+        return d.flood && level.isRaining();
     }
 
     static void tick(ServerLevel level, WeatherData d, List<ServerPlayer> players, RandomSource rng) {
+        boolean anyHeavy = false;
         if (growing(level, d)) {
-            float k = (WeatherServer.rain - 0.55F) / 0.45F;
-            int attempts = 2 + (int) (k * 10);
             int count = Math.min(players.size(), 8);
             for (int p = 0; p < count && d.floodList.size() < MAX_BLOCKS; p++) {
                 ServerPlayer player = players.get(rng.nextInt(players.size()));
+                // Floods follow the heavy rain under the storms, not the weather everywhere.
+                float local = WeatherServer.rainAt(level, player.getX(), player.getZ());
+                if (local < 0.55F) {
+                    continue;
+                }
+                anyHeavy = true;
+                float k = (local - 0.55F) / 0.45F;
+                int attempts = 2 + (int) (k * 10);
                 for (int i = 0; i < attempts; i++) {
                     tryFlood(level, d, player, rng, k);
                 }
             }
-        } else if (!d.floodList.isEmpty() && (!level.isRaining() || WeatherServer.rain < 0.45F || !d.flood) && level.getGameTime() % 2 == 0) {
+            if (anyHeavy && !d.floodList.isEmpty()) {
+                spreadIndoors(level, d, rng);
+            }
+        }
+        if (!anyHeavy && !d.floodList.isEmpty() && level.getGameTime() % 2 == 0) {
             // The water soaks away over a minute or two, top layers first.
             int budget = 1 + d.floodList.size() / 1000;
             drain(level, d, budget);
@@ -79,9 +90,48 @@ public final class FloodManager {
         return removed;
     }
 
+    /**
+     * Rising water pushes against windows and doors: glass shatters, doors give way, and the water runs into
+     * the house at the same level.
+     */
+    private static void spreadIndoors(ServerLevel level, WeatherData d, RandomSource rng) {
+        for (int i = 0; i < 3; i++) {
+            long packed = d.floodList.getLong(rng.nextInt(d.floodList.size()));
+            BlockPos pos = BlockPos.of(packed);
+            if (!level.isLoaded(pos) || !isFlood(level.getFluidState(pos))) {
+                continue;
+            }
+            for (Direction dir : Direction.Plane.HORIZONTAL) {
+                BlockPos n = pos.relative(dir);
+                BlockState s = level.getBlockState(n);
+                if (breaksInFlood(s)) {
+                    if (rng.nextFloat() < 0.12F) {
+                        level.destroyBlock(n, s.is(BlockTags.DOORS) || s.is(BlockTags.TRAPDOORS));
+                        if (s.is(BlockTags.DOORS)) {
+                            // The other half of the door goes with it.
+                            BlockPos other = s.getValue(net.minecraft.world.level.block.DoorBlock.HALF) == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER ? n.above() : n.below();
+                            if (level.getBlockState(other).is(BlockTags.DOORS)) {
+                                level.destroyBlock(other, false);
+                            }
+                        }
+                    }
+                } else if (s.isAir() && level.getBlockState(n.below()).isFaceSturdy(level, n.below(), Direction.UP) && rng.nextFloat() < 0.25F
+                        && d.floodList.size() < MAX_BLOCKS) {
+                    level.setBlock(n, ModContent.FLOOD_FLOWING.get().getFlowing(FloodFluid.SHEET, false).createLegacyBlock(), 3);
+                    d.addFlood(n.asLong());
+                }
+            }
+        }
+    }
+
+    private static boolean breaksInFlood(BlockState s) {
+        return s.is(net.neoforged.neoforge.common.Tags.Blocks.GLASS_BLOCKS) || s.is(net.neoforged.neoforge.common.Tags.Blocks.GLASS_PANES)
+                || s.is(BlockTags.WOODEN_DOORS) || s.is(BlockTags.WOODEN_TRAPDOORS) || s.is(BlockTags.FENCE_GATES);
+    }
+
     static void onRandomTick(ServerLevel level, BlockPos pos, RandomSource random) {
         WeatherData d = WeatherData.get(level.getServer().overworld());
-        boolean keep = level.dimension() == Level.OVERWORLD && growing(level, d) && level.isRainingAt(pos.above());
+        boolean keep = level.dimension() == Level.OVERWORLD && growing(level, d) && WeatherServer.rainAt(level, pos.getX(), pos.getZ()) > 0.45F;
         if (!keep && random.nextInt(3) != 0) {
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
             d.removeFlood(pos.asLong());

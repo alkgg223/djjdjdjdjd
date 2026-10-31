@@ -35,9 +35,12 @@ public class WeatherData extends SavedData {
     public boolean villagers = true;
     public boolean natural = true;
     public boolean tornadoDamage = true;
+    public boolean hail = true;
     public boolean tornadoNatural = true;
     public int nextTornadoId = 1;
     public final java.util.List<Tornado> tornadoes = new java.util.ArrayList<>();
+    public int nextStormId = 1;
+    public final java.util.List<StormCell> storms = new java.util.ArrayList<>();
 
     /** Flood water blocks placed by the mod, oldest first, so the water can drain later. */
     public final LongArrayList floodList = new LongArrayList();
@@ -70,11 +73,17 @@ public class WeatherData extends SavedData {
         d.villagers = tag.getBoolean("villagers");
         d.natural = tag.getBoolean("natural");
         d.tornadoDamage = !tag.contains("tornadoDamage") || tag.getBoolean("tornadoDamage");
+        d.hail = !tag.contains("hail") || tag.getBoolean("hail");
         d.tornadoNatural = !tag.contains("tornadoNatural") || tag.getBoolean("tornadoNatural");
         d.nextTornadoId = Math.max(1, tag.getInt("nextTornadoId"));
         net.minecraft.nbt.ListTag list = tag.getList("tornadoes", net.minecraft.nbt.Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
             d.tornadoes.add(Tornado.load(list.getCompound(i)));
+        }
+        d.nextStormId = Math.max(1, tag.getInt("nextStormId"));
+        net.minecraft.nbt.ListTag storms = tag.getList("storms", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for (int i = 0; i < storms.size(); i++) {
+            d.storms.add(StormCell.load(storms.getCompound(i)));
         }
         for (long p : tag.getLongArray("floodBlocks")) {
             if (d.floodSet.add(p)) {
@@ -106,6 +115,7 @@ public class WeatherData extends SavedData {
         tag.putBoolean("villagers", villagers);
         tag.putBoolean("natural", natural);
         tag.putBoolean("tornadoDamage", tornadoDamage);
+        tag.putBoolean("hail", hail);
         tag.putBoolean("tornadoNatural", tornadoNatural);
         tag.putInt("nextTornadoId", nextTornadoId);
         net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
@@ -113,6 +123,12 @@ public class WeatherData extends SavedData {
             list.add(t.save());
         }
         tag.put("tornadoes", list);
+        tag.putInt("nextStormId", nextStormId);
+        net.minecraft.nbt.ListTag storms = new net.minecraft.nbt.ListTag();
+        for (StormCell c : this.storms) {
+            storms.add(c.save());
+        }
+        tag.put("storms", storms);
         tag.putLongArray("floodBlocks", floodList.toLongArray());
         return tag;
     }

@@ -69,5 +69,16 @@
   "realweather.config.realistic_lightning": "Realistic lightning bolts",
   "realweather.config.tornado": "Tornado",
   "realweather.config.tornado_quality": "Tornado graphics",
-  "realweather.config.tornado_quality.tooltip": "LOW, MEDIUM, HIGH or ULTRA. Separate from the rain and snow detail."
+  "realweather.config.tornado_quality.tooltip": "LOW, MEDIUM, HIGH or ULTRA. Separate from the rain and snow detail.",
+  "block.realweather.hail": "Hailstones",
+  "block.realweather.hail_snow": "Hail-Snow",
+  "subtitles.realweather.hail": "Hail rattles",
+  "subtitles.realweather.hail_roof": "Hail drums on the roof",
+  "death.attack.realweather.hail": "%1$s was battered by hail",
+  "death.attack.realweather.hail.player": "%1$s was battered by hail while fighting %2$s",
+  "realweather.cmd.hail.on": "Hail piles up and stings again",
+  "realweather.cmd.hail.off": "Hail no longer piles up or hurts",
+  "realweather.cmd.storm.1": "A thunderstorm is building overhead",
+  "realweather.cmd.storm.2": "A hailstorm (%s%%) is coming for %s minutes",
+  "realweather.cmd.storm.3": "A supercell is approaching (%s%%, %s minutes) - watch the wall cloud"
 }

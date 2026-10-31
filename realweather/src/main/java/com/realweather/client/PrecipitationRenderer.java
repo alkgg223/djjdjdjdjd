@@ -34,6 +34,7 @@ public final class PrecipitationRenderer {
     private static final ResourceLocation RAIN_DENSE = RealWeather.id("textures/environment/rain_dense.png");
     private static final ResourceLocation RAIN_MIST = RealWeather.id("textures/environment/rain_mist.png");
     private static final ResourceLocation SNOW = RealWeather.id("textures/environment/snow_flakes.png");
+    private static final ResourceLocation HAIL = RealWeather.id("textures/environment/hail_streaks.png");
     private static final ResourceLocation SNOW_FINE = RealWeather.id("textures/environment/snow_fine.png");
     private static final ResourceLocation SNOW_STREAKS = RealWeather.id("textures/environment/snow_streaks.png");
     private static final ResourceLocation SAND = RealWeather.id("textures/environment/sand_sheet.png");
@@ -122,7 +123,7 @@ public final class PrecipitationRenderer {
 
         float wx = ClientWeather.windX;
         float wz = ClientWeather.windZ;
-        float rain = ClientWeather.rain * rainLevel;
+        float rain = ClientWeather.localRain * rainLevel;
         float snow = Math.max(ClientWeather.snow, ClientWeather.blizzard) * rainLevel;
         float bliz = ClientWeather.blizzard * rainLevel;
 
@@ -139,6 +140,12 @@ public final class PrecipitationRenderer {
                 layer(RAIN_MIST, RAIN_COL, r, camX, camY, camZ, time, 0.75F, 6F, 4F, 0F,
                         0.42F * (rain - 0.55F) / 0.45F, 0.3F + 0.35F * ClientWeather.wind, wx, wz, 0.85F, 0.88F, 0.92F, 37, true);
             }
+        }
+        float hail = ClientWeather.camHail;
+        if (hail > 0.01F) {
+            // Hailstones fall faster and straighter than rain, as bright pellets.
+            layer(HAIL, RAIN_COL, r, camX, camY, camZ, time, 1.05F, 3F, 1.5F, 0F,
+                    0.85F * (float) Math.pow(hail, 0.6), 0.12F, wx, wz, 1F, 1F, 1F, 131, false);
         }
         if (snow > 0.001F) {
             float drift = 0.6F + bliz * 1.8F;

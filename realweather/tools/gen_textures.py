@@ -320,8 +320,131 @@ def tornado(rng):
     save(os.path.join(ENV, 'tornado_cloud.png'), img, blur=True)
 
 
+def sphere_sprite(size, cx, cy, r, base=0.86, tint=(0.95, 0.97, 1.0)):
+    """A small icy ball: lit from the top left, translucent edge."""
+    yy, xx = np.mgrid[0:size[0], 0:size[1]]
+    dx = (xx - cx) / r
+    dy = (yy - cy) / r
+    d = np.sqrt(dx * dx + dy * dy)
+    a = np.clip((1.0 - d) * r * 0.9 + 0.5, 0, 1)
+    lum = base + 0.18 * np.clip(-dx * 0.6 - dy * 0.8, -1, 1) + 0.25 * np.exp(-((dx + 0.35) ** 2 + (dy + 0.4) ** 2) / 0.06)
+    lum = np.clip(lum, 0, 1.15)
+    return a, lum
+
+
+def hail(rng):
+    BLOCKTEX = os.path.join(ROOT, 'realweather', 'textures', 'block')
+    ENTITY = os.path.join(ROOT, 'realweather', 'textures', 'entity')
+    # Particle: a hailstone.
+    a, lum = sphere_sprite((16, 16), 7.5, 7.5, 6.5)
+    img = np.zeros((16, 16, 4))
+    img[..., 0] = np.clip(lum * 0.95, 0, 1) * 255
+    img[..., 1] = np.clip(lum * 0.97, 0, 1) * 255
+    img[..., 2] = np.clip(lum * 1.0, 0, 1) * 255
+    img[..., 3] = a * 235
+    save(os.path.join(PART, 'hailstone.png'), img)
+    # Falling hail sheet: short bright streaks with round heads.
+    h, w = 256, 128
+    alpha = np.zeros((h, w))
+    for _ in range(110):
+        cx, cy = rng.uniform(0, w), rng.uniform(0, h)
+        ln = rng.uniform(5, 14)
+        r = rng.uniform(0.9, 2.0)
+        alpha = np.maximum(alpha, wrap_disc(h, w, cx, cy, r, 0.8) * rng.uniform(0.7, 1.0))
+        for k in range(int(ln)):
+            alpha = np.maximum(alpha, wrap_disc(h, w, cx, (cy - k) % h, r * (1 - k / ln) * 0.7, 0.8) * 0.5 * (1 - k / ln))
+    save(os.path.join(ENV, 'hail_streaks.png'), rgba((240, 245, 255), alpha), blur=True)
+
+    # Ground: loose hailstones, three stages.
+    for stage, count in ((1, 22), (2, 55), (3, 120)):
+        s = 32
+        a = np.zeros((s, s))
+        l = np.zeros((s, s))
+        for _ in range(count):
+            cx, cy = rng.uniform(0, s), rng.uniform(0, s)
+            r = rng.uniform(1.1, 2.3)
+            aa, ll = sphere_sprite((s, s), cx, cy, r, base=0.82)
+            for ox in (-s, 0, s):
+                for oy in (-s, 0, s):
+                    a2, l2 = sphere_sprite((s, s), cx + ox, cy + oy, r, base=0.82)
+                    m = a2 > a
+                    a = np.where(m, a2, a)
+                    l = np.where(m, l2, l)
+        a = (a > 0.45).astype(float)
+        img = np.zeros((s, s, 4))
+        img[..., 0] = np.clip(l * 0.93, 0, 1) * 255
+        img[..., 1] = np.clip(l * 0.96, 0, 1) * 255
+        img[..., 2] = np.clip(l * 1.0, 0, 1) * 255
+        img[..., 3] = a * 255
+        save(os.path.join(BLOCKTEX, 'hail_pellets_%d.png' % stage), img)
+    # Packed hail-snow: grainy, icy white.
+    s = 32
+    n = periodic_noise(rng, (s, s), 10)
+    l = np.full((s, s), 0.9)
+    for _ in range(140):
+        cx, cy = rng.uniform(0, s), rng.uniform(0, s)
+        aa, ll = sphere_sprite((s, s), cx, cy, rng.uniform(0.8, 1.8), base=0.88)
+        l = np.where(aa > 0.5, np.maximum(l * 0.97, ll), l)
+    l = np.clip(l + 0.025 * n, 0.72, 1.0)
+    img = np.zeros((s, s, 4))
+    img[..., 0] = l * 0.94 * 255
+    img[..., 1] = l * 0.97 * 255
+    img[..., 2] = l * 1.0 * 255
+    img[..., 3] = 255
+    save(os.path.join(BLOCKTEX, 'hail_snow.png'), img)
+
+    # Footprints: a boot (left half) and an animal paw (right half), pressed-in shading.
+    img = np.zeros((64, 128, 4))
+    yy, xx = np.mgrid[0:64, 0:64]
+    sole = (((xx - 32) / 14) ** 2 + ((yy - 18) / 15) ** 2 < 1) | (((xx - 32) / 11) ** 2 + ((yy - 47) / 12) ** 2 < 1) | ((abs(xx - 32) < 9) & (yy > 20) & (yy < 45))
+    tread = (np.sin(yy * 1.3) > 0.2) & sole
+    a = sole * 0.55 + tread * 0.3
+    l = 0.55 + 0.1 * tread
+    img[:, :64, 0] = l * 255 * 0.9
+    img[:, :64, 1] = l * 255 * 0.93
+    img[:, :64, 2] = l * 255
+    img[:, :64, 3] = np.clip(a, 0, 1) * 255
+    pad = (((xx - 32) / 13) ** 2 + ((yy - 40) / 11) ** 2 < 1)
+    toes = np.zeros_like(pad)
+    for tx, ty in ((18, 22), (28, 15), (38, 15), (47, 22)):
+        toes |= ((xx - tx) / 5.5) ** 2 + ((yy - ty) / 6.5) ** 2 < 1
+    pa = (pad | toes).astype(float) * 0.7
+    img[:, 64:, 0] = 0.5 * 255 * 0.9
+    img[:, 64:, 1] = 0.5 * 255 * 0.93
+    img[:, 64:, 2] = 0.5 * 255
+    img[:, 64:, 3] = pa * 255
+    save(os.path.join(ENV, 'footprints.png'), img, blur=True)
+
+    # Hail stuck on creatures: scattered stones, then an icy crust.
+    for name, count, crust in (('hail_light', 70, 0.0), ('hail_heavy', 260, 0.55)):
+        s = 64
+        a = np.zeros((s, s))
+        l = np.zeros((s, s))
+        for _ in range(count):
+            cx, cy = rng.uniform(0, s), rng.uniform(0, s)
+            aa, ll = sphere_sprite((s, s), cx, cy, rng.uniform(0.9, 1.9), base=0.86)
+            m = aa > a
+            a = np.where(m, aa, a)
+            l = np.where(m, ll, l)
+        if crust > 0:
+            n = periodic_noise(rng, (s, s), 8)
+            cr = np.clip((n + 0.3) * 1.5, 0, 1) * crust
+            l = np.where(a > 0.5, l, 0.9 + 0.05 * n)
+            a = np.maximum(a, cr)
+        img = np.zeros((s, s, 4))
+        img[..., 0] = np.clip(l * 0.94, 0, 1) * 255
+        img[..., 1] = np.clip(l * 0.97, 0, 1) * 255
+        img[..., 2] = np.clip(l, 0, 1) * 255
+        img[..., 3] = np.clip(a, 0, 1) * 255
+        save(os.path.join(ENTITY, name + '.png'), img)
+
+
 def main():
     rng = np.random.default_rng(2026)
+    if len(sys.argv) > 1 and sys.argv[1] == 'hail':
+        hail(np.random.default_rng(91))
+        print('hail textures done')
+        return
     if len(sys.argv) > 1 and sys.argv[1] == 'tornado':
         tornado(np.random.default_rng(77))
         print('tornado textures done')

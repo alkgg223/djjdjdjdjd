@@ -38,7 +38,7 @@ public final class WeatherTicker {
         }
         Vec3 cam = camera.getPosition();
         float rainLevel = level.getRainLevel(1F);
-        float rain = ClientWeather.rain * rainLevel;
+        float rain = ClientWeather.localRain * rainLevel;
         float snow = Math.max(ClientWeather.snow, ClientWeather.blizzard) * rainLevel;
         float bliz = ClientWeather.blizzard * rainLevel;
         float sand = ClientWeather.sand;
@@ -62,6 +62,21 @@ public final class WeatherTicker {
                 if (precipitationAt(level, x, y, z) == Biome.Precipitation.RAIN) {
                     double fall = 0.85 + RANDOM.nextDouble() * 0.25;
                     level.addParticle(ModContent.RAIN_DROP.get(), x, y, z, wx * 0.35, -fall, wz * 0.35);
+                }
+            }
+        }
+        float hail = ClientWeather.camHail;
+        if (hail > 0.02F) {
+            int n = Math.round(hail * q * 16F);
+            for (int i = 0; i < n; i++) {
+                double a = RANDOM.nextDouble() * Math.PI * 2;
+                double d = 0.5 + Math.sqrt(RANDOM.nextDouble()) * 9;
+                double x = cam.x + Math.cos(a) * d - wx * 3;
+                double z = cam.z + Math.sin(a) * d - wz * 3;
+                double y = cam.y + 2 + RANDOM.nextDouble() * 8;
+                if (precipitationAt(level, x, y, z) == Biome.Precipitation.RAIN) {
+                    double size = 0.03 + hail * 0.08 + RANDOM.nextDouble() * 0.03;
+                    level.addParticle(ModContent.HAILSTONE.get(), x, y, z, wx * 0.25, size, wz * 0.25);
                 }
             }
         }

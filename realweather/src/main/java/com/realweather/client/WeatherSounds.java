@@ -28,7 +28,7 @@ public final class WeatherSounds {
     private static final ResourceLocation VANILLA_THUNDER = SoundEvents.LIGHTNING_BOLT_THUNDER.getLocation();
     private static final ResourceLocation VANILLA_IMPACT = SoundEvents.LIGHTNING_BOLT_IMPACT.getLocation();
 
-    private static Loop rainLight, rainHeavy, rainRoof, wind, blizzard, sandstorm;
+    private static Loop rainLight, rainHeavy, rainRoof, wind, blizzard, sandstorm, hail, hailRoof;
     private static final float[] levels = new float[6];
 
     private WeatherSounds() {}
@@ -39,7 +39,7 @@ public final class WeatherSounds {
             return;
         }
         float rain = ClientWeather.camRain;
-        float heavy = smooth(0.35F, 0.85F, ClientWeather.rain);
+        float heavy = smooth(0.35F, 0.85F, ClientWeather.localRain);
         float open = ClientWeather.exposure;
         float near = ClientWeather.groundNear;
         float outside = rain * (0.2F + 0.8F * open) * near;
@@ -69,6 +69,11 @@ public final class WeatherSounds {
         wind = ensure(mc, wind, ModContent.WIND, windLevel * 0.75F);
         blizzard = ensure(mc, blizzard, ModContent.BLIZZARD, bliz);
         sandstorm = ensure(mc, sandstorm, ModContent.SANDSTORM, sand);
+        float h = ClientWeather.camHail;
+        float hailOut = h * (0.2F + 0.8F * open) * near * (ClientWeather.underwater ? 0.1F : 1F);
+        float hailIn = (ClientWeather.covered ? h * (1F - open * 0.4F) : h * (1F - open) * 0.4F) * (ClientWeather.underwater ? 0.1F : 1F);
+        hail = ensure(mc, hail, ModContent.HAIL, hailOut);
+        hailRoof = ensure(mc, hailRoof, ModContent.HAIL_ROOF, hailIn);
     }
 
     private static Loop ensure(Minecraft mc, Loop loop, Supplier<SoundEvent> event, float volume) {
@@ -102,6 +107,8 @@ public final class WeatherSounds {
         wind = halt(wind);
         blizzard = halt(blizzard);
         sandstorm = halt(sandstorm);
+        hail = halt(hail);
+        hailRoof = halt(hailRoof);
     }
 
     private static Loop halt(Loop loop) {

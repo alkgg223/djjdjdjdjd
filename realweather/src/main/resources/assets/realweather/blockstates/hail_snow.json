@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "layers=1": {
+      "model": "realweather:block/hail_snow_1"
+    },
+    "layers=2": {
+      "model": "realweather:block/hail_snow_2"
+    },
+    "layers=3": {
+      "model": "realweather:block/hail_snow_3"
+    },
+    "layers=4": {
+      "model": "realweather:block/hail_snow_4"
+    },
+    "layers=5": {
+      "model": "realweather:block/hail_snow_5"
+    },
+    "layers=6": {
+      "model": "realweather:block/hail_snow_6"
+    },
+    "layers=7": {
+      "model": "realweather:block/hail_snow_7"
+    },
+    "layers=8": {
+      "model": "realweather:block/hail_snow_8"
+    }
+  }
+}

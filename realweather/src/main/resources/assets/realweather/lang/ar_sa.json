@@ -69,5 +69,16 @@
   "realweather.config.realistic_lightning": "برق واقعي",
   "realweather.config.tornado": "الإعصار",
   "realweather.config.tornado_quality": "جرافيك الإعصار",
-  "realweather.config.tornado_quality.tooltip": "LOW أو MEDIUM أو HIGH أو ULTRA، منفصل عن جودة المطر والثلج"
+  "realweather.config.tornado_quality.tooltip": "LOW أو MEDIUM أو HIGH أو ULTRA، منفصل عن جودة المطر والثلج",
+  "block.realweather.hail": "حبات البَرَد",
+  "block.realweather.hail_snow": "ثلج البَرَد",
+  "subtitles.realweather.hail": "البَرَد يتساقط",
+  "subtitles.realweather.hail_roof": "البَرَد يطرق السقف",
+  "death.attack.realweather.hail": "%1$s مات من ضربات البَرَد",
+  "death.attack.realweather.hail.player": "%1$s مات من ضربات البَرَد أثناء قتاله %2$s",
+  "realweather.cmd.hail.on": "البَرَد يتراكم ويؤذي من جديد",
+  "realweather.cmd.hail.off": "البَرَد لم يعد يتراكم أو يؤذي",
+  "realweather.cmd.storm.1": "عاصفة رعدية تتكون فوقك",
+  "realweather.cmd.storm.2": "عاصفة بَرَد (%s%%) قادمة لمدة %s دقيقة",
+  "realweather.cmd.storm.3": "خلية عملاقة (سوبرسل) تقترب (%s%%، %s دقيقة) - راقب السحابة الجدارية"
 }

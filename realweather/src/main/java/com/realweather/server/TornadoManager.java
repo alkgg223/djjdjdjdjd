@@ -42,16 +42,7 @@ public final class TornadoManager {
     private TornadoManager() {}
 
     static void tick(ServerLevel level, WeatherData d, List<ServerPlayer> players, RandomSource rng) {
-        // Natural tornadoes: rare, only from strong thunderstorms over open land.
-        if (d.tornadoNatural && level.isThundering() && WeatherServer.thunder > 0.45F && d.tornadoes.size() < 2 && !players.isEmpty()
-                && rng.nextInt(9600) == 0) {
-            ServerPlayer p = players.get(rng.nextInt(players.size()));
-            int rating = naturalRating(rng);
-            Tornado t = spawnApproaching(level, d, p.position(), rating, 110 + rng.nextInt(90), rng);
-            if (t != null && !suitable(level, t)) {
-                d.tornadoes.remove(t);
-            }
-        }
+        // Natural tornadoes come from supercells (see StormManager).
         if (d.tornadoes.isEmpty()) {
             if (hadTornadoes) {
                 hadTornadoes = false;

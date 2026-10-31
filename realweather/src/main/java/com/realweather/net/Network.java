@@ -10,6 +10,8 @@ public final class Network {
         event.registrar("1").optional()
                 .playToClient(WeatherSyncPayload.TYPE, WeatherSyncPayload.CODEC,
                         (payload, context) -> context.enqueueWork(() -> com.realweather.client.ClientWeather.onSync(payload)))
+                .playToClient(StormSyncPayload.TYPE, StormSyncPayload.CODEC,
+                        (payload, context) -> context.enqueueWork(() -> com.realweather.client.ClientStorms.onSync(payload)))
                 .playToClient(TornadoSyncPayload.TYPE, TornadoSyncPayload.CODEC,
                         (payload, context) -> context.enqueueWork(() -> com.realweather.client.tornado.ClientTornadoes.onSync(payload)));
     }
