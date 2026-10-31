@@ -45,6 +45,8 @@ echo "client exit $?"
 echo "::endgroup::"
 echo "=== SELFTEST LOG"
 grep "RW-SELFTEST" /tmp/client.log | sed 's/^.*RW-SELFTEST[^:]*: //' | head -260
+echo "=== VEHICLE EVENTS"
+grep -E "removed \(|destroyed by" /tmp/client.log | head -20
 echo "=== PROBLEMS"
 grep -nE "Exception|Caused by|\[ERROR\]|ERROR\]|/ERROR|FATAL|Failed to|Couldn't|shader" /tmp/client.log | grep -v "^\s*at " | head -80
 echo "=== OPENGL"

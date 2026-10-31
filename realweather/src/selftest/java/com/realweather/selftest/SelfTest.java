@@ -1026,6 +1026,16 @@ public final class SelfTest {
 
     private static void vehicleState(String label) {
         Minecraft mc = Minecraft.getInstance();
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+            for (int id : VEHICLE_IDS) {
+                net.minecraft.world.entity.Entity e = server.overworld().getEntity(id);
+                LOG.info("[{}] server vehicle {}: {}", label, id, e == null ? "missing" : e.getName().getString() + " at " + e.blockPosition()
+                        + " health=" + ((net.minecraft.world.entity.LivingEntity) e).getHealth() + " passengers=" + e.getPassengers().size());
+            }
+            LOG.info("[{}] server player at {} vehicle={}", label, sp.blockPosition(), sp.getVehicle() == null ? "none" : sp.getVehicle().getId());
+        });
         for (int id : VEHICLE_IDS) {
             if (mc.level != null && mc.level.getEntity(id) instanceof com.realweather.vehicle.StormVehicle v) {
                 LOG.info("[{}] {} speed={} km/h steer={} gear={} pitch={} roll={} lift={} spikes={} wipers={} glass={} bodySnow={} rpm={} wind={} riding={}",

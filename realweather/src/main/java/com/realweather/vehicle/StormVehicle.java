@@ -355,10 +355,19 @@ public class StormVehicle extends Mob {
     }
 
     @Override
+    public void remove(RemovalReason reason) {
+        if (!level().isClientSide && (reason == RemovalReason.KILLED || reason == RemovalReason.DISCARDED)) {
+            com.realweather.RealWeather.LOG.info("{} removed ({}) at {} health {}", kind.id, reason, blockPosition(), getHealth());
+        }
+        super.remove(reason);
+    }
+
+    @Override
     public void die(DamageSource source) {
         if (level().isClientSide || isRemoved()) {
             return;
         }
+        com.realweather.RealWeather.LOG.info("{} destroyed by {}", kind.id, source.getMsgId());
         super.die(source);
         ejectPassengers();
         level().playSound(null, getX(), getY(), getZ(), ModContent.VEHICLE_CRASH.get(), SoundSource.NEUTRAL, 1.4F, 0.7F);

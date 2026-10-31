@@ -35,7 +35,7 @@ public final class VehicleGeometry {
     public static final float PICKUP_WIPER_LEN = 0.6000F;
     public static final float[] PICKUP_SIZE = {2.0000F, 2.1000F, 5.5000F};
     public static final float[][] PICKUP_LIGHTS = {{-0.7200F, 0.9800F, -2.7500F}, {0.7200F, 0.9800F, -2.7500F}};
-    public static final float[][] PICKUP_SCREEN = {{-0.1400F, 1.0700F, -0.4700F}, {0.1400F, 1.0700F, -0.4700F}, {0.1400F, 1.2300F, -0.5300F}, {-0.1400F, 1.2300F, -0.5300F}};
+    public static final float[][] PICKUP_SCREEN = {{-0.1400F, 1.0700F, -0.4780F}, {0.1400F, 1.0700F, -0.4780F}, {0.1400F, 1.2300F, -0.4780F}, {-0.1400F, 1.2300F, -0.4780F}};
     public static final float[] PICKUP_ANEMOMETER = {0.6200F, 2.7800F, 0.9800F};
     public static final float[] PICKUP_DISH = {-0.3000F, 0.6600F, 1.3500F};
     public static final float[][] PICKUP_DOORS = {{1.0000F, 0.0000F, -0.7680F}};
@@ -54,7 +54,7 @@ public final class VehicleGeometry {
     public static final float INTERCEPT_WIPER_LEN = 0.4500F;
     public static final float[] INTERCEPT_SIZE = {2.4000F, 2.6500F, 6.0000F};
     public static final float[][] INTERCEPT_LIGHTS = {{-0.8500F, 1.1200F, -2.7200F}, {0.8500F, 1.1200F, -2.7200F}};
-    public static final float[][] INTERCEPT_SCREEN = {{-0.1400F, 1.2700F, -0.8100F}, {0.1400F, 1.2700F, -0.8100F}, {0.1400F, 1.4300F, -0.8700F}, {-0.1400F, 1.4300F, -0.8700F}};
+    public static final float[][] INTERCEPT_SCREEN = {{-0.1400F, 1.2700F, -0.8180F}, {0.1400F, 1.2700F, -0.8180F}, {0.1400F, 1.4300F, -0.8180F}, {-0.1400F, 1.4300F, -0.8180F}};
     public static final float[] INTERCEPT_ANEMOMETER = {-0.7000F, 3.1800F, 2.6000F};
     public static final float[] INTERCEPT_TURRET = {0.3500F, 2.2500F, -0.0500F};
     public static final float[][] INTERCEPT_DOORS = {{1.2000F, 0.0000F, -0.8880F}};

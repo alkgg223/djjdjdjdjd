@@ -107,7 +107,8 @@ public final class VehicleHud {
                         .withStyle(ChatFormatting.GOLD));
             } else {
                 float mps = v.measuredWind;
-                int ef = RadarProducts.ratingFor(v.measuredPeak);
+                // The pickup's Doppler sees the whole vortex; the probe's reading is fitted to the vortex profile.
+                int ef = RadarProducts.ratingFor(probe ? Math.max(v.measuredPeak, RadarProducts.peakWind(t) * Math.min(1F, v.spikeDeploy)) : v.measuredPeak);
                 lines.add(Component.translatable("realweather.vehicle.probe.wind", Math.round(mps * 3.6F), Math.round(mps)).withStyle(ChatFormatting.WHITE));
                 lines.add(Component.translatable("realweather.vehicle.probe.peak", Math.round(v.measuredPeak * 3.6F)).withStyle(ChatFormatting.WHITE));
                 lines.add(Component.translatable("realweather.vehicle.probe.rating", "EF" + ef).withStyle(ChatFormatting.RED, ChatFormatting.BOLD));

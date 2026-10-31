@@ -368,7 +368,7 @@ def interior(v, m, W, zw0, floor_y, belt, seats_rear, driver_x=-0.37, screen=Fal
     K.rbox((-0.13, floor_y, zw0 + 0.15), (0.13, floor_y + 0.32, zw0 + 1.2), 0.03, "dash", m=m)
     g["gear"] = (0.0, floor_y + 0.32, zw0 + 0.62)
     # Centre screen (the radar display on chase vehicles).
-    sc = [(-0.14, belt - 0.13, zw0 + 0.31), (0.14, belt - 0.13, zw0 + 0.31), (0.14, belt + 0.03, zw0 + 0.25), (-0.14, belt + 0.03, zw0 + 0.25)]
+    sc = [(-0.14, belt - 0.13, zw0 + 0.302), (0.14, belt - 0.13, zw0 + 0.302), (0.14, belt + 0.03, zw0 + 0.302), (-0.14, belt + 0.03, zw0 + 0.302)]
     if screen:
         K.rbox((-0.16, belt - 0.15, zw0 + 0.22), (0.16, belt + 0.05, zw0 + 0.3), 0.015, "trim", m=m)
         g["screen"] = [tuple(p) for p in sc]
