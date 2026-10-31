@@ -809,8 +809,8 @@ public final class SelfTest {
             weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
         });
         step(40, SelfTest::testPad);
-        step(20, SelfTest::spawnVehicles);
-        step(60, () -> lookAt(1, 14));
+        step(20, () -> spawnVehicles(false));
+        step(160, () -> lookAt(1, 14));
         step(40, () -> {
             shot("40_vehicles");
             vehicleState("parked");
@@ -830,40 +830,21 @@ public final class SelfTest {
             turnClient(0F, 15F);
             drive(1F, 0F);
         });
-        step(80, () -> {
+        step(50, () -> {
             shot("42_pickup_driving_hud");
             vehicleState("driving");
-            drive(1F, 1F);
+            drive(0.6F, 1F);
         });
-        step(30, () -> {
+        step(25, () -> {
             shot("42b_pickup_turning");
             vehicleState("turning");
             drive(-1F, 0F);
         });
-        step(60, () -> {
+        step(40, () -> {
             drive(0F, 0F);
             vehicleState("braked");
-            cmd("rw blizzard 100 10");
         });
-        step(400, () -> {
-            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
-            turnClient(0F, 8F);
-        });
-        step(20, () -> {
-            shot("43_blizzard_windshield");
-            vehicleState("blizzard");
-            vehicleAction(1, 1);
-            vehicleAction(1, 1);
-        });
-        step(50, () -> {
-            shot("44_wipers");
-            vehicleState("wipers");
-        });
-        step(5, () -> {
-            cmd("rw blizzard stop");
-            cmd("rw clear");
-            dismount();
-        });
+        step(5, SelfTest::dismount);
         step(20, () -> ride(2));
         step(20, () -> {
             vehicleAction(2, 4);
@@ -880,10 +861,38 @@ public final class SelfTest {
         });
         step(5, () -> {
             Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
-            faceTornadoClient(6F);
+            turnClient(0F, 6F);
         });
         step(20, () -> shot("46_intercept_interior"));
+        // A blizzard (they only happen where it is cold enough): snow on the glass, then the wipers.
         step(5, () -> {
+            cmd("rw clear");
+            dismount();
+        });
+        step(10, () -> goTo("minecraft:snowy_plains", 0, 15));
+        step(40, SelfTest::testPad);
+        step(20, () -> spawnVehicles(true));
+        step(100, () -> ride(0));
+        step(20, () -> {
+            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            turnClient(0F, 8F);
+            cmd("rw blizzard 100 10");
+        });
+        step(500, () -> {
+            shot("43_blizzard_windshield");
+            vehicleState("blizzard");
+            vehicleAction(0, 1);
+            vehicleAction(0, 1);
+        });
+        step(60, () -> {
+            shot("44_wipers");
+            vehicleState("wipers");
+            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+            turnClient(150F, 25F);
+        });
+        step(20, () -> shot("47_snowy_sedan"));
+        step(5, () -> {
+            cmd("rw blizzard stop");
             cmd("rw clear");
             dismount();
             Minecraft.getInstance().options.hideGui = true;
@@ -945,13 +954,13 @@ public final class SelfTest {
         p.xRotO = pitch;
     }
 
-    private static void spawnVehicles() {
+    private static void spawnVehicles(boolean sedanOnly) {
         MinecraftServer server = server();
         server.execute(() -> {
             ServerPlayer p = server.getPlayerList().getPlayers().get(0);
             ServerLevel level = server.overworld();
             com.realweather.vehicle.VehicleType[] kinds = com.realweather.vehicle.VehicleType.values();
-            for (int i = 0; i < kinds.length; i++) {
+            for (int i = 0; i < (sedanOnly ? 1 : kinds.length); i++) {
                 double x = p.getX() - 7 + i * 7;
                 double z = p.getZ() + 9;
                 int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, net.minecraft.util.Mth.floor(x),
@@ -962,7 +971,7 @@ public final class SelfTest {
                 level.addFreshEntity(v);
                 VEHICLE_IDS[i] = v.getUUID();
                 // A block under one wheel of the sedan, to see it lean.
-                if (i == 0) {
+                if (i == 0 && !sedanOnly) {
                     level.setBlockAndUpdate(new BlockPos(net.minecraft.util.Mth.floor(x + 0.8), y, net.minecraft.util.Mth.floor(z - 1.2)),
                             net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
                 }
