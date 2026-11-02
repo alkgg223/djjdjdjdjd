@@ -72,7 +72,8 @@ public final class WorkbenchRecipes {
                 case RIFLE -> {
                     cost.add(c(steel, 8));
                     cost.add(c(parts, 6));
-                    cost.add(c(g == GunType.AK47 ? Items.DARK_OAK_PLANKS : Items.BLACK_DYE, g == GunType.AK47 ? 4 : 2));
+                    boolean wood = g == GunType.AK47 || g == GunType.SKS || g == GunType.M14;
+                    cost.add(c(wood ? Items.DARK_OAK_PLANKS : Items.BLACK_DYE, wood ? 4 : 2));
                     cost.add(c(Items.REDSTONE, 2));
                 }
                 case SHOTGUN -> {
@@ -84,6 +85,7 @@ public final class WorkbenchRecipes {
                     cost.add(c(steel, 10));
                     cost.add(c(parts, 8));
                     cost.add(c(Items.DIAMOND, g == GunType.M107 ? 3 : 1));
+                    if (g == GunType.MOSIN) cost.add(c(Items.DARK_OAK_PLANKS, 4));
                 }
                 case HEAVY -> {
                     cost.add(c(steel, 16));
@@ -95,6 +97,8 @@ public final class WorkbenchRecipes {
                     cost.add(c(steel, 10));
                     cost.add(c(parts, 6));
                     cost.add(c(Items.TNT, 2));
+                    if (g == GunType.IGLA) cost.add(c(Items.REDSTONE_BLOCK, 1));
+                    if (g == GunType.RPG7_TBG) cost.add(c(Items.BLAZE_POWDER, 4));
                 }
                 case SPECIAL -> {
                     cost.add(c(steel, 12));

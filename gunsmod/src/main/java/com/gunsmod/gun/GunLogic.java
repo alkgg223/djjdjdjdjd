@@ -3,7 +3,9 @@ package com.gunsmod.gun;
 import com.gunsmod.Reg;
 import com.gunsmod.block.ExplosiveBarrelBlock;
 import com.gunsmod.entity.BotEntity;
+import com.gunsmod.entity.Aircraft;
 import com.gunsmod.entity.BotTeam;
+import com.gunsmod.entity.GuidedMissileEntity;
 import com.gunsmod.entity.JeepEntity;
 import com.gunsmod.entity.MineEntity;
 import com.gunsmod.entity.VehicleEntity;
@@ -157,7 +159,7 @@ public final class GunLogic {
         Level level = shooter.level();
         GunAttachments att = GunItem.attachments(stack);
         Vec3 eye = shooter.getEyePosition();
-        boolean suppressed = att.has(Attachment.SUPPRESSOR);
+        boolean suppressed = att.has(Attachment.SUPPRESSOR) || t.silent();
         float spread = spread(t, att, aiming, shooter) * spreadMul;
         List<Vec3> ends = new ArrayList<>();
         List<Byte> kinds = new ArrayList<>();
@@ -179,12 +181,25 @@ public final class GunLogic {
             }
             case ROCKET, GRENADE -> {
                 Vec3 d = directions(t, yaw, pitch, seed, spread).get(0);
-                RocketEntity r = new RocketEntity(level, shooter, t.kind == GunType.Kind.ROCKET ? 0 : 1);
-                Vec3 start = eye.add(d.scale(0.8)).add(0, -0.15, 0);
-                r.setPos(start.x, start.y, start.z);
-                r.shoot(d.x, d.y, d.z, t.kind == GunType.Kind.ROCKET ? 2.6f : 1.55f, 0f);
-                level.addFreshEntity(r);
-                ends.add(start.add(d.scale(2)));
+                if (t == GunType.IGLA) {
+                    // infrared seeker: chases the aircraft it was locked on to, flies straight if there was none
+                    Vec3 start = eye.add(d).add(0, -0.1, 0);
+                    GuidedMissileEntity m = new GuidedMissileEntity(level, shooter, GuidedMissileEntity.SAM).power(70f, 0f, 0f)
+                            .target(iglaTarget(level, shooter, eye, dir(pitch, yaw)));
+                    m.setPos(start.x, start.y, start.z);
+                    m.setDeltaMovement(d.scale(1.2));
+                    m.alignToMotion();
+                    level.addFreshEntity(m);
+                    ends.add(start.add(d.scale(2)));
+                } else {
+                    int kind = t == GunType.RPG7_TBG ? RocketEntity.THERMOBARIC : t.kind == GunType.Kind.ROCKET ? RocketEntity.RPG : RocketEntity.GRENADE;
+                    RocketEntity r = new RocketEntity(level, shooter, kind);
+                    Vec3 start = eye.add(d.scale(0.8)).add(0, -0.15, 0);
+                    r.setPos(start.x, start.y, start.z);
+                    r.shoot(d.x, d.y, d.z, t.kind == GunType.Kind.ROCKET ? 2.6f : 1.55f, 0f);
+                    level.addFreshEntity(r);
+                    ends.add(start.add(d.scale(2)));
+                }
                 kinds.add((byte) 0);
             }
             case FLAME -> {
@@ -200,6 +215,32 @@ public final class GunLogic {
         else PacketDistributor.sendToPlayersTrackingEntityAndSelf(shooter, fx);
         // soldiers hear gunfire
         if (level instanceof ServerLevel sl && !suppressed) BotEntity.alertGunfire(sl, shooter, t.range > 100 ? 64 : 40);
+    }
+
+    /** the Igla seeker looks IGLA_CONE degrees around the line of sight, out to IGLA_RANGE blocks */
+    public static final double IGLA_RANGE = 260, IGLA_CONE = 9;
+
+    /** the aircraft the Igla's seeker sees: airborne, hostile, in the cone and not behind a wall (nearest to the sight line) */
+    @javax.annotation.Nullable
+    public static Entity iglaTarget(Level level, Entity shooter, Vec3 eye, Vec3 look) {
+        double cos = Math.cos(Math.toRadians(IGLA_CONE));
+        Entity best = null;
+        double bestDot = cos;
+        AABB box = new AABB(eye, eye.add(look.scale(IGLA_RANGE))).inflate(IGLA_RANGE * 0.16);
+        for (VehicleEntity v : level.getEntitiesOfClass(VehicleEntity.class, box, v -> v.isAlive() && v instanceof Aircraft a && a.isAirborne())) {
+            Vec3 c = v.position().add(0, v.getBbHeight() * 0.5, 0);
+            Vec3 to = c.subtract(eye);
+            double dist = to.length();
+            if (dist < 6 || dist > IGLA_RANGE) continue;
+            double dot = to.scale(1 / dist).dot(look);
+            if (dot <= bestDot) continue;
+            Entity crew = v.getControllingPassenger();
+            if (crew != null && BotTeam.friendly(shooter, crew)) continue;
+            if (level.clip(new ClipContext(eye, c, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, shooter)).getType() != HitResult.Type.MISS) continue;
+            best = v;
+            bestDot = dot;
+        }
+        return best;
     }
 
     public static List<Vec3> relative(Vec3 origin, List<Vec3> ends) {
@@ -319,7 +360,7 @@ public final class GunLogic {
         stack.remove(Reg.RELOAD.get());
         String snd = switch (t.category) {
             case SNIPER -> "bolt";
-            case SHOTGUN -> t == GunType.AUTO_SHOTGUN ? "mag_in" : "pump";
+            case SHOTGUN -> t == GunType.AUTO_SHOTGUN || t == GunType.SAIGA12 ? "mag_in" : "pump";
             case EXPLOSIVE -> "mag_in";
             default -> "mag_in";
         };

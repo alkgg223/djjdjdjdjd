@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/m14"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.43,
+    0.23,
+    0.167
+   ],
+   "scale": [
+    0.4322,
+    0.4322,
+    0.4322
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.206,
+    0.126,
+    -0.063
+   ],
+   "scale": [
+    0.2094,
+    0.2094,
+    0.2094
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.356,
+    0.217,
+    -0.108
+   ],
+   "scale": [
+    0.3616,
+    0.3616,
+    0.3616
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.45,
+    0.9,
+    -1.477
+   ],
+   "scale": [
+    1.5,
+    1.5,
+    1.5
+   ]
+  }
+ }
+}

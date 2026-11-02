@@ -190,7 +190,9 @@ public class BotEntity extends PathfinderMob {
         setTeam(team);
         setSkin(r.nextInt(4));
         GunType[] all = GunType.values();
-        GunType g = forced != null ? forced : all[r.nextInt(all.length)];
+        GunType g = forced;
+        // the shoulder launched missile is only worth carrying against aircraft: rifleman's kit instead
+        while (g == null || (forced == null && g == GunType.IGLA)) g = all[r.nextInt(all.length)];
         ItemStack gun = GunItem.create(g);
         gun.set(Reg.ATTACHMENTS.get(), randomAttachments(g, r));
         this.setItemSlot(EquipmentSlot.MAINHAND, gun);

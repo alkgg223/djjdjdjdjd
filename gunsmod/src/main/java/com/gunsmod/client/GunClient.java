@@ -51,6 +51,9 @@ public final class GunClient {
 
     // aiming
     public static boolean aiming;
+    /** Igla seeker: the aircraft it sees (-1 none) and how long it has held it */
+    public static int seekerTarget = -1, seekerTicks;
+    public static final int SEEKER_LOCK = 14;
     public static float aim, prevAim;
     private static boolean aimToggle;
     private static boolean useWasDown;
@@ -154,6 +157,27 @@ public final class GunClient {
         return Math.max(1.15f, z);
     }
 
+    /** the Igla's infrared seeker growls while it sees an aircraft and gives the lock tone once it holds it */
+    private static void seeker(Minecraft mc, LocalPlayer p) {
+        ItemStack st = p.getMainHandItem();
+        if (!holdingGun(p) || GunItem.typeOf(st) != GunType.IGLA || aim < 0.5f || GunItem.ammo(st) <= 0 || p.isPassenger()) {
+            seekerTarget = -1;
+            seekerTicks = 0;
+            return;
+        }
+        if (ticks % 2 == 0) {
+            Entity t = GunLogic.iglaTarget(p.level(), p, p.getEyePosition(), GunLogic.dir(p.getXRot(), p.getYRot()));
+            int id = t == null ? -1 : t.getId();
+            if (id != seekerTarget) seekerTicks = 0;
+            seekerTarget = id;
+        }
+        if (seekerTarget < 0) return;
+        seekerTicks++;
+        if (seekerTicks == SEEKER_LOCK) p.playSound(Reg.sound("lock_on"), 0.9f, 1.15f);
+        else if (seekerTicks < SEEKER_LOCK && seekerTicks % 6 == 1) p.playSound(Reg.sound("lock_tone"), 0.6f, 0.9f);
+        else if (seekerTicks > SEEKER_LOCK && seekerTicks % 12 == 0) p.playSound(Reg.sound("lock_tone"), 0.7f, 1.4f);
+    }
+
     // ------------------------------------------------------------------------------------ tick
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
@@ -178,6 +202,7 @@ public final class GunClient {
             Prone.set(p, false);
             PacketDistributor.sendToServer(new Net.ProneState(false));
         }
+        seeker(mc, p);
         while (TEAM.consumeClick()) {
             if (BattleHud.field()) mc.setScreen(new TeamScreen());
             else p.displayClientMessage(Component.translatable("gunsmod.msg.no_battlefield"), true);
@@ -342,7 +367,7 @@ public final class GunClient {
         kick = Math.min(1.6f, kick + 0.35f + rec * 0.06f);
         p.setXRot(p.getXRot() - rec * 0.45f);
         p.setYRot(p.getYRot() + (RNG.nextFloat() - 0.5f) * rec * 0.25f);
-        if (!att.has(Attachment.SUPPRESSOR)) flashTicks = 2;
+        if (!att.has(Attachment.SUPPRESSOR) && !t.silent()) flashTicks = 2;
     }
 
     /** sound, tracers and impacts for our own shot (the server does the real hit detection) */
@@ -352,7 +377,7 @@ public final class GunClient {
         Vec3 look = GunLogic.dir(pitch, yaw);
         Vec3 right = GunLogic.dir(0, yaw + 90);
         Vec3 muzzle = eye.add(look.scale(ads ? 1.1 : 1.3)).add(right.scale(ads ? 0.0 : 0.22)).add(0, ads ? -0.08 : -0.2, 0);
-        boolean suppressed = att.has(Attachment.SUPPRESSOR);
+        boolean suppressed = att.has(Attachment.SUPPRESSOR) || t.silent();
         playShot(level, t, muzzle, suppressed, true);
         // the muzzle flash lights up the surroundings (a burst keeps one light alive)
         ClientLights.light(p, muzzle, suppressed ? 6 : t.kind == GunType.Kind.FLAME ? 14 : 13, t.kind == GunType.Kind.FLAME ? 4 : 3);

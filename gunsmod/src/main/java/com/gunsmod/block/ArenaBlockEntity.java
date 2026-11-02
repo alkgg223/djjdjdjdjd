@@ -105,12 +105,12 @@ public class ArenaBlockEntity extends BlockEntity {
     private GunType pick(BotTeam team, int i) {
         var r = level.random;
         GunType[] pool = switch (loadout) {
-            case 1 -> team == BotTeam.GREEN ? new GunType[]{GunType.M4A1, GunType.M16A4, GunType.BR17, GunType.TACTICAL_RIFLE} : new GunType[]{GunType.AK47, GunType.BR77, GunType.BR17};
-            case 2 -> new GunType[]{GunType.M24, GunType.SVD, GunType.M107};
-            case 3 -> new GunType[]{GunType.PUMP_SHOTGUN, GunType.AUTO_SHOTGUN, GunType.DOUBLE_BARREL};
-            case 4 -> new GunType[]{GunType.M1911, GunType.P9, GunType.MAGNUM50, GunType.REVOLVER};
-            case 5 -> new GunType[]{GunType.M249, GunType.MINIGUN, GunType.M249};
-            case 6 -> new GunType[]{GunType.RPG7, GunType.M79, GunType.FLAMETHROWER};
+            case 1 -> team == BotTeam.GREEN ? new GunType[]{GunType.M4A1, GunType.M16A4, GunType.BR17, GunType.TACTICAL_RIFLE, GunType.M14, GunType.FAMAS} : new GunType[]{GunType.AK47, GunType.BR77, GunType.BR17, GunType.AKS74U, GunType.SKS};
+            case 2 -> new GunType[]{GunType.M24, GunType.SVD, GunType.M107, GunType.MOSIN, GunType.VSS};
+            case 3 -> new GunType[]{GunType.PUMP_SHOTGUN, GunType.AUTO_SHOTGUN, GunType.DOUBLE_BARREL, GunType.SAIGA12};
+            case 4 -> new GunType[]{GunType.M1911, GunType.P9, GunType.MAGNUM50, GunType.REVOLVER, GunType.APS, GunType.M9};
+            case 5 -> new GunType[]{GunType.M249, GunType.MINIGUN, GunType.PKM};
+            case 6 -> new GunType[]{GunType.RPG7, GunType.M79, GunType.FLAMETHROWER, GunType.MGL, GunType.RPG7_TBG};
             default -> null;
         };
         return pool == null ? null : pool[r.nextInt(pool.length)];

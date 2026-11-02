@@ -1005,3 +1005,6 @@ def flamethrower():
     m.mount("under", [16.0, 9.8, 8])
     m.mount("side", [16.0, 10.4, 8.6])
     return m
+
+
+import guns2  # noqa: E402,F401  (registers the v2.0 guns)

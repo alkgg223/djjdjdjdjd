@@ -181,7 +181,9 @@ public class GunRenderer extends BlockEntityWithoutLevelRenderer {
             float[] s = geo.spin();
             pose.pushPose();
             pose.translate(0, s[1] / 16f, s[2] / 16f);
-            float ang = fp ? (GunClient.spin + GunClient.spinSpeed * GunClient.partialTick) * 40f : 0f;
+            // minigun barrels spin up; the MGL's cylinder indexes one chamber (60 degrees) per round fired
+            float ang = t == GunType.MGL ? (t.magSize - GunItem.ammo(stack)) * 60f
+                    : fp ? (GunClient.spin + GunClient.spinSpeed * GunClient.partialTick) * 40f : 0f;
             pose.mulPose(Axis.XP.rotationDegrees(ang));
             pose.translate(0, -s[1] / 16f, -s[2] / 16f);
             BakedRender.item(stack, part(t, "spin"), pose, buf, light, overlay);
@@ -199,7 +201,7 @@ public class GunRenderer extends BlockEntityWithoutLevelRenderer {
             pose.popPose();
         }
         // magazine
-        boolean single = t == GunType.RPG7 || t == GunType.M79;
+        boolean single = t.singleShotTube();
         boolean showMag = !single || GunItem.ammo(stack) > 0 || rp > 0.55f;
         if (showMag) {
             pose.pushPose();

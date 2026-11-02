@@ -19,9 +19,12 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-/** RPG rocket, 40 mm grenade, tank shell, helicopter rocket or aircraft bomb. Vehicle rounds hurt but never break blocks. */
+/**
+ * RPG rocket, 40 mm grenade, tank shell, helicopter rocket, aircraft bomb or the RPG's thermobaric round. Vehicle rounds
+ * hurt but never break blocks.
+ */
 public class RocketEntity extends Projectile {
-    public static final int RPG = 0, GRENADE = 1, TANK_SHELL = 2, HELI_ROCKET = 3, BOMB = 4, ARTY = 5;
+    public static final int RPG = 0, GRENADE = 1, TANK_SHELL = 2, HELI_ROCKET = 3, BOMB = 4, ARTY = 5, THERMOBARIC = 6;
     private static final EntityDataAccessor<Byte> DATA_KIND = SynchedEntityData.defineId(RocketEntity.class, EntityDataSerializers.BYTE);
     private int life;
     /** vehicle rounds: direct hit damage against armour / everything else and the blast power (set by the vehicle) */
@@ -48,7 +51,12 @@ public class RocketEntity extends Projectile {
 
     /** vehicle rounds: no block damage */
     public boolean isVehicleRound() {
-        return getKind() >= TANK_SHELL;
+        return getKind() >= TANK_SHELL && getKind() <= ARTY;
+    }
+
+    /** a shoulder fired rocket (the normal or the thermobaric round) */
+    public boolean isRpg() {
+        return getKind() == RPG || getKind() == THERMOBARIC;
     }
 
     public void setPower(float armour, float soft, float blastPower) {
@@ -91,7 +99,7 @@ public class RocketEntity extends Projectile {
             }
         }
         switch (getKind()) {
-            case RPG -> {
+            case RPG, THERMOBARIC -> {
                 if (life > 4 && v.length() < 4.0) v = v.scale(1.035);
                 v = v.add(0, -0.006, 0);
             }
@@ -129,7 +137,7 @@ public class RocketEntity extends Projectile {
                 FxHooks.light.accept(this, 12);
             } else if (getKind() == BOMB) {
                 // falls silently, no trail
-            } else if (getKind() == 0) {
+            } else if (isRpg()) {
                 FxHooks.light.accept(this, 11);
                 for (int i = 0; i < 3; i++) {
                     double f = i / 3.0;
@@ -177,7 +185,17 @@ public class RocketEntity extends Projectile {
             return;
         }
         // soldiers' rockets and 40 mm grenades leave the terrain as it is
-        Level.ExplosionInteraction mode = owner instanceof Player ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.NONE;
+        boolean player = owner instanceof Player;
+        Level.ExplosionInteraction mode = player ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.NONE;
+        if (getKind() == THERMOBARIC) {
+            // fuel-air charge: a fireball, then the pressure wave fills the space around it (and goes round corners)
+            Blast.explode(this.level(), this, at, 3.0f, player, mode, Blast.FX_FIRE, 1.6f);
+            Blast.shockwave(this.level(), at, 9.0, 16f, 8, this, owner);
+            if (player) Blast.firestorm(this.level(), at, 4.5f, 12);
+            this.level().playSound(null, at.x, at.y, at.z, Reg.sound("explosion_far"), net.minecraft.sounds.SoundSource.NEUTRAL, 10f, 0.75f);
+            this.discard();
+            return;
+        }
         Blast.explode(this.level(), this, at, getKind() == 0 ? 3.6f : 2.4f, false, mode, Blast.FX_SMALL, getKind() == 0 ? 1.0f : 0.7f);
         this.discard();
     }

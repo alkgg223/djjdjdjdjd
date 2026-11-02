@@ -64,9 +64,10 @@ public final class Hud {
     public static void scope(GuiGraphics g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
         if (hidden(mc) || !GunClient.holdingGun(mc.player)) return;
+        float pt = dt.getGameTimeDeltaPartialTick(true);
+        seeker(g, mc, pt);
         Attachment optic = GunItem.attachments(mc.player.getMainHandItem()).get(Attachment.Slot.SCOPE);
         if (optic == null) return;
-        float pt = dt.getGameTimeDeltaPartialTick(true);
         float a = GunClient.aim(pt);
         int w = g.guiWidth(), h = g.guiHeight(), cx = w / 2, cy = h / 2;
         if (optic.zoom < 2f) {
@@ -267,6 +268,20 @@ public final class Hud {
         if (Math.abs(dyaw) > 75 || Math.abs(dpitch) > 75) return null;
         double f = (guiH / 2.0) / Math.tan(Math.toRadians(VehicleCamera.fovDeg(mc) / 2.0));
         return new int[]{cx + (int) Math.round(Math.tan(Math.toRadians(dyaw)) * f), cy + (int) Math.round(Math.tan(Math.toRadians(dpitch)) * f)};
+    }
+
+    /** Igla: brackets round the aircraft the seeker sees, closing in as it locks */
+    private static void seeker(GuiGraphics g, Minecraft mc, float pt) {
+        if (GunClient.seekerTarget < 0 || mc.level == null) return;
+        Entity t = mc.level.getEntity(GunClient.seekerTarget);
+        if (t == null) return;
+        int cx = g.guiWidth() / 2, cy = g.guiHeight() / 2;
+        int[] s = project(mc, mc.player, t.getPosition(pt).add(0, t.getBbHeight() * 0.5, 0), cx, cy, pt, g.guiHeight());
+        if (s == null) return;
+        float prog = Math.min(1f, GunClient.seekerTicks / (float) GunClient.SEEKER_LOCK);
+        lockBox(g, s[0], s[1], prog, (mc.player.tickCount / 3) % 2 == 0);
+        Component lbl = Component.translatable(prog >= 1f ? "gunsmod.hud.radar_locked" : "gunsmod.hud.radar_tracking");
+        g.drawString(mc.font, lbl, cx - mc.font.width(lbl) / 2, cy + 26, prog >= 1f ? 0xFFFF4030 : 0xFFFFD040, true);
     }
 
     /** square brackets round a target: dashed while the seeker works, solid red when locked */

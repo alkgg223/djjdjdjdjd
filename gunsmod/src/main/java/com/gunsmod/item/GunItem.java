@@ -138,6 +138,9 @@ public class GunItem extends Item {
         tip.add(Component.translatable("gunsmod.tip.rpm", Math.round(1200f / type.fireDelay),
                 Component.translatable("gunsmod.mode." + type.mode.name().toLowerCase())).withStyle(ChatFormatting.GRAY));
         tip.add(Component.translatable("gunsmod.tip.range", type.range).withStyle(ChatFormatting.GRAY));
+        if (type == GunType.IGLA || type == GunType.RPG7_TBG || type == GunType.VSS) {
+            tip.add(Component.translatable("gunsmod.tip.gun." + type.id).withStyle(ChatFormatting.YELLOW));
+        }
         GunAttachments att = attachments(stack);
         for (Attachment.Slot s : Attachment.Slot.values()) {
             Attachment a = att.get(s);

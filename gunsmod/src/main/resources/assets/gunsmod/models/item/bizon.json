@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/bizon"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    2.365,
+    -0.328,
+    1.441
+   ],
+   "scale": [
+    0.6268,
+    0.6268,
+    0.6268
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.364,
+    -0.01,
+    -0.0
+   ],
+   "scale": [
+    0.3066,
+    0.3066,
+    0.3066
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    2.357,
+    -0.018,
+    -0.0
+   ],
+   "scale": [
+    0.5296,
+    0.5296,
+    0.5296
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    -0.063,
+    -8.287
+   ],
+   "scale": [
+    1.8623,
+    1.8623,
+    1.8623
+   ]
+  }
+ }
+}

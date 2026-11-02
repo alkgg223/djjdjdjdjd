@@ -47,8 +47,8 @@ public class ProjectileRenderer<T extends Entity> extends EntityRenderer<T> {
             return;
         }
         if (e instanceof RocketEntity r) {
-            stack = new ItemStack(r.getKind() == 0 ? Reg.AMMO_ITEMS.get(com.gunsmod.gun.AmmoType.ROCKET).get() : Reg.AMMO_ITEMS.get(com.gunsmod.gun.AmmoType.GRENADE).get());
-            scale = r.getKind() == 0 ? 0.55f : 0.35f;
+            stack = new ItemStack(r.isRpg() ? Reg.AMMO_ITEMS.get(com.gunsmod.gun.AmmoType.ROCKET).get() : Reg.AMMO_ITEMS.get(com.gunsmod.gun.AmmoType.GRENADE).get());
+            scale = r.isRpg() ? 0.55f : 0.35f;
             // item model points along +X; orient with the flight direction
             pose.mulPose(Axis.YP.rotationDegrees(Mth.lerp(pt, e.yRotO, e.getYRot()) - 90f));
             pose.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(pt, e.xRotO, e.getXRot())));

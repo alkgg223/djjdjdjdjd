@@ -1,6 +1,6 @@
 package com.gunsmod.gun;
 
-/** The 25 guns and their stats. Damage is in health points (2 = one heart). Times are in ticks. */
+/** The guns and their stats (append only: the ordinal is saved). Damage is in health points (2 = one heart). Times are in ticks. */
 public enum GunType {
     //  id               category           ammo             mag  dmg  delay mode            hip  ads  recoil reload range pellets kind                 sound
     M1911("m1911", Category.PISTOL, AmmoType.PISTOL, 7, 7.0f, 4, FireMode.SEMI, 2.2f, 0.7f, 4.0f, 32, 50, 1, Kind.BULLET, "shot_pistol"),
@@ -27,7 +27,24 @@ public enum GunType {
     MINIGUN("minigun", Category.HEAVY, AmmoType.HEAVY, 300, 5.0f, 1, FireMode.AUTO, 4.5f, 3.0f, 0.8f, 110, 80, 1, Kind.BULLET, "shot_minigun"),
     RPG7("rpg7", Category.EXPLOSIVE, AmmoType.ROCKET, 1, 0.0f, 20, FireMode.SEMI, 1.5f, 0.3f, 8.0f, 60, 200, 1, Kind.ROCKET, "rocket_launch"),
     M79("m79", Category.EXPLOSIVE, AmmoType.GRENADE, 1, 0.0f, 20, FireMode.SEMI, 2.0f, 0.6f, 6.0f, 40, 120, 1, Kind.GRENADE, "shot_grenade_launcher"),
-    FLAMETHROWER("flamethrower", Category.SPECIAL, AmmoType.FUEL, 200, 2.0f, 2, FireMode.AUTO, 6.0f, 6.0f, 0.3f, 60, 9, 1, Kind.FLAME, "flamethrower_loop");
+    FLAMETHROWER("flamethrower", Category.SPECIAL, AmmoType.FUEL, 200, 2.0f, 2, FireMode.AUTO, 6.0f, 6.0f, 0.3f, 60, 9, 1, Kind.FLAME, "flamethrower_loop"),
+    // 2.0
+    APS("aps", Category.PISTOL, AmmoType.PISTOL, 20, 5.0f, 2, FireMode.AUTO, 2.6f, 1.0f, 2.2f, 36, 45, 1, Kind.BULLET, "shot_pistol"),
+    M9("m9", Category.PISTOL, AmmoType.PISTOL, 15, 6.0f, 3, FireMode.SEMI, 2.0f, 0.6f, 3.2f, 30, 50, 1, Kind.BULLET, "shot_pistol"),
+    PPSH41("ppsh41", Category.SMG, AmmoType.PISTOL, 71, 4.2f, 1, FireMode.AUTO, 3.4f, 1.4f, 1.6f, 70, 45, 1, Kind.BULLET, "shot_smg"),
+    BIZON("bizon", Category.SMG, AmmoType.PISTOL, 64, 4.0f, 2, FireMode.AUTO, 3.0f, 1.2f, 1.3f, 60, 45, 1, Kind.BULLET, "shot_smg"),
+    UZI("uzi", Category.SMG, AmmoType.PISTOL, 32, 4.4f, 2, FireMode.AUTO, 3.6f, 1.5f, 1.8f, 38, 40, 1, Kind.BULLET, "shot_smg"),
+    M14("m14", Category.RIFLE, AmmoType.RIFLE, 20, 9.5f, 4, FireMode.SEMI, 2.4f, 0.3f, 4.0f, 48, 140, 1, Kind.BULLET, "shot_rifle"),
+    AKS74U("aks74u", Category.RIFLE, AmmoType.RIFLE, 30, 6.0f, 2, FireMode.AUTO, 3.2f, 1.0f, 2.6f, 40, 70, 1, Kind.BULLET, "shot_carbine"),
+    FAMAS("famas", Category.RIFLE, AmmoType.RIFLE, 25, 6.5f, 1, FireMode.BURST, 2.4f, 0.5f, 2.0f, 44, 95, 1, Kind.BULLET, "shot_carbine"),
+    SKS("sks", Category.RIFLE, AmmoType.RIFLE, 10, 9.0f, 4, FireMode.SEMI, 2.2f, 0.35f, 4.2f, 55, 120, 1, Kind.BULLET, "shot_rifle"),
+    MOSIN("mosin", Category.SNIPER, AmmoType.SNIPER, 5, 19.0f, 28, FireMode.SEMI, 3.0f, 0.06f, 10.0f, 70, 220, 1, Kind.BULLET, "shot_sniper"),
+    VSS("vss", Category.SNIPER, AmmoType.SNIPER, 20, 10.0f, 4, FireMode.SEMI, 2.6f, 0.18f, 3.0f, 50, 140, 1, Kind.BULLET, "shot_sniper"),
+    PKM("pkm", Category.HEAVY, AmmoType.HEAVY, 100, 7.5f, 2, FireMode.AUTO, 4.2f, 1.6f, 2.8f, 95, 110, 1, Kind.BULLET, "shot_lmg"),
+    SAIGA12("saiga12", Category.SHOTGUN, AmmoType.SHOTGUN, 8, 3.0f, 5, FireMode.SEMI, 7.0f, 5.5f, 6.5f, 48, 30, 8, Kind.BULLET, "shot_shotgun"),
+    MGL("mgl", Category.EXPLOSIVE, AmmoType.GRENADE, 6, 0.0f, 10, FireMode.SEMI, 2.0f, 0.6f, 5.0f, 90, 130, 1, Kind.GRENADE, "shot_grenade_launcher"),
+    IGLA("igla", Category.EXPLOSIVE, AmmoType.ROCKET, 1, 0.0f, 20, FireMode.SEMI, 1.5f, 0.3f, 6.0f, 80, 300, 1, Kind.ROCKET, "rocket_launch"),
+    RPG7_TBG("rpg7_tbg", Category.EXPLOSIVE, AmmoType.ROCKET, 1, 0.0f, 20, FireMode.SEMI, 1.5f, 0.3f, 8.0f, 60, 200, 1, Kind.ROCKET, "rocket_launch");
 
     public enum Category { PISTOL, SMG, RIFLE, SHOTGUN, SNIPER, HEAVY, EXPLOSIVE, SPECIAL }
 
@@ -74,9 +91,19 @@ public enum GunType {
         return category == Category.SNIPER ? 2.2f : category == Category.SHOTGUN ? 1.3f : 1.6f;
     }
 
-    /** built-in optic zoom (only the bullpup rifle has one) */
+    /** built-in optic zoom (the bullpup rifle and the shoulder launched missile) */
     public float builtInZoom() {
-        return this == BR77 ? 1.6f : 1.0f;
+        return this == BR77 ? 1.6f : this == IGLA ? 1.5f : 1.0f;
+    }
+
+    /** integrally suppressed (the VSS) */
+    public boolean silent() {
+        return this == VSS;
+    }
+
+    /** a one-round tube: the round shows on the muzzle until fired */
+    public boolean singleShotTube() {
+        return this == RPG7 || this == RPG7_TBG || this == IGLA || this == M79;
     }
 
     /** min / max engagement distance used by the bots */
@@ -110,10 +137,10 @@ public enum GunType {
         }
         return switch (slot) {
             case SCOPE -> this != MINIGUN && this != DOUBLE_BARREL;
-            case MUZZLE -> category != Category.SHOTGUN && this != MINIGUN;
-            case GRIP -> category != Category.PISTOL && this != MICRO_SMG;
+            case MUZZLE -> category != Category.SHOTGUN && this != MINIGUN && this != VSS;
+            case GRIP -> category != Category.PISTOL && this != MICRO_SMG && this != UZI;
             case LASER -> true;
-            case MAG -> this != REVOLVER && this != DOUBLE_BARREL && this != PUMP_SHOTGUN;
+            case MAG -> this != REVOLVER && this != DOUBLE_BARREL && this != PUMP_SHOTGUN && this != MOSIN && this != SKS;
         };
     }
 
