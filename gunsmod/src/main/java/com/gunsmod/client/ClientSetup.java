@@ -186,6 +186,7 @@ public final class ClientSetup {
         e.register(GunClient.HORN);
         e.register(GunClient.FLARES);
         e.register(GunClient.TEAM);
+        e.register(GunClient.PRONE);
     }
 
     @SubscribeEvent
@@ -199,12 +200,14 @@ public final class ClientSetup {
 
     @SubscribeEvent
     public static void gui(RegisterGuiLayersEvent e) {
-        e.registerBelow(VanillaGuiLayers.HOTBAR, Reg.id("scope"), Hud::scope);
-        e.registerAbove(VanillaGuiLayers.CROSSHAIR, Reg.id("crosshair"), Hud::crosshair);
-        e.registerAbove(VanillaGuiLayers.HOTBAR, Reg.id("ammo"), Hud::ammo);
-        e.registerAbove(VanillaGuiLayers.HOTBAR, Reg.id("vehicle"), Hud::vehicle);
-        e.registerAbove(VanillaGuiLayers.CROSSHAIR, Reg.id("bot_info"), Hud::botInfo);
+        e.registerBelow(VanillaGuiLayers.HOTBAR, Reg.id("scope"), (g, dt) -> g.drawManaged(() -> Hud.scope(g, dt)));
+        e.registerAbove(VanillaGuiLayers.CROSSHAIR, Reg.id("crosshair"), (g, dt) -> g.drawManaged(() -> Hud.crosshair(g, dt)));
+        e.registerAbove(VanillaGuiLayers.HOTBAR, Reg.id("ammo"), (g, dt) -> g.drawManaged(() -> Hud.ammo(g, dt)));
+        e.registerAbove(VanillaGuiLayers.HOTBAR, Reg.id("vehicle"), (g, dt) -> g.drawManaged(() -> Hud.vehicle(g, dt)));
+        e.registerAbove(VanillaGuiLayers.CROSSHAIR, Reg.id("bot_info"), (g, dt) -> g.drawManaged(() -> Hud.botInfo(g, dt)));
         e.registerAboveAll(Reg.id("blast_flash"), Hud::flash);
-        e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Reg.id("battle_score"), BattleHud::render);
+        // night vision: the post effect over the world, before any other layer
+        e.registerBelowAll(Reg.id("night_vision"), NightVision::layer);
+        e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Reg.id("battle_score"), (g, dt) -> g.drawManaged(() -> BattleHud.render(g, dt)));
     }
 }

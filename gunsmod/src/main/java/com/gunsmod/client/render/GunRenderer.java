@@ -87,7 +87,8 @@ public class GunRenderer extends BlockEntityWithoutLevelRenderer {
         boolean fp = ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND || ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
         boolean tp = ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
         boolean left = ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
-        if (fp && GunClient.scoped()) return;
+        // through a magnifying scope the eyepiece fills the view (drawn by the HUD); reflex sights stay on the gun in sight
+        if (fp && GunClient.scopeView()) return;
         pose.pushPose();
         if (fp) {
             pose.translate(0.5f, 0.5f, 0.5f);

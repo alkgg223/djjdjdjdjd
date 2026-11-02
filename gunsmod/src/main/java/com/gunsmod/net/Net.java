@@ -30,6 +30,7 @@ public final class Net {
         r.playToServer(VehicleFire.TYPE, VehicleFire.CODEC, ServerNet::vehicleFire);
         r.playToServer(TeamPick.TYPE, TeamPick.CODEC, ServerNet::teamPick);
         r.playToServer(ConvoySave.TYPE, ConvoySave.CODEC, ServerNet::convoySave);
+        r.playToServer(ProneState.TYPE, ProneState.CODEC, ServerNet::prone);
         r.playToServer(ConvoySpawn.TYPE, ConvoySpawn.CODEC, ServerNet::convoySpawn);
         r.playToClient(ShotFx.TYPE, ShotFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.shotFx(p));
         r.playToClient(HitMarker.TYPE, HitMarker.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.hitMarker(p));
@@ -256,6 +257,25 @@ public final class Net {
 
         @Override
         public Type<ConvoySave> type() {
+            return TYPE;
+        }
+    }
+
+    /** the prone key: lie down or get up */
+    public record ProneState(boolean down) implements CustomPacketPayload {
+        public static final Type<ProneState> TYPE = payloadType("prone");
+        public static final StreamCodec<RegistryFriendlyByteBuf, ProneState> CODEC = CustomPacketPayload.codec(ProneState::write, ProneState::new);
+
+        ProneState(RegistryFriendlyByteBuf b) {
+            this(b.readBoolean());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeBoolean(down);
+        }
+
+        @Override
+        public Type<ProneState> type() {
             return TYPE;
         }
     }

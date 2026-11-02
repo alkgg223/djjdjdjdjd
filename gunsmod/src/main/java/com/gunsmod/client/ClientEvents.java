@@ -40,6 +40,11 @@ public final class ClientEvents {
     /** nearby explosions shake the camera */
     @SubscribeEvent
     public static void shake(ViewportEvent.ComputeCameraAngles e) {
+        GunClient.updateSway((float) e.getPartialTick());
+        if (GunClient.swayYaw != 0f || GunClient.swayPitch != 0f) {
+            e.setYaw(e.getYaw() + GunClient.swayYaw);
+            e.setPitch(e.getPitch() + GunClient.swayPitch);
+        }
         if (ClientFx.shake <= 0) return;
         Minecraft mc = Minecraft.getInstance();
         float t = (mc.level != null ? mc.level.getGameTime() : 0) + (float) e.getPartialTick();

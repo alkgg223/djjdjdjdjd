@@ -126,6 +126,8 @@ public final class WorkbenchRecipes {
                 case LASER_SIGHT -> List.of(c(steel, 1), c(Items.REDSTONE_TORCH, 1), c(Items.GLASS_PANE, 1));
                 case EXTENDED_MAG -> List.of(c(steel, 2), c(parts, 1));
                 case FLASHLIGHT -> List.of(c(steel, 1), c(Items.GLOWSTONE_DUST, 2), c(Items.GLASS_PANE, 1));
+                case BIPOD -> List.of(c(steel, 2), c(Items.STICK, 2), c(Items.BLACK_DYE, 1));
+                case NV_SCOPE -> List.of(c(steel, 3), c(Items.GLASS_PANE, 2), c(Items.GLOWSTONE_DUST, 4), c(Items.AMETHYST_SHARD, 1));
             };
             l.add(new Recipe(Tab.ATTACHMENTS, new ItemStack(Reg.ATTACHMENT_ITEMS.get(a).get()), cost));
         }

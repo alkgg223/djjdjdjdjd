@@ -13,7 +13,11 @@ public enum Attachment {
     LASER_SIGHT("laser_sight", Slot.LASER, 1.0f, 1.0f, 0.6f, 1.0f, 0f),
     EXTENDED_MAG("extended_mag", Slot.MAG, 1.0f, 1.0f, 1.0f, 1.0f, 0f),
     /** weapon light on the side rail (shares the slot with the laser); lights up the dark */
-    FLASHLIGHT("flashlight", Slot.LASER, 1.0f, 1.0f, 0.92f, 1.0f, 0f);
+    FLASHLIGHT("flashlight", Slot.LASER, 1.0f, 1.0f, 0.92f, 1.0f, 0f),
+    /** folding bipod: rested (lying down, or crouched with a block in front) the gun barely moves */
+    BIPOD("bipod", Slot.GRIP, 1.0f, 0.92f, 1.0f, 0.9f, 0f),
+    /** night vision scope (3.5x): the dark turns into a bright green and white picture */
+    NV_SCOPE("nv_scope", Slot.SCOPE, 3.5f, 0.55f, 1.0f, 1.0f, 2.6f);
 
     public enum Slot { SCOPE, MUZZLE, GRIP, LASER, MAG }
 

@@ -119,6 +119,42 @@ def angled_grip():
     return m
 
 
+@item("bipod", "attachment")
+def bipod():
+    """folding bipod: rail clamp, yoke and two telescopic legs splayed out, rubber feet"""
+    m = Model("bipod", density=10)
+    block(m, 6.6, 9.4, 11.2, 12.0, 1.4, "dark_paint", deco=("rail",))
+    m.box([7.2, 10.2, 7.0], [8.8, 11.2, 9.0], "gunmetal", deco=("rivets",))
+    m.cyl("z", (8.0, 10.6), 0.35, 6.6, 9.4, "steel", sides=8)
+    for side, ang in ((-1, 22.5), (1, -22.5)):
+        z = 8.0 + side * 0.9
+        piv = [8.0, 10.6, z]
+        m.box([7.6, 5.4, z - 0.32], [8.4, 10.6, z + 0.32], "gunmetal", rot=("x", ang, piv))
+        m.box([7.72, 1.6, z - 0.22], [8.28, 5.6, z + 0.22], "steel", rot=("x", ang, piv))
+        m.box([7.45, 0.9, z - 0.45], [8.55, 1.7, z + 0.45], "rubber", rot=("x", ang, piv))
+        m.box([7.55, 5.2, z - 0.4], [8.45, 5.6, z + 0.4], "black", rot=("x", ang, piv))
+    return m
+
+
+@item("nv_scope", "attachment")
+def nv_scope():
+    """night vision scope: image intensifier tube body, big objective, rubber eyecup, IR illuminator, battery cap"""
+    m = Model("nv_scope", density=10)
+    block(m, 5.2, 10.8, 4.0, 4.9, 1.4, "dark_paint", deco=("rail",))
+    for x in (6.2, 9.8):
+        m.box([x - 0.5, 4.8, 6.6], [x + 0.5, 5.6, 9.4], "gunmetal")
+    m.cyl("x", (6.6, 8.0), 1.45, 2.6, 12.0, "od_paint", sides=12, deco=("panel",))
+    m.cyl("x", (6.6, 8.0), 1.85, 12.0, 14.4, "od_paint", sides=12)
+    m.cyl("x", (6.6, 8.0), 1.55, 14.38, 14.5, "glow_green", sides=12)
+    m.cyl("x", (6.6, 8.0), 1.25, 1.0, 2.6, "rubber", sides=12)
+    m.cyl("x", (6.6, 8.0), 0.9, 0.96, 1.0, "glow_green", sides=12)
+    m.cyl("x", (8.55, 6.7), 0.45, 8.6, 13.0, "dark_paint", sides=8)
+    m.box([12.98, 8.25, 6.4], [13.05, 8.85, 7.0], "lens_red")
+    m.cyl("z", (9.0, 6.6), 0.55, 9.4, 10.1, "dark_paint", sides=8, deco=("rivets",))
+    m.box([5.0, 7.9, 7.6], [6.2, 8.4, 8.4], "black")
+    return m
+
+
 @item("laser_sight", "attachment")
 def laser_sight():
     m = Model("laser_sight", density=10)

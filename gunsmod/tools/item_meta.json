@@ -406,5 +406,29 @@
   ],
   "kind": "attachment",
   "elements": 35
+ },
+ "bipod": {
+  "bounds": [
+   6.6,
+   0.9,
+   6.6,
+   9.4,
+   12.0,
+   9.4
+  ],
+  "kind": "attachment",
+  "elements": 14
+ },
+ "nv_scope": {
+  "bounds": [
+   0.96,
+   4.0,
+   6.15,
+   14.5,
+   9.0,
+   10.1
+  ],
+  "kind": "attachment",
+  "elements": 23
  }
 }

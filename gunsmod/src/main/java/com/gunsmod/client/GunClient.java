@@ -8,6 +8,7 @@ import com.gunsmod.gun.Attachment;
 import com.gunsmod.gun.GunAttachments;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.gun.GunType;
+import com.gunsmod.gun.Prone;
 import com.gunsmod.item.GunItem;
 import com.gunsmod.net.Net;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -46,6 +47,7 @@ public final class GunClient {
     public static final KeyMapping HORN = new KeyMapping("key.gunsmod.horn", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, CATEGORY);
     public static final KeyMapping FLARES = new KeyMapping("key.gunsmod.flares", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_X, CATEGORY);
     public static final KeyMapping TEAM = new KeyMapping("key.gunsmod.team", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, CATEGORY);
+    public static final KeyMapping PRONE = new KeyMapping("key.gunsmod.prone", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, CATEGORY);
 
     // aiming
     public static boolean aiming;
@@ -93,6 +95,56 @@ public final class GunClient {
         return s != null && s.overlayScope();
     }
 
+    /** the optic magnifies (ACOG and up): at full aim its eyepiece fills the view and the gun is out of sight */
+    public static boolean magnified() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || !holdingGun(mc.player)) return false;
+        Attachment s = GunItem.attachments(mc.player.getMainHandItem()).get(Attachment.Slot.SCOPE);
+        return s != null && s.zoom >= 2f;
+    }
+
+    /** looking through a magnifying scope: the eyepiece is at the eye */
+    public static boolean scopeView() {
+        return scoped() && magnified() && aim >= 0.9f;
+    }
+
+    /** aim sway in degrees, added to the camera and to every shot */
+    public static float swayYaw, swayPitch;
+
+    /** how steady the gun is held: crouching, lying down and the bipod steady it, moving shakes it */
+    public static float stability(LocalPlayer p) {
+        float s = 1f;
+        if (p.isCrouching()) s *= 0.55f;
+        if (Prone.isProne(p)) s *= 0.32f;
+        if (Prone.bipodDown(p)) s *= 0.1f;
+        double v = p.getDeltaMovement().horizontalDistance();
+        if (v > 0.04) s *= 1f + (float) Math.min(1.2, v * 8);
+        return s;
+    }
+
+    /** the gun drifts slowly in a figure eight while aiming; heavier guns more, a steady stance far less */
+    public static void updateSway(float pt) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer p = mc.player;
+        float a = aim(pt);
+        if (p == null || a < 0.02f || !holdingGun(p)) {
+            swayYaw = swayPitch = 0f;
+            return;
+        }
+        GunType t = GunItem.typeOf(p.getMainHandItem());
+        float weight = t == null ? 1f : switch (t.category) {
+            case PISTOL -> 0.75f;
+            case SMG -> 0.85f;
+            case SNIPER -> 1.15f;
+            case HEAVY, EXPLOSIVE -> 1.5f;
+            default -> 1f;
+        };
+        float amp = 0.42f * weight * stability(p) * a * (magnified() ? 0.7f : 1f);
+        float time = (ticks + pt) * 0.045f;
+        swayYaw = amp * (Mth.sin(time) + 0.35f * Mth.sin(time * 2.3f + 1.1f));
+        swayPitch = amp * 0.6f * (Mth.sin(time * 2f + 0.4f) + 0.3f * Mth.sin(time * 3.1f));
+    }
+
     public static float zoom() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || !holdingGun(mc.player)) return 1f;
@@ -116,6 +168,16 @@ public final class GunClient {
         if (cooldown > 0) cooldown--;
         if (p == null) return;
         boolean inScreen = mc.screen != null;
+        // lie down / get up (jumping gets up too)
+        while (PRONE.consumeClick()) {
+            boolean down = !Prone.isProne(p) && Prone.allowed(p);
+            Prone.set(p, down);
+            PacketDistributor.sendToServer(new Net.ProneState(down));
+        }
+        if (Prone.isProne(p) && (mc.options.keyJump.isDown() && !inScreen || !Prone.allowed(p))) {
+            Prone.set(p, false);
+            PacketDistributor.sendToServer(new Net.ProneState(false));
+        }
         while (TEAM.consumeClick()) {
             if (BattleHud.field()) mc.setScreen(new TeamScreen());
             else p.displayClientMessage(Component.translatable("gunsmod.msg.no_battlefield"), true);
@@ -266,7 +328,8 @@ public final class GunClient {
             return;
         }
         long seed = RNG.nextLong();
-        float yaw = p.getYRot(), pitch = p.getXRot();
+        // the shot goes where the swaying sights point
+        float yaw = p.getYRot() + swayYaw, pitch = p.getXRot() + swayPitch;
         boolean ads = aim > 0.6f;
         PacketDistributor.sendToServer(new Net.Shoot(yaw, pitch, seed, ads));
         pendingShots++;
@@ -274,7 +337,8 @@ public final class GunClient {
         sinceShot = 0;
         localEffects(p, t, att, yaw, pitch, seed, ads);
         // recoil: kick the model and the camera
-        float rec = t.recoil * att.recoilMul() * (ads ? 0.65f : 1f) * (p.isCrouching() ? 0.8f : 1f);
+        float rec = t.recoil * att.recoilMul() * (ads ? 0.65f : 1f) * (p.isCrouching() ? 0.8f : 1f)
+                * (Prone.bipodDown(p) ? 0.3f : Prone.isProne(p) ? 0.6f : 1f);
         kick = Math.min(1.6f, kick + 0.35f + rec * 0.06f);
         p.setXRot(p.getXRot() - rec * 0.45f);
         p.setYRot(p.getYRot() + (RNG.nextFloat() - 0.5f) * rec * 0.25f);

@@ -54,27 +54,88 @@ public final class Hud {
     }
 
     // ------------------------------------------------------------------------------------ scope overlay
+    public static final ResourceLocation EYEPIECE = Reg.id("textures/gui/eyepiece.png");
+
+    /**
+     * Aiming through an optic. The gun itself comes up to the eye (GunRenderer). A magnifying scope's eyepiece then
+     * closes in round the view, its shadow sliding a little as the gun sways, with the reticle in the glass. Reflex
+     * sights stay on the gun in sight with their dot or ring glowing. Everything is a few batched quads.
+     */
     public static void scope(GuiGraphics g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
-        if (hidden(mc) || !GunClient.scoped()) return;
+        if (hidden(mc) || !GunClient.holdingGun(mc.player)) return;
         Attachment optic = GunItem.attachments(mc.player.getMainHandItem()).get(Attachment.Slot.SCOPE);
-        int w = g.guiWidth(), h = g.guiHeight();
-        int s = Math.min(w, h);
-        ResourceLocation tex = optic == Attachment.RED_DOT ? SCOPE_RED_DOT : optic == Attachment.HOLO_SIGHT ? SCOPE_HOLO
-                : optic == Attachment.ACOG ? SCOPE_ACOG : SCOPE;
-        // reflex sights: a short tube / window at arm's length, the world stays visible round it
-        boolean reflex = optic == Attachment.RED_DOT || optic == Attachment.HOLO_SIGHT;
-        if (reflex) s = (int) (Math.min(w, h) * 1.15f);
-        int x = (w - s) / 2, y = (h - s) / 2;
-        RenderSystem.enableBlend();
-        g.blit(tex, x, y, 0, 0, s, s, s, s);
-        if (!reflex) {
-            g.fill(0, 0, x, h, 0xFF000000);
-            g.fill(x + s, 0, w, h, 0xFF000000);
-            g.fill(x, 0, x + s, y, 0xFF000000);
-            g.fill(x, y + s, x + s, h, 0xFF000000);
+        if (optic == null) return;
+        float pt = dt.getGameTimeDeltaPartialTick(true);
+        float a = GunClient.aim(pt);
+        int w = g.guiWidth(), h = g.guiHeight(), cx = w / 2, cy = h / 2;
+        if (optic.zoom < 2f) {
+            // reflex sight: the dot (red) or ring (holo) glows on the glass of the sight on the gun
+            if (a < 0.85f) return;
+            int col = optic == Attachment.HOLO_SIGHT ? 0xE0FF4A30 : 0xF0FF2A20;
+            if (optic == Attachment.HOLO_SIGHT) {
+                for (int i = 0; i < 24; i++) {
+                    double ang = i * Math.PI * 2 / 24;
+                    int x = cx + (int) Math.round(Math.cos(ang) * 9), y = cy + (int) Math.round(Math.sin(ang) * 9);
+                    g.fill(x, y, x + 1, y + 1, col);
+                }
+            }
+            g.fill(cx - 1, cy - 1, cx + 2, cy + 2, 0x60FF4030);
+            g.fill(cx, cy, cx + 1, cy + 1, col);
+            return;
         }
+        if (a < 0.55f) return;
+        // the eyepiece comes up to the eye: a ring closing in from outside the screen
+        float t = Mth.clamp((a - 0.55f) / 0.4f, 0f, 1f);
+        t = t * t * (3 - 2 * t);
+        float base = Math.min(w, h);
+        int r = (int) (base * Mth.lerp(t, 1.5f, 0.5f));
+        // scope shadow: the eyepiece slides against the reticle as the gun sways
+        int ox = (int) (GunClient.swayYaw * base * -0.06f), oy = (int) (GunClient.swayPitch * base * -0.06f);
+        int ex = cx + ox - r, ey = cy + oy - r, es = r * 2;
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        g.blit(EYEPIECE, ex, ey, 0, 0, es, es, es, es);
+        g.fill(0, 0, w, Math.max(0, ey), 0xFF000000);
+        g.fill(0, Math.min(h, ey + es), w, h, 0xFF000000);
+        g.fill(0, Math.max(0, ey), Math.max(0, ex), Math.min(h, ey + es), 0xFF000000);
+        g.fill(Math.min(w, ex + es), Math.max(0, ey), w, Math.min(h, ey + es), 0xFF000000);
         RenderSystem.disableBlend();
+        if (t < 0.9f) return;
+        // reticle, fixed to the centre (where the shots go)
+        int lr = (int) (r * 0.92f);
+        if (optic == Attachment.ACOG) {
+            int col = 0xF0FF3828;
+            g.fill(cx - 1, cy, cx + 1, cy + lr, 0xD0101010);
+            g.fill(cx - lr, cy, cx - r / 4, cy + 1, 0xD0101010);
+            g.fill(cx + r / 4, cy, cx + lr, cy + 1, 0xD0101010);
+            for (int i = 0; i < 6; i++) {
+                g.fill(cx - 6 + i, cy - 1 + i, cx - 5 + i, cy + i, col);
+                g.fill(cx + 5 - i, cy - 1 + i, cx + 6 - i, cy + i, col);
+            }
+            for (int k = 1; k <= 4; k++) {
+                int y = cy + k * r / 7, half = r / 14 + (4 - k) * 2;
+                g.fill(cx - half, y, cx + half + 1, y + 1, 0xD0101010);
+            }
+        } else {
+            boolean nv = optic == Attachment.NV_SCOPE;
+            int line = nv ? 0xE060FF80 : 0xF0101010, post = nv ? 0xF060FF80 : 0xFF000000;
+            g.fill(cx - lr, cy, cx + lr + 1, cy + 1, line);
+            g.fill(cx, cy - lr, cx + 1, cy + lr + 1, line);
+            // thick posts from the edge
+            g.fill(cx - lr, cy - 1, cx - lr / 2, cy + 2, post);
+            g.fill(cx + lr / 2, cy - 1, cx + lr + 1, cy + 2, post);
+            g.fill(cx - 1, cy + lr / 2, cx + 2, cy + lr + 1, post);
+            // mil dots
+            for (int k = 1; k <= 4; k++) {
+                int d = k * lr / 10;
+                g.fill(cx + d - 1, cy - 1, cx + d + 1, cy + 1, line);
+                g.fill(cx - d - 1, cy - 1, cx - d + 1, cy + 1, line);
+                g.fill(cx - 1, cy + d - 1, cx + 1, cy + d + 1, line);
+                g.fill(cx - 1, cy - d - 1, cx + 1, cy - d + 1, line);
+            }
+            if (nv) g.fill(cx - 1, cy - 1, cx + 2, cy + 2, 0xFFB0FFC0);
+        }
     }
 
     // ------------------------------------------------------------------------------------ crosshair + hit marker

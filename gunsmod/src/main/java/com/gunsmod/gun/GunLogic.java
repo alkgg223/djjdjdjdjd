@@ -69,6 +69,9 @@ public final class GunLogic {
         Vec3 v = shooter.getDeltaMovement();
         if (v.x * v.x + v.z * v.z > 0.01) s *= 1.35f;
         if (shooter.isCrouching()) s *= 0.75f;
+        // lying down steadies the gun, a rested bipod most of all
+        if (Prone.bipodDown(shooter)) s *= 0.45f;
+        else if (Prone.isProne(shooter)) s *= 0.65f;
         if (!shooter.onGround() && !shooter.isPassenger()) s *= 1.8f;
         return s;
     }

@@ -48,6 +48,10 @@ public final class ServerNet {
         if (st.getItem() instanceof com.gunsmod.item.ConvoyToolItem) com.gunsmod.item.ConvoyToolItem.spawn(sp, st);
     }
 
+    public static void prone(Net.ProneState p, IPayloadContext ctx) {
+        if (ctx.player() instanceof ServerPlayer sp) com.gunsmod.gun.Prone.set(sp, p.down() && com.gunsmod.gun.Prone.allowed(sp));
+    }
+
     public static void reload(Net.Reload p, IPayloadContext ctx) {
         if (ctx.player() instanceof ServerPlayer sp) {
             ItemStack st = sp.getMainHandItem();

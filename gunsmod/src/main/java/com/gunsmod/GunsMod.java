@@ -60,6 +60,10 @@ public class GunsMod {
 
     /** big battlefield jobs build a few rows every tick */
     private static void serverTick(ServerTickEvent.Post e) {
+        // nobody stays lying down in water, in a vehicle or in flight
+        for (net.minecraft.server.level.ServerPlayer p : e.getServer().getPlayerList().getPlayers()) {
+            if (com.gunsmod.gun.Prone.isProne(p) && !com.gunsmod.gun.Prone.allowed(p)) com.gunsmod.gun.Prone.set(p, false);
+        }
         OrchardWorld.tick(e.getServer());
         OrchardBuilder.tick(e.getServer());
         BattleEvents.tick(e.getServer());

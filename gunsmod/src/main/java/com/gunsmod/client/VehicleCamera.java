@@ -130,18 +130,16 @@ public final class VehicleCamera {
     public static void sightFrame(GuiGraphics g, Minecraft mc) {
         int w = g.guiWidth(), h = g.guiHeight(), cx = w / 2, cy = h / 2;
         int r = (int) (Math.min(w, h) * 0.47);
-        g.fill(0, 0, w, Math.max(0, cy - r), 0xFF000000);
-        g.fill(0, Math.min(h, cy + r), w, h, 0xFF000000);
-        for (int y = Math.max(0, cy - r); y < Math.min(h, cy + r); y++) {
-            double dy = y + 0.5 - cy;
-            int half = (int) Math.sqrt(Math.max(0, r * (double) r - dy * dy));
-            g.fill(0, y, cx - half, y + 1, 0xFF000000);
-            g.fill(cx + half, y, w, y + 1, 0xFF000000);
-            // soft dark rim inside the glass
-            int rim = Math.max(2, r / 14);
-            g.fill(cx - half, y, Math.min(cx, cx - half + rim), y + 1, 0x70000000);
-            g.fill(Math.max(cx, cx + half - rim), y, cx + half, y + 1, 0x70000000);
-        }
+        // the eyepiece: one textured quad and four black bars (cheap even on phones)
+        int ex = cx - r, ey = cy - r, es = r * 2;
+        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
+        g.blit(Hud.EYEPIECE, ex, ey, 0, 0, es, es, es, es);
+        g.fill(0, 0, w, Math.max(0, ey), 0xFF000000);
+        g.fill(0, Math.min(h, ey + es), w, h, 0xFF000000);
+        g.fill(0, Math.max(0, ey), Math.max(0, ex), Math.min(h, ey + es), 0xFF000000);
+        g.fill(Math.min(w, ex + es), Math.max(0, ey), w, Math.min(h, ey + es), 0xFF000000);
+        com.mojang.blaze3d.systems.RenderSystem.disableBlend();
         // stadia: range ticks below the centre and the horizontal bar
         int col = 0xC0101010;
         for (int i = 1; i <= 4; i++) {
