@@ -105,6 +105,8 @@ public class BotEntity extends PathfinderMob {
     @Nullable public LivingEntity lastAttacker;
     @Nullable public Vec3 lastKnownEnemyPos;
     @Nullable private Vec3 heardAt;
+    /** a new enemy takes a moment to react to, like a player (the target it was for, ticks left) */
+    private int reactTarget = -1, reactTicks;
     private int heardTicks;
     public int vehicleCooldown;
     /** missiles this soldier carries to reload the launch stations of its remote (off hand) */
@@ -304,6 +306,22 @@ public class BotEntity extends PathfinderMob {
         Vec3 d = aim.subtract(eye);
         float yaw = (float) (Mth.atan2(d.z, d.x) * Mth.RAD_TO_DEG) - 90f;
         float pitch = (float) -(Mth.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)) * Mth.RAD_TO_DEG);
+        // like a player: a moment to react to a new enemy, then the gun comes round at a human speed (the look control
+        // turns the head) and it fires once the sights are on; shots fired while still settling go a little wide
+        if (target.getId() != reactTarget) {
+            reactTarget = target.getId();
+            reactTicks = 5 + this.random.nextInt(9) + (this.isPassenger() ? 4 : 0);
+        }
+        if (reactTicks > 0) {
+            reactTicks--;
+            return false;
+        }
+        float headYaw = this.getYHeadRot(), headPitch = this.getXRot();
+        float offYaw = Mth.wrapDegrees(headYaw - yaw), offPitch = headPitch - pitch;
+        float tol = Math.max(1.5f, (float) Math.toDegrees(Math.atan2(target.getBbWidth() * 0.9, Math.max(1.0, dist))));
+        if (Math.abs(offYaw) + Math.abs(offPitch) > tol + 3f) return false;
+        yaw += offYaw * 0.5f;
+        pitch += offPitch * 0.5f;
         // friendly fire check along the line
         AABB box = new AABB(eye, aim).inflate(0.6);
         for (LivingEntity e : this.level().getEntitiesOfClass(LivingEntity.class, box, e -> e != this && e != target && !isEnemy(e)
@@ -316,9 +334,7 @@ public class BotEntity extends PathfinderMob {
         setAiming(true);
         GunItem.setAmmo(g, GunItem.ammo(g) - 1);
         GunLogic.fire(this, g, t, yaw, pitch, this.random.nextLong(), aimingDown, spreadMul, null);
-        this.yHeadRot = yaw;
-        this.setYRot(yaw);
-        this.yBodyRot = yaw;
+        this.yBodyRot = headYaw;
         // burst control so automatic weapons are not lasers
         fireCooldown = t.fireDelay;
         if (t.mode != GunType.FireMode.SEMI) {
@@ -352,7 +368,12 @@ public class BotEntity extends PathfinderMob {
         this.lastHurtTime = this.level().getGameTime();
         if (isEnemy(shooter)) {
             this.lastAttacker = shooter;
-            if (this.getTarget() == null || !this.canSeeTarget(this.getTarget())) this.setTarget(shooter);
+            // like a player: turn to where the shots came from, fight once the shooter is in sight
+            if (this.getTarget() == null || !this.canSeeTarget(this.getTarget())) {
+                this.lastKnownEnemyPos = shooter.position();
+                this.hear(shooter.position());
+                if (this.canSeeTarget(shooter) && Sight.soldier(this, shooter)) this.setTarget(shooter);
+            }
         }
     }
 
@@ -407,7 +428,12 @@ public class BotEntity extends PathfinderMob {
             lastHurtTime = this.level().getGameTime();
             if (att instanceof LivingEntity le && isEnemy(le)) {
                 lastAttacker = le;
-                if (getTarget() == null) setTarget(le);
+                if (getTarget() == null) {
+                    // hit from behind or through cover: spin round towards it first
+                    lastKnownEnemyPos = le.position();
+                    hear(le.position());
+                    if (canSeeTarget(le) && Sight.soldier(this, le)) setTarget(le);
+                }
                 // call for help: team mates nearby turn to where the fire comes from
                 for (BotEntity b : this.level().getEntitiesOfClass(BotEntity.class, this.getBoundingBox().inflate(24), b -> b != this && b.getBotTeam() == getBotTeam())) {
                     if (b.getTarget() == null && b.isEnemy(le)) {
@@ -441,7 +467,7 @@ public class BotEntity extends PathfinderMob {
         if (mines > 0 && !operator && this.getTarget() == null && !this.isPassenger() && this.onGround() && this.random.nextInt(900) == 0) layMine();
         if (heardTicks > 0 && heardAt != null) {
             heardTicks--;
-            if (this.getTarget() == null) this.getLookControl().setLookAt(heardAt.x, heardAt.y + 1.5, heardAt.z, 20f, 20f);
+            if (this.getTarget() == null) this.getLookControl().setLookAt(heardAt.x, heardAt.y + 1.5, heardAt.z, 16f, 16f);
         }
         if (reloadLeft > 0 && --reloadLeft == 0) {
             ItemStack g = gun();

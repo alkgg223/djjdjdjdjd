@@ -36,6 +36,22 @@ public class BotRenderer extends HumanoidMobRenderer<BotEntity, BotRenderer.Sold
         this.addLayer(new HumanoidArmorLayer<>(this, new HumanoidArmorModel<>(ctx.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
                 new HumanoidArmorModel<>(ctx.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR)), ctx.getModelManager()));
         this.addLayer(new GearLayer(this));
+        // riding in a vehicle the soldier keeps his gun out of sight
+        this.layers.removeIf(l -> l instanceof net.minecraft.client.renderer.entity.layers.ItemInHandLayer);
+        this.addLayer(new HandLayer(this, ctx.getItemInHandRenderer()));
+    }
+
+    static class HandLayer extends net.minecraft.client.renderer.entity.layers.ItemInHandLayer<BotEntity, SoldierModel> {
+        HandLayer(RenderLayerParent<BotEntity, SoldierModel> parent, net.minecraft.client.renderer.ItemInHandRenderer r) {
+            super(parent, r);
+        }
+
+        @Override
+        public void render(PoseStack pose, MultiBufferSource buf, int light, BotEntity bot, float limbSwing, float limbSwingAmount, float pt,
+                           float age, float headYaw, float headPitch) {
+            if (bot.isPassenger()) return;
+            super.render(pose, buf, light, bot, limbSwing, limbSwingAmount, pt, age, headYaw, headPitch);
+        }
     }
 
     @Override
@@ -56,8 +72,9 @@ public class BotRenderer extends HumanoidMobRenderer<BotEntity, BotRenderer.Sold
         @Override
         public void prepareMobModel(BotEntity bot, float limbSwing, float limbSwingAmount, float pt) {
             super.prepareMobModel(bot, limbSwing, limbSwingAmount, pt);
-            boolean gun = bot.getMainHandItem().getItem() instanceof GunItem;
-            this.rightArmPose = gun ? HumanoidModel.ArmPose.BOW_AND_ARROW : bot.getMainHandItem().isEmpty() ? HumanoidModel.ArmPose.EMPTY : HumanoidModel.ArmPose.ITEM;
+            boolean gun = bot.getMainHandItem().getItem() instanceof GunItem && !bot.isPassenger();
+            this.rightArmPose = gun ? HumanoidModel.ArmPose.BOW_AND_ARROW : bot.getMainHandItem().isEmpty() || bot.isPassenger() ? HumanoidModel.ArmPose.EMPTY
+                    : HumanoidModel.ArmPose.ITEM;
             this.leftArmPose = HumanoidModel.ArmPose.EMPTY;
             this.crouching = bot.isCrouching();
         }

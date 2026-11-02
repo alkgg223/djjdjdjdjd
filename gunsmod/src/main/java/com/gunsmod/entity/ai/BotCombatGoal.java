@@ -27,6 +27,7 @@ public class BotCombatGoal extends Goal {
     private int coverCooldown;
     private int repath;
     private int engageLimit;
+    private int crouchPulse;
     private Vec3 coverPos;
     private Vec3 movePos;
     private Vec3 lastSeen;
@@ -125,8 +126,16 @@ public class BotCombatGoal extends Goal {
             lostSight++;
         }
         Vec3 threatEye = see ? target.getEyePosition() : (lastSeen != null ? lastSeen.add(0, 1.6, 0) : target.getEyePosition());
-        if (see) bot.getLookControl().setLookAt(target, 40f, 40f);
-        else if (lastSeen != null) bot.getLookControl().setLookAt(lastSeen.x, lastSeen.y + 1.5, lastSeen.z, 30f, 30f);
+        // the head (and the gun) turn at a human speed onto the chest, where it aims
+        float turn = 12f + bot.getRandom().nextFloat() * 6f;
+        if (see) bot.getLookControl().setLookAt(target.getX(), target.getY() + target.getBbHeight() * 0.62, target.getZ(), turn, turn);
+        else if (lastSeen != null) bot.getLookControl().setLookAt(lastSeen.x, lastSeen.y + 1.5, lastSeen.z, 14f, 14f);
+        // out of sight for long: it is gone; the last place it was seen is still worth a look
+        if (!see && lostSight > 300) {
+            bot.lastKnownEnemyPos = lastSeen;
+            bot.setTarget(null);
+            return;
+        }
 
         // no gun: melee rush
         if (gun == null) {
@@ -146,7 +155,8 @@ public class BotCombatGoal extends Goal {
 
         switch (state) {
             case ENGAGE -> {
-                bot.setCrouch(bot.isReloadingGun() || gun.category == GunType.Category.SNIPER && see && dist > 20);
+                if (crouchPulse > 0) crouchPulse--;
+                bot.setCrouch(bot.isReloadingGun() || gun.category == GunType.Category.SNIPER && see && dist > 20 || crouchPulse > 0);
                 if (wantsCover) {
                     Vec3 c = byRoad(CoverFinder.findCover(bot, threatEye, 10));
                     coverCooldown = 40;
@@ -177,6 +187,9 @@ public class BotCombatGoal extends Goal {
                         }
                         float speed = gun.category == GunType.Category.SNIPER ? 0f : 0.45f;
                         bot.getMoveControl().strafe(0f, strafeDir * speed);
+                        // like a player in a close fight: a jump now and then, ducking between bursts
+                        if (dist < 16 && bot.onGround() && strafeDir != 0 && bot.getRandom().nextInt(70) == 0) bot.getJumpControl().jump();
+                        if (gun.category != GunType.Category.SNIPER && dist > 10 && bot.getRandom().nextInt(90) == 0) crouchPulse = 12 + bot.getRandom().nextInt(16);
                     }
                     bot.tryShoot(target, true);
                     if (engageLimit > 0 && --engageLimit == 0 && coverPos != null && (lowHealth || bot.recentlyHurt(60))) {

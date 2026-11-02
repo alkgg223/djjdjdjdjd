@@ -14,8 +14,18 @@ public final class Sight {
 
     /** half angles of view, degrees: a soldier's eyes, a turret's sights, a helicopter cockpit, a jet's nose */
     public static final float SOLDIER = 65f, TURRET = 35f, HELI = 75f, JET = 70f;
-    /** this close a soldier notices anyone (footsteps, a touch) */
-    public static final double TOUCH = 3.0;
+    /** this close a soldier notices anyone even behind it (bumping into it) */
+    public static final double TOUCH = 1.2;
+
+    /**
+     * How far a soldier hears someone it can not see (and turns its head that way): running loud, walking a little,
+     * sneaking not at all.
+     */
+    public static double hearing(Entity e) {
+        if (e.isCrouching()) return 0;
+        if (e.isSprinting()) return 10;
+        return e.getDeltaMovement().horizontalDistanceSqr() > 0.004 ? 5 : 0;
+    }
 
     /** is {@code p} within {@code half} degrees either side of the heading {@code yaw}, or nearer than {@code near} */
     public static boolean inView(Vec3 eye, float yaw, float half, double near, Vec3 p) {

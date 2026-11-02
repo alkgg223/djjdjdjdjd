@@ -33,9 +33,13 @@ public class BotTargetGoal extends Goal {
         for (LivingEntity e : bot.level().getEntitiesOfClass(LivingEntity.class, bot.getBoundingBox().inflate(range, 16, range), bot::isEnemy)) {
             if (VehicleEntity.shieldOf(e) != null) continue;   // the vehicle itself is the target
             if (e instanceof com.gunsmod.entity.JetEntity jet && jet.isAirborne()) continue;   // rifles cannot catch a jet
-            boolean see = bot.canSeeTarget(e) && Sight.soldier(bot, e);
+            boolean see = Sight.soldier(bot, e) && bot.canSeeTarget(e);
             double d = bot.distanceTo(e);
-            if (!see && e != bot.lastAttacker) continue;
+            if (!see) {
+                // not in sight (behind it, or behind a wall): footsteps only make it turn its head
+                if (current == null && d < Sight.hearing(e)) bot.hear(e.position());
+                continue;
+            }
             double score = d + (see ? 0 : 25) - (e == bot.lastAttacker ? 15 : 0) - (e == current ? 6 : 0);
             // soldiers go for enemy players first; rifles are no use against armour
             if (e instanceof Player) score -= 12;
