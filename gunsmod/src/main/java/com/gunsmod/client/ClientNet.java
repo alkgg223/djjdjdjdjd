@@ -54,8 +54,15 @@ public final class ClientNet {
             float pitch = id == -6 ? 1.15f : id == -8 ? 1.3f : 0.95f;
             // the M61 and the C-RAM fire 75-100 rounds a second: one burst sample covers several ticks
             if (id > -7 || level.getGameTime() % 4 == 0) level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound(snd), SoundSource.HOSTILE, id <= -3 ? 10f : 7f, pitch + R.nextFloat() * 0.1f, true);
-            level.addParticle(Reg.MUZZLE_FLASH.get(), muzzle.x, muzzle.y, muzzle.z, 0, 0, 0);
-            level.addParticle(Reg.SMOKE.get(), muzzle.x, muzzle.y, muzzle.z, 0, 0.02, 0);
+            float fs = switch (id) {
+                case -2 -> 1.1f;
+                case -3, -7 -> 1.7f;
+                case -4, -6 -> 2.1f;
+                case -5 -> 1.0f;
+                case -8 -> 1.4f;
+                default -> 1.6f;
+            };
+            muzzleFire(level, muzzle, fireDir(p, muzzle, shooter), fs, id != -5 && id != -8 || level.getGameTime() % 3 == 0);
             if (id == -8) {
                 // C-RAM: a white-hot muzzle and a bright glow round the mount
                 ClientLights.light(shooter != null ? shooter : (Object) p.shooter(), muzzle, 15, 2);
@@ -83,8 +90,31 @@ public final class ClientNet {
                 flames(level, muzzle, dir);
                 return;
             }
-            if (!p.suppressed()) level.addParticle(Reg.MUZZLE_FLASH.get(), muzzle.x, muzzle.y, muzzle.z, 0, 0, 0);
-            level.addParticle(Reg.SMOKE.get(), muzzle.x, muzzle.y, muzzle.z, 0, 0.015, 0);
+            Vec3 fd = fireDir(p, muzzle, shooter);
+            boolean ownView = shooter == mc.player && mc.options.getCameraType().isFirstPerson();
+            if (p.suppressed()) {
+                // a suppressor: no flame, only a thin wisp of gas
+                level.addParticle(Reg.SMOKE.get(), muzzle.x, muzzle.y, muzzle.z, fd.x * 0.03, 0.012, fd.z * 0.03);
+            } else if (!ownView) {
+                // the first-person gun draws its own flash; everyone else sees this one
+                float fs = switch (t.category) {
+                    case PISTOL -> 0.8f;
+                    case SMG -> 0.9f;
+                    case SHOTGUN -> 1.5f;
+                    case SNIPER -> 1.6f;
+                    case HEAVY -> 1.4f;
+                    default -> 1.1f;
+                };
+                muzzleFire(level, muzzle, fd, fs, true);
+            } else {
+                level.addParticle(Reg.SMOKE.get(), muzzle.x, muzzle.y, muzzle.z, fd.x * 0.04, 0.015, fd.z * 0.04);
+            }
+            // brass flying out of the ejection port of soldiers' guns (the player's own gun does that itself)
+            if (shooter instanceof LivingEntity le && shooter != mc.player && t.kind == GunType.Kind.BULLET && t.category != GunType.Category.SHOTGUN) {
+                Vec3 right = GunLogic.dir(0, le.getYHeadRot() + 90);
+                Vec3 port = muzzle.subtract(fd.scale(0.6));
+                level.addParticle(Reg.SHELL.get(), port.x, port.y, port.z, right.x * 0.12 + R.nextGaussian() * 0.02, 0.1, right.z * 0.12);
+            }
             if (t.kind != GunType.Kind.BULLET) return;
         }
         Vec3 me = mc.player != null ? mc.player.getEyePosition() : null;
@@ -104,6 +134,37 @@ public final class ClientNet {
                     level.playLocalSound(me.x, me.y, me.z, Reg.sound("bullet_whiz"), SoundSource.HOSTILE, 0.9f, 0.9f + R.nextFloat() * 0.3f, false);
                 }
             }
+        }
+    }
+
+    /** the direction a shot went: towards its first end point, else where the shooter looks */
+    private static Vec3 fireDir(Net.ShotFx p, Vec3 muzzle, @Nullable Entity shooter) {
+        if (!p.ends().isEmpty()) {
+            Vec3 d = p.end(0).subtract(muzzle);
+            if (d.lengthSqr() > 1e-4) return d.normalize();
+        }
+        return shooter != null ? shooter.getLookAngle() : new Vec3(0, 0, 1);
+    }
+
+    /**
+     * Fire at the muzzle: the directional flash (size: 1 = rifle), a puff of smoke pushed forward and a few sparks of
+     * burning powder; heavy guns throw a bigger cloud.
+     */
+    public static void muzzleFire(ClientLevel level, Vec3 at, Vec3 dir, float size, boolean smoke) {
+        level.addParticle(Reg.MUZZLE_FLASH.get(), at.x, at.y, at.z, dir.x * size, dir.y * size, dir.z * size);
+        if (smoke) {
+            int n = size > 1.5f ? 3 : 1;
+            for (int i = 0; i < n; i++) {
+                double sp = 0.03 + R.nextDouble() * 0.05 * size;
+                level.addParticle(Reg.SMOKE.get(), at.x + dir.x * 0.2, at.y + dir.y * 0.2, at.z + dir.z * 0.2, dir.x * sp + R.nextGaussian() * 0.01,
+                        dir.y * sp + 0.015, dir.z * sp + R.nextGaussian() * 0.01);
+            }
+        }
+        int sparks = R.nextInt(3) + (size > 1.3f ? 2 : 0);
+        for (int i = 0; i < sparks; i++) {
+            double sp = 0.35 + R.nextDouble() * 0.4;
+            level.addParticle(Reg.SPARK.get(), at.x, at.y, at.z, dir.x * sp + R.nextGaussian() * 0.06, dir.y * sp + R.nextGaussian() * 0.06,
+                    dir.z * sp + R.nextGaussian() * 0.06);
         }
     }
 

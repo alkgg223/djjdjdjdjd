@@ -18,15 +18,30 @@ public final class GunParticles {
     private GunParticles() {}
 
     // ------------------------------------------------------------------------------------ muzzle flash
+    /**
+     * Muzzle flash. Without a direction: a round flash. With one (the particle's motion = fire direction times the
+     * size): a white-hot core, a long forward flame spike and four flame petals thrown out round the muzzle, each shot
+     * a little different, gone after two frames.
+     */
     public static class Flash extends TextureSheetParticle {
-        Flash(ClientLevel l, double x, double y, double z, SpriteSet s) {
+        private final Vec3 dir;
+        private final float size, spin, stretch;
+
+        Flash(ClientLevel l, double x, double y, double z, double dx, double dy, double dz, SpriteSet s) {
             super(l, x, y, z);
             pickSprite(s);
+            Vec3 d = new Vec3(dx, dy, dz);
+            double len = d.length();
+            dir = len > 1e-4 ? d.scale(1.0 / len) : null;
+            size = len > 1e-4 ? (float) len : 1f;
             lifetime = 2;
-            quadSize = 0.32f + random.nextFloat() * 0.15f;
+            quadSize = (0.32f + random.nextFloat() * 0.15f) * (dir == null ? 1f : 0.55f + size * 0.35f);
             roll = oRoll = random.nextFloat() * Mth.TWO_PI;
+            spin = random.nextFloat() * Mth.TWO_PI;
+            stretch = 0.75f + random.nextFloat() * 0.5f;
             hasPhysics = false;
             gravity = 0;
+            xd = yd = zd = 0;
         }
 
         @Override
@@ -42,6 +57,51 @@ public final class GunParticles {
         @Override
         public float getQuadSize(float pt) {
             return quadSize * (1f - (age + pt) / (lifetime + 1f) * 0.4f);
+        }
+
+        @Override
+        public void render(VertexConsumer vc, Camera cam, float pt) {
+            super.render(vc, cam, pt);
+            if (dir == null) return;
+            float fade = 1f - (age + pt) / (lifetime + 1f);
+            Vec3 c = new Vec3(x, y, z).subtract(cam.getPosition());
+            Vec3 side = Math.abs(dir.y) < 0.95 ? dir.cross(new Vec3(0, 1, 0)).normalize() : new Vec3(1, 0, 0);
+            Vec3 up = side.cross(dir).normalize();
+            float u0 = getU0(), u1 = getU1(), v0 = getV0(), v1 = getV1();
+            int light = getLightColor(pt);
+            double L = 0.55 * size * stretch * (0.7 + 0.3 * fade);
+            // forward spike: two crossed blades along the line of fire
+            for (int k = 0; k < 2; k++) {
+                double a = spin + k * Math.PI / 2;
+                Vec3 w = side.scale(Math.cos(a)).add(up.scale(Math.sin(a))).scale(0.09 * size);
+                blade(vc, c, c.add(dir.scale(L * 1.25)), w, u0, u1, v0, v1, light, fade, 1f, 0.92f, 0.62f);
+            }
+            // petals thrown out round the muzzle
+            for (int k = 0; k < 4; k++) {
+                double a = spin + k * Math.PI / 2 + Math.PI / 4;
+                Vec3 out = side.scale(Math.cos(a)).add(up.scale(Math.sin(a)));
+                Vec3 tip = c.add(dir.scale(L * 0.45)).add(out.scale(L * 0.42));
+                Vec3 w = dir.cross(out).normalize().scale(0.07 * size);
+                blade(vc, c, tip, w, u0, u1, v0, v1, light, fade * 0.9f, 1f, 0.7f, 0.3f);
+            }
+        }
+
+        /** a flame blade from base to tip, w = half width at the base; drawn from both sides */
+        private void blade(VertexConsumer vc, Vec3 base, Vec3 tip, Vec3 w, float u0, float u1, float v0, float v1, int light, float a,
+                           float r, float g, float b) {
+            Vec3 p0 = base.subtract(w), p1 = base.add(w), p2 = tip.add(w.scale(0.25)), p3 = tip.subtract(w.scale(0.25));
+            vert(vc, p0, u0, v1, light, a, r, g, b);
+            vert(vc, p1, u0, v0, light, a, r, g, b);
+            vert(vc, p2, u1, v0, light, a * 0.15f, r, g * 0.8f, b * 0.6f);
+            vert(vc, p3, u1, v1, light, a * 0.15f, r, g * 0.8f, b * 0.6f);
+            vert(vc, p3, u1, v1, light, a * 0.15f, r, g * 0.8f, b * 0.6f);
+            vert(vc, p2, u1, v0, light, a * 0.15f, r, g * 0.8f, b * 0.6f);
+            vert(vc, p1, u0, v0, light, a, r, g, b);
+            vert(vc, p0, u0, v1, light, a, r, g, b);
+        }
+
+        private static void vert(VertexConsumer vc, Vec3 p, float u, float v, int light, float a, float r, float g, float b) {
+            vc.addVertex((float) p.x, (float) p.y, (float) p.z).setUv(u, v).setColor(r, g, b, a).setLight(light);
         }
     }
 
@@ -329,7 +389,7 @@ public final class GunParticles {
     public record FlashProvider(SpriteSet s) implements ParticleProvider<SimpleParticleType> {
         @Override
         public Particle createParticle(SimpleParticleType t, ClientLevel l, double x, double y, double z, double dx, double dy, double dz) {
-            return new Flash(l, x, y, z, s);
+            return new Flash(l, x, y, z, dx, dy, dz, s);
         }
     }
 

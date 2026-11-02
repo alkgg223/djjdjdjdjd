@@ -270,8 +270,7 @@ public class GunRenderer extends BlockEntityWithoutLevelRenderer {
             pose.mulPose(Axis.XP.rotationDegrees((GunClient.ticks * 73) % 360));
             float s = t.category == GunType.Category.PISTOL ? 0.7f : t.category == GunType.Category.SNIPER || t.category == GunType.Category.SHOTGUN ? 1.4f : 1.0f;
             pose.scale(s, s, s);
-            pose.translate(0, -8 / 16f, -8 / 16f);
-            BakedRender.item(stack, "fx/muzzle_flash", pose, buf, LightTexture.FULL_BRIGHT, overlay);
+            muzzleFlame(pose, buf, GunClient.ticks * 31L + GunClient.flashTicks);
             pose.popPose();
         }
     }
@@ -299,6 +298,60 @@ public class GunRenderer extends BlockEntityWithoutLevelRenderer {
             vc.addVertex(m, x + len, y + c0 * r1, z + s0 * r1).setColor(1f, 0.96f, 0.85f, 0f);
             vc.addVertex(m, x + len, y + c1 * r1, z + s1 * r1).setColor(1f, 0.96f, 0.85f, 0f);
             vc.addVertex(m, x, y + c1 * r0, z + s1 * r0).setColor(1f, 0.96f, 0.85f, a0);
+        }
+    }
+
+    /**
+     * First-person muzzle flash, different every shot: a white-hot star at the muzzle, a long flame spike along the
+     * barrel (+X) and petals of burning gas thrown out round it, all glowing (additive).
+     */
+    private static void muzzleFlame(PoseStack pose, MultiBufferSource buf, long seed) {
+        VertexConsumer vc = buf.getBuffer(RenderType.lightning());
+        Matrix4f m = pose.last().pose();
+        java.util.Random r = new java.util.Random(seed);
+        float len = 0.5f + r.nextFloat() * 0.3f;
+        float spin = r.nextFloat() * Mth.TWO_PI;
+        // core star across the bore
+        int n = 7;
+        for (int i = 0; i < n; i++) {
+            double a0 = spin + i * Math.PI * 2 / n, a1 = spin + (i + 0.5) * Math.PI * 2 / n, a2 = spin + (i + 1) * Math.PI * 2 / n;
+            float rr = 0.11f + r.nextFloat() * 0.12f;
+            flameTri(vc, m, 0.01f, 0f, 0f, 0.02f, (float) Math.cos(a1) * rr, (float) Math.sin(a1) * rr, 0.01f, (float) Math.cos(a0) * 0.04f,
+                    (float) Math.sin(a0) * 0.04f, 1f, 0.96f, 0.8f, 0.9f, 1f, 0.6f, 0.2f);
+            flameTri(vc, m, 0.01f, 0f, 0f, 0.01f, (float) Math.cos(a2) * 0.04f, (float) Math.sin(a2) * 0.04f, 0.02f, (float) Math.cos(a1) * rr,
+                    (float) Math.sin(a1) * rr, 1f, 0.96f, 0.8f, 0.9f, 1f, 0.6f, 0.2f);
+        }
+        // forward spike: three blades round the line of fire
+        for (int k = 0; k < 3; k++) {
+            double a = spin + k * Math.PI / 3;
+            float wy = (float) Math.cos(a) * 0.07f, wz = (float) Math.sin(a) * 0.07f;
+            float tip = len * (1.0f + r.nextFloat() * 0.35f);
+            flameTri(vc, m, 0f, -wy, -wz, tip, 0f, 0f, 0f, wy, wz, 1f, 0.9f, 0.6f, 0.75f, 1f, 0.45f, 0.1f);
+        }
+        // petals of gas thrown out at an angle
+        for (int k = 0; k < 4; k++) {
+            double a = spin + Math.PI / 4 + k * Math.PI / 2;
+            float c = (float) Math.cos(a), sn = (float) Math.sin(a);
+            float pl = len * (0.35f + r.nextFloat() * 0.25f);
+            float wy = -sn * 0.05f, wz = c * 0.05f;
+            flameTri(vc, m, 0f, -wy, -wz, pl * 0.8f, c * pl * 0.7f, sn * pl * 0.7f, 0f, wy, wz, 1f, 0.8f, 0.45f, 0.6f, 1f, 0.35f, 0.05f);
+        }
+    }
+
+    /** one glowing triangle (a degenerate quad), base colour at the first and third corner, the tip colour fading out */
+    private static void flameTri(VertexConsumer vc, Matrix4f m, float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2,
+                                 float r, float g, float b, float a, float tr, float tg, float tb) {
+        for (int side = 0; side < 2; side++) {
+            vc.addVertex(m, x0, y0, z0).setColor(r, g, b, a);
+            if (side == 0) {
+                vc.addVertex(m, x1, y1, z1).setColor(tr, tg, tb, 0f);
+                vc.addVertex(m, x1, y1, z1).setColor(tr, tg, tb, 0f);
+            } else {
+                vc.addVertex(m, x2, y2, z2).setColor(r, g, b, a);
+                vc.addVertex(m, x2, y2, z2).setColor(r, g, b, a);
+            }
+            vc.addVertex(m, side == 0 ? x2 : x1, side == 0 ? y2 : y1, side == 0 ? z2 : z1).setColor(side == 0 ? r : tr, side == 0 ? g : tg,
+                    side == 0 ? b : tb, side == 0 ? a : 0f);
         }
     }
 
