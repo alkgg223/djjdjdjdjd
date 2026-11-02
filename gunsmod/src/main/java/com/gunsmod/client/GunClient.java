@@ -322,8 +322,25 @@ public final class GunClient {
             default -> 5.5f;
         };
         if (t.kind == GunType.Kind.FLAME) return; // looping sound handled separately
+        if (!local && !suppressed && farShot(level, at, t.category == GunType.Category.SNIPER || t.category == GunType.Category.HEAVY ? "shot_far_heavy"
+                : t.category == GunType.Category.PISTOL || t.category == GunType.Category.SMG ? "shot_far_light" : "shot_far_rifle")) return;
         level.playLocalSound(at.x, at.y, at.z, s, local ? SoundSource.PLAYERS : SoundSource.HOSTILE, local ? Math.min(vol, 2.5f) : vol,
                 0.95f + RNG.nextFloat() * 0.1f, !local);
+    }
+
+    /**
+     * Far away the crack and hiss of a shot are gone: past 48 blocks the listener hears the distant version instead
+     * (a muffled thump rolling on the hills), loud enough to carry a long way. True when it was played.
+     */
+    public static boolean farShot(ClientLevel level, Vec3 at, String far) {
+        Minecraft mc = Minecraft.getInstance();
+        Vec3 ear = mc.gameRenderer.getMainCamera().getPosition();
+        double d = ear.distanceTo(at);
+        if (d < 48) return false;
+        // played a little towards the listener so it is not cut off by the attenuation range
+        Vec3 p = d > 140 ? ear.add(at.subtract(ear).normalize().scale(140)) : at;
+        level.playLocalSound(p.x, p.y, p.z, Reg.sound(far), SoundSource.HOSTILE, 9f, 0.9f + RNG.nextFloat() * 0.2f, true);
+        return true;
     }
 
     public static void onHitMarker(boolean kill) {

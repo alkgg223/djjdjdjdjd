@@ -136,7 +136,8 @@ public final class Reg {
                 "ui_confirm", "hitmarker", "grenade_bounce", "bullet_whiz", "turret_overheat", "heavy_launch", "explosion_big",
                 "explosion_far", "missile_incoming", "tank_idle", "tank_drive", "tank_fire", "tank_reload", "heli_rotor", "heli_start",
                 "heli_rocket", "heli_gun", "flare", "missile_warning", "lock_tone", "lock_on", "atgm_launch", "sam_launch", "cannon_30",
-                "bomb_drop", "radar_ping", "jet_start", "jet_idle", "jet_engine", "jet_afterburner", "jet_flyby", "jet_missile", "jet_cannon"}) {
+                "bomb_drop", "radar_ping", "jet_start", "jet_idle", "jet_engine", "jet_afterburner", "jet_flyby", "jet_missile", "jet_cannon",
+                "shot_far_light", "shot_far_rifle", "shot_far_heavy", "impact_dirt", "impact_stone", "impact_wood", "impact_metal", "ricochet"}) {
             SOUND.put(s, SOUNDS.register(s, () -> SoundEvent.createVariableRangeEvent(id(s))));
         }
     }

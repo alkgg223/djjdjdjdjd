@@ -53,7 +53,10 @@ public final class ClientNet {
             };
             float pitch = id == -6 ? 1.15f : id == -8 ? 1.3f : 0.95f;
             // the M61 and the C-RAM fire 75-100 rounds a second: one burst sample covers several ticks
-            if (id > -7 || level.getGameTime() % 4 == 0) level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound(snd), SoundSource.HOSTILE, id <= -3 ? 10f : 7f, pitch + R.nextFloat() * 0.1f, true);
+            boolean burst = id > -7 || level.getGameTime() % 4 == 0;
+            if (burst && (id == -2 || id == -5) && GunClient.farShot(level, muzzle, "shot_far_rifle")) burst = false;
+            else if (burst && id != -2 && id != -5 && GunClient.farShot(level, muzzle, "shot_far_heavy")) burst = false;
+            if (burst) level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound(snd), SoundSource.HOSTILE, id <= -3 ? 10f : 7f, pitch + R.nextFloat() * 0.1f, true);
             float fs = switch (id) {
                 case -2 -> 1.1f;
                 case -3, -7 -> 1.7f;
@@ -174,6 +177,7 @@ public final class ClientNet {
     }
 
     public static void impact(ClientLevel level, Vec3 at, byte kind, @Nullable BlockState state, Vec3 dir) {
+        if (kind == 1 && state != null && !state.isAir()) impactSound(level, at, state);
         if (kind == 1) {
             Vec3 back = at.subtract(dir.scale(0.06));
             for (int i = 0; i < 3; i++) {
@@ -191,6 +195,34 @@ public final class ClientNet {
             }
             level.addParticle(ParticleTypes.CRIT, at.x, at.y, at.z, 0, 0.1, 0);
         }
+    }
+
+    /** the round striking: a sound for the surface, and off hard ones now and then a ricochet whining away */
+    private static void impactSound(ClientLevel level, Vec3 at, BlockState state) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.player.distanceToSqr(at) > 40 * 40) return;
+        net.minecraft.world.level.block.SoundType st = state.getSoundType();
+        String name;
+        boolean hard = false;
+        if (st == net.minecraft.world.level.block.SoundType.METAL || st == net.minecraft.world.level.block.SoundType.ANVIL
+                || st == net.minecraft.world.level.block.SoundType.CHAIN || st == net.minecraft.world.level.block.SoundType.LANTERN
+                || st == net.minecraft.world.level.block.SoundType.COPPER) {
+            name = "impact_metal";
+            hard = true;
+        } else if (st == net.minecraft.world.level.block.SoundType.WOOD || st == net.minecraft.world.level.block.SoundType.BAMBOO_WOOD
+                || st == net.minecraft.world.level.block.SoundType.CHERRY_WOOD || st == net.minecraft.world.level.block.SoundType.NETHER_WOOD) {
+            name = "impact_wood";
+        } else if (st == net.minecraft.world.level.block.SoundType.STONE || st == net.minecraft.world.level.block.SoundType.DEEPSLATE
+                || st == net.minecraft.world.level.block.SoundType.POLISHED_DEEPSLATE || st == net.minecraft.world.level.block.SoundType.DEEPSLATE_BRICKS
+                || st == net.minecraft.world.level.block.SoundType.TUFF || st == net.minecraft.world.level.block.SoundType.BASALT
+                || st == net.minecraft.world.level.block.SoundType.GLASS) {
+            name = "impact_stone";
+            hard = true;
+        } else {
+            name = "impact_dirt";
+        }
+        level.playLocalSound(at.x, at.y, at.z, Reg.sound(name), SoundSource.BLOCKS, 1.0f, 0.9f + R.nextFloat() * 0.25f, false);
+        if (hard && R.nextInt(6) == 0) level.playLocalSound(at.x, at.y, at.z, Reg.sound("ricochet"), SoundSource.BLOCKS, 1.2f, 0.85f + R.nextFloat() * 0.3f, false);
     }
 
     public static void flames(ClientLevel level, Vec3 from, Vec3 dir) {
