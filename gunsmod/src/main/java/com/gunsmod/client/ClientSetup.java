@@ -91,6 +91,7 @@ public final class ClientSetup {
             for (String part : geo.parts()) e.register(BakedRender.id("gun/" + g.id + "/" + part));
         }
         for (String p : new String[]{"entity/jeep/body", "entity/jeep/mark_green", "entity/jeep/mark_red", "entity/jeep/turret", "entity/jeep/gun",
+                "entity/jeep/steering", "entity/jeep/gear",
                 "entity/jeep/wheel", "entity/gear/helmet", "entity/gear/vest", "block/launcher_erector", "block/heavy_launcher_base",
                 "block/heavy_launcher_erector", "fx/muzzle_flash", "entity/tank/body", "entity/tank/mark_green", "entity/tank/mark_red",
                 "entity/tank/turret", "entity/tank/gun", "entity/tank/roadwheel", "entity/tank/idler", "entity/tank/sprocket",

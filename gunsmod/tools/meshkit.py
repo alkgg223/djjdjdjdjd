@@ -35,6 +35,7 @@ MATS = {
     "track": ((0.27, 0.26, 0.25), "metal", False),
     "glass": ((0.42, 0.56, 0.66), "glass", False),
     "glass_dark": ((0.20, 0.28, 0.34), "glass", False),
+    "glass_clear": ((0.66, 0.78, 0.84), "glass", False),
     "lens": ((0.10, 0.22, 0.36), "glass", False),
     "canvas": ((0.48, 0.45, 0.35), "canvas", False),
     "canvas_green": ((0.36, 0.40, 0.27), "canvas", False),
@@ -49,6 +50,8 @@ MATS = {
 }
 TEXTURES = ["paint", "metal", "rubber", "glass", "canvas", "plain"]
 EMISSIVE = {"glow", "red_light", "amber"}
+# see-through materials: opacity of the texture
+TRANSLUCENT = {"glass_clear": 0.28}
 TEX_REF = "gunsmod:item/vehicle/mesh/"
 SMOOTH_DEG = 38.0
 UV_TILE = 40.0          # model units the whole texture spans
@@ -839,6 +842,12 @@ def make_textures(res_dir, size=128):
         if mat in EMISSIVE:
             base = np.ones_like(base)
         a = np.stack([base * rgb[0], base * rgb[1], base * rgb[2]], axis=-1)
+        if mat in TRANSLUCENT:
+            # glass: mostly clear, the light streaks a little more opaque
+            alpha = np.clip(TRANSLUCENT[mat] * (0.6 + 0.6 * (base - base.min()) / max(1e-6, base.max() - base.min())), 0, 1)
+            a = np.concatenate([a, alpha[..., None]], axis=-1)
+            Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8), "RGBA").save(os.path.join(out, mat + ".png"))
+            continue
         Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8)).save(os.path.join(out, mat + ".png"))
 
 

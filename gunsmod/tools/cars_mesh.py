@@ -291,14 +291,14 @@ def jeep():
             K.rbox((x0, 4.0, z0), (x1, 10.7, z1), 0.35, "paint", seg=2, m=body)
             hx = x0 - 0.05 if x0 < 0 else x1 - 0.25
             K.rbox((hx, 8.6, z0 + 6.4), (hx + 0.3, 9.0, z0 + 8.0), 0.1, "dark", seg=1, m=body)
-            K.box((x0 + 0.2, 10.75, z0 + 0.6), (x1 - 0.2, 17.8, z1 - 0.6), "glass_dark", m=body, faces="xX")
+            K.box((x0 + 0.2, 10.75, z0 + 0.6), (x1 - 0.2, 17.8, z1 - 0.6), "glass_clear", m=body, faces="xX")
             for zz in (z0 + 0.2, z1 - 0.6):
                 K.rbox((x0 + 0.1, 10.6, zz), (x1 - 0.1, 18.7, zz + 0.4), 0.12, "paint", seg=1, m=body)
             K.rbox((x0 + 0.1, 17.8, z0 + 0.2), (x1 - 0.1, 18.7, z1 - 0.2), 0.15, "paint", seg=1, m=body)
     for x0, x1 in ((-1.6, -0.6), (7.5, 8.5), (16.6, 17.6)):
         K.rbox((x0, 10.5, -1.4), (x1, 18.6, -0.4), 0.25, "paint", seg=1, m=body)
-    K.box((-0.6, 10.8, -1.0), (7.5, 18.4, -0.8), "glass_dark", m=body, faces="zZ")
-    K.box((8.5, 10.8, -1.0), (16.6, 18.4, -0.8), "glass_dark", m=body, faces="zZ")
+    K.box((-0.6, 10.8, -1.0), (7.5, 18.4, -0.8), "glass_clear", m=body, faces="zZ")
+    K.box((8.5, 10.8, -1.0), (16.6, 18.4, -0.8), "glass_clear", m=body, faces="zZ")
     for c0, c1 in (((-2.8, 18.6, -1.6), (18.8, 19.4, 8.8)), ((-2.8, 18.6, 8.6), (3.6, 19.4, 17.2)),
                    ((12.4, 18.6, 8.6), (18.8, 19.4, 17.2)), ((3.4, 18.6, 16.6), (12.6, 19.4, 17.2))):
         K.rbox(c0, c1, 0.3, "paint", seg=1, m=body)
@@ -313,9 +313,9 @@ def jeep():
         for z0 in (2.4, 10.4):
             K.rbox((sx - 2.4, 3.0, z0), (sx + 2.4, 5.6, z0 + 4.6), 0.5, "canvas", seg=1, m=body)
             K.rbox((sx - 2.4, 5.6, z0 + 3.8), (sx + 2.4, 12.0, z0 + 4.8), 0.4, "canvas", seg=1, m=body)
-    K.torus("z", (2.6, 13.2), 1.8, 1.45, 0.18, "rubber", n=16, k=5, m=body)
-    K.tube([(2.6, 11.4, 2.6), (2.6, 13.2, 1.8)], 0.22, "dark", n=6, m=body)
+    K.tube([(2.6, 11.4, 2.6), (2.6, 13.2, 1.95)], 0.22, "dark", n=6, m=body)
     K.rbox((5.4, 3.0, -0.5), (10.6, 8.0, 7.0), 0.4, "dark", seg=1, m=body)
+    _interior(body)
     K.rbox((6.0, 3.0, 9.0), (10.0, 11.0, 13.0), 0.3, "grey", seg=1, m=body)
     # rear: bed with the canvas cover, tailgate, lights, jerry cans, whip antennas
     K.rbox((-3.0, 3.4, 16.6), (19.0, 10.9, 29.4), 0.5, "paint", seg=2, m=body)
@@ -347,9 +347,59 @@ def jeep():
     parts = {"body": body}
     parts.update(marks(spots))
     parts["wheel"] = jeep_wheel()
+    parts["steering"] = jeep_steering()
+    parts["gear"] = jeep_gear()
     parts["turret"] = jeep_turret()
     parts["gun"] = jeep_gun()
     return parts
+
+
+def _interior(m):
+    """the cab as seen from inside: floor, the firewall under the dash, door trims with pulls, the rear wall, the roof
+    lining (open round the turret ring), the driver's gauges, the centre screen, pedals and the gear gate"""
+    K.box((-1.4, 3.0, -0.6), (17.4, 3.5, 16.4), "rubber", m=m, faces="Y")
+    K.box((-1.4, 3.5, -0.7), (17.4, 10.5, -0.6), "paint_dark", m=m, faces="Z")
+    K.box((-1.45, 3.5, -0.6), (-1.35, 10.7, 16.4), "paint_dark", m=m, faces="X")
+    K.box((17.35, 3.5, -0.6), (17.45, 10.7, 16.4), "paint_dark", m=m, faces="x")
+    K.box((-1.4, 3.5, 16.3), (17.4, 10.7, 16.4), "paint_dark", m=m, faces="z")
+    for c0, c1 in (((-2.6, 18.45, -1.4), (18.6, 18.55, 8.6)), ((-2.6, 18.45, 8.6), (3.6, 18.55, 17.0)),
+                   ((12.4, 18.45, 8.6), (18.6, 18.55, 17.0)), ((3.6, 18.45, 16.6), (12.4, 18.55, 17.0))):
+        K.box(c0, c1, "canvas", m=m, faces="y")
+    for x, s in ((-1.35, 1), (17.35, -1)):
+        for z in (2.0, 11.0):
+            K.rbox((x if s > 0 else x - 0.35, 8.0, z), (x + 0.35 if s > 0 else x, 8.4, z + 2.2), 0.1, "dark", seg=1, m=m)
+    # driver's gauges and warning lamps, the centre screen
+    for gx in (1.3, 3.9):
+        K.cylinder("z", (gx, 11.45), 0.62, 1.6, 1.68, "dark", n=14, m=m)
+        K.cylinder("z", (gx, 11.45), 0.5, 1.68, 1.7, "white", n=14, caps=(False, True), m=m)
+        K.box((gx - 0.04, 11.45, 1.7), (gx + 0.04, 11.85, 1.72), "red_light", m=m, faces="Z")
+    for i in range(4):
+        K.box((0.9 + i * 0.9, 10.75, 1.62), (1.3 + i * 0.9, 10.95, 1.64), "amber" if i % 2 else "glow", m=m, faces="Z")
+    K.rbox((6.2, 10.7, 1.4), (9.8, 12.6, 1.75), 0.12, "dark", seg=1, m=m)
+    K.box((6.45, 10.95, 1.75), (9.55, 12.35, 1.78), "glow", m=m, faces="Z")
+    for px in (1.8, 3.3):
+        K.rbox((px, 3.5, 0.0), (px + 0.7, 4.6, 0.5), 0.1, "steel", seg=1, m=m)
+    K.box((7.3, 8.0, 2.4), (8.7, 8.06, 4.0), "black", m=m, faces="Y")
+
+
+def jeep_steering():
+    """the steering wheel, turned by the renderer about the column (z axis through x 2.6, y 13.2)"""
+    m = Mesh()
+    K.torus("z", (2.6, 13.2), 1.9, 1.45, 0.18, "rubber", n=20, k=6, m=m)
+    K.cylinder("z", (2.6, 13.2), 0.4, 1.85, 2.05, "dark", n=10, m=m)
+    for a in (90, 210, 330):
+        r = math.radians(a)
+        K.tube([(2.6, 13.2, 1.95), (2.6 + math.cos(r) * 1.35, 13.2 + math.sin(r) * 1.35, 1.9)], 0.11, "dark", n=5, m=m)
+    return m
+
+
+def jeep_gear():
+    """the gear lever on the console, tilted by the renderer about x (pivot 8.0, 8.0, 3.2)"""
+    m = Mesh()
+    K.tube([(8.0, 8.0, 3.2), (8.0, 10.0, 3.2)], 0.12, "steel", n=6, m=m)
+    K.sphere((8.0, 10.25, 3.2), 0.36, 0.3, 0.36, "dark", n=10, rows=6, m=m)
+    K.cylinder("y", (8.0, 3.2), 0.4, 8.0, 8.35, "rubber", n=10, r1=0.18, m=m)
+    return m
 
 
 def jeep_wheel():

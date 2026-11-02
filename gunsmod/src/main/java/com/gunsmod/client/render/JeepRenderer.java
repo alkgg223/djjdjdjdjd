@@ -30,8 +30,9 @@ public class JeepRenderer extends EntityRenderer<JeepEntity> {
         pose.mulPose(Axis.YP.rotationDegrees(180f - bodyYaw));
         // small damage wobble
         if (jeep.hurtTime > 0) pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin((jeep.hurtTime - pt) * 2f) * 1.5f));
+        double v = jeep.getDisplaySpeed();
         renderJeep(pose, buf, light, jeep.getBotTeam(), Mth.lerp(pt, jeep.prevWheelSpin, jeep.wheelSpin), jeep.getSteerVisual(),
-                turretYaw(jeep, pt), turretPitch(jeep, pt), jeep.tow);
+                turretYaw(jeep, pt), turretPitch(jeep, pt), jeep.tow, v > 0.01 ? 1 : v < -0.01 ? -1 : 0);
         pose.popPose();
         super.render(jeep, yaw, pt, pose, buf, light);
     }
@@ -56,6 +57,12 @@ public class JeepRenderer extends EntityRenderer<JeepEntity> {
     /** {@code tow}: the TOW launcher instead of the machine gun */
     public static void renderJeep(PoseStack pose, MultiBufferSource buf, int light, BotTeam team, float spin, float steer, float tYaw, float tPitch,
                                   boolean tow) {
+        renderJeep(pose, buf, light, team, spin, steer, tYaw, tPitch, tow, 0);
+    }
+
+    /** {@code gear}: 1 drive, -1 reverse, 0 neutral (the lever on the console) */
+    public static void renderJeep(PoseStack pose, MultiBufferSource buf, int light, BotTeam team, float spin, float steer, float tYaw, float tPitch,
+                                  boolean tow, int gear) {
         int ov = OverlayTexture.NO_OVERLAY;
         float r = team.r, g = team.g, b = team.b;
         pose.pushPose();
@@ -63,6 +70,19 @@ public class JeepRenderer extends EntityRenderer<JeepEntity> {
         pose.translate(-0.5f, 0f, -0.5f);       // model (8, 0, 8) at the origin
         BakedRender.entity("entity/jeep/body", pose, buf, light, ov, r, g, b);
         BakedRender.entity(team == BotTeam.GREEN ? "entity/jeep/mark_green" : "entity/jeep/mark_red", pose, buf, light, ov, 1, 1, 1);
+        // the steering wheel turns with the front wheels (a few times as far), the gear lever shows drive / reverse
+        pose.pushPose();
+        pose.translate(2.6f / 16f, 13.2f / 16f, 0f);
+        pose.mulPose(Axis.ZP.rotationDegrees(steer * 120f));
+        pose.translate(-2.6f / 16f, -13.2f / 16f, 0f);
+        BakedRender.entity("entity/jeep/steering", pose, buf, light, ov, 1, 1, 1);
+        pose.popPose();
+        pose.pushPose();
+        pose.translate(8f / 16f, 8f / 16f, 3.2f / 16f);
+        pose.mulPose(Axis.XP.rotationDegrees(-16f * gear));
+        pose.translate(-8f / 16f, -8f / 16f, -3.2f / 16f);
+        BakedRender.entity("entity/jeep/gear", pose, buf, light, ov, 1, 1, 1);
+        pose.popPose();
         // wheels
         double[][] wheels = {{-1.0, 4.3, -8.0}, {17.0, 4.3, -8.0}, {-1.0, 4.3, 21.0}, {17.0, 4.3, 21.0}};
         for (int i = 0; i < 4; i++) {
