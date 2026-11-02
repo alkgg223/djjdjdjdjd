@@ -61,6 +61,7 @@ public final class VehicleCamera {
         LocalPlayer p = mc.player;
         if (p == null || !mc.options.getCameraType().isFirstPerson()) return false;
         Entity v = p.getVehicle();
+        if (v instanceof ArmoredCarEntity c && c.kind.civilian()) return false;
         return (v instanceof TankEntity || v instanceof ArmoredCarEntity) && ((VehicleEntity) v).getControllingPassenger() == p;
     }
 
@@ -81,7 +82,7 @@ public final class VehicleCamera {
         Entity v = mc.player.getVehicle();
         float d;
         if (v instanceof TankEntity t) d = 9.5f * t.kind.scale;
-        else if (v instanceof ArmoredCarEntity c) d = c.kind.artillery() || c.kind.antiAir() ? 12f : c.kind.cram() ? 8f : 10f;
+        else if (v instanceof ArmoredCarEntity c) d = c.kind.artillery() || c.kind.antiAir() ? 12f : c.kind.cram() || c.kind.civilian() ? 8f : 10f;
         else if (v instanceof HelicopterEntity) d = 14f;
         else if (v instanceof JetEntity) d = 17f;
         else if (v instanceof JeepEntity) d = 7f;
@@ -170,6 +171,7 @@ public final class VehicleCamera {
             dir = t.gunDir();
             if (t.getReload() > 0) col = 0xE0FFA030;
         } else if (v instanceof ArmoredCarEntity c && c.getControllingPassenger() == p) {
+            if (c.kind.civilian()) return;
             if (c.kind.artillery()) {
                 // rocket artillery: the point the fire control lays on
                 from = p.getEyePosition(pt);

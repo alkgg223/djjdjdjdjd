@@ -351,6 +351,9 @@ public final class OrchardBuilder {
             vehiclePad(s, -28, 44, s < 0 ? VehicleKind.MAUS : VehicleKind.OBJ279, team, toEnemy);
             vehiclePad(s, 32, 42, s < 0 ? VehicleKind.HIMARS : VehicleKind.GRAD, team, toEnemy);
             vehiclePad(s, 8, 44, VehicleKind.CRAM, team, toEnemy);
+            // v1.9: civilian cars the soldiers take to get to the front quickly
+            vehiclePad(s, -14, 44, VehicleKind.PICKUP, team, toEnemy);
+            vehiclePad(s, 20, 44, VehicleKind.SUV, team, toEnemy);
             runway(s);
             vehiclePad(s, -132, 66, VehicleKind.F16, team, runwayDir);
         }

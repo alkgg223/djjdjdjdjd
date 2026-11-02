@@ -17,11 +17,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * in the column to take it out again. Helicopters fly cover over the column.
  */
 public class ConvoyScreen extends Screen {
-    private static final int[] OPTIONS = {ConvoyToolItem.JEEP, VehicleKind.TOW_HUMVEE.ordinal(), VehicleKind.BTR.ordinal(), VehicleKind.PANTSIR.ordinal(),
+    private static final int[] OPTIONS = {VehicleKind.PICKUP.ordinal(), VehicleKind.SUV.ordinal(), ConvoyToolItem.JEEP, VehicleKind.TOW_HUMVEE.ordinal(), VehicleKind.BTR.ordinal(), VehicleKind.PANTSIR.ordinal(),
             VehicleKind.HIMARS.ordinal(), VehicleKind.GRAD.ordinal(), VehicleKind.ABRAMS.ordinal(), VehicleKind.LEOPARD.ordinal(),
             VehicleKind.T90.ordinal(), VehicleKind.CHALLENGER.ordinal(), VehicleKind.MAUS.ordinal(), VehicleKind.OBJ279.ordinal(),
             VehicleKind.COBRA.ordinal(), VehicleKind.APACHE.ordinal(), VehicleKind.HIND.ordinal(), VehicleKind.KA52.ordinal()};
-    private static final int W = 360, H = 236, CELL = 42, SLOT = 32;
+    private static final int W = 360, H = 278, CELL = 42, SLOT = 32;
     private int left, top;
     private int team;
     private final List<Integer> column = new ArrayList<>();
@@ -64,7 +64,7 @@ public class ConvoyScreen extends Screen {
     }
 
     private int colY() {
-        return top + 142;
+        return top + 184;
     }
 
     private BotTeam side() {

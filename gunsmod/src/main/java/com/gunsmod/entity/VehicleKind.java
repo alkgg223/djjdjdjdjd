@@ -22,6 +22,8 @@ public enum VehicleKind {
     HIMARS("himars", Group.CAR),
     GRAD("grad", Group.CAR),
     CRAM("cram", Group.CAR),
+    PICKUP("pickup", Group.CAR),
+    SUV("suv", Group.CAR),
     F16("f16", Group.JET);
 
     public enum Group { TANK, HELI, JEEP, CAR, JET }
@@ -52,6 +54,8 @@ public enum VehicleKind {
             case HIMARS -> Reg.HIMARS.get();
             case GRAD -> Reg.GRAD.get();
             case CRAM -> Reg.CRAM.get();
+            case PICKUP -> Reg.PICKUP.get();
+            case SUV -> Reg.SUV.get();
             case F16 -> Reg.F16.get();
         };
     }
@@ -82,6 +86,8 @@ public enum VehicleKind {
             case HIMARS -> CarType.HIMARS;
             case GRAD -> CarType.GRAD;
             case CRAM -> CarType.CRAM;
+            case PICKUP -> CarType.PICKUP;
+            case SUV -> CarType.SUV;
             default -> CarType.BTR;
         };
     }

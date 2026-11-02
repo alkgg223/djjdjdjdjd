@@ -231,6 +231,8 @@ public final class Reg {
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> HIMARS = car("himars", CarType.HIMARS);
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> GRAD = car("grad", CarType.GRAD);
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> CRAM = car("cram", CarType.CRAM);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> PICKUP = car("pickup", CarType.PICKUP);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> SUV = car("suv", CarType.SUV);
     public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> F16 = ENTITIES.register("f16",
             () -> EntityType.Builder.<JetEntity>of(JetEntity::new, MobCategory.MISC).sized(3.0f, 2.2f).eyeHeight(1.8f).clientTrackingRange(24)
                     .updateInterval(1).build("f16"));

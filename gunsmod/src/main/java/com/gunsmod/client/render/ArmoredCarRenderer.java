@@ -52,6 +52,13 @@ public class ArmoredCarRenderer extends EntityRenderer<ArmoredCarEntity> {
         String dir = "entity/" + g.model() + "/";
         int ov = OverlayTexture.NO_OVERLAY;
         float r = team.r, gr = team.g, b = team.b;
+        if (kind.civilian()) {
+            // civilian paint; the team shows on the door stripe
+            float[] c = kind.civColor();
+            r = c[0];
+            gr = c[1];
+            b = c[2];
+        }
         pose.pushPose();
         pose.scale(S, S, S);
         pose.translate(-0.5f, 0f, -0.5f);
@@ -70,8 +77,12 @@ public class ArmoredCarRenderer extends EntityRenderer<ArmoredCarEntity> {
             pose.mulPose(Axis.XP.rotationDegrees((w[0] > 8 ? spin : -spin) * Mth.RAD_TO_DEG));
             pose.scale(scale, scale, scale);
             pose.translate(-0.5f, -0.5f, -0.5f);
-            BakedRender.entityCutout("entity/car/wheel", pose, buf, light, ov, 1, 1, 1);
+            BakedRender.entityCutout(kind.civilian() ? "entity/car/civ_wheel" : "entity/car/wheel", pose, buf, light, ov, 1, 1, 1);
             pose.popPose();
+        }
+        if (kind.civilian()) {
+            pose.popPose();
+            return;
         }
         float px = (float) (g.turret()[0] / 16), pz = (float) (g.turret()[1] / 16);
         pose.pushPose();

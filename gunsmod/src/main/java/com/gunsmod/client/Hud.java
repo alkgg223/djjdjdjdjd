@@ -96,6 +96,7 @@ public final class Hud {
         }
         float pt = dt.getGameTimeDeltaPartialTick(true);
         if (p.getVehicle() instanceof ArmoredCarEntity car && car.getControllingPassenger() == p) {
+            if (car.kind.civilian()) return;
             VehicleCamera.sightFrame(g, mc);
             if (car.kind.artillery()) {
                 VehicleCamera.thirdPersonAim(g, mc, pt);
@@ -694,14 +695,15 @@ public final class Hud {
                     : Component.translatable("gunsmod.hud.weapon_ammo", Component.translatable("gunsmod.weapon.sam"), car.getAmmo());
         } else {
             String wk = car.kind.artillery() ? "gunsmod.weapon.mlrs" : car.kind.cram() ? "gunsmod.weapon.cram20" : "gunsmod.weapon.cannon30";
-            main = car.getReload() > 0 ? Component.translatable("gunsmod.hud.weapon_loading", Component.translatable(wk))
+            main = car.kind.civilian() ? Component.translatable("gunsmod.hud.civ_car")
+                    : car.getReload() > 0 ? Component.translatable("gunsmod.hud.weapon_loading", Component.translatable(wk))
                     : Component.translatable("gunsmod.hud.weapon_ammo", Component.translatable(wk), car.getAmmo());
         }
         col = car.getReload() > 0 ? 0xFFFFA030 : 0xFFFFFFFF;
         panel(g, mc, bx, Component.translatable(commander ? "gunsmod.seat.commander" : "gunsmod.seat.passenger"), car.getHealth() / car.getMaxHealth(), main, col);
         if (car.kind.antiAir()) radarScope(g, mc, car, bx + 106);
         if (commander) {
-            String hk = car.kind.antiAir() ? "gunsmod.hud.pantsir_hint" : car.kind.artillery() ? "gunsmod.hud.mlrs_hint"
+            String hk = car.kind.civilian() ? "gunsmod.hud.civ_hint" : car.kind.antiAir() ? "gunsmod.hud.pantsir_hint" : car.kind.artillery() ? "gunsmod.hud.mlrs_hint"
                     : car.kind.cram() ? "gunsmod.hud.cram_hint" : "gunsmod.hud.btr_hint";
             Component hint = Component.translatable(hk);
             g.drawString(mc.font, hint, g.guiWidth() / 2 - mc.font.width(hint) / 2, 6, 0xA0FFFFFF, true);

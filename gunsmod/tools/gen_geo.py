@@ -5,6 +5,7 @@ import armor as AR
 import armor2 as A2
 import armor3 as A3
 import newveh_mesh as NV
+import civ_mesh as CV
 import jet as J
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "java", "com", "gunsmod", "entity", "VehicleGeo.java")
@@ -98,10 +99,10 @@ def main():
     for fn in A3.CARS.values():
         fn()
     lines += ["", "    public record Car(String model, " + ", ".join(t + " " + f for f, t in CAR_FIELDS) + ") {}", ""]
-    for fn in NV.CARS2.values():
+    for fn in list(NV.CARS2.values()) + list(CV.CIVS.values()):
         fn()
-    for name in list(A3.CARS) + list(NV.CARS2):
-        g = A3.GEO.get(name) or NV.GEO[name]
+    for name in list(A3.CARS) + list(NV.CARS2) + list(CV.CIVS):
+        g = A3.GEO.get(name) or NV.GEO.get(name) or CV.GEO[name]
         args = [jv(name)] + [jt(g[f], t) for f, t in CAR_FIELDS]
         lines.append(f"    public static final Car {name.upper()} = new Car({', '.join(args)});")
     for fn in J.JETS.values():

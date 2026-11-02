@@ -14,7 +14,11 @@ public enum CarType {
     /** BM-21 Grad: forty 122 mm rockets rippled off in seconds over a wide area */
     GRAD(VehicleGeo.GRAD, 150, 0.35f, false, 75, 0.8f, 4.0, 2.4f, 1.8f, 40, 480),
     /** C-RAM: a Phalanx 20 mm gatling on a trailer that shoots down rockets, shells, missiles and aircraft on its own */
-    CRAM(VehicleGeo.CRAM, 140, 0.35f, false, 0, 0f, 1.0, 16f, 12f, 1550, 300);
+    CRAM(VehicleGeo.CRAM, 140, 0.35f, false, 0, 0f, 1.0, 16f, 12f, 1550, 300),
+    /** civilian double-cab pickup: soldiers ride it from place to place (two in the cab, two in the bed), no weapons */
+    PICKUP(VehicleGeo.PICKUP, 70, 1.0f, false, 115, 1.5f, 3.2, 0f, 0f, 0, 0),
+    /** civilian SUV: four soldiers, quick on the road, no weapons */
+    SUV(VehicleGeo.SUV, 65, 1.0f, false, 125, 1.6f, 2.8, 0f, 0f, 0, 0);
 
     public final VehicleGeo.Car geo;
     public final float health, bulletFactor, accel, traverse, elevate;
@@ -45,6 +49,8 @@ public enum CarType {
             case HIMARS -> VehicleKind.HIMARS;
             case GRAD -> VehicleKind.GRAD;
             case CRAM -> VehicleKind.CRAM;
+            case PICKUP -> VehicleKind.PICKUP;
+            case SUV -> VehicleKind.SUV;
         };
     }
 
@@ -63,6 +69,16 @@ public enum CarType {
 
     public boolean cram() {
         return this == CRAM;
+    }
+
+    /** civilian cars: transport only, they carry no weapons */
+    public boolean civilian() {
+        return this == PICKUP || this == SUV;
+    }
+
+    /** the paint of a civilian car (the team shows on a stripe along the doors) */
+    public float[] civColor() {
+        return this == PICKUP ? new float[]{0.92f, 0.92f, 0.89f} : new float[]{0.24f, 0.31f, 0.43f};
     }
 
     /** the commander's seat turns with the turret (the launchers are worked from the cab) */

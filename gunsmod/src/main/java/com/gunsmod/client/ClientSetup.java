@@ -118,8 +118,10 @@ public final class ClientSetup {
                 "mav_3", "burner"}) {
             e.register(BakedRender.id("entity/f16/" + p));
         }
+        e.register(BakedRender.id("entity/car/civ_wheel"));
         for (CarType c : CarType.values()) {
-            for (String p : new String[]{"body", "mark_green", "mark_red", "turret", "gun"}) e.register(BakedRender.id("entity/" + c.geo.model() + "/" + p));
+            String[] parts = c.civilian() ? new String[]{"body", "mark_green", "mark_red"} : new String[]{"body", "mark_green", "mark_red", "turret", "gun"};
+            for (String p : parts) e.register(BakedRender.id("entity/" + c.geo.model() + "/" + p));
             if (c.geo.radar() != null) e.register(BakedRender.id("entity/" + c.geo.model() + "/radar"));
         }
     }
@@ -144,6 +146,8 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.HIMARS.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.GRAD.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.CRAM.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.PICKUP.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.SUV.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.F16.get(), JetRenderer::new);
         e.registerEntityRenderer(Reg.GUIDED_MISSILE.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.FLARE_ENTITY.get(), NoopRenderer::new);

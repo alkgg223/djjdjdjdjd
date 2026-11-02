@@ -142,7 +142,7 @@ public class ArmoredCarEntity extends VehicleEntity {
 
     @Override
     protected String seatName(int seat) {
-        return seat == 0 ? seatName0() : "gunsmod.seat.passenger";
+        return seat == 0 ? (kind.civilian() ? "gunsmod.seat.driver" : seatName0()) : "gunsmod.seat.passenger";
     }
 
     public float getTurretYaw() {
@@ -234,7 +234,42 @@ public class ArmoredCarEntity extends VehicleEntity {
 
     @Override
     public Vec3 sightEye() {
-        return sightWorld();
+        return kind.civilian() ? null : sightWorld();
+    }
+
+    /** civilian cars take a driver and three more; nobody gets in with the enemy about */
+    @Override
+    public int seatForBot(BotEntity bot) {
+        if (!kind.civilian()) return super.seatForBot(bot);
+        if (bot.getTarget() != null || this.getPassengers().size() >= seatCount()) return -1;
+        return this.getPassengers().size();
+    }
+
+    @Override
+    public boolean seatFree(int seat) {
+        if (!kind.civilian()) return super.seatFree(seat);
+        return this.getPassengers().size() <= seat && seat < seatCount();
+    }
+
+    /**
+     * Civilian car: as soon as anyone aboard spots an enemy, or the car takes fire, the driver stops and the soldiers
+     * jump out to fight; they do not get back in for a while.
+     */
+    private void bailOutCheck() {
+        if (!kind.civilian() || this.tickCount % 4 != 0 || this.getPassengers().isEmpty()) return;
+        boolean contact = this.hurtTime > 0 && getControllingPassenger() instanceof BotEntity;
+        for (Entity p : this.getPassengers()) {
+            if (p instanceof BotEntity b && b.getTarget() != null && b.getTarget().isAlive()) contact = true;
+        }
+        if (!contact) return;
+        speed = 0;
+        throttleIn = 0;
+        for (Entity p : new ArrayList<>(this.getPassengers())) {
+            if (p instanceof BotEntity b) {
+                b.stopRiding();
+                b.vehicleCooldown = 400 + this.random.nextInt(200);
+            }
+        }
     }
 
     /** where the radar and the sights look from */
@@ -394,6 +429,7 @@ public class ArmoredCarEntity extends VehicleEntity {
         } else {
             weaponsTick();
             ramTick();
+            bailOutCheck();
         }
     }
 
@@ -446,6 +482,10 @@ public class ArmoredCarEntity extends VehicleEntity {
             }
         }
         LivingEntity crew = getControllingPassenger();
+        if (kind.civilian()) {
+            fireMain = fireSecond = false;
+            return;
+        }
         if (kind.cram()) {
             cramTick(crew instanceof Player p ? p : null);
             return;

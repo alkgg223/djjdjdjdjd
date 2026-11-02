@@ -10,6 +10,7 @@ import helis_mesh as HM
 import cars_mesh as CM
 import jet_mesh as JM
 import newveh_mesh as NV
+import civ_mesh as CV
 
 RES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "resources", "assets", "gunsmod")
 
@@ -37,7 +38,9 @@ def main(only=None):
         groups.append((key, lambda fn=fn: fn()[0]))
     for key, fn in NV.CARS2.items():
         groups.append((key, lambda fn=fn: fn()[0]))
-    groups.append(("car", lambda: {"wheel": CM.car_wheel()}))
+    for key, fn in CV.CIVS.items():
+        groups.append((key, lambda fn=fn: fn()[0]))
+    groups.append(("car", lambda: {"wheel": CM.car_wheel(), "civ_wheel": CV.civ_wheel()}))
     groups.append(("jeep", CM.jeep))
     groups.append(("jeep_tow", lambda: {"launcher": CM.tow()}))
     for key, fn in JM.JETS.items():

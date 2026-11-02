@@ -100,6 +100,8 @@ public class ConvoyToolItem extends Item {
         VehicleKind v = VehicleKind.values()[k];
         if (v.group == VehicleKind.Group.TANK) return 8 * v.tank().scale;
         if (v == VehicleKind.TOW_HUMVEE) return 5;
+        if (v == VehicleKind.PICKUP) return 5.5;
+        if (v == VehicleKind.SUV) return 5;
         return v == VehicleKind.BTR ? 7.5 : 11;
     }
 
