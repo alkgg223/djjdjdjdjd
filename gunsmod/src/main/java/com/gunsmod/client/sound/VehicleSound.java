@@ -56,6 +56,10 @@ public class VehicleSound extends AbstractTickableSoundInstance {
         else if (v instanceof HelicopterEntity h) heli(h);
         else if (v instanceof ArmoredCarEntity c) car(c);
         else if (v instanceof JetEntity j) JetSound.tick(j);
+        else if (v instanceof com.gunsmod.entity.BomberEntity b) {
+            BomberSound.tick(b);
+            return;
+        }
         damageSmoke(v);
     }
 

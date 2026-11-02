@@ -817,7 +817,7 @@ public final class Hud {
         for (VehicleEntity h : mc.level.getEntitiesOfClass(VehicleEntity.class, car.getBoundingBox().inflate(range, range, range))) {
             double dx = h.getX() - car.getX(), dz = h.getZ() - car.getZ();
             double dist = Math.sqrt(dx * dx + dz * dz);
-            if (dist > range || !(h instanceof com.gunsmod.entity.Aircraft a) || !a.isAirborne()) continue;
+            if (dist > range || !com.gunsmod.entity.Aircraft.detectable(h)) continue;
             // bearing from the hull heading: positive = to the right
             double rel = Math.toRadians(Math.toDegrees(Math.atan2(dz, dx)) - 90 - yaw);
             double k = dist / range * r;

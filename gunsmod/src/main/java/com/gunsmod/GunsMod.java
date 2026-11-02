@@ -52,7 +52,7 @@ public class GunsMod {
                 case TANK -> e.put(k.type(), TankEntity.createAttributes(k.tank()).build());
                 case HELI -> e.put(k.type(), HelicopterEntity.createAttributes(k.heli()).build());
                 case CAR -> e.put(k.type(), ArmoredCarEntity.createAttributes(k.car()).build());
-                case JET -> e.put(k.type(), JetEntity.createAttributes().build());
+                case JET -> e.put(k.type(), k == VehicleKind.B2 ? com.gunsmod.entity.BomberEntity.createAttributes().build() : JetEntity.createAttributes().build());
                 default -> { }
             }
         }

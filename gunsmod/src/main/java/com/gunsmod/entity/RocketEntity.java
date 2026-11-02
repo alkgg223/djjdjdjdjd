@@ -24,11 +24,15 @@ import net.minecraft.world.phys.Vec3;
  * hurt but never break blocks.
  */
 public class RocketEntity extends Projectile {
-    public static final int RPG = 0, GRENADE = 1, TANK_SHELL = 2, HELI_ROCKET = 3, BOMB = 4, ARTY = 5, THERMOBARIC = 6;
+    public static final int RPG = 0, GRENADE = 1, TANK_SHELL = 2, HELI_ROCKET = 3, BOMB = 4, ARTY = 5, THERMOBARIC = 6, B2_BOMB = 7;
     private static final EntityDataAccessor<Byte> DATA_KIND = SynchedEntityData.defineId(RocketEntity.class, EntityDataSerializers.BYTE);
     private int life;
     /** vehicle rounds: direct hit damage against armour / everything else and the blast power (set by the vehicle) */
     private float hitArmour = -1, hitSoft = -1, blast = -1;
+    /** the B-2's guided bomb: the point on the ground it steers to (null = falls free) */
+    @javax.annotation.Nullable private Vec3 guide;
+    /** RPG rounds: the bombers this rocket already passed (one roll of the dice each) */
+    private java.util.Set<Integer> passed;
 
     public RocketEntity(EntityType<? extends RocketEntity> type, Level level) {
         super(type, level);
@@ -59,6 +63,10 @@ public class RocketEntity extends Projectile {
         return getKind() == RPG || getKind() == THERMOBARIC;
     }
 
+    public void guideTo(Vec3 target) {
+        guide = target;
+    }
+
     public void setPower(float armour, float soft, float blastPower) {
         hitArmour = armour;
         hitSoft = soft;
@@ -80,6 +88,7 @@ public class RocketEntity extends Projectile {
         Entity owner = this.getOwner();
         if (owner != null && (e == owner.getVehicle() || e.getVehicle() == owner.getVehicle() && owner.getVehicle() != null)) return false;
         if (VehicleEntity.shieldOf(e) != null) return false;    // the round hits the vehicle
+        if (e instanceof BomberEntity) return false;               // only the dice decide (see bomberPass)
         return super.canHitEntity(e) && !BotTeam.friendly(owner, e);
     }
 
@@ -98,7 +107,9 @@ public class RocketEntity extends Projectile {
                 return;
             }
         }
+        if (!this.level().isClientSide && isRpg() && bomberPass()) return;
         switch (getKind()) {
+            case B2_BOMB -> v = steerBomb(v);
             case RPG, THERMOBARIC -> {
                 if (life > 4 && v.length() < 4.0) v = v.scale(1.035);
                 v = v.add(0, -0.006, 0);
@@ -147,11 +158,62 @@ public class RocketEntity extends Projectile {
             } else if (life % 2 == 0) {
                 this.level().addParticle(ParticleTypes.SMOKE, getX(), getY(), getZ(), 0, 0, 0);
             }
+        } else if (getKind() == B2_BOMB) {
+            if (life > 900) detonate(this.position());
         } else if (isVehicleRound() && life > (getKind() == BOMB || getKind() == ARTY ? 400 : 110)) {
             this.discard();
         } else if (life > 240 || this.isInWater() && getKind() == 1) {
             detonate(this.position());
         }
+    }
+
+    /** an RPG passing a stealth bomber: one roll of the dice; true when it hit (and burst) */
+    private boolean bomberPass() {
+        for (BomberEntity b : BomberEntity.active(this.level())) {
+            if (passed != null && passed.contains(b.getId())) continue;
+            Vec3 c = b.position().add(0, BomberEntity.MID_Y, 0);
+            double dx = getX() - c.x, dz = getZ() - c.z, dy = getY() - c.y;
+            if (dx * dx + dz * dz > BomberEntity.HALF_SPAN * BomberEntity.HALF_SPAN || Math.abs(dy) > 4) continue;
+            if (BotTeam.friendly(this.getOwner(), b)) continue;
+            if (passed == null) passed = new java.util.HashSet<>();
+            passed.add(b.getId());
+            if (b.rpgPass(this, this.getOwner())) {
+                detonate(this.position());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** the guided bomb: falls under gravity and trims its glide so it comes down on the target */
+    private Vec3 steerBomb(Vec3 v) {
+        v = v.scale(0.995).add(0, -0.04, 0);
+        if (guide == null) return v;
+        double h = this.getY() - guide.y;
+        if (h <= 0.5) return v;
+        // time left to fall from here: h = -vy t + 0.02 t^2
+        double vy = v.y;
+        double tFall = Math.max(1, (vy + Math.sqrt(vy * vy + 0.08 * h)) / 0.04);
+        double ax = Mth.clamp((guide.x - getX()) / tFall - v.x, -0.04, 0.04), az = Mth.clamp((guide.z - getZ()) / tFall - v.z, -0.04, 0.04);
+        return new Vec3(v.x + ax, v.y, v.z + az);
+    }
+
+    /** the B-2 bomb: a blinding flash and a fireball that rises into a mushroom cloud; the land is left as it was */
+    private void nuke(Vec3 at) {
+        Entity owner = this.getOwner();
+        Level level = this.level();
+        Blast.explode(level, this, at, 6.0f, false, Level.ExplosionInteraction.NONE, Blast.FX_NUKE, 4.0f);
+        Blast.shockwave(level, at, 30, 80f, 10, this, owner);
+        // armour inside the fireball does not survive either
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(at, at).inflate(24),
+                e -> e instanceof VehicleEntity && !(e instanceof BomberEntity) || e instanceof JeepEntity)) {
+            double d = e.position().distanceTo(at);
+            if (d > 24) continue;
+            e.invulnerableTime = 0;
+            e.hurt(this.damageSources().explosion(this, owner), (float) (600 * (1 - d / 24)));
+            e.invulnerableTime = 0;
+        }
+        this.discard();
     }
 
     /** shot down in the air (C-RAM): a small burst, no damage on the ground */
@@ -175,6 +237,10 @@ public class RocketEntity extends Projectile {
 
     private void detonate(Vec3 at) {
         Entity owner = this.getOwner();
+        if (getKind() == B2_BOMB) {
+            nuke(at);
+            return;
+        }
         if (isVehicleRound()) {
             // same blast as the launch station missiles, but the terrain stays as it is
             boolean shell = getKind() == TANK_SHELL;
@@ -204,12 +270,18 @@ public class RocketEntity extends Projectile {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putByte("Kind", (byte) getKind());
+        if (guide != null) {
+            tag.putDouble("GX", guide.x);
+            tag.putDouble("GY", guide.y);
+            tag.putDouble("GZ", guide.z);
+        }
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.entityData.set(DATA_KIND, tag.getByte("Kind"));
+        if (tag.contains("GX")) guide = new Vec3(tag.getDouble("GX"), tag.getDouble("GY"), tag.getDouble("GZ"));
     }
 
     @Override

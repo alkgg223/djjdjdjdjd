@@ -740,8 +740,8 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     }
 
     private boolean wantsTarget(Entity e, int weapon) {
-        if (weapon == 1) return e instanceof Aircraft a && a.isAirborne();
-        return (e instanceof VehicleEntity || e instanceof JeepEntity) && !(e instanceof Aircraft a && a.isAirborne());
+        if (weapon == 1) return Aircraft.detectable(e);
+        return (e instanceof VehicleEntity || e instanceof JeepEntity) && !(e instanceof Aircraft a && a.isAirborne()) && !(e instanceof BomberEntity);
     }
 
     @Nullable

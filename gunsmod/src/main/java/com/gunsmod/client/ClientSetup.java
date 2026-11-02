@@ -120,6 +120,7 @@ public final class ClientSetup {
             e.register(BakedRender.id("entity/f16/" + p));
         }
         e.register(BakedRender.id("entity/car/civ_wheel"));
+        for (String p : new String[]{"body", "mark_green", "mark_red", "bay"}) e.register(BakedRender.id("entity/b2/" + p));
         for (CarType c : CarType.values()) {
             String[] parts = c.civilian() ? new String[]{"body", "mark_green", "mark_red"} : new String[]{"body", "mark_green", "mark_red", "turret", "gun"};
             for (String p : parts) e.register(BakedRender.id("entity/" + c.geo.model() + "/" + p));
@@ -150,6 +151,7 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.PICKUP.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.SUV.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.F16.get(), JetRenderer::new);
+        e.registerEntityRenderer(Reg.B2.get(), com.gunsmod.client.render.BomberRenderer::new);
         e.registerEntityRenderer(Reg.GUIDED_MISSILE.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.FLARE_ENTITY.get(), NoopRenderer::new);
         e.registerEntityRenderer(Reg.MINE.get(), MineRenderer::new);

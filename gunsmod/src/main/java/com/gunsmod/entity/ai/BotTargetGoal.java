@@ -33,6 +33,7 @@ public class BotTargetGoal extends Goal {
         for (LivingEntity e : bot.level().getEntitiesOfClass(LivingEntity.class, bot.getBoundingBox().inflate(range, 16, range), bot::isEnemy)) {
             if (VehicleEntity.shieldOf(e) != null) continue;   // the vehicle itself is the target
             if (e instanceof com.gunsmod.entity.JetEntity jet && jet.isAirborne()) continue;   // rifles cannot catch a jet
+            if (e instanceof com.gunsmod.entity.BomberEntity) continue;                      // only an RPG has a chance (BotSkyGoal)
             boolean see = Sight.soldier(bot, e) && bot.canSeeTarget(e);
             double d = bot.distanceTo(e);
             if (!see) {

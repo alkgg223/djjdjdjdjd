@@ -110,7 +110,7 @@ public class GuidedMissileEntity extends Projectile {
         Entity owner = this.getOwner();
         if (owner != null && (e == owner.getVehicle() || e.getVehicle() != null && e.getVehicle() == owner.getVehicle())) return false;
         if (e instanceof FlareEntity) return false;
-        if (antiAir()) return e instanceof Aircraft && super.canHitEntity(e) && !BotTeam.friendly(owner, e.getControllingPassenger());
+        if (antiAir()) return e instanceof Aircraft && !((Aircraft) e).stealth() && super.canHitEntity(e) && !BotTeam.friendly(owner, e.getControllingPassenger());
         if (VehicleEntity.shieldOf(e) != null) return false;
         return super.canHitEntity(e) && !BotTeam.friendly(owner, e);
     }
@@ -218,7 +218,7 @@ public class GuidedMissileEntity extends Projectile {
             this.discard();
             return true;
         }
-        for (VehicleEntity h : this.level().getEntitiesOfClass(VehicleEntity.class, this.getBoundingBox().inflate(4.5), this::canHitEntity)) {
+        for (VehicleEntity h : this.level().getEntitiesOfClass(VehicleEntity.class, this.getBoundingBox().inflate(4.5), e -> canHitEntity(e) && !(e instanceof BomberEntity))) {
             if (h.position().add(0, h.getBbHeight() * 0.5, 0).distanceTo(this.position()) < 4.5) {
                 detonate(this.position());
                 return true;

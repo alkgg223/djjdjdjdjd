@@ -522,7 +522,7 @@ public class ArmoredCarEntity extends VehicleEntity {
     }
 
     private boolean enemyAircraft(VehicleEntity h, @Nullable LivingEntity crew) {
-        if (!(h instanceof Aircraft a) || !h.isAlive() || h.getPassengers().isEmpty() || !a.isAirborne()) return false;
+        if (!Aircraft.detectable(h) || !h.isAlive() || h.getPassengers().isEmpty()) return false;
         if (crew != null && BotTeam.friendly(crew, h.getControllingPassenger())) return false;
         return crew == null || h.getBotTeam() != getBotTeam() || crew instanceof Player;
     }
@@ -869,7 +869,7 @@ public class ArmoredCarEntity extends VehicleEntity {
             Vec3 v = e.getDeltaMovement();
             return v.lengthSqr() > 0.04 && (e.getY() > this.getY() + 2 || v.dot(this.position().subtract(e.position())) > 0);
         }
-        return e instanceof VehicleEntity h && h instanceof Aircraft a && a.isAirborne() && h.getBotTeam() != getBotTeam()
+        return e instanceof VehicleEntity h && Aircraft.detectable(h) && h.getBotTeam() != getBotTeam()
                 && !h.getPassengers().isEmpty() && h.distanceTo(this) < CRAM_RANGE * 0.8;
     }
 

@@ -227,7 +227,7 @@ public final class GunLogic {
         Entity best = null;
         double bestDot = cos;
         AABB box = new AABB(eye, eye.add(look.scale(IGLA_RANGE))).inflate(IGLA_RANGE * 0.16);
-        for (VehicleEntity v : level.getEntitiesOfClass(VehicleEntity.class, box, v -> v.isAlive() && v instanceof Aircraft a && a.isAirborne())) {
+        for (VehicleEntity v : level.getEntitiesOfClass(VehicleEntity.class, box, v -> v.isAlive() && Aircraft.detectable(v))) {
             Vec3 c = v.position().add(0, v.getBbHeight() * 0.5, 0);
             Vec3 to = c.subtract(eye);
             double dist = to.length();

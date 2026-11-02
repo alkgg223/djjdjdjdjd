@@ -107,6 +107,8 @@ public class BotEntity extends PathfinderMob {
     @Nullable private Vec3 heardAt;
     /** a new enemy takes a moment to react to, like a player (the target it was for, ticks left) */
     private int reactTarget = -1, reactTicks;
+    /** its own gun, put away while it fires an RPG at a bomber */
+    @Nullable private ItemStack stashedGun;
     private int heardTicks;
     public int vehicleCooldown;
     /** missiles this soldier carries to reload the launch stations of its remote (off hand) */
@@ -151,10 +153,11 @@ public class BotEntity extends PathfinderMob {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new BotAvoidGrenadeGoal(this));
         this.goalSelector.addGoal(2, new BotVehicleGoal(this));
-        this.goalSelector.addGoal(3, new BotCombatGoal(this));
-        this.goalSelector.addGoal(4, new BotReloadGoal(this));
-        this.goalSelector.addGoal(5, new com.gunsmod.entity.ai.BotRouteGoal(this));
-        this.goalSelector.addGoal(6, new BotPatrolGoal(this));
+        this.goalSelector.addGoal(3, new com.gunsmod.entity.ai.BotSkyGoal(this));
+        this.goalSelector.addGoal(4, new BotCombatGoal(this));
+        this.goalSelector.addGoal(5, new BotReloadGoal(this));
+        this.goalSelector.addGoal(6, new com.gunsmod.entity.ai.BotRouteGoal(this));
+        this.goalSelector.addGoal(7, new BotPatrolGoal(this));
         this.goalSelector.addGoal(8, new BotGlanceGoal(this));
         this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new BotTargetGoal(this));
@@ -345,6 +348,55 @@ public class BotEntity extends PathfinderMob {
         } else {
             fireCooldown += (int) (accuracyMul() * 4) + this.random.nextInt(6) + (t.category == GunType.Category.SNIPER ? 25 : 0);
         }
+        return true;
+    }
+
+    /** put the gun away and take an RPG (for the stealth bomber) */
+    public void armLauncher() {
+        GunType t = gunType();
+        if (stashedGun != null || t == GunType.RPG7 || t == GunType.RPG7_TBG) return;
+        stashedGun = this.getMainHandItem().copy();
+        reloadLeft = 0;
+        this.setItemSlot(EquipmentSlot.MAINHAND, GunItem.create(GunType.RPG7));
+        playBotSound(Reg.sound("mag_in"), 0.7f, 0.8f);
+    }
+
+    /** the gun it had before the RPG comes back */
+    public void restoreGun() {
+        if (stashedGun == null) return;
+        this.setItemSlot(EquipmentSlot.MAINHAND, stashedGun);
+        stashedGun = null;
+        reloadLeft = 0;
+    }
+
+    /** fire at a point in the sky once the head is on it (the bomber: no target entity to track the usual way) */
+    public boolean tryShootAt(Vec3 aim, net.minecraft.world.entity.Entity target) {
+        GunType t = gunType();
+        if (t == null || reloadLeft > 0 || fireCooldown > 0) return false;
+        ItemStack g = gun();
+        if (GunItem.ammo(g) <= 0) {
+            startBotReload();
+            return false;
+        }
+        Vec3 eye = this.getEyePosition();
+        Vec3 d = aim.subtract(eye);
+        float yaw = (float) (Mth.atan2(d.z, d.x) * Mth.RAD_TO_DEG) - 90f;
+        float pitch = (float) -(Mth.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)) * Mth.RAD_TO_DEG);
+        if (target.getId() != reactTarget) {
+            reactTarget = target.getId();
+            reactTicks = 12 + this.random.nextInt(16);
+        }
+        if (reactTicks > 0) {
+            reactTicks--;
+            return false;
+        }
+        float offYaw = Mth.wrapDegrees(this.getYHeadRot() - yaw), offPitch = this.getXRot() - pitch;
+        if (Math.abs(offYaw) + Math.abs(offPitch) > 5f) return false;
+        setAiming(true);
+        GunItem.setAmmo(g, GunItem.ammo(g) - 1);
+        GunLogic.fire(this, g, t, yaw + offYaw * 0.5f, pitch + offPitch * 0.5f, this.random.nextLong(), true, accuracyMul(), null);
+        this.yBodyRot = this.getYHeadRot();
+        fireCooldown = t.fireDelay + 6 + this.random.nextInt(20);
         return true;
     }
 
@@ -678,6 +730,7 @@ public class BotEntity extends PathfinderMob {
             rack.add(e);
         }
         tag.put("Missiles", rack);
+        if (stashedGun != null && !stashedGun.isEmpty()) tag.put("StashedGun", stashedGun.save(this.registryAccess()));
     }
 
     @Override
@@ -705,6 +758,8 @@ public class BotEntity extends PathfinderMob {
                 ItemStack.parse(this.registryAccess(), e.getCompound("Item")).ifPresent(s -> missiles.setItem(slot, s));
             }
         }
+        // saved while firing at a bomber: back to its own gun
+        if (tag.contains("StashedGun")) ItemStack.parse(this.registryAccess(), tag.getCompound("StashedGun")).ifPresent(s -> this.setItemSlot(EquipmentSlot.MAINHAND, s));
     }
 
     public void playBotSound(SoundEvent sound, float vol, float pitch) {

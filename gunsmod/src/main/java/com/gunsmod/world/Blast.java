@@ -26,7 +26,7 @@ public final class Blast {
     private Blast() {}
 
     /** effect styles understood by the client (ClientFx.blast) */
-    public static final int FX_SMALL = 0, FX_MISSILE = 1, FX_FIRE = 2, FX_HEAVY = 3, FX_TITAN = 4, FX_ERUPTION = 5;
+    public static final int FX_SMALL = 0, FX_MISSILE = 1, FX_FIRE = 2, FX_HEAVY = 3, FX_TITAN = 4, FX_ERUPTION = 5, FX_NUKE = 6;
 
     /** a vanilla explosion plus its visual blast */
     public static void explode(Level level, @Nullable Entity source, Vec3 at, float power, boolean fire, Level.ExplosionInteraction mode, int fx, float fxSize) {

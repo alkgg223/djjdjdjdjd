@@ -30,6 +30,17 @@ public class ProjectileRenderer<T extends Entity> extends EntityRenderer<T> {
         ItemStack stack;
         float scale;
         pose.pushPose();
+        if (e instanceof RocketEntity r && r.getKind() == RocketEntity.B2_BOMB) {
+            // the B-2's big guided bomb
+            pose.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(pt, e.yRotO, e.getYRot()) + 180f));
+            pose.mulPose(Axis.XP.rotationDegrees(Mth.lerp(pt, e.xRotO, e.getXRot())));
+            pose.scale(4.0f, 4.0f, 4.0f);
+            pose.translate(-0.5f, -0.5f, -0.5f);
+            BakedRender.entityCutout("entity/vehicle_ammo/bomb", pose, buf, light, OverlayTexture.NO_OVERLAY, 1, 1, 1);
+            pose.popPose();
+            super.render(e, yaw, pt, pose, buf, light);
+            return;
+        }
         if (e instanceof RocketEntity r && r.isVehicleRound()) {
             // 120 mm shell / helicopter rocket: baked models pointing along -Z
             pose.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(pt, e.yRotO, e.getYRot()) + 180f));

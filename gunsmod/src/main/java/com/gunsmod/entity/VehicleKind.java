@@ -24,7 +24,8 @@ public enum VehicleKind {
     CRAM("cram", Group.CAR),
     PICKUP("pickup", Group.CAR),
     SUV("suv", Group.CAR),
-    F16("f16", Group.JET);
+    F16("f16", Group.JET),
+    B2("b2", Group.JET);
 
     public enum Group { TANK, HELI, JEEP, CAR, JET }
 
@@ -57,6 +58,7 @@ public enum VehicleKind {
             case PICKUP -> Reg.PICKUP.get();
             case SUV -> Reg.SUV.get();
             case F16 -> Reg.F16.get();
+            case B2 -> Reg.B2.get();
         };
     }
 

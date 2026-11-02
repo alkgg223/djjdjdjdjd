@@ -85,6 +85,10 @@ public final class ClientFx {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         if (level == null || BlastParticles.fireballSprites == null) return;
+        if (style == Blast.FX_NUKE) {
+            nuke(mc, level, pos, size);
+            return;
+        }
         RandomSource r = level.random;
         float q = quality(mc) / (1f + Math.max(0f, load - 3f) * 0.35f);
         load += 1f;
@@ -232,6 +236,100 @@ public final class ClientFx {
             Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
             double dist = cam.distanceTo(pos);
             if (dist < 30) shake = Math.max(shake, (float) (size * 1.2 * (1 - dist / 30)));
+        }
+    }
+
+    /**
+     * The B-2 bomb: a blinding flash, a white-hot fireball that rises and rolls into the cap of a mushroom cloud on a
+     * column of smoke, a white condensation ring round the stem, the base surge of dust racing out over the ground and
+     * the shock rings. The cloud hangs there for half a minute. Sound and shake arrive late with distance.
+     */
+    private static void nuke(Minecraft mc, ClientLevel level, Vec3 pos, float size) {
+        RandomSource r = level.random;
+        float q = quality(mc);
+        double x = pos.x, z = pos.z;
+        int gy = level.getHeight(Heightmap.Types.MOTION_BLOCKING, Mth.floor(x), Mth.floor(z));
+        double ground = gy > pos.y + 4 || gy < pos.y - 8 ? pos.y : gy;
+        double scale = size / 4.0, top = 46 * scale;
+        add(new BlastParticles.Flash(level, x, ground + 3, z, BlastParticles.flashSprites, 40f * (float) scale, 16));
+        add(new BlastParticles.Flash(level, x, ground + 8, z, BlastParticles.flashSprites, 24f * (float) scale, 30));
+        for (int i = 0; i < 2; i++) {
+            add(new BlastParticles.Shockwave(level, x, ground + 0.2 + i * 0.3, z, BlastParticles.shockwaveSprites, (float) (48 * scale) * (i == 0 ? 1f : 0.7f), 28 + i * 10));
+        }
+        // the first fireball: a ball of fire that swells for a second before it starts to rise
+        int nCore = (int) (26 * q) + 6;
+        for (int i = 0; i < nCore; i++) {
+            Vec3 d = randomDir(r, 0.6);
+            double sp = 0.15 + r.nextDouble() * 0.35;
+            add(new BlastParticles.Fireball(level, x + d.x * 2, ground + 3 + d.y * 3, z + d.z * 2, d.x * sp, d.y * sp * 0.6 + 0.12, d.z * sp,
+                    BlastParticles.fireballSprites, (float) ((5 + r.nextFloat() * 4) * scale), 30 + r.nextInt(20)));
+        }
+        // dirt and stones flung up round the point of impact
+        BlockState soil = level.getBlockState(BlockPos.containing(x, ground - 1, z));
+        if (soil.isAir()) soil = Blocks.DIRT.defaultBlockState();
+        int nDeb = (int) (60 * q);
+        for (int i = 0; i < nDeb; i++) {
+            double a = r.nextDouble() * Mth.TWO_PI;
+            double h = 0.3 + r.nextDouble() * 0.9, up = 0.6 + r.nextDouble() * 1.4;
+            TerrainParticle p = new TerrainParticle(level, x, ground + 0.5, z, 0, 0, 0, soil).updateSprite(soil, BlockPos.containing(x, ground - 1, z));
+            p.setParticleSpeed(Math.cos(a) * h, up, Math.sin(a) * h);
+            p.scale(2f + r.nextFloat() * 3f);
+            p.setLifetime(60 + r.nextInt(60));
+            add(p);
+        }
+        // the cloud itself grows over the first few seconds
+        float qq = q;
+        emit((lvl, age) -> {
+            RandomSource rr = lvl.random;
+            if (age < 70) {
+                int n = rr.nextFloat() < qq ? 4 : 2;
+                for (int i = 0; i < n; i++) {
+                    float rf = (float) Math.sqrt(rr.nextFloat());
+                    add(new BlastParticles.Mushroom(lvl, x, ground, z, top, scale, BlastParticles.dustSprites, BlastParticles.Mushroom.CAP, age,
+                            rr.nextFloat() * Mth.TWO_PI, rr.nextFloat() * Mth.TWO_PI, rf, (float) ((6 + rr.nextFloat() * 4) * scale),
+                            620 + rr.nextInt(260) - age, 1f - rf));
+                }
+            }
+            if (age < 90 && (age % 2 == 0 || rr.nextFloat() < qq)) {
+                add(new BlastParticles.Mushroom(lvl, x, ground, z, top, scale, BlastParticles.dustSprites, BlastParticles.Mushroom.STEM, age,
+                        rr.nextFloat() * Mth.TWO_PI, rr.nextFloat(), 0.4f + rr.nextFloat() * 0.6f, (float) ((3.5 + rr.nextFloat() * 2) * scale),
+                        460 + rr.nextInt(160) - age, 0.3f));
+            }
+            if (age < 14) {
+                int n = (int) (8 * qq) + 2;
+                for (int i = 0; i < n; i++) {
+                    add(new BlastParticles.Mushroom(lvl, x, ground, z, top, scale, BlastParticles.dustSprites, BlastParticles.Mushroom.SURGE, age,
+                            rr.nextFloat() * Mth.TWO_PI, 0, rr.nextFloat(), (float) ((4.5 + rr.nextFloat() * 3) * scale), 260 + rr.nextInt(120), 0f));
+                }
+            }
+            if (age >= 10 && age < 16) {
+                int n = (int) (9 * qq) + 2;
+                for (int i = 0; i < n; i++) {
+                    add(new BlastParticles.Mushroom(lvl, x, ground, z, top, scale, BlastParticles.dustSprites, BlastParticles.Mushroom.RING, age,
+                            rr.nextFloat() * Mth.TWO_PI, 0, rr.nextFloat(), (float) ((3 + rr.nextFloat() * 1.5) * scale), 50 + rr.nextInt(20), 0f));
+                }
+            }
+            return age < 90;
+        });
+        // light it up, shake, flash and the sound arriving at the speed of sound
+        ClientLights.light("nuke" + (int) x + "_" + (int) z, new Vec3(x, ground + 10, z), 15, 60);
+        Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
+        double dist = cam.distanceTo(new Vec3(x, ground, z));
+        if (dist < 420) flash = Math.max(flash, (float) Math.min(1.0, 1.15 - dist / 420));
+        int delay = (int) (dist / 17.0);
+        if (dist < 260) {
+            float s = (float) Math.min(5.5, 6.0 / (1 + dist / 60));
+            emit((lvl, age) -> {
+                if (age >= delay) shake = Math.max(shake, s);
+                return age < delay + 1;
+            });
+        }
+        if (dist < 140) {
+            mc.getSoundManager().playDelayed(new SimpleSoundInstance(Reg.sound("b2_bomb"), SoundSource.BLOCKS, 12f, 0.95f + r.nextFloat() * 0.1f, r, x, ground, z), delay);
+        } else if (dist < 900) {
+            float vol = (float) Mth.clamp(1.4 - dist / 900, 0.25, 1.0);
+            mc.getSoundManager().playDelayed(new SimpleSoundInstance(Reg.sound("b2_bomb_far"), SoundSource.BLOCKS, vol, 0.9f + r.nextFloat() * 0.1f, r,
+                    cam.x, cam.y, cam.z), delay);
         }
     }
 

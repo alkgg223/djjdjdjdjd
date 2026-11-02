@@ -18,6 +18,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 /** Places a tank, helicopter or armed car of a team. */
 public class VehicleItem extends Item {
@@ -80,6 +81,17 @@ public class VehicleItem extends Item {
             BlockPos p = ctx.getClickedPos().relative(ctx.getClickedFace());
             Mob m = create(level, ctx.getItemInHand(), p.getX() + 0.5, p.getY(), p.getZ() + 0.5, ctx.getRotation());
             if (m == null) return InteractionResult.FAIL;
+            if (m instanceof com.gunsmod.entity.BomberEntity b) {
+                // called in: it arrives high over this spot and circles it on its own
+                b.center = Vec3.atBottomCenterOf(p);
+                link(m, p, null);
+                level.addFreshEntity(m);
+                if (ctx.getPlayer() != null) {
+                    ctx.getPlayer().displayClientMessage(Component.translatable("gunsmod.msg.b2_inbound").withStyle(ChatFormatting.GOLD), true);
+                    if (!ctx.getPlayer().getAbilities().instabuild) ctx.getItemInHand().shrink(1);
+                }
+                return InteractionResult.SUCCESS;
+            }
             if (!level.noCollision(m, m.getBoundingBox())) {
                 if (ctx.getPlayer() != null) ctx.getPlayer().displayClientMessage(Component.translatable("gunsmod.msg.no_room_vehicle"), true);
                 return InteractionResult.FAIL;
@@ -93,7 +105,7 @@ public class VehicleItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tip, TooltipFlag flag) {
-        String k = switch (kind.group) {
+        String k = kind == VehicleKind.B2 ? "b2" : switch (kind.group) {
             case TANK -> "tank";
             case HELI -> "heli";
             case JET -> "jet";

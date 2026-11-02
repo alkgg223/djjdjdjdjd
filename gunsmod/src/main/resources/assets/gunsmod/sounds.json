@@ -503,5 +503,31 @@
    "gunsmod:ricochet_3"
   ],
   "subtitle": "subtitles.gunsmod.ricochet"
+ },
+ "b2_bomb": {
+  "sounds": [
+   "gunsmod:b2_bomb_1",
+   "gunsmod:b2_bomb_2"
+  ],
+  "subtitle": "subtitles.gunsmod.b2_bomb"
+ },
+ "b2_bomb_far": {
+  "sounds": [
+   "gunsmod:b2_bomb_far_1",
+   "gunsmod:b2_bomb_far_2"
+  ],
+  "subtitle": "subtitles.gunsmod.b2_bomb"
+ },
+ "b2_release": {
+  "sounds": [
+   "gunsmod:b2_release"
+  ],
+  "subtitle": "subtitles.gunsmod.b2_release"
+ },
+ "b2_drone": {
+  "sounds": [
+   "gunsmod:b2_drone"
+  ],
+  "subtitle": "subtitles.gunsmod.b2_drone"
  }
 }

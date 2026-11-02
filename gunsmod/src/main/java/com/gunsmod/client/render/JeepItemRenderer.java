@@ -57,6 +57,17 @@ public class JeepItemRenderer extends BlockEntityWithoutLevelRenderer {
         VehicleKind.Group grp = v.kind.group;
         boolean heli = grp == VehicleKind.Group.HELI;
         boolean longOne = v.kind == VehicleKind.PANTSIR || v.kind == VehicleKind.HIMARS || v.kind == VehicleKind.GRAD;
+        if (v.kind == VehicleKind.B2) {
+            pose.pushPose();
+            pose.translate(0.5f, 0.1f, 0.5f);
+            float s = ctx == ItemDisplayContext.GUI ? 0.0285f : ctx == ItemDisplayContext.NONE ? 0.06f : 0.024f;
+            pose.scale(s, s, s);
+            if (ctx == ItemDisplayContext.GUI) pose.translate(0, 2.5f, 0);
+            pose.mulPose(Axis.YP.rotationDegrees(180));
+            BomberRenderer.renderB2(pose, buf, light, v.team, false, false);
+            pose.popPose();
+            return;
+        }
         if (grp == VehicleKind.Group.JET) {
             pose.pushPose();
             pose.translate(0.5f, 0.1f, 0.5f);

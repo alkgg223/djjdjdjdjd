@@ -259,6 +259,151 @@ public final class BlastParticles {
         }
     }
 
+    // ------------------------------------------------------------------------------------ mushroom cloud
+    /**
+     * One puff of the mushroom cloud. Its path comes from the cloud's age, not from physics: up the stem, round and
+     * round the rolling ring of the cap (up the middle, out over the top, down the outside), out along the ground in
+     * the base surge, or in the white condensation ring that flashes round the stem. It glows as fire at first, then
+     * cools to dirty orange and grey-brown smoke.
+     */
+    public static class Mushroom extends TextureSheetParticle {
+        public static final int CAP = 0, STEM = 1, SURGE = 2, RING = 3;
+        private final int kind, born;
+        private final double cx, ground, cz, top, scale;
+        private final float phi0, theta0, rf, size0, heat;
+
+        public Mushroom(ClientLevel l, double cx, double ground, double cz, double top, double scale, SpriteSet s, int kind, int born,
+                        float phi, float theta, float rf, float size, int life, float heat) {
+            super(l, cx, ground, cz);
+            pickSprite(s);
+            this.kind = kind;
+            this.born = born;
+            this.cx = cx;
+            this.ground = ground;
+            this.cz = cz;
+            this.top = top;
+            this.scale = scale;
+            this.phi0 = phi;
+            this.theta0 = theta;
+            this.rf = rf;
+            this.size0 = size;
+            this.heat = heat;
+            lifetime = life;
+            hasPhysics = false;
+            gravity = 0;
+            alpha = 0;
+            roll = oRoll = random.nextFloat() * Mth.TWO_PI;
+            place(born);
+            xo = x;
+            yo = y;
+            zo = z;
+        }
+
+        private static double grow(double t, double tau) {
+            return 1 - Math.exp(-t / tau);
+        }
+
+        /** where the puff is when the cloud is t ticks old */
+        private void place(double t) {
+            double capY = ground + top * (0.25 + 0.75 * grow(t, 55));
+            double capR = scale * (3 + 13 * grow(t, 45));
+            double minor = scale * (2.2 + 6.5 * grow(t, 45));
+            double px, py, pz;
+            switch (kind) {
+                case CAP -> {
+                    // poloidal roll slowing down as the cloud cools, a slow swirl round the middle
+                    double theta = theta0 - 0.9 * (1 - Math.exp(-t / 160)) * 7.0;
+                    double phi = phi0 + t * 0.0012;
+                    double rad = capR + minor * rf * Math.cos(theta);
+                    px = cx + Math.cos(phi) * rad;
+                    pz = cz + Math.sin(phi) * rad;
+                    py = capY + minor * rf * 0.72 * Math.sin(theta);
+                }
+                case STEM -> {
+                    double stemTop = capY - minor * 0.6;
+                    double u = (theta0 + t * 0.006) % 1.0;
+                    double rs = scale * (1.6 + 2.4 * grow(t, 40)) * (0.55 + 0.45 * u) * rf;
+                    px = cx + Math.cos(phi0 + u * 3) * rs;
+                    pz = cz + Math.sin(phi0 + u * 3) * rs;
+                    py = ground + 1 + (stemTop - ground - 1) * u;
+                }
+                case SURGE -> {
+                    double rb = scale * (5 + 32 * grow(t, 28)) * (0.75 + 0.25 * rf);
+                    px = cx + Math.cos(phi0) * rb;
+                    pz = cz + Math.sin(phi0) * rb;
+                    py = ground + 0.8 + rf * 2.5 * scale + grow(t, 200) * 3;
+                }
+                default -> {
+                    double rr = scale * (9 + 20 * grow(t - 6, 18));
+                    px = cx + Math.cos(phi0) * rr;
+                    pz = cz + Math.sin(phi0) * rr;
+                    py = ground + top * 0.42 + rf * 1.2;
+                }
+            }
+            x = px;
+            y = py;
+            z = pz;
+        }
+
+        @Override
+        public void tick() {
+            xo = x;
+            yo = y;
+            zo = z;
+            oRoll = roll;
+            roll += 0.003f;
+            if (age++ >= lifetime) {
+                remove();
+                return;
+            }
+            double t = born + age;
+            place(t);
+            float f = (float) age / lifetime;
+            float fadeIn = Math.min(1f, age / 6f);
+            float fadeOut = f < 0.75f ? 1f : 1f - (f - 0.75f) / 0.25f;
+            alpha = (kind == RING ? 0.55f : 0.88f) * fadeIn * fadeOut;
+            quadSize = size0 * (float) (kind == RING ? 1.0 : 0.6 + 0.6 * grow(t, 50));
+            // colour: white-hot fire, orange, dirty brown smoke (the inside of the ring keeps glowing longer)
+            float cool = (float) Mth.clamp((t - 12 - heat * 40) / (90 + heat * 60), 0, 1);
+            if (kind == RING) {
+                rCol = gCol = bCol = 0.95f;
+            } else if (kind == SURGE) {
+                rCol = 0.56f;
+                gCol = 0.50f;
+                bCol = 0.43f;
+            } else {
+                rCol = Mth.lerp(cool, 1.0f, 0.46f);
+                gCol = Mth.lerp(cool, Mth.lerp(Math.min(1f, (float) t / 25f), 0.95f, 0.55f), 0.40f);
+                bCol = Mth.lerp(cool, Mth.lerp(Math.min(1f, (float) t / 25f), 0.7f, 0.22f), 0.35f);
+            }
+        }
+
+        private float coolness() {
+            return (float) Mth.clamp((born + age - 12 - heat * 40) / (90 + heat * 60), 0, 1);
+        }
+
+        @Override
+        protected int getLightColor(float pt) {
+            if (kind == CAP || kind == STEM) {
+                float c = coolness();
+                if (c < 0.6f) return LightTexture.FULL_BRIGHT;
+                int sky = 15, block = (int) (15 * (1f - (c - 0.6f) / 0.4f));
+                return LightTexture.pack(Math.max(block, 4), sky);
+            }
+            return LightTexture.pack(8, 15);
+        }
+
+        @Override
+        public AABB getRenderBoundingBox(float pt) {
+            return getBoundingBox().inflate(quadSize + 2);
+        }
+
+        @Override
+        public ParticleRenderType getRenderType() {
+            return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+        }
+    }
+
     // ------------------------------------------------------------------------------------ providers (defaults for level.addParticle)
     public static class FireballProvider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet s;

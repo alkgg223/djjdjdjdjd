@@ -570,7 +570,7 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider, Ai
         double bestAng = LOCK_CONE;
         AABB box = new AABB(eye, eye.add(look.scale(LOCK_RANGE))).inflate(14);
         for (LivingEntity e : this.level().getEntitiesOfClass(LivingEntity.class, box, e -> e.isAlive() && e != this && e.getVehicle() != this
-                && !(e instanceof Player pl && pl.isCreative()) && VehicleEntity.shieldOf(e) == null && !BotTeam.friendly(p, e))) {
+                && !(e instanceof Player pl && pl.isCreative()) && !(e instanceof BomberEntity) && VehicleEntity.shieldOf(e) == null && !BotTeam.friendly(p, e))) {
             Vec3 c = e.position().add(0, e.getBbHeight() * 0.5, 0);
             Vec3 to = c.subtract(eye);
             double dist = to.length();

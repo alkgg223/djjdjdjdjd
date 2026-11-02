@@ -9,4 +9,14 @@ public interface Aircraft {
 
     /** a fire control radar is tracking this aircraft */
     void radarWarning();
+
+    /** invisible to radar and to infrared seekers (the stealth bomber) */
+    default boolean stealth() {
+        return false;
+    }
+
+    /** an aircraft radars and heat seekers can find */
+    static boolean detectable(Object e) {
+        return e instanceof Aircraft a && a.isAirborne() && !a.stealth();
+    }
 }

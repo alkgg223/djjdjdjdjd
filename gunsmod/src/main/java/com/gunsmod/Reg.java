@@ -237,6 +237,9 @@ public final class Reg {
     public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> F16 = ENTITIES.register("f16",
             () -> EntityType.Builder.<JetEntity>of(JetEntity::new, MobCategory.MISC).sized(3.0f, 2.2f).eyeHeight(1.8f).clientTrackingRange(24)
                     .updateInterval(1).build("f16"));
+    public static final DeferredHolder<EntityType<?>, EntityType<com.gunsmod.entity.BomberEntity>> B2 = ENTITIES.register("b2",
+            () -> EntityType.Builder.<com.gunsmod.entity.BomberEntity>of(com.gunsmod.entity.BomberEntity::new, MobCategory.MISC).sized(12.0f, 2.6f)
+                    .eyeHeight(1.9f).clientTrackingRange(32).updateInterval(1).build("b2"));
 
     private static DeferredHolder<EntityType<?>, EntityType<TankEntity>> tank(String id, TankType k) {
         return ENTITIES.register(id, () -> EntityType.Builder.<TankEntity>of((t, l) -> new TankEntity(t, l, k), MobCategory.MISC)
