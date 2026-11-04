@@ -14,9 +14,20 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.InventoryMenu;
 
-/** F-16: pitch and bank about the cockpit area, folding gear, the stores still on the pylons, afterburner plume, burnt-out wreck. */
+/**
+ * Every fixed-wing aircraft: pitch and bank about the cockpit area, folding gear, the stores still on the pylons (not the
+ * ones carried inside), afterburner plumes, the B-2's open bomb bay, burnt-out wreck.
+ */
 public class JetRenderer extends EntityRenderer<JetEntity> {
-    public static final float S = 6.0f;
+    /** the baked parts of an aircraft type */
+    public static java.util.List<String> parts(com.gunsmod.entity.JetType t) {
+        java.util.List<String> l = new java.util.ArrayList<>(java.util.List.of("body", "mark_green", "mark_red", "gear_nose", "gear_main"));
+        if (t.afterburner) l.add("burner");
+        if (t.ground == com.gunsmod.entity.JetType.Ground.NUKE) l.add("bay");
+        String[] stores = {"mav_0", "mav_1", "mav_2", "mav_3", "aim9_l", "aim9_r"};
+        for (int i = 0; i < 6; i++) if ((t.drawMask & (1 << i)) != 0) l.add(stores[i]);
+        return l;
+    }
 
     public JetRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
@@ -26,7 +37,7 @@ public class JetRenderer extends EntityRenderer<JetEntity> {
     @Override
     public void render(JetEntity jet, float yaw, float pt, PoseStack pose, MultiBufferSource buf, int light) {
         if (com.gunsmod.client.VehicleCamera.hidden(jet)) return;      // first person: looking out through the sight
-        float py = (float) jet.geo.pivotY(), pz = (float) ((JetEntity.PIVOT_Z - 8) * JetEntity.JET_UNIT);
+        float py = (float) jet.geo.pivotY(), pz = (float) ((jet.pivotZ() - 8) * jet.type.unit);
         pose.pushPose();
         pose.mulPose(Axis.YP.rotationDegrees(180f - Mth.rotLerp(pt, jet.yRotO, jet.getYRot())));
         pose.translate(0, py, pz);
@@ -35,21 +46,25 @@ public class JetRenderer extends EntityRenderer<JetEntity> {
         pose.translate(0, -py, -pz);
         if (jet.hurtTime > 0) pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin((jet.hurtTime - pt) * 2f) * 0.8f));
         boolean burner = jet.isAfterburner() && !jet.isCrashing();
-        renderJet(pose, buf, light, jet.getBotTeam(), Mth.lerp(pt, jet.prevGear, jet.gear), jet.getStores(), burner, jet.isCrashing(),
-                burner ? 0.9f + jet.getRandom().nextFloat() * 0.25f : 1f);
+        renderJet(pose, buf, light, jet.type, jet.getBotTeam(), Mth.lerp(pt, jet.prevGear, jet.gear), jet.getStores(), burner, jet.isCrashing(),
+                jet.bayOpen(), burner ? 0.9f + jet.getRandom().nextFloat() * 0.25f : 1f);
         pose.popPose();
         super.render(jet, yaw, pt, pose, buf, light);
     }
 
     /** gear 0 = down, 1 = folded away; stores = bit mask of the missiles still aboard */
-    public static void renderJet(PoseStack pose, MultiBufferSource buf, int light, BotTeam team, float gear, int stores, boolean burner,
-                                 boolean wreck, float flicker) {
-        VehicleGeo.Jet g = VehicleGeo.F16;
+    public static void renderJet(PoseStack pose, MultiBufferSource buf, int light, com.gunsmod.entity.JetType type, BotTeam team, float gear,
+                                 int stores, boolean burner, boolean wreck, boolean bay, float flicker) {
+        VehicleGeo.Jet g = type.geo;
         String dir = "entity/" + g.model() + "/";
         int ov = OverlayTexture.NO_OVERLAY;
-        // air superiority grey with a hint of the team colour; a wreck burns black
-        float r = wreck ? 0.12f : Mth.lerp(0.35f, 0.74f, team.r), gr = wreck ? 0.11f : Mth.lerp(0.35f, 0.76f, team.g),
-                b = wreck ? 0.10f : Mth.lerp(0.35f, 0.78f, team.b);
+        // the type's own paint with a hint of the team colour; a wreck burns black
+        float[] c = type.paint();
+        float tint = type.rpgOnly() ? 0.06f : 0.35f;
+        float r = wreck ? 0.12f : Mth.lerp(tint, c[0], team.r), gr = wreck ? 0.11f : Mth.lerp(tint, c[1], team.g),
+                b = wreck ? 0.10f : Mth.lerp(tint, c[2], team.b);
+        stores &= type.drawMask;
+        float S = type.renderScale();
         pose.pushPose();
         pose.scale(S, S, S);
         pose.translate(-0.5f, 0f, -0.5f);
@@ -65,7 +80,8 @@ public class JetRenderer extends EntityRenderer<JetEntity> {
         }
         if ((stores & 16) != 0) BakedRender.entityCutout(dir + "aim9_l", pose, buf, light, ov, 1, 1, 1);
         if ((stores & 32) != 0) BakedRender.entityCutout(dir + "aim9_r", pose, buf, light, ov, 1, 1, 1);
-        if (burner) {
+        if (bay) BakedRender.entity(dir + "bay", pose, buf, light, ov, r, gr, b);
+        if (burner && type.afterburner) {
             float nz = (float) g.nozzle()[2] / 16f, ny = (float) g.nozzle()[1] / 16f;
             pose.pushPose();
             pose.translate(0.5f, ny, nz);

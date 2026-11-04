@@ -1,6 +1,6 @@
 package com.gunsmod.entity.ai;
 
-import com.gunsmod.entity.BomberEntity;
+import com.gunsmod.entity.JetEntity;
 import com.gunsmod.entity.BotEntity;
 import com.gunsmod.entity.BotTeam;
 import java.util.EnumSet;
@@ -21,7 +21,7 @@ public class BotSkyGoal extends Goal {
     public static final double RANGE = 160, MAX_UP = 150;
     private final BotEntity bot;
     private int cooldown, lost, ticks;
-    @Nullable private BomberEntity bomber;
+    @Nullable private JetEntity bomber;
 
     public BotSkyGoal(BotEntity bot) {
         this.bot = bot;
@@ -33,15 +33,15 @@ public class BotSkyGoal extends Goal {
         return t != null && t.isAlive() && bot.distanceTo(t) < 35 && bot.canSeeTarget(t);
     }
 
-    private boolean inReach(BomberEntity b) {
+    private boolean inReach(JetEntity b) {
         if (!b.isAlive() || b.isCrashing() || BotTeam.friendly(bot, b)) return false;
         double dx = b.getX() - bot.getX(), dz = b.getZ() - bot.getZ(), dy = b.getY() - bot.getY();
-        return dx * dx + dz * dz < RANGE * RANGE && dy > 8 && dy < MAX_UP;
+        return b.isAirborne() && dx * dx + dz * dz < RANGE * RANGE && dy > 8 && dy < MAX_UP;
     }
 
-    private boolean clearSky(BomberEntity b) {
+    private boolean clearSky(JetEntity b) {
         Vec3 eye = bot.getEyePosition();
-        Vec3 c = b.position().add(0, BomberEntity.MID_Y, 0);
+        Vec3 c = b.position().add(0, b.geo.pivotY(), 0);
         return bot.level().clip(new ClipContext(eye, c, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, bot)).getType() == HitResult.Type.MISS;
     }
 
@@ -50,9 +50,9 @@ public class BotSkyGoal extends Goal {
         if (--cooldown > 0) return false;
         cooldown = 20 + bot.getRandom().nextInt(10);
         if (bot.isPassenger() || bot.operator || busy()) return false;
-        BomberEntity best = null;
+        JetEntity best = null;
         double bestD = Double.MAX_VALUE;
-        for (BomberEntity b : BomberEntity.active(bot.level())) {
+        for (JetEntity b : JetEntity.rpgOnlyActive(bot.level())) {
             if (!inReach(b)) continue;
             double d = b.distanceToSqr(bot);
             if (d < bestD && clearSky(b)) {
@@ -111,7 +111,7 @@ public class BotSkyGoal extends Goal {
         if (ticks % 10 == 0) lost = clearSky(bomber) ? 0 : lost + 10;
         // lead the bomber: where it will be when the rocket gets there, a little high for the drop
         Vec3 eye = bot.getEyePosition();
-        Vec3 c = bomber.position().add(0, BomberEntity.MID_Y, 0);
+        Vec3 c = bomber.position().add(0, bomber.geo.pivotY(), 0);
         Vec3 aim = c;
         int t = 0;
         for (int i = 0; i < 3; i++) {

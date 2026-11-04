@@ -152,7 +152,48 @@ def b2():
     return {"body": body, **marks, "bay": bay}, None
 
 
-BOMBERS = {"b2": b2}
+# where the game needs things (model units = blocks here; the jet code takes them from GEO)
+GEO = {"b2": dict(seat=(8.0, 2.7, 3.4), cannon=(8.0, 1.6, 2.0), nozzle=(8.0, 2.7, 11.4),
+                  gearNose=(8.0, 1.3, 4.6), gearMain=(8.0, 1.3, 9.4),
+                  tips=[(-7.6, 1.9, 12.2), (23.6, 1.9, 12.2)], pylons=[(7.4, 1.0, 7.8), (8.6, 1.0, 7.8), (7.4, 1.0, 9.6), (8.6, 1.0, 9.6)],
+                  flares=[(6.0, 1.5, 11.0), (10.0, 1.5, 11.0)],
+                  ends=[(8.0, 1.9, 1.7), (8.0, 2.0, 14.2), (-7.4, 1.9, 12.4), (23.4, 1.9, 12.4), (8.0, 3.4, 6.0), (8.0, 1.1, 8.0)],
+                  pivotY=1.9, size=(8.0, 2.6))}
+
+
+def b2_gear():
+    """the nose leg and the two main bogies (folding into the wing), wheels touching y = 0"""
+    g = GEO["b2"]
+    nx, ny, nz = g["gearNose"]
+    gn = Mesh()
+    K.tube([(nx, ny, nz), (nx, 0.3, nz - 0.05)], 0.07, "steel", n=8, m=gn)
+    for dx in (-0.16, 0.16):
+        K.cylinder("x", (0.3, nz - 0.08), 0.3, nx + dx - 0.1, nx + dx + 0.1, "rubber", n=12, bevel=0.04, m=gn)
+        K.cylinder("x", (0.3, nz - 0.08), 0.16, nx + dx - 0.11, nx + dx + 0.11, "light_grey", n=8, m=gn)
+    K.plate([v3(nx + 0.35, 0.8, nz - 0.5), v3(nx + 0.35, 1.3, nz - 0.5), v3(nx + 0.35, 1.3, nz + 0.8), v3(nx + 0.35, 0.8, nz + 0.8)], 0.03,
+            "paint", m=gn)
+    mx, my, mz = g["gearMain"]
+    gm = Mesh()
+    for s in (-1, 1):
+        x = mx + s * 3.0
+        K.tube([(x, my, mz), (x, 0.36, mz + 0.1)], 0.09, "steel", n=8, m=gm)
+        for dz in (-0.45, 0.45):
+            for dx in (-0.2, 0.2):
+                K.cylinder("x", (0.34, mz + 0.1 + dz), 0.34, x + dx - 0.1, x + dx + 0.1, "rubber", n=12, bevel=0.04, m=gm)
+                K.cylinder("x", (0.34, mz + 0.1 + dz), 0.18, x + dx - 0.11, x + dx + 0.11, "light_grey", n=8, m=gm)
+        K.box((x - 0.3, 0.3, mz - 0.6), (x + 0.3, 0.42, mz + 0.8), "steel", m=gm)
+        K.plate([v3(x + s * 0.45, 0.7, mz - 0.9), v3(x + s * 0.45, 1.3, mz - 0.9), v3(x + s * 0.45, 1.3, mz + 1.2), v3(x + s * 0.45, 0.7, mz + 1.2)],
+                0.03, "paint", m=gm)
+    return gn, gm
+
+
+def b2_all():
+    parts, _ = b2()
+    parts["gear_nose"], parts["gear_main"] = b2_gear()
+    return parts, GEO["b2"]
+
+
+BOMBERS = {"b2": b2_all}
 
 if __name__ == "__main__":
     parts, _ = b2()

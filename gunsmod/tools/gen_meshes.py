@@ -12,6 +12,7 @@ import jet_mesh as JM
 import newveh_mesh as NV
 import civ_mesh as CV
 import b2_mesh as BM
+import jets2_mesh as J2
 
 RES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "resources", "assets", "gunsmod")
 
@@ -45,6 +46,8 @@ def main(only=None):
     groups.append(("jeep", CM.jeep))
     groups.append(("jeep_tow", lambda: {"launcher": CM.tow()}))
     for key, fn in JM.JETS.items():
+        groups.append((key, lambda fn=fn: fn()[0]))
+    for key, fn in J2.JETS2.items():
         groups.append((key, lambda fn=fn: fn()[0]))
     for key, fn in BM.BOMBERS.items():
         groups.append((key, lambda fn=fn: fn()[0]))

@@ -50,10 +50,14 @@ import net.neoforged.neoforge.network.PacketDistributor;
  */
 public class JetEntity extends VehicleEntity implements Aircraft {
     public static final double JET_UNIT = 0.375;
-    public static final double STALL = 40 / 3.6 / 20, ROTATE = 70 / 3.6 / 20, MAX_SPEED = 180 / 3.6 / 20, PATROL = 50 / 3.6 / 20;
-    public static final int LOCK_TICKS = 20, GUN_ROUNDS = 510;
-    /** stores: bit 0..3 Mavericks on the pylons, bit 4 / 5 the Sidewinders on the wingtips */
-    public static final int MAV_MASK = 0b001111, AIM_MASK = 0b110000, ALL_STORES = 0b111111;
+    public static final int LOCK_TICKS = 20;
+    /** stores: bit 0..3 the pylons, bit 4 / 5 the wing tips; which are ground or air weapons depends on the type */
+    public static final int ALL_STORES = 0b111111;
+    /** the B-2: RPG hits it takes to come down */
+    public static final int RPG_HITS = 5;
+    public static final float RPG_HIT_CHANCE = 0.01f;
+    /** the stealth bombers in flight (server): rockets and soldiers look here */
+    private static final java.util.Set<JetEntity> RPG_ONLY = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
 
     private static final EntityDataAccessor<Float> DATA_THROTTLE = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_SPEED = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.FLOAT);
@@ -69,8 +73,14 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     private static final EntityDataAccessor<Byte> DATA_WARN = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.BYTE);
     /** extra roll of an aerobatic manoeuvre (barrel roll, inverted), on top of the bank into turns */
     private static final EntityDataAccessor<Float> DATA_STUNT = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_BAY = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Byte> DATA_HITS = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.BYTE);
 
-    public final VehicleGeo.Jet geo = VehicleGeo.F16;
+    public final JetType type;
+    public final VehicleGeo.Jet geo;
+    private int bayTicks;
+    /** bomber: the group it is on its way to */
+    @Nullable private Vec3 bombRun;
 
     // flight state (simulated where the jet is controlled: the pilot's client, or the server for soldiers and wrecks)
     public double speed;
@@ -111,15 +121,25 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     public Vec3 velocity = Vec3.ZERO;
 
     public JetEntity(EntityType<? extends JetEntity> type, Level level) {
-        super(type, level);
-        this.entityData.set(DATA_STORES, ALL_STORES);
-        this.entityData.set(DATA_GUN, GUN_ROUNDS);
-        this.entityData.set(DATA_FLARES, 60);
+        this(type, level, JetType.F16);
+    }
+
+    public JetEntity(EntityType<? extends JetEntity> entityType, Level level, JetType type) {
+        super(entityType, level);
+        this.type = type;
+        this.geo = type.geo;
+        this.entityData.set(DATA_STORES, type.allStores());
+        this.entityData.set(DATA_GUN, type.gun.rounds);
+        this.entityData.set(DATA_FLARES, type.flares);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
+        return createAttributes(JetType.F16);
+    }
+
+    public static AttributeSupplier.Builder createAttributes(JetType type) {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 200.0)
+                .add(Attributes.MAX_HEALTH, type.health)
                 .add(Attributes.ARMOR, 6.0)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.3)
@@ -135,8 +155,10 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         b.define(DATA_GEAR_UP, false);
         b.define(DATA_CRASH, false);
         b.define(DATA_STORES, ALL_STORES);
-        b.define(DATA_GUN, GUN_ROUNDS);
+        b.define(DATA_GUN, 0);
         b.define(DATA_FLARES, 60);
+        b.define(DATA_BAY, false);
+        b.define(DATA_HITS, (byte) 0);
         b.define(DATA_WEAPON, (byte) 0);
         b.define(DATA_LOCK, -1);
         b.define(DATA_LOCK_PROGRESS, (byte) 0);
@@ -146,12 +168,12 @@ public class JetEntity extends VehicleEntity implements Aircraft {
 
     @Override
     public double unit() {
-        return JET_UNIT;
+        return type.unit;
     }
 
     @Override
     public ItemStack pickItem() {
-        return new ItemStack(Reg.vehicleItem(VehicleKind.F16, getBotTeam()));
+        return new ItemStack(Reg.vehicleItem(type.kind(), getBotTeam()));
     }
 
     @Override
@@ -160,31 +182,33 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     }
 
     /** attitude pivot in model units: the renderer pitches and rolls the jet about this point */
-    public static final double PIVOT_Z = 4.0;
+    public double pivotZ() {
+        return type.pivotZ();
+    }
 
     public double pivotYModel() {
-        return geo.pivotY() / JET_UNIT;
+        return geo.pivotY() / type.unit;
     }
 
     @Override
     protected Vec3 seatModel(int seat) {
         // the seat turns with the jet's pitch and bank so the pilot stays in the cockpit
         double py = pivotYModel();
-        double x = geo.seat()[0] - 8, y = geo.seat()[1] - py, z = geo.seat()[2] - PIVOT_Z;
+        double x = geo.seat()[0] - 8, y = geo.seat()[1] - py, z = geo.seat()[2] - pivotZ();
         double r = Math.toRadians(-roll), p = Math.toRadians(pitch());
         double x1 = x * Math.cos(r) - y * Math.sin(r), y1 = x * Math.sin(r) + y * Math.cos(r);
         double y2 = y1 * Math.cos(p) - z * Math.sin(p), z2 = y1 * Math.sin(p) + z * Math.cos(p);
-        return new Vec3(8 + x1, py + y2, PIVOT_Z + z2);
+        return new Vec3(8 + x1, py + y2, pivotZ() + z2);
     }
 
     @Override
     public boolean isArmored() {
-        return false;
+        return type == JetType.A10 || type.rpgOnly();
     }
 
     @Override
     public float bulletFactor() {
-        return 0.2f;
+        return type.bulletFactor;
     }
 
     @Override
@@ -230,13 +254,70 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         return this.entityData.get(DATA_FLARES);
     }
 
-    /** 0 Maverick (ground), 1 Sidewinder (air) */
+    /** 0 ground weapon, 1 air-to-air missile */
     public int getWeapon() {
         return this.entityData.get(DATA_WEAPON);
     }
 
     public int missilesLeft(int weapon) {
-        return Integer.bitCount(getStores() & (weapon == 0 ? MAV_MASK : AIM_MASK));
+        return Integer.bitCount(getStores() & (weapon == 0 ? type.groundMask : type.airMask));
+    }
+
+    public boolean bayOpen() {
+        return this.entityData.get(DATA_BAY);
+    }
+
+    public int rpgHits() {
+        return this.entityData.get(DATA_HITS);
+    }
+
+    @Override
+    public boolean stealth() {
+        return type.rpgOnly();
+    }
+
+    /** the stealth bombers flying in this level (server side) */
+    public static java.util.List<JetEntity> rpgOnlyActive(Level level) {
+        java.util.List<JetEntity> l = new ArrayList<>(2);
+        for (JetEntity j : RPG_ONLY) if (j.level() == level && j.isAlive() && !j.isRemoved()) l.add(j);
+        return l;
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        RPG_ONLY.remove(this);
+        super.remove(reason);
+    }
+
+    /** half span in blocks (how close an RPG has to pass the bomber for the dice) */
+    public double halfSpan() {
+        return (geo.tips()[1][0] - 8) * type.unit;
+    }
+
+    /**
+     * An RPG rocket passing close to the B-2: one roll of the dice per rocket. True when it hit (the rocket bursts on
+     * the wing); the fifth hit brings it down.
+     */
+    public boolean rpgPass(Entity rocket, @Nullable Entity shooter) {
+        if (!type.rpgOnly() || isCrashing() || !this.isAlive()) return false;
+        if (this.random.nextFloat() >= RPG_HIT_CHANCE) return false;
+        int hits = rpgHits() + 1;
+        this.entityData.set(DATA_HITS, (byte) hits);
+        Vec3 at = rocket.position();
+        Blast.fx(this.level(), at, Blast.FX_MISSILE, 1.4f);
+        this.level().playSound(null, at.x, at.y, at.z, Reg.sound("explosion_far"), SoundSource.NEUTRAL, 12f, 1.2f);
+        if (this.level() instanceof ServerLevel sl) {
+            net.minecraft.network.chat.Component msg = hits >= RPG_HITS
+                    ? net.minecraft.network.chat.Component.translatable("gunsmod.msg.b2_down").withStyle(net.minecraft.ChatFormatting.GOLD)
+                    : net.minecraft.network.chat.Component.translatable("gunsmod.msg.b2_hit", hits, RPG_HITS).withStyle(net.minecraft.ChatFormatting.YELLOW);
+            for (net.minecraft.server.level.ServerPlayer p : sl.players()) {
+                if (p.distanceToSqr(this) < 400 * 400 && (p == shooter || p.getVehicle() == this || hits >= RPG_HITS)) p.displayClientMessage(msg, true);
+            }
+        }
+        float h = this.getMaxHealth() * (RPG_HITS - hits) / RPG_HITS;
+        if (hits >= RPG_HITS) die(this.damageSources().explosion(rocket, shooter));
+        else this.setHealth(Math.max(1f, h));
+        return true;
     }
 
     public int getRearm() {
@@ -291,7 +372,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
                 if (down) dropFlares();
             }
             case 3 -> {
-                if (down) {
+                if (down && type.groundMask != 0 && type.airMask != 0) {
                     this.entityData.set(DATA_WEAPON, (byte) (1 - getWeapon()));
                     lockCandidate = -1;
                     lockCount = 0;
@@ -350,11 +431,11 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             throttle = Math.max(0f, throttle - 0.01f);
             wantPitch = ground ? 0 : Math.max(pitch - 1.5f, -20f);
         }
-        boolean ab = !crashing && afterburnerWanted() && spool > 0.95f;
-        double thrust = crashing ? 0 : (throttle * 0.0095 + (ab ? 0.0065 : 0)) * spool;
+        boolean ab = !crashing && type.afterburner && afterburnerWanted() && spool > 0.95f;
+        double thrust = crashing ? 0 : (throttle * 0.0095 * type.thrust + (ab ? 0.0065 * type.reheat : 0)) * spool;
         double drag = 0.00256 * speed * speed + (gear > 0.5f ? 0 : 0.0012 * speed);
         // control authority builds up above the stall speed
-        double auth = Mth.clamp((speed - STALL * 0.8) / (STALL * 0.35), 0, 1);
+        double auth = Mth.clamp((speed - type.stall * 0.8) / (type.stall * 0.35), 0, 1);
         float rate = (float) (auth * Math.min(1.0, 0.45 + speed / 1.4));
         float dYaw = Mth.wrapDegrees(wantYaw - yaw), dPitch = wantPitch - pitch;
         double vy;
@@ -374,17 +455,18 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             } else {
                 yaw += steer * (float) Math.min(1.0, 0.2 + speed * 3);
             }
-            float maxNose = speed > ROTATE * 0.95 ? 12f : 0f;
+            float maxNose = speed > type.rotate * 0.95 ? 12f : 0f;
             pitch += Mth.clamp(Mth.clamp(wantPitch, 0f, maxNose) - pitch, -1.2f, 1.0f);
             speed += thrust - drag - 0.0015 * Math.signum(speed);
             if (pilot instanceof Player && throttle < 0.02f && throttleIn < -0.1f) speed -= 0.02;     // wheel brakes
             if (pilot instanceof BotEntity && botControl && botThrottle <= 0f) speed -= 0.015;
             if (pilot == null) speed *= 0.96;
             speed = Math.max(0, speed);
-            vy = pitch > 4 && speed > ROTATE ? speed * Math.sin(Math.toRadians(pitch)) * 0.6 : -0.08;
+            vy = pitch > 4 && speed > type.rotate ? speed * Math.sin(Math.toRadians(pitch)) * 0.6 : -0.08;
         } else {
-            pitch += Mth.clamp(dPitch, -3.2f * rate, 3.2f * rate);
-            yaw += Mth.clamp(dYaw, -2.8f * rate, 2.8f * rate) + rudderIn * 0.6f * rate;
+            float ag = (float) type.agility;
+            pitch += Mth.clamp(dPitch, -3.2f * rate * ag, 3.2f * rate * ag);
+            yaw += Mth.clamp(dYaw, -2.8f * rate * ag, 2.8f * rate * ag) + rudderIn * 0.6f * rate * ag;
             // below the stall speed the nose drops whatever the pilot does
             if (auth < 1) pitch -= (float) ((1 - auth) * 1.8);
             pitch = Mth.clamp(pitch, -80f, 80f);
@@ -392,7 +474,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             speed = Math.max(0, speed);
             vy = -(1 - auth) * 0.3;
         }
-        speed = Math.min(speed, MAX_SPEED * 1.08);
+        speed = Math.min(speed, type.maxSpeed * 1.08);
         this.setYRot(yaw);
         jetPitch = pitch;
         this.setXRot(-pitch);
@@ -422,7 +504,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         } else if (ground && !wasGround) {
             // touchdown: gear down, gentle sink rate, wings level, nose not down
             double sink = -moved.y;
-            boolean good = !isGearUp() && sink < 0.45 && pitch() > -4 && Math.abs(roll) < 30 && hs < MAX_SPEED * 0.8;
+            boolean good = !isGearUp() && sink < 0.45 && pitch() > -4 && Math.abs(roll) < 30 && hs < type.maxSpeed * 0.8;
             if (!good) this.hurt(this.damageSources().fall(), (float) (sink * 160 + hs * (isGearUp() ? 70 : 30)));
         }
         wasGround = ground;
@@ -494,7 +576,9 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         if (!this.level().isClientSide) {
             this.entityData.set(DATA_SPEED, (float) speed);
             this.entityData.set(DATA_THROTTLE, throttle);
-            this.entityData.set(DATA_AB, !isCrashing() && afterburnerWanted() && spool > 0.95f);
+            this.entityData.set(DATA_AB, !isCrashing() && type.afterburner && afterburnerWanted() && spool > 0.95f);
+            if (type.rpgOnly()) RPG_ONLY.add(this);
+            if (bayTicks > 0 && --bayTicks == 0) this.entityData.set(DATA_BAY, false);
             gearLogic();
             weaponsTick();
             flaresTick();
@@ -512,7 +596,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     private void gearLogic() {
         boolean up = isGearUp();
         double agl = heightAboveGround();
-        if (!up && !this.onGround() && agl > 6 && velocity.y > -0.05 && speed > ROTATE) up = true;
+        if (!up && !this.onGround() && agl > 6 && velocity.y > -0.05 && speed > type.rotate) up = true;
         else if (up && (this.onGround() || agl < 14 && speed < 1.35 && velocity.y < 0 && !isCrashing())) up = false;
         if (up != isGearUp()) {
             this.entityData.set(DATA_GEAR_UP, up);
@@ -524,9 +608,17 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (isCrashing()) return false;
+        // the B-2: nothing but the RPG dice hurt it (or /kill, or a creative player taking it away)
+        if (type.rpgOnly() && !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)
+                && !(source.getEntity() instanceof Player p && p.getAbilities().instabuild && p.isShiftKeyDown())) return false;
         boolean hit = super.hurt(source, amount);
         if (hit && !this.level().isClientSide && source.getEntity() != null) underFire(source.getEntity());
         return hit;
+    }
+
+    @Override
+    public void hurtByBullet(DamageSource src, float amount) {
+        if (!type.rpgOnly()) super.hurtByBullet(src, amount);
     }
 
     public float getStuntRoll() {
@@ -539,6 +631,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
      */
     public void underFire(@Nullable Entity from) {
         if (this.level().isClientSide || !(getControllingPassenger() instanceof BotEntity) || !isAirborne() || isCrashing() || stuntCooldown > 0) return;
+        if (type.role == JetType.Role.BOMBER) return;          // a heavy bomber does not throw itself about
         if (phase == Phase.GROUND || phase == Phase.CLIMB) return;
         double agl = heightAboveGround();
         float bearing = this.getYRot();
@@ -699,7 +792,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
 
     private void flaresTick() {
         if (flareCooldown > 0) flareCooldown--;
-        else if (getFlares() < 60 && this.tickCount % 50 == 0) this.entityData.set(DATA_FLARES, getFlares() + 1);
+        else if (getFlares() < type.flares && this.tickCount % 50 == 0) this.entityData.set(DATA_FLARES, getFlares() + 1);
         if (flareQueue <= 0 || flareCooldown % 3 != 1) return;
         flareQueue--;
         Vec3 right = new Vec3(-noseDir().z, 0, noseDir().x).normalize();
@@ -719,19 +812,20 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         if (storeCooldown > 0) storeCooldown--;
         if (gunCooldown > 0) gunCooldown--;
         // re-armed after a while (faster parked on the ground)
-        if (getStores() != ALL_STORES || getGunRounds() < GUN_ROUNDS) {
+        if (getStores() != type.allStores() || getGunRounds() < type.gun.rounds) {
             rearm += this.onGround() && speed < 0.1 ? 4 : 1;
             if (rearm >= 900) {
                 rearm = 0;
-                this.entityData.set(DATA_STORES, ALL_STORES);
-                this.entityData.set(DATA_GUN, GUN_ROUNDS);
+                this.entityData.set(DATA_STORES, type.allStores());
+                this.entityData.set(DATA_GUN, type.gun.rounds);
                 this.level().playSound(null, getX(), getY(), getZ(), Reg.sound("tank_reload"), SoundSource.NEUTRAL, 1f, 1.2f);
             }
         }
         LivingEntity pilot = getControllingPassenger();
         if (pilot instanceof Player p) {
-            lockTick(p.getEyePosition(), p.getLookAngle(), p, 4.0);
-            if (fireStores) fireMissile(p, lockedTarget());
+            if (getWeapon() == 0 && type.ground != JetType.Ground.MAVERICK && lockedTarget() == null) setLock(-1, 0);
+            if (getWeapon() == 1 || type.ground == JetType.Ground.MAVERICK || type.ground == JetType.Ground.JDAM) lockTick(p.getEyePosition(), p.getLookAngle(), p, 4.0);
+            if (fireStores) fireMissile(p, lockedTarget(), groundAim(p));
             if (fireGun && gunCooldown <= 0) fireGun(p);
         } else if (!(pilot instanceof BotEntity)) {
             fireStores = fireGun = false;
@@ -741,7 +835,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
 
     private boolean wantsTarget(Entity e, int weapon) {
         if (weapon == 1) return Aircraft.detectable(e);
-        return (e instanceof VehicleEntity || e instanceof JeepEntity) && !(e instanceof Aircraft a && a.isAirborne()) && !(e instanceof BomberEntity);
+        return (e instanceof VehicleEntity || e instanceof JeepEntity) && !(e instanceof Aircraft a && (a.isAirborne() || a.stealth()));
     }
 
     @Nullable
@@ -762,7 +856,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             setLock(-1, 0);
             return;
         }
-        double range = w == 1 ? 260 : 240;
+        double range = w == 1 ? type.air.range : 240;
         LivingEntity best = null;
         double bestAng = cone;
         AABB box = new AABB(eye, eye.add(look.scale(range))).inflate(20);
@@ -790,20 +884,56 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         setLock(id, id < 0 ? 0 : lockCount);
     }
 
+    /** where a player's bomb goes without a lock: the ground under the crosshair (null = falls free) */
+    @Nullable
+    private Vec3 groundAim(LivingEntity who) {
+        Vec3 eye = who.getEyePosition();
+        HitResult hr = this.level().clip(new ClipContext(eye, eye.add(who.getLookAngle().scale(420)), ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, this));
+        return hr.getType() == HitResult.Type.MISS ? null : hr.getLocation();
+    }
+
     private void fireMissile(LivingEntity shooter, @Nullable Entity target) {
+        fireMissile(shooter, target, null);
+    }
+
+    private void fireMissile(LivingEntity shooter, @Nullable Entity target, @Nullable Vec3 aimPoint) {
         int w = getWeapon();
         int stores = getStores();
         if (storeCooldown > 0 || missilesLeft(w) == 0 || isCrashing()) return;
-        int mask = w == 0 ? MAV_MASK : AIM_MASK;
+        int mask = w == 0 ? type.groundMask : type.airMask;
         int bit = Integer.numberOfTrailingZeros(stores & mask);
-        storeCooldown = w == 0 ? 30 : 40;
         this.entityData.set(DATA_STORES, stores & ~(1 << bit));
         double[] pt = bit < 4 ? geo.pylons()[bit] : geo.tips()[bit - 4];
         Vec3 at = toWorld(pt[0], pt[1] - 0.4, pt[2] + 3.0);
-        int kind = w == 0 ? GuidedMissileEntity.MAVERICK : GuidedMissileEntity.AIM9;
+        if (w == 0 && type.ground != JetType.Ground.MAVERICK) {
+            // bombs: guided onto the target or the point aimed at; the B-2's drops out of its bay
+            boolean nuke = type.ground == JetType.Ground.NUKE;
+            storeCooldown = nuke ? 100 : 30;
+            Vec3 aim = target != null ? target.position() : aimPoint;
+            RocketEntity b = new RocketEntity(this.level(), shooter, nuke ? RocketEntity.B2_BOMB : RocketEntity.BOMB);
+            Vec3 from = nuke ? toWorld(8, pivotYModel() - 1.0, 8.6) : at.add(0, -0.3, 0);
+            b.setPos(from.x, from.y, from.z);
+            b.setDeltaMovement(velocity.multiply(1, 0, 1).scale(nuke ? 0.6 : 0.9).add(0, -0.15, 0));
+            if (aim != null) b.guideTo(aim);
+            if (!nuke) b.setPower(75f, 50f, 3.6f);
+            b.alignToMotion();
+            this.level().addFreshEntity(b);
+            this.level().playSound(null, from.x, from.y, from.z, Reg.sound(nuke ? "b2_release" : "bomb_drop"), SoundSource.NEUTRAL, nuke ? 6f : 4f, 1f);
+            if (nuke) {
+                this.entityData.set(DATA_BAY, true);
+                bayTicks = 60;
+            }
+            fireStores = false;
+            return;
+        }
+        storeCooldown = w == 0 ? 30 : 40;
+        int kind = w == 0 ? GuidedMissileEntity.MAVERICK : type.air.kind;
         GuidedMissileEntity m = new GuidedMissileEntity(this.level(), shooter, kind).target(target);
         if (w == 0) m.power(85f, 60f, 3.8f);
-        else m.power(95f, 0f, 0f);
+        else {
+            m.power(95f, 0f, 0f);
+            if (type.air.speed > 0) m.flight(type.air.speed, type.air.agility);
+        }
         m.setPos(at.x, at.y, at.z);
         m.setDeltaMovement(velocity.add(noseDir().scale(0.4)).add(0, -0.15, 0));
         m.alignToMotion();
@@ -816,22 +946,34 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         if (w == 0) fireStores = false;
     }
 
+    /** the shot effect code of this jet's cannon (ClientNet): -7 M61, -9 GAU-22, -10 GSh-30-1, -11 GAU-8 */
+    public int gunFxId() {
+        return switch (type.gun) {
+            case GAU22 -> -9;
+            case GSH30 -> -10;
+            case GAU8 -> -11;
+            default -> -7;
+        };
+    }
+
     private void fireGun(LivingEntity shooter) {
-        if (getGunRounds() <= 0 || isCrashing()) return;
+        JetType.Gun gun = type.gun;
+        if (gun == JetType.Gun.NONE || getGunRounds() <= 0 || isCrashing()) return;
         gunCooldown = 1;
         this.entityData.set(DATA_GUN, getGunRounds() - 1);
         Vec3 muzzle = toWorld(geo.cannon()[0], geo.cannon()[1], geo.cannon()[2]).add(velocity);
         float yaw = this.getYRot(), pitch = -pitch();
-        Vec3 dir = GunLogic.dir(pitch + (float) this.random.nextGaussian() * 0.5f, yaw + (float) this.random.nextGaussian() * 0.5f);
-        GunLogic.Trace tr = GunLogic.trace(this.level(), shooter, muzzle, dir, 220);
-        if (tr.entity() != null && tr.entity() != this) GunLogic.damage(shooter, tr.entity(), 8f, false, GunType.M249);
-        if (tr.kind() != 0 && this.random.nextInt(3) == 0) {
+        float spread = gun == JetType.Gun.GAU8 ? 0.35f : 0.5f;
+        Vec3 dir = GunLogic.dir(pitch + (float) this.random.nextGaussian() * spread, yaw + (float) this.random.nextGaussian() * spread);
+        GunLogic.Trace tr = GunLogic.trace(this.level(), shooter, muzzle, dir, gun.range);
+        if (tr.entity() != null && tr.entity() != this) GunLogic.damage(shooter, tr.entity(), gun.damage, false, GunType.M249);
+        if (tr.kind() != 0 && this.random.nextInt(gun.explosive ? 2 : 3) == 0) {
             Vec3 e = tr.end();
-            this.level().explode(this, e.x, e.y, e.z, 1.0f, Level.ExplosionInteraction.NONE);
+            this.level().explode(this, e.x, e.y, e.z, gun == JetType.Gun.GAU8 ? 1.6f : gun.explosive ? 1.2f : 1.0f, Level.ExplosionInteraction.NONE);
         }
         List<Vec3> ends = new ArrayList<>();
         ends.add(tr.end().subtract(muzzle));
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, new Net.ShotFx(this.getId(), -7, muzzle, ends, new byte[]{tr.kind()}, false));
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, new Net.ShotFx(this.getId(), gunFxId(), muzzle, ends, new byte[]{tr.kind()}, false));
         if (this.level() instanceof ServerLevel sl && this.tickCount % 10 == 0) BotEntity.alertGunfire(sl, shooter, 96);
     }
 
@@ -854,6 +996,11 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             phase = Phase.GROUND;
             phaseTicks = 0;
         }
+        if (type.role == JetType.Role.BOMBER) {
+            bomberPilot(bot, agl);
+            if (phase != Phase.GROUND) terrainGuard(agl);
+            return;
+        }
         if (--scanTimer <= 0 && phase != Phase.GROUND && phase != Phase.CLIMB) {
             scanTimer = 10;
             LivingEntity t = scanVehicles(bot);
@@ -875,7 +1022,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
                 botPitch = 14;
                 botThrottle = 1;
                 botAb = agl < 20;
-                if (agl > 32) phase = Phase.PATROL;
+                if (agl > patrolHeight() * 0.8) phase = Phase.PATROL;
             }
             case PATROL -> patrol(bot);
             case ATTACK -> {
@@ -943,8 +1090,8 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             botYaw = taxiYaw;
             botThrottle = 1;
             botAb = true;
-            botPitch = speed >= ROTATE ? 14 : 0;
-            if (speed < ROTATE * 0.8 && corridor(this.getYRot(), 6 + speed * 25) < 6 + speed * 25) {
+            botPitch = speed >= type.rotate ? 14 : 0;
+            if (speed < type.rotate * 0.8 && corridor(this.getYRot(), 6 + speed * 25) < 6 + speed * 25) {
                 botThrottle = 0;
                 botAb = false;
                 taxiLen = -1;
@@ -1017,8 +1164,69 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         }
         Vec3 to = waypoint.subtract(this.position());
         botYaw = (float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f;
-        holdHeight(40);
-        holdSpeed(PATROL);
+        holdHeight(patrolHeight());
+        holdSpeed(type.patrol);
+    }
+
+    /** how high a soldier pilot patrols: fighters high, the A-10 low over the battle, the bomber far up */
+    private double patrolHeight() {
+        return switch (type.role) {
+            case FIGHTER -> 55;
+            case STRIKE -> 24;
+            case BOMBER -> 85;
+            default -> 40;
+        };
+    }
+
+    /**
+     * B-2 pilot: take off, climb far up and circle the area; when a group of enemies shows below (several soldiers or
+     * vehicles close together, none of its own side near them) fly over them and drop a bomb, then go on circling.
+     */
+    private void bomberPilot(BotEntity bot, double agl) {
+        switch (phase) {
+            case GROUND -> takeOff(bot, agl);
+            case CLIMB -> {
+                botPitch = 10;
+                botThrottle = 1;
+                if (agl > patrolHeight() * 0.8) phase = Phase.PATROL;
+            }
+            case ATTACK -> {
+                if (bombRun == null || missilesLeft(0) == 0 || phaseTicks > 700) {
+                    bombRun = null;
+                    phase = Phase.PATROL;
+                    break;
+                }
+                if (phaseTicks % 40 == 0) {
+                    bombRun = com.gunsmod.entity.ai.GroupFinder.find(this.level(), this, getBotTeam(), bombRun, com.gunsmod.entity.ai.GroupFinder.GROUP_RADIUS * 3);
+                    if (bombRun == null) break;
+                }
+                Vec3 to = bombRun.subtract(this.position());
+                botYaw = (float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90f;
+                holdHeight(patrolHeight());
+                holdSpeed(type.patrol * 1.25);
+                double d = horiz(bombRun);
+                float off = Math.abs(Mth.wrapDegrees(botYaw - this.getYRot()));
+                if (d < 25 || d < 60 && off < 60) {
+                    if (getWeapon() != 0) this.entityData.set(DATA_WEAPON, (byte) 0);
+                    fireMissile(bot, null, bombRun);
+                    bombRun = null;
+                    phase = Phase.PATROL;
+                    phaseTicks = 0;
+                }
+            }
+            default -> {
+                // circle round home (or the enemy half of a battlefield) high up
+                patrol(bot);
+                if (missilesLeft(0) > 0 && storeCooldown <= 0 && phaseTicks % 40 == 20) {
+                    Vec3 g = com.gunsmod.entity.ai.GroupFinder.find(this.level(), this, getBotTeam(), this.position(), 170);
+                    if (g != null) {
+                        bombRun = g;
+                        phase = Phase.ATTACK;
+                        phaseTicks = 0;
+                    }
+                }
+            }
+        }
     }
 
     private void holdHeight(double agl) {
@@ -1048,17 +1256,21 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         botThrottle = 1;
         botAb = dist > 110;
         double off = Math.toDegrees(Math.acos(Mth.clamp(to.normalize().dot(noseDir()), -1, 1)));
-        // missiles: lock as soon as the seeker sees it, at most two per pass
-        if (missilesLeft(weapon) > 0 && off < (air ? 14 : 9) && dist > (air ? 30 : 55) && dist < (air ? 230 : 210)
-                && storeCooldown <= 0 && passShots < 2 && hasSight(c)) {
+        // missiles: lock as soon as the seeker sees it (the Fulcrum and the Flanker off-boresight with the helmet sight),
+        // at most two per pass; bombs are let go a long way out, they glide onto the target
+        boolean bombs = !air && type.ground == JetType.Ground.JDAM;
+        double cone = air ? type.air.cone : bombs ? 25 : 9;
+        double minD = air ? 30 : bombs ? 45 : 55, maxD = air ? type.air.range * 0.88 : bombs ? 200 : 210;
+        if (missilesLeft(weapon) > 0 && off < cone && dist > minD && dist < maxD && storeCooldown <= 0 && passShots < 2 && hasSight(c)) {
             setLock(t.getId(), LOCK_TICKS);
             fireStores = true;
             fireMissile(bot, t);
             fireStores = false;
             passShots++;
         }
-        // cannon: short bursts when the pipper is on it
-        if (off < 3.5 && dist < (air ? 75 : 95) && hasSight(c)) {
+        // cannon: short bursts when the pipper is on it (the A-10 opens up from much further out)
+        double gunRange = air ? Math.min(85, type.gun.range * 0.35) : type.gun.range * (type.role == JetType.Role.STRIKE ? 0.6 : 0.43);
+        if (type.gun != JetType.Gun.NONE && off < 3.5 && dist < gunRange && hasSight(c)) {
             if (gunPause > 0) gunPause--;
             else if (gunCooldown <= 0) {
                 fireGun(bot);
@@ -1109,7 +1321,11 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             if (d > 280 || !Sight.inCone(eye, noseDir(), Sight.JET, c)) continue;    // the pilot sees what is ahead of the nose
             boolean air = e instanceof Aircraft a && a.isAirborne();
             if (!air && this.level().clip(new ClipContext(eye, c, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)).getType() != HitResult.Type.MISS) continue;
-            double score = d - (air ? 60 : 0) - (e == bot.getTarget() ? 40 : 0);
+            // fighters hunt aircraft first, the A-10 hunts armour and only turns on aircraft that come close
+            if (air && type.role == JetType.Role.STRIKE && d > 70) continue;
+            if (air && type.airMask == 0 && type.gun == JetType.Gun.NONE) continue;
+            double airBonus = type.role == JetType.Role.FIGHTER ? 140 : type.role == JetType.Role.STRIKE ? -40 : 60;
+            double score = d - (air ? airBonus : 0) - (e == bot.getTarget() ? 40 : 0);
             if (score < bestScore) {
                 bestScore = score;
                 best = e;
@@ -1136,14 +1352,16 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         tag.putInt("Flares", getFlares());
         tag.putBoolean("Crashing", isCrashing());
         tag.putFloat("Pitch", jetPitch);
+        tag.putInt("RpgHits", rpgHits());
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("Stores")) this.entityData.set(DATA_STORES, tag.getInt("Stores") & ALL_STORES);
-        if (tag.contains("GunRounds")) this.entityData.set(DATA_GUN, Mth.clamp(tag.getInt("GunRounds"), 0, GUN_ROUNDS));
-        if (tag.contains("Flares")) this.entityData.set(DATA_FLARES, Mth.clamp(tag.getInt("Flares"), 0, 60));
+        if (tag.contains("Stores")) this.entityData.set(DATA_STORES, tag.getInt("Stores") & type.allStores());
+        if (tag.contains("GunRounds")) this.entityData.set(DATA_GUN, Mth.clamp(tag.getInt("GunRounds"), 0, type.gun.rounds));
+        if (tag.contains("Flares")) this.entityData.set(DATA_FLARES, Mth.clamp(tag.getInt("Flares"), 0, type.flares));
+        this.entityData.set(DATA_HITS, (byte) tag.getInt("RpgHits"));
         this.entityData.set(DATA_CRASH, tag.getBoolean("Crashing"));
         jetPitch = tag.getFloat("Pitch");
     }

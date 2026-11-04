@@ -30,12 +30,7 @@ public class JetSound extends AbstractTickableSoundInstance {
     private int age;
 
     private JetSound(JetEntity jet, int kind) {
-        super(Reg.sound(switch (kind) {
-            case IDLE -> "jet_idle";
-            case ENGINE -> "jet_engine";
-            case BURNER -> "jet_afterburner";
-            default -> "jet_flyby";
-        }), SoundSource.NEUTRAL, SoundInstance.createUnseededRandom());
+        super(Reg.sound(name(jet, kind)), SoundSource.NEUTRAL, SoundInstance.createUnseededRandom());
         this.jet = jet;
         this.kind = kind;
         this.looping = kind != FLYBY;
@@ -44,6 +39,25 @@ public class JetSound extends AbstractTickableSoundInstance {
         this.x = jet.getX();
         this.y = jet.getY();
         this.z = jet.getZ();
+    }
+
+    /** each type has its own engines: the F-16 keeps the original set, the others <model>_idle / _engine / _burner / _flyby */
+    private static String name(JetEntity jet, int kind) {
+        String p = jet.type.soundPrefix();
+        if (jet.type == com.gunsmod.entity.JetType.F16) {
+            return switch (kind) {
+                case IDLE -> "jet_idle";
+                case ENGINE -> "jet_engine";
+                case BURNER -> "jet_afterburner";
+                default -> "jet_flyby";
+            };
+        }
+        return switch (kind) {
+            case IDLE -> p + "_idle";
+            case ENGINE -> p + "_engine";
+            case BURNER -> p + "_burner";
+            default -> p + "_flyby";
+        };
     }
 
     /** called every client tick for every jet */
@@ -56,7 +70,8 @@ public class JetSound extends AbstractTickableSoundInstance {
         LAST_SPOOL.put(j, j.spool);
         JetSound[] s = ACTIVE.get(j);
         if (j.spool > 0.03f && !playing(s)) {
-            s = new JetSound[]{new JetSound(j, IDLE), new JetSound(j, ENGINE), new JetSound(j, BURNER)};
+            s = j.type.afterburner ? new JetSound[]{new JetSound(j, IDLE), new JetSound(j, ENGINE), new JetSound(j, BURNER)}
+                    : new JetSound[]{new JetSound(j, IDLE), new JetSound(j, ENGINE)};
             ACTIVE.put(j, s);
             for (JetSound x : s) mc.getSoundManager().play(x);
         }

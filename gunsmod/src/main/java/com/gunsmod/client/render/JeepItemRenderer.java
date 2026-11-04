@@ -57,25 +57,18 @@ public class JeepItemRenderer extends BlockEntityWithoutLevelRenderer {
         VehicleKind.Group grp = v.kind.group;
         boolean heli = grp == VehicleKind.Group.HELI;
         boolean longOne = v.kind == VehicleKind.PANTSIR || v.kind == VehicleKind.HIMARS || v.kind == VehicleKind.GRAD;
-        if (v.kind == VehicleKind.B2) {
-            pose.pushPose();
-            pose.translate(0.5f, 0.1f, 0.5f);
-            float s = ctx == ItemDisplayContext.GUI ? 0.0285f : ctx == ItemDisplayContext.NONE ? 0.06f : 0.024f;
-            pose.scale(s, s, s);
-            if (ctx == ItemDisplayContext.GUI) pose.translate(0, 2.5f, 0);
-            pose.mulPose(Axis.YP.rotationDegrees(180));
-            BomberRenderer.renderB2(pose, buf, light, v.team, false, false);
-            pose.popPose();
-            return;
-        }
         if (grp == VehicleKind.Group.JET) {
+            com.gunsmod.entity.JetType jt = v.kind.jet();
+            // the same size in the slot whatever the span (the F-16 spans 9.7 blocks)
+            double span = (jt.geo.tips()[1][0] - jt.geo.tips()[0][0]) * jt.unit;
+            float k = (float) Math.min(1.2, 9.7 / span);
             pose.pushPose();
             pose.translate(0.5f, 0.1f, 0.5f);
-            float s = ctx == ItemDisplayContext.GUI ? 0.06f : ctx == ItemDisplayContext.NONE ? 0.13f : 0.05f;
+            float s = (ctx == ItemDisplayContext.GUI ? 0.06f : ctx == ItemDisplayContext.NONE ? 0.13f : 0.05f) * k;
             pose.scale(s, s, s);
-            if (ctx == ItemDisplayContext.GUI) pose.translate(0, 1.6f, 0);
+            if (ctx == ItemDisplayContext.GUI) pose.translate(0, 1.6f / k, 0);
             pose.mulPose(Axis.YP.rotationDegrees(180));
-            JetRenderer.renderJet(pose, buf, light, v.team, 0f, JetEntity.ALL_STORES, false, false, 1f);
+            JetRenderer.renderJet(pose, buf, light, jt, v.team, 0f, jt.allStores(), false, false, false, 1f);
             pose.popPose();
             return;
         }

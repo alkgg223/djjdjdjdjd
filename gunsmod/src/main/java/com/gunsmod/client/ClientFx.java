@@ -187,6 +187,45 @@ public final class ClientFx {
         }
     }
 
+    private static long lastBurstSound;
+    private static int burstSounds;
+
+    /**
+     * One explosive round going off: a flash, a small fireball, a puff of smoke (black for flak in the air, earthy on the
+     * ground) and sparks; a crack heard with it (a few a tick at most, the guns fire fast).
+     */
+    public static void roundBurst(Vec3 at, float size, boolean air) {
+        Minecraft mc = Minecraft.getInstance();
+        ClientLevel level = mc.level;
+        if (level == null || BlastParticles.fireballSprites == null) return;
+        RandomSource r = level.random;
+        float q = quality(mc);
+        add(new BlastParticles.Flash(level, at.x, at.y, at.z, BlastParticles.flashSprites, 1.3f * size, 3));
+        int n = (int) (3 * q) + 1;
+        for (int i = 0; i < n; i++) {
+            Vec3 d = randomDir(r, 0.3);
+            double sp = 0.06 * size;
+            add(new BlastParticles.Fireball(level, at.x, at.y, at.z, d.x * sp, d.y * sp, d.z * sp, BlastParticles.fireballSprites,
+                    (0.5f + r.nextFloat() * 0.5f) * size, 6 + r.nextInt(5)));
+        }
+        float g = air ? 0.1f + r.nextFloat() * 0.06f : 0.35f + r.nextFloat() * 0.1f;
+        add(new BlastParticles.DustCloud(level, at.x, at.y, at.z, 0, air ? 0.004 : 0.02, 0, BlastParticles.dustSprites, (air ? 1.3f : 0.9f) * size,
+                air ? 70 + r.nextInt(30) : 40 + r.nextInt(20), g, g * 0.97f, g * 0.94f, 0.02f * size, 0.002f));
+        for (int i = 0; i < 3; i++) {
+            level.addParticle(Reg.SPARK.get(), at.x, at.y, at.z, r.nextGaussian() * 0.15, r.nextGaussian() * 0.15 + 0.05, r.nextGaussian() * 0.15);
+        }
+        ClientLights.flash(at, 12, 2);
+        long now = level.getGameTime();
+        if (now != lastBurstSound) {
+            lastBurstSound = now;
+            burstSounds = 0;
+        }
+        if (burstSounds++ < 2) {
+            level.playLocalSound(at.x, at.y, at.z, Reg.sound(air ? "flak_burst" : "shell_impact"), SoundSource.NEUTRAL, 3f * size + 1f,
+                    0.85f + r.nextFloat() * 0.3f, true);
+        }
+    }
+
     /** a tank gun or rocket pod firing: fireball along the barrel, a smoke ring, dust kicked up off the ground */
     public static void muzzleBlast(Vec3 pos, Vec3 dir, float size) {
         Minecraft mc = Minecraft.getInstance();

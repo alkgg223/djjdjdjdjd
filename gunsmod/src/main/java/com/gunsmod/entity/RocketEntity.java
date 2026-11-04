@@ -88,7 +88,7 @@ public class RocketEntity extends Projectile {
         Entity owner = this.getOwner();
         if (owner != null && (e == owner.getVehicle() || e.getVehicle() == owner.getVehicle() && owner.getVehicle() != null)) return false;
         if (VehicleEntity.shieldOf(e) != null) return false;    // the round hits the vehicle
-        if (e instanceof BomberEntity) return false;               // only the dice decide (see bomberPass)
+        if (e instanceof JetEntity j && j.type.rpgOnly()) return false;   // only the dice decide (see bomberPass)
         return super.canHitEntity(e) && !BotTeam.friendly(owner, e);
     }
 
@@ -116,7 +116,7 @@ public class RocketEntity extends Projectile {
             }
             case TANK_SHELL -> v = v.add(0, -0.03, 0);
             case ARTY -> v = v.add(0, -ArmoredCarEntity.ARTY_GRAVITY, 0);
-            case BOMB -> v = v.scale(0.995).add(0, -0.04, 0);
+            case BOMB -> v = guide != null ? steerBomb(v) : v.scale(0.995).add(0, -0.04, 0);
             case HELI_ROCKET -> {
                 if (v.length() < 4.2) v = v.scale(1.06);
                 v = v.add(0, -0.004, 0);
@@ -169,11 +169,11 @@ public class RocketEntity extends Projectile {
 
     /** an RPG passing a stealth bomber: one roll of the dice; true when it hit (and burst) */
     private boolean bomberPass() {
-        for (BomberEntity b : BomberEntity.active(this.level())) {
+        for (JetEntity b : JetEntity.rpgOnlyActive(this.level())) {
             if (passed != null && passed.contains(b.getId())) continue;
-            Vec3 c = b.position().add(0, BomberEntity.MID_Y, 0);
-            double dx = getX() - c.x, dz = getZ() - c.z, dy = getY() - c.y;
-            if (dx * dx + dz * dz > BomberEntity.HALF_SPAN * BomberEntity.HALF_SPAN || Math.abs(dy) > 4) continue;
+            Vec3 c = b.position().add(0, b.geo.pivotY(), 0);
+            double dx = getX() - c.x, dz = getZ() - c.z, dy = getY() - c.y, hs = b.halfSpan();
+            if (dx * dx + dz * dz > hs * hs || Math.abs(dy) > 4) continue;
             if (BotTeam.friendly(this.getOwner(), b)) continue;
             if (passed == null) passed = new java.util.HashSet<>();
             passed.add(b.getId());
@@ -206,7 +206,7 @@ public class RocketEntity extends Projectile {
         Blast.shockwave(level, at, 30, 80f, 10, this, owner);
         // armour inside the fireball does not survive either
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(at, at).inflate(24),
-                e -> e instanceof VehicleEntity && !(e instanceof BomberEntity) || e instanceof JeepEntity)) {
+                e -> e instanceof VehicleEntity && !(e instanceof Aircraft a && a.isAirborne()) || e instanceof JeepEntity)) {
             double d = e.position().distanceTo(at);
             if (d > 24) continue;
             e.invulnerableTime = 0;

@@ -167,6 +167,17 @@ public final class WorkbenchRecipes {
                 l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.vehicleItem(k, team)), cost.stream().filter(x -> x.count() > 0).toList()));
             }
         }
+        // air defence: radars, launchers and guns, the link tool
+        for (com.gunsmod.block.airdef.RadarType t : com.gunsmod.block.airdef.RadarType.values()) {
+            l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.RADARS.get(t).get()), List.of(c(steel, 24), c(Items.IRON_BLOCK, 4), c(Items.REDSTONE_BLOCK, 4),
+                    c(Items.COMPASS, 2), c(Items.GLASS, 4))));
+        }
+        for (com.gunsmod.block.airdef.LauncherType t : com.gunsmod.block.airdef.LauncherType.values()) {
+            l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.AD_LAUNCHERS.get(t).get()), t.gun()
+                    ? List.of(c(steel, 24), c(Items.IRON_BLOCK, 4), c(Items.GUNPOWDER, 16), c(Items.REDSTONE, 8))
+                    : List.of(c(steel, 32), c(Items.IRON_BLOCK, 6), c(Items.TNT, 8), c(Items.REDSTONE_BLOCK, 4))));
+        }
+        l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.AD_LINK_TOOL.get()), List.of(c(steel, 2), c(Items.REDSTONE, 4), c(Items.COMPASS, 1))));
         l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.DOG_TAG.get()), List.of(c(Items.IRON_NUGGET, 4), c(Items.CHAIN, 1))));
         l.add(new Recipe(Tab.GEAR, new ItemStack(Reg.GUN_PARTS.get(), 4), List.of(c(steel, 2), c(Items.IRON_NUGGET, 4))));
         return l;

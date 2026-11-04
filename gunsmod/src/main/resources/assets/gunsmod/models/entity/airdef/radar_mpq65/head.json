@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/airdef/radar_mpq65/head.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "paint": "gunsmod:item/vehicle/mesh/paint",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

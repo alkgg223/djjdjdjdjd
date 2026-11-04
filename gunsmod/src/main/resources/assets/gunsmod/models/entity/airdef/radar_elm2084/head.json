@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/airdef/radar_elm2084/head.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "sand": "gunsmod:item/vehicle/mesh/sand",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

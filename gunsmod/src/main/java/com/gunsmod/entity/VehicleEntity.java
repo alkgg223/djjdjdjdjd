@@ -361,6 +361,7 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
     public void tick() {
         if (!this.level().isClientSide && home == null && this.tickCount > 1) home = this.blockPosition();
         if (!this.level().isClientSide && routeActive()) com.gunsmod.entity.ai.Waypoints.keepLoaded(this);
+        if (!this.level().isClientSide && this instanceof Aircraft) com.gunsmod.block.airdef.AirTracker.add(this);
         super.tick();
         if (this.level().isClientSide) clientTick.accept(this);
     }

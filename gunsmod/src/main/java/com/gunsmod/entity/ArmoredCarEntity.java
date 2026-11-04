@@ -6,6 +6,7 @@ import com.gunsmod.entity.ai.Sight;
 import com.gunsmod.gun.GunLogic;
 import com.gunsmod.gun.GunType;
 import com.gunsmod.net.Net;
+import com.gunsmod.world.Blast;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -885,7 +886,7 @@ public class ArmoredCarEntity extends VehicleEntity {
         this.entityData.set(DATA_AMMO, Math.max(0, getAmmo() - 4));
         if (target != null) {
             if (target instanceof JetEntity jet) jet.underFire(this);
-            cramHit(target, target.distanceTo(this) < 60 ? 0.3f : 0.18f, gunner);
+            cramHit(target, target.distanceTo(this) < 60 ? 0.18f : 0.1f, gunner);
             return;
         }
         // manned: anything flying close to the stream of rounds can be hit
@@ -895,16 +896,21 @@ public class ArmoredCarEntity extends VehicleEntity {
         for (Entity e : this.level().getEntities(this, new AABB(muzzle, end).inflate(3), this::cramThreat)) {
             Vec3 c = e.position().add(0, e.getBbHeight() * 0.5, 0);
             double t = Mth.clamp(c.subtract(muzzle).dot(ab) / len2, 0, 1);
-            if (muzzle.add(ab.scale(t)).distanceTo(c) < e.getBbWidth() * 0.5 + 1.5) cramHit(e, 0.35f, gunner);
+            if (muzzle.add(ab.scale(t)).distanceTo(c) < e.getBbWidth() * 0.5 + 1.5) cramHit(e, 0.22f, gunner);
         }
     }
 
     private void cramHit(Entity e, float chance, @Nullable LivingEntity gunner) {
         if (e instanceof VehicleEntity h) {
-            if (this.random.nextFloat() < 0.5f) {
+            // 20 mm against aircraft: some rounds find it; fast or armoured types shrug off more (JetType.cramFactor)
+            float factor = h instanceof JetEntity j ? j.type.cramFactor : 0.8f;
+            if (factor > 0 && this.random.nextFloat() < 0.35f) {
                 h.invulnerableTime = 0;
-                h.hurt(this.damageSources().explosion(this, gunner), 2.2f);
+                h.hurt(this.damageSources().explosion(this, gunner), 1.6f * factor);
                 h.invulnerableTime = 0;
+                if (this.level() instanceof net.minecraft.server.level.ServerLevel && this.random.nextInt(3) == 0) {
+                    Blast.fx(this.level(), h.position().add(this.random.nextGaussian() * 1.5, h.getBbHeight() * 0.5, this.random.nextGaussian() * 1.5), Blast.FX_SMALL, 0.35f);
+                }
             }
             return;
         }

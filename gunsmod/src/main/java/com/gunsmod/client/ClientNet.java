@@ -41,7 +41,8 @@ public final class ClientNet {
         if (!p.suppressed()) ClientLights.light(shooter != null ? shooter : (Object) p.shooter(), muzzle, t == null ? 14 : 13, 3);
         if (t == null) {
             // vehicle guns: -1 jeep turret, -2 coaxial machine gun, -3 20 mm chin gun, -4 30 mm cannon, -5 12.7 mm gatling,
-            // -6 anti-aircraft twin 30 mm, -7 jet cannon, -8 C-RAM
+            // -6 anti-aircraft twin 30 mm, -7 jet cannon, -8 C-RAM, -9 GAU-22, -10 GSh-30-1, -11 GAU-8,
+            // -20 Gepard 35 mm, -21 ZU-23-2, -22 Bofors 40 mm
             int id = p.gun();
             String snd = switch (id) {
                 case -2 -> "shot_lmg";
@@ -49,11 +50,17 @@ public final class ClientNet {
                 case -4, -6 -> "cannon_30";
                 case -5 -> "shot_minigun";
                 case -7, -8 -> "jet_cannon";
+                case -9 -> "gun_gau22";
+                case -10 -> "gun_gsh30";
+                case -11 -> "gun_gau8";
+                case -20 -> "aa_35mm";
+                case -21 -> "aa_23mm";
+                case -22 -> "aa_40mm";
                 default -> "shot_turret";
             };
             float pitch = id == -6 ? 1.15f : id == -8 ? 1.3f : 0.95f;
-            // the M61 and the C-RAM fire 75-100 rounds a second: one burst sample covers several ticks
-            boolean burst = id > -7 || level.getGameTime() % 4 == 0;
+            // the aircraft cannons and the C-RAM fire 30-100 rounds a second: one burst sample covers several ticks
+            boolean burst = id > -7 || id <= -20 || level.getGameTime() % 4 == 0;
             if (burst && (id == -2 || id == -5) && GunClient.farShot(level, muzzle, "shot_far_rifle")) burst = false;
             else if (burst && id != -2 && id != -5 && GunClient.farShot(level, muzzle, "shot_far_heavy")) burst = false;
             if (burst) level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound(snd), SoundSource.HOSTILE, id <= -3 ? 10f : 7f, pitch + R.nextFloat() * 0.1f, true);
@@ -63,6 +70,11 @@ public final class ClientNet {
                 case -4, -6 -> 2.1f;
                 case -5 -> 1.0f;
                 case -8 -> 1.4f;
+                case -9 -> 1.4f;
+                case -10 -> 1.8f;
+                case -11 -> 2.3f;
+                case -20, -22 -> 2.1f;
+                case -21 -> 1.5f;
                 default -> 1.6f;
             };
             muzzleFire(level, muzzle, fireDir(p, muzzle, shooter), fs, id != -5 && id != -8 || level.getGameTime() % 3 == 0);
@@ -71,6 +83,18 @@ public final class ClientNet {
                 ClientLights.light(shooter != null ? shooter : (Object) p.shooter(), muzzle, 15, 2);
                 for (int k = 0; k < 2; k++) {
                     level.addParticle(Reg.SPARK.get(), muzzle.x, muzzle.y, muzzle.z, R.nextGaussian() * 0.1, R.nextGaussian() * 0.1, R.nextGaussian() * 0.1);
+                }
+            }
+            boolean airburst = id == -8 || id <= -20;
+            if (id <= -8) {
+                // explosive shells: a burst where they strike the ground or a target; flak and the C-RAM's rounds also
+                // burst in the air at the end of their flight
+                float size = id == -11 ? 1.0f : id == -22 || id == -20 ? 0.9f : id == -8 ? 0.45f : 0.7f;
+                for (int i = 0; i < p.ends().size(); i++) {
+                    byte kind = p.kinds().length > i ? p.kinds()[i] : 0;
+                    if (kind == 0 && !airburst) continue;
+                    if ((id == -8 || id == -11 || id == -9) && (i > 0 || level.getGameTime() % 2 != 0)) continue;
+                    ClientFx.roundBurst(p.end(i), size, kind == 0 || kind == 2 && airburst);
                 }
             }
             if (id == -4 || id == -6) {

@@ -529,5 +529,238 @@
    "gunsmod:b2_drone"
   ],
   "subtitle": "subtitles.gunsmod.b2_drone"
+ },
+ "f22_idle": {
+  "sounds": [
+   "gunsmod:f22_idle"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "f22_engine": {
+  "sounds": [
+   "gunsmod:f22_engine"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "f22_burner": {
+  "sounds": [
+   "gunsmod:f22_burner"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_afterburner"
+ },
+ "f22_flyby": {
+  "sounds": [
+   "gunsmod:f22_flyby_1",
+   "gunsmod:f22_flyby_2"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "f35_idle": {
+  "sounds": [
+   "gunsmod:f35_idle"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "f35_engine": {
+  "sounds": [
+   "gunsmod:f35_engine"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "f35_burner": {
+  "sounds": [
+   "gunsmod:f35_burner"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_afterburner"
+ },
+ "f35_flyby": {
+  "sounds": [
+   "gunsmod:f35_flyby_1",
+   "gunsmod:f35_flyby_2"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "su35_idle": {
+  "sounds": [
+   "gunsmod:su35_idle"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "su35_engine": {
+  "sounds": [
+   "gunsmod:su35_engine"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "su35_burner": {
+  "sounds": [
+   "gunsmod:su35_burner"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_afterburner"
+ },
+ "su35_flyby": {
+  "sounds": [
+   "gunsmod:su35_flyby_1",
+   "gunsmod:su35_flyby_2"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "mig29_idle": {
+  "sounds": [
+   "gunsmod:mig29_idle"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "mig29_engine": {
+  "sounds": [
+   "gunsmod:mig29_engine"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "mig29_burner": {
+  "sounds": [
+   "gunsmod:mig29_burner"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_afterburner"
+ },
+ "mig29_flyby": {
+  "sounds": [
+   "gunsmod:mig29_flyby_1",
+   "gunsmod:mig29_flyby_2"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "a10_idle": {
+  "sounds": [
+   "gunsmod:a10_idle"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "a10_engine": {
+  "sounds": [
+   "gunsmod:a10_engine"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "a10_flyby": {
+  "sounds": [
+   "gunsmod:a10_flyby_1",
+   "gunsmod:a10_flyby_2"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "b2_idle": {
+  "sounds": [
+   "gunsmod:b2_idle"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "b2_engine": {
+  "sounds": [
+   "gunsmod:b2_engine"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "b2_flyby": {
+  "sounds": [
+   "gunsmod:b2_flyby_1",
+   "gunsmod:b2_flyby_2"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "gun_gau22": {
+  "sounds": [
+   "gunsmod:gun_gau22_1",
+   "gunsmod:gun_gau22_2"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_cannon"
+ },
+ "gun_gsh30": {
+  "sounds": [
+   "gunsmod:gun_gsh30_1",
+   "gunsmod:gun_gsh30_2"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_cannon"
+ },
+ "gun_gau8": {
+  "sounds": [
+   "gunsmod:gun_gau8_1",
+   "gunsmod:gun_gau8_2"
+  ],
+  "subtitle": "subtitles.gunsmod.gau8"
+ },
+ "aa_35mm": {
+  "sounds": [
+   "gunsmod:aa_35mm_1",
+   "gunsmod:aa_35mm_2",
+   "gunsmod:aa_35mm_3"
+  ],
+  "subtitle": "subtitles.gunsmod.aa_gun"
+ },
+ "aa_23mm": {
+  "sounds": [
+   "gunsmod:aa_23mm_1",
+   "gunsmod:aa_23mm_2",
+   "gunsmod:aa_23mm_3"
+  ],
+  "subtitle": "subtitles.gunsmod.aa_gun"
+ },
+ "aa_40mm": {
+  "sounds": [
+   "gunsmod:aa_40mm_1",
+   "gunsmod:aa_40mm_2",
+   "gunsmod:aa_40mm_3"
+  ],
+  "subtitle": "subtitles.gunsmod.aa_gun"
+ },
+ "flak_burst": {
+  "sounds": [
+   "gunsmod:flak_burst_1",
+   "gunsmod:flak_burst_2",
+   "gunsmod:flak_burst_3"
+  ],
+  "subtitle": "subtitles.gunsmod.flak_burst"
+ },
+ "shell_impact": {
+  "sounds": [
+   "gunsmod:shell_impact_1",
+   "gunsmod:shell_impact_2",
+   "gunsmod:shell_impact_3"
+  ],
+  "subtitle": "subtitles.gunsmod.shell_impact"
+ },
+ "sam_patriot": {
+  "sounds": [
+   "gunsmod:sam_patriot_1",
+   "gunsmod:sam_patriot_2"
+  ],
+  "subtitle": "subtitles.gunsmod.sam_launch"
+ },
+ "sam_s400": {
+  "sounds": [
+   "gunsmod:sam_s400_1",
+   "gunsmod:sam_s400_2"
+  ],
+  "subtitle": "subtitles.gunsmod.sam_launch"
+ },
+ "sam_nasams": {
+  "sounds": [
+   "gunsmod:sam_nasams_1",
+   "gunsmod:sam_nasams_2"
+  ],
+  "subtitle": "subtitles.gunsmod.sam_launch"
+ },
+ "sam_tamir": {
+  "sounds": [
+   "gunsmod:sam_tamir_1",
+   "gunsmod:sam_tamir_2"
+  ],
+  "subtitle": "subtitles.gunsmod.sam_launch"
+ },
+ "radar_contact": {
+  "sounds": [
+   "gunsmod:radar_contact"
+  ],
+  "subtitle": "subtitles.gunsmod.radar_contact"
  }
 }

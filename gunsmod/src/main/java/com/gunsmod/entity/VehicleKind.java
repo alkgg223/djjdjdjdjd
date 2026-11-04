@@ -25,7 +25,12 @@ public enum VehicleKind {
     PICKUP("pickup", Group.CAR),
     SUV("suv", Group.CAR),
     F16("f16", Group.JET),
-    B2("b2", Group.JET);
+    B2("b2", Group.JET),
+    F22("f22", Group.JET),
+    F35("f35", Group.JET),
+    SU35("su35", Group.JET),
+    MIG29("mig29", Group.JET),
+    A10("a10", Group.JET);
 
     public enum Group { TANK, HELI, JEEP, CAR, JET }
 
@@ -59,6 +64,24 @@ public enum VehicleKind {
             case SUV -> Reg.SUV.get();
             case F16 -> Reg.F16.get();
             case B2 -> Reg.B2.get();
+            case F22 -> Reg.F22.get();
+            case F35 -> Reg.F35.get();
+            case SU35 -> Reg.SU35.get();
+            case MIG29 -> Reg.MIG29.get();
+            case A10 -> Reg.A10.get();
+        };
+    }
+
+    /** the aircraft type of a jet kind */
+    public JetType jet() {
+        return switch (this) {
+            case B2 -> JetType.B2;
+            case F22 -> JetType.F22;
+            case F35 -> JetType.F35;
+            case SU35 -> JetType.SU35;
+            case MIG29 -> JetType.MIG29;
+            case A10 -> JetType.A10;
+            default -> JetType.F16;
         };
     }
 

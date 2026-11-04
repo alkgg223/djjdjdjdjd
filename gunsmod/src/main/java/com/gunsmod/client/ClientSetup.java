@@ -81,6 +81,7 @@ public final class ClientSetup {
             vehicles.add(Reg.RED_VEHICLES.get(k).get());
         }
         e.registerItem(JeepItemRenderer.EXTENSIONS, vehicles.toArray(new Item[0]));
+        e.registerItem(com.gunsmod.client.render.AirDefenseItemRenderer.EXTENSIONS, Reg.AD_ITEMS.stream().map(d -> (Item) d.get()).toArray(Item[]::new));
     }
 
     @SubscribeEvent
@@ -120,7 +121,15 @@ public final class ClientSetup {
             e.register(BakedRender.id("entity/f16/" + p));
         }
         e.register(BakedRender.id("entity/car/civ_wheel"));
-        for (String p : new String[]{"body", "mark_green", "mark_red", "bay"}) e.register(BakedRender.id("entity/b2/" + p));
+        for (var g : com.gunsmod.block.airdef.AirDefenseGeo.GEO.entrySet()) {
+            e.register(BakedRender.id("entity/airdef/" + g.getKey() + "/base"));
+            e.register(BakedRender.id("entity/airdef/" + g.getKey() + "/head"));
+            if (g.getValue().muzzles().length > 0) e.register(BakedRender.id("entity/airdef/" + g.getKey() + "/arm"));
+        }
+        for (com.gunsmod.entity.JetType jt : com.gunsmod.entity.JetType.values()) {
+            if (jt == com.gunsmod.entity.JetType.F16) continue;
+            for (String p : JetRenderer.parts(jt)) e.register(BakedRender.id("entity/" + jt.model + "/" + p));
+        }
         for (CarType c : CarType.values()) {
             String[] parts = c.civilian() ? new String[]{"body", "mark_green", "mark_red"} : new String[]{"body", "mark_green", "mark_red", "turret", "gun"};
             for (String p : parts) e.register(BakedRender.id("entity/" + c.geo.model() + "/" + p));
@@ -151,7 +160,12 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.PICKUP.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.SUV.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.F16.get(), JetRenderer::new);
-        e.registerEntityRenderer(Reg.B2.get(), com.gunsmod.client.render.BomberRenderer::new);
+        e.registerEntityRenderer(Reg.B2.get(), JetRenderer::new);
+        e.registerEntityRenderer(Reg.F22.get(), JetRenderer::new);
+        e.registerEntityRenderer(Reg.F35.get(), JetRenderer::new);
+        e.registerEntityRenderer(Reg.SU35.get(), JetRenderer::new);
+        e.registerEntityRenderer(Reg.MIG29.get(), JetRenderer::new);
+        e.registerEntityRenderer(Reg.A10.get(), JetRenderer::new);
         e.registerEntityRenderer(Reg.GUIDED_MISSILE.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.FLARE_ENTITY.get(), NoopRenderer::new);
         e.registerEntityRenderer(Reg.MINE.get(), MineRenderer::new);
@@ -162,6 +176,8 @@ public final class ClientSetup {
         e.registerBlockEntityRenderer(Reg.HEAVY_LAUNCHER_BE.get(), HeavyLauncherRenderer::new);
         e.registerBlockEntityRenderer(Reg.SPAWNER_BE.get(), SpawnerRenderer::new);
         e.registerBlockEntityRenderer(Reg.VEHICLE_SPAWNER_BE.get(), VehicleSpawnerRenderer::new);
+        e.registerBlockEntityRenderer(Reg.RADAR_BE.get(), com.gunsmod.client.render.AirDefenseRenderer::new);
+        e.registerBlockEntityRenderer(Reg.DEFENSE_BE.get(), com.gunsmod.client.render.AirDefenseRenderer::new);
     }
 
     @SubscribeEvent

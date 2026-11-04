@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/airdef/sam_tamir/arm.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "black": "gunsmod:item/vehicle/mesh/black",
+  "sand": "gunsmod:item/vehicle/mesh/sand",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

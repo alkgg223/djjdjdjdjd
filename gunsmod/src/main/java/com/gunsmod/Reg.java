@@ -129,15 +129,7 @@ public final class Reg {
     public static final Map<String, DeferredHolder<SoundEvent, SoundEvent>> SOUND = new LinkedHashMap<>();
 
     static {
-        for (String s : new String[]{"shot_pistol", "shot_magnum", "shot_smg", "shot_rifle", "shot_carbine", "shot_shotgun", "shot_sniper",
-                "shot_heavy", "shot_lmg", "shot_minigun", "shot_turret", "shot_suppressed", "shot_grenade_launcher", "rocket_launch",
-                "flamethrower_loop", "dry_fire", "mag_out", "mag_in", "bolt", "shell_insert", "pump", "break_open", "jeep_idle",
-                "jeep_drive", "jeep_start", "jeep_horn", "missile_launch", "missile_alarm", "cover_open", "arm_switch", "ui_beep",
-                "ui_confirm", "hitmarker", "grenade_bounce", "bullet_whiz", "turret_overheat", "heavy_launch", "explosion_big",
-                "explosion_far", "missile_incoming", "tank_idle", "tank_drive", "tank_fire", "tank_reload", "heli_rotor", "heli_start",
-                "heli_rocket", "heli_gun", "flare", "missile_warning", "lock_tone", "lock_on", "atgm_launch", "sam_launch", "cannon_30",
-                "bomb_drop", "radar_ping", "jet_start", "jet_idle", "jet_engine", "jet_afterburner", "jet_flyby", "jet_missile", "jet_cannon",
-                "shot_far_light", "shot_far_rifle", "shot_far_heavy", "impact_dirt", "impact_stone", "impact_wood", "impact_metal", "ricochet"}) {
+        for (String s : SoundNames.ALL) {
             SOUND.put(s, SOUNDS.register(s, () -> SoundEvent.createVariableRangeEvent(id(s))));
         }
     }
@@ -204,6 +196,27 @@ public final class Reg {
             () -> BlockEntityType.Builder.of(HeavyLauncherBlockEntity::new, HEAVY_LAUNCHER.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SpawnerBlockEntity>> SPAWNER_BE = BLOCK_ENTITIES.register("bot_spawner",
             () -> BlockEntityType.Builder.of(SpawnerBlockEntity::new, SPAWNER.get()).build(null));
+    // ------------------------------------------------------------------------------ air defence: radars and launchers
+    public static final Map<com.gunsmod.block.airdef.RadarType, DeferredBlock<com.gunsmod.block.airdef.AirDefenseBlock>> RADARS =
+            new EnumMap<>(com.gunsmod.block.airdef.RadarType.class);
+    public static final Map<com.gunsmod.block.airdef.LauncherType, DeferredBlock<com.gunsmod.block.airdef.AirDefenseBlock>> AD_LAUNCHERS =
+            new EnumMap<>(com.gunsmod.block.airdef.LauncherType.class);
+
+    static {
+        for (com.gunsmod.block.airdef.RadarType t : com.gunsmod.block.airdef.RadarType.values()) {
+            RADARS.put(t, BLOCKS.register(t.id, () -> new com.gunsmod.block.airdef.AirDefenseBlock(metal().strength(6f, 20f), t, null)));
+        }
+        for (com.gunsmod.block.airdef.LauncherType t : com.gunsmod.block.airdef.LauncherType.values()) {
+            AD_LAUNCHERS.put(t, BLOCKS.register(t.id, () -> new com.gunsmod.block.airdef.AirDefenseBlock(metal().strength(6f, 20f), null, t)));
+        }
+    }
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.gunsmod.block.airdef.RadarBlockEntity>> RADAR_BE = BLOCK_ENTITIES.register("radar",
+            () -> BlockEntityType.Builder.of(com.gunsmod.block.airdef.RadarBlockEntity::new,
+                    RADARS.values().stream().map(DeferredBlock::get).toArray(Block[]::new)).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.gunsmod.block.airdef.DefenseBlockEntity>> DEFENSE_BE = BLOCK_ENTITIES.register("air_defense",
+            () -> BlockEntityType.Builder.of(com.gunsmod.block.airdef.DefenseBlockEntity::new,
+                    AD_LAUNCHERS.values().stream().map(DeferredBlock::get).toArray(Block[]::new)).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<VehicleSpawnerBlockEntity>> VEHICLE_SPAWNER_BE = BLOCK_ENTITIES.register("vehicle_spawner",
             () -> BlockEntityType.Builder.of(VehicleSpawnerBlockEntity::new, VEHICLE_SPAWNER.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ArenaBlockEntity>> ARENA_BE = BLOCK_ENTITIES.register("arena_controller",
@@ -234,12 +247,19 @@ public final class Reg {
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> CRAM = car("cram", CarType.CRAM);
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> PICKUP = car("pickup", CarType.PICKUP);
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> SUV = car("suv", CarType.SUV);
-    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> F16 = ENTITIES.register("f16",
-            () -> EntityType.Builder.<JetEntity>of(JetEntity::new, MobCategory.MISC).sized(3.0f, 2.2f).eyeHeight(1.8f).clientTrackingRange(24)
-                    .updateInterval(1).build("f16"));
-    public static final DeferredHolder<EntityType<?>, EntityType<com.gunsmod.entity.BomberEntity>> B2 = ENTITIES.register("b2",
-            () -> EntityType.Builder.<com.gunsmod.entity.BomberEntity>of(com.gunsmod.entity.BomberEntity::new, MobCategory.MISC).sized(12.0f, 2.6f)
-                    .eyeHeight(1.9f).clientTrackingRange(32).updateInterval(1).build("b2"));
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> F16 = jet("f16", com.gunsmod.entity.JetType.F16);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> B2 = jet("b2", com.gunsmod.entity.JetType.B2);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> F22 = jet("f22", com.gunsmod.entity.JetType.F22);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> F35 = jet("f35", com.gunsmod.entity.JetType.F35);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> SU35 = jet("su35", com.gunsmod.entity.JetType.SU35);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> MIG29 = jet("mig29", com.gunsmod.entity.JetType.MIG29);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> A10 = jet("a10", com.gunsmod.entity.JetType.A10);
+
+    private static DeferredHolder<EntityType<?>, EntityType<JetEntity>> jet(String id, com.gunsmod.entity.JetType k) {
+        return ENTITIES.register(id, () -> EntityType.Builder.<JetEntity>of((t, l) -> new JetEntity(t, l, k), MobCategory.MISC)
+                .sized((float) k.geo.size()[0], (float) k.geo.size()[1]).eyeHeight(1.8f).clientTrackingRange(k.rpgOnly() ? 32 : 24)
+                .updateInterval(1).build(id));
+    }
 
     private static DeferredHolder<EntityType<?>, EntityType<TankEntity>> tank(String id, TankType k) {
         return ENTITIES.register(id, () -> EntityType.Builder.<TankEntity>of((t, l) -> new TankEntity(t, l, k), MobCategory.MISC)
@@ -324,6 +344,16 @@ public final class Reg {
     public static final DeferredItem<ArenaToolItem> ARENA_TOOL = ITEMS.register("arena_tool", () -> new ArenaToolItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final DeferredItem<OrchardToolItem> ORCHARD_TOOL = ITEMS.register("orchard_tool", () -> new OrchardToolItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final DeferredItem<RouteToolItem> ROUTE_TOOL = ITEMS.register("route_planner", () -> new RouteToolItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+    public static final DeferredItem<com.gunsmod.item.AirLinkToolItem> AD_LINK_TOOL = ITEMS.register("ad_link_tool",
+            () -> new com.gunsmod.item.AirLinkToolItem(new Item.Properties().stacksTo(1)));
+    /** the radar and launcher items, in order */
+    public static final java.util.List<DeferredItem<com.gunsmod.item.AirDefenseItem>> AD_ITEMS = new java.util.ArrayList<>();
+
+    static {
+        for (var b : RADARS.values()) AD_ITEMS.add(ITEMS.register(b.getId().getPath(), () -> new com.gunsmod.item.AirDefenseItem(b.get(), new Item.Properties())));
+        for (var b : AD_LAUNCHERS.values()) AD_ITEMS.add(ITEMS.register(b.getId().getPath(), () -> new com.gunsmod.item.AirDefenseItem(b.get(), new Item.Properties())));
+    }
+
     public static final DeferredItem<com.gunsmod.item.ConvoyToolItem> CONVOY_TOOL = ITEMS.register("convoy_planner",
             () -> new com.gunsmod.item.ConvoyToolItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final DeferredItem<SoldierItem> GREEN_SOLDIER = ITEMS.register("green_soldier", () -> new SoldierItem(BotTeam.GREEN, new Item.Properties().stacksTo(16)));
@@ -411,6 +441,8 @@ public final class Reg {
                 out.accept(ORCHARD_TOOL.get());
                 out.accept(ROUTE_TOOL.get());
                 out.accept(CONVOY_TOOL.get());
+                out.accept(AD_LINK_TOOL.get());
+                for (var a : AD_ITEMS) out.accept(a.get());
                 out.accept(STEEL_INGOT.get());
                 out.accept(GUN_PARTS.get());
                 for (DeferredItem<BlockItem> b : BLOCK_ITEMS.values()) out.accept(b.get());

@@ -81,17 +81,6 @@ public class VehicleItem extends Item {
             BlockPos p = ctx.getClickedPos().relative(ctx.getClickedFace());
             Mob m = create(level, ctx.getItemInHand(), p.getX() + 0.5, p.getY(), p.getZ() + 0.5, ctx.getRotation());
             if (m == null) return InteractionResult.FAIL;
-            if (m instanceof com.gunsmod.entity.BomberEntity b) {
-                // called in: it arrives high over this spot and circles it on its own
-                b.center = Vec3.atBottomCenterOf(p);
-                link(m, p, null);
-                level.addFreshEntity(m);
-                if (ctx.getPlayer() != null) {
-                    ctx.getPlayer().displayClientMessage(Component.translatable("gunsmod.msg.b2_inbound").withStyle(ChatFormatting.GOLD), true);
-                    if (!ctx.getPlayer().getAbilities().instabuild) ctx.getItemInHand().shrink(1);
-                }
-                return InteractionResult.SUCCESS;
-            }
             if (!level.noCollision(m, m.getBoundingBox())) {
                 if (ctx.getPlayer() != null) ctx.getPlayer().displayClientMessage(Component.translatable("gunsmod.msg.no_room_vehicle"), true);
                 return InteractionResult.FAIL;

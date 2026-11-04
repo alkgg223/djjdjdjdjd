@@ -31,7 +31,10 @@ public class GuidedMissileEntity extends Projectile {
     public static final int HELLFIRE = 0, VIKHR = 1, SHTURM = 2, TOW = 3, SAM = 4, MAVERICK = 5, AIM9 = 6;
     private static final EntityDataAccessor<Byte> DATA_KIND = SynchedEntityData.defineId(GuidedMissileEntity.class, EntityDataSerializers.BYTE);
 
-    private int life, targetId = -1, guiderId = -1;
+    private int life, targetId = -1, guiderId = -1, loseAt = -1;
+    private double speedOverride, agilityOverride;
+    /** fired by a ground station with no shooter: the side it belongs to */
+    @Nullable private BotTeam side;
     private float hitArmour = 60, hitSoft = 45, blast = 3.0f;
     /** flares already tried against this missile */
     private final java.util.Set<Integer> triedFlares = new java.util.HashSet<>();
@@ -69,12 +72,31 @@ public class GuidedMissileEntity extends Projectile {
     }
 
     /** beam rider: follow the line of sight of this launcher */
+    /** a faster or more agile missile of the same kind (AIM-120, R-77, R-73, the air defence missiles) */
+    public GuidedMissileEntity flight(double topSpeed, double agility) {
+        speedOverride = topSpeed;
+        agilityOverride = agility;
+        return this;
+    }
+
+    /** the fire control's guess comes good or not: past this age a missile that is going to miss loses its target */
+    public GuidedMissileEntity side(BotTeam team) {
+        side = team;
+        return this;
+    }
+
+    public GuidedMissileEntity missAfter(int ticks) {
+        loseAt = ticks;
+        return this;
+    }
+
     public GuidedMissileEntity guider(Entity g) {
         guiderId = g.getId();
         return this;
     }
 
     private double topSpeed() {
+        if (speedOverride > 0) return speedOverride;
         return switch (getKind()) {
             case HELLFIRE -> 3.2;
             case VIKHR -> 4.4;
@@ -87,6 +109,7 @@ public class GuidedMissileEntity extends Projectile {
 
     /** degrees the missile can turn in a tick */
     private double agility() {
+        if (agilityOverride > 0) return agilityOverride;
         return switch (getKind()) {
             case SAM -> 9.0;
             case AIM9 -> 12.0;
@@ -110,7 +133,10 @@ public class GuidedMissileEntity extends Projectile {
         Entity owner = this.getOwner();
         if (owner != null && (e == owner.getVehicle() || e.getVehicle() != null && e.getVehicle() == owner.getVehicle())) return false;
         if (e instanceof FlareEntity) return false;
-        if (antiAir()) return e instanceof Aircraft && !((Aircraft) e).stealth() && super.canHitEntity(e) && !BotTeam.friendly(owner, e.getControllingPassenger());
+        if (antiAir()) {
+            if (!(e instanceof Aircraft a) || a.stealth() || !super.canHitEntity(e)) return false;
+            return side != null ? BotTeam.of(e) != side : !BotTeam.friendly(owner, e.getControllingPassenger());
+        }
         if (VehicleEntity.shieldOf(e) != null) return false;
         return super.canHitEntity(e) && !BotTeam.friendly(owner, e);
     }
@@ -146,6 +172,7 @@ public class GuidedMissileEntity extends Projectile {
         double speed = Math.min(topSpeed(), v.length() * (life < 10 ? 1.22 : 1.06) + 0.05);
         Vec3 dir = v.lengthSqr() < 1e-6 ? new Vec3(0, 0, 1) : v.normalize();
         Vec3 want = null;
+        if (loseAt >= 0 && life >= loseAt) targetId = -1;
         if (targetId >= 0) {
             Entity t = this.level().getEntity(targetId);
             if (t == null || !t.isAlive()) targetId = -1;
@@ -218,7 +245,7 @@ public class GuidedMissileEntity extends Projectile {
             this.discard();
             return true;
         }
-        for (VehicleEntity h : this.level().getEntitiesOfClass(VehicleEntity.class, this.getBoundingBox().inflate(4.5), e -> canHitEntity(e) && !(e instanceof BomberEntity))) {
+        for (VehicleEntity h : this.level().getEntitiesOfClass(VehicleEntity.class, this.getBoundingBox().inflate(4.5), e -> canHitEntity(e) && !(e instanceof Aircraft a && a.stealth()))) {
             if (h.position().add(0, h.getBbHeight() * 0.5, 0).distanceTo(this.position()) < 4.5) {
                 detonate(this.position());
                 return true;

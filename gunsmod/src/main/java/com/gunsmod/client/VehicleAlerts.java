@@ -33,7 +33,7 @@ public final class VehicleAlerts {
             else if (w == 1 && t % 20 == 0) beep(mc, p, "lock_tone", 0.5f, 0.7f);
             if (j.getLockTarget() >= 0 && j.missilesLeft(j.getWeapon()) > 0) lockTone(mc, p, j.getLockProgress() >= JetEntity.LOCK_TICKS);
             // stall warning horn
-            if (!j.onGround() && j.getAirSpeed() < JetEntity.STALL * 1.1 && t % 8 == 0) beep(mc, p, "ui_beep", 0.6f, 0.6f);
+            if (!j.onGround() && j.getAirSpeed() < j.type.stall * 1.1 && t % 8 == 0) beep(mc, p, "ui_beep", 0.6f, 0.6f);
         } else if (p.getVehicle() instanceof ArmoredCarEntity c && c.kind.antiAir() && c.getControllingPassenger() == p) {
             if (t % 40 == 0) beep(mc, p, "radar_ping", 0.35f, 1f);
             if (c.getTrack() >= 0) lockTone(mc, p, c.isLocked());

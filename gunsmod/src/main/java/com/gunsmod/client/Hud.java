@@ -729,7 +729,7 @@ public final class Hud {
         int bx = 6, by = h - 64;
         g.blitSprite(PANEL, bx - 3, by - 4, 126, 58);
         int wpn = jet.getWeapon();
-        Component wn = Component.translatable(wpn == 0 ? "gunsmod.weapon.maverick" : "gunsmod.weapon.aim9");
+        Component wn = Component.translatable(jet.type.weaponKey(wpn));
         g.drawString(f, Component.translatable("gunsmod.hud.weapon_ammo", wn, jet.missilesLeft(wpn)), bx, by, 0xFFFFFFFF, true);
         g.drawString(f, Component.translatable("gunsmod.hud.gun_rounds", jet.getGunRounds()), bx, by + 11, 0xFFE0E0E0, true);
         g.drawString(f, Component.translatable("gunsmod.hud.flares", jet.getFlares()), bx, by + 22, jet.getFlares() > 0 ? 0xFFFFE0A0 : 0xFFFF6040, true);
@@ -741,7 +741,7 @@ public final class Hud {
         Component big = null;
         int bigCol = 0xFFFF3020;
         if (warn == 2) big = Component.translatable("gunsmod.hud.missile_warning");
-        else if (!jet.onGround() && jet.getAirSpeed() < JetEntity.STALL * 1.1) big = Component.translatable("gunsmod.hud.stall");
+        else if (!jet.onGround() && jet.getAirSpeed() < jet.type.stall * 1.1) big = Component.translatable("gunsmod.hud.stall");
         else if (!jet.onGround() && jet.heightAboveGround() < 25 && jet.velocity.y < -0.4) big = Component.translatable("gunsmod.hud.pull_up");
         else if (warn == 1) {
             big = Component.translatable("gunsmod.hud.radar_warning");

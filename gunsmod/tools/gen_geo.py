@@ -7,6 +7,8 @@ import armor3 as A3
 import newveh_mesh as NV
 import civ_mesh as CV
 import jet as J
+import jets2_mesh as J2
+import b2_mesh as B2
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "java", "com", "gunsmod", "entity", "VehicleGeo.java")
 
@@ -109,8 +111,13 @@ def main():
         fn()
     lines += ["", "    /** jets: model units of 0.375 block */",
               "    public record Jet(String model, " + ", ".join(t + " " + f for f, t in JET_FIELDS) + ") {}", ""]
-    for name in J.JETS:
-        g = J.GEO[name]
+    for fn in J2.JETS2.values():
+        fn()
+    jets = dict(J.GEO)
+    jets.update(J2.GEO)
+    jets.update(B2.GEO)
+    for name in list(J.JETS) + list(J2.JETS2) + list(B2.GEO):
+        g = jets[name]
         lines.append(f"    public static final Jet {name.upper()} = new Jet({', '.join([jv(name)] + [jt(g[f], t) for f, t in JET_FIELDS])});")
     lines += ["", "    /** TOW launcher on the Humvee turret (jeep units): elevation pivot and tube mouth */",
               f"    public static final double[] TOW_PIVOT = {jt(A3.TOW_PIVOT, 'double[]')};",
