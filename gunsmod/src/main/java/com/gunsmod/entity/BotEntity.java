@@ -169,6 +169,7 @@ public class BotEntity extends PathfinderMob {
         this.goalSelector.addGoal(3, new com.gunsmod.entity.ai.BotSkyGoal(this));
         this.goalSelector.addGoal(3, new com.gunsmod.entity.ai.BotDroneGoal(this));
         this.goalSelector.addGoal(5, new com.gunsmod.entity.ai.BotSquadGoal(this));
+        this.goalSelector.addGoal(5, new com.gunsmod.entity.ai.BotObjectiveGoal(this));
         this.goalSelector.addGoal(4, new BotCombatGoal(this));
         this.goalSelector.addGoal(5, new BotReloadGoal(this));
         this.goalSelector.addGoal(6, new com.gunsmod.entity.ai.BotRouteGoal(this));

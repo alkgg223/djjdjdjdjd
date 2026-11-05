@@ -1,0 +1,41 @@
+newmtl amber
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #amber
+
+newmtl green_mark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #green_mark
+
+newmtl gunmetal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #gunmetal
+
+newmtl light_grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #light_grey
+
+newmtl red
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #red
+
+newmtl white
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #white
+
+newmtl white_mark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #white_mark

@@ -86,6 +86,8 @@ public final class ClientSetup {
         e.registerItem(com.gunsmod.client.render.AirDefenseItemRenderer.EXTENSIONS, Reg.AD_ITEMS.stream().map(d -> (Item) d.get()).toArray(Item[]::new));
         e.registerItem(com.gunsmod.client.render.DroneRenderer.Item.EXTENSIONS, Reg.FPV_DRONE.get(), Reg.SHAHED.get(),
                 Reg.RECON_DRONE.get(), Reg.BOMBER_DRONE.get(), Reg.SURVEIL_DRONE.get(), Reg.LANCET.get());
+        e.registerItem(com.gunsmod.client.render.ObjectiveRenderer.Item.EXTENSIONS, Reg.CAPTURE_POINT.asItem(), Reg.CTF_FLAG.asItem(), Reg.OBJECTIVE_TARGET.asItem(),
+                Reg.CONVOY_DESTINATION.asItem(), Reg.MISSION_CONTROL.asItem());
     }
 
     @SubscribeEvent
@@ -127,6 +129,7 @@ public final class ClientSetup {
         e.register(BakedRender.id("entity/car/civ_wheel"));
         for (String p : com.gunsmod.entity.WreckPieceEntity.KINDS) e.register(BakedRender.id("entity/debris/" + p));
         for (String p : com.gunsmod.client.render.DroneRenderer.PARTS) e.register(BakedRender.id("entity/drone/" + p));
+        for (String p : com.gunsmod.client.render.ObjectiveRenderer.PARTS) e.register(BakedRender.id("entity/objective/" + p));
         for (var g : com.gunsmod.block.airdef.AirDefenseGeo.GEO.entrySet()) {
             e.register(BakedRender.id("entity/airdef/" + g.getKey() + "/base"));
             e.register(BakedRender.id("entity/airdef/" + g.getKey() + "/head"));
@@ -185,6 +188,7 @@ public final class ClientSetup {
         e.registerBlockEntityRenderer(Reg.SPAWNER_BE.get(), SpawnerRenderer::new);
         e.registerBlockEntityRenderer(Reg.VEHICLE_SPAWNER_BE.get(), VehicleSpawnerRenderer::new);
         e.registerBlockEntityRenderer(Reg.RADAR_BE.get(), com.gunsmod.client.render.AirDefenseRenderer::new);
+        e.registerBlockEntityRenderer(Reg.OBJECTIVE_BE.get(), com.gunsmod.client.render.ObjectiveRenderer::new);
         e.registerBlockEntityRenderer(Reg.DEFENSE_BE.get(), com.gunsmod.client.render.AirDefenseRenderer::new);
     }
 
@@ -216,6 +220,7 @@ public final class ClientSetup {
         e.register(GunClient.PRONE);
         e.register(GunClient.SCOPE_ZOOM);
         e.register(GunClient.SQUAD);
+        e.register(GunClient.MAP);
         e.register(JetControl.VIEW);
     }
 
@@ -239,6 +244,7 @@ public final class ClientSetup {
         // night vision: the post effect over the world, before any other layer
         e.registerBelowAll(Reg.id("night_vision"), NightVision::layer);
         e.registerBelowAll(Reg.id("thermal"), Thermal::layer);
+        e.registerAbove(VanillaGuiLayers.HOTBAR, Reg.id("match"), MatchHud::layer);
         e.registerAboveAll(Reg.id("drone"), DroneClient::layer);
         e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Reg.id("battle_score"), (g, dt) -> g.drawManaged(() -> BattleHud.render(g, dt)));
         e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Reg.id("squad"), (g, dt) -> g.drawManaged(() -> SquadHud.render(g, dt)));

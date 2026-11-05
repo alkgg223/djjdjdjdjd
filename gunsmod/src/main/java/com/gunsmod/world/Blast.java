@@ -32,6 +32,7 @@ public final class Blast {
     public static void explode(Level level, @Nullable Entity source, Vec3 at, float power, boolean fire, Level.ExplosionInteraction mode, int fx, float fxSize) {
         if (mode == Level.ExplosionInteraction.NONE && com.gunsmod.Config.blockDestruction() && power >= 2.0f) mode = Level.ExplosionInteraction.TNT;
         com.gunsmod.entity.VehicleEntity.hitPoint = at;
+        com.gunsmod.game.MatchLogic.blast(level, source, at, power);
         try {
             level.explode(source, at.x, at.y, at.z, power * com.gunsmod.Config.explosionPower(), fire, mode);
         } finally {

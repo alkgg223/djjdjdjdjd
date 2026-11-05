@@ -52,6 +52,8 @@ public final class GunClient {
     public static final KeyMapping SCOPE_ZOOM = new KeyMapping("key.gunsmod.scope_zoom", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, CATEGORY);
     /** the squad command board */
     public static final KeyMapping SQUAD = new KeyMapping("key.gunsmod.squad", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_U, CATEGORY);
+    /** 3.0: the tactical map */
+    public static final KeyMapping MAP = new KeyMapping("key.gunsmod.map", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, CATEGORY);
 
     /** the variable scope is what the player aims through now */
     public static boolean variableScope() {

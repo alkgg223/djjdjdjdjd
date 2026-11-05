@@ -37,6 +37,11 @@ public final class Net {
         r.playToClient(SquadStatus.TYPE, SquadStatus.CODEC, (p, ctx) -> com.gunsmod.client.SquadHud.status(p));
         r.playToServer(RadarRequest.TYPE, RadarRequest.CODEC, ServerNet::radarRequest);
         r.playToServer(DroneControl.TYPE, DroneControl.CODEC, ServerNet::droneControl);
+        r.playToServer(MatchControl.TYPE, MatchControl.CODEC, ServerNet::matchControl);
+        r.playToServer(MapRequest.TYPE, MapRequest.CODEC, ServerNet::mapRequest);
+        r.playToServer(SquadOrderAt.TYPE, SquadOrderAt.CODEC, ServerNet::squadOrderAt);
+        r.playToClient(MatchState.TYPE, MatchState.CODEC, (p, ctx) -> com.gunsmod.client.MatchHud.state(p));
+        r.playToClient(MapIntel.TYPE, MapIntel.CODEC, (p, ctx) -> com.gunsmod.client.screen.TacticalMapScreen.intel(p));
         r.playToServer(DroneAction.TYPE, DroneAction.CODEC, ServerNet::droneAction);
         r.playToClient(DronePilot.TYPE, DronePilot.CODEC, (p, ctx) -> com.gunsmod.client.DroneClient.pilot(p));
         r.playToClient(Spotted.TYPE, Spotted.CODEC, (p, ctx) -> com.gunsmod.client.DroneClient.spotted(p));
@@ -444,6 +449,198 @@ public final class Net {
 
         @Override
         public Type<Spotted> type() {
+            return TYPE;
+        }
+    }
+
+    /** one objective on the HUD / map. kind: ObjectiveBlock.Kind ordinal (5 = a convoy vehicle); team -1 neutral; progress:
+     * a point's balance (-1 red .. +1 green) or a target's planting / defusing; flags: 1 flag home, 2 flag carried,
+     * 4 flag dropped, 8 charge planted, 16 convoy vehicle arrived */
+    public record ObjInfo(byte kind, byte team, float progress, byte label, float x, float y, float z, float hp, byte flags, int charge) {}
+
+    /** a line of the side's mission: state 0 under way, 1 done, 2 failed */
+    public record MissionLine(String key, String arg, byte state, boolean optional) {}
+
+    /** the battle as one player sees it (and the table's settings when he opens the mission control table) */
+    public record MatchState(int mode, boolean running, int timeLeft, int ticketsG, int ticketsR, int scoreG, int scoreR, int winner, int attackers, int limit,
+                             int minutes, int radius, int myTeam, List<ObjInfo> objectives, List<MissionLine> lines, boolean open, BlockPos table, String banner)
+            implements CustomPacketPayload {
+        public static final Type<MatchState> TYPE = payloadType("match_state");
+        public static final StreamCodec<RegistryFriendlyByteBuf, MatchState> CODEC = CustomPacketPayload.codec(MatchState::write, MatchState::new);
+
+        MatchState(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt(), b.readBoolean(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(),
+                    b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), readObjs(b), readLines(b), b.readBoolean(), b.readBlockPos(), b.readUtf(128));
+        }
+
+        private static List<ObjInfo> readObjs(FriendlyByteBuf b) {
+            int n = Math.min(96, b.readVarInt());
+            List<ObjInfo> l = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) {
+                l.add(new ObjInfo(b.readByte(), b.readByte(), b.readFloat(), b.readByte(), b.readFloat(), b.readFloat(), b.readFloat(), b.readFloat(), b.readByte(),
+                        b.readVarInt()));
+            }
+            return l;
+        }
+
+        private static List<MissionLine> readLines(FriendlyByteBuf b) {
+            int n = Math.min(12, b.readVarInt());
+            List<MissionLine> l = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) l.add(new MissionLine(b.readUtf(96), b.readUtf(32), b.readByte(), b.readBoolean()));
+            return l;
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(mode);
+            b.writeBoolean(running);
+            b.writeVarInt(timeLeft);
+            b.writeVarInt(ticketsG);
+            b.writeVarInt(ticketsR);
+            b.writeVarInt(scoreG);
+            b.writeVarInt(scoreR);
+            b.writeVarInt(winner);
+            b.writeVarInt(attackers);
+            b.writeVarInt(limit);
+            b.writeVarInt(minutes);
+            b.writeVarInt(radius);
+            b.writeVarInt(myTeam);
+            int n = Math.min(96, objectives.size());
+            b.writeVarInt(n);
+            for (int i = 0; i < n; i++) {
+                ObjInfo o = objectives.get(i);
+                b.writeByte(o.kind());
+                b.writeByte(o.team());
+                b.writeFloat(o.progress());
+                b.writeByte(o.label());
+                b.writeFloat(o.x());
+                b.writeFloat(o.y());
+                b.writeFloat(o.z());
+                b.writeFloat(o.hp());
+                b.writeByte(o.flags());
+                b.writeVarInt(o.charge());
+            }
+            int k = Math.min(12, lines.size());
+            b.writeVarInt(k);
+            for (int i = 0; i < k; i++) {
+                MissionLine l = lines.get(i);
+                b.writeUtf(l.key(), 96);
+                b.writeUtf(l.arg(), 32);
+                b.writeByte(l.state());
+                b.writeBoolean(l.optional());
+            }
+            b.writeBoolean(open);
+            b.writeBlockPos(table);
+            b.writeUtf(banner, 128);
+        }
+
+        @Override
+        public Type<MatchState> type() {
+            return TYPE;
+        }
+    }
+
+    /** the mission control table's buttons: start or stop the battle with these settings, or only save them */
+    public record MatchControl(BlockPos pos, int action, int mode, int attackers, int minutes, int limit, int radius) implements CustomPacketPayload {
+        public static final int START = 0, STOP = 1, SAVE = 2;
+        public static final Type<MatchControl> TYPE = payloadType("match_control");
+        public static final StreamCodec<RegistryFriendlyByteBuf, MatchControl> CODEC = CustomPacketPayload.codec(MatchControl::write, MatchControl::new);
+
+        MatchControl(RegistryFriendlyByteBuf b) {
+            this(b.readBlockPos(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeBlockPos(pos);
+            b.writeVarInt(action);
+            b.writeVarInt(mode);
+            b.writeVarInt(attackers);
+            b.writeVarInt(minutes);
+            b.writeVarInt(limit);
+            b.writeVarInt(radius);
+        }
+
+        @Override
+        public Type<MatchControl> type() {
+            return TYPE;
+        }
+    }
+
+    /** the tactical map asks what the side knows round the player */
+    public record MapRequest(int radius) implements CustomPacketPayload {
+        public static final Type<MapRequest> TYPE = payloadType("map_request");
+        public static final StreamCodec<RegistryFriendlyByteBuf, MapRequest> CODEC = CustomPacketPayload.codec(MapRequest::write, MapRequest::new);
+
+        MapRequest(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(radius);
+        }
+
+        @Override
+        public Type<MapRequest> type() {
+            return TYPE;
+        }
+    }
+
+    /** one mark on the tactical map (see game.MapIntel for the kinds) */
+    public record MapMark(byte kind, byte team, float x, float z, float yaw, byte label) {}
+
+    public record MapIntel(List<MapMark> marks) implements CustomPacketPayload {
+        public static final Type<MapIntel> TYPE = payloadType("map_intel");
+        public static final StreamCodec<RegistryFriendlyByteBuf, MapIntel> CODEC = CustomPacketPayload.codec(MapIntel::write, MapIntel::new);
+
+        MapIntel(RegistryFriendlyByteBuf b) {
+            this(readMarks(b));
+        }
+
+        private static List<MapMark> readMarks(FriendlyByteBuf b) {
+            int n = Math.min(600, b.readVarInt());
+            List<MapMark> l = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) l.add(new MapMark(b.readByte(), b.readByte(), b.readFloat(), b.readFloat(), b.readFloat(), b.readByte()));
+            return l;
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            int n = Math.min(600, marks.size());
+            b.writeVarInt(n);
+            for (int i = 0; i < n; i++) {
+                MapMark m = marks.get(i);
+                b.writeByte(m.kind());
+                b.writeByte(m.team());
+                b.writeFloat(m.x());
+                b.writeFloat(m.z());
+                b.writeFloat(m.yaw());
+                b.writeByte(m.label());
+            }
+        }
+
+        @Override
+        public Type<MapIntel> type() {
+            return TYPE;
+        }
+    }
+
+    /** a squad order given on the tactical map: at a place instead of where the player looks */
+    public record SquadOrderAt(int command, int formation, double x, double y, double z) implements CustomPacketPayload {
+        public static final Type<SquadOrderAt> TYPE = payloadType("squad_order_at");
+        public static final StreamCodec<RegistryFriendlyByteBuf, SquadOrderAt> CODEC = CustomPacketPayload.codec(SquadOrderAt::write, SquadOrderAt::new);
+
+        SquadOrderAt(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt(), b.readVarInt(), b.readDouble(), b.readDouble(), b.readDouble());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(command);
+            b.writeVarInt(formation);
+            b.writeDouble(x);
+            b.writeDouble(y);
+            b.writeDouble(z);
+        }
+
+        @Override
+        public Type<SquadOrderAt> type() {
             return TYPE;
         }
     }

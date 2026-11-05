@@ -1,0 +1,27 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "RWR",
+  " I ",
+  " S "
+ ],
+ "key": {
+  "R": {
+   "item": "minecraft:red_dye"
+  },
+  "W": {
+   "item": "minecraft:white_wool"
+  },
+  "I": {
+   "item": "minecraft:iron_bars"
+  },
+  "S": {
+   "item": "minecraft:stone"
+  }
+ },
+ "result": {
+  "id": "gunsmod:convoy_destination",
+  "count": 1
+ }
+}

@@ -70,6 +70,21 @@ public final class ServerNet {
         if (ctx.player() instanceof ServerPlayer sp && sp.level().getEntity(p.id()) instanceof com.gunsmod.entity.DroneEntity d) d.action(sp, p.action());
     }
 
+    public static void matchControl(Net.MatchControl p, IPayloadContext ctx) {
+        if (ctx.player() instanceof ServerPlayer sp && sp.isAlive()) com.gunsmod.game.MatchLogic.control(sp, p);
+    }
+
+    public static void mapRequest(Net.MapRequest p, IPayloadContext ctx) {
+        if (ctx.player() instanceof ServerPlayer sp) PacketDistributor.sendToPlayer(sp, com.gunsmod.game.MapIntel.build(sp, Mth.clamp(p.radius(), 32, 512)));
+    }
+
+    public static void squadOrderAt(Net.SquadOrderAt p, IPayloadContext ctx) {
+        if (!(ctx.player() instanceof ServerPlayer sp) || !sp.isAlive() || sp.isSpectator() || !Double.isFinite(p.x() + p.y() + p.z())) return;
+        net.minecraft.world.phys.Vec3 at = new net.minecraft.world.phys.Vec3(p.x(), p.y(), p.z());
+        if (at.distanceTo(sp.position()) > 600) return;
+        com.gunsmod.entity.ai.Squad.command(sp, p.command(), p.formation(), at);
+    }
+
     public static void radarRequest(Net.RadarRequest p, IPayloadContext ctx) {
         if (!(ctx.player() instanceof ServerPlayer sp) || !sp.isAlive() || sp.isSpectator()) return;
         if (sp.blockPosition().distSqr(p.pos()) > 16 * 16 || !sp.level().isLoaded(p.pos())) return;

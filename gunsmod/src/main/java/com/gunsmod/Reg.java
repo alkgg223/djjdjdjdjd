@@ -192,7 +192,22 @@ public final class Reg {
     public static final DeferredBlock<ExplosiveBarrelBlock> EXPLOSIVE_BARREL = BLOCKS.register("explosive_barrel",
             () -> new ExplosiveBarrelBlock(metal().strength(1.5f, 2f)));
 
+    // 3.0: battle objectives
+    public static final DeferredBlock<com.gunsmod.game.ObjectiveBlock> CAPTURE_POINT = BLOCKS.register("capture_point",
+            () -> new com.gunsmod.game.ObjectiveBlock(metal().strength(4f, 3600000f).noOcclusion(), com.gunsmod.game.ObjectiveBlock.Kind.POINT));
+    public static final DeferredBlock<com.gunsmod.game.ObjectiveBlock> CTF_FLAG = BLOCKS.register("ctf_flag",
+            () -> new com.gunsmod.game.ObjectiveBlock(metal().strength(4f, 3600000f).noOcclusion(), com.gunsmod.game.ObjectiveBlock.Kind.FLAG));
+    public static final DeferredBlock<com.gunsmod.game.ObjectiveBlock> OBJECTIVE_TARGET = BLOCKS.register("objective_target",
+            () -> new com.gunsmod.game.ObjectiveBlock(metal().strength(4f, 3600000f).noOcclusion(), com.gunsmod.game.ObjectiveBlock.Kind.TARGET));
+    public static final DeferredBlock<com.gunsmod.game.ObjectiveBlock> CONVOY_DESTINATION = BLOCKS.register("convoy_destination",
+            () -> new com.gunsmod.game.ObjectiveBlock(metal().strength(4f, 3600000f).noOcclusion(), com.gunsmod.game.ObjectiveBlock.Kind.DESTINATION));
+    public static final DeferredBlock<com.gunsmod.game.ObjectiveBlock> MISSION_CONTROL = BLOCKS.register("mission_control",
+            () -> new com.gunsmod.game.ObjectiveBlock(metal().strength(3f, 20f).noOcclusion().lightLevel(st -> 6), com.gunsmod.game.ObjectiveBlock.Kind.CONTROL));
+
     // ------------------------------------------------------------------------------ block entities
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.gunsmod.game.ObjectiveBlockEntity>> OBJECTIVE_BE = BLOCK_ENTITIES.register("objective",
+            () -> BlockEntityType.Builder.of(com.gunsmod.game.ObjectiveBlockEntity::new, CAPTURE_POINT.get(), CTF_FLAG.get(), OBJECTIVE_TARGET.get(),
+                    CONVOY_DESTINATION.get(), MISSION_CONTROL.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LauncherBlockEntity>> LAUNCHER_BE = BLOCK_ENTITIES.register("missile_launcher",
             () -> BlockEntityType.Builder.of(LauncherBlockEntity::new, LAUNCHER.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HeavyLauncherBlockEntity>> HEAVY_LAUNCHER_BE = BLOCK_ENTITIES.register("heavy_launcher",
@@ -423,6 +438,11 @@ public final class Reg {
         blockItem("concrete_barrier", CONCRETE_BARRIER);
         blockItem("barbed_wire", BARBED_WIRE);
         blockItem("explosive_barrel", EXPLOSIVE_BARREL);
+        blockItem("capture_point", CAPTURE_POINT);
+        blockItem("ctf_flag", CTF_FLAG);
+        blockItem("objective_target", OBJECTIVE_TARGET);
+        blockItem("convoy_destination", CONVOY_DESTINATION);
+        blockItem("mission_control", MISSION_CONTROL);
     }
 
     private static void blockItem(String name, Supplier<? extends Block> block) {

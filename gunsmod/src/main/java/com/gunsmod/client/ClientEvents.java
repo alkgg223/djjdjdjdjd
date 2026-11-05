@@ -33,6 +33,11 @@ public final class ClientEvents {
         while (GunClient.SQUAD.consumeClick()) {
             if (Minecraft.getInstance().screen == null && Minecraft.getInstance().player != null) Minecraft.getInstance().setScreen(new com.gunsmod.client.screen.SquadScreen());
         }
+        while (GunClient.MAP.consumeClick()) {
+            if (Minecraft.getInstance().screen == null && Minecraft.getInstance().player != null && !DroneClient.piloting()) {
+                Minecraft.getInstance().setScreen(new com.gunsmod.client.screen.TacticalMapScreen());
+            }
+        }
         while (GunClient.SCOPE_ZOOM.consumeClick()) {
             if (GunClient.variableScope()) {
                 if (com.gunsmod.gun.Attachment.zoomStep >= com.gunsmod.gun.Attachment.ZOOM_STEPS.length - 1) com.gunsmod.gun.Attachment.zoomStep = -1;

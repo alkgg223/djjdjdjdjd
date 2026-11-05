@@ -129,6 +129,11 @@ public final class Squad {
 
     /** a command from the player's squad screen */
     public static void command(ServerPlayer p, int cmd, int formation) {
+        command(p, cmd, formation, null);
+    }
+
+    /** an order; {@code at} is the place picked on the tactical map (null: where the player looks) */
+    public static void command(ServerPlayer p, int cmd, int formation, @javax.annotation.Nullable Vec3 at) {
         List<BotEntity> squad = members(p);
         if (cmd == C_FOLLOW || squad.isEmpty()) {
             for (BotEntity b : recruits(p)) {
@@ -141,8 +146,8 @@ public final class Squad {
             return;
         }
         int n = squad.size();
-        Vec3 look = lookPoint(p);
-        float facing = p.getYRot();
+        Vec3 look = at != null ? at : lookPoint(p);
+        float facing = at != null ? (float) (Mth.atan2(at.z - p.getZ(), at.x - p.getX()) * Mth.RAD_TO_DEG) - 90f : p.getYRot();
         switch (cmd) {
             case C_FOLLOW -> {
                 for (int i = 0; i < n; i++) squad.get(i).giveOrder(p.getUUID(), Order.FOLLOW, p.position(), -1, i, n);

@@ -75,6 +75,7 @@ public class GunsMod {
         com.gunsmod.gun.Ballistics.tick();
         com.gunsmod.entity.ai.Squad.tick(e.getServer());
         com.gunsmod.entity.ai.Spotting.tick(e.getServer());
+        com.gunsmod.game.MatchLogic.tick(e.getServer());
     }
 
     /** the crew of any vehicle (jeep included) is protected: hits go to the vehicle until it blows up */
@@ -87,6 +88,7 @@ public class GunsMod {
 
     /** a kill on a battlefield scores; a player that dies during an arena round is out of that round */
     private static void onDeath(LivingDeathEvent e) {
+        com.gunsmod.game.MatchLogic.onDeath(e);
         BattleEvents.onDeath(e);
         if (!(e.getEntity() instanceof ServerPlayer sp)) return;
         ServerLevel level = sp.serverLevel();

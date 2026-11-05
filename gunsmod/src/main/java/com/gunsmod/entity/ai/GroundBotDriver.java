@@ -69,6 +69,13 @@ public final class GroundBotDriver {
     @Nullable
     public Vec3 goal(Entity v, @Nullable LivingEntity enemy, boolean armed, Vec3 home, double leash, double engage, double tooClose) {
         slow = false;
+        // in a battle the patrol goes round the side's objective
+        Vec3 obj = com.gunsmod.game.MatchLogic.vehicleHome(v, home);
+        if (obj != home) {
+            if (waypoint != null && waypoint.distanceToSqr(obj) > (leash * 0.5) * (leash * 0.5)) waypoint = null;
+            home = obj;
+            leash = Math.min(leash, 40);
+        }
         if (enemy != null && enemy.isAlive() && armed) {
             double d = horiz(v, enemy.position());
             boolean see = canSee(v, enemy);

@@ -1,0 +1,59 @@
+newmtl black
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #black
+
+newmtl burnt_metal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #burnt_metal
+
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl grille
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #grille
+
+newmtl gunmetal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #gunmetal
+
+newmtl olive
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #olive
+
+newmtl olive_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #olive_dark
+
+newmtl screen
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #screen
+
+newmtl steel
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #steel
+
+newmtl yellow
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #yellow

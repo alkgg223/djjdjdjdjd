@@ -1,0 +1,77 @@
+newmtl amber
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #amber
+
+newmtl black
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #black
+
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl glow
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #glow
+
+newmtl green_mark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #green_mark
+
+newmtl gunmetal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #gunmetal
+
+newmtl olive
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #olive
+
+newmtl olive_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #olive_dark
+
+newmtl red_mark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #red_mark
+
+newmtl sand
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #sand
+
+newmtl screen
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #screen
+
+newmtl screen_amber
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #screen_amber
+
+newmtl wood
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #wood
