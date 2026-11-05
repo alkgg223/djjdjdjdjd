@@ -39,6 +39,8 @@ public class BotTargetGoal extends Goal {
             if (!see) {
                 // not in sight (behind it, or behind a wall): footsteps only make it turn its head
                 if (current == null && d < Sight.hearing(e)) bot.hear(e.position());
+                // a drone of the side has it spotted: the soldier knows where to look
+                else if (current == null && d < range && Spotting.spotted(bot.level(), bot.getBotTeam(), e)) bot.hear(e.position());
                 continue;
             }
             double score = d + (see ? 0 : 25) - (e == bot.lastAttacker ? 15 : 0) - (e == current ? 6 : 0) - (e.getId() == bot.focusTarget ? 200 : 0);

@@ -210,6 +210,8 @@ public final class GunClient {
         sinceShot++;
         if (cooldown > 0) cooldown--;
         if (p == null) return;
+        // flying a drone: the gun in the hands is not used
+        if (DroneClient.piloting()) return;
         boolean inScreen = mc.screen != null;
         // lie down / get up (jumping gets up too)
         while (PRONE.consumeClick()) {

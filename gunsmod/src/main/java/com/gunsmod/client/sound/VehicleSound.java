@@ -25,7 +25,7 @@ import net.minecraft.world.phys.Vec3;
  * turbine), following the vehicle and cross-fading with speed / rotor speed. Also exhaust, rotor wash and damage smoke.
  */
 public class VehicleSound extends AbstractTickableSoundInstance {
-    private static final int TANK_IDLE = 0, TANK_DRIVE = 1, ROTOR = 2, CAR_IDLE = 3, CAR_DRIVE = 4, FPV = 5, SHAHED = 6;
+    private static final int TANK_IDLE = 0, TANK_DRIVE = 1, ROTOR = 2, CAR_IDLE = 3, CAR_DRIVE = 4, FPV = 5, SHAHED = 6, QUAD = 7, HEXA = 8, PLANE = 9, LANCET = 10;
     private static final Map<VehicleEntity, VehicleSound[]> ACTIVE = new WeakHashMap<>();
     private static final Map<VehicleEntity, Boolean> RUNNING = new WeakHashMap<>();
 
@@ -40,6 +40,10 @@ public class VehicleSound extends AbstractTickableSoundInstance {
             case CAR_DRIVE -> "jeep_drive";
             case FPV -> "fpv_buzz";
             case SHAHED -> "shahed_engine";
+            case QUAD -> "drone_quad";
+            case HEXA -> "drone_hexa";
+            case PLANE -> "drone_plane";
+            case LANCET -> "drone_lancet";
             default -> "heli_rotor";
         }), SoundSource.NEUTRAL, SoundInstance.createUnseededRandom());
         this.vehicle = v;
@@ -69,7 +73,15 @@ public class VehicleSound extends AbstractTickableSoundInstance {
     private static void drone(com.gunsmod.entity.DroneEntity d) {
         VehicleSound[] s = ACTIVE.get(d);
         if (d.isAlive() && !playing(s)) {
-            s = new VehicleSound[]{new VehicleSound(d, d.fpv() ? FPV : SHAHED)};
+            int k = switch (d.kind()) {
+                case FPV -> FPV;
+                case SHAHED -> SHAHED;
+                case RECON -> QUAD;
+                case BOMBER -> HEXA;
+                case SURVEIL -> PLANE;
+                case LANCET -> LANCET;
+            };
+            s = new VehicleSound[]{new VehicleSound(d, k)};
             ACTIVE.put(d, s);
             Minecraft.getInstance().getSoundManager().play(s[0]);
         }
@@ -207,14 +219,26 @@ public class VehicleSound extends AbstractTickableSoundInstance {
     public void tick() {
         boolean alive = vehicle.isAlive() && !vehicle.isRemoved();
         float target;
-        if (kind == FPV || kind == SHAHED) {
+        if (kind == FPV || kind == SHAHED || kind >= QUAD) {
             if (!alive) {
                 this.stop();
                 return;
             }
             double sp = vehicle.position().subtract(vehicle.xo, vehicle.yo, vehicle.zo).length();
-            target = kind == FPV ? 2.2f : 7f;
-            this.pitch = kind == FPV ? (float) (0.85 + Math.min(0.35, sp * 0.22)) : (float) (0.95 + Math.min(0.1, sp * 0.05));
+            target = switch (kind) {
+                case FPV -> 2.2f;
+                case QUAD -> 1.6f;
+                case HEXA -> 2.6f;
+                case PLANE -> 4.5f;
+                case LANCET -> 2.4f;
+                default -> 7f;
+            };
+            this.pitch = switch (kind) {
+                case FPV -> (float) (0.85 + Math.min(0.35, sp * 0.22));
+                case QUAD, HEXA -> (float) (0.9 + Math.min(0.25, sp * 0.3));
+                case LANCET -> (float) (0.9 + Math.min(0.3, sp * 0.12));
+                default -> (float) (0.95 + Math.min(0.1, sp * 0.05));
+            };
         } else if (kind == ROTOR) {
             HelicopterEntity h = (HelicopterEntity) vehicle;
             if (!alive || h.rotor <= 0.02f) {

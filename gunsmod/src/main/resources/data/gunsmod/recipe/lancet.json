@@ -1,0 +1,24 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  " S ",
+  "STS",
+  " R "
+ ],
+ "key": {
+  "S": {
+   "item": "gunsmod:steel_ingot"
+  },
+  "T": {
+   "item": "minecraft:tnt"
+  },
+  "R": {
+   "item": "minecraft:redstone"
+  }
+ },
+ "result": {
+  "id": "gunsmod:lancet",
+  "count": 2
+ }
+}

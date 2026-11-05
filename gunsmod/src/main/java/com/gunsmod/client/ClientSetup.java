@@ -84,7 +84,8 @@ public final class ClientSetup {
         }
         e.registerItem(JeepItemRenderer.EXTENSIONS, vehicles.toArray(new Item[0]));
         e.registerItem(com.gunsmod.client.render.AirDefenseItemRenderer.EXTENSIONS, Reg.AD_ITEMS.stream().map(d -> (Item) d.get()).toArray(Item[]::new));
-        e.registerItem(com.gunsmod.client.render.DroneRenderer.Item.EXTENSIONS, Reg.FPV_DRONE.get(), Reg.SHAHED.get());
+        e.registerItem(com.gunsmod.client.render.DroneRenderer.Item.EXTENSIONS, Reg.FPV_DRONE.get(), Reg.SHAHED.get(),
+                Reg.RECON_DRONE.get(), Reg.BOMBER_DRONE.get(), Reg.SURVEIL_DRONE.get(), Reg.LANCET.get());
     }
 
     @SubscribeEvent
@@ -238,6 +239,7 @@ public final class ClientSetup {
         // night vision: the post effect over the world, before any other layer
         e.registerBelowAll(Reg.id("night_vision"), NightVision::layer);
         e.registerBelowAll(Reg.id("thermal"), Thermal::layer);
+        e.registerAboveAll(Reg.id("drone"), DroneClient::layer);
         e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Reg.id("battle_score"), (g, dt) -> g.drawManaged(() -> BattleHud.render(g, dt)));
         e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Reg.id("squad"), (g, dt) -> g.drawManaged(() -> SquadHud.render(g, dt)));
     }

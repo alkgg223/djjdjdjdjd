@@ -28,6 +28,7 @@ public final class Thermal {
 
     public static boolean active() {
         Minecraft mc = Minecraft.getInstance();
+        if (DroneClient.thermalOn()) return true;
         if (mc.player == null || !GunClient.scopeView()) return false;
         return GunItem.attachments(mc.player.getMainHandItem()).get(Attachment.Slot.SCOPE) == Attachment.THERMAL_SCOPE;
     }
@@ -42,11 +43,19 @@ public final class Thermal {
         boolean on = active();
         Set<Integer> now = new HashSet<>();
         if (on) {
-            AABB box = mc.player.getBoundingBox().inflate(220);
+            Entity eye = mc.getCameraEntity() != null ? mc.getCameraEntity() : mc.player;
+            AABB box = eye.getBoundingBox().inflate(220);
             for (Entity e : mc.level.getEntities(mc.player, box, x -> x instanceof LivingEntity le && le.isAlive())) {
                 e.setGlowingTag(true);
                 now.add(e.getId());
             }
+        }
+        // enemies the side's drones have spotted stand out through walls
+        for (Integer id : DroneClient.SPOTTED) {
+            Entity e = mc.level.getEntity(id);
+            if (e == null || !e.isAlive()) continue;
+            e.setGlowingTag(true);
+            now.add(id);
         }
         for (Integer id : LIT) {
             if (now.contains(id)) continue;

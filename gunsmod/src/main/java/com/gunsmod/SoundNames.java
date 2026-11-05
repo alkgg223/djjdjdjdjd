@@ -29,6 +29,7 @@ public final class SoundNames {
             "shot_mp7", "shot_p90", "shot_mpx", "shot_m240", "shot_mg3", "shot_pkp",
             "shot_m82", "shot_axmc", "shot_m200", "shot_benelli", "shot_r870", "shot_spas12",
             "shot_glock", "shot_deagle", "shot_p320", "shot_fiveseven", "impact_glass", "impact_armor",
-            "ciws_burst"
+            "ciws_burst", "drone_quad", "drone_hexa", "drone_lancet", "drone_plane", "drone_drop",
+            "ui_drone_static", "ui_drone_spot", "ui_drone_lock"
     };
 }

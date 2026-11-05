@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 
-from sounds import OUT, ROOT, write_ogg
+from sounds import OUT, ROOT, write_ogg, SR, noise, lp, hp, bp, norm, sat, fade
 from sounds_v19 import shot
 
 GUNS = {
@@ -132,5 +132,96 @@ def build_ciws():
         write_ogg(os.path.join(OUT, fname + ".ogg"), rotary(np.random.default_rng(5700 + v), 75, 0.4, 95, 0.8, 0.9))
         files.append(f"gunsmod:{fname}")
     sounds["ciws_burst"] = {"sounds": files, "subtitle": "subtitles.gunsmod.aa_gun"}
+    with open(path, "w") as fh:
+        json.dump(sounds, fh, indent=1)
+
+
+def quad(rng, freqs, harm, wash_lo, wash_hi, wash, L=2.0, drive=1.4):
+    """multirotor motors: detuned whines (one per motor) and the propeller wash beating over them"""
+    from sounds import _loopify
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    out = np.zeros(n)
+    for f in freqs:
+        wob = 1 + 0.01 * np.sin(2 * np.pi * (1.6 + rng.random() * 2) * k + rng.random() * 6) + 0.004 * lp(noise(L, rng), 8, 1)
+        ph = 2 * np.pi * np.cumsum(f * wob) / SR
+        out += sum(np.sin(h * ph) / h for h in range(1, harm)) * 0.2
+    w = bp(noise(L, rng), wash_lo, wash_hi) * wash * (1 + 0.35 * np.sin(2 * np.pi * freqs[0] * 2.0 * k))
+    return _loopify(norm(sat(out + w, drive), 0.85))
+
+
+def plane_engine(rng, L=3.0):
+    """a small four-stroke single: an even pulse train at about 70 firings a second, the tractor prop over it"""
+    from sounds import _loopify, place, env_exp
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    pulses = np.zeros(n)
+    tt = 0.0
+    burst = lp(noise(0.025, rng), 1400) * env_exp(int(0.025 * SR), 0.005, 0.0004)
+    while tt < L - 0.03:
+        place(pulses, burst * (0.85 + rng.random() * 0.3), tt)
+        tt += (1 / 70.0) * (1 + 0.025 * rng.standard_normal())
+    tone = sum(np.sin(2 * np.pi * 70 * h * k + h) / h for h in range(1, 6)) * 0.3
+    prop = bp(noise(L, rng), 160, 900) * (0.6 + 0.4 * np.sin(2 * np.pi * 140 * k)) * 0.5
+    return _loopify(norm(lp(sat(pulses * 2.6 + tone + prop, 1.8), 4200), 0.85))
+
+
+def release(seed):
+    """the drop rack's servo snapping open and the bomb leaving"""
+    rng = np.random.default_rng(seed)
+    from sounds import place, env_exp
+    n = int(SR * 0.5)
+    out = np.zeros(n)
+    k = np.arange(int(0.06 * SR)) / SR
+    servo = np.sin(2 * np.pi * (900 + 1400 * k / k[-1]) * k) * np.exp(-k * 30) * 0.4
+    place(out, servo, 0.0)
+    snap = hp(noise(0.02, rng), 2500) * env_exp(int(0.02 * SR), 0.0005, 0.004)
+    place(out, snap * 0.9, 0.055)
+    whoosh = bp(noise(0.4, rng), 400, 2200) * np.linspace(0.3, 0, int(0.4 * SR))
+    place(out, whoosh, 0.07)
+    return fade(norm(out, 0.9), 0.001, 0.05)
+
+
+def static_noise(seed, L=1.2):
+    """video link breaking up: hiss with dropouts and digital crackle"""
+    rng = np.random.default_rng(seed)
+    n = int(SR * L)
+    hiss = bp(noise(L, rng), 900, 9000) * 0.6
+    gate = (lp(noise(L, rng), 18, 1) > -0.1).astype(float) * 0.7 + 0.3
+    crackle = (rng.random(n) > 0.9993).astype(float) * rng.standard_normal(n) * 3
+    return fade(norm(hiss * gate + crackle, 0.8), 0.01, 0.15)
+
+
+def ping(seed, f0, f1, L=0.35):
+    from sounds import env_exp
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    f = np.linspace(f0, f1, n)
+    tone = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-k * 9)
+    tone += 0.3 * np.sin(4 * np.pi * np.cumsum(f) / SR) * np.exp(-k * 14)
+    return fade(norm(tone, 0.7), 0.002, 0.05)
+
+
+def build_drones():
+    path = os.path.join(ROOT, "sounds.json")
+    with open(path) as fh:
+        sounds = json.load(fh)
+
+    def put(name, xs, subtitle):
+        files = []
+        for v, x in enumerate(xs):
+            fname = f"{name}_{v + 1}" if len(xs) > 1 else name
+            write_ogg(os.path.join(OUT, fname + ".ogg"), x)
+            files.append(f"gunsmod:{fname}")
+        sounds[name] = {"sounds": files, "subtitle": f"subtitles.gunsmod.{subtitle}"}
+
+    put("drone_quad", [quad(np.random.default_rng(5800), (231, 238, 246, 252), 7, 600, 3800, 0.4)], "drone")
+    put("drone_hexa", [quad(np.random.default_rng(5810), (118, 121, 124, 127, 130, 133), 9, 180, 1800, 0.65, drive=1.8)], "drone")
+    put("drone_lancet", [quad(np.random.default_rng(5820), (520, 1040), 5, 1200, 7000, 0.6, drive=1.2)], "drone")
+    put("drone_plane", [plane_engine(np.random.default_rng(5830))], "drone")
+    put("drone_drop", [release(5840 + v) for v in range(2)], "drone_drop")
+    put("ui_drone_static", [static_noise(5850)], "drone_static")
+    put("ui_drone_spot", [ping(5860, 1400, 1900)], "drone_spot")
+    put("ui_drone_lock", [ping(5870, 900, 2400, 0.5)], "drone_spot")
     with open(path, "w") as fh:
         json.dump(sounds, fh, indent=1)

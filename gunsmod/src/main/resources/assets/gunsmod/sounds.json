@@ -1921,5 +1921,72 @@
    }
   ],
   "subtitle": "subtitles.gunsmod.aa_gun"
+ },
+ "drone_quad": {
+  "sounds": [
+   {
+    "name": "gunsmod:drone_quad",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.drone"
+ },
+ "drone_hexa": {
+  "sounds": [
+   {
+    "name": "gunsmod:drone_hexa",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.drone"
+ },
+ "drone_lancet": {
+  "sounds": [
+   {
+    "name": "gunsmod:drone_lancet",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.drone"
+ },
+ "drone_plane": {
+  "sounds": [
+   {
+    "name": "gunsmod:drone_plane",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.drone"
+ },
+ "drone_drop": {
+  "sounds": [
+   {
+    "name": "gunsmod:drone_drop_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:drone_drop_2",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.drone_drop"
+ },
+ "ui_drone_static": {
+  "sounds": [
+   "gunsmod:ui_drone_static"
+  ],
+  "subtitle": "subtitles.gunsmod.drone_static"
+ },
+ "ui_drone_spot": {
+  "sounds": [
+   "gunsmod:ui_drone_spot"
+  ],
+  "subtitle": "subtitles.gunsmod.drone_spot"
+ },
+ "ui_drone_lock": {
+  "sounds": [
+   "gunsmod:ui_drone_lock"
+  ],
+  "subtitle": "subtitles.gunsmod.drone_spot"
  }
 }

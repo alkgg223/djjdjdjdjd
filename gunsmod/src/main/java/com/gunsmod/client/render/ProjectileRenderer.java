@@ -75,6 +75,14 @@ public class ProjectileRenderer<T extends Entity> extends EntityRenderer<T> {
             pose.popPose();
             super.render(e, yaw, pt, pose, buf, light);
             return;
+        } else if (e instanceof GrenadeEntity g && g.isBomb()) {
+            // a drone bomb: its own model, nose down, turning slowly as it falls
+            pose.mulPose(Axis.YP.rotationDegrees(Mth.lerp(pt, g.prevSpin, g.spin)));
+            pose.translate(-0.5f, -0.05f, -0.5f);
+            BakedRender.entity("entity/drone/bomber/bomb", pose, buf, light, OverlayTexture.NO_OVERLAY, 1f, 1f, 1f);
+            pose.popPose();
+            super.render(e, yaw, pt, pose, buf, light);
+            return;
         } else if (e instanceof GrenadeEntity g) {
             stack = new ItemStack(g.isSmoke() ? Reg.SMOKE_GRENADE.get() : Reg.FRAG_GRENADE.get());
             scale = 0.45f;

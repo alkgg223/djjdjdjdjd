@@ -1,0 +1,11 @@
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl gunmetal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #gunmetal

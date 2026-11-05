@@ -27,6 +27,7 @@ public final class ClientEvents {
 
     @SubscribeEvent
     public static void tick(ClientTickEvent.Post e) {
+        DroneClient.tick();
         GunClient.tick();
         Thermal.tick();
         while (GunClient.SQUAD.consumeClick()) {
@@ -50,6 +51,10 @@ public final class ClientEvents {
     /** nearby explosions shake the camera */
     @SubscribeEvent
     public static void shake(ViewportEvent.ComputeCameraAngles e) {
+        if (DroneClient.piloting()) {
+            DroneClient.camera(e);
+            return;
+        }
         GunClient.updateSway((float) e.getPartialTick());
         if (GunClient.swayYaw != 0f || GunClient.swayPitch != 0f) {
             e.setYaw(e.getYaw() + GunClient.swayYaw);
@@ -70,6 +75,14 @@ public final class ClientEvents {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
+        if (DroneClient.piloting()) {
+            // the buttons belong to the drone: nothing is punched, placed or used by the body
+            e.setCanceled(true);
+            e.setSwingHand(false);
+            if (e.isAttack()) DroneClient.button(true);
+            else if (e.isUseItem()) DroneClient.button(false);
+            return;
+        }
         if (p.getVehicle() instanceof JeepEntity jeep && e.isAttack()) {
             e.setCanceled(true);
             e.setSwingHand(false);
@@ -100,6 +113,10 @@ public final class ClientEvents {
     /** the mouse wheel turns the variable scope's zoom ring while aiming through it */
     @SubscribeEvent
     public static void scroll(InputEvent.MouseScrollingEvent e) {
+        if (DroneClient.piloting()) {
+            e.setCanceled(true);
+            return;
+        }
         if (!GunClient.variableScope() || e.getScrollDeltaY() == 0) return;
         GunClient.zoomStep(e.getScrollDeltaY() > 0 ? 1 : -1);
         e.setCanceled(true);
@@ -108,6 +125,10 @@ public final class ClientEvents {
     @SubscribeEvent
     public static void fov(ViewportEvent.ComputeFov e) {
         if (!e.usedConfiguredFov()) return;
+        if (DroneClient.piloting()) {
+            e.setFOV(e.getFOV() / DroneClient.zoom());
+            return;
+        }
         float a = GunClient.aim((float) e.getPartialTick());
         if (a <= 0f) return;
         float z = GunClient.zoom();
@@ -116,12 +137,22 @@ public final class ClientEvents {
 
     @SubscribeEvent
     public static void turn(CalculatePlayerTurnEvent e) {
+        if (DroneClient.piloting()) {
+            e.setMouseSensitivity(e.getMouseSensitivity() / Math.pow(DroneClient.zoom(), 0.7));
+            return;
+        }
         float a = GunClient.aim;
         if (a > 0.5f) e.setMouseSensitivity(e.getMouseSensitivity() / Math.pow(GunClient.zoom(), 0.7));
     }
 
     @SubscribeEvent
     public static void hideCrosshair(RenderGuiLayerEvent.Pre e) {
+        if (DroneClient.piloting()) {
+            // the drone's picture: only its own display (and the chat) over it
+            if (!e.getName().equals(com.gunsmod.Reg.id("drone")) && !e.getName().equals(com.gunsmod.Reg.id("thermal"))
+                    && !e.getName().equals(VanillaGuiLayers.CHAT)) e.setCanceled(true);
+            return;
+        }
         if (!e.getName().equals(VanillaGuiLayers.CROSSHAIR)) return;
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null) return;
@@ -129,5 +160,17 @@ public final class ClientEvents {
                 || p.getVehicle() instanceof TankEntity t && t.getControllingPassenger() == p
                 || p.getVehicle() instanceof ArmoredCarEntity c && c.getControllingPassenger() == p
                 || p.getVehicle() instanceof com.gunsmod.entity.JetEntity) e.setCanceled(true);
+    }
+
+    /** flying a drone: the movement keys fly it and the body stands still */
+    @SubscribeEvent
+    public static void movementInput(net.neoforged.neoforge.client.event.MovementInputUpdateEvent e) {
+        DroneClient.input(e.getInput());
+    }
+
+    /** no hands in front of the drone's camera */
+    @SubscribeEvent
+    public static void hand(net.neoforged.neoforge.client.event.RenderHandEvent e) {
+        if (DroneClient.piloting()) e.setCanceled(true);
     }
 }

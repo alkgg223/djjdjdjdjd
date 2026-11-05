@@ -367,6 +367,15 @@ public final class Reg {
             () -> new com.gunsmod.item.DroneItem(com.gunsmod.entity.DroneEntity.Kind.FPV, new Item.Properties().stacksTo(8).rarity(Rarity.RARE)));
     public static final DeferredItem<com.gunsmod.item.DroneItem> SHAHED = ITEMS.register("shahed",
             () -> new com.gunsmod.item.DroneItem(com.gunsmod.entity.DroneEntity.Kind.SHAHED, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
+    // 3.0: drones flown from their camera
+    public static final DeferredItem<com.gunsmod.item.DroneItem> RECON_DRONE = ITEMS.register("recon_drone",
+            () -> new com.gunsmod.item.DroneItem(com.gunsmod.entity.DroneEntity.Kind.RECON, new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+    public static final DeferredItem<com.gunsmod.item.DroneItem> BOMBER_DRONE = ITEMS.register("bomber_drone",
+            () -> new com.gunsmod.item.DroneItem(com.gunsmod.entity.DroneEntity.Kind.BOMBER, new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+    public static final DeferredItem<com.gunsmod.item.DroneItem> SURVEIL_DRONE = ITEMS.register("surveillance_drone",
+            () -> new com.gunsmod.item.DroneItem(com.gunsmod.entity.DroneEntity.Kind.SURVEIL, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
+    public static final DeferredItem<com.gunsmod.item.DroneItem> LANCET = ITEMS.register("lancet",
+            () -> new com.gunsmod.item.DroneItem(com.gunsmod.entity.DroneEntity.Kind.LANCET, new Item.Properties().stacksTo(4).rarity(Rarity.EPIC)));
     public static final DeferredItem<com.gunsmod.item.RepairKitItem> REPAIR_KIT = ITEMS.register("repair_kit",
             () -> new com.gunsmod.item.RepairKitItem(new Item.Properties().durability(64).rarity(Rarity.UNCOMMON)));
     public static final DeferredItem<com.gunsmod.item.CommandRadioItem> COMMAND_RADIO = ITEMS.register("command_radio",
@@ -449,6 +458,10 @@ public final class Reg {
                 out.accept(REPAIR_KIT.get());
                 out.accept(FPV_DRONE.get());
                 out.accept(SHAHED.get());
+                out.accept(RECON_DRONE.get());
+                out.accept(BOMBER_DRONE.get());
+                out.accept(SURVEIL_DRONE.get());
+                out.accept(LANCET.get());
                 out.accept(GREEN_SOLDIER.get());
                 out.accept(RED_SOLDIER.get());
                 out.accept(GREEN_JEEP.get());

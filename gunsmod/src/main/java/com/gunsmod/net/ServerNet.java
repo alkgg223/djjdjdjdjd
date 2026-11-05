@@ -60,6 +60,16 @@ public final class ServerNet {
         if (ctx.player() instanceof ServerPlayer sp && sp.isAlive() && !sp.isSpectator()) com.gunsmod.entity.ai.Squad.command(sp, p.command(), p.formation());
     }
 
+    public static void droneControl(Net.DroneControl p, IPayloadContext ctx) {
+        if (ctx.player() instanceof ServerPlayer sp && sp.level().getEntity(p.id()) instanceof com.gunsmod.entity.DroneEntity d) {
+            d.control(sp, p.x(), p.y(), p.z(), p.yaw(), p.pitch());
+        }
+    }
+
+    public static void droneAction(Net.DroneAction p, IPayloadContext ctx) {
+        if (ctx.player() instanceof ServerPlayer sp && sp.level().getEntity(p.id()) instanceof com.gunsmod.entity.DroneEntity d) d.action(sp, p.action());
+    }
+
     public static void radarRequest(Net.RadarRequest p, IPayloadContext ctx) {
         if (!(ctx.player() instanceof ServerPlayer sp) || !sp.isAlive() || sp.isSpectator()) return;
         if (sp.blockPosition().distSqr(p.pos()) > 16 * 16 || !sp.level().isLoaded(p.pos())) return;

@@ -36,6 +36,10 @@ public final class Net {
         r.playToServer(SquadOrder.TYPE, SquadOrder.CODEC, ServerNet::squadOrder);
         r.playToClient(SquadStatus.TYPE, SquadStatus.CODEC, (p, ctx) -> com.gunsmod.client.SquadHud.status(p));
         r.playToServer(RadarRequest.TYPE, RadarRequest.CODEC, ServerNet::radarRequest);
+        r.playToServer(DroneControl.TYPE, DroneControl.CODEC, ServerNet::droneControl);
+        r.playToServer(DroneAction.TYPE, DroneAction.CODEC, ServerNet::droneAction);
+        r.playToClient(DronePilot.TYPE, DronePilot.CODEC, (p, ctx) -> com.gunsmod.client.DroneClient.pilot(p));
+        r.playToClient(Spotted.TYPE, Spotted.CODEC, (p, ctx) -> com.gunsmod.client.DroneClient.spotted(p));
         r.playToClient(RadarPicture.TYPE, RadarPicture.CODEC, (p, ctx) -> com.gunsmod.client.screen.RadarScreen.picture(p));
         r.playToClient(ShotFx.TYPE, ShotFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.shotFx(p));
         r.playToClient(BulletPath.TYPE, BulletPath.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.bulletPath(p));
@@ -356,6 +360,90 @@ public final class Net {
 
         @Override
         public Type<SquadOrder> type() {
+            return TYPE;
+        }
+    }
+
+    /** the camera link of a drone the player flies: state 0 starts it (with the link range), 1 landed, 2 destroyed, 3 link lost */
+    public record DronePilot(int id, int state, float range) implements CustomPacketPayload {
+        public static final Type<DronePilot> TYPE = payloadType("drone_pilot");
+        public static final StreamCodec<RegistryFriendlyByteBuf, DronePilot> CODEC = CustomPacketPayload.codec(DronePilot::write, DronePilot::new);
+
+        DronePilot(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt(), b.readVarInt(), b.readFloat());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(id);
+            b.writeVarInt(state);
+            b.writeFloat(range);
+        }
+
+        @Override
+        public Type<DronePilot> type() {
+            return TYPE;
+        }
+    }
+
+    /** the drone pilot's controls each tick: where the drone is (flown on the client) and where its camera looks */
+    public record DroneControl(int id, double x, double y, double z, float yaw, float pitch) implements CustomPacketPayload {
+        public static final Type<DroneControl> TYPE = payloadType("drone_control");
+        public static final StreamCodec<RegistryFriendlyByteBuf, DroneControl> CODEC = CustomPacketPayload.codec(DroneControl::write, DroneControl::new);
+
+        DroneControl(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt(), b.readDouble(), b.readDouble(), b.readDouble(), b.readFloat(), b.readFloat());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(id);
+            b.writeDouble(x);
+            b.writeDouble(y);
+            b.writeDouble(z);
+            b.writeFloat(yaw);
+            b.writeFloat(pitch);
+        }
+
+        @Override
+        public Type<DroneControl> type() {
+            return TYPE;
+        }
+    }
+
+    /** a drone pilot's button (DroneEntity.A_*) */
+    public record DroneAction(int id, int action) implements CustomPacketPayload {
+        public static final Type<DroneAction> TYPE = payloadType("drone_action");
+        public static final StreamCodec<RegistryFriendlyByteBuf, DroneAction> CODEC = CustomPacketPayload.codec(DroneAction::write, DroneAction::new);
+
+        DroneAction(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt(), b.readVarInt());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(id);
+            b.writeVarInt(action);
+        }
+
+        @Override
+        public Type<DroneAction> type() {
+            return TYPE;
+        }
+    }
+
+    /** the enemies the player's side has spotted (outlined for him) */
+    public record Spotted(int[] ids) implements CustomPacketPayload {
+        public static final Type<Spotted> TYPE = payloadType("spotted");
+        public static final StreamCodec<RegistryFriendlyByteBuf, Spotted> CODEC = CustomPacketPayload.codec(Spotted::write, Spotted::new);
+
+        Spotted(RegistryFriendlyByteBuf b) {
+            this(b.readVarIntArray());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarIntArray(ids);
+        }
+
+        @Override
+        public Type<Spotted> type() {
             return TYPE;
         }
     }

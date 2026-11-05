@@ -23,6 +23,8 @@ import net.minecraft.world.phys.Vec3;
 public class GrenadeEntity extends Projectile {
     private static final EntityDataAccessor<Boolean> DATA_SMOKE = SynchedEntityData.defineId(GrenadeEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_AGE = SynchedEntityData.defineId(GrenadeEntity.class, EntityDataSerializers.INT);
+    /** a bomb dropped from a drone: goes off on impact */
+    private static final EntityDataAccessor<Boolean> DATA_BOMB = SynchedEntityData.defineId(GrenadeEntity.class, EntityDataSerializers.BOOLEAN);
 
     public record SmokeCloud(ResourceKey<Level> dim, Vec3 center, double radius, long until) {}
 
@@ -40,10 +42,25 @@ public class GrenadeEntity extends Projectile {
         this.entityData.set(DATA_SMOKE, smoke);
     }
 
+    /** a drone bomb let go at a point with the drone's speed */
+    public static GrenadeEntity bomb(Level level, Entity drone, Vec3 at, Vec3 vel) {
+        GrenadeEntity g = new GrenadeEntity(Reg.GRENADE.get(), level);
+        g.setOwner(drone);
+        g.entityData.set(DATA_BOMB, true);
+        g.moveTo(at.x, at.y, at.z, 0, 0);
+        g.setDeltaMovement(vel);
+        return g;
+    }
+
+    public boolean isBomb() {
+        return this.entityData.get(DATA_BOMB);
+    }
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder b) {
         b.define(DATA_SMOKE, false);
         b.define(DATA_AGE, 0);
+        b.define(DATA_BOMB, false);
     }
 
     public boolean isSmoke() {
@@ -71,6 +88,36 @@ public class GrenadeEntity extends Projectile {
         if (!this.level().isClientSide) this.entityData.set(DATA_AGE, age);
         prevSpin = spin;
         Vec3 v = this.getDeltaMovement().add(0, -0.05, 0);
+        if (isBomb()) {
+            // nose down, no bounce: it goes off on whatever it meets
+            Vec3 from = this.position();
+            this.move(MoverType.SELF, v);
+            this.setDeltaMovement(v.scale(0.99));
+            spin += 4f;
+            if (!this.level().isClientSide) {
+                boolean hit = this.horizontalCollision || this.verticalCollision || age > 240;
+                if (!hit) {
+                    for (Entity e : this.level().getEntities(this, this.getBoundingBox().expandTowards(v).inflate(0.4),
+                            e -> e instanceof LivingEntity le && le.isAlive() && !(e instanceof DroneEntity))) {
+                        hit = true;
+                        break;
+                    }
+                }
+                if (hit) {
+                    Blast.explode(this.level(), this, this.position().add(0, 0.2, 0), 3.0f, false, Level.ExplosionInteraction.NONE, Blast.FX_SMALL, 0.8f);
+                    for (LivingEntity e : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(2.0),
+                            e -> e instanceof VehicleEntity || e instanceof JeepEntity)) {
+                        e.invulnerableTime = 0;
+                        e.hurt(this.damageSources().explosion(this, null), 30f);
+                        e.invulnerableTime = 0;
+                    }
+                    this.discard();
+                }
+            } else if (age % 2 == 0) {
+                this.level().addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE, from.x, from.y + 0.2, from.z, 0, 0.01, 0);
+            }
+            return;
+        }
         this.move(MoverType.SELF, v);
         Vec3 after = this.getDeltaMovement();
         if (this.horizontalCollision) v = new Vec3(-v.x * 0.4, v.y, -v.z * 0.4);
@@ -115,6 +162,7 @@ public class GrenadeEntity extends Projectile {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("Smoke", isSmoke());
         tag.putInt("Age", this.entityData.get(DATA_AGE));
+        tag.putBoolean("Bomb", isBomb());
     }
 
     @Override
@@ -122,5 +170,6 @@ public class GrenadeEntity extends Projectile {
         super.readAdditionalSaveData(tag);
         this.entityData.set(DATA_SMOKE, tag.getBoolean("Smoke"));
         this.entityData.set(DATA_AGE, tag.getInt("Age"));
+        this.entityData.set(DATA_BOMB, tag.getBoolean("Bomb"));
     }
 }

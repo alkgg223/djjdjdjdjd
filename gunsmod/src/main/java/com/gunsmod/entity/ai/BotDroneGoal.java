@@ -63,7 +63,10 @@ public class BotDroneGoal extends Goal {
     public boolean canUse() {
         if (--cooldown > 0) return false;
         cooldown = 40 + bot.getRandom().nextInt(20);
-        if ((bot.drones <= 0 && bot.shaheds <= 0) || bot.isPassenger() || bot.operator || threatened()) return false;
+        if (!com.gunsmod.Config.botDrones()) return false;
+        if ((bot.drones <= 0 && bot.shaheds <= 0 && bot.reconDrones <= 0 && bot.bomberDrones <= 0 && bot.lancets <= 0) || bot.isPassenger() || bot.operator
+                || threatened()) return false;
+        if (launchOthers()) return false;
         if (bot.shaheds > 0 && bot.getRandom().nextInt(3) == 0) {
             Entity v = vehicleTarget(SHAHED_MIN, SHAHED_MAX);
             Vec3 at = v != null ? v.position() : GroupFinder.find(bot.level(), bot, bot.getBotTeam(), bot.position(), SHAHED_MAX);
@@ -93,6 +96,50 @@ public class BotDroneGoal extends Goal {
         drone = DroneEntity.launch(bot.level(), DroneEntity.Kind.FPV, bot.getBotTeam(), eye.add(to.scale(1.0)), chase, point, bot.getUUID());
         flying = 0;
         return true;
+    }
+
+    /** 3.0: the drones that fly themselves once up: the recon quad over the enemy (it spots for the side), the bomber
+     * over a group of them, the Lancet after a vehicle. The soldier goes back to the fight. */
+    private boolean launchOthers() {
+        var level = bot.level();
+        Vec3 eye = bot.getEyePosition();
+        if (bot.lancets > 0) {
+            Entity v = vehicleTarget(50, 360);
+            if (v != null) {
+                bot.lancets--;
+                Vec3 to = v.position().subtract(bot.position()).multiply(1, 0, 1).normalize();
+                DroneEntity.launch(level, DroneEntity.Kind.LANCET, bot.getBotTeam(), eye.add(to.scale(1.2)).add(0, 0.4, 0), v, null, bot.getUUID());
+                cooldown = 900 + bot.getRandom().nextInt(900);
+                return true;
+            }
+        }
+        if (bot.reconDrones > 0 && !friendlyEyeUp()) {
+            Vec3 at = GroupFinder.find(level, bot, bot.getBotTeam(), bot.position(), 140);
+            if (at == null) at = bot.position().add(bot.getLookAngle().multiply(1, 0, 1).normalize().scale(35));
+            bot.reconDrones--;
+            DroneEntity.launch(level, DroneEntity.Kind.RECON, bot.getBotTeam(), eye.add(0, 0.6, 0), null, at, bot.getUUID());
+            cooldown = 600 + bot.getRandom().nextInt(600);
+            return true;
+        }
+        if (bot.bomberDrones > 0) {
+            Vec3 at = GroupFinder.find(level, bot, bot.getBotTeam(), bot.position(), 150);
+            if (at != null && at.distanceTo(bot.position()) > 24) {
+                bot.bomberDrones--;
+                DroneEntity.launch(level, DroneEntity.Kind.BOMBER, bot.getBotTeam(), eye.add(0, 0.6, 0), null, at, bot.getUUID());
+                cooldown = 900 + bot.getRandom().nextInt(900);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** a recon quad or a surveillance plane of the side is already watching round here */
+    private boolean friendlyEyeUp() {
+        for (DroneEntity d : bot.level().getEntitiesOfClass(DroneEntity.class, bot.getBoundingBox().inflate(150, 80, 150),
+                d -> d.getBotTeam() == bot.getBotTeam() && (d.kind() == DroneEntity.Kind.RECON || d.kind() == DroneEntity.Kind.SURVEIL))) {
+            return true;
+        }
+        return false;
     }
 
     @Override

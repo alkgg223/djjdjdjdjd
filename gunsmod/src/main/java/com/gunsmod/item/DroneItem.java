@@ -53,6 +53,21 @@ public class DroneItem extends Item {
         Vec3 look = player.getViewVector(1f);
         BotTeam team = BotTeam.of(player);
         if (team == null) team = BotTeam.GREEN;
+        boolean flown = kind != DroneEntity.Kind.FPV && kind != DroneEntity.Kind.SHAHED || kind == DroneEntity.Kind.FPV && player.isShiftKeyDown();
+        if (flown && player instanceof ServerPlayer sp) {
+            // flown from its camera: it lifts off in front of the operator
+            if (player.isPassenger()) {
+                player.displayClientMessage(Component.translatable("gunsmod.msg.drone_not_riding").withStyle(ChatFormatting.RED), true);
+                return InteractionResultHolder.fail(stack);
+            }
+            Vec3 flat = new Vec3(look.x, 0, look.z);
+            flat = flat.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : flat.normalize();
+            Vec3 from = kind.quad() ? eye.add(flat.scale(1.4)).add(0, 0.2, 0) : player.position().add(flat.scale(2.2)).add(0, 1.6, 0);
+            DroneEntity.launchManual(sp, kind, from);
+            player.displayClientMessage(Component.translatable("gunsmod.msg.drone_up", Component.translatable(this.getDescriptionId())).withStyle(ChatFormatting.AQUA), true);
+            used(player, stack, 40);
+            return InteractionResultHolder.success(stack);
+        }
         if (kind == DroneEntity.Kind.FPV) {
             GunLogic.Trace t = GunLogic.trace(level, player, eye, look, FPV_RANGE);
             Entity chase = t.entity() instanceof LivingEntity le && le.isAlive() ? t.entity() : null;
@@ -114,6 +129,14 @@ public class DroneItem extends Item {
         if (kind == DroneEntity.Kind.FPV) {
             tip.add(Component.translatable("gunsmod.tip.fpv1").withStyle(ChatFormatting.GRAY));
             tip.add(Component.translatable("gunsmod.tip.fpv2").withStyle(ChatFormatting.GRAY));
+            tip.add(Component.translatable("gunsmod.tip.fpv3").withStyle(ChatFormatting.AQUA));
+            return;
+        }
+        if (kind != DroneEntity.Kind.SHAHED) {
+            tip.add(Component.translatable("gunsmod.tip." + kind.id() + "1").withStyle(ChatFormatting.GRAY));
+            tip.add(Component.translatable("gunsmod.tip." + kind.id() + "2").withStyle(ChatFormatting.GRAY));
+            tip.add(Component.translatable("gunsmod.tip.drone_battery", kind.battery() / 1200, Math.round(kind.link())).withStyle(ChatFormatting.DARK_AQUA));
+            tip.add(Component.translatable("gunsmod.tip.drone_keys").withStyle(ChatFormatting.DARK_GRAY));
             return;
         }
         BlockPos t = stack.get(Reg.LINK.get());

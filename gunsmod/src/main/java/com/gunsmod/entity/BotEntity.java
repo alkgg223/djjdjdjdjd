@@ -100,6 +100,8 @@ public class BotEntity extends PathfinderMob {
     public int mines = 1;
     /** FPV kamikaze drones and Shahed-136s it carries (a drone operator) */
     public int drones, shaheds;
+    /** 3.0: recon quads, bomber hexacopters and Lancets it carries */
+    public int reconDrones, bomberDrones, lancets;
     // ------------------------------------------------------------------------------------ squad (a player's orders)
     @Nullable public java.util.UUID squadLeader;
     public com.gunsmod.entity.ai.Squad.Order order = com.gunsmod.entity.ai.Squad.Order.NONE;
@@ -220,6 +222,10 @@ public class BotEntity extends PathfinderMob {
         float d = r.nextFloat();
         if (d < 0.12f) drones = 3;
         else if (d < 0.16f) shaheds = 2;
+        // 3.0: a recon quad (spots for the side), a bomber hexacopter, or a pair of Lancets
+        else if (d < 0.20f) reconDrones = 1;
+        else if (d < 0.23f) bomberDrones = 1;
+        else if (d < 0.26f) lancets = 2;
     }
 
     /** every slot the gun supports gets a random attachment of that slot, or stays empty */
@@ -779,6 +785,9 @@ public class BotEntity extends PathfinderMob {
         tag.putInt("Mines", mines);
         tag.putInt("Drones", drones);
         tag.putInt("Shaheds", shaheds);
+        tag.putInt("ReconDrones", reconDrones);
+        tag.putInt("BomberDrones", bomberDrones);
+        tag.putInt("Lancets", lancets);
         if (squadLeader != null) {
             tag.putUUID("SquadLeader", squadLeader);
             tag.putString("Order", order.name());
@@ -821,6 +830,9 @@ public class BotEntity extends PathfinderMob {
         mines = tag.contains("Mines") ? tag.getInt("Mines") : 1;
         drones = tag.getInt("Drones");
         shaheds = tag.getInt("Shaheds");
+        reconDrones = tag.getInt("ReconDrones");
+        bomberDrones = tag.getInt("BomberDrones");
+        lancets = tag.getInt("Lancets");
         if (tag.hasUUID("SquadLeader")) {
             squadLeader = tag.getUUID("SquadLeader");
             try {
