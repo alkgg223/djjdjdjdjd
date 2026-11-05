@@ -1078,7 +1078,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         this.level().addFreshEntity(m);
         this.level().playSound(null, at.x, at.y, at.z, Reg.sound("jet_missile"), SoundSource.NEUTRAL, 9f, 0.95f + this.random.nextFloat() * 0.1f);
         if (this.level() instanceof ServerLevel sl) {
-            PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, 160, new Net.MuzzleFx(at, noseDir(), 0.6f, this.getId()));
+            PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, com.gunsmod.gun.GunLogic.SHOT_RANGE, new Net.MuzzleFx(at, noseDir(), 0.6f, this.getId()));
             BotEntity.alertGunfire(sl, shooter, 96);
         }
         if (w == 0) fireStores = false;
@@ -1111,7 +1111,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         }
         List<Vec3> ends = new ArrayList<>();
         ends.add(tr.end().subtract(muzzle));
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, new Net.ShotFx(this.getId(), gunFxId(), muzzle, ends, new byte[]{tr.kind()}, false));
+        com.gunsmod.gun.GunLogic.broadcastFx(this, muzzle, new Net.ShotFx(this.getId(), gunFxId(), muzzle, ends, new byte[]{tr.kind()}, false));
         if (this.level() instanceof ServerLevel sl && this.tickCount % 10 == 0) BotEntity.alertGunfire(sl, shooter, 96);
     }
 

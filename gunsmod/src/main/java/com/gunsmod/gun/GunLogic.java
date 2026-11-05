@@ -101,6 +101,14 @@ public final class GunLogic {
 
     public record Trace(Vec3 end, byte kind, Entity entity, boolean headshot, BlockPos block) {}
 
+    /** how far a gunshot is sent (and heard) */
+    public static final double SHOT_RANGE = 640;
+
+    /** a shot / muzzle effect for everyone within SHOT_RANGE of the gun (it is heard that far) */
+    public static void broadcastFx(Entity source, Vec3 at, net.minecraft.network.protocol.common.custom.CustomPacketPayload fx) {
+        if (source.level() instanceof net.minecraft.server.level.ServerLevel sl) PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, SHOT_RANGE, fx);
+    }
+
     /** ray cast against blocks then entities */
     public static Trace trace(Level level, Entity shooter, Vec3 from, Vec3 dir, double range) {
         Vec3 to = from.add(dir.scale(range));
@@ -211,8 +219,8 @@ public final class GunLogic {
         byte[] k = new byte[kinds.size()];
         for (int i = 0; i < k.length; i++) k[i] = kinds.get(i);
         Net.ShotFx fx = new Net.ShotFx(shooter.getId(), t.ordinal(), eye, relative(eye, ends), k, suppressed);
-        if (except != null) PacketDistributor.sendToPlayersTrackingEntity(shooter, fx);
-        else PacketDistributor.sendToPlayersTrackingEntityAndSelf(shooter, fx);
+        // gunfire carries far: everyone within SHOT_RANGE gets the shot (sound, flash, tracer)
+        if (level instanceof net.minecraft.server.level.ServerLevel sl) PacketDistributor.sendToPlayersNear(sl, except, eye.x, eye.y, eye.z, SHOT_RANGE, fx);
         // soldiers hear gunfire
         if (level instanceof ServerLevel sl && !suppressed) BotEntity.alertGunfire(sl, shooter, t.range > 100 ? 64 : 40);
     }

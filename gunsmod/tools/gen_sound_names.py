@@ -1,10 +1,27 @@
 """Writes com/gunsmod/SoundNames.java: every sound event in sounds.json, so the mod registers all of them (a sound the
-code asks for but nobody registered would play the fallback beep). Run after any sound tool."""
+code asks for but nobody registered would play the fallback beep), and gives every world sound its long hearing distance
+in sounds.json. Run after any sound tool."""
 import json
 import os
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-names = list(json.load(open(os.path.join(ROOT, "src/main/resources/assets/gunsmod/sounds.json"))))
+SJ = os.path.join(ROOT, "src/main/resources/assets/gunsmod/sounds.json")
+sounds = json.load(open(SJ))
+# every world sound carries five times the vanilla distance (16 blocks a volume step); the interface beeps stay close
+RANGE = 80
+for name, ev in sounds.items():
+    out = []
+    for f in ev.get("sounds", []):
+        e = dict(f) if isinstance(f, dict) else {"name": f}
+        if name.startswith("ui_"):
+            e.pop("attenuation_distance", None)
+        else:
+            e["attenuation_distance"] = RANGE
+        out.append(e if len(e) > 1 else e["name"])
+    ev["sounds"] = out
+with open(SJ, "w") as fh:
+    json.dump(sounds, fh, indent=1)
+names = list(sounds)
 out = os.path.join(ROOT, "src/main/java/com/gunsmod/SoundNames.java")
 body = ",\n".join("            " + ", ".join('"%s"' % n for n in names[i:i + 6]) for i in range(0, len(names), 6))
 open(out, "w").write("""package com.gunsmod;

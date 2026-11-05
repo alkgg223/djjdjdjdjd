@@ -239,7 +239,7 @@ public class DefenseBlockEntity extends BlockEntity {
         level.addFreshEntity(m);
         level.playSound(null, at.x, at.y, at.z, Reg.sound(type.sound), SoundSource.BLOCKS, 10f, 0.95f + level.random.nextFloat() * 0.1f);
         if (level instanceof ServerLevel sl) {
-            PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, 200, new Net.MuzzleFx(at, dir.scale(-1), 1.3f, -1 - worldPosition.hashCode()));
+            PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, com.gunsmod.gun.GunLogic.SHOT_RANGE, new Net.MuzzleFx(at, dir.scale(-1), 1.3f, -1 - worldPosition.hashCode()));
         }
         ammo--;
         cooldown = type.interval;
@@ -292,7 +292,7 @@ public class DefenseBlockEntity extends BlockEntity {
         }
         if (t instanceof JetEntity jet) jet.underFire(null);
         if (level instanceof ServerLevel sl) {
-            PacketDistributor.sendToPlayersNear(sl, null, origin.x, origin.y, origin.z, 220, new Net.ShotFx(-1, type.fx, origin, ends, kinds, false));
+            PacketDistributor.sendToPlayersNear(sl, null, origin.x, origin.y, origin.z, com.gunsmod.gun.GunLogic.SHOT_RANGE, new Net.ShotFx(-1, type.fx, origin, ends, kinds, false));
         }
         if (--burstLeft <= 0) {
             burstLeft = type.magazine;

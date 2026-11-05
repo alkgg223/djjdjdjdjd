@@ -21,7 +21,7 @@ import net.minecraft.world.inventory.InventoryMenu;
 public class JetRenderer extends EntityRenderer<JetEntity> {
     /** the baked parts of an aircraft type */
     public static java.util.List<String> parts(com.gunsmod.entity.JetType t) {
-        java.util.List<String> l = new java.util.ArrayList<>(java.util.List.of("body", "mark_green", "mark_red", "gear_nose", "gear_main", "cockpit", "stick", "throttle"));
+        java.util.List<String> l = new java.util.ArrayList<>(java.util.List.of("body", "body_fp", "mark_green", "mark_red", "gear_nose", "gear_main", "cockpit", "stick", "throttle"));
         if (t.afterburner) l.add("burner");
         if (t.ground == com.gunsmod.entity.JetType.Ground.NUKE) l.add("bay");
         String[] stores = {"mav_0", "mav_1", "mav_2", "mav_3", "aim9_l", "aim9_r"};
@@ -48,7 +48,7 @@ public class JetRenderer extends EntityRenderer<JetEntity> {
         if (jet.hurtTime > 0) pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin((jet.hurtTime - pt) * 2f) * 0.8f));
         boolean burner = jet.isAfterburner() && !jet.isCrashing();
         renderJet(pose, buf, light, jet.type, jet.getBotTeam(), Mth.lerp(pt, jet.prevGear, jet.gear), jet.getStores(), burner, jet.isCrashing(),
-                jet.bayOpen(), burner ? 0.9f + jet.getRandom().nextFloat() * 0.25f : 1f);
+                jet.bayOpen(), burner ? 0.9f + jet.getRandom().nextFloat() * 0.25f : 1f, inside);
         if (inside) renderCockpit(pose, buf, light, jet);
         pose.popPose();
         super.render(jet, yaw, pt, pose, buf, light);
@@ -57,6 +57,12 @@ public class JetRenderer extends EntityRenderer<JetEntity> {
     /** gear 0 = down, 1 = folded away; stores = bit mask of the missiles still aboard */
     public static void renderJet(PoseStack pose, MultiBufferSource buf, int light, com.gunsmod.entity.JetType type, BotTeam team, float gear,
                                  int stores, boolean burner, boolean wreck, boolean bay, float flicker) {
+        renderJet(pose, buf, light, type, team, gear, stores, burner, wreck, bay, flicker, false);
+    }
+
+    /** inside = seen from the cockpit: the skin over the cockpit opening is left out so the panel shows */
+    public static void renderJet(PoseStack pose, MultiBufferSource buf, int light, com.gunsmod.entity.JetType type, BotTeam team, float gear,
+                                 int stores, boolean burner, boolean wreck, boolean bay, float flicker, boolean inside) {
         VehicleGeo.Jet g = type.geo;
         String dir = "entity/" + g.model() + "/";
         int ov = OverlayTexture.NO_OVERLAY;
@@ -70,7 +76,7 @@ public class JetRenderer extends EntityRenderer<JetEntity> {
         pose.pushPose();
         pose.scale(S, S, S);
         pose.translate(-0.5f, 0f, -0.5f);
-        BakedRender.entity(dir + "body", pose, buf, light, ov, r, gr, b);
+        BakedRender.entity(dir + (inside ? "body_fp" : "body"), pose, buf, light, ov, r, gr, b);
         if (!wreck) BakedRender.entity(dir + (team == BotTeam.GREEN ? "mark_green" : "mark_red"), pose, buf, light, ov, 1, 1, 1);
         if (gear < 0.98f) {
             float a = gear * 92f;

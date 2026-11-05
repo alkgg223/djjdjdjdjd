@@ -408,7 +408,7 @@ public class TankEntity extends VehicleEntity {
         this.level().addFreshEntity(shell);
         this.level().playSound(null, muzzle.x, muzzle.y, muzzle.z, Reg.sound("tank_fire"), SoundSource.NEUTRAL, 9f, 0.95f + this.random.nextFloat() * 0.1f);
         if (this.level() instanceof ServerLevel sl) {
-            PacketDistributor.sendToPlayersNear(sl, null, muzzle.x, muzzle.y, muzzle.z, 192, new Net.MuzzleFx(muzzle, dir, 1.6f, this.getId()));
+            PacketDistributor.sendToPlayersNear(sl, null, muzzle.x, muzzle.y, muzzle.z, com.gunsmod.gun.GunLogic.SHOT_RANGE, new Net.MuzzleFx(muzzle, dir, 1.6f, this.getId()));
             if (gunner != null) BotEntity.alertGunfire(sl, gunner, 96);
         }
     }
@@ -425,7 +425,7 @@ public class TankEntity extends VehicleEntity {
         if (tr.entity() != null && tr.entity() != this && gunner != null) GunLogic.damage(gunner, tr.entity(), 7f, tr.headshot(), GunType.M249);
         List<Vec3> ends = new ArrayList<>();
         ends.add(tr.end().subtract(muzzle));
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, new Net.ShotFx(this.getId(), -2, muzzle, ends, new byte[]{tr.kind()}, false));
+        com.gunsmod.gun.GunLogic.broadcastFx(this, muzzle, new Net.ShotFx(this.getId(), -2, muzzle, ends, new byte[]{tr.kind()}, false));
         if (gunner != null && this.level() instanceof ServerLevel sl) BotEntity.alertGunfire(sl, gunner, 64);
     }
 

@@ -10,6 +10,12 @@ Ka 0 0 0
 d 1.0
 map_Kd #bright
 
+newmtl burnt_metal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #burnt_metal
+
 newmtl dark
 Kd 1 1 1
 Ka 0 0 0

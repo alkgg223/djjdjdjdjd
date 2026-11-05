@@ -8,6 +8,7 @@
  "textures": {
   "black": "gunsmod:item/vehicle/mesh/black",
   "bright": "gunsmod:item/vehicle/mesh/bright",
+  "burnt_metal": "gunsmod:item/vehicle/mesh/burnt_metal",
   "dark": "gunsmod:item/vehicle/mesh/dark",
   "glass": "gunsmod:item/vehicle/mesh/glass",
   "glow": "gunsmod:item/vehicle/mesh/glow",

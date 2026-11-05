@@ -425,9 +425,9 @@ public final class GunClient {
         Minecraft mc = Minecraft.getInstance();
         Vec3 ear = mc.gameRenderer.getMainCamera().getPosition();
         double d = ear.distanceTo(at);
-        if (d < 48) return false;
-        // played a little towards the listener so it is not cut off by the attenuation range
-        Vec3 p = d > 140 ? ear.add(at.subtract(ear).normalize().scale(140)) : at;
+        if (d < 240) return false;
+        // the distant report where the gun is (sounds carry five times the vanilla range), drawn in past 700 blocks
+        Vec3 p = d > 700 ? ear.add(at.subtract(ear).normalize().scale(700)) : at;
         level.playLocalSound(p.x, p.y, p.z, Reg.sound(far), SoundSource.HOSTILE, 9f, 0.9f + RNG.nextFloat() * 0.2f, true);
         return true;
     }

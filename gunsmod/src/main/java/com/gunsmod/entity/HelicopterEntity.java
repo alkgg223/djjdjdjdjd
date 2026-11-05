@@ -653,7 +653,7 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider, Ai
     }
 
     private void muzzleFx(Vec3 at, Vec3 dir, float size) {
-        if (this.level() instanceof ServerLevel sl) PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, 128, new Net.MuzzleFx(at, dir, size, this.getId()));
+        if (this.level() instanceof ServerLevel sl) PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, com.gunsmod.gun.GunLogic.SHOT_RANGE, new Net.MuzzleFx(at, dir, size, this.getId()));
     }
 
     private void fireGun(LivingEntity shooter, @Nullable Vec3 aimAt) {
@@ -674,7 +674,7 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider, Ai
         }
         List<Vec3> ends = new ArrayList<>();
         ends.add(tr.end().subtract(muzzle));
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, new Net.ShotFx(this.getId(), g.fx, muzzle, ends, new byte[]{tr.kind()}, false));
+        com.gunsmod.gun.GunLogic.broadcastFx(this, muzzle, new Net.ShotFx(this.getId(), g.fx, muzzle, ends, new byte[]{tr.kind()}, false));
         if (this.level() instanceof ServerLevel sl) BotEntity.alertGunfire(sl, shooter, 80);
     }
 

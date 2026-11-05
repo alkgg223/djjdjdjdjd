@@ -68,12 +68,28 @@ MATS = {
     "grille": ((0.20, 0.21, 0.21), "grille", False),
     "links": ((0.30, 0.29, 0.28), "links", False),
     "olive_dark": ((0.27, 0.30, 0.21), "paint", False),
+    # cockpit: display pages, gauges, switch panels, keypad, caution lights (coloured textures fitted to the face),
+    # the canopy seen from inside (faint glass), the canopy frame
+    "mfd_a": ((1.0, 1.0, 1.0), "mfd_a", False),
+    "mfd_b": ((1.0, 1.0, 1.0), "mfd_b", False),
+    "mfd_c": ((1.0, 1.0, 1.0), "mfd_c", False),
+    "dial_a": ((1.0, 1.0, 1.0), "dial_a", False),
+    "dial_b": ((1.0, 1.0, 1.0), "dial_b", False),
+    "dial_c": ((1.0, 1.0, 1.0), "dial_c", False),
+    "switches": ((1.0, 1.0, 1.0), "switches", False),
+    "keypad": ((1.0, 1.0, 1.0), "keypad", False),
+    "caution": ((1.0, 1.0, 1.0), "caution", False),
+    "glass_in": ((0.80, 0.88, 0.95), "glass", False),
+    "frame": ((0.16, 0.17, 0.18), "metal", False),
     "sand_dark": ((0.52, 0.46, 0.33), "paint", False),
 }
-TEXTURES = ["paint", "metal", "rubber", "glass", "canvas", "plain", "skin", "screen", "stripes", "burnt", "array", "tread", "grille", "links"]
-EMISSIVE = {"glow", "red_light", "amber", "screen", "screen_amber"}
+TEXTURES = ["paint", "metal", "rubber", "glass", "canvas", "plain", "skin", "screen", "stripes", "burnt", "array", "tread", "grille", "links",
+            "mfd_a", "mfd_b", "mfd_c", "dial_a", "dial_b", "dial_c", "switches", "keypad", "caution"]
+# the texture is stretched over the whole face instead of tiling with world position
+FIT_UV = {"mfd_a", "mfd_b", "mfd_c", "dial_a", "dial_b", "dial_c", "switches", "keypad", "caution"}
+EMISSIVE = {"glow", "red_light", "amber", "screen", "screen_amber", "mfd_a", "mfd_b", "mfd_c", "caution"}
 # see-through materials: opacity of the texture
-TRANSLUCENT = {"glass_clear": 0.28, "hud_glass": 0.22}
+TRANSLUCENT = {"glass_clear": 0.28, "hud_glass": 0.22, "glass_in": 0.16}
 TEX_REF = "gunsmod:item/vehicle/mesh/"
 SMOOTH_DEG = 38.0
 UV_TILE = 40.0          # model units the whole texture spans
@@ -727,12 +743,27 @@ def smooth_normals(mesh):
     return out
 
 
-def _uvs(pts, n, seed):
-    """planar mapping along the face's main axis, kept inside the texture without wrapping"""
+def _uvs(pts, n, seed, fit=False):
+    """planar mapping along the face's main axis, kept inside the texture without wrapping; `fit` stretches the
+    texture over the whole face (displays, dials), mirrored so it reads the right way round from the front"""
     a = int(np.argmax(np.abs(n)))
     ax = [i for i in range(3) if i != a]
     us = [q[ax[0]] / UV_TILE for q in pts]
     vs = [-q[ax[1]] / UV_TILE for q in pts]
+    if fit:
+        if a == 1:
+            # a face lying flat: its top edge is the far (-z) side
+            us = [q[0] / UV_TILE for q in pts]
+            vs = [q[2] / UV_TILE for q in pts]
+        flip = (a == 2 and n[2] < 0) or (a == 0 and n[0] > 0)
+        if a == 0:
+            us = [q[2] / UV_TILE for q in pts]
+            vs = [-q[1] / UV_TILE for q in pts]
+        if flip:
+            us = [-x for x in us]
+        u0, v0 = min(us), min(vs)
+        du, dv = max(max(us) - u0, 1e-9), max(max(vs) - v0, 1e-9)
+        return [((u - u0) / du, (v - v0) / dv) for u, v in zip(us, vs)]
     u0, v0 = min(us), min(vs)
     du, dv = max(us) - u0, max(vs) - v0
     sc = 1.0 / max(1.0, du, dv)
@@ -768,7 +799,7 @@ def write_part(mesh, folder, name, res_dir):
             pts = p["pts"]
             seed += 1
             fn = poly_normal(pts)
-            uv = _uvs(pts, fn, seed)
+            uv = _uvs(pts, fn, seed, mat in FIT_UV)
             # faces of 3 or 4 corners only: fan out anything bigger
             polys = []
             if len(pts) <= 4:
@@ -854,6 +885,10 @@ def skin_texture(rng, size=256):
                 img[hy0:hy1, hx1] -= 0.18
                 for cx, cy in ((hx0 + 2, hy0 + 2), (hx1 - 2, hy0 + 2), (hx0 + 2, hy1 - 2), (hx1 - 2, hy1 - 2)):
                     img[cy, cx] -= 0.15
+    # two-tone camouflage: large soft-edged patches a shade darker (own random source: the other textures stay the same)
+    crng = np.random.default_rng(4242)
+    blot = np.asarray(Image.fromarray((crng.random((6, 6)) * 255).astype(np.uint8)).resize((size, size), Image.BICUBIC), dtype=float) / 255
+    img -= np.clip((blot - 0.52) * 7, 0, 1) * 0.13
     # weathering: faint streaks running back over the skin
     streak = rng.random((8, size))
     s = np.asarray(Image.fromarray((streak * 255).astype(np.uint8)).resize((size, size), Image.BILINEAR), dtype=float) / 255
@@ -952,8 +987,14 @@ def make_textures(res_dir, size=128):
     for f in os.listdir(out):
         if f.endswith(".png"):
             os.remove(os.path.join(out, f))
+    import cockpit_tex
+    for k, v in cockpit_tex.all_textures().items():
+        fam[k] = v
     for mat, (rgb, tex, tint) in MATS.items():
         base = fam[tex]
+        if base.ndim == 3:
+            Image.fromarray((np.clip(base * np.array(rgb), 0, 1) * 255).astype(np.uint8)).save(os.path.join(out, mat + ".png"))
+            continue
         if mat in EMISSIVE and tex != "screen":
             base = np.ones_like(base)
         a = np.stack([base * rgb[0], base * rgb[1], base * rgb[2]], axis=-1)

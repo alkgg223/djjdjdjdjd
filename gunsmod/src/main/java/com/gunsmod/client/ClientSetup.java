@@ -119,7 +119,7 @@ public final class ClientSetup {
             if (h.geo.chin() != null) e.register(BakedRender.id("entity/" + h.geo.model() + "/chin"));
         }
         for (String p : new String[]{"body", "mark_green", "mark_red", "gear_nose", "gear_main", "aim9_l", "aim9_r", "mav_0", "mav_1", "mav_2",
-                "mav_3", "burner", "cockpit", "stick", "throttle"}) {
+                "mav_3", "burner", "cockpit", "stick", "throttle", "body_fp"}) {
             e.register(BakedRender.id("entity/f16/" + p));
         }
         e.register(BakedRender.id("entity/car/civ_wheel"));

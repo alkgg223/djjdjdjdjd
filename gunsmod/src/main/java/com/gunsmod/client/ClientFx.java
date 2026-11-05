@@ -177,11 +177,11 @@ public final class ClientFx {
         if (dist < 90 * size) shake = Math.max(shake, Math.min(4f, (float) (size * 1.3 / (1 + dist / (9 * size)))));
         if (titan && dist < 260) flash = Math.max(flash, (float) (1 - dist / 300));
         int delay = (int) (dist / 17.0);
-        if (dist < 32 * size) {
+        if (dist < 160 * size) {
             mc.getSoundManager().playDelayed(new SimpleSoundInstance(Reg.sound("explosion_big"), SoundSource.BLOCKS, Math.max(1f, size * 2.2f),
                     0.85f + r.nextFloat() * 0.2f - (titan ? 0.25f : 0f), r, x, y, z), delay);
-        } else if (dist < 220 * size) {
-            float vol = (float) Mth.clamp(1.2 - dist / (220 * size), 0.15, 1.0);
+        } else if (dist < 1100 * size) {
+            float vol = (float) Mth.clamp(1.2 - dist / (1100 * size), 0.15, 1.0);
             mc.getSoundManager().playDelayed(new SimpleSoundInstance(Reg.sound("explosion_far"), SoundSource.BLOCKS, vol,
                     0.8f + r.nextFloat() * 0.2f, r, cam.x, cam.y, cam.z), delay);
         }
@@ -363,10 +363,10 @@ public final class ClientFx {
                 return age < delay + 1;
             });
         }
-        if (dist < 140) {
+        if (dist < 700) {
             mc.getSoundManager().playDelayed(new SimpleSoundInstance(Reg.sound("b2_bomb"), SoundSource.BLOCKS, 12f, 0.95f + r.nextFloat() * 0.1f, r, x, ground, z), delay);
-        } else if (dist < 900) {
-            float vol = (float) Mth.clamp(1.4 - dist / 900, 0.25, 1.0);
+        } else if (dist < 4500) {
+            float vol = (float) Mth.clamp(1.4 - dist / 4500, 0.25, 1.0);
             mc.getSoundManager().playDelayed(new SimpleSoundInstance(Reg.sound("b2_bomb_far"), SoundSource.BLOCKS, vol, 0.9f + r.nextFloat() * 0.1f, r,
                     cam.x, cam.y, cam.z), delay);
         }

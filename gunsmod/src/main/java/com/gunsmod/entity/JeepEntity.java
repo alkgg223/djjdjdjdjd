@@ -756,10 +756,10 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
         this.level().addFreshEntity(m);
         this.level().playSound(null, at.x, at.y, at.z, Reg.sound("atgm_launch"), SoundSource.NEUTRAL, 6f, 0.9f + this.random.nextFloat() * 0.1f);
         if (this.level() instanceof net.minecraft.server.level.ServerLevel sl) {
-            PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, 128, new Net.MuzzleFx(at, turretDir(), 0.7f, this.getId()));
+            PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, com.gunsmod.gun.GunLogic.SHOT_RANGE, new Net.MuzzleFx(at, turretDir(), 0.7f, this.getId()));
             // back blast behind the launcher
             Vec3 back = at.subtract(turretDir().scale(2.6));
-            PacketDistributor.sendToPlayersNear(sl, null, back.x, back.y, back.z, 96, new Net.MuzzleFx(back, turretDir().scale(-1), 0.6f, this.getId()));
+            PacketDistributor.sendToPlayersNear(sl, null, back.x, back.y, back.z, com.gunsmod.gun.GunLogic.SHOT_RANGE, new Net.MuzzleFx(back, turretDir().scale(-1), 0.6f, this.getId()));
             BotEntity.alertGunfire(sl, gunner, 96);
         }
     }
@@ -832,7 +832,7 @@ public class JeepEntity extends Mob implements BotRideable, MissileGuider {
         }
         List<Vec3> ends = new ArrayList<>();
         ends.add(tr.end().subtract(muzzle));
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, new Net.ShotFx(this.getId(), -1, muzzle, ends, new byte[]{tr.kind()}, false));
+        com.gunsmod.gun.GunLogic.broadcastFx(this, muzzle, new Net.ShotFx(this.getId(), -1, muzzle, ends, new byte[]{tr.kind()}, false));
         if (gunner != null && this.level() instanceof net.minecraft.server.level.ServerLevel sl) BotEntity.alertGunfire(sl, gunner, 64);
     }
 

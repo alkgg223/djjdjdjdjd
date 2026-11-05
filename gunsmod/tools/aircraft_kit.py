@@ -189,3 +189,85 @@ def hinge_lines(m, le_root, le_tip, chord_root, chord_tip, thick, fracs=(0.12, 0
     y = p[1] + _upper(c, thick, 0.85) + 0.02
     K.plate([v3(p[0] - 0.05, y, p[2] + 0.74 * c), v3(p[0] + 0.05, y, p[2] + 0.74 * c), v3(p[0] + 0.05, y, p[2] + c), v3(p[0] - 0.05, y, p[2] + c)],
             0.02, "dark", m=m)
+
+
+# ------------------------------------------------------------------------------------------------ v2.3.1 exterior detail
+def petal_nozzle(m, x, y, z0, z1, r0, r1, petals=16):
+    """a convergent nozzle of overlapping petals from radius r0 at z0 to r1 at z1 (pointing +z), the sync ring round
+    it, and inside the liner, the flame holder rings and the turbine face"""
+    for k in range(petals):
+        a0 = 2 * math.pi * (k - 0.55) / petals
+        a1 = 2 * math.pi * (k + 0.55) / petals
+        lift = 0.03 if k % 2 else 0.0
+        mat = "gunmetal" if k % 2 else "burnt_metal"
+        tip = 0.18 if k % 2 == 0 else 0.0
+        pts = [v3(x + math.cos(a0) * (r0 + lift), y + math.sin(a0) * (r0 + lift), z0),
+               v3(x + math.cos(a1) * (r0 + lift), y + math.sin(a1) * (r0 + lift), z0),
+               v3(x + math.cos(a1) * (r1 + lift), y + math.sin(a1) * (r1 + lift), z1),
+               v3(x + math.cos((a0 + a1) / 2) * (r1 + lift), y + math.sin((a0 + a1) / 2) * (r1 + lift), z1 + tip),
+               v3(x + math.cos(a0) * (r1 + lift), y + math.sin(a0) * (r1 + lift), z1)]
+        K.plate(pts, 0.05, mat, m=m)
+    K.torus("z", (x, y), z0 + 0.25, r0 + 0.06, 0.07, "steel", n=petals * 2, k=4, m=m)
+    K.torus("z", (x, y), z1 - 0.05, r1 + 0.02, 0.05, "dark", n=petals * 2, k=4, m=m)
+    # the liner seen from behind (inward faces), the flame holder and the turbine
+    liner = Mesh()
+    K.cylinder("z", (x, y), r1 * 0.96, z1 - 1.8, z1 - 0.02, "burnt_metal", n=petals, caps=(False, False), m=liner)
+    m.extend(inward(liner))
+    K.torus("z", (x, y), z1 - 1.0, r1 * 0.55, 0.06, "dark", n=16, k=4, m=m)
+    K.torus("z", (x, y), z1 - 1.0, r1 * 0.3, 0.05, "dark", n=12, k=4, m=m)
+    for k in range(6):
+        a = 2 * math.pi * k / 6
+        K.tube([(x + math.cos(a) * r1 * 0.3, y + math.sin(a) * r1 * 0.3, z1 - 1.0), (x + math.cos(a) * r1 * 0.9, y + math.sin(a) * r1 * 0.9, z1 - 1.0)],
+               0.04, "dark", n=4, m=m)
+    K.cylinder("z", (x, y), r1 * 0.96, z1 - 1.8, z1 - 1.75, "black", n=petals, caps=(False, True), m=m)
+    K.cylinder("z", (x, y), r1 * 0.22, z1 - 1.75, z1 - 1.2, "dark", n=10, r1=0.05, caps=(False, False), m=m)
+
+
+def nozzle_2d(m, x, y0, y1, z0, z1, w):
+    """a two-dimensional thrust-vectoring nozzle: side walls, the upper and lower flaps with their seams, the dark
+    throat inside"""
+    hw = w / 2
+    for s in (-1, 1):
+        K.plate([v3(x + s * hw, y0, z0), v3(x + s * hw, y1, z0), v3(x + s * hw, y1 - 0.2, z1), v3(x + s * hw, y0 + 0.2, z1)], 0.12, "gunmetal", m=m)
+    ym = (y0 + y1) / 2
+    for yy, d in ((y1, -1), (y0, 1)):
+        K.plate([v3(x - hw, yy, z0), v3(x + hw, yy, z0), v3(x + hw, yy + d * 0.25, z1), v3(x - hw, yy + d * 0.25, z1)], 0.1, "burnt_metal", m=m)
+        for k in range(1, 4):
+            xx = x - hw + k * w / 4
+            K.box((xx - 0.02, yy - 0.06, z0 + 0.1), (xx + 0.02, yy + 0.06, z1 - 0.05), "dark", m=m)
+    inner = Mesh()
+    K.box((x - hw + 0.1, y0 + 0.3, z1 - 1.6), (x + hw - 0.1, y1 - 0.3, z1 - 0.02), "burnt_metal", m=inner, faces="xXyYz")
+    m.extend(inward(inner))
+    K.box((x - hw + 0.1, ym - 0.04, z1 - 1.2), (x + hw - 0.1, ym + 0.04, z1 - 1.1), "dark", m=m)
+
+
+def canopy_frame(m, c, rx, ry, rz, bow=-0.68):
+    """the canopy's sill frame round its base and the windscreen arch"""
+    x, y, z = c
+    base = [(x + rx * 1.01 * math.cos(math.radians(a)), y + 0.02, z + rz * 1.01 * math.sin(math.radians(a))) for a in range(0, 361, 12)]
+    K.tube(base, 0.07, "dark", n=5, caps=(False, False), m=m)
+    bz = z + rz * bow
+    k = math.sqrt(max(0.05, 1 - bow * bow))
+    arch = [(x + rx * k * 1.01 * math.cos(math.radians(a)), y + ry * k * 1.01 * math.sin(math.radians(a)), bz) for a in range(0, 181, 12)]
+    K.tube(arch, 0.07, "dark", n=5, m=m)
+
+
+def beacon(m, x, y, z, r=0.16):
+    """the red anti-collision light on its base"""
+    K.cylinder("y", (x, z), r * 1.2, y, y + 0.06, "dark", n=8, m=m)
+    K.sphere((x, y + 0.06, z), r, r * 0.7, r, "red_light", n=8, rows=4, top_only=True, m=m)
+
+
+def insignia(spots, green=True):
+    """the team roundel: a ring in the team colour, white, the team colour again, its symbol in white on top"""
+    import vehmesh as V
+    m = Mesh()
+    team = "green_mark" if green else "red_mark"
+    for c, n, up, s in spots:
+        for rr, mat, off in ((1.0, team, 0.02), (0.74, "white_mark", 0.03), (0.52, team, 0.04)):
+            V._flat(m, c, n, up, [(math.cos(a) * s * rr, math.sin(a) * s * rr) for a in np.linspace(0, 2 * math.pi, 20, endpoint=False)], mat, off)
+        if green:
+            V.chevron(m, np.asarray(c, dtype=float) + np.asarray(n, dtype=float) * 0.025, n, up, s * 0.36, "white_mark")
+        else:
+            V.triangle_mark(m, np.asarray(c, dtype=float) + np.asarray(n, dtype=float) * 0.025, n, up, s * 0.3, "white_mark")
+    return m

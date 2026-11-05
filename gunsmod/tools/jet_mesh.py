@@ -8,6 +8,7 @@ import jet as J
 import meshkit as K
 import vehmesh as V
 import aircraft_kit as AK
+import cockpit_kit as CK
 from helis_mesh import stations_loft, foil
 from meshkit import Mesh, v3
 
@@ -53,13 +54,7 @@ def f16():
     K.cylinder("z", (8.0, 5.5), 0.05, -16.3, -15.9, "steel", n=6, m=body)
     # nozzle: turkey feathers tapering to the exhaust, black inside
     K.cylinder("z", (8.0, 5.6), 1.72, 21.3, 22.4, "gunmetal", n=24, r1=1.6, caps=(False, False), m=body)
-    K.cylinder("z", (8.0, 5.6), 1.6, 22.4, 24.2, "gunmetal", n=24, r1=1.42, caps=(False, False), m=body)
-    for k in range(12):
-        a = math.radians(k * 30)
-        x, y = 8 + math.cos(a) * 1.52, 5.6 + math.sin(a) * 1.52
-        K.tube([(x, y, 22.4), (8 + math.cos(a) * 1.44, 5.6 + math.sin(a) * 1.44, 24.2)], 0.05, "steel", n=4, m=body)
-    K.cylinder("z", (8.0, 5.6), 1.3, 24.0, 24.15, "black", n=20, caps=(False, True), m=body)
-    K.torus("z", (8.0, 5.6), 24.2, 1.42, 0.06, "steel", n=24, k=4, m=body)
+    AK.petal_nozzle(body, 8.0, 5.6, 22.4, 24.2, 1.6, 1.42, petals=18)
     # chin intake under the forward body, its dark mouth
     stations_loft(body, [
         (-7.5, 3.35, 1.62, 0.98, 3.0), (-7.2, 3.35, 1.72, 1.08, 3.0), (-3.0, 3.45, 1.7, 1.1, 3.0), (2.0, 3.7, 1.55, 1.0, 3.0),
@@ -76,6 +71,7 @@ def f16():
                          (16.0, 6.9, 0.25, 0.2, 2.0)], "paint", n=16)
     # bubble canopy, its frame bow, the seat headrest and the HUD
     K.sphere((8.0, 7.2, -8.3), 1.45, 2.05, 4.0, "glass", n=20, rows=8, top_only=True, m=body)
+    AK.canopy_frame(body, (8.0, 7.2, -8.3), 1.45, 2.05, 4.0)
     bow = [(8 + 1.42 * math.cos(math.radians(a)), 7.2 + 1.95 * math.sin(math.radians(a)), -5.4) for a in range(0, 181, 15)]
     K.tube(bow, 0.09, "dark", n=5, m=body)
     K.rbox((7.25, 6.6, -7.2), (8.75, 8.8, -6.3), 0.25, "dark", seg=1, m=body)
@@ -111,10 +107,10 @@ def f16():
     for s in (-1, 1):
         AK.light_strip(body, (8 + s * 1.95, 5.9, -11.0), (8 + s * 2.1, 6.1, -7.0))
     AK.reskin(body)
-    eye = (8.0, 7.2 + 0.35 * 2.05, -8.3 + 0.25 * 4.0)
-    pit, stick_p, thr_p = AK.cockpit(eye, 0.375, side_stick=True, displays=2)
+    eye = (8.0, 7.2 + 0.5 / 0.375, -8.3 + 0.25 * 4.0)
+    pit, stick_p, thr_p = CK.cockpit(body, eye, 0.375, ((8.0, 7.2, -8.3), 1.45, 2.05, 4.0), displays=2)
     g["eye"], g["seat"], g["stick"], g["throttle"] = eye, AK.place_seat(eye, 0.375), stick_p, thr_p
-    parts = {"body": body, "mark_green": V.team_marks(spots, True), "mark_red": V.team_marks(spots, False)}
+    parts = {"body": body, "mark_green": AK.insignia(spots, True), "mark_red": AK.insignia(spots, False)}
     parts.update(pit)
     # gear (folding about its pivots)
     nx, ny, nz = g["gearNose"]

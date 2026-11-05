@@ -12,6 +12,7 @@ import numpy as np
 
 import meshkit as K
 import aircraft_kit as AK
+import cockpit_kit as CK
 from meshkit import Mesh, v3
 
 SCALE = 0.6
@@ -192,9 +193,15 @@ def b2_all():
     parts, _ = b2()
     AK.reskin(parts["body"])
     parts["gear_nose"], parts["gear_main"] = b2_gear()
-    # the cockpit in the nose behind the four windows (model units are metres here)
-    eye = (8.0 - 0.45, 2.85, 4.75)
-    pit, stick_p, thr_p = AK.cockpit(eye, 1.0, side_stick=False, displays=3)
+    # the flight deck in the hump under the four windows (model units are metres here); the hull is lined inside
+    eye = (8.0 - 0.45, 3.2, 4.75)
+    deck = ((5.9, 2.0, 2.4), (10.1, 3.75, 6.4))
+    pit, stick_p, thr_p = CK.cockpit(parts["body"], eye, 1.0, displays=3, tub_w=0.45, enclosed=(deck, deck))
+    # the second seat, the mission commander's, on the right
+    co, _, _ = CK.cockpit(parts["body"], (8.0 + 0.45, 3.2, 4.75), 1.0, displays=3, tub_w=0.45, enclosed=(deck, deck), station_only=True)
+    pit["cockpit"].extend(co["cockpit"])
+    pit["cockpit"].extend(co["stick"])
+    pit["cockpit"].extend(co["throttle"])
     parts.update(pit)
     g = GEO["b2"]
     g["eye"], g["seat"], g["stick"], g["throttle"] = eye, AK.place_seat(eye, 1.0), stick_p, thr_p

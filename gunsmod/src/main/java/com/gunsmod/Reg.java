@@ -127,10 +127,13 @@ public final class Reg {
 
     // ------------------------------------------------------------------------------ sounds
     public static final Map<String, DeferredHolder<SoundEvent, SoundEvent>> SOUND = new LinkedHashMap<>();
+    /** blocks the server sends a sound out to (the client fades it by its own distance) */
+    public static final float SOUND_RANGE = 512f;
 
     static {
         for (String s : SoundNames.ALL) {
-            SOUND.put(s, SOUNDS.register(s, () -> SoundEvent.createVariableRangeEvent(id(s))));
+            // heard five times further than vanilla (attenuation_distance 80 in sounds.json): the server sends them that far too
+            SOUND.put(s, SOUNDS.register(s, () -> s.startsWith("ui_") ? SoundEvent.createVariableRangeEvent(id(s)) : SoundEvent.createFixedRangeEvent(id(s), SOUND_RANGE)));
         }
     }
 

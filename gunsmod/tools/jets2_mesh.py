@@ -16,6 +16,7 @@ import numpy as np
 import meshkit as K
 import vehmesh as V
 import aircraft_kit as AK
+import cockpit_kit as CK
 from helis_mesh import stations_loft, foil
 from jet_mesh import maverick, aim9
 from meshkit import Mesh, v3
@@ -106,8 +107,11 @@ def plume(nozzles, r, length=5.0):
 
 
 def canopy(m, c, rx, ry, rz, tint="glass"):
+    # room for the pilot's head: at least 0.7 m of bubble over the sill
+    ry = max(ry, 0.70 / U)
     _last_canopy["c"] = (c, rx, ry, rz)
     K.sphere(c, rx, ry, rz, tint, n=20, rows=8, top_only=True, m=m)
+    AK.canopy_frame(m, c, rx, ry, rz)
     x, y, z = c
     bow = [(x + rx * 0.98 * math.cos(math.radians(a)), y + ry * 0.95 * math.sin(math.radians(a)), z + rz * 0.35) for a in range(0, 181, 15)]
     K.tube(bow, 0.08, "dark", n=5, m=m)
@@ -146,20 +150,21 @@ def details(name, g, body):
     tl, tr = g["tips"]
     AK.lights(body, (tl[0] - 0.15, tl[1], tl[2] + 0.5), (tr[0] + 0.15, tr[1], tr[2] + 0.5), (8.0, g["ends"][1][1] + 0.4, g["ends"][1][2] - 0.6))
     AK.wicks(body, [(tl[0] + 0.3, tl[1], tl[2] + 2.5), (tr[0] - 0.3, tr[1], tr[2] + 2.5)])
+    AK.beacon(body, 8.0, cy - 0.15, cz + rz * 1.25)
 
 
 def finish(name, g, body, spots, gear_parts, burner, stores):
     details(name, g, body)
     AK.reskin(body)
     (cx, cy, cz), rx, ry, rz = _last_canopy["c"]
-    eye = (cx, cy + 0.35 * ry, cz + 0.25 * rz)
+    eye = (cx, cy + 0.5 / U, cz + 0.25 * rz)
     side, displays, wide = COCKPIT[name]
-    pit, stick_p, thr_p = AK.cockpit(eye, U, side_stick=side, displays=displays, wide_panel=wide)
+    pit, stick_p, thr_p = CK.cockpit(body, eye, U, _last_canopy["c"], displays=displays, wide=wide)
     g["eye"] = eye
     g["seat"] = AK.place_seat(eye, U)
     g["stick"] = stick_p
     g["throttle"] = thr_p
-    parts = {"body": body, "mark_green": V.team_marks(spots, True), "mark_red": V.team_marks(spots, False)}
+    parts = {"body": body, "mark_green": AK.insignia(spots, True), "mark_red": AK.insignia(spots, False)}
     parts.update(pit)
     parts["gear_nose"], parts["gear_main"] = gear_parts
     if burner is not None:
@@ -190,12 +195,7 @@ def store_parts(g, kinds):
 
 def nozzle_round(m, x, y, z0, z1, r):
     K.cylinder("z", (x, y), r * 1.08, z0, z1 - 1.2, "gunmetal", n=20, r1=r, caps=(False, False), m=m)
-    K.cylinder("z", (x, y), r, z1 - 1.2, z1, "gunmetal", n=20, r1=r * 0.88, caps=(False, False), m=m)
-    for k in range(12):
-        a = math.radians(k * 30)
-        K.tube([(x + math.cos(a) * r * 0.97, y + math.sin(a) * r * 0.97, z1 - 1.2), (x + math.cos(a) * r * 0.86, y + math.sin(a) * r * 0.86, z1)],
-               0.05, "steel", n=4, m=m)
-    K.cylinder("z", (x, y), r * 0.8, z1 - 0.15, z1 - 0.05, "black", n=16, caps=(False, True), m=m)
+    AK.petal_nozzle(m, x, y, z1 - 1.2, z1, r, r * 0.86)
 
 
 # ------------------------------------------------------------------------------------------------ F-22A
@@ -225,8 +225,8 @@ def f22():
         foil(body, (8 + s * 3.8, 5.7, 15.0), (8 + s * 10.6, 5.6, 21.0), 8.2, 3.0, 0.05, "paint", thick_dir=(0, 1, 0), n=10)
         fin(body, (8 + s * 3.3, 6.9, 11.0), 7.4, 7.2, 28 * s, 9.0, 3.4)
         # square two-dimensional nozzles
-        K.rbox((8 + s * 1.8 - 1.2, 4.95, 21.5), (8 + s * 1.8 + 1.2, 6.65, 24.8), 0.15, "gunmetal", seg=1, m=body)
-        K.box((8 + s * 1.8 - 1.0, 5.15, 24.79), (8 + s * 1.8 + 1.0, 6.45, 24.85), "black", m=body, faces="Z")
+        K.rbox((8 + s * 1.8 - 1.2, 4.95, 21.5), (8 + s * 1.8 + 1.2, 6.65, 23.0), 0.15, "gunmetal", seg=1, m=body)
+        AK.nozzle_2d(body, 8 + s * 1.8, 4.95, 6.65, 23.0, 24.8, 2.4)
     K.cylinder("z", (12.6, 6.0), 0.2, -10.6, -9.6, "black", n=8, m=body)
     for fx, fy, fz in g["flares"]:
         K.rbox((fx - 0.4, fy - 0.2, fz - 0.8), (fx + 0.4, fy + 0.2, fz + 0.8), 0.08, "dark", seg=1, m=body)

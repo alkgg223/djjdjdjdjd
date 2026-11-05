@@ -1,8 +1,8 @@
-newmtl pit
+newmtl frame
 Kd 1 1 1
 Ka 0 0 0
 d 1.0
-map_Kd #pit
+map_Kd #frame
 
 newmtl pit_light
 Kd 1 1 1

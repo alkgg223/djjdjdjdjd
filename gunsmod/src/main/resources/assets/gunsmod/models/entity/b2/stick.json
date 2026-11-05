@@ -6,7 +6,7 @@
  "emissive_ambient": true,
  "shade_quads": true,
  "textures": {
-  "pit": "gunsmod:item/vehicle/mesh/pit",
+  "frame": "gunsmod:item/vehicle/mesh/frame",
   "pit_light": "gunsmod:item/vehicle/mesh/pit_light",
   "red": "gunsmod:item/vehicle/mesh/red",
   "rubber": "gunsmod:item/vehicle/mesh/rubber",

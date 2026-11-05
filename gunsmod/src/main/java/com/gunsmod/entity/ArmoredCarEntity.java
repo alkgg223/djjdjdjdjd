@@ -661,11 +661,11 @@ public class ArmoredCarEntity extends VehicleEntity {
     private void shotFx(Vec3 muzzle, GunLogic.Trace tr, int fx) {
         List<Vec3> ends = new ArrayList<>();
         ends.add(tr.end().subtract(muzzle));
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, new Net.ShotFx(this.getId(), fx, muzzle, ends, new byte[]{tr.kind()}, false));
+        com.gunsmod.gun.GunLogic.broadcastFx(this, muzzle, new Net.ShotFx(this.getId(), fx, muzzle, ends, new byte[]{tr.kind()}, false));
     }
 
     private void muzzleFx(Vec3 at, Vec3 dir, float size) {
-        if (this.level() instanceof ServerLevel sl) PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, 160, new Net.MuzzleFx(at, dir, size, this.getId()));
+        if (this.level() instanceof ServerLevel sl) PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, com.gunsmod.gun.GunLogic.SHOT_RANGE, new Net.MuzzleFx(at, dir, size, this.getId()));
     }
 
     // ------------------------------------------------------------------------------------ rocket artillery
@@ -883,7 +883,7 @@ public class ArmoredCarEntity extends VehicleEntity {
             Vec3 dir = spread(aim.subtract(muzzle).normalize(), 0.6f);
             ends.add(dir.scale(Math.min(CRAM_RANGE + 20, aim.distanceTo(muzzle) + 3 + this.random.nextDouble() * 12)));
         }
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, new Net.ShotFx(this.getId(), -8, muzzle, ends, new byte[2], false));
+        com.gunsmod.gun.GunLogic.broadcastFx(this, muzzle, new Net.ShotFx(this.getId(), -8, muzzle, ends, new byte[2], false));
         this.entityData.set(DATA_AMMO, Math.max(0, getAmmo() - 4));
         if (target != null) {
             if (target instanceof JetEntity jet) jet.underFire(this);

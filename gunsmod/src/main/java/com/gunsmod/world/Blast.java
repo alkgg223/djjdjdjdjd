@@ -37,7 +37,7 @@ public final class Blast {
     /** send the blast effect to everyone who can see or hear it */
     public static void fx(Level level, Vec3 at, int style, float size) {
         if (level instanceof ServerLevel sl) {
-            double range = Math.min(512, 96 + size * 80);
+            double range = Math.min(1536, (96 + size * 80) * 5);
             PacketDistributor.sendToPlayersNear(sl, null, at.x, at.y, at.z, range, new Net.ExplosionFx(at, style, size));
         }
     }
