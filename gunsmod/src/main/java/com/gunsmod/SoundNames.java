@@ -28,6 +28,7 @@ public final class SoundNames {
             "shot_g36", "shot_aug", "shot_qbz95", "shot_ak12", "shot_ak103", "shot_mp5",
             "shot_mp7", "shot_p90", "shot_mpx", "shot_m240", "shot_mg3", "shot_pkp",
             "shot_m82", "shot_axmc", "shot_m200", "shot_benelli", "shot_r870", "shot_spas12",
-            "shot_glock", "shot_deagle", "shot_p320", "shot_fiveseven", "impact_glass", "impact_armor"
+            "shot_glock", "shot_deagle", "shot_p320", "shot_fiveseven", "impact_glass", "impact_armor",
+            "ciws_burst"
     };
 }

@@ -35,6 +35,8 @@ public final class Net {
         r.playToServer(JetBank.TYPE, JetBank.CODEC, ServerNet::jetBank);
         r.playToServer(SquadOrder.TYPE, SquadOrder.CODEC, ServerNet::squadOrder);
         r.playToClient(SquadStatus.TYPE, SquadStatus.CODEC, (p, ctx) -> com.gunsmod.client.SquadHud.status(p));
+        r.playToServer(RadarRequest.TYPE, RadarRequest.CODEC, ServerNet::radarRequest);
+        r.playToClient(RadarPicture.TYPE, RadarPicture.CODEC, (p, ctx) -> com.gunsmod.client.screen.RadarScreen.picture(p));
         r.playToClient(ShotFx.TYPE, ShotFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.shotFx(p));
         r.playToClient(BulletPath.TYPE, BulletPath.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.bulletPath(p));
         r.playToClient(HitMarker.TYPE, HitMarker.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.hitMarker(p));
@@ -354,6 +356,76 @@ public final class Net {
 
         @Override
         public Type<SquadOrder> type() {
+            return TYPE;
+        }
+    }
+
+    /** the radar scope asks for a fresh picture of the radar at pos (sent while the scope is open) */
+    public record RadarRequest(BlockPos pos) implements CustomPacketPayload {
+        public static final Type<RadarRequest> TYPE = payloadType("radar_request");
+        public static final StreamCodec<RegistryFriendlyByteBuf, RadarRequest> CODEC = CustomPacketPayload.codec(RadarRequest::write, RadarRequest::new);
+
+        RadarRequest(RegistryFriendlyByteBuf b) {
+            this(b.readBlockPos());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeBlockPos(pos);
+        }
+
+        @Override
+        public Type<RadarRequest> type() {
+            return TYPE;
+        }
+    }
+
+    /** one blip on a radar scope. iff: 0 friend, 1 hostile, 2 unknown. kind: 0 jet, 1 helicopter, 2 drone, 3 other, 4 our
+     * launcher. flags: 1 seen by another radar of the network, 2 a launcher is engaging it */
+    public record Blip(byte iff, byte kind, byte flags, float dx, float dz, float y, float heading, float speed) {}
+
+    /** what a radar sees: its place, reach, sweep, side and the blips (positions relative to the radar) */
+    public record RadarPicture(BlockPos pos, float range, int sweep, boolean sector, float facing, int team, List<Blip> blips)
+            implements CustomPacketPayload {
+        public static final Type<RadarPicture> TYPE = payloadType("radar_picture");
+        public static final StreamCodec<RegistryFriendlyByteBuf, RadarPicture> CODEC = CustomPacketPayload.codec(RadarPicture::write, RadarPicture::new);
+
+        RadarPicture(RegistryFriendlyByteBuf b) {
+            this(b.readBlockPos(), b.readFloat(), b.readVarInt(), b.readBoolean(), b.readFloat(), b.readVarInt(), readBlips(b));
+        }
+
+        private static List<Blip> readBlips(FriendlyByteBuf b) {
+            int n = Math.min(128, b.readVarInt());
+            List<Blip> l = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) {
+                l.add(new Blip(b.readByte(), b.readByte(), b.readByte(), b.readFloat(), b.readFloat(), b.readFloat(), b.readFloat(), b.readFloat()));
+            }
+            return l;
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeBlockPos(pos);
+            b.writeFloat(range);
+            b.writeVarInt(sweep);
+            b.writeBoolean(sector);
+            b.writeFloat(facing);
+            b.writeVarInt(team);
+            int n = Math.min(128, blips.size());
+            b.writeVarInt(n);
+            for (int i = 0; i < n; i++) {
+                Blip p = blips.get(i);
+                b.writeByte(p.iff());
+                b.writeByte(p.kind());
+                b.writeByte(p.flags());
+                b.writeFloat(p.dx());
+                b.writeFloat(p.dz());
+                b.writeFloat(p.y());
+                b.writeFloat(p.heading());
+                b.writeFloat(p.speed());
+            }
+        }
+
+        @Override
+        public Type<RadarPicture> type() {
             return TYPE;
         }
     }

@@ -1,0 +1,29 @@
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl gunmetal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #gunmetal
+
+newmtl light_grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #light_grey
+
+newmtl steel
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #steel
+
+newmtl white
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #white

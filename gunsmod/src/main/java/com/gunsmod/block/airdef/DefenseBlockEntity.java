@@ -36,6 +36,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * roll of the accuracy; misses burst in the air near the target or come down on the ground and explode there).
  */
 public class DefenseBlockEntity extends BlockEntity {
+    /** how far the team's radar network reaches a launcher (blocks) */
+    public static final double NETWORK_RANGE = 1500;
+
     public static final int MAX_LINKS = 4;
     public final LauncherType type;
     private BotTeam team = BotTeam.GREEN;
@@ -186,6 +189,8 @@ public class DefenseBlockEntity extends BlockEntity {
         engaged.values().removeIf(u -> u < now);
         VehicleEntity best = null;
         double bestD = Double.MAX_VALUE;
+        // the linked radars, and with the radar network every radar of the side within reach shares its tracks
+        java.util.List<RadarBlockEntity> sources = new java.util.ArrayList<>();
         for (int i = links.size() - 1; i >= 0; i--) {
             BlockPos rp = links.get(i);
             if (!level.isLoaded(rp)) continue;
@@ -194,6 +199,14 @@ public class DefenseBlockEntity extends BlockEntity {
                 sync();
                 continue;
             }
+            sources.add(radar);
+        }
+        if (com.gunsmod.Config.radarNetwork()) {
+            for (RadarBlockEntity r : AirTracker.radarsNear(level, worldPosition, NETWORK_RANGE)) {
+                if (!sources.contains(r)) sources.add(r);
+            }
+        }
+        for (RadarBlockEntity radar : sources) {
             if (radar.team() != team) continue;
             for (int id : radar.tracked()) {
                 if (!type.gun() && engaged.containsKey(id)) continue;

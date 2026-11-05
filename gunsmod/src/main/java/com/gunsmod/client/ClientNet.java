@@ -56,11 +56,12 @@ public final class ClientNet {
                 case -20 -> "aa_35mm";
                 case -21 -> "aa_23mm";
                 case -22 -> "aa_40mm";
+                case -23 -> "ciws_burst";
                 default -> "shot_turret";
             };
             float pitch = id == -6 ? 1.15f : id == -8 ? 1.3f : 0.95f;
             // the aircraft cannons and the C-RAM fire 30-100 rounds a second: one burst sample covers several ticks
-            boolean burst = id > -7 || id <= -20 || level.getGameTime() % 4 == 0;
+            boolean burst = id > -7 || (id <= -20 && id != -23) || level.getGameTime() % 4 == 0;
             if (burst && (id == -2 || id == -5) && GunClient.farShot(level, muzzle, "shot_far_rifle")) burst = false;
             else if (burst && id != -2 && id != -5 && GunClient.farShot(level, muzzle, "shot_far_heavy")) burst = false;
             if (burst) level.playLocalSound(muzzle.x, muzzle.y, muzzle.z, Reg.sound(snd), SoundSource.HOSTILE, id <= -3 ? 10f : 7f, pitch + R.nextFloat() * 0.1f, true);
@@ -75,6 +76,7 @@ public final class ClientNet {
                 case -11 -> 2.3f;
                 case -20, -22 -> 2.1f;
                 case -21 -> 1.5f;
+                case -23 -> 1.2f;
                 default -> 1.6f;
             };
             muzzleFire(level, muzzle, fireDir(p, muzzle, shooter), fs, id != -5 && id != -8 || level.getGameTime() % 3 == 0);

@@ -545,10 +545,169 @@ def aa_bofors():
     return finish("aa_bofors", base, head, arm, (8, hy, 8), (8, ay, az), [(8, ay + 1, az - 55)], "gun", hy + 34)
 
 
+# ------------------------------------------------------------------------------------------------ v3.0
+def radar_30n6():
+    """30N6 'Flap Lid' (S-300): a truck carrying the big square phased array on a folding mast, the shelter behind it"""
+    base, head = Mesh(), Mesh()
+    deck = G.truck(base, 34, 104, 16)
+    G.shelter(base, -7, deck, 18, 23, deck + 16, 50)
+    K.tube([(8, deck, 4), (8, deck + 24, 8)], 1.6, "steel", n=8, m=base)
+    G.ram(base, (8, deck, 14), (8, deck + 18, 7), 1.0)
+    hy = deck + 24
+    K.cylinder("y", (8, 8), 3.0, hy - 1, hy, "steel", n=12, m=base)
+    array_face(head, [v3(-8, hy + 2, 6), v3(24, hy + 2, 6), v3(24, hy + 30, 2), v3(-8, hy + 30, 2)], 2.6, "paint", "array")
+    stiffeners(head, v3(-7, hy + 2, 8), v3(23, hy + 2, 8), v3(23, hy + 30, 4), v3(-7, hy + 30, 4), 5)
+    G.cabinet(head, (0, hy, 8), (16, hy + 8, 14), "paint", "Z")
+    iff_bar(head, -9, 25, hy + 30.5, 3)
+    return finish("radar_30n6", base, head, head_pivot=(8, hy, 8), label_y=hy + 40)
+
+
+def radar_50n6():
+    """50N6A (S-350): the four-faced phased array on its rotating head over a heavy truck"""
+    base, head = Mesh(), Mesh()
+    deck = G.truck(base, 34, 104, 16)
+    G.cabinet(base, (-8, deck, -14), (24, deck + 10, 6), "paint", "z")
+    G.turntable(base, deck, 9)
+    hy = deck + 3
+    K.rbox((-2, hy, -2), (18, hy + 12, 18), 1.0, "paint", seg=1, m=head)
+    for corners in ([v3(-4, hy + 13, -4), v3(20, hy + 13, -4), v3(20, hy + 31, -1), v3(-4, hy + 31, -1)],):
+        array_face(head, corners, 2.0, "paint", "array")
+    array_face(head, [v3(20, hy + 13, 20), v3(-4, hy + 13, 20), v3(-4, hy + 31, 17), v3(20, hy + 31, 17)], 2.0, "paint", "array", front=(0, 0, 1))
+    K.rbox((-3, hy + 12, -1), (19, hy + 30, 17), 0.8, "paint", seg=1, m=head)
+    iff_bar(head, -2, 18, hy + 31.5, 8)
+    return finish("radar_50n6", base, head, head_pivot=(8, hy, 8), label_y=hy + 42)
+
+
+def radar_tpy2():
+    """AN/TPY-2 (THAAD): the huge X-band array on its trailer, looking over a fixed sector, the cooling unit behind"""
+    base, head = Mesh(), Mesh()
+    top = G.trailer(base, 40, 88, 12)
+    G.generator(base, -10, top, 30, 4, top + 9, 42)
+    G.cabinet(base, (12, top, 30), (26, top + 10, 42), "paint", "X")
+    G.railing(base, -12, 28, -36, 42, top, 4.5, sides="xX")
+    hy = top
+    tilt = math.radians(10)
+    pts = [v3(-14, hy + 2, 0), v3(30, hy + 2, 0), v3(30, hy + 2 + 30 * math.cos(tilt), -30 * math.sin(tilt)), v3(-14, hy + 2 + 30 * math.cos(tilt), -30 * math.sin(tilt))]
+    array_face(head, pts, 4.0, "paint", "array")
+    back = [p + v3(0, 0, 2.2) for p in pts]
+    stiffeners(head, back[0], back[1], back[2], back[3], 7)
+    for s_ in (-1, 1):
+        K.tube([(8 + s_ * 16, hy, 14), (8 + s_ * 16, hy + 24, -1)], 1.0, "steel", n=6, m=head)
+    return finish("radar_tpy2", base, head, head_pivot=(8, hy, 8), label_y=hy + 40)
+
+
+def radar_trml4d():
+    """TRML-4D (IRIS-T SLM): the folding mast truck with the rotating AESA panel and its IFF on top"""
+    base, head = Mesh(), Mesh()
+    deck = G.truck(base, 32, 88, 16, "sand")
+    G.shelter(base, -6, deck, 0, 22, deck + 16, 34, "sand")
+    K.tube([(8, deck + 16, 30), (8, deck + 40, 26)], 1.6, "steel", n=8, m=base)
+    hy = deck + 40
+    K.cylinder("y", (8, 26), 2.4, hy - 1.5, hy, "steel", n=10, m=base)
+    array_face(head, [v3(-4, hy + 1, 24), v3(20, hy + 1, 24), v3(20, hy + 17, 24), v3(-4, hy + 17, 24)], 2.2, "sand", "array_sand")
+    iff_bar(head, -5, 21, hy + 17.5, 24.5)
+    G.cabinet(head, (2, hy + 2, 25.2), (14, hy + 9, 28), "sand", "Z", handles=1)
+    return finish("radar_trml4d", base, head, head_pivot=(8, hy, 26), label_y=hy + 26)
+
+
+def sam_s300():
+    """5P85S (S-300): a truck that raises four big tubes upright to cold-launch the 48N6 missiles"""
+    base, head, arm = Mesh(), Mesh(), Mesh()
+    deck = G.truck(base, 34, 116, 16, axles=((12, 26), (-28, -14)))
+    hy = deck
+    K.rbox((-6, hy, 30), (22, hy + 4, 54), 0.5, "steel", seg=1, m=head)
+    ay, az = hy + 6, 54
+    mouths = []
+    for c in range(2):
+        for r in range(2):
+            mouths.append(canister(arm, 8 - 6.4 + c * 12.8, ay + 6.4 + r * 12.8, az - 94, 94, 12.8, 12.8, "olive", bands=5, round_=True, r=5.8))
+    K.rbox((-7, ay - 3, az - 94), (23, ay, az), 0.5, "steel", seg=1, m=arm)
+    for s_ in (-1, 1):
+        G.ram(arm, (8 + s_ * 8, ay - 3, az - 58), (8 + s_ * 8, ay - 9, az - 28), 1.2)
+    return finish("sam_s300", base, head, arm, (8, hy, 8), (8, ay, az), mouths, "missile_vertical", hy + 110)
+
+
+def sam_s350():
+    """50P6 (S-350 Vityaz): twelve slim canisters raised upright on a truck, the small 9M96 missiles"""
+    base, head, arm = Mesh(), Mesh(), Mesh()
+    deck = G.truck(base, 34, 104, 16)
+    hy = deck
+    K.rbox((-6, hy, 26), (22, hy + 4, 48), 0.5, "steel", seg=1, m=head)
+    ay, az = hy + 6, 48
+    mouths = []
+    for c in range(4):
+        for r in range(3):
+            mouths.append(canister(arm, 8 - 10.5 + c * 7, ay + 3.6 + r * 7.2, az - 70, 70, 7, 7, "olive", bands=4))
+    K.rbox((-7, ay - 2.5, az - 70), (23, ay, az), 0.5, "steel", seg=1, m=arm)
+    G.ram(arm, (8, ay - 2.5, az - 40), (8, ay - 8, az - 20), 1.1)
+    return finish("sam_s350", base, head, arm, (8, hy, 8), (8, ay, az), mouths, "missile_vertical", hy + 80)
+
+
+def sam_thaad():
+    """THAAD launcher: an M1120 truck with the eight-canister pack that elevates to fire"""
+    base, head, arm = Mesh(), Mesh(), Mesh()
+    deck = G.truck(base, 34, 108, 16, "sand")
+    hy = deck
+    K.rbox((-6, hy, 24), (22, hy + 5, 52), 0.5, "steel", seg=1, m=head)
+    ay, az = hy + 7, 52
+    mouths = []
+    for c in range(4):
+        for r in range(2):
+            mouths.append(canister(arm, 8 - 10.5 + c * 7, ay + 3.8 + r * 7.6, az - 84, 84, 7, 7.6, "sand", bands=5))
+    K.rbox((-7, ay - 2.5, az - 84), (23, ay, az), 0.5, "steel", seg=1, m=arm)
+    for s_ in (-1, 1):
+        G.ram(arm, (8 + s_ * 7, ay - 2.5, az - 46), (8 + s_ * 7, ay - 8, az - 22), 1.1)
+    return finish("sam_thaad", base, head, arm, (8, hy, 8), (8, ay, az), mouths, "missile", hy + 60)
+
+
+def sam_iris():
+    """IRIS-T SLM launcher: a truck with eight canisters raised near upright"""
+    base, head, arm = Mesh(), Mesh(), Mesh()
+    deck = G.truck(base, 32, 92, 16, "sand")
+    hy = deck
+    K.rbox((-5, hy, 20), (21, hy + 4, 42), 0.5, "steel", seg=1, m=head)
+    ay, az = hy + 6, 42
+    mouths = []
+    for c in range(4):
+        for r in range(2):
+            mouths.append(canister(arm, 8 - 9.6 + c * 6.4, ay + 3.4 + r * 6.8, az - 58, 58, 6.4, 6.8, "sand", bands=4))
+    K.rbox((-6, ay - 2.5, az - 58), (22, ay, az), 0.5, "steel", seg=1, m=arm)
+    G.ram(arm, (8, ay - 2.5, az - 32), (8, ay - 7, az - 16), 1.0)
+    return finish("sam_iris", base, head, arm, (8, hy, 8), (8, ay, az), mouths, "missile_vertical", hy + 70)
+
+
+def aa_ciws():
+    """Phalanx CIWS: the white radome over the six-barrel 20 mm gatling, the ammunition drum, the base on a deck plate"""
+    base, head, arm = Mesh(), Mesh(), Mesh()
+    K.rbox((-10, 0, -10), (26, 3, 26), 0.6, "grey", seg=1, m=base)
+    K.box((-9, 3.02, -9), (25, 3.08, 25), "tread_plate", m=base, faces="Y")
+    K.cylinder("y", (8, 8), 7, 3, 8, "light_grey", n=20, m=base)
+    hy = 8
+    G.turntable(base, hy, 7, "light_grey")
+    K.rbox((0, hy + 3, 0), (16, hy + 12, 18), 1.2, "light_grey", seg=1, m=head)
+    for s_ in (-1, 1):
+        K.plate([v3(8 + s_ * 8.5, hy + 3, 2), v3(8 + s_ * 8.5, hy + 3, 16), v3(8 + s_ * 8.5, hy + 13, 14), v3(8 + s_ * 8.5, hy + 13, 4)], 1.0, "light_grey", m=head)
+    ay, az = hy + 13, 8
+    # the radome (search + track radar), the drum, the gatling and its shroud
+    K.cylinder("y", (8, az + 2), 5.0, ay + 2, ay + 10, "white", n=18, m=arm)
+    K.sphere((8, ay + 10, az + 2), 5.0, 4.5, 5.0, "white", n=18, rows=8, top_only=True, m=arm)
+    K.cylinder("z", (8, ay), 3.4, az - 2, az + 10, "light_grey", n=16, m=arm)
+    K.cylinder("z", (8, ay), 1.6, az - 20, az - 2, "gunmetal", n=12, m=arm)
+    for k in range(6):
+        a = 2 * math.pi * k / 6
+        K.cylinder("z", (8 + math.cos(a) * 0.9, ay + math.sin(a) * 0.9), 0.3, az - 24, az - 20, "gunmetal", n=6, m=arm)
+    K.cylinder("z", (8, ay), 1.7, az - 21, az - 20, "dark", n=12, caps=(False, False), m=arm)
+    K.cylinder("x", (ay, az + 6), 0.8, -1, 17, "steel", n=8, m=arm)
+    mouths = [(8, ay, az - 25)]
+    return finish("aa_ciws", base, head, arm, (8, hy, 8), (8, ay, az), mouths, "gun", hy + 34)
+
+
 RADARS = {"radar_mpq65": radar_mpq65, "radar_96l6": radar_96l6, "radar_giraffe": radar_giraffe, "radar_sentinel": radar_sentinel,
-          "radar_elm2084": radar_elm2084, "radar_p18": radar_p18, "radar_kupol": radar_kupol}
+          "radar_elm2084": radar_elm2084, "radar_p18": radar_p18, "radar_kupol": radar_kupol,
+          "radar_30n6": radar_30n6, "radar_50n6": radar_50n6, "radar_tpy2": radar_tpy2, "radar_trml4d": radar_trml4d}
 LAUNCHERS = {"sam_patriot": sam_patriot, "sam_s400": sam_s400, "sam_nasams": sam_nasams, "sam_tamir": sam_tamir,
-             "aa_gepard": aa_gepard, "aa_zu23": aa_zu23, "aa_bofors": aa_bofors}
+             "aa_gepard": aa_gepard, "aa_zu23": aa_zu23, "aa_bofors": aa_bofors,
+             "sam_s300": sam_s300, "sam_s350": sam_s350, "sam_thaad": sam_thaad, "sam_iris": sam_iris, "aa_ciws": aa_ciws}
 ALL = {**RADARS, **LAUNCHERS}
 
 OUT_JAVA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "java", "com", "gunsmod", "block", "airdef",

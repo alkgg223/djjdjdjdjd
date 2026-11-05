@@ -146,7 +146,9 @@ public class AirDefenseBlock extends FacingBlock implements EntityBlock {
             return InteractionResult.SUCCESS;
         }
         if (be instanceof RadarBlockEntity r) {
-            player.displayClientMessage(Component.translatable("gunsmod.msg.ad_radar_status", Math.round(r.type.detect * 100), (int) r.type.range, r.shownTracks()), true);
+            player.displayClientMessage(Component.translatable("gunsmod.msg.ad_radar_status", Math.round(r.type.detect * 100), (int) r.type.reach(), r.shownTracks()), true);
+            // the operator's scope: the client opens it on the first picture
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp) net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sp, r.picture());
         } else if (be instanceof DefenseBlockEntity d) {
             player.displayClientMessage(Component.translatable("gunsmod.msg.ad_launcher_status", Math.round(d.type.accuracy * 100), (int) d.type.range,
                     d.links().size()), true);

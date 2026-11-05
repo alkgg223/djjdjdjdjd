@@ -1908,5 +1908,18 @@
    }
   ],
   "subtitle": "subtitles.gunsmod.bullet_impact"
+ },
+ "ciws_burst": {
+  "sounds": [
+   {
+    "name": "gunsmod:ciws_burst_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:ciws_burst_2",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.aa_gun"
  }
 }

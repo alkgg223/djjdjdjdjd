@@ -63,6 +63,70 @@ public class RadarBlockEntity extends BlockEntity {
         return tracks.keySet();
     }
 
+    /** whether this radar is tracking the aircraft now */
+    public boolean tracks(int id) {
+        return tracks.containsKey(id);
+    }
+
+    /**
+     * The scope picture: friendly aircraft answer the IFF interrogation and always show; enemy aircraft show only when
+     * this radar (or, with the network on, another radar of the side) holds a track on them; aircraft of no side that
+     * are tracked show as unknown. Our launchers within reach are marked too.
+     */
+    public com.gunsmod.net.Net.RadarPicture picture() {
+        java.util.List<com.gunsmod.net.Net.Blip> blips = new java.util.ArrayList<>();
+        Vec3 eye = antenna();
+        double reach = type.reach();
+        java.util.List<RadarBlockEntity> mesh = new java.util.ArrayList<>();
+        if (com.gunsmod.Config.radarNetwork()) {
+            for (RadarBlockEntity r : AirTracker.radarsNear(level, worldPosition, DefenseBlockEntity.NETWORK_RANGE)) {
+                if (r != this && r.team == team) mesh.add(r);
+            }
+        }
+        java.util.Set<Integer> engaged = new java.util.HashSet<>();
+        java.util.List<DefenseBlockEntity> sites = AirTracker.launchersNear(level, worldPosition, reach);
+        for (DefenseBlockEntity d : sites) if (d.team() == team && d.targetId() >= 0) engaged.add(d.targetId());
+        for (VehicleEntity v : AirTracker.flying(level)) {
+            Vec3 c = v.position();
+            double dx = c.x - eye.x, dz = c.z - eye.z;
+            if (dx * dx + dz * dz > reach * reach) continue;
+            BotTeam side = BotTeam.of(v);
+            byte iff;
+            byte flags = 0;
+            if (side == team) {
+                iff = 0;
+            } else if (tracks.containsKey(v.getId())) {
+                iff = (byte) (side == null ? 2 : 1);
+            } else {
+                boolean seen = false;
+                for (RadarBlockEntity r : mesh) {
+                    if (r.tracks.containsKey(v.getId())) {
+                        seen = true;
+                        break;
+                    }
+                }
+                if (!seen) continue;
+                iff = (byte) (side == null ? 2 : 1);
+                flags |= 1;
+            }
+            if (engaged.contains(v.getId())) flags |= 2;
+            byte kind = v instanceof com.gunsmod.entity.JetEntity ? (byte) 0 : v instanceof com.gunsmod.entity.HelicopterEntity ? (byte) 1
+                    : v instanceof com.gunsmod.entity.DroneEntity ? (byte) 2 : (byte) 3;
+            Vec3 m = v.getDeltaMovement();
+            float speed = (float) (Math.sqrt(m.x * m.x + m.z * m.z) * 20);
+            float heading = speed > 0.5f ? (float) Math.toDegrees(Math.atan2(-m.x, m.z)) : v.getYRot();
+            blips.add(new com.gunsmod.net.Net.Blip(iff, kind, flags, (float) dx, (float) dz, (float) c.y, heading, speed));
+        }
+        for (DefenseBlockEntity d : sites) {
+            if (d.team() != team || blips.size() >= 120) continue;
+            BlockPos p = d.getBlockPos();
+            blips.add(new com.gunsmod.net.Net.Blip((byte) 0, (byte) 4, (byte) (d.targetId() >= 0 ? 2 : 0), (float) (p.getX() + 0.5 - eye.x),
+                    (float) (p.getZ() + 0.5 - eye.z), p.getY(), 0f, 0f));
+        }
+        float facing = getBlockState().getValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING).toYRot();
+        return new com.gunsmod.net.Net.RadarPicture(worldPosition, (float) reach, type.sweep, type.sector, facing, team.ordinal(), blips);
+    }
+
     public void tick() {
         if (level == null || level.isClientSide) return;
         AirTracker.radar(this, true);

@@ -12,7 +12,13 @@ public enum LauncherType {
     TAMIR("sam_tamir", Mode.FIXED, 0.85f, 180, 20, 60, 15, 6.0, 12.0, 70f, "sam_tamir", 0),
     GEPARD("aa_gepard", Mode.GUN, 0.45f, 120, 24, 40, 2, 0, 0, 7f, "aa_35mm", -20),
     ZU23("aa_zu23", Mode.GUN, 0.30f, 90, 30, 50, 2, 0, 0, 4.5f, "aa_23mm", -21),
-    BOFORS("aa_bofors", Mode.GUN, 0.38f, 110, 8, 30, 4, 0, 0, 10f, "aa_40mm", -22);
+    BOFORS("aa_bofors", Mode.GUN, 0.38f, 110, 8, 30, 4, 0, 0, 10f, "aa_40mm", -22),
+    // 3.0
+    S300("sam_s300", Mode.VERTICAL, 0.86f, 340, 4, 170, 50, 7.2, 7.5, 140f, "sam_s400", 0),
+    S350("sam_s350", Mode.VERTICAL, 0.90f, 240, 12, 70, 18, 7.4, 11.0, 80f, "sam_nasams", 0),
+    THAAD("sam_thaad", Mode.MISSILE, 0.95f, 420, 8, 200, 60, 8.2, 6.0, 160f, "sam_patriot", 0),
+    IRIS_T("sam_iris", Mode.VERTICAL, 0.88f, 220, 8, 80, 20, 7.6, 13.0, 75f, "sam_nasams", 0),
+    CIWS("aa_ciws", Mode.GUN, 0.55f, 70, 60, 30, 1, 0, 0, 3.5f, "ciws_burst", -23);
 
     /** MISSILE: turns and elevates; VERTICAL: stands its tubes upright and the missiles turn after launch; FIXED: turns at a set
      * elevation; GUN: a cannon that turns and elevates */

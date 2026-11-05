@@ -119,3 +119,18 @@ def build_impacts():
 
 if __name__ == "__main__":
     build_impacts()
+
+
+def build_ciws():
+    from sounds_v22 import rotary
+    path = os.path.join(ROOT, "sounds.json")
+    with open(path) as fh:
+        sounds = json.load(fh)
+    files = []
+    for v in range(2):
+        fname = f"ciws_burst_{v + 1}"
+        write_ogg(os.path.join(OUT, fname + ".ogg"), rotary(np.random.default_rng(5700 + v), 75, 0.4, 95, 0.8, 0.9))
+        files.append(f"gunsmod:{fname}")
+    sounds["ciws_burst"] = {"sounds": files, "subtitle": "subtitles.gunsmod.aa_gun"}
+    with open(path, "w") as fh:
+        json.dump(sounds, fh, indent=1)
