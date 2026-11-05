@@ -21,7 +21,7 @@ public final class Net {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar r = event.registrar("4");
+        PayloadRegistrar r = event.registrar("5");
         r.playToServer(Shoot.TYPE, Shoot.CODEC, ServerNet::shoot);
         r.playToServer(Reload.TYPE, Reload.CODEC, ServerNet::reload);
         r.playToServer(Turret.TYPE, Turret.CODEC, ServerNet::turret);
@@ -32,6 +32,7 @@ public final class Net {
         r.playToServer(ConvoySave.TYPE, ConvoySave.CODEC, ServerNet::convoySave);
         r.playToServer(ProneState.TYPE, ProneState.CODEC, ServerNet::prone);
         r.playToServer(ConvoySpawn.TYPE, ConvoySpawn.CODEC, ServerNet::convoySpawn);
+        r.playToServer(JetBank.TYPE, JetBank.CODEC, ServerNet::jetBank);
         r.playToClient(ShotFx.TYPE, ShotFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.shotFx(p));
         r.playToClient(HitMarker.TYPE, HitMarker.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.hitMarker(p));
         r.playToClient(LaunchStatus.TYPE, LaunchStatus.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.launchStatus(p));
@@ -276,6 +277,28 @@ public final class Net {
 
         @Override
         public Type<ProneState> type() {
+            return TYPE;
+        }
+    }
+
+    /** a player flying with the locked cockpit view: his bank and stick, for the others to see */
+    public record JetBank(float bank, float stickX, float stickY, boolean on) implements CustomPacketPayload {
+        public static final Type<JetBank> TYPE = payloadType("jet_bank");
+        public static final StreamCodec<RegistryFriendlyByteBuf, JetBank> CODEC = CustomPacketPayload.codec(JetBank::write, JetBank::new);
+
+        JetBank(RegistryFriendlyByteBuf b) {
+            this(b.readFloat(), b.readFloat(), b.readFloat(), b.readBoolean());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeFloat(bank);
+            b.writeFloat(stickX);
+            b.writeFloat(stickY);
+            b.writeBoolean(on);
+        }
+
+        @Override
+        public Type<JetBank> type() {
             return TYPE;
         }
     }

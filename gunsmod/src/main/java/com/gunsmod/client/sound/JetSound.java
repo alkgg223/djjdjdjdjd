@@ -18,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
  * Doppler shifted for anyone the jet flies past. A fast pass close by adds the tearing flyby roar.
  */
 public class JetSound extends AbstractTickableSoundInstance {
-    private static final int IDLE = 0, ENGINE = 1, BURNER = 2, FLYBY = 3;
+    private static final int IDLE = 0, ENGINE = 1, BURNER = 2, FLYBY = 3, COCKPIT = 4;
     /** speed of sound in blocks per tick */
     private static final double C = 343.0 / 20.0;
     private static final Map<JetEntity, JetSound[]> ACTIVE = new WeakHashMap<>();
@@ -44,6 +44,7 @@ public class JetSound extends AbstractTickableSoundInstance {
     /** each type has its own engines: the F-16 keeps the original set, the others <model>_idle / _engine / _burner / _flyby */
     private static String name(JetEntity jet, int kind) {
         String p = jet.type.soundPrefix();
+        if (kind == COCKPIT) return "jet_cockpit";
         if (jet.type == com.gunsmod.entity.JetType.F16) {
             return switch (kind) {
                 case IDLE -> "jet_idle";
@@ -70,8 +71,8 @@ public class JetSound extends AbstractTickableSoundInstance {
         LAST_SPOOL.put(j, j.spool);
         JetSound[] s = ACTIVE.get(j);
         if (j.spool > 0.03f && !playing(s)) {
-            s = j.type.afterburner ? new JetSound[]{new JetSound(j, IDLE), new JetSound(j, ENGINE), new JetSound(j, BURNER)}
-                    : new JetSound[]{new JetSound(j, IDLE), new JetSound(j, ENGINE)};
+            s = j.type.afterburner ? new JetSound[]{new JetSound(j, IDLE), new JetSound(j, ENGINE), new JetSound(j, BURNER), new JetSound(j, COCKPIT)}
+                    : new JetSound[]{new JetSound(j, IDLE), new JetSound(j, ENGINE), new JetSound(j, COCKPIT)};
             ACTIVE.put(j, s);
             for (JetSound x : s) mc.getSoundManager().play(x);
         }
@@ -136,7 +137,18 @@ public class JetSound extends AbstractTickableSoundInstance {
         }
         float thr = jet.isCrashing() ? 0.4f : jet.getThrottle(), sp = jet.isCrashing() ? 1f : jet.spool;
         float target, pitch;
+        // in the cockpit with the canopy shut the engines are muffled; the air rushing past and the avionics take over
+        boolean inside = com.gunsmod.client.VehicleCamera.hidden(jet);
+        float v = (float) Math.min(1.0, jet.getAirSpeed() / jet.type.maxSpeed);
         switch (kind) {
+            case COCKPIT -> {
+                target = inside ? (0.5f + 1.3f * v) * sp : 0.01f;
+                pitch = 0.8f + 0.35f * v;
+                this.pitch = pitch;
+                this.volume += (target - this.volume) * 0.2f;
+                follow();
+                return;
+            }
             case IDLE -> {
                 target = 3.5f * sp * (1f - 0.55f * thr);
                 pitch = 0.65f + 0.35f * sp + 0.1f * thr;
@@ -151,6 +163,7 @@ public class JetSound extends AbstractTickableSoundInstance {
             }
         }
         this.pitch = (float) Mth.clamp(pitch * doppler(), 0.5, 2.0);
+        if (inside) target *= 0.35f;
         this.volume += (target - this.volume) * 0.2f;
         follow();
     }

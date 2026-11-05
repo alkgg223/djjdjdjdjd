@@ -1,0 +1,11 @@
+newmtl burnt
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #burnt
+
+newmtl burnt_metal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #burnt_metal

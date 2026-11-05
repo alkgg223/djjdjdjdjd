@@ -25,7 +25,7 @@ import net.minecraft.world.phys.Vec3;
  * turbine), following the vehicle and cross-fading with speed / rotor speed. Also exhaust, rotor wash and damage smoke.
  */
 public class VehicleSound extends AbstractTickableSoundInstance {
-    private static final int TANK_IDLE = 0, TANK_DRIVE = 1, ROTOR = 2, CAR_IDLE = 3, CAR_DRIVE = 4;
+    private static final int TANK_IDLE = 0, TANK_DRIVE = 1, ROTOR = 2, CAR_IDLE = 3, CAR_DRIVE = 4, FPV = 5, SHAHED = 6;
     private static final Map<VehicleEntity, VehicleSound[]> ACTIVE = new WeakHashMap<>();
     private static final Map<VehicleEntity, Boolean> RUNNING = new WeakHashMap<>();
 
@@ -38,6 +38,8 @@ public class VehicleSound extends AbstractTickableSoundInstance {
             case TANK_DRIVE -> "tank_drive";
             case CAR_IDLE -> "jeep_idle";
             case CAR_DRIVE -> "jeep_drive";
+            case FPV -> "fpv_buzz";
+            case SHAHED -> "shahed_engine";
             default -> "heli_rotor";
         }), SoundSource.NEUTRAL, SoundInstance.createUnseededRandom());
         this.vehicle = v;
@@ -56,7 +58,21 @@ public class VehicleSound extends AbstractTickableSoundInstance {
         else if (v instanceof HelicopterEntity h) heli(h);
         else if (v instanceof ArmoredCarEntity c) car(c);
         else if (v instanceof JetEntity j) JetSound.tick(j);
+        else if (v instanceof com.gunsmod.entity.DroneEntity d) {
+            drone(d);
+            return;
+        }
         damageSmoke(v);
+    }
+
+    /** the FPV's angry buzz, the Shahed's two-stroke moped drone heard from far away */
+    private static void drone(com.gunsmod.entity.DroneEntity d) {
+        VehicleSound[] s = ACTIVE.get(d);
+        if (d.isAlive() && !playing(s)) {
+            s = new VehicleSound[]{new VehicleSound(d, d.fpv() ? FPV : SHAHED)};
+            ACTIVE.put(d, s);
+            Minecraft.getInstance().getSoundManager().play(s[0]);
+        }
     }
 
     private static boolean playing(VehicleSound[] s) {
@@ -181,7 +197,15 @@ public class VehicleSound extends AbstractTickableSoundInstance {
     public void tick() {
         boolean alive = vehicle.isAlive() && !vehicle.isRemoved();
         float target;
-        if (kind == ROTOR) {
+        if (kind == FPV || kind == SHAHED) {
+            if (!alive) {
+                this.stop();
+                return;
+            }
+            double sp = vehicle.position().subtract(vehicle.xo, vehicle.yo, vehicle.zo).length();
+            target = kind == FPV ? 2.2f : 7f;
+            this.pitch = kind == FPV ? (float) (0.85 + Math.min(0.35, sp * 0.22)) : (float) (0.95 + Math.min(0.1, sp * 0.05));
+        } else if (kind == ROTOR) {
             HelicopterEntity h = (HelicopterEntity) vehicle;
             if (!alive || h.rotor <= 0.02f) {
                 this.volume -= 0.1f;

@@ -1,8 +1,26 @@
+newmtl array_sand
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #array_sand
+
 newmtl dark
 Kd 1 1 1
 Ka 0 0 0
 d 1.0
 map_Kd #dark
+
+newmtl grille
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #grille
+
+newmtl light_grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #light_grey
 
 newmtl sand
 Kd 1 1 1

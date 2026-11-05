@@ -7,8 +7,10 @@
  "shade_quads": true,
  "textures": {
   "black": "gunsmod:item/vehicle/mesh/black",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
   "gunmetal": "gunsmod:item/vehicle/mesh/gunmetal",
   "olive": "gunsmod:item/vehicle/mesh/olive",
+  "olive_dark": "gunsmod:item/vehicle/mesh/olive_dark",
   "particle": "gunsmod:item/vehicle/mesh/paint"
  }
 }

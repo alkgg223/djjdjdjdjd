@@ -6,10 +6,15 @@
  "emissive_ambient": true,
  "shade_quads": true,
  "textures": {
-  "olive": "gunsmod:item/vehicle/mesh/olive",
+  "black": "gunsmod:item/vehicle/mesh/black",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "grille": "gunsmod:item/vehicle/mesh/grille",
+  "red_light": "gunsmod:item/vehicle/mesh/red_light",
   "rubber": "gunsmod:item/vehicle/mesh/rubber",
   "sand": "gunsmod:item/vehicle/mesh/sand",
   "steel": "gunsmod:item/vehicle/mesh/steel",
+  "tread_plate": "gunsmod:item/vehicle/mesh/tread_plate",
+  "white": "gunsmod:item/vehicle/mesh/white",
   "particle": "gunsmod:item/vehicle/mesh/paint"
  }
 }

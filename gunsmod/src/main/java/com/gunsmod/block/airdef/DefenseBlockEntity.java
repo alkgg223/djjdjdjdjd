@@ -198,7 +198,7 @@ public class DefenseBlockEntity extends BlockEntity {
             for (int id : radar.tracked()) {
                 if (!type.gun() && engaged.containsKey(id)) continue;
                 if (!(level.getEntity(id) instanceof VehicleEntity v) || !v.isAlive() || !(v instanceof Aircraft a) || !a.isAirborne()) continue;
-                if (BotTeam.of(v) == team || v.getPassengers().isEmpty()) continue;
+                if (BotTeam.of(v) == team || !v.threat()) continue;
                 Vec3 c = v.position().add(0, v.getBbHeight() * 0.5, 0);
                 double d = c.distanceTo(head);
                 if (d > type.range || d >= bestD) continue;

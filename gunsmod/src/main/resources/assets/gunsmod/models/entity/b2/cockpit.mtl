@@ -1,0 +1,53 @@
+newmtl bright
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #bright
+
+newmtl cushion
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #cushion
+
+newmtl hud_glass
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #hud_glass
+
+newmtl light_grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #light_grey
+
+newmtl pit
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #pit
+
+newmtl pit_light
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #pit_light
+
+newmtl screen
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #screen
+
+newmtl screen_amber
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #screen_amber
+
+newmtl warning
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #warning

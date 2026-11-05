@@ -16,6 +16,12 @@ Ka 0 0 0
 d 1.0
 map_Kd #glass_dark
 
+newmtl glow
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #glow
+
 newmtl green_mark
 Kd 1 1 1
 Ka 0 0 0
@@ -28,18 +34,25 @@ Ka 0 0 0
 d 1.0
 map_Kd #gunmetal
 
-newmtl paint
-Kd 1 1 1
-Ka 0 0 0
-d 1.0
-map_Kd #paint
-neoforge_TintIndex 0
-
 newmtl red_light
 Kd 1 1 1
 Ka 1 1 1
 d 1.0
 map_Kd #red_light
+
+newmtl skin
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #skin
+neoforge_TintIndex 0
+
+newmtl skin_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #skin_dark
+neoforge_TintIndex 0
 
 newmtl steel
 Kd 1 1 1

@@ -1,14 +1,62 @@
+newmtl amber
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #amber
+
+newmtl black
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #black
+
+newmtl burnt_metal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #burnt_metal
+
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl glass
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #glass
+
 newmtl glass_dark
 Kd 1 1 1
 Ka 0 0 0
 d 1.0
 map_Kd #glass_dark
 
+newmtl grille
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #grille
+
+newmtl light_grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #light_grey
+
 newmtl olive
 Kd 1 1 1
 Ka 0 0 0
 d 1.0
 map_Kd #olive
+
+newmtl red_light
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #red_light
 
 newmtl rubber
 Kd 1 1 1
@@ -21,3 +69,15 @@ Kd 1 1 1
 Ka 0 0 0
 d 1.0
 map_Kd #steel
+
+newmtl tread_plate
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #tread_plate
+
+newmtl white
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #white

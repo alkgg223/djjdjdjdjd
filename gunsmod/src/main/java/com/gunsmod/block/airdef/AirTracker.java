@@ -40,6 +40,7 @@ public final class AirTracker {
     public static float signature(VehicleEntity v) {
         if (v instanceof Aircraft a && a.stealth()) return 0f;
         if (v instanceof JetEntity j) return j.type.signature;
+        if (v instanceof com.gunsmod.entity.DroneEntity d) return d.fpv() ? 0.15f : 0.45f;
         return v instanceof HelicopterEntity ? 0.8f : 1f;
     }
 

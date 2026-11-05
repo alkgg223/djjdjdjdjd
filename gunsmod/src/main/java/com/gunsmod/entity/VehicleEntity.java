@@ -110,6 +110,16 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         return getControllingPassenger() != null;
     }
 
+    /** flies with nobody on board and is still a threat (an attack drone) */
+    public boolean unmannedThreat() {
+        return false;
+    }
+
+    /** somebody on board, or a drone: what radars, air defence and soldiers treat as a live enemy */
+    public boolean threat() {
+        return !this.getPassengers().isEmpty() || unmannedThreat();
+    }
+
     // ------------------------------------------------------------------------------------ seats
     public int seatOf(Entity e) {
         return this.getPassengers().indexOf(e);

@@ -11,6 +11,7 @@ import math
 import numpy as np
 
 import meshkit as K
+import aircraft_kit as AK
 from meshkit import Mesh, v3
 
 SCALE = 0.6
@@ -116,8 +117,8 @@ def b2():
     K.loft(rings, "paint", caps=(True, True), m=body)
     # cockpit: four windows on the hump, dark glass with a frame
     for side in (-1, 1):
-        skin_patch(body, [(0.25 * side, 3.1), (1.35 * side, 3.25), (1.25 * side, 4.25), (0.25 * side, 4.15)], "glass_dark", 0.025)
-        skin_patch(body, [(1.55 * side, 3.4), (2.15 * side, 3.7), (2.0 * side, 4.4), (1.45 * side, 4.3)], "glass_dark", 0.025)
+        skin_patch(body, [(0.25 * side, 3.1), (1.35 * side, 3.25), (1.25 * side, 4.25), (0.25 * side, 4.15)], "glass_clear", 0.025)
+        skin_patch(body, [(1.55 * side, 3.4), (2.15 * side, 3.7), (2.0 * side, 4.4), (1.45 * side, 4.3)], "glass_clear", 0.025)
     # engine intakes and the exhaust troughs behind them
     for side in (-1, 1):
         intake(body, side)
@@ -189,8 +190,15 @@ def b2_gear():
 
 def b2_all():
     parts, _ = b2()
+    AK.reskin(parts["body"])
     parts["gear_nose"], parts["gear_main"] = b2_gear()
-    return parts, GEO["b2"]
+    # the cockpit in the nose behind the four windows (model units are metres here)
+    eye = (8.0 - 0.45, 2.85, 4.75)
+    pit, stick_p, thr_p = AK.cockpit(eye, 1.0, side_stick=False, displays=3)
+    parts.update(pit)
+    g = GEO["b2"]
+    g["eye"], g["seat"], g["stick"], g["throttle"] = eye, AK.place_seat(eye, 1.0), stick_p, thr_p
+    return parts, g
 
 
 BOMBERS = {"b2": b2_all}

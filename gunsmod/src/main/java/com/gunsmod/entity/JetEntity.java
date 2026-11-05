@@ -75,6 +75,14 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     private static final EntityDataAccessor<Float> DATA_STUNT = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_BAY = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Byte> DATA_HITS = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.BYTE);
+    /** a player flying with the cockpit view locked to the aircraft: his true bank and stick, for everyone else to see */
+    private static final EntityDataAccessor<Float> DATA_BANK = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_BANK_ON = SynchedEntityData.defineId(JetEntity.class, EntityDataSerializers.BOOLEAN);
+
+    /** client: the local pilot flies with the view locked to the aircraft (stick from the mouse / touch) */
+    public static java.util.function.Predicate<JetEntity> lockedPilot = j -> false;
+    /** stick: roll (+ right) and pitch (+ pull) from -1 to 1; the bank angle of a locked-view pilot (degrees, + right wing down) */
+    public float stickX, stickY, stickInX, stickInY, bank;
 
     public final JetType type;
     public final VehicleGeo.Jet geo;
@@ -159,6 +167,8 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         b.define(DATA_FLARES, 60);
         b.define(DATA_BAY, false);
         b.define(DATA_HITS, (byte) 0);
+        b.define(DATA_BANK, 0f);
+        b.define(DATA_BANK_ON, false);
         b.define(DATA_WEAPON, (byte) 0);
         b.define(DATA_LOCK, -1);
         b.define(DATA_LOCK_PROGRESS, (byte) 0);
@@ -193,12 +203,37 @@ public class JetEntity extends VehicleEntity implements Aircraft {
     @Override
     protected Vec3 seatModel(int seat) {
         // the seat turns with the jet's pitch and bank so the pilot stays in the cockpit
+        return rotated(geo.seat());
+    }
+
+    /** a model point turned with the jet's pitch and bank about the attitude pivot (model units) */
+    public Vec3 rotated(double[] q) {
         double py = pivotYModel();
-        double x = geo.seat()[0] - 8, y = geo.seat()[1] - py, z = geo.seat()[2] - pivotZ();
+        double x = q[0] - 8, y = q[1] - py, z = q[2] - pivotZ();
         double r = Math.toRadians(-roll), p = Math.toRadians(pitch());
         double x1 = x * Math.cos(r) - y * Math.sin(r), y1 = x * Math.sin(r) + y * Math.cos(r);
         double y2 = y1 * Math.cos(p) - z * Math.sin(p), z2 = y1 * Math.sin(p) + z * Math.cos(p);
         return new Vec3(8 + x1, py + y2, pivotZ() + z2);
+    }
+
+    /** first person: the pilot's eye in the cockpit, behind the instrument panel and the HUD */
+    @Nullable
+    @Override
+    public Vec3 sightEye() {
+        Vec3 e = rotated(geo.eye());
+        return toWorld(e.x, e.y, e.z);
+    }
+
+    public boolean bankSynced() {
+        return this.entityData.get(DATA_BANK_ON);
+    }
+
+    /** server: the pilot's client sends his bank and stick */
+    public void setBank(float b, float sx, float sy, boolean on) {
+        this.entityData.set(DATA_BANK, Mth.wrapDegrees(b));
+        this.entityData.set(DATA_BANK_ON, on);
+        stickX = sx;
+        stickY = sy;
     }
 
     @Override
@@ -420,6 +455,11 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         boolean ground = this.onGround();
         float yaw = this.getYRot(), pitch = pitch();
         float wantYaw = yaw, wantPitch = pitch;
+        if (pilot instanceof Player && lockedPilot.test(this) && !crashing) {
+            stickFlight();
+            return;
+        }
+        bank = roll;
         if (pilot instanceof Player p) {
             wantYaw = p.getYRot();
             wantPitch = -p.getXRot();
@@ -482,6 +522,86 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         this.yHeadRot = yaw;
         Vec3 fwd = forward();
         Vec3 motion = ground && !crashing ? new Vec3(fwd.x * speed, vy, fwd.z * speed) : GunLogic.dir(-pitch, yaw).scale(speed).add(0, vy, 0);
+        velocity = motion;
+        this.setDeltaMovement(motion);
+        this.move(MoverType.SELF, motion);
+        this.fallDistance = 0;
+        if (this.horizontalCollision) speed *= 0.2;
+    }
+
+    /**
+     * A player flying from the cockpit with the view locked to the aircraft: the stick rolls and pitches it, the bank
+     * turns it (lift pulled sideways), the rudder yaws it a little. The stick commands a rate; let go and the aircraft
+     * keeps its attitude. Pulling hard bleeds speed, below the stall speed the nose drops and a wing may go.
+     */
+    private void stickFlight() {
+        boolean ground = this.onGround();
+        float yaw = this.getYRot(), pitch = pitch();
+        stickX += (stickInX - stickX) * 0.5f;
+        stickY += (stickInY - stickY) * 0.5f;
+        boolean ab = type.afterburner && afterburnerWanted() && spool > 0.95f;
+        double thrust = (throttle * 0.0095 * type.thrust + (ab ? 0.0065 * type.reheat : 0)) * spool;
+        double drag = 0.00256 * speed * speed + (gear > 0.5f ? 0 : 0.0012 * speed);
+        double auth = Mth.clamp((speed - type.stall * 0.8) / (type.stall * 0.35), 0, 1);
+        float ag = (float) type.agility;
+        double vy;
+        if (ground) {
+            // on the wheels: wings level, nose wheel steering with the rudder and the stick, pull to rotate
+            bank += -bank * 0.3f;
+            float steer = rudderIn * (speed < 0.4 ? 2.2f : 0.8f) + stickX * (speed < 0.4 ? 1.6f : 0.5f);
+            yaw += speed < 0.05 ? steer : steer * (float) Math.min(1.0, 0.2 + speed * 3);
+            float maxNose = speed > type.rotate * 0.95 ? 14f : 0f;
+            float wantNose = Mth.clamp(pitch + stickY * 2.5f, 0f, maxNose);
+            pitch += Mth.clamp(wantNose - pitch, -1.2f, 1.0f);
+            if (stickY <= 0.05f && speed < type.rotate) pitch += -pitch * 0.2f;
+            speed += thrust - drag - 0.0015 * Math.signum(speed);
+            if (throttle < 0.02f && throttleIn < -0.1f) speed -= 0.02;          // wheel brakes
+            speed = Math.max(0, speed);
+            vy = pitch > 4 && speed > type.rotate ? speed * Math.sin(Math.toRadians(pitch)) * 0.6 : -0.08;
+        } else {
+            float rollRate = 6.5f * ag * (float) auth;
+            float pitchRate = 2.8f * ag * (float) auth;
+            bank = Mth.wrapDegrees(bank + stickX * rollRate);
+            double b = Math.toRadians(bank);
+            float q = stickY * pitchRate;                      // body pitch rate: the nose moves towards the canopy
+            // the pull goes up the aircraft's own vertical: with the wings banked it turns the heading
+            pitch += (float) (q * Math.cos(b));
+            float cosP = (float) Math.max(0.25, Math.cos(Math.toRadians(pitch)));
+            yaw += (float) (q * Math.sin(b)) / cosP;
+            // banked without pulling: the lift tilts, it turns gently and the nose sinks
+            yaw += (float) (Math.sin(b) * 0.9 * auth) / cosP;
+            pitch -= (float) ((1 - Math.cos(b)) * 0.5 * auth);
+            yaw += rudderIn * 0.5f * (float) auth;
+            // stalled: the nose drops whatever the stick does, sometimes a wing goes
+            if (auth < 1) {
+                pitch -= (float) ((1 - auth) * 1.8);
+                if (auth < 0.4 && this.random.nextInt(20) == 0) bank += (this.random.nextBoolean() ? 1 : -1) * 12f;
+            }
+            if (pitch > 90f) {
+                // over the top of a loop: carry on upside down the other way round
+                pitch = 180f - pitch;
+                yaw += 180f;
+                bank = Mth.wrapDegrees(bank + 180f);
+            } else if (pitch < -90f) {
+                pitch = -180f - pitch;
+                yaw += 180f;
+                bank = Mth.wrapDegrees(bank + 180f);
+            }
+            // pulling g costs energy, climbing trades speed for height
+            double pull = Math.abs(q);
+            speed += thrust - drag - 0.04 * Math.sin(Math.toRadians(pitch)) - 0.00045 * pull * pull * speed;
+            speed = Math.max(0, speed);
+            vy = -(1 - auth) * 0.3;
+        }
+        speed = Math.min(speed, type.maxSpeed * 1.08);
+        this.setYRot(yaw);
+        jetPitch = pitch;
+        this.setXRot(-pitch);
+        this.yBodyRot = yaw;
+        this.yHeadRot = yaw;
+        roll = bank;
+        Vec3 fwd = forward();
+        Vec3 motion = ground ? new Vec3(fwd.x * speed, vy, fwd.z * speed) : GunLogic.dir(-pitch, yaw).scale(speed).add(0, vy, 0);
         velocity = motion;
         this.setDeltaMovement(motion);
         this.move(MoverType.SELF, motion);
@@ -557,7 +677,13 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             if (!this.level().isClientSide) speed = moved.length();
         }
         if (isCrashing()) roll += 9f;
-        else {
+        else if (lockedPilot.test(this)) {
+            // the local pilot: the true bank from the stick flight
+            roll = bank;
+        } else if (bankSynced() && !this.onGround()) {
+            float want = this.entityData.get(DATA_BANK);
+            roll += Mth.wrapDegrees(want - roll) * 0.5f;
+        } else {
             float want = this.onGround() ? 0f : Mth.clamp(dYaw * 16f, -80f, 80f);
             float stuntRoll = getStuntRoll();
             roll += Mth.wrapDegrees(want + stuntRoll - roll) * (stuntRoll != 0f ? 0.45f : 0.15f);
@@ -727,9 +853,13 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             }
             this.level().playSound(null, getX(), getY(), getZ(), Reg.sound("explosion_far"), SoundSource.NEUTRAL, 10f, 1.1f);
             Blast.fx(this.level(), this.position().add(0, 1, 0), Blast.FX_SMALL, 1.0f);
+            // the hit tears pieces off: a wing panel and some skin go spinning down
+            WreckPieceEntity.scatter(this.level(), this.position().add(0, 1, 0), velocity, wreckScale(), 2, 0.35);
             return;
         }
         if (isCrashing()) return;
+        // destroyed on the ground: it blows apart where it stands
+        WreckPieceEntity.scatter(this.level(), this.position().add(0, 1, 0), Vec3.ZERO, wreckScale(), 5, 0.6);
         super.die(source);
     }
 
@@ -741,8 +871,16 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         Blast.fx(this.level(), c.add(this.noseDir().scale(4)), Blast.FX_FIRE, 2.0f);
         Blast.shockwave(this.level(), c, 9, 18f, 4, this, null);
         this.level().playSound(null, c.x, c.y, c.z, Reg.sound("explosion_big"), SoundSource.NEUTRAL, 14f, 0.8f);
+        // it breaks up: wings, the fin, pieces of the fuselage and the engine are thrown about and burn where they land
+        WreckPieceEntity.scatter(this.level(), c, velocity, wreckScale(), 6 + this.random.nextInt(3), 0.75);
         VehicleSpawnerBlockEntity.vehicleGone(this.level(), spawnerPos, this.getUUID());
         this.discard();
+    }
+
+    /** wreck pieces sized to the aircraft (an F-16 is 1) */
+    private float wreckScale() {
+        double span = (geo.tips()[1][0] - geo.tips()[0][0]) * type.unit;
+        return (float) Mth.clamp(span / 10.0, 0.8, 2.4);
     }
 
     private void crashFx() {
@@ -1019,7 +1157,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         switch (phase) {
             case GROUND -> takeOff(bot, agl);
             case CLIMB -> {
-                botPitch = 14;
+                botPitch = type.role == JetType.Role.STRIKE ? 9 : 14;
                 botThrottle = 1;
                 botAb = agl < 20;
                 if (agl > patrolHeight() * 0.8) phase = Phase.PATROL;
@@ -1075,7 +1213,8 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         if (taxiLen < 0 && speed >= 0.3) taxiYaw = this.getYRot();
         if (!this.onGround()) {
             botYaw = taxiYaw;
-            botPitch = agl < 18 ? 20 : 12;
+            boolean heavy = type.role == JetType.Role.STRIKE || type.role == JetType.Role.BOMBER;
+            botPitch = heavy ? (agl < 18 ? 11 : 8) : agl < 18 ? 20 : 12;
             botThrottle = 1;
             botAb = true;
             if (agl > 8) {

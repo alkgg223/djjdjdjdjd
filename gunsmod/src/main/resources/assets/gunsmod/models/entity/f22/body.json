@@ -9,10 +9,12 @@
   "black": "gunsmod:item/vehicle/mesh/black",
   "dark": "gunsmod:item/vehicle/mesh/dark",
   "glass_dark": "gunsmod:item/vehicle/mesh/glass_dark",
+  "glow": "gunsmod:item/vehicle/mesh/glow",
   "green_mark": "gunsmod:item/vehicle/mesh/green_mark",
   "gunmetal": "gunsmod:item/vehicle/mesh/gunmetal",
-  "paint": "gunsmod:item/vehicle/mesh/paint",
   "red_light": "gunsmod:item/vehicle/mesh/red_light",
+  "skin": "gunsmod:item/vehicle/mesh/skin",
+  "skin_dark": "gunsmod:item/vehicle/mesh/skin_dark",
   "particle": "gunsmod:item/vehicle/mesh/paint"
  }
 }

@@ -21,7 +21,7 @@ import net.minecraft.world.inventory.InventoryMenu;
 public class JetRenderer extends EntityRenderer<JetEntity> {
     /** the baked parts of an aircraft type */
     public static java.util.List<String> parts(com.gunsmod.entity.JetType t) {
-        java.util.List<String> l = new java.util.ArrayList<>(java.util.List.of("body", "mark_green", "mark_red", "gear_nose", "gear_main"));
+        java.util.List<String> l = new java.util.ArrayList<>(java.util.List.of("body", "mark_green", "mark_red", "gear_nose", "gear_main", "cockpit", "stick", "throttle"));
         if (t.afterburner) l.add("burner");
         if (t.ground == com.gunsmod.entity.JetType.Ground.NUKE) l.add("bay");
         String[] stores = {"mav_0", "mav_1", "mav_2", "mav_3", "aim9_l", "aim9_r"};
@@ -36,7 +36,8 @@ public class JetRenderer extends EntityRenderer<JetEntity> {
 
     @Override
     public void render(JetEntity jet, float yaw, float pt, PoseStack pose, MultiBufferSource buf, int light) {
-        if (com.gunsmod.client.VehicleCamera.hidden(jet)) return;      // first person: looking out through the sight
+        // first person in the pilot's seat: the whole aircraft is drawn round the cockpit
+        boolean inside = com.gunsmod.client.VehicleCamera.hidden(jet);
         float py = (float) jet.geo.pivotY(), pz = (float) ((jet.pivotZ() - 8) * jet.type.unit);
         pose.pushPose();
         pose.mulPose(Axis.YP.rotationDegrees(180f - Mth.rotLerp(pt, jet.yRotO, jet.getYRot())));
@@ -48,6 +49,7 @@ public class JetRenderer extends EntityRenderer<JetEntity> {
         boolean burner = jet.isAfterburner() && !jet.isCrashing();
         renderJet(pose, buf, light, jet.type, jet.getBotTeam(), Mth.lerp(pt, jet.prevGear, jet.gear), jet.getStores(), burner, jet.isCrashing(),
                 jet.bayOpen(), burner ? 0.9f + jet.getRandom().nextFloat() * 0.25f : 1f);
+        if (inside) renderCockpit(pose, buf, light, jet);
         pose.popPose();
         super.render(jet, yaw, pt, pose, buf, light);
     }
@@ -90,6 +92,35 @@ public class JetRenderer extends EntityRenderer<JetEntity> {
             BakedRender.entity(dir + "burner", pose, buf, LightTexture.FULL_BRIGHT, ov, 1, 1, 1);
             pose.popPose();
         }
+        pose.popPose();
+    }
+
+    /** the cockpit around the pilot: panel, displays, HUD glass, seat; the stick and the throttle move with his hands */
+    private static void renderCockpit(PoseStack pose, MultiBufferSource buf, int light, JetEntity jet) {
+        com.gunsmod.entity.JetType type = jet.type;
+        VehicleGeo.Jet g = type.geo;
+        String dir = "entity/" + g.model() + "/";
+        int ov = OverlayTexture.NO_OVERLAY;
+        float S = type.renderScale();
+        pose.pushPose();
+        pose.scale(S, S, S);
+        pose.translate(-0.5f, 0f, -0.5f);
+        BakedRender.entity(dir + "cockpit", pose, buf, light, ov, 1, 1, 1);
+        double[] sp = g.stick();
+        pose.pushPose();
+        pose.translate(sp[0] / 16f, sp[1] / 16f, sp[2] / 16f);
+        pose.mulPose(Axis.XP.rotationDegrees(jet.stickY * 18f));
+        pose.mulPose(Axis.ZP.rotationDegrees(-jet.stickX * 18f));
+        pose.translate(-sp[0] / 16f, -sp[1] / 16f, -sp[2] / 16f);
+        BakedRender.entity(dir + "stick", pose, buf, light, ov, 1, 1, 1);
+        pose.popPose();
+        double[] tp = g.throttle();
+        pose.pushPose();
+        pose.translate(tp[0] / 16f, tp[1] / 16f, tp[2] / 16f);
+        pose.mulPose(Axis.XP.rotationDegrees(15f - jet.getThrottle() * 40f));
+        pose.translate(-tp[0] / 16f, -tp[1] / 16f, -tp[2] / 16f);
+        BakedRender.entity(dir + "throttle", pose, buf, light, ov, 1, 1, 1);
+        pose.popPose();
         pose.popPose();
     }
 

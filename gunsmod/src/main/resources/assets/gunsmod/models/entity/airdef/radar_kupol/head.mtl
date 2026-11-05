@@ -1,8 +1,32 @@
+newmtl array
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #array
+
+newmtl black
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #black
+
 newmtl dark
 Kd 1 1 1
 Ka 0 0 0
 d 1.0
 map_Kd #dark
+
+newmtl grille
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #grille
+
+newmtl light_grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #light_grey
 
 newmtl paint
 Kd 1 1 1

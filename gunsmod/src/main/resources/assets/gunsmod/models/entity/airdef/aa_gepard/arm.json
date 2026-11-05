@@ -7,6 +7,8 @@
  "shade_quads": true,
  "textures": {
   "black": "gunsmod:item/vehicle/mesh/black",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "grille": "gunsmod:item/vehicle/mesh/grille",
   "gunmetal": "gunsmod:item/vehicle/mesh/gunmetal",
   "olive": "gunsmod:item/vehicle/mesh/olive",
   "steel": "gunsmod:item/vehicle/mesh/steel",

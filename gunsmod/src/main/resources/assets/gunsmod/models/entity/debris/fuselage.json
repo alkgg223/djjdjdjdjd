@@ -1,0 +1,14 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/debris/fuselage.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "burnt": "gunsmod:item/vehicle/mesh/burnt",
+  "burnt_metal": "gunsmod:item/vehicle/mesh/burnt_metal",
+  "skin_dark": "gunsmod:item/vehicle/mesh/skin_dark",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

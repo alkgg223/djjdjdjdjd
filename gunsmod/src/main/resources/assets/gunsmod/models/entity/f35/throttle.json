@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/f35/throttle.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "pit": "gunsmod:item/vehicle/mesh/pit",
+  "pit_light": "gunsmod:item/vehicle/mesh/pit_light",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

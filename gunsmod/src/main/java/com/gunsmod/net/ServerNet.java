@@ -14,6 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -46,6 +47,13 @@ public final class ServerNet {
         if (!(ctx.player() instanceof ServerPlayer sp) || !sp.getAbilities().mayBuild) return;
         ItemStack st = sp.getMainHandItem();
         if (st.getItem() instanceof com.gunsmod.item.ConvoyToolItem) com.gunsmod.item.ConvoyToolItem.spawn(sp, st);
+    }
+
+    public static void jetBank(Net.JetBank p, IPayloadContext ctx) {
+        if (ctx.player() instanceof ServerPlayer sp && sp.getVehicle() instanceof com.gunsmod.entity.JetEntity j && j.getControllingPassenger() == sp
+                && Float.isFinite(p.bank())) {
+            j.setBank(p.bank(), Mth.clamp(p.stickX(), -1f, 1f), Mth.clamp(p.stickY(), -1f, 1f), p.on());
+        }
     }
 
     public static void prone(Net.ProneState p, IPayloadContext ctx) {

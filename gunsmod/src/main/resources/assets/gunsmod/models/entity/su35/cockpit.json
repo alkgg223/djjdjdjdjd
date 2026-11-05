@@ -1,0 +1,20 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/su35/cockpit.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "bright": "gunsmod:item/vehicle/mesh/bright",
+  "cushion": "gunsmod:item/vehicle/mesh/cushion",
+  "hud_glass": "gunsmod:item/vehicle/mesh/hud_glass",
+  "light_grey": "gunsmod:item/vehicle/mesh/light_grey",
+  "pit": "gunsmod:item/vehicle/mesh/pit",
+  "pit_light": "gunsmod:item/vehicle/mesh/pit_light",
+  "screen": "gunsmod:item/vehicle/mesh/screen",
+  "screen_amber": "gunsmod:item/vehicle/mesh/screen_amber",
+  "warning": "gunsmod:item/vehicle/mesh/warning",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

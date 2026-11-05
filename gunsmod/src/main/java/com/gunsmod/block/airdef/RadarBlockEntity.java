@@ -71,7 +71,7 @@ public class RadarBlockEntity extends BlockEntity {
         long now = level.getGameTime();
         Vec3 eye = antenna();
         for (VehicleEntity v : AirTracker.flying(level)) {
-            if (v.getPassengers().isEmpty() || BotTeam.of(v) == team) continue;
+            if (!v.threat() || BotTeam.of(v) == team) continue;
             Vec3 c = v.position().add(0, v.getBbHeight() * 0.5, 0);
             double d = c.distanceTo(eye);
             if (d > type.range) continue;

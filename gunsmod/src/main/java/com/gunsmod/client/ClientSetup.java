@@ -61,6 +61,7 @@ public final class ClientSetup {
         JeepEntity.clientTick = JeepSound::tickJeep;
         VehicleEntity.clientTick = VehicleSound::tick;
         VehicleCamera.init();
+        JetControl.init();
         com.gunsmod.item.ConvoyToolItem.openScreen = s -> net.minecraft.client.Minecraft.getInstance().setScreen(new com.gunsmod.client.screen.ConvoyScreen(s));
         FxHooks.light = (en, lvl) -> ClientLights.light(en, en.position(), lvl, 2);
         // helicopter collective: jump climbs, sneak descends
@@ -82,6 +83,7 @@ public final class ClientSetup {
         }
         e.registerItem(JeepItemRenderer.EXTENSIONS, vehicles.toArray(new Item[0]));
         e.registerItem(com.gunsmod.client.render.AirDefenseItemRenderer.EXTENSIONS, Reg.AD_ITEMS.stream().map(d -> (Item) d.get()).toArray(Item[]::new));
+        e.registerItem(com.gunsmod.client.render.DroneRenderer.Item.EXTENSIONS, Reg.FPV_DRONE.get(), Reg.SHAHED.get());
     }
 
     @SubscribeEvent
@@ -117,10 +119,12 @@ public final class ClientSetup {
             if (h.geo.chin() != null) e.register(BakedRender.id("entity/" + h.geo.model() + "/chin"));
         }
         for (String p : new String[]{"body", "mark_green", "mark_red", "gear_nose", "gear_main", "aim9_l", "aim9_r", "mav_0", "mav_1", "mav_2",
-                "mav_3", "burner"}) {
+                "mav_3", "burner", "cockpit", "stick", "throttle"}) {
             e.register(BakedRender.id("entity/f16/" + p));
         }
         e.register(BakedRender.id("entity/car/civ_wheel"));
+        for (String p : com.gunsmod.entity.WreckPieceEntity.KINDS) e.register(BakedRender.id("entity/debris/" + p));
+        for (String p : com.gunsmod.client.render.DroneRenderer.PARTS) e.register(BakedRender.id("entity/drone/" + p));
         for (var g : com.gunsmod.block.airdef.AirDefenseGeo.GEO.entrySet()) {
             e.register(BakedRender.id("entity/airdef/" + g.getKey() + "/base"));
             e.register(BakedRender.id("entity/airdef/" + g.getKey() + "/head"));
@@ -168,6 +172,8 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.A10.get(), JetRenderer::new);
         e.registerEntityRenderer(Reg.GUIDED_MISSILE.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.FLARE_ENTITY.get(), NoopRenderer::new);
+        e.registerEntityRenderer(Reg.WRECK_PIECE.get(), com.gunsmod.client.render.WreckPieceRenderer::new);
+        e.registerEntityRenderer(Reg.DRONE.get(), com.gunsmod.client.render.DroneRenderer::new);
         e.registerEntityRenderer(Reg.MINE.get(), MineRenderer::new);
         e.registerEntityRenderer(Reg.ROCKET.get(), ProjectileRenderer::new);
         e.registerEntityRenderer(Reg.GRENADE.get(), ProjectileRenderer::new);
@@ -206,6 +212,7 @@ public final class ClientSetup {
         e.register(GunClient.FLARES);
         e.register(GunClient.TEAM);
         e.register(GunClient.PRONE);
+        e.register(JetControl.VIEW);
     }
 
     @SubscribeEvent

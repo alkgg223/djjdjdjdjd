@@ -523,8 +523,9 @@ public class ArmoredCarEntity extends VehicleEntity {
     }
 
     private boolean enemyAircraft(VehicleEntity h, @Nullable LivingEntity crew) {
-        if (!Aircraft.detectable(h) || !h.isAlive() || h.getPassengers().isEmpty()) return false;
+        if (!Aircraft.detectable(h) || !h.isAlive() || !h.threat()) return false;
         if (crew != null && BotTeam.friendly(crew, h.getControllingPassenger())) return false;
+        if (h.unmannedThreat() && h.getBotTeam() == BotTeam.of(crew != null ? crew : this)) return false;
         return crew == null || h.getBotTeam() != getBotTeam() || crew instanceof Player;
     }
 
@@ -871,7 +872,7 @@ public class ArmoredCarEntity extends VehicleEntity {
             return v.lengthSqr() > 0.04 && (e.getY() > this.getY() + 2 || v.dot(this.position().subtract(e.position())) > 0);
         }
         return e instanceof VehicleEntity h && Aircraft.detectable(h) && h.getBotTeam() != getBotTeam()
-                && !h.getPassengers().isEmpty() && h.distanceTo(this) < CRAM_RANGE * 0.8;
+                && h.threat() && h.distanceTo(this) < CRAM_RANGE * 0.8;
     }
 
     /** one tick of 20 mm fire (about four rounds): two glowing tracers, a chance to kill what it is aimed at */

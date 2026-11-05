@@ -22,6 +22,7 @@ MATS = {
     "paint_dark": ((0.66, 0.66, 0.66), "paint", True),
     "olive": ((0.36, 0.39, 0.27), "paint", False),
     "sand": ((0.66, 0.58, 0.42), "paint", False),
+    "wood": ((0.50, 0.34, 0.20), "canvas", False),
     "grey": ((0.45, 0.47, 0.49), "paint", False),
     "light_grey": ((0.70, 0.72, 0.74), "paint", False),
     "white": ((0.90, 0.90, 0.88), "paint", False),
@@ -47,11 +48,32 @@ MATS = {
     "red_mark": ((0.80, 0.12, 0.10), "paint", False),
     "white_mark": ((0.92, 0.92, 0.90), "plain", False),
     "glow": ((1.0, 0.86, 0.55), "plain", False),
+    # aircraft: painted skin with panel lines, rivets and access hatches (team tinted), and the cockpit
+    "skin": ((1.0, 1.0, 1.0), "skin", True),
+    "skin_dark": ((0.78, 0.78, 0.78), "skin", True),
+    "skin_metal": ((0.52, 0.53, 0.55), "skin", False),
+    "pit": ((0.20, 0.21, 0.22), "metal", False),
+    "pit_light": ((0.34, 0.35, 0.37), "metal", False),
+    "cushion": ((0.24, 0.23, 0.18), "canvas", False),
+    "screen": ((0.30, 0.95, 0.55), "screen", False),
+    "screen_amber": ((1.0, 0.72, 0.30), "screen", False),
+    "hud_glass": ((0.55, 1.0, 0.65), "glass", False),
+    "warning": ((0.92, 0.75, 0.10), "stripes", False),
+    "burnt": ((0.16, 0.14, 0.12), "burnt", False),
+    "burnt_metal": ((0.38, 0.34, 0.30), "burnt", False),
+    # ground equipment: phased-array faces, tread plate decks, vent grilles, track links, darker paint shades
+    "array": ((0.36, 0.39, 0.36), "array", False),
+    "array_sand": ((0.60, 0.54, 0.42), "array", False),
+    "tread_plate": ((0.52, 0.54, 0.56), "tread", False),
+    "grille": ((0.20, 0.21, 0.21), "grille", False),
+    "links": ((0.30, 0.29, 0.28), "links", False),
+    "olive_dark": ((0.27, 0.30, 0.21), "paint", False),
+    "sand_dark": ((0.52, 0.46, 0.33), "paint", False),
 }
-TEXTURES = ["paint", "metal", "rubber", "glass", "canvas", "plain"]
-EMISSIVE = {"glow", "red_light", "amber"}
+TEXTURES = ["paint", "metal", "rubber", "glass", "canvas", "plain", "skin", "screen", "stripes", "burnt", "array", "tread", "grille", "links"]
+EMISSIVE = {"glow", "red_light", "amber", "screen", "screen_amber"}
 # see-through materials: opacity of the texture
-TRANSLUCENT = {"glass_clear": 0.28}
+TRANSLUCENT = {"glass_clear": 0.28, "hud_glass": 0.22}
 TEX_REF = "gunsmod:item/vehicle/mesh/"
 SMOOTH_DEG = 38.0
 UV_TILE = 40.0          # model units the whole texture spans
@@ -792,6 +814,73 @@ def write_part(mesh, folder, name, res_dir):
 
 
 # ------------------------------------------------------------------------------------------------ textures
+def skin_texture(rng, size=256):
+    """aircraft skin: panels of slightly different shade, recessed panel lines, rivet rows along them, a few access
+    hatches with their fasteners, soft exhaust and rain streaks"""
+    img = np.full((size, size), 0.90)
+    yy, xx = np.mgrid[0:size, 0:size]
+    # panel tone: random rectangles a shade lighter or darker
+    ys = [0]
+    while ys[-1] < size:
+        ys.append(ys[-1] + int(rng.integers(36, 72)))
+    for y0, y1 in zip(ys, ys[1:]):
+        xs = [0]
+        while xs[-1] < size:
+            xs.append(xs[-1] + int(rng.integers(28, 64)))
+        for x0, x1 in zip(xs, xs[1:]):
+            img[y0:y1, x0:x1] += rng.uniform(-0.035, 0.035)
+            # the panel lines: a dark seam with a faint light edge
+            img[y0:y0 + 1, x0:x1] -= 0.22
+            img[y0 + 1:y0 + 2, x0:x1] += 0.05
+            img[y0:y1, x0:x0 + 1] -= 0.22
+            img[y0:y1, x0 + 1:x0 + 2] += 0.04
+            # rivets in a row a few pixels in from the seam
+            for x in range(x0 + 4, min(x1, size) - 2, 6):
+                if y0 + 4 < size and x < size:
+                    img[y0 + 4, x] -= 0.12
+            for y in range(y0 + 4, min(y1, size) - 2, 6):
+                if x0 + 4 < size and y < size:
+                    img[y, x0 + 4] -= 0.12
+            # now and then an access hatch with a fastener in each corner
+            if rng.random() < 0.3 and x1 - x0 > 24 and y1 - y0 > 24:
+                hx0 = x0 + int(rng.integers(6, max(7, (x1 - x0) // 2)))
+                hy0 = y0 + int(rng.integers(6, max(7, (y1 - y0) // 2)))
+                hw, hh = int(rng.integers(8, 16)), int(rng.integers(6, 12))
+                hx0, hy0 = min(hx0, size - 3), min(hy0, size - 3)
+                hx1, hy1 = min(size - 1, hx0 + hw), min(size - 1, hy0 + hh)
+                img[hy0, hx0:hx1] -= 0.18
+                img[hy1, hx0:hx1] -= 0.18
+                img[hy0:hy1, hx0] -= 0.18
+                img[hy0:hy1, hx1] -= 0.18
+                for cx, cy in ((hx0 + 2, hy0 + 2), (hx1 - 2, hy0 + 2), (hx0 + 2, hy1 - 2), (hx1 - 2, hy1 - 2)):
+                    img[cy, cx] -= 0.15
+    # weathering: faint streaks running back over the skin
+    streak = rng.random((8, size))
+    s = np.asarray(Image.fromarray((streak * 255).astype(np.uint8)).resize((size, size), Image.BILINEAR), dtype=float) / 255
+    img += (s - 0.5) * 0.05
+    return np.clip(img, 0, 1)
+
+
+def screen_texture(rng, size=128):
+    """a lit display: dark glass with the symbology drawn in bright lines (a horizon, a scale, a few boxes)"""
+    img = np.full((size, size), 0.12)
+    img[size // 2, 8:size - 8] = 1.0
+    for y in range(16, size - 16, 12):
+        img[y, 10:22] = 0.85
+        img[y, size - 22:size - 10] = 0.85
+    for k in range(6):
+        x0, y0 = int(rng.integers(20, size - 40)), int(rng.integers(20, size - 30))
+        img[y0, x0:x0 + 18] = 0.9
+        img[y0 + 10, x0:x0 + 18] = 0.9
+        img[y0:y0 + 10, x0] = 0.9
+        img[y0:y0 + 10, x0 + 18] = 0.9
+    img[4:6, :] = 0.6
+    img[-6:-4, :] = 0.6
+    img[:, 4:6] = 0.6
+    img[:, -6:-4] = 0.6
+    return img
+
+
 def make_textures(res_dir, size=128):
     """one texture per material: the family pattern (paint, metal, rubber...) times the material colour"""
     out = os.path.join(res_dir, "textures", "item", "vehicle", "mesh")
@@ -834,12 +923,38 @@ def make_textures(res_dir, size=128):
     g += 0.12 * np.clip(1 - np.abs((xx + yy) / size - 1.3) * 8, 0, 1)
     save("glass", g)
     save("plain", np.ones((size, size)) * 0.97)
+    save("skin", skin_texture(rng, 256))
+    save("screen", screen_texture(rng, 128))
+    st = ((xx + yy) // 12) % 2
+    save("stripes", np.where(st == 0, 1.0, 0.12))
+    burnt = 0.55 + (noise(8) - 0.5) * 0.7 + (noise(48, 2) - 0.5) * 0.3
+    save("burnt", np.clip(burnt, 0.1, 1.0))
+    # phased array: a grid of transmit / receive modules, each a slightly different shade
+    cell = 4
+    shade = rng.random((size // cell + 1, size // cell + 1))
+    arr = 0.80 + shade[yy // cell, xx // cell] * 0.10
+    arr = np.where((xx % cell == 0) | (yy % cell == 0), 0.48, arr)
+    arr = np.where((xx % (cell * 8) == 0) | (yy % (cell * 8) == 0), 0.32, arr)
+    save("array", arr)
+    # tread plate: raised diagonal bars, alternating direction cell by cell
+    c = 12
+    cx, cy = xx % c, yy % c
+    even = ((xx // c + yy // c) % 2) == 0
+    bar = (even & (np.abs(cx - cy) < 2) | ~even & (np.abs(cx + cy - (c - 1)) < 2)) & (cx > 2) & (cx < c - 3)
+    save("tread", 0.70 + 0.26 * bar + (noise(6) - 0.5) * 0.08)
+    # vent grille: slats with a dark gap and a lit top edge
+    ph = yy % 6
+    save("grille", np.where(ph < 2, 0.25, np.where(ph == 2, 1.0, 0.75)) + (noise(8, 2) - 0.5) * 0.06)
+    # track links: a dark gap between the steel shoes, the rubber pad in the middle a shade darker
+    ph = yy % 8
+    links = np.where(ph < 2, 0.35, np.where(ph < 6, 0.95, 0.8)) + (noise(16, 2) - 0.5) * 0.18
+    save("links", links)
     for f in os.listdir(out):
         if f.endswith(".png"):
             os.remove(os.path.join(out, f))
     for mat, (rgb, tex, tint) in MATS.items():
         base = fam[tex]
-        if mat in EMISSIVE:
+        if mat in EMISSIVE and tex != "screen":
             base = np.ones_like(base)
         a = np.stack([base * rgb[0], base * rgb[1], base * rgb[2]], axis=-1)
         if mat in TRANSLUCENT:

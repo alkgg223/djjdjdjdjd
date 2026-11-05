@@ -135,7 +135,9 @@ public class GuidedMissileEntity extends Projectile {
         if (e instanceof FlareEntity) return false;
         if (antiAir()) {
             if (!(e instanceof Aircraft a) || a.stealth() || !super.canHitEntity(e)) return false;
-            return side != null ? BotTeam.of(e) != side : !BotTeam.friendly(owner, e.getControllingPassenger());
+            if (side != null) return BotTeam.of(e) != side;
+            if (e instanceof VehicleEntity v && v.unmannedThreat()) return owner == null || BotTeam.of(owner) != v.getBotTeam();
+            return !BotTeam.friendly(owner, e.getControllingPassenger());
         }
         if (VehicleEntity.shieldOf(e) != null) return false;
         return super.canHitEntity(e) && !BotTeam.friendly(owner, e);

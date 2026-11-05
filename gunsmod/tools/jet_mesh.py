@@ -7,6 +7,7 @@ import numpy as np
 import jet as J
 import meshkit as K
 import vehmesh as V
+import aircraft_kit as AK
 from helis_mesh import stations_loft, foil
 from meshkit import Mesh, v3
 
@@ -84,6 +85,7 @@ def f16():
     for s in (1, -1):
         xr = 8 + s * 2.2
         foil(body, (xr, WY, -1.0), (8 + s * 12.6, WY, 9.4), 13.2, 1.2, 0.05, "paint", thick_dir=(0, 1, 0), n=12)
+        AK.hinge_lines(body, (xr, WY, -1.0), (8 + s * 12.6, WY, 9.4), 13.2, 1.2, 0.05)
         foil(body, (8 + s * 2.0, WY + 0.3, 16.4), (8 + s * 7.6, WY - 0.4, 22.0), 6.0, 0.6, 0.06, "paint", thick_dir=(0, 1, 0), n=10)
         K.plate([v3(8 + s * 1.6, 2.4, 15.4), v3(8 + s * 1.6, 3.9, 15.4), v3(8 + s * 1.5, 3.9, 18.6), v3(8 + s * 1.6, 2.6, 18.6)], 0.14, "paint", m=body)
         # wing tip rail and the pylons
@@ -103,7 +105,17 @@ def f16():
     spots = [(v3(16.4, WY + 0.25, 8.0), (0, 1, 0), (0, 0, -1), 0.9), (v3(-0.4, WY + 0.25, 8.0), (0, 1, 0), (0, 0, -1), 0.9),
              (v3(8.22, 10.6, 19.6), (1, 0, 0), (0, 1, 0), 0.75), (v3(7.78, 10.6, 19.6), (-1, 0, 0), (0, 1, 0), 0.75),
              (v3(6.29, 3.5, -2.5), (-1, 0, 0), (0, 1, 0), 0.55), (v3(9.71, 3.5, -2.5), (1, 0, 0), (0, 1, 0), 0.55)]
+    # antennas, formation lights; the skin with its panels; the cockpit
+    AK.blade(body, 8.0, 7.6, -2.0, 1.0, 1.4, True)
+    AK.blade(body, 8.0, 2.4, 4.0, 0.9, 1.2, False)
+    for s in (-1, 1):
+        AK.light_strip(body, (8 + s * 1.95, 5.9, -11.0), (8 + s * 2.1, 6.1, -7.0))
+    AK.reskin(body)
+    eye = (8.0, 7.2 + 0.35 * 2.05, -8.3 + 0.25 * 4.0)
+    pit, stick_p, thr_p = AK.cockpit(eye, 0.375, side_stick=True, displays=2)
+    g["eye"], g["seat"], g["stick"], g["throttle"] = eye, AK.place_seat(eye, 0.375), stick_p, thr_p
     parts = {"body": body, "mark_green": V.team_marks(spots, True), "mark_red": V.team_marks(spots, False)}
+    parts.update(pit)
     # gear (folding about its pivots)
     nx, ny, nz = g["gearNose"]
     gn = Mesh()

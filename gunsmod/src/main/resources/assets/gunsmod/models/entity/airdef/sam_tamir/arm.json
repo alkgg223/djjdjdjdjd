@@ -7,7 +7,11 @@
  "shade_quads": true,
  "textures": {
   "black": "gunsmod:item/vehicle/mesh/black",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "grille": "gunsmod:item/vehicle/mesh/grille",
   "sand": "gunsmod:item/vehicle/mesh/sand",
+  "sand_dark": "gunsmod:item/vehicle/mesh/sand_dark",
+  "steel": "gunsmod:item/vehicle/mesh/steel",
   "particle": "gunsmod:item/vehicle/mesh/paint"
  }
 }

@@ -17,9 +17,9 @@ public enum JetType {
             Gun.GSH30, Ground.MAVERICK, Air.R77, 0b001100, 0b110011, 0b111111, 64, true),
     MIG29("mig29", VehicleGeo.MIG29, 0.375, 0.55, 0.95, 2.60, 0.80, 0.97, 1.24, 1.25, 200, 0.22f, 0.90f, 0.70f, Role.FIGHTER,
             Gun.GSH30, Ground.JDAM, Air.R73, 0b001100, 0b110011, 0b111111, 60, true),
-    A10("a10", VehicleGeo.A10, 0.375, 0.40, 0.70, 1.45, 0.60, 0.55, 0.00, 0.85, 420, 0.05f, 1.10f, 0.35f, Role.STRIKE,
-            Gun.GAU8, Ground.MAVERICK, Air.AIM9, 0b001111, 0b110000, 0b111111, 96, false),
-    B2("b2", VehicleGeo.B2, 1.0, 0.50, 0.85, 1.90, 1.00, 0.97, 0.00, 0.45, 500, 0.00f, 0.00f, 0.00f, Role.BOMBER,
+    A10("a10", VehicleGeo.A10, 0.375, 0.40, 0.62, 1.70, 0.60, 0.62, 0.90, 0.85, 420, 0.05f, 1.10f, 0.35f, Role.STRIKE,
+            Gun.GAU8, Ground.MAVERICK, Air.AIM9, 0b001111, 0b110000, 0b111111, 96, true),
+    B2("b2", VehicleGeo.B2, 1.0, 0.50, 0.85, 1.90, 1.00, 1.30, 0.00, 0.45, 500, 0.00f, 0.00f, 0.00f, Role.BOMBER,
             Gun.NONE, Ground.NUKE, Air.NONE, 0b111111, 0, 0, 30, false);
 
     /** how a soldier pilot fights it */

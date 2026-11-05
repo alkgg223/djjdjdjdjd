@@ -23,6 +23,7 @@ public final class SoundNames {
             "mig29_burner", "mig29_flyby", "a10_idle", "a10_engine", "a10_flyby", "b2_idle",
             "b2_engine", "b2_flyby", "gun_gau22", "gun_gsh30", "gun_gau8", "aa_35mm",
             "aa_23mm", "aa_40mm", "flak_burst", "shell_impact", "sam_patriot", "sam_s400",
-            "sam_nasams", "sam_tamir", "radar_contact"
+            "sam_nasams", "sam_tamir", "radar_contact", "jet_cockpit", "wreck_impact", "fpv_buzz",
+            "shahed_engine", "shahed_launch", "a10_burner"
     };
 }

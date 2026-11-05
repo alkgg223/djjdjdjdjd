@@ -100,7 +100,7 @@ MATERIALS = {
     "rotor": ("#232528", "paint", 0.04, 0.18),
 }
 
-MAT_ALPHA = {"glass_clear": 0.38, "decal": 0.0}
+MAT_ALPHA = {"glass_clear": 0.38, "decal": 0.0, "lens": 0.2, "lens_red": 0.28}
 TINT_MATS = {"paint_white", "tintcloth"}
 _unused = {
 }

@@ -47,6 +47,7 @@ public class GunsMod {
         e.put(Reg.BOT.get(), BotEntity.createAttributes().build());
         e.put(Reg.JEEP.get(), JeepEntity.createAttributes().build());
         e.put(Reg.JEEP_TOW.get(), JeepEntity.createAttributes().build());
+        e.put(Reg.DRONE.get(), com.gunsmod.entity.DroneEntity.createAttributes().build());
         for (VehicleKind k : VehicleKind.values()) {
             switch (k.group) {
                 case TANK -> e.put(k.type(), TankEntity.createAttributes(k.tank()).build());

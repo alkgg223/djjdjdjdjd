@@ -7,11 +7,15 @@
  "shade_quads": true,
  "textures": {
   "black": "gunsmod:item/vehicle/mesh/black",
+  "bright": "gunsmod:item/vehicle/mesh/bright",
   "dark": "gunsmod:item/vehicle/mesh/dark",
   "glass": "gunsmod:item/vehicle/mesh/glass",
+  "glow": "gunsmod:item/vehicle/mesh/glow",
   "gunmetal": "gunsmod:item/vehicle/mesh/gunmetal",
-  "paint": "gunsmod:item/vehicle/mesh/paint",
-  "paint_dark": "gunsmod:item/vehicle/mesh/paint_dark",
+  "lens": "gunsmod:item/vehicle/mesh/lens",
+  "red_light": "gunsmod:item/vehicle/mesh/red_light",
+  "skin": "gunsmod:item/vehicle/mesh/skin",
+  "skin_dark": "gunsmod:item/vehicle/mesh/skin_dark",
   "steel": "gunsmod:item/vehicle/mesh/steel",
   "particle": "gunsmod:item/vehicle/mesh/paint"
  }

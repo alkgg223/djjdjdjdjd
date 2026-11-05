@@ -762,5 +762,44 @@
    "gunsmod:radar_contact"
   ],
   "subtitle": "subtitles.gunsmod.radar_contact"
+ },
+ "jet_cockpit": {
+  "sounds": [
+   "gunsmod:jet_cockpit"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "wreck_impact": {
+  "sounds": [
+   "gunsmod:wreck_impact_1",
+   "gunsmod:wreck_impact_2",
+   "gunsmod:wreck_impact_3"
+  ],
+  "subtitle": "subtitles.gunsmod.wreck_impact"
+ },
+ "fpv_buzz": {
+  "sounds": [
+   "gunsmod:fpv_buzz"
+  ],
+  "subtitle": "subtitles.gunsmod.fpv_buzz"
+ },
+ "shahed_engine": {
+  "sounds": [
+   "gunsmod:shahed_engine"
+  ],
+  "subtitle": "subtitles.gunsmod.shahed_engine"
+ },
+ "shahed_launch": {
+  "sounds": [
+   "gunsmod:shahed_launch_1",
+   "gunsmod:shahed_launch_2"
+  ],
+  "subtitle": "subtitles.gunsmod.shahed_launch"
+ },
+ "a10_burner": {
+  "sounds": [
+   "gunsmod:a10_burner"
+  ],
+  "subtitle": "subtitles.gunsmod.jet_afterburner"
  }
 }

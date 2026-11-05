@@ -15,11 +15,16 @@ import numpy as np
 
 import meshkit as K
 import vehmesh as V
+import aircraft_kit as AK
 from helis_mesh import stations_loft, foil
 from jet_mesh import maverick, aim9
 from meshkit import Mesh, v3
 
 GEO = {}
+U = 0.375            # metres (= blocks) per model unit
+_last_canopy = {}
+# per jet: side stick or not, number of displays, one wide display, exterior details
+COCKPIT = {"f22": (True, 3, False), "f35": (True, 3, True), "su35": (False, 3, False), "mig29": (False, 2, False), "a10": (False, 2, False)}
 
 
 # ------------------------------------------------------------------------------------------------ stores
@@ -101,6 +106,7 @@ def plume(nozzles, r, length=5.0):
 
 
 def canopy(m, c, rx, ry, rz, tint="glass"):
+    _last_canopy["c"] = (c, rx, ry, rz)
     K.sphere(c, rx, ry, rz, tint, n=20, rows=8, top_only=True, m=m)
     x, y, z = c
     bow = [(x + rx * 0.98 * math.cos(math.radians(a)), y + ry * 0.95 * math.sin(math.radians(a)), z + rz * 0.35) for a in range(0, 181, 15)]
@@ -120,10 +126,41 @@ def fin(m, root_le, height, sweep, cant, chord_root, chord_tip, mat="paint", thi
 def wing_pair(m, root_x, wy, root_le_z, tip_x, tip_le_z, chord_root, chord_tip, thick=0.05, droop=0.0):
     for s in (1, -1):
         foil(m, (8 + s * root_x, wy, root_le_z), (8 + s * tip_x, wy - droop, tip_le_z), chord_root, chord_tip, thick, "paint", thick_dir=(0, 1, 0), n=12)
+        AK.hinge_lines(m, (8 + s * root_x, wy, root_le_z), (8 + s * tip_x, wy - droop, tip_le_z), chord_root, chord_tip, thick)
+
+
+def details(name, g, body):
+    """small exterior parts: pitot / probes, blade antennas, formation light strips, IRST, wicks, nav lights"""
+    (cx, cy, cz), rx, ry, rz = _last_canopy["c"]
+    nose = g["ends"][0]
+    if name in ("su35", "mig29", "a10"):
+        AK.pitot(body, nose, 1.6 if name != "a10" else 0.8, 0.09)
+    if name in ("su35", "mig29"):
+        AK.irst(body, cx + 0.7, cy + 0.1, cz - rz * 1.02, 0.42)
+    # blade antennas: one on the spine behind the canopy, one under the belly
+    AK.blade(body, 8.0, cy - 0.2, cz + rz * 1.6, 1.0, 1.4, True)
+    AK.blade(body, 8.0, 3.1 if name != "a10" else 2.9, cz + rz * 2.2, 0.9, 1.2, False)
+    # formation light strips on the forward fuselage sides and the fins
+    for s in (-1, 1):
+        AK.light_strip(body, (8 + s * (rx + 0.75), cy - 1.2, cz - rz * 0.6), (8 + s * (rx + 0.9), cy - 1.0, cz + rz * 0.4))
+    tl, tr = g["tips"]
+    AK.lights(body, (tl[0] - 0.15, tl[1], tl[2] + 0.5), (tr[0] + 0.15, tr[1], tr[2] + 0.5), (8.0, g["ends"][1][1] + 0.4, g["ends"][1][2] - 0.6))
+    AK.wicks(body, [(tl[0] + 0.3, tl[1], tl[2] + 2.5), (tr[0] - 0.3, tr[1], tr[2] + 2.5)])
 
 
 def finish(name, g, body, spots, gear_parts, burner, stores):
+    details(name, g, body)
+    AK.reskin(body)
+    (cx, cy, cz), rx, ry, rz = _last_canopy["c"]
+    eye = (cx, cy + 0.35 * ry, cz + 0.25 * rz)
+    side, displays, wide = COCKPIT[name]
+    pit, stick_p, thr_p = AK.cockpit(eye, U, side_stick=side, displays=displays, wide_panel=wide)
+    g["eye"] = eye
+    g["seat"] = AK.place_seat(eye, U)
+    g["stick"] = stick_p
+    g["throttle"] = thr_p
     parts = {"body": body, "mark_green": V.team_marks(spots, True), "mark_red": V.team_marks(spots, False)}
+    parts.update(pit)
     parts["gear_nose"], parts["gear_main"] = gear_parts
     if burner is not None:
         parts["burner"] = burner
@@ -254,6 +291,7 @@ def flanker_like(name, L, WY, span, g, centre, lerx, nac_x, nac, nozzle_z, nozzl
         K.cap(body, mouth, "black", np.array([0.0, 0.0, -1.0]))
         nozzle_round(body, 8 + s * nac_x, nac[-1][1], nac[-1][0] - 0.1, nozzle_z, nozzle_r)
         foil(body, (8 + s * wing[0], WY, wing[1]), (8 + s * wing[2], WY - 0.2, wing[3]), wing[4], wing[5], 0.05, "paint", thick_dir=(0, 1, 0), n=12)
+        AK.hinge_lines(body, (8 + s * wing[0], WY, wing[1]), (8 + s * wing[2], WY - 0.2, wing[3]), wing[4], wing[5], 0.05)
         foil(body, (8 + s * htail[0], htail[1], htail[2]), (8 + s * htail[3], htail[1] - 0.1, htail[4]), htail[5], htail[6], 0.05, "paint",
              thick_dir=(0, 1, 0), n=10)
         fin(body, (8 + s * fins[0], fins[1], fins[2]), fins[3], fins[4], fins[5] * s, fins[6], fins[7])
@@ -345,6 +383,7 @@ def a10():
     # straight wing with the drooped tips and the gear pods
     for s in (1, -1):
         foil(body, (8 + s * 2.0, WY, -1.0), (8 + s * 19.0, WY + 0.4, 0.6), 8.2, 5.2, 0.12, "paint", thick_dir=(0, 1, 0), n=12)
+        AK.hinge_lines(body, (8 + s * 2.0, WY, -1.0), (8 + s * 19.0, WY + 0.4, 0.6), 8.2, 5.2, 0.12)
         foil(body, (8 + s * 19.0, WY + 0.4, 0.6), (8 + s * 22.8, WY - 0.4, 2.2), 5.2, 3.2, 0.12, "paint", thick_dir=(0, 1, 0), n=10)
         stations_loft(body, [(-2.4, 2.9, 0.1, 0.1, 2.0), (-1.6, 2.9, 0.8, 0.7, 2.4), (2.4, 2.9, 0.85, 0.75, 2.4), (4.6, 3.1, 0.4, 0.35, 2.0)],
                       "paint", n=12, cx=8 + s * 6.0)
@@ -369,7 +408,9 @@ def a10():
     spots = [(v3(22.0, WY + 0.25, 1.6), (0, 1, 0), (0, 0, -1), 1.0), (v3(-6.0, WY + 0.25, 1.6), (0, 1, 0), (0, 0, -1), 1.0),
              (v3(15.7, 8.6, 18.6), (1, 0, 0), (0, 1, 0), 0.8), (v3(0.3, 8.6, 18.6), (-1, 0, 0), (0, 1, 0), 0.8)]
     gp = gear(g, 4.2, 3.4, 6.0, nose_r=0.6, main_r=0.8)
-    return finish("a10", g, body, spots, gp, None, store_parts(g, ["mav", "mav", "mav", "mav", "aim9", "aim9"]))
+    # boost: reheat plumes behind the pods (the game gives the A-10 an afterburner to get it off the ground)
+    return finish("a10", g, body, spots, gp, plume([(8 + s * 3.2, 8.0, 14.6) for s in (1, -1)], 1.0, 4.2),
+                  store_parts(g, ["mav", "mav", "mav", "mav", "aim9", "aim9"]))
 
 
 JETS2 = {"f22": f22, "f35": f35, "su35": su35, "mig29": mig29, "a10": a10}

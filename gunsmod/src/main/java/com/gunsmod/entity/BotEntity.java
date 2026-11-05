@@ -98,6 +98,8 @@ public class BotEntity extends PathfinderMob {
     public static final double OPERATOR_LEASH = 20;
     /** anti-vehicle mines it carries (laid somewhere along its way) */
     public int mines = 1;
+    /** FPV kamikaze drones and Shahed-136s it carries (a drone operator) */
+    public int drones, shaheds;
     public boolean ignorePlayers;
     public int grenades = 2;
     public int smokes = 1;
@@ -154,6 +156,7 @@ public class BotEntity extends PathfinderMob {
         this.goalSelector.addGoal(1, new BotAvoidGrenadeGoal(this));
         this.goalSelector.addGoal(2, new BotVehicleGoal(this));
         this.goalSelector.addGoal(3, new com.gunsmod.entity.ai.BotSkyGoal(this));
+        this.goalSelector.addGoal(3, new com.gunsmod.entity.ai.BotDroneGoal(this));
         this.goalSelector.addGoal(4, new BotCombatGoal(this));
         this.goalSelector.addGoal(5, new BotReloadGoal(this));
         this.goalSelector.addGoal(6, new com.gunsmod.entity.ai.BotRouteGoal(this));
@@ -203,6 +206,10 @@ public class BotEntity extends PathfinderMob {
         this.setCustomName(Component.translatable("gunsmod.team." + team.name().toLowerCase()).append(" " + name).withStyle(team.chat));
         this.setCustomNameVisible(false);
         this.home = this.blockPosition();
+        // one in eight is a drone operator: three FPV kamikaze drones; a few carry a pair of Shaheds
+        float d = r.nextFloat();
+        if (d < 0.12f) drones = 3;
+        else if (d < 0.16f) shaheds = 2;
     }
 
     /** every slot the gun supports gets a random attachment of that slot, or stays empty */
@@ -225,7 +232,7 @@ public class BotEntity extends PathfinderMob {
             return BotTeam.of(p) != getBotTeam() && !ignorePlayers && !p.isCreative() && !p.isSpectator();
         }
         if (e instanceof JeepEntity j) return j.getBotTeam() != getBotTeam() && !j.getPassengers().isEmpty();
-        if (e instanceof VehicleEntity v) return v.getBotTeam() != getBotTeam() && v.isManned();
+        if (e instanceof VehicleEntity v) return v.getBotTeam() != getBotTeam() && (v.isManned() || v.unmannedThreat());
         return e instanceof Enemy && getBotTeam() == BotTeam.GREEN && !(e instanceof net.minecraft.world.entity.monster.Creeper && distanceToSqr(e) < 9);
     }
 
@@ -720,6 +727,8 @@ public class BotEntity extends PathfinderMob {
         }
         tag.putBoolean("Operator", operator);
         tag.putInt("Mines", mines);
+        tag.putInt("Drones", drones);
+        tag.putInt("Shaheds", shaheds);
         ListTag rack = new ListTag();
         for (int i = 0; i < missiles.getContainerSize(); i++) {
             ItemStack s = missiles.getItem(i);
@@ -750,6 +759,8 @@ public class BotEntity extends PathfinderMob {
         routeIdx = battle != null ? tag.getInt("RouteIdx") : -1;
         operator = tag.getBoolean("Operator");
         mines = tag.contains("Mines") ? tag.getInt("Mines") : 1;
+        drones = tag.getInt("Drones");
+        shaheds = tag.getInt("Shaheds");
         missiles.clearContent();
         for (Tag t : tag.getList("Missiles", Tag.TAG_COMPOUND)) {
             CompoundTag e = (CompoundTag) t;

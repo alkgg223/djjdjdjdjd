@@ -4,6 +4,12 @@ Ka 0 0 0
 d 1.0
 map_Kd #black
 
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
 newmtl gunmetal
 Kd 1 1 1
 Ka 0 0 0
@@ -15,3 +21,9 @@ Kd 1 1 1
 Ka 0 0 0
 d 1.0
 map_Kd #olive
+
+newmtl olive_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #olive_dark

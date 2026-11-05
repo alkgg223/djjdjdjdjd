@@ -288,6 +288,12 @@ public final class Reg {
     public static final DeferredHolder<EntityType<?>, EntityType<MineEntity>> MINE = ENTITIES.register("mine",
             () -> EntityType.Builder.<MineEntity>of(MineEntity::new, MobCategory.MISC).sized(0.6f, 0.2f).clientTrackingRange(8)
                     .updateInterval(20).build("mine"));
+    public static final DeferredHolder<EntityType<?>, EntityType<com.gunsmod.entity.WreckPieceEntity>> WRECK_PIECE = ENTITIES.register("wreck_piece",
+            () -> EntityType.Builder.<com.gunsmod.entity.WreckPieceEntity>of(com.gunsmod.entity.WreckPieceEntity::new, MobCategory.MISC).sized(1.2f, 0.6f)
+                    .clientTrackingRange(10).updateInterval(2).build("wreck_piece"));
+    public static final DeferredHolder<EntityType<?>, EntityType<com.gunsmod.entity.DroneEntity>> DRONE = ENTITIES.register("drone",
+            () -> EntityType.Builder.<com.gunsmod.entity.DroneEntity>of(com.gunsmod.entity.DroneEntity::new, MobCategory.MISC).sized(0.9f, 0.45f)
+                    .clientTrackingRange(16).updateInterval(1).build("drone"));
     public static final DeferredHolder<EntityType<?>, EntityType<FlareEntity>> FLARE_ENTITY = ENTITIES.register("flare",
             () -> EntityType.Builder.<FlareEntity>of(FlareEntity::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(12)
                     .updateInterval(1).build("flare"));
@@ -354,6 +360,10 @@ public final class Reg {
         for (var b : AD_LAUNCHERS.values()) AD_ITEMS.add(ITEMS.register(b.getId().getPath(), () -> new com.gunsmod.item.AirDefenseItem(b.get(), new Item.Properties())));
     }
 
+    public static final DeferredItem<com.gunsmod.item.DroneItem> FPV_DRONE = ITEMS.register("fpv_drone",
+            () -> new com.gunsmod.item.DroneItem(com.gunsmod.entity.DroneEntity.Kind.FPV, new Item.Properties().stacksTo(8).rarity(Rarity.RARE)));
+    public static final DeferredItem<com.gunsmod.item.DroneItem> SHAHED = ITEMS.register("shahed",
+            () -> new com.gunsmod.item.DroneItem(com.gunsmod.entity.DroneEntity.Kind.SHAHED, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final DeferredItem<com.gunsmod.item.ConvoyToolItem> CONVOY_TOOL = ITEMS.register("convoy_planner",
             () -> new com.gunsmod.item.ConvoyToolItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final DeferredItem<SoldierItem> GREEN_SOLDIER = ITEMS.register("green_soldier", () -> new SoldierItem(BotTeam.GREEN, new Item.Properties().stacksTo(16)));
@@ -428,6 +438,8 @@ public final class Reg {
                 out.accept(MISSILE_BUNKER_BUSTER.get());
                 out.accept(MISSILE_TITAN.get());
                 out.accept(REMOTE.get());
+                out.accept(FPV_DRONE.get());
+                out.accept(SHAHED.get());
                 out.accept(GREEN_SOLDIER.get());
                 out.accept(RED_SOLDIER.get());
                 out.accept(GREEN_JEEP.get());

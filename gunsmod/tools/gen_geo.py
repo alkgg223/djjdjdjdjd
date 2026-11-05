@@ -26,7 +26,7 @@ CAR_FIELDS = [("turret", "double[]"), ("gun", "double[]"), ("muzzles", "double[]
               ("front", "double[][]"), ("back", "double[][]"), ("exhaust", "double[][]"), ("smoke", "double[]"), ("size", "double[]"),
               ("gunMin", "double"), ("gunMax", "double")]
 
-JET_FIELDS = [("seat", "double[]"), ("cannon", "double[]"), ("nozzle", "double[]"), ("gearNose", "double[]"), ("gearMain", "double[]"),
+JET_FIELDS = [("seat", "double[]"), ("eye", "double[]"), ("stick", "double[]"), ("throttle", "double[]"), ("cannon", "double[]"), ("nozzle", "double[]"), ("gearNose", "double[]"), ("gearMain", "double[]"),
               ("tips", "double[][]"), ("pylons", "double[][]"), ("flares", "double[][]"), ("ends", "double[][]"), ("pivotY", "double"),
               ("size", "double[]")]
 
@@ -111,8 +111,11 @@ def main():
         fn()
     lines += ["", "    /** jets: model units of 0.375 block */",
               "    public record Jet(String model, " + ", ".join(t + " " + f for f, t in JET_FIELDS) + ") {}", ""]
+    import jet_mesh as JM
+    JM.f16()
     for fn in J2.JETS2.values():
         fn()
+    B2.b2_all()
     jets = dict(J.GEO)
     jets.update(J2.GEO)
     jets.update(B2.GEO)

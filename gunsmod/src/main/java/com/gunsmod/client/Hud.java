@@ -336,6 +336,14 @@ public final class Hud {
         int col = 0xD040FF70;
         double f = (g.guiHeight() / 2.0) / Math.tan(Math.toRadians(VehicleCamera.fovDeg(mc) / 2.0));
         float viewX = p.getViewXRot(pt), viewY = p.getViewYRot(pt);
+        // locked cockpit view: the horizon on the HUD banks with the aircraft
+        boolean banked = JetControl.active(jet);
+        if (banked) {
+            g.pose().pushPose();
+            g.pose().translate(cx, cy, 0);
+            g.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-Mth.lerp(pt, jet.prevRoll, jet.roll)));
+            g.pose().translate(-cx, -cy, 0);
+        }
         // pitch ladder every 10 degrees (dashed below the horizon)
         for (int k = -60; k <= 60; k += 10) {
             float dp = -k - viewX;
@@ -371,6 +379,7 @@ public final class Hud {
             g.fill(gx, gy - 10, gx + 1, gy - 5, col);
             g.fill(gx, gy, gx + 1, gy + 1, 0xFFFFFFFF);
         }
+        if (banked) g.pose().popPose();
         // heading tape
         int hy = 22;
         float hdg = Mth.wrapDegrees(viewY + 180f);

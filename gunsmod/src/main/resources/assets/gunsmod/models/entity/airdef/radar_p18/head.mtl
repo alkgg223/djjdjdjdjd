@@ -1,3 +1,9 @@
+newmtl black
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #black
+
 newmtl light_grey
 Kd 1 1 1
 Ka 0 0 0
