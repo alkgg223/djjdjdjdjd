@@ -430,5 +430,41 @@
   ],
   "kind": "attachment",
   "elements": 23
+ },
+ "thermal_scope": {
+  "bounds": [
+   2.36,
+   4.0,
+   6.25,
+   13.7,
+   9.0,
+   9.75
+  ],
+  "kind": "attachment",
+  "elements": 18
+ },
+ "variable_scope": {
+  "bounds": [
+   -2.65,
+   4.0,
+   6.85,
+   15.65,
+   8.4,
+   9.8
+  ],
+  "kind": "attachment",
+  "elements": 57
+ },
+ "muzzle_brake": {
+  "bounds": [
+   2.0,
+   7.2,
+   7.05,
+   5.65,
+   8.8,
+   8.95
+  ],
+  "kind": "attachment",
+  "elements": 12
  }
 }

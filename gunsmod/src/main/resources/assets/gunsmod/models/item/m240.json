@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/m240"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    -0.16,
+    0.179,
+    0.286
+   ],
+   "scale": [
+    0.4469,
+    0.4469,
+    0.4469
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.003,
+    0.115,
+    0.143
+   ],
+   "scale": [
+    0.2198,
+    0.2198,
+    0.2198
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.006,
+    0.199,
+    0.247
+   ],
+   "scale": [
+    0.3797,
+    0.3797,
+    0.3797
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.913,
+    0.738,
+    0.021
+   ],
+   "scale": [
+    1.4049,
+    1.4049,
+    1.4049
+   ]
+  }
+ }
+}

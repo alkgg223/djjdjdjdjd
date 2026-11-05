@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/aug"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    2.083,
+    0.484,
+    1.434
+   ],
+   "scale": [
+    0.6405,
+    0.6405,
+    0.6405
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.235,
+    0.388,
+    -0.0
+   ],
+   "scale": [
+    0.322,
+    0.322,
+    0.322
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    2.133,
+    0.67,
+    -0.0
+   ],
+   "scale": [
+    0.5562,
+    0.5562,
+    0.5562
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    1.355,
+    -4.311
+   ],
+   "scale": [
+    1.1241,
+    1.1241,
+    1.1241
+   ]
+  }
+ }
+}

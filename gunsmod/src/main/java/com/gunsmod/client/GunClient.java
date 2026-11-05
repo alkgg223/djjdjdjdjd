@@ -48,6 +48,23 @@ public final class GunClient {
     public static final KeyMapping FLARES = new KeyMapping("key.gunsmod.flares", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_X, CATEGORY);
     public static final KeyMapping TEAM = new KeyMapping("key.gunsmod.team", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, CATEGORY);
     public static final KeyMapping PRONE = new KeyMapping("key.gunsmod.prone", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, CATEGORY);
+    /** the variable scope's magnification: next step (the mouse wheel works too while aiming) */
+    public static final KeyMapping SCOPE_ZOOM = new KeyMapping("key.gunsmod.scope_zoom", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, CATEGORY);
+
+    /** the variable scope is what the player aims through now */
+    public static boolean variableScope() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.player != null && scoped()
+                && GunItem.attachments(mc.player.getMainHandItem()).get(com.gunsmod.gun.Attachment.Slot.SCOPE) == com.gunsmod.gun.Attachment.VARIABLE_SCOPE;
+    }
+
+    public static void zoomStep(int d) {
+        int n = com.gunsmod.gun.Attachment.ZOOM_STEPS.length;
+        com.gunsmod.gun.Attachment.zoomStep = Math.max(0, Math.min(n - 1, com.gunsmod.gun.Attachment.zoomStep + d));
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                String.format("%.1fx", com.gunsmod.gun.Attachment.variableZoom())), true);
+    }
 
     // aiming
     public static boolean aiming;

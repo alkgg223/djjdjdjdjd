@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/g36"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.826,
+    0.466,
+    0.439
+   ],
+   "scale": [
+    0.5204,
+    0.5204,
+    0.5204
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.428,
+    0.267,
+    -0.076
+   ],
+   "scale": [
+    0.2541,
+    0.2541,
+    0.2541
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.74,
+    0.461,
+    -0.132
+   ],
+   "scale": [
+    0.4389,
+    0.4389,
+    0.4389
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.335,
+    1.173,
+    -1.881
+   ],
+   "scale": [
+    1.1161,
+    1.1161,
+    1.1161
+   ]
+  }
+ }
+}

@@ -1449,5 +1449,430 @@
    }
   ],
   "subtitle": "subtitles.gunsmod.jet_afterburner"
+ },
+ "shot_hk416": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_hk416_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_hk416_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_hk416_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_scar_l": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_scar_l_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_scar_l_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_scar_l_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_scar_h": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_scar_h_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_scar_h_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_scar_h_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_g36": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_g36_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_g36_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_g36_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_aug": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_aug_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_aug_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_aug_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_qbz95": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_qbz95_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_qbz95_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_qbz95_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_ak12": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_ak12_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_ak12_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_ak12_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_ak103": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_ak103_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_ak103_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_ak103_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_mp5": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_mp5_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_mp5_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_mp5_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_mp7": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_mp7_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_mp7_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_mp7_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_p90": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_p90_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_p90_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_p90_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_mpx": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_mpx_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_mpx_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_mpx_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_m240": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_m240_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_m240_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_m240_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_mg3": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_mg3_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_mg3_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_mg3_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_pkp": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_pkp_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_pkp_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_pkp_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_m82": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_m82_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_m82_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_m82_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_axmc": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_axmc_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_axmc_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_axmc_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_m200": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_m200_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_m200_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_m200_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_benelli": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_benelli_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_benelli_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_benelli_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_r870": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_r870_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_r870_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_r870_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_spas12": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_spas12_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_spas12_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_spas12_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_glock": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_glock_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_glock_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_glock_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_deagle": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_deagle_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_deagle_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_deagle_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_p320": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_p320_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_p320_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_p320_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "shot_fiveseven": {
+  "sounds": [
+   {
+    "name": "gunsmod:shot_fiveseven_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_fiveseven_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:shot_fiveseven_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.gunshot"
  }
 }

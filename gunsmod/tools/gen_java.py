@@ -4,7 +4,9 @@ meta = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "java", "com", "gunsmod", "client", "GunGeometry.java")
 order = ["m1911","p9","magnum50","revolver","smg5","micro_smg","vortex","pdw","ak47","m4a1","m16a4","br17","br77","tactical_rifle",
          "pump_shotgun","auto_shotgun","double_barrel","m24","svd","m107","m249","minigun","rpg7","m79","flamethrower",
-         "aps","m9","ppsh41","bizon","uzi","m14","aks74u","famas","sks","mosin","vss","pkm","saiga12","mgl","igla","rpg7_tbg"]
+         "aps","m9","ppsh41","bizon","uzi","m14","aks74u","famas","sks","mosin","vss","pkm","saiga12","mgl","igla","rpg7_tbg",
+         "hk416","scar_l","scar_h","g36","aug","qbz95","ak12","ak103","mp5","mp7","p90","mpx","m240","mg3","pkp","m82","axmc","m200",
+         "benelli_m4","r870","spas12","glock17","deagle","p320","fiveseven"]
 def v(p): return "new float[]{%sf, %sf, %sf}" % tuple(round(x, 4) for x in p)
 lines = []
 for g in order:

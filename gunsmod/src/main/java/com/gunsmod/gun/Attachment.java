@@ -17,7 +17,21 @@ public enum Attachment {
     /** folding bipod: rested (lying down, or crouched with a block in front) the gun barely moves */
     BIPOD("bipod", Slot.GRIP, 1.0f, 0.92f, 1.0f, 0.9f, 0f),
     /** night vision scope (3.5x): the dark turns into a bright green and white picture */
-    NV_SCOPE("nv_scope", Slot.SCOPE, 3.5f, 0.55f, 1.0f, 1.0f, 2.6f);
+    NV_SCOPE("nv_scope", Slot.SCOPE, 3.5f, 0.55f, 1.0f, 1.0f, 2.6f),
+    /** thermal scope (4x): white-hot picture, living things outlined */
+    THERMAL_SCOPE("thermal_scope", Slot.SCOPE, 4.0f, 0.5f, 1.0f, 1.0f, 2.6f),
+    /** variable power scope: 2.5x to 10x, the mouse wheel or the zoom key changes it */
+    VARIABLE_SCOPE("variable_scope", Slot.SCOPE, 4.0f, 0.3f, 1.0f, 1.0f, 2.6f),
+    /** muzzle brake: throws the gas sideways, much less kick, a bit more spread from the blast */
+    MUZZLE_BRAKE("muzzle_brake", Slot.MUZZLE, 1.0f, 1.05f, 1.0f, 0.58f, 0f);
+
+    /** the variable scope's steps and the one chosen (client side: it only changes the view) */
+    public static final float[] ZOOM_STEPS = {2.5f, 4f, 6f, 8f, 10f};
+    public static int zoomStep = 1;
+
+    public static float variableZoom() {
+        return ZOOM_STEPS[Math.floorMod(zoomStep, ZOOM_STEPS.length)];
+    }
 
     public enum Slot { SCOPE, MUZZLE, GRIP, LASER, MAG }
 

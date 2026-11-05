@@ -57,6 +57,7 @@ public record GunAttachments(int scope, int muzzle, int grip, int laser, int mag
 
     public float zoom(GunType type) {
         Attachment s = get(Attachment.Slot.SCOPE);
+        if (s == Attachment.VARIABLE_SCOPE) return Attachment.variableZoom();
         return s != null ? s.zoom : type.builtInZoom();
     }
 

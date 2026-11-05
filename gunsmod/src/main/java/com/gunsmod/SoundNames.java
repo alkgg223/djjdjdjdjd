@@ -24,6 +24,10 @@ public final class SoundNames {
             "b2_engine", "b2_flyby", "gun_gau22", "gun_gsh30", "gun_gau8", "aa_35mm",
             "aa_23mm", "aa_40mm", "flak_burst", "shell_impact", "sam_patriot", "sam_s400",
             "sam_nasams", "sam_tamir", "radar_contact", "jet_cockpit", "wreck_impact", "fpv_buzz",
-            "shahed_engine", "shahed_launch", "a10_burner"
+            "shahed_engine", "shahed_launch", "a10_burner", "shot_hk416", "shot_scar_l", "shot_scar_h",
+            "shot_g36", "shot_aug", "shot_qbz95", "shot_ak12", "shot_ak103", "shot_mp5",
+            "shot_mp7", "shot_p90", "shot_mpx", "shot_m240", "shot_mg3", "shot_pkp",
+            "shot_m82", "shot_axmc", "shot_m200", "shot_benelli", "shot_r870", "shot_spas12",
+            "shot_glock", "shot_deagle", "shot_p320", "shot_fiveseven"
     };
 }

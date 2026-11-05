@@ -105,11 +105,11 @@ public class ArenaBlockEntity extends BlockEntity {
     private GunType pick(BotTeam team, int i) {
         var r = level.random;
         GunType[] pool = switch (loadout) {
-            case 1 -> team == BotTeam.GREEN ? new GunType[]{GunType.M4A1, GunType.M16A4, GunType.BR17, GunType.TACTICAL_RIFLE, GunType.M14, GunType.FAMAS} : new GunType[]{GunType.AK47, GunType.BR77, GunType.BR17, GunType.AKS74U, GunType.SKS};
-            case 2 -> new GunType[]{GunType.M24, GunType.SVD, GunType.M107, GunType.MOSIN, GunType.VSS};
-            case 3 -> new GunType[]{GunType.PUMP_SHOTGUN, GunType.AUTO_SHOTGUN, GunType.DOUBLE_BARREL, GunType.SAIGA12};
-            case 4 -> new GunType[]{GunType.M1911, GunType.P9, GunType.MAGNUM50, GunType.REVOLVER, GunType.APS, GunType.M9};
-            case 5 -> new GunType[]{GunType.M249, GunType.MINIGUN, GunType.PKM};
+            case 1 -> team == BotTeam.GREEN ? new GunType[]{GunType.M4A1, GunType.M16A4, GunType.BR17, GunType.TACTICAL_RIFLE, GunType.M14, GunType.FAMAS, GunType.HK416, GunType.SCAR_L, GunType.SCAR_H, GunType.G36, GunType.AUG} : new GunType[]{GunType.AK47, GunType.BR77, GunType.BR17, GunType.AKS74U, GunType.SKS, GunType.AK12, GunType.AK103, GunType.QBZ95};
+            case 2 -> new GunType[]{GunType.M24, GunType.SVD, GunType.M107, GunType.MOSIN, GunType.VSS, GunType.M82, GunType.AXMC, GunType.M200};
+            case 3 -> new GunType[]{GunType.PUMP_SHOTGUN, GunType.AUTO_SHOTGUN, GunType.DOUBLE_BARREL, GunType.SAIGA12, GunType.BENELLI_M4, GunType.R870, GunType.SPAS12};
+            case 4 -> new GunType[]{GunType.M1911, GunType.P9, GunType.MAGNUM50, GunType.REVOLVER, GunType.APS, GunType.M9, GunType.GLOCK17, GunType.DEAGLE, GunType.P320, GunType.FIVESEVEN};
+            case 5 -> new GunType[]{GunType.M249, GunType.MINIGUN, GunType.PKM, GunType.M240, GunType.MG3, GunType.PKP};
             case 6 -> new GunType[]{GunType.RPG7, GunType.M79, GunType.FLAMETHROWER, GunType.MGL, GunType.RPG7_TBG};
             default -> null;
         };

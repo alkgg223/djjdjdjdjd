@@ -1008,3 +1008,4 @@ def flamethrower():
 
 
 import guns2  # noqa: E402,F401  (registers the v2.0 guns)
+import guns3  # noqa: E402,F401  (registers the v3.0 guns)

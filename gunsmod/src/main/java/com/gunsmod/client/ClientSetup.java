@@ -212,6 +212,7 @@ public final class ClientSetup {
         e.register(GunClient.FLARES);
         e.register(GunClient.TEAM);
         e.register(GunClient.PRONE);
+        e.register(GunClient.SCOPE_ZOOM);
         e.register(JetControl.VIEW);
     }
 
@@ -234,6 +235,7 @@ public final class ClientSetup {
         e.registerAboveAll(Reg.id("blast_flash"), Hud::flash);
         // night vision: the post effect over the world, before any other layer
         e.registerBelowAll(Reg.id("night_vision"), NightVision::layer);
+        e.registerBelowAll(Reg.id("thermal"), Thermal::layer);
         e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Reg.id("battle_score"), (g, dt) -> g.drawManaged(() -> BattleHud.render(g, dt)));
     }
 }

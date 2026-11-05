@@ -155,6 +155,55 @@ def nv_scope():
     return m
 
 
+@item("thermal_scope", "attachment")
+def thermal_scope():
+    """thermal sight: the boxy housing with its cooling fins, the large germanium objective, the display eyecup, the battery"""
+    m = Model("thermal_scope", density=10)
+    block(m, 5.0, 11.0, 4.0, 4.8, 1.4, "dark_paint", deco=("rail",))
+    block(m, 3.6, 12.0, 4.8, 8.6, 2.6, "grey_paint", deco=("panel", "text:THERMAL"))
+    for x in (5.0, 6.2, 7.4):
+        m.box([x, 8.6, 7.0], [x + 0.5, 9.0, 9.0], "gunmetal")
+    m.cyl("x", (6.7, 8.0), 1.75, 12.0, 13.6, "grey_paint", sides=12)
+    m.cyl("x", (6.7, 8.0), 1.45, 13.58, 13.7, "brass", sides=12)
+    m.cyl("x", (6.7, 8.0), 1.1, 2.4, 3.6, "rubber", sides=12)
+    m.cyl("x", (6.7, 8.0), 0.8, 2.36, 2.4, "glow_white", sides=12)
+    m.cyl("z", (9.4, 6.0), 0.6, 6.7, 9.6, "dark_paint", sides=8)
+    m.box([9.0, 6.6, 9.3], [10.4, 7.4, 9.5], "glow_orange", light=True)
+    return m
+
+
+@item("variable_scope", "attachment")
+def variable_scope():
+    """variable power scope (2.5-10x): the long tube, the windage and elevation turrets, the zoom ring with its throw lever"""
+    m = Model("variable_scope", density=8)
+    for x in (4.0, 10.0):
+        block(m, x - 0.8, x + 0.8, 4.0, 5.9, 1.4, "blued")
+        m.cyl("x", (6.6, 8), 0.95, x - 0.6, x + 0.6, "blued", sides=16)
+    m.cyl("x", (6.6, 8), 0.75, -1.0, 15.0, "blued", sides=16)
+    m.cyl("x", (6.6, 8), 1.15, 12.4, 15.6, "blued", sides=16)
+    m.box([15.58, 5.7, 7.1], [15.65, 7.5, 8.9], "lens")
+    m.cyl("x", (6.6, 8), 1.0, -2.6, 0.4, "blued", sides=16, deco=("vlines:8",))
+    m.box([-2.65, 5.85, 7.25], [-2.6, 7.35, 8.75], "lens")
+    m.cyl("y", (7.0, 8.0), 0.55, 7.2, 8.4, "blued", sides=10, deco=("vlines:6",))
+    m.cyl("z", (6.6, 7.0), 0.55, 8.6, 9.8, "blued", sides=10, deco=("vlines:6",))
+    m.cyl("x", (6.6, 8), 0.92, 0.6, 2.0, "gunmetal", sides=16, deco=("vlines:10",))
+    m.box([1.0, 7.4, 8.6], [1.6, 7.8, 9.2], "gunmetal")
+    return m
+
+
+@item("muzzle_brake", "attachment")
+def muzzle_brake():
+    """muzzle brake: a squared block with three pairs of large side ports throwing the gas sideways"""
+    m = Model("muzzle_brake", density=12)
+    m.cyl("x", (8, 8), 0.6, 2.0, 2.8, "blued", sides=8)
+    m.box([2.8, 7.2, 7.1], [5.6, 8.8, 8.9], "blued")
+    for x in (3.1, 3.9, 4.7):
+        for z0, z1 in ((7.05, 7.35), (8.65, 8.95)):
+            m.box([x, 7.5, z0], [x + 0.5, 8.5, z1], "black")
+    m.box([5.58, 7.7, 7.7], [5.65, 8.3, 8.3], "black")
+    return m
+
+
 @item("laser_sight", "attachment")
 def laser_sight():
     m = Model("laser_sight", density=10)

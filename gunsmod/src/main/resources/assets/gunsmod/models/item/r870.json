@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/r870"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.698,
+    -0.121,
+    0.571
+   ],
+   "scale": [
+    0.454,
+    0.454,
+    0.454
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.436,
+    -0.0,
+    0.06
+   ],
+   "scale": [
+    0.2198,
+    0.2198,
+    0.2198
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.754,
+    -0.0,
+    0.104
+   ],
+   "scale": [
+    0.3797,
+    0.3797,
+    0.3797
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.639,
+    -0.0,
+    -4.61
+   ],
+   "scale": [
+    2.3226,
+    2.3226,
+    2.3226
+   ]
+  }
+ }
+}

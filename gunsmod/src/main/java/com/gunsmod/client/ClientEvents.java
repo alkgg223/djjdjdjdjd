@@ -28,6 +28,13 @@ public final class ClientEvents {
     @SubscribeEvent
     public static void tick(ClientTickEvent.Post e) {
         GunClient.tick();
+        Thermal.tick();
+        while (GunClient.SCOPE_ZOOM.consumeClick()) {
+            if (GunClient.variableScope()) {
+                if (com.gunsmod.gun.Attachment.zoomStep >= com.gunsmod.gun.Attachment.ZOOM_STEPS.length - 1) com.gunsmod.gun.Attachment.zoomStep = -1;
+                GunClient.zoomStep(1);
+            }
+        }
         GunRenderer.clientTick();
         FlameSound.clientTick();
         ClientFx.tick();
@@ -85,6 +92,14 @@ public final class ClientEvents {
             e.setCanceled(true);
             e.setSwingHand(false);
         }
+    }
+
+    /** the mouse wheel turns the variable scope's zoom ring while aiming through it */
+    @SubscribeEvent
+    public static void scroll(InputEvent.MouseScrollingEvent e) {
+        if (!GunClient.variableScope() || e.getScrollDeltaY() == 0) return;
+        GunClient.zoomStep(e.getScrollDeltaY() > 0 ? 1 : -1);
+        e.setCanceled(true);
     }
 
     @SubscribeEvent

@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/deagle"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    3.372,
+    1.328,
+    2.436
+   ],
+   "scale": [
+    1.2836,
+    1.2836,
+    1.2836
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    2.431,
+    1.104,
+    -0.0
+   ],
+   "scale": [
+    0.7848,
+    0.7848,
+    0.7848
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    4.199,
+    1.906,
+    -0.0
+   ],
+   "scale": [
+    1.3556,
+    1.3556,
+    1.3556
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    1.806,
+    -3.978
+   ],
+   "scale": [
+    1.2843,
+    1.2843,
+    1.2843
+   ]
+  }
+ }
+}

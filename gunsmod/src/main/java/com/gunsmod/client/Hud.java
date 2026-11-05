@@ -119,8 +119,11 @@ public final class Hud {
                 g.fill(cx - half, y, cx + half + 1, y + 1, 0xD0101010);
             }
         } else {
-            boolean nv = optic == Attachment.NV_SCOPE;
-            int line = nv ? 0xE060FF80 : 0xF0101010, post = nv ? 0xF060FF80 : 0xFF000000;
+            boolean nv = optic == Attachment.NV_SCOPE, th = optic == Attachment.THERMAL_SCOPE;
+            int line = nv ? 0xE060FF80 : th ? 0xE0F0F0F0 : 0xF0101010, post = nv ? 0xF060FF80 : th ? 0xF0FFFFFF : 0xFF000000;
+            if (optic == Attachment.VARIABLE_SCOPE) {
+                g.drawString(Minecraft.getInstance().font, String.format("%.1fx", Attachment.variableZoom()), cx + lr / 2 + 6, cy + lr / 2, 0xFFE0E0E0, true);
+            }
             g.fill(cx - lr, cy, cx + lr + 1, cy + 1, line);
             g.fill(cx, cy - lr, cx + 1, cy + lr + 1, line);
             // thick posts from the edge
