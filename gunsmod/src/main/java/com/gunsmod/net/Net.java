@@ -21,7 +21,7 @@ public final class Net {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar r = event.registrar("5");
+        PayloadRegistrar r = event.registrar("6");
         r.playToServer(Shoot.TYPE, Shoot.CODEC, ServerNet::shoot);
         r.playToServer(Reload.TYPE, Reload.CODEC, ServerNet::reload);
         r.playToServer(Turret.TYPE, Turret.CODEC, ServerNet::turret);
@@ -34,6 +34,7 @@ public final class Net {
         r.playToServer(ConvoySpawn.TYPE, ConvoySpawn.CODEC, ServerNet::convoySpawn);
         r.playToServer(JetBank.TYPE, JetBank.CODEC, ServerNet::jetBank);
         r.playToClient(ShotFx.TYPE, ShotFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.shotFx(p));
+        r.playToClient(BulletPath.TYPE, BulletPath.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.bulletPath(p));
         r.playToClient(HitMarker.TYPE, HitMarker.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.hitMarker(p));
         r.playToClient(LaunchStatus.TYPE, LaunchStatus.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.launchStatus(p));
         r.playToClient(ExplosionFx.TYPE, ExplosionFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.explosion(p));
@@ -168,6 +169,38 @@ public final class Net {
 
     // ================================================================================ server -> client
     /** bullet/flame/rocket effects. kind: 0 miss, 1 block, 2 entity. gun = GunType ordinal, -1 = jeep turret */
+    /** the legs of a bullet's flight after a penetration or a ricochet: pairs of points (from, to) and what each ends on */
+    public record BulletPath(List<Vec3> points, byte[] kinds) implements CustomPacketPayload {
+        public static final Type<BulletPath> TYPE = payloadType("bullet_path");
+        public static final StreamCodec<RegistryFriendlyByteBuf, BulletPath> CODEC = CustomPacketPayload.codec(BulletPath::write, BulletPath::new);
+
+        BulletPath(RegistryFriendlyByteBuf b) {
+            this(readPoints(b), b.readByteArray());
+        }
+
+        private static List<Vec3> readPoints(FriendlyByteBuf b) {
+            int n = Math.min(64, b.readVarInt());
+            List<Vec3> l = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) l.add(new Vec3(b.readDouble(), b.readDouble(), b.readDouble()));
+            return l;
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(points.size());
+            for (Vec3 v : points) {
+                b.writeDouble(v.x);
+                b.writeDouble(v.y);
+                b.writeDouble(v.z);
+            }
+            b.writeByteArray(kinds);
+        }
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     public record ShotFx(int shooter, int gun, Vec3 origin, List<Vec3> ends, byte[] kinds, boolean suppressed) implements CustomPacketPayload {
         public static final Type<ShotFx> TYPE = payloadType("shot_fx");
         public static final StreamCodec<RegistryFriendlyByteBuf, ShotFx> CODEC = CustomPacketPayload.codec(ShotFx::write, ShotFx::new);

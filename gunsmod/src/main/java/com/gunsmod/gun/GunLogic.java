@@ -174,6 +174,13 @@ public final class GunLogic {
         switch (t.kind) {
             case BULLET -> {
                 for (Vec3 d : directions(t, yaw, pitch, seed, spread)) {
+                    if (com.gunsmod.Config.ballistics()) {
+                        // a real flight: drop, travel time, penetration and ricochets (Ballistics)
+                        Ballistics.First f = Ballistics.fire(level, shooter, eye, d, t, t.damage * (suppressed ? 0.92f : 1f));
+                        ends.add(f.end());
+                        kinds.add(f.kind());
+                        continue;
+                    }
                     Trace tr = trace(level, shooter, eye, d, t.range);
                     ends.add(tr.end);
                     kinds.add(tr.kind);
@@ -257,6 +264,10 @@ public final class GunLogic {
         return l;
     }
 
+    public static float falloffAt(GunType t, double dist) {
+        return falloff(t, dist);
+    }
+
     private static float falloff(GunType t, double dist) {
         double start = t.range * 0.55;
         if (dist <= start) return 1f;
@@ -282,7 +293,7 @@ public final class GunLogic {
         if (target instanceof BotEntity bot) bot.onShotBy(shooter);
     }
 
-    private static void impactBlock(Level level, Entity shooter, BlockPos pos) {
+    static void impactBlock(Level level, Entity shooter, BlockPos pos) {
         BlockState st = level.getBlockState(pos);
         if (st.getBlock() instanceof ExplosiveBarrelBlock barrel) {
             barrel.detonate(level, pos, shooter);

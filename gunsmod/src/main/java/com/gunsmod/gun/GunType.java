@@ -113,6 +113,52 @@ public enum GunType {
         this.sound = sound;
     }
 
+    /** muzzle velocity in blocks per tick (1 block = 1 m: 45 = 900 m/s) */
+    public double muzzleVelocity() {
+        return switch (this) {
+            case DEAGLE, MAGNUM50, REVOLVER -> 22;
+            case FIVESEVEN -> 32;
+            case MP7, P90 -> 34;
+            case VSS -> 15;
+            case AK47, AK103, SKS, AKS74U -> 36;
+            case M14, SCAR_H -> 42;
+            case MOSIN -> 42;
+            case M107, M82 -> 43;
+            case M200 -> 52;
+            case AXMC, M24 -> 47;
+            default -> switch (category) {
+                case PISTOL -> 18;
+                case SMG -> 20;
+                case RIFLE -> 44;
+                case SHOTGUN -> 20;
+                case SNIPER -> 45;
+                case HEAVY -> 42;
+                default -> 30;
+            };
+        };
+    }
+
+    /** how much the round can go through: glass and leaves cost 0.3, a wooden block 1.6, sand 3.5, stone 6+, metal 14 */
+    public float penetration() {
+        return switch (this) {
+            case M107, M82 -> 10f;
+            case M200 -> 8f;
+            case AXMC -> 7f;
+            case DEAGLE, MAGNUM50, FIVESEVEN -> 1.5f;
+            case MP7, P90 -> 1.6f;
+            case AK47, AK103, M14, SCAR_H, SKS, SVD, PKM, PKP, M240 -> 3.5f;
+            default -> switch (category) {
+                case PISTOL -> 0.6f;
+                case SMG -> 0.8f;
+                case RIFLE -> 2.5f;
+                case SHOTGUN -> 0.4f;
+                case SNIPER -> 5f;
+                case HEAVY -> 4f;
+                default -> 1f;
+            };
+        };
+    }
+
     public float headshotMultiplier() {
         return category == Category.SNIPER ? 2.2f : category == Category.SHOTGUN ? 1.3f : 1.6f;
     }

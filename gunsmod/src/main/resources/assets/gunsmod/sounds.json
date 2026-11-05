@@ -1874,5 +1874,39 @@
    }
   ],
   "subtitle": "subtitles.gunsmod.gunshot"
+ },
+ "impact_glass": {
+  "sounds": [
+   {
+    "name": "gunsmod:impact_glass_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:impact_glass_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:impact_glass_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.bullet_impact"
+ },
+ "impact_armor": {
+  "sounds": [
+   {
+    "name": "gunsmod:impact_armor_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:impact_armor_2",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:impact_armor_3",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.bullet_impact"
  }
 }

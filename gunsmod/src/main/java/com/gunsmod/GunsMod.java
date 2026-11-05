@@ -72,6 +72,7 @@ public class GunsMod {
         OrchardWorld.tick(e.getServer());
         OrchardBuilder.tick(e.getServer());
         BattleEvents.tick(e.getServer());
+        com.gunsmod.gun.Ballistics.tick();
     }
 
     /** the crew of any vehicle (jeep included) is protected: hits go to the vehicle until it blows up */

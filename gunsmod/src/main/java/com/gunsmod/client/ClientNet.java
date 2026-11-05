@@ -164,6 +164,22 @@ public final class ClientNet {
         }
     }
 
+    /** a bullet's flight after it went through something or glanced off: the tracer on, the impact at the end */
+    public static void bulletPath(Net.BulletPath p) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        for (int i = 0; i + 1 < p.points().size(); i += 2) {
+            Vec3 from = p.points().get(i), to = p.points().get(i + 1);
+            byte kind = i / 2 < p.kinds().length ? p.kinds()[i / 2] : 0;
+            tracer(level, from, to);
+            Vec3 d = to.subtract(from);
+            if (d.lengthSqr() < 1e-6) continue;
+            d = d.normalize();
+            BlockState st = kind == 1 ? level.getBlockState(net.minecraft.core.BlockPos.containing(to.add(d.scale(0.05)))) : null;
+            impact(level, to, kind, st, d);
+        }
+    }
+
     /** the direction a shot went: towards its first end point, else where the shooter looks */
     private static Vec3 fireDir(Net.ShotFx p, Vec3 muzzle, @Nullable Entity shooter) {
         if (!p.ends().isEmpty()) {
@@ -214,6 +230,19 @@ public final class ClientNet {
             }
             level.addParticle(Reg.SMOKE.get(), back.x, back.y, back.z, 0, 0.01, 0);
         } else if (kind == 2) {
+            // a round on armour rings and throws sparks; on a soldier it shows the hit
+            boolean armour = !level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, new net.minecraft.world.phys.AABB(at, at).inflate(0.6),
+                    e -> e instanceof com.gunsmod.entity.VehicleEntity || e instanceof com.gunsmod.entity.JeepEntity).isEmpty();
+            if (armour) {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.player != null && mc.player.distanceToSqr(at) < 60 * 60) {
+                    level.playLocalSound(at.x, at.y, at.z, Reg.sound("impact_armor"), SoundSource.BLOCKS, 1.2f, 0.85f + R.nextFloat() * 0.3f, false);
+                }
+                for (int i = 0; i < 6; i++) {
+                    level.addParticle(Reg.SPARK.get(), at.x, at.y, at.z, -dir.x * 0.15 + R.nextGaussian() * 0.12, 0.08 + R.nextDouble() * 0.1, -dir.z * 0.15 + R.nextGaussian() * 0.12);
+                }
+                return;
+            }
             for (int i = 0; i < 3; i++) {
                 level.addParticle(ParticleTypes.DAMAGE_INDICATOR, at.x, at.y, at.z, R.nextGaussian() * 0.1, 0.1, R.nextGaussian() * 0.1);
             }
@@ -238,10 +267,11 @@ public final class ClientNet {
             name = "impact_wood";
         } else if (st == net.minecraft.world.level.block.SoundType.STONE || st == net.minecraft.world.level.block.SoundType.DEEPSLATE
                 || st == net.minecraft.world.level.block.SoundType.POLISHED_DEEPSLATE || st == net.minecraft.world.level.block.SoundType.DEEPSLATE_BRICKS
-                || st == net.minecraft.world.level.block.SoundType.TUFF || st == net.minecraft.world.level.block.SoundType.BASALT
-                || st == net.minecraft.world.level.block.SoundType.GLASS) {
+                || st == net.minecraft.world.level.block.SoundType.TUFF || st == net.minecraft.world.level.block.SoundType.BASALT) {
             name = "impact_stone";
             hard = true;
+        } else if (st == net.minecraft.world.level.block.SoundType.GLASS) {
+            name = "impact_glass";
         } else {
             name = "impact_dirt";
         }

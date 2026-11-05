@@ -73,3 +73,49 @@ def build():
 if __name__ == "__main__":
     build()
     print("ok", len(GUNS))
+
+
+# ------------------------------------------------------------------------------------------------ impacts
+def glass_hit(seed):
+    from sounds import t, noise, hp, bp, env_exp, place, norm, fade, SR
+    rng = np.random.default_rng(seed)
+    n = int(0.7 * SR)
+    out = np.zeros(n)
+    place(out, hp(noise(0.02, rng), 2500) * env_exp(int(0.02 * SR), 0.004) * 1.2, 0.0)
+    for _ in range(18):
+        f = 2500 + rng.random() * 6000
+        k = t(0.08)
+        tink = np.sin(2 * np.pi * f * k) * np.exp(-k / (0.01 + rng.random() * 0.03)) * (0.2 + rng.random() * 0.4)
+        place(out, tink, 0.01 + rng.random() * 0.45)
+    return fade(norm(out, 0.85), 0.001, 0.1)
+
+
+def armour_hit(seed):
+    from sounds import t, noise, bp, env_exp, place, norm, fade, SR
+    rng = np.random.default_rng(seed)
+    k = t(0.85)
+    out = np.zeros(len(k))
+    place(out, bp(noise(0.015, rng), 1500, 7000) * env_exp(int(0.015 * SR), 0.003) * 1.4, 0.0)
+    base = 900 + rng.random() * 500
+    for r, a, tau in ((1.0, 0.6, 0.25), (1.71, 0.4, 0.18), (2.53, 0.3, 0.12), (3.9, 0.2, 0.07)):
+        out += np.sin(2 * np.pi * base * r * k + rng.random() * 6) * a * np.exp(-k / tau)
+    return fade(norm(out, 0.9), 0.001, 0.2)
+
+
+def build_impacts():
+    path = os.path.join(ROOT, "sounds.json")
+    with open(path) as fh:
+        sounds = json.load(fh)
+    for name, fn, seed in (("impact_glass", glass_hit, 5600), ("impact_armor", armour_hit, 5610)):
+        files = []
+        for v in range(3):
+            fname = f"{name}_{v + 1}"
+            write_ogg(os.path.join(OUT, fname + ".ogg"), fn(seed + v))
+            files.append(f"gunsmod:{fname}")
+        sounds[name] = {"sounds": files, "subtitle": "subtitles.gunsmod.bullet_impact"}
+    with open(path, "w") as fh:
+        json.dump(sounds, fh, indent=1)
+
+
+if __name__ == "__main__":
+    build_impacts()
