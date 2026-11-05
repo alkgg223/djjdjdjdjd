@@ -35,7 +35,13 @@ public enum RadarType {
     }
 
     /** chance this sweep picks up an aircraft of the given signature at the given distance */
+    /** the range with the server's radar setting applied */
+    public double reach() {
+        return range * com.gunsmod.Config.radarRange();
+    }
+
     public double chance(float signature, double dist) {
+        double range = reach();
         if (signature <= 0 || dist > range) return 0;
         double f = dist / range;
         return detect * Math.min(1.0, signature * stealthBonus) * (1 - 0.45 * f * f);

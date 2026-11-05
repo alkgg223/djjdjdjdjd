@@ -116,7 +116,7 @@ public class SpawnerBlockEntity extends BlockEntity {
     }
 
     public void onBotDied(UUID id) {
-        if (alive.remove(id)) cooldown = Math.max(cooldown, delay * 20);
+        if (alive.remove(id)) cooldown = Math.max(cooldown, (int) (delay * 20 / com.gunsmod.Config.soldierSpawn()));
         setChanged();
     }
 
@@ -147,7 +147,7 @@ public class SpawnerBlockEntity extends BlockEntity {
         }
         if (alive.size() < count) {
             spawnOne(sl);
-            cooldown = delay * 20;
+            cooldown = (int) (delay * 20 / com.gunsmod.Config.soldierSpawn());
         }
     }
 

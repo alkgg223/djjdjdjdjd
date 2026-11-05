@@ -290,7 +290,7 @@ public class BotEntity extends PathfinderMob {
     private float accuracyMul() {
         Difficulty d = this.level().getDifficulty();
         float m = d == Difficulty.HARD ? 1.0f : d == Difficulty.NORMAL ? 1.35f : 1.9f;
-        return m;
+        return m / com.gunsmod.Config.aiAccuracy();
     }
 
     /** try to fire at the target this tick. returns true when a shot was fired */

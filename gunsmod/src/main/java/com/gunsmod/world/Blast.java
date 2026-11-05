@@ -30,7 +30,8 @@ public final class Blast {
 
     /** a vanilla explosion plus its visual blast */
     public static void explode(Level level, @Nullable Entity source, Vec3 at, float power, boolean fire, Level.ExplosionInteraction mode, int fx, float fxSize) {
-        level.explode(source, at.x, at.y, at.z, power, fire, mode);
+        if (mode == Level.ExplosionInteraction.NONE && com.gunsmod.Config.blockDestruction() && power >= 2.0f) mode = Level.ExplosionInteraction.TNT;
+        level.explode(source, at.x, at.y, at.z, power * com.gunsmod.Config.explosionPower(), fire, mode);
         fx(level, at, fx, fxSize);
     }
 

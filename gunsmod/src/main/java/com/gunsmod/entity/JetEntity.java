@@ -472,7 +472,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             wantPitch = ground ? 0 : Math.max(pitch - 1.5f, -20f);
         }
         boolean ab = !crashing && type.afterburner && afterburnerWanted() && spool > 0.95f;
-        double thrust = crashing ? 0 : (throttle * 0.0095 * type.thrust + (ab ? 0.0065 * type.reheat : 0)) * spool;
+        double thrust = crashing ? 0 : (throttle * 0.0095 * type.thrust + (ab ? 0.0065 * type.reheat : 0)) * spool * com.gunsmod.Config.aircraftSpeed();
         double drag = 0.00256 * speed * speed + (gear > 0.5f ? 0 : 0.0012 * speed);
         // control authority builds up above the stall speed
         double auth = Mth.clamp((speed - type.stall * 0.8) / (type.stall * 0.35), 0, 1);
@@ -514,7 +514,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             speed = Math.max(0, speed);
             vy = -(1 - auth) * 0.3;
         }
-        speed = Math.min(speed, type.maxSpeed * 1.08);
+        speed = Math.min(speed, type.maxSpeed * com.gunsmod.Config.aircraftSpeed() * 1.08);
         this.setYRot(yaw);
         jetPitch = pitch;
         this.setXRot(-pitch);
@@ -540,7 +540,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         stickX += (stickInX - stickX) * 0.5f;
         stickY += (stickInY - stickY) * 0.5f;
         boolean ab = type.afterburner && afterburnerWanted() && spool > 0.95f;
-        double thrust = (throttle * 0.0095 * type.thrust + (ab ? 0.0065 * type.reheat : 0)) * spool;
+        double thrust = (throttle * 0.0095 * type.thrust + (ab ? 0.0065 * type.reheat : 0)) * spool * com.gunsmod.Config.aircraftSpeed();
         double drag = 0.00256 * speed * speed + (gear > 0.5f ? 0 : 0.0012 * speed);
         double auth = Mth.clamp((speed - type.stall * 0.8) / (type.stall * 0.35), 0, 1);
         float ag = (float) type.agility;
@@ -593,7 +593,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
             speed = Math.max(0, speed);
             vy = -(1 - auth) * 0.3;
         }
-        speed = Math.min(speed, type.maxSpeed * 1.08);
+        speed = Math.min(speed, type.maxSpeed * com.gunsmod.Config.aircraftSpeed() * 1.08);
         this.setYRot(yaw);
         jetPitch = pitch;
         this.setXRot(-pitch);

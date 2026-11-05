@@ -42,6 +42,7 @@ public enum BotTeam {
     /** true when a bullet from {@code shooter} should pass through {@code target} */
     public static boolean friendly(Entity shooter, Entity target) {
         if (shooter == null || target == null) return false;
+        if (com.gunsmod.Config.friendlyFire() && shooter != target) return false;
         if (shooter instanceof Player pa && target instanceof Player pb) {
             // players are only team mates once both have picked a side
             return com.gunsmod.world.PlayerTeam.chosen(pa) && com.gunsmod.world.PlayerTeam.chosen(pb)

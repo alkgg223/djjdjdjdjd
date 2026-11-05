@@ -74,7 +74,7 @@ public class RadarBlockEntity extends BlockEntity {
             if (!v.threat() || BotTeam.of(v) == team) continue;
             Vec3 c = v.position().add(0, v.getBbHeight() * 0.5, 0);
             double d = c.distanceTo(eye);
-            if (d > type.range) continue;
+            if (d > type.reach()) continue;
             double p = type.chance(AirTracker.signature(v), d);
             if (p <= 0 || level.random.nextDouble() >= p) continue;
             if (level.clip(new ClipContext(eye, c, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, v)).getType() != HitResult.Type.MISS) continue;

@@ -107,7 +107,7 @@ public class VehicleSpawnerBlockEntity extends BlockEntity {
         sl.getChunkAt(pos);
         if (sl.getBlockEntity(pos) instanceof VehicleSpawnerBlockEntity be && id.equals(be.current)) {
             be.current = null;
-            be.respawnAt = sl.getGameTime() + DELAY;
+            be.respawnAt = sl.getGameTime() + (long) (DELAY / com.gunsmod.Config.vehicleSpawn());
             be.changed();
         }
     }

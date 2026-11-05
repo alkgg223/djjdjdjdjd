@@ -304,6 +304,7 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         else if (source.is(GunLogic.BULLET)) amount *= bulletFactor();
         else if (source.getDirectEntity() instanceof LivingEntity) amount *= isArmored() ? 0.02f : 0.2f;   // fists and swords
         this.invulnerableTime = 0;
+        amount /= com.gunsmod.Config.vehicleDurability();
         boolean r = super.hurt(source, amount);
         this.invulnerableTime = 0;
         // the crew knows where the hit came from and turns that way
@@ -316,7 +317,7 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
     /** a bullet from a gun (rifle or machine gun) */
     public void hurtByBullet(DamageSource src, float amount) {
         this.invulnerableTime = 0;
-        super.hurt(src, amount * bulletFactor());
+        super.hurt(src, amount * bulletFactor() / com.gunsmod.Config.vehicleDurability());
         this.invulnerableTime = 0;
     }
 

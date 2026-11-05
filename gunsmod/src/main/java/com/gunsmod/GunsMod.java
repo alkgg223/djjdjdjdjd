@@ -20,6 +20,8 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -31,7 +33,9 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public class GunsMod {
     public static final String MODID = "gunsmod";
 
-    public GunsMod(IEventBus modBus) {
+    public GunsMod(IEventBus modBus, ModContainer container) {
+        container.registerConfig(ModConfig.Type.COMMON, Config.COMMON);
+        container.registerConfig(ModConfig.Type.CLIENT, Config.CLIENT);
         Reg.register(modBus);
         modBus.addListener(GunsMod::attributes);
         modBus.addListener(Net::register);

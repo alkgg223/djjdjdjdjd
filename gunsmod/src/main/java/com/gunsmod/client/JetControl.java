@@ -37,6 +37,7 @@ public final class JetControl {
     private static boolean wasOn;
 
     public static void init() {
+        locked = com.gunsmod.Config.cockpitLock();
         JetEntity.lockedPilot = JetControl::active;
     }
 

@@ -44,7 +44,7 @@ public final class ClientFx {
 
     private static float quality(Minecraft mc) {
         ParticleStatus s = mc.options.particles().get();
-        return s == ParticleStatus.MINIMAL ? 0.3f : s == ParticleStatus.DECREASED ? 0.55f : 1f;
+        return (s == ParticleStatus.MINIMAL ? 0.3f : s == ParticleStatus.DECREASED ? 0.55f : 1f) * com.gunsmod.Config.particles();
     }
 
     private static void add(Particle p) {

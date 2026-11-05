@@ -96,6 +96,10 @@ public class GuidedMissileEntity extends Projectile {
     }
 
     private double topSpeed() {
+        return baseSpeed() * com.gunsmod.Config.missileSpeed();
+    }
+
+    private double baseSpeed() {
         if (speedOverride > 0) return speedOverride;
         return switch (getKind()) {
             case HELLFIRE -> 3.2;
@@ -109,6 +113,10 @@ public class GuidedMissileEntity extends Projectile {
 
     /** degrees the missile can turn in a tick */
     private double agility() {
+        return baseAgility() * com.gunsmod.Config.missileAgility();
+    }
+
+    private double baseAgility() {
         if (agilityOverride > 0) return agilityOverride;
         return switch (getKind()) {
             case SAM -> 9.0;

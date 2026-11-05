@@ -264,6 +264,7 @@ public final class GunLogic {
     }
 
     public static void damage(LivingEntity shooter, Entity target, float dmg, boolean headshot, GunType t) {
+        dmg *= com.gunsmod.Config.weaponDamage();
         DamageSource src = source(shooter.level(), BULLET, shooter, shooter);
         boolean wasAlive = target.isAlive();
         if (target instanceof JeepEntity jeep) {
