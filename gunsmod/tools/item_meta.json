@@ -478,5 +478,17 @@
   ],
   "kind": "item",
   "elements": 15
+ },
+ "repair_kit": {
+  "bounds": [
+   1.8,
+   1.0,
+   4.9,
+   14.2,
+   9.3,
+   11.15
+  ],
+  "kind": "item",
+  "elements": 10
  }
 }

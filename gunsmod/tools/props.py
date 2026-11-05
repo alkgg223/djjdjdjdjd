@@ -219,6 +219,23 @@ def command_radio():
     return m
 
 
+@item("repair_kit", "item")
+def repair_kit():
+    """field repair kit: the olive steel box with its latches and handle, a big wrench strapped on top"""
+    m = Model("repair_kit", density=10)
+    block(m, 2.0, 14.0, 1.0, 7.0, 6.0, "od_paint", deco=("panel", "rivets"))
+    block(m, 2.0, 14.0, 7.0, 7.4, 6.2, "dark_paint")
+    for x in (4.0, 12.0):
+        m.box([x - 0.5, 4.8, 10.95], [x + 0.5, 6.6, 11.15], "steel")
+    m.box([6.0, 8.8, 7.7], [10.0, 9.3, 8.3], "black")
+    for x in (6.0, 9.5):
+        m.box([x, 7.4, 7.7], [x + 0.5, 9.3, 8.3], "black")
+    m.box([3.0, 7.4, 9.4], [13.0, 7.9, 10.4], "bright")
+    m.box([12.0, 7.4, 8.9], [13.8, 7.9, 10.9], "bright")
+    m.box([1.8, 4.0, 10.9], [14.2, 4.6, 11.1], "hazard")
+    return m
+
+
 @item("laser_sight", "attachment")
 def laser_sight():
     m = Model("laser_sight", density=10)

@@ -184,6 +184,16 @@ public class VehicleSound extends AbstractTickableSoundInstance {
 
     private static void damageSmoke(VehicleEntity v) {
         float hp = v.getHealth() / v.getMaxHealth();
+        // a burning fuel system: fire and black smoke pouring out of the back
+        if (v.isBurning() && !(v instanceof JetEntity)) {
+            Vec3 c = v.position().add(0, v.getBbHeight() * 0.7, 0);
+            RandomSource r = v.level().random;
+            for (int i = 0; i < 2; i++) {
+                v.level().addParticle(ParticleTypes.FLAME, c.x + r.nextGaussian() * v.getBbWidth() * 0.25, c.y, c.z + r.nextGaussian() * v.getBbWidth() * 0.25,
+                        0, 0.05 + r.nextDouble() * 0.05, 0);
+            }
+            if (v.tickCount % 2 == 0) v.level().addParticle(ParticleTypes.LARGE_SMOKE, c.x, c.y + 0.5, c.z, 0, 0.1, 0);
+        }
         if (hp >= 0.5f || v.tickCount % (hp < 0.25f ? 2 : 5) != 0) return;
         if (v instanceof JetEntity) return;      // the jet burns its own way when it goes down
         double[] sm = v instanceof TankEntity tk ? tk.kind.geo.smoke() : v instanceof ArmoredCarEntity c ? c.geo.smoke()

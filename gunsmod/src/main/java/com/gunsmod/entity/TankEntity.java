@@ -225,12 +225,13 @@ public class TankEntity extends VehicleEntity {
         float thr = driver != null ? throttleIn : 0f;
         float st = driver != null ? steerIn : 0f;
         boolean water = this.isInWater();
-        double max = water ? 0.08 : kind.maxSpeed;
+        // a hit engine or broken tracks slow it (zones)
+        double max = (water ? 0.08 : kind.maxSpeed) * Math.min(engineFactor(), mobilityFactor());
         if (thr > 0.05f) {
             if (speed < -0.01) speed = Math.min(0, speed + 0.025);
             else {
                 double k = speed / max;
-                speed += 0.0055 * kind.accel * thr * (1.0 - 0.85 * k * k);
+                speed += 0.0055 * kind.accel * thr * (1.0 - 0.85 * k * k) * engineFactor();
             }
         } else if (thr < -0.05f) {
             if (speed > 0.01) speed = Math.max(0, speed - 0.025);
@@ -247,7 +248,7 @@ public class TankEntity extends VehicleEntity {
         boolean wasFront = blockedAfter(Vec3.ZERO, front), wasBack = blockedAfter(Vec3.ZERO, back);
         if (this.onGround() || water) {
             // tracks turn the hull on the spot; a little slower at speed
-            float rate = kind.turnRate - 1.0f * (float) Math.min(1, Math.abs(speed) / kind.maxSpeed);
+            float rate = (kind.turnRate - 1.0f * (float) Math.min(1, Math.abs(speed) / kind.maxSpeed)) * mobilityFactor();
             this.setYRot(this.getYRot() + steer * rate * (speed < -0.01 ? -1 : 1));
         }
         this.yBodyRot = this.getYRot();
@@ -387,8 +388,26 @@ public class TankEntity extends VehicleEntity {
         }
     }
 
+    @Override
+    public boolean hasTurret() {
+        return true;
+    }
+
+    @Override
+    protected java.util.List<String> hulkModels() {
+        String d = "entity/" + kind.geo.model() + "/";
+        return java.util.List.of(d + "body", d + "turret");
+    }
+
+    @Override
+    protected float hulkScale() {
+        return 4f * kind.scale;
+    }
+
     private void traverse(float wantYaw, float wantPitch, float yawRate, float pitchRate) {
         float cy = getTurretYaw(), cp = getGunPitch();
+        yawRate *= turretFactor();
+        pitchRate *= Math.max(0.3f, turretFactor());
         float dy = Mth.clamp(Mth.wrapDegrees(wantYaw - cy), -yawRate, yawRate);
         float dp = Mth.clamp(wantPitch - cp, -pitchRate, pitchRate);
         this.entityData.set(DATA_TURRET, Mth.wrapDegrees(cy + dy));
@@ -397,7 +416,9 @@ public class TankEntity extends VehicleEntity {
 
     private void fireMain(@Nullable LivingEntity gunner) {
         fireMain = false;
-        this.entityData.set(DATA_RELOAD, kind.reload);
+        // a wrecked main gun cannot fire; a damaged one reloads slower
+        if (gunFactor() <= 0) return;
+        this.entityData.set(DATA_RELOAD, (int) (kind.reload / gunFactor()));
         Vec3 muzzle = muzzleWorld();
         Vec3 dir = gunDir();
         RocketEntity shell = new RocketEntity(this.level(), gunner, RocketEntity.TANK_SHELL);

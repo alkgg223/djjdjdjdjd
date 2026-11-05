@@ -980,4 +980,10 @@ public class HelicopterEntity extends VehicleEntity implements MissileGuider, Ai
         if (tag.contains("Flares")) this.entityData.set(DATA_FLARES, Mth.clamp(tag.getInt("Flares"), 0, kind.flares));
         this.entityData.set(DATA_WEAPON, (byte) Mth.clamp(tag.getByte("Weapon"), 0, kind.weapons.length - 1));
     }
+
+    @Override
+    protected java.util.List<String> hulkModels() {
+        return java.util.List.of("entity/" + geo.model() + "/body");
+    }
+
 }

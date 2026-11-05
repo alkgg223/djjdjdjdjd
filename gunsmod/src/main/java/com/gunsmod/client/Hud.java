@@ -531,9 +531,32 @@ public final class Hud {
     }
 
     // ------------------------------------------------------------------------------------ vehicle
+    /** the damage zone strip over the hotbar while driving: engine, tracks / wheels, turret, gun, fuel (green / amber / red) */
+    private static void zoneStrip(GuiGraphics g, Minecraft mc, VehicleEntity v) {
+        if (v instanceof JetEntity || v instanceof com.gunsmod.entity.DroneEntity) return;
+        String[] keys = v.hasTurret() ? new String[]{"eng", "trk", "tur", "gun", "fuel"} : new String[]{"eng", "whl", "fuel"};
+        int[] zones = v.hasTurret() ? new int[]{VehicleEntity.Z_ENGINE, VehicleEntity.Z_MOBILITY, VehicleEntity.Z_TURRET, VehicleEntity.Z_GUN, VehicleEntity.Z_FUEL}
+                : new int[]{VehicleEntity.Z_ENGINE, VehicleEntity.Z_MOBILITY, VehicleEntity.Z_FUEL};
+        int w = 34, x = g.guiWidth() / 2 - keys.length * (w + 2) / 2, y = g.guiHeight() - 62;
+        for (int i = 0; i < keys.length; i++) {
+            float z = v.zone(zones[i]);
+            int col = z > 0.66f ? 0xFF7FD87F : z > 0.33f ? 0xFFE0B040 : z > 0 ? 0xFFFF6A5A : 0xFF606060;
+            int bx = x + i * (w + 2);
+            g.fill(bx, y, bx + w, y + 11, 0x90101418);
+            g.fill(bx, y + 9, bx + (int) (w * z), y + 11, col);
+            Component c = Component.translatable("gunsmod.zone." + keys[i]);
+            g.drawString(mc.font, c, bx + (w - mc.font.width(c)) / 2, y + 1, col, false);
+        }
+        if (v.isBurning()) {
+            Component fire = Component.translatable("gunsmod.zone.fire");
+            g.drawString(mc.font, fire, g.guiWidth() / 2 - mc.font.width(fire) / 2, y - 10, 0xFFFF6A5A, true);
+        }
+    }
+
     public static void vehicle(GuiGraphics g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
         if (hidden(mc)) return;
+        if (mc.player.getVehicle() instanceof VehicleEntity zv && zv.getControllingPassenger() == mc.player) zoneStrip(g, mc, zv);
         if (mc.player.getVehicle() instanceof TankEntity tank) {
             tankHud(g, mc, tank);
             return;

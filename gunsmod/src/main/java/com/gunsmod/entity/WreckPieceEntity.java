@@ -22,7 +22,9 @@ public class WreckPieceEntity extends Entity {
     public static final String[] KINDS = {"wing", "fin", "fuselage", "engine", "panel"};
     private static final EntityDataAccessor<Byte> DATA_KIND = SynchedEntityData.defineId(WreckPieceEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Float> DATA_SCALE = SynchedEntityData.defineId(WreckPieceEntity.class, EntityDataSerializers.FLOAT);
-    public static final int LIFE = 1400, BURN = 500;
+    /** a vehicle's burnt-out hulk: the model it shows (empty for an aircraft piece) */
+    private static final EntityDataAccessor<String> DATA_MODEL = SynchedEntityData.defineId(WreckPieceEntity.class, EntityDataSerializers.STRING);
+    public static final int LIFE = 1400, BURN = 500, HULK_LIFE = 3600, HULK_BURN = 1400;
     private int life;
     private boolean landed;
     // client: tumbling
@@ -45,6 +47,26 @@ public class WreckPieceEntity extends Entity {
         return w;
     }
 
+    /** a destroyed vehicle's hulk (or its turret blown off): the vehicle's own model, charred, smoking and burning a while */
+    public static WreckPieceEntity hulk(Level level, String model, float scale, Vec3 at, float yaw, Vec3 vel) {
+        WreckPieceEntity w = new WreckPieceEntity(Reg.WRECK_PIECE.get(), level);
+        w.entityData.set(DATA_MODEL, model);
+        w.entityData.set(DATA_SCALE, scale);
+        w.setPos(at.x, at.y, at.z);
+        w.setDeltaMovement(vel);
+        w.setYRot(yaw);
+        w.spinRate = vel.lengthSqr() > 0.05 ? 6f + level.random.nextFloat() * 8f : 0f;
+        return w;
+    }
+
+    public String model() {
+        return this.entityData.get(DATA_MODEL);
+    }
+
+    public boolean isHulk() {
+        return !model().isEmpty();
+    }
+
     /** throw pieces of an aircraft about: n of them from a point with the aircraft's own motion */
     public static void scatter(Level level, Vec3 at, Vec3 motion, float scale, int n, double force) {
         for (int i = 0; i < n; i++) {
@@ -61,6 +83,7 @@ public class WreckPieceEntity extends Entity {
     protected void defineSynchedData(SynchedEntityData.Builder b) {
         b.define(DATA_KIND, (byte) 0);
         b.define(DATA_SCALE, 1f);
+        b.define(DATA_MODEL, "");
     }
 
     public String kind() {
@@ -73,7 +96,7 @@ public class WreckPieceEntity extends Entity {
     }
 
     public boolean burning() {
-        return this.tickCount < BURN;
+        return this.tickCount < (isHulk() ? HULK_BURN : BURN);
     }
 
     @Override
@@ -107,7 +130,7 @@ public class WreckPieceEntity extends Entity {
             if (burning()) FxHooks.light.accept(this, 11);
             return;
         }
-        if (++life > LIFE || this.getY() < this.level().getMinBuildHeight() - 16) this.discard();
+        if (++life > (isHulk() ? HULK_LIFE : LIFE) || this.getY() < this.level().getMinBuildHeight() - 16) this.discard();
     }
 
     @Override
@@ -119,6 +142,7 @@ public class WreckPieceEntity extends Entity {
     protected void readAdditionalSaveData(CompoundTag tag) {
         this.entityData.set(DATA_KIND, tag.getByte("Kind"));
         this.entityData.set(DATA_SCALE, tag.contains("Scale") ? tag.getFloat("Scale") : 1f);
+        this.entityData.set(DATA_MODEL, tag.getString("Model"));
         life = tag.getInt("Life");
     }
 
@@ -126,6 +150,7 @@ public class WreckPieceEntity extends Entity {
     protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putByte("Kind", this.entityData.get(DATA_KIND));
         tag.putFloat("Scale", scale());
+        tag.putString("Model", model());
         tag.putInt("Life", life);
     }
 }

@@ -38,6 +38,13 @@ import net.neoforged.neoforge.fluids.FluidType;
 public abstract class VehicleEntity extends Mob implements BotRideable {
     public static final double UNIT = 0.25;
     private static final EntityDataAccessor<Byte> DATA_TEAM = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.BYTE);
+    /** the damage zones, six bits each (63 = sound): engine, tracks / wheels, turret, main gun, fuel; bit 30 = on fire */
+    private static final EntityDataAccessor<Integer> DATA_ZONES = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);
+    public static final int Z_ENGINE = 0, Z_MOBILITY = 1, Z_TURRET = 2, Z_GUN = 3, Z_FUEL = 4, ZONES = 5;
+    private static final int INTACT = 0b111111_111111_111111_111111_111111;
+    /** where the hit that is being dealt landed (set by the gun and blast code around the hurt call; server thread) */
+    @Nullable public static Vec3 hitPoint;
+    private int burnTicks;
 
     @Nullable public BlockPos home;
     @Nullable public BlockPos spawnerPos;
@@ -64,6 +71,7 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
     protected void defineSynchedData(SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
         b.define(DATA_TEAM, (byte) 0);
+        b.define(DATA_ZONES, INTACT);
     }
 
     // ------------------------------------------------------------------------------------ kind
@@ -250,8 +258,13 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
+        if (held.getItem() instanceof com.gunsmod.item.RepairKitItem) {
+            if (!this.level().isClientSide) com.gunsmod.item.RepairKitItem.use(this, player, held);
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
+        }
         if ((held.is(Items.IRON_INGOT) || held.is(Items.IRON_BLOCK)) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {
+                if (held.is(Items.IRON_BLOCK)) repair();
                 this.heal(held.is(Items.IRON_BLOCK) ? this.getMaxHealth() * 0.4f : this.getMaxHealth() * 0.06f);
                 held.consume(1, player);
                 this.level().playSound(null, getX(), getY(), getZ(), SoundEvents.ANVIL_USE, SoundSource.NEUTRAL, 0.6f, 1.2f);
@@ -286,6 +299,132 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         return getControllingPassenger() == e;
     }
 
+    // ------------------------------------------------------------------------------------ damage zones
+    /** a zone's state: 1 sound, 0 wrecked */
+    public float zone(int z) {
+        return ((this.entityData.get(DATA_ZONES) >> (z * 6)) & 63) / 63f;
+    }
+
+    public void setZone(int z, float v) {
+        int raw = this.entityData.get(DATA_ZONES);
+        int q = Mth.clamp(Math.round(v * 63), 0, 63);
+        raw = (raw & ~(63 << (z * 6))) | (q << (z * 6));
+        this.entityData.set(DATA_ZONES, raw);
+    }
+
+    public boolean isBurning() {
+        return (this.entityData.get(DATA_ZONES) & (1 << 30)) != 0;
+    }
+
+    private void setBurning(boolean b) {
+        int raw = this.entityData.get(DATA_ZONES);
+        this.entityData.set(DATA_ZONES, b ? raw | (1 << 30) : raw & ~(1 << 30));
+    }
+
+    /** the models left as the hulk when it is destroyed (model path, render scale), the turret last */
+    protected java.util.List<String> hulkModels() {
+        return java.util.List.of();
+    }
+
+    protected float hulkScale() {
+        return 4f;
+    }
+
+    /** has a turret and a main gun (the zones only matter then) */
+    public boolean hasTurret() {
+        return false;
+    }
+
+    /** top speed and acceleration with the engine and running gear as they are */
+    public float engineFactor() {
+        float e = zone(Z_ENGINE);
+        return e <= 0 ? 0f : 0.35f + 0.65f * e;
+    }
+
+    public float mobilityFactor() {
+        float m = zone(Z_MOBILITY);
+        return m <= 0 ? 0.12f : 0.35f + 0.65f * m;
+    }
+
+    /** turret traverse speed (0: jammed) */
+    public float turretFactor() {
+        float t = zone(Z_TURRET);
+        return t <= 0 ? 0f : 0.3f + 0.7f * t;
+    }
+
+    /** main gun: reload time multiplier, 0 = it cannot fire */
+    public float gunFactor() {
+        float g = zone(Z_GUN);
+        return g <= 0 ? 0f : 0.35f + 0.65f * g;
+    }
+
+    /** which zone a hit at a world point takes: low = running gear, the back = engine (and the tanks), up front = turret / gun */
+    private int zoneAt(Vec3 p) {
+        Vec3 d = p.subtract(this.position());
+        double a = Math.toRadians(this.getYRot());
+        double fwd = -d.x * Math.sin(a) + d.z * Math.cos(a);
+        double h = this.getBbHeight(), len = Math.max(1.0, this.getBbWidth());
+        double up = d.y / Math.max(0.5, h);
+        if (up < 0.3) return Z_MOBILITY;
+        if (fwd < -len * 0.18) return this.random.nextFloat() < 0.35f ? Z_FUEL : Z_ENGINE;
+        if (hasTurret() && up > 0.6) return this.random.nextFloat() < 0.4f ? Z_GUN : Z_TURRET;
+        return this.random.nextFloat() < 0.2f ? Z_FUEL : -1;
+    }
+
+    private void damageZones(DamageSource source, float amount) {
+        Vec3 at = hitPoint;
+        if (at == null) {
+            Entity src = source.getDirectEntity() != null ? source.getDirectEntity() : source.getEntity();
+            if (src == null) return;
+            // from the attacker's side, at the height it is
+            Vec3 c = this.position().add(0, this.getBbHeight() * 0.5, 0);
+            Vec3 to = src.position().add(0, src.getBbHeight() * 0.5, 0).subtract(c);
+            at = to.lengthSqr() < 1e-4 ? c : c.add(to.normalize().scale(this.getBbWidth() * 0.5));
+        }
+        boolean blast = source.is(DamageTypeTags.IS_EXPLOSION);
+        float share = amount / Math.max(1f, this.getMaxHealth() * 0.3f);
+        int z = zoneAt(at);
+        if (z >= 0) setZone(z, zone(z) - share);
+        // a blast underneath (a mine, a shell at the tracks) wrecks the running gear
+        if (blast && at.y < this.getY() + this.getBbHeight() * 0.3) setZone(Z_MOBILITY, zone(Z_MOBILITY) - share * 1.5f);
+        if (zone(Z_FUEL) < 0.3f && !isBurning() && this.random.nextFloat() < 0.35f) setBurning(true);
+    }
+
+    /** the repair kit: puts a quarter back on the worst zone and some health, true if there was anything to mend */
+    public boolean repair() {
+        int worst = -1;
+        float w = 1f;
+        for (int z = 0; z < ZONES; z++) {
+            if (!hasTurret() && (z == Z_TURRET || z == Z_GUN)) continue;
+            if (zone(z) < w - 1e-3) {
+                w = zone(z);
+                worst = z;
+            }
+        }
+        boolean did = false;
+        if (worst >= 0) {
+            setZone(worst, zone(worst) + 0.25f);
+            did = true;
+        }
+        if (this.getHealth() < this.getMaxHealth()) {
+            this.heal(this.getMaxHealth() * 0.08f);
+            did = true;
+        }
+        if (isBurning() && zone(Z_FUEL) >= 0.3f) setBurning(false);
+        return did;
+    }
+
+    /** server tick: a burning fuel system eats the vehicle until it is put out or blows up */
+    private void zoneTick() {
+        if (!isBurning()) return;
+        if (++burnTicks % 20 == 0) {
+            this.invulnerableTime = 0;
+            super.hurt(this.damageSources().onFire(), Math.max(1f, this.getMaxHealth() * 0.02f));
+            this.invulnerableTime = 0;
+            if (this.isInWater()) setBurning(false);
+        }
+    }
+
     // ------------------------------------------------------------------------------------ damage
     @Override
     public boolean hurt(DamageSource source, float amount) {
@@ -306,6 +445,7 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         this.invulnerableTime = 0;
         amount /= com.gunsmod.Config.vehicleDurability();
         boolean r = super.hurt(source, amount);
+        if (r && !source.is(DamageTypeTags.IS_FIRE)) damageZones(source, amount);
         this.invulnerableTime = 0;
         // the crew knows where the hit came from and turns that way
         if (r && att instanceof LivingEntity le) {
@@ -317,7 +457,8 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
     /** a bullet from a gun (rifle or machine gun) */
     public void hurtByBullet(DamageSource src, float amount) {
         this.invulnerableTime = 0;
-        super.hurt(src, amount * bulletFactor() / com.gunsmod.Config.vehicleDurability());
+        float a = amount * bulletFactor() / com.gunsmod.Config.vehicleDurability();
+        if (super.hurt(src, a)) damageZones(src, a);
         this.invulnerableTime = 0;
     }
 
@@ -335,6 +476,14 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         // the wreck burns out: big fireball, no damage to the terrain
         Vec3 c = this.position().add(0, this.getBbHeight() * 0.5, 0);
         Blast.explode(this.level(), this, c, isArmored() ? 4.5f : 3.6f, false, Level.ExplosionInteraction.NONE, Blast.FX_MISSILE, isArmored() ? 2.0f : 1.6f);
+        // the burnt-out hulk stays; a tank's turret is sometimes blown clean off
+        java.util.List<String> hulk = hulkModels();
+        for (int i = 0; i < hulk.size(); i++) {
+            boolean turret = hasTurret() && i == hulk.size() - 1 && hulk.size() > 1;
+            Vec3 v = turret && this.random.nextFloat() < 0.4f ? new Vec3(this.random.nextGaussian() * 0.15, 0.7 + this.random.nextDouble() * 0.3, this.random.nextGaussian() * 0.15)
+                    : Vec3.ZERO;
+            this.level().addFreshEntity(com.gunsmod.entity.WreckPieceEntity.hulk(this.level(), hulk.get(i), hulkScale(), this.position(), this.getYRot(), v));
+        }
         this.discard();
     }
 
@@ -373,6 +522,7 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
         if (!this.level().isClientSide && home == null && this.tickCount > 1) home = this.blockPosition();
         if (!this.level().isClientSide && routeActive()) com.gunsmod.entity.ai.Waypoints.keepLoaded(this);
         if (!this.level().isClientSide && this instanceof Aircraft) com.gunsmod.block.airdef.AirTracker.add(this);
+        if (!this.level().isClientSide) zoneTick();
         super.tick();
         if (this.level().isClientSide) clientTick.accept(this);
     }
@@ -382,6 +532,7 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("Team", getBotTeam().ordinal());
+        tag.putInt("Zones", this.entityData.get(DATA_ZONES));
         if (home != null) tag.put("Home", NbtUtils.writeBlockPos(home));
         if (spawnerPos != null) tag.put("Spawner", NbtUtils.writeBlockPos(spawnerPos));
         if (waypoints != null) tag.put("Waypoints", waypoints.save());
@@ -428,6 +579,7 @@ public abstract class VehicleEntity extends Mob implements BotRideable {
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         setTeam(BotTeam.byId(tag.getInt("Team")));
+        if (tag.contains("Zones")) this.entityData.set(DATA_ZONES, tag.getInt("Zones"));
         home = NbtUtils.readBlockPos(tag, "Home").orElse(null);
         spawnerPos = NbtUtils.readBlockPos(tag, "Spawner").orElse(null);
         waypoints = com.gunsmod.entity.ai.Waypoints.read(tag, "Waypoints");

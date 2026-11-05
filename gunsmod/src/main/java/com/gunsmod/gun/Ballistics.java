@@ -190,7 +190,12 @@ public final class Ballistics {
                 double dist = r.travelled[r.index] + s.from.distanceTo(hit.end());
                 float dmg = r.damage * r.mul * GunLogic.falloffAt(r.type, dist);
                 if (hit.headshot()) dmg *= r.type.headshotMultiplier();
-                GunLogic.damage(r.shooter, hit.entity(), dmg, hit.headshot(), r.type);
+                VehicleEntity.hitPoint = hit.end();
+                try {
+                    GunLogic.damage(r.shooter, hit.entity(), dmg, hit.headshot(), r.type);
+                } finally {
+                    VehicleEntity.hitPoint = null;
+                }
                 return true;
             }
             r.index++;

@@ -324,7 +324,7 @@ public class ArmoredCarEntity extends VehicleEntity {
         float thr = driver != null ? throttleIn : 0f;
         float st = driver != null ? steerIn : 0f;
         boolean water = this.isInWater();
-        double max = water ? (kind == CarType.BTR ? 0.18 : 0.06) : kind.maxSpeed;
+        double max = (water ? (kind == CarType.BTR ? 0.18 : 0.06) : kind.maxSpeed) * Math.min(engineFactor(), mobilityFactor());
         if (thr > 0.05f) {
             if (speed < -0.01) speed = Math.min(0, speed + 0.03);
             else {
@@ -346,7 +346,7 @@ public class ArmoredCarEntity extends VehicleEntity {
         boolean wasFront = blockedAfter(Vec3.ZERO, front), wasBack = blockedAfter(Vec3.ZERO, back);
         if (this.onGround() || water) {
             // front axles steer: the yaw rate follows the speed (no turning on the spot)
-            double angle = steer * Math.toRadians(30) * (1.0 - 0.45 * Math.min(1, Math.abs(speed) / kind.maxSpeed));
+            double angle = steer * Math.toRadians(30) * (1.0 - 0.45 * Math.min(1, Math.abs(speed) / kind.maxSpeed)) * mobilityFactor();
             this.setYRot(this.getYRot() + (float) Math.toDegrees(speed * Math.tan(angle) / kind.wheelbase));
         }
         this.yBodyRot = this.getYRot();
@@ -509,8 +509,20 @@ public class ArmoredCarEntity extends VehicleEntity {
         }
     }
 
+    @Override
+    public boolean hasTurret() {
+        return !kind.civilian() && kind.maxSpeed > 0;
+    }
+
+    @Override
+    protected java.util.List<String> hulkModels() {
+        return java.util.List.of("entity/" + geo.model() + "/body");
+    }
+
     private void traverse(float wantYaw, float wantPitch, float yawRate, float pitchRate) {
         float cy = getTurretYaw(), cp = getGunPitch();
+        yawRate *= turretFactor();
+        pitchRate *= Math.max(0.3f, turretFactor());
         float dy = Mth.clamp(Mth.wrapDegrees(wantYaw - cy), -yawRate, yawRate);
         float dp = Mth.clamp(Mth.clamp(wantPitch, (float) -geo.gunMax(), (float) -geo.gunMin()) - cp, -pitchRate, pitchRate);
         this.entityData.set(DATA_TURRET, Mth.wrapDegrees(cy + dy));
