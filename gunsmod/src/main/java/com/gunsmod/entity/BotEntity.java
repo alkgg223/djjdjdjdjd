@@ -100,6 +100,15 @@ public class BotEntity extends PathfinderMob {
     public int mines = 1;
     /** FPV kamikaze drones and Shahed-136s it carries (a drone operator) */
     public int drones, shaheds;
+    // ------------------------------------------------------------------------------------ squad (a player's orders)
+    @Nullable public java.util.UUID squadLeader;
+    public com.gunsmod.entity.ai.Squad.Order order = com.gunsmod.entity.ai.Squad.Order.NONE;
+    public com.gunsmod.entity.ai.Squad.Formation formation = com.gunsmod.entity.ai.Squad.Formation.WEDGE;
+    public Vec3 orderPos = Vec3.ZERO;
+    @Nullable public Vec3 patrolFrom;
+    public int orderEntity = -1, focusTarget = -1;
+    public float orderFacing;
+    public boolean holdFire;
     public boolean ignorePlayers;
     public int grenades = 2;
     public int smokes = 1;
@@ -157,6 +166,7 @@ public class BotEntity extends PathfinderMob {
         this.goalSelector.addGoal(2, new BotVehicleGoal(this));
         this.goalSelector.addGoal(3, new com.gunsmod.entity.ai.BotSkyGoal(this));
         this.goalSelector.addGoal(3, new com.gunsmod.entity.ai.BotDroneGoal(this));
+        this.goalSelector.addGoal(5, new com.gunsmod.entity.ai.BotSquadGoal(this));
         this.goalSelector.addGoal(4, new BotCombatGoal(this));
         this.goalSelector.addGoal(5, new BotReloadGoal(this));
         this.goalSelector.addGoal(6, new com.gunsmod.entity.ai.BotRouteGoal(this));
@@ -293,8 +303,47 @@ public class BotEntity extends PathfinderMob {
         return m / com.gunsmod.Config.aiAccuracy();
     }
 
+    /** a squad order from the player (leader null: back to the soldier's own business) */
+    public void giveOrder(@Nullable java.util.UUID leader, com.gunsmod.entity.ai.Squad.Order o, @Nullable Vec3 pos, int entity, int index, int count) {
+        this.squadLeader = leader;
+        this.order = o;
+        if (pos != null) this.orderPos = pos;
+        this.orderEntity = entity;
+        if (o == com.gunsmod.entity.ai.Squad.Order.NONE) {
+            this.holdFire = false;
+            this.focusTarget = -1;
+        }
+    }
+
+    /** the spot an order keeps the soldier near while it fights, and how far it may go from it (radius 0: free) */
+    @Nullable
+    public Vec3 leashCenter() {
+        return switch (order) {
+            case HOLD, DEFEND -> orderPos;
+            case FOLLOW -> {
+                Player p = squadLeader == null ? null : this.level().getPlayerByUUID(squadLeader);
+                yield p != null ? p.position() : null;
+            }
+            case PROTECT -> {
+                net.minecraft.world.entity.Entity e = this.level().getEntity(orderEntity);
+                yield e != null ? e.position() : null;
+            }
+            default -> null;
+        };
+    }
+
+    public double leashRadius() {
+        return switch (order) {
+            case HOLD -> 3;
+            case DEFEND -> 14;
+            case FOLLOW, PROTECT -> 22;
+            default -> 0;
+        };
+    }
+
     /** try to fire at the target this tick. returns true when a shot was fired */
     public boolean tryShoot(LivingEntity target, boolean canSee) {
+        if (holdFire) return false;
         GunType t = gunType();
         if (t == null || reloadLeft > 0 || fireCooldown > 0 || !canSee) return false;
         ItemStack g = gun();
@@ -378,6 +427,7 @@ public class BotEntity extends PathfinderMob {
 
     /** fire at a point in the sky once the head is on it (the bomber: no target entity to track the usual way) */
     public boolean tryShootAt(Vec3 aim, net.minecraft.world.entity.Entity target) {
+        if (holdFire) return false;
         GunType t = gunType();
         if (t == null || reloadLeft > 0 || fireCooldown > 0) return false;
         ItemStack g = gun();
@@ -729,6 +779,16 @@ public class BotEntity extends PathfinderMob {
         tag.putInt("Mines", mines);
         tag.putInt("Drones", drones);
         tag.putInt("Shaheds", shaheds);
+        if (squadLeader != null) {
+            tag.putUUID("SquadLeader", squadLeader);
+            tag.putString("Order", order.name());
+            tag.putString("Formation", formation.name());
+            tag.putDouble("OrderX", orderPos.x);
+            tag.putDouble("OrderY", orderPos.y);
+            tag.putDouble("OrderZ", orderPos.z);
+            tag.putFloat("OrderFacing", orderFacing);
+            tag.putBoolean("HoldFire", holdFire);
+        }
         ListTag rack = new ListTag();
         for (int i = 0; i < missiles.getContainerSize(); i++) {
             ItemStack s = missiles.getItem(i);
@@ -761,6 +821,20 @@ public class BotEntity extends PathfinderMob {
         mines = tag.contains("Mines") ? tag.getInt("Mines") : 1;
         drones = tag.getInt("Drones");
         shaheds = tag.getInt("Shaheds");
+        if (tag.hasUUID("SquadLeader")) {
+            squadLeader = tag.getUUID("SquadLeader");
+            try {
+                order = com.gunsmod.entity.ai.Squad.Order.valueOf(tag.getString("Order"));
+                formation = com.gunsmod.entity.ai.Squad.Formation.valueOf(tag.getString("Formation"));
+            } catch (IllegalArgumentException ex) {
+                order = com.gunsmod.entity.ai.Squad.Order.HOLD;
+            }
+            orderPos = new Vec3(tag.getDouble("OrderX"), tag.getDouble("OrderY"), tag.getDouble("OrderZ"));
+            orderFacing = tag.getFloat("OrderFacing");
+            holdFire = tag.getBoolean("HoldFire");
+            // a guarded entity or a patrol start does not survive a reload: the soldier holds where it was told
+            if (order == com.gunsmod.entity.ai.Squad.Order.PROTECT || order == com.gunsmod.entity.ai.Squad.Order.PATROL) order = com.gunsmod.entity.ai.Squad.Order.HOLD;
+        }
         missiles.clearContent();
         for (Tag t : tag.getList("Missiles", Tag.TAG_COMPOUND)) {
             CompoundTag e = (CompoundTag) t;

@@ -50,6 +50,8 @@ public final class GunClient {
     public static final KeyMapping PRONE = new KeyMapping("key.gunsmod.prone", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, CATEGORY);
     /** the variable scope's magnification: next step (the mouse wheel works too while aiming) */
     public static final KeyMapping SCOPE_ZOOM = new KeyMapping("key.gunsmod.scope_zoom", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, CATEGORY);
+    /** the squad command board */
+    public static final KeyMapping SQUAD = new KeyMapping("key.gunsmod.squad", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_U, CATEGORY);
 
     /** the variable scope is what the player aims through now */
     public static boolean variableScope() {

@@ -204,6 +204,21 @@ def muzzle_brake():
     return m
 
 
+@item("command_radio", "item")
+def command_radio():
+    """the squad radio: an olive handset with its whip antenna, the push-to-talk bar, the speaker grille and a lit display"""
+    m = Model("command_radio", density=10)
+    block(m, 5.0, 11.0, 1.0, 12.0, 3.2, "od_paint", deco=("panel",))
+    block(m, 5.6, 10.4, 7.0, 10.6, 3.3, "black", deco=("lines:5",))
+    m.box([6.0, 3.6, 9.6], [10.0, 5.6, 9.7], "screen")
+    m.box([4.6, 5.0, 7.0], [5.0, 9.0, 9.0], "black")
+    m.cyl("y", (6.2, 8.0), 0.5, 12.0, 13.0, "black", sides=8)
+    m.cyl("y", (6.2, 8.0), 0.16, 13.0, 21.0, "black", sides=6)
+    m.cyl("y", (9.6, 8.0), 0.55, 12.0, 12.8, "dark_paint", sides=8, deco=("vlines:6",))
+    m.box([6.4, 1.8, 9.6], [9.6, 3.0, 9.7], "glow_green", light=True)
+    return m
+
+
 @item("laser_sight", "attachment")
 def laser_sight():
     m = Model("laser_sight", density=10)

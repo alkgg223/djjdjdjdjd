@@ -466,5 +466,17 @@
   ],
   "kind": "attachment",
   "elements": 12
+ },
+ "command_radio": {
+  "bounds": [
+   4.6,
+   1.0,
+   6.35,
+   11.0,
+   21.0,
+   9.7
+  ],
+  "kind": "item",
+  "elements": 15
  }
 }

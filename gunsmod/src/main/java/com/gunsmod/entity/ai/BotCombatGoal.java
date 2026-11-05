@@ -40,6 +40,7 @@ public class BotCombatGoal extends Goal {
     @Override
     public boolean canUse() {
         LivingEntity t = bot.getTarget();
+        if (bot.order == Squad.Order.RETREAT) return false;
         return t != null && t.isAlive() && !bot.isPassenger();
     }
 
@@ -104,6 +105,13 @@ public class BotCombatGoal extends Goal {
     private void moveTo(Vec3 p, double speed) {
         if (repath-- <= 0) {
             p = roadside(p);
+            // a squad order keeps the soldier near its post (or its leader) while it fights
+            Vec3 c = bot.leashCenter();
+            double lr = bot.leashRadius();
+            if (c != null && lr > 0) {
+                Vec3 d = new Vec3(p.x - c.x, 0, p.z - c.z);
+                if (d.length() > lr) p = new Vec3(c.x + d.x / d.length() * lr, p.y, c.z + d.z / d.length() * lr);
+            }
             bot.getNavigation().moveTo(p.x, p.y, p.z, speed);
             repath = 10;
         }

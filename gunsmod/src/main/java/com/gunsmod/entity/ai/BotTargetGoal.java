@@ -41,7 +41,7 @@ public class BotTargetGoal extends Goal {
                 if (current == null && d < Sight.hearing(e)) bot.hear(e.position());
                 continue;
             }
-            double score = d + (see ? 0 : 25) - (e == bot.lastAttacker ? 15 : 0) - (e == current ? 6 : 0);
+            double score = d + (see ? 0 : 25) - (e == bot.lastAttacker ? 15 : 0) - (e == current ? 6 : 0) - (e.getId() == bot.focusTarget ? 200 : 0);
             // soldiers go for enemy players first; rifles are no use against armour
             if (e instanceof Player) score -= 12;
             if (e instanceof VehicleEntity v && v.isArmored() && !bot.hasAntiArmor()) score += 45;

@@ -367,6 +367,8 @@ public final class Reg {
             () -> new com.gunsmod.item.DroneItem(com.gunsmod.entity.DroneEntity.Kind.FPV, new Item.Properties().stacksTo(8).rarity(Rarity.RARE)));
     public static final DeferredItem<com.gunsmod.item.DroneItem> SHAHED = ITEMS.register("shahed",
             () -> new com.gunsmod.item.DroneItem(com.gunsmod.entity.DroneEntity.Kind.SHAHED, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
+    public static final DeferredItem<com.gunsmod.item.CommandRadioItem> COMMAND_RADIO = ITEMS.register("command_radio",
+            () -> new com.gunsmod.item.CommandRadioItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
     public static final DeferredItem<com.gunsmod.item.ConvoyToolItem> CONVOY_TOOL = ITEMS.register("convoy_planner",
             () -> new com.gunsmod.item.ConvoyToolItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final DeferredItem<SoldierItem> GREEN_SOLDIER = ITEMS.register("green_soldier", () -> new SoldierItem(BotTeam.GREEN, new Item.Properties().stacksTo(16)));
@@ -441,6 +443,7 @@ public final class Reg {
                 out.accept(MISSILE_BUNKER_BUSTER.get());
                 out.accept(MISSILE_TITAN.get());
                 out.accept(REMOTE.get());
+                out.accept(COMMAND_RADIO.get());
                 out.accept(FPV_DRONE.get());
                 out.accept(SHAHED.get());
                 out.accept(GREEN_SOLDIER.get());

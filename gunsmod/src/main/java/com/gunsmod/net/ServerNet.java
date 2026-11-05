@@ -56,6 +56,10 @@ public final class ServerNet {
         }
     }
 
+    public static void squadOrder(Net.SquadOrder p, IPayloadContext ctx) {
+        if (ctx.player() instanceof ServerPlayer sp && sp.isAlive() && !sp.isSpectator()) com.gunsmod.entity.ai.Squad.command(sp, p.command(), p.formation());
+    }
+
     public static void prone(Net.ProneState p, IPayloadContext ctx) {
         if (ctx.player() instanceof ServerPlayer sp) com.gunsmod.gun.Prone.set(sp, p.down() && com.gunsmod.gun.Prone.allowed(sp));
     }

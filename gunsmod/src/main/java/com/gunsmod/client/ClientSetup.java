@@ -62,6 +62,7 @@ public final class ClientSetup {
         VehicleEntity.clientTick = VehicleSound::tick;
         VehicleCamera.init();
         JetControl.init();
+        com.gunsmod.item.CommandRadioItem.openScreen = () -> net.minecraft.client.Minecraft.getInstance().setScreen(new com.gunsmod.client.screen.SquadScreen());
         com.gunsmod.item.ConvoyToolItem.openScreen = s -> net.minecraft.client.Minecraft.getInstance().setScreen(new com.gunsmod.client.screen.ConvoyScreen(s));
         FxHooks.light = (en, lvl) -> ClientLights.light(en, en.position(), lvl, 2);
         // helicopter collective: jump climbs, sneak descends
@@ -213,6 +214,7 @@ public final class ClientSetup {
         e.register(GunClient.TEAM);
         e.register(GunClient.PRONE);
         e.register(GunClient.SCOPE_ZOOM);
+        e.register(GunClient.SQUAD);
         e.register(JetControl.VIEW);
     }
 
@@ -237,5 +239,6 @@ public final class ClientSetup {
         e.registerBelowAll(Reg.id("night_vision"), NightVision::layer);
         e.registerBelowAll(Reg.id("thermal"), Thermal::layer);
         e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Reg.id("battle_score"), (g, dt) -> g.drawManaged(() -> BattleHud.render(g, dt)));
+        e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Reg.id("squad"), (g, dt) -> g.drawManaged(() -> SquadHud.render(g, dt)));
     }
 }

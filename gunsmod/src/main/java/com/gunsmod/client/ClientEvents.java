@@ -29,6 +29,9 @@ public final class ClientEvents {
     public static void tick(ClientTickEvent.Post e) {
         GunClient.tick();
         Thermal.tick();
+        while (GunClient.SQUAD.consumeClick()) {
+            if (Minecraft.getInstance().screen == null && Minecraft.getInstance().player != null) Minecraft.getInstance().setScreen(new com.gunsmod.client.screen.SquadScreen());
+        }
         while (GunClient.SCOPE_ZOOM.consumeClick()) {
             if (GunClient.variableScope()) {
                 if (com.gunsmod.gun.Attachment.zoomStep >= com.gunsmod.gun.Attachment.ZOOM_STEPS.length - 1) com.gunsmod.gun.Attachment.zoomStep = -1;

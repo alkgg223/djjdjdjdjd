@@ -33,6 +33,8 @@ public final class Net {
         r.playToServer(ProneState.TYPE, ProneState.CODEC, ServerNet::prone);
         r.playToServer(ConvoySpawn.TYPE, ConvoySpawn.CODEC, ServerNet::convoySpawn);
         r.playToServer(JetBank.TYPE, JetBank.CODEC, ServerNet::jetBank);
+        r.playToServer(SquadOrder.TYPE, SquadOrder.CODEC, ServerNet::squadOrder);
+        r.playToClient(SquadStatus.TYPE, SquadStatus.CODEC, (p, ctx) -> com.gunsmod.client.SquadHud.status(p));
         r.playToClient(ShotFx.TYPE, ShotFx.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.shotFx(p));
         r.playToClient(BulletPath.TYPE, BulletPath.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.bulletPath(p));
         r.playToClient(HitMarker.TYPE, HitMarker.CODEC, (p, ctx) -> com.gunsmod.client.ClientNet.hitMarker(p));
@@ -332,6 +334,49 @@ public final class Net {
 
         @Override
         public Type<JetBank> type() {
+            return TYPE;
+        }
+    }
+
+    /** an order from the squad screen (see entity.ai.Squad: the command ids) */
+    public record SquadOrder(int command, int formation) implements CustomPacketPayload {
+        public static final Type<SquadOrder> TYPE = payloadType("squad_order");
+        public static final StreamCodec<RegistryFriendlyByteBuf, SquadOrder> CODEC = CustomPacketPayload.codec(SquadOrder::write, SquadOrder::new);
+
+        SquadOrder(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt(), b.readVarInt());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(command);
+            b.writeVarInt(formation);
+        }
+
+        @Override
+        public Type<SquadOrder> type() {
+            return TYPE;
+        }
+    }
+
+    /** the leader's squad: how many, their average health, the current order and formation, hold fire */
+    public record SquadStatus(int count, float health, int order, int formation, boolean holdFire) implements CustomPacketPayload {
+        public static final Type<SquadStatus> TYPE = payloadType("squad_status");
+        public static final StreamCodec<RegistryFriendlyByteBuf, SquadStatus> CODEC = CustomPacketPayload.codec(SquadStatus::write, SquadStatus::new);
+
+        SquadStatus(RegistryFriendlyByteBuf b) {
+            this(b.readVarInt(), b.readFloat(), b.readVarInt(), b.readVarInt(), b.readBoolean());
+        }
+
+        void write(RegistryFriendlyByteBuf b) {
+            b.writeVarInt(count);
+            b.writeFloat(health);
+            b.writeVarInt(order);
+            b.writeVarInt(formation);
+            b.writeBoolean(holdFire);
+        }
+
+        @Override
+        public Type<SquadStatus> type() {
             return TYPE;
         }
     }

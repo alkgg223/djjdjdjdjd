@@ -33,7 +33,7 @@ public class BotPatrolGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (bot.getTarget() != null || bot.isPassenger()) return false;
+        if (bot.getTarget() != null || bot.isPassenger() || bot.order != Squad.Order.NONE) return false;
         if (retry > 0) {
             retry--;
             return false;

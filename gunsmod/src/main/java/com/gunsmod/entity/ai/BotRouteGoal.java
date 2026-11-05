@@ -24,7 +24,7 @@ public class BotRouteGoal extends Goal {
     }
 
     private boolean onRoute() {
-        return bot.waypoints != null && bot.waypoints.active() && bot.getTarget() == null && !bot.isPassenger();
+        return bot.waypoints != null && bot.waypoints.active() && bot.getTarget() == null && !bot.isPassenger() && bot.order == Squad.Order.NONE;
     }
 
     @Override
