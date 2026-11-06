@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/tank/sprocket.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "gunmetal": "gunsmod:item/vehicle/mesh/gunmetal",
+  "paint_dark": "gunsmod:item/vehicle/mesh/paint_dark",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

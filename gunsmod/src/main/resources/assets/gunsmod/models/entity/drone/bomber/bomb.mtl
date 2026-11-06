@@ -1,0 +1,17 @@
+newmtl brass
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #brass
+
+newmtl olive
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #olive
+
+newmtl white
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #white

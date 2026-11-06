@@ -1,0 +1,27 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "SSS",
+  "ICI",
+  "P P"
+ ],
+ "key": {
+  "S": {
+   "item": "gunsmod:steel_ingot"
+  },
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "C": {
+   "item": "minecraft:crafting_table"
+  },
+  "P": {
+   "tag": "minecraft:planks"
+  }
+ },
+ "result": {
+  "id": "gunsmod:weapon_workbench",
+  "count": 1
+ }
+}

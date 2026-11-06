@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/m16a4"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.397,
+    0.86,
+    0.417
+   ],
+   "scale": [
+    0.4227,
+    0.4227,
+    0.4227
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.222,
+    0.449,
+    -0.008
+   ],
+   "scale": [
+    0.2045,
+    0.2045,
+    0.2045
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.383,
+    0.775,
+    -0.013
+   ],
+   "scale": [
+    0.3532,
+    0.3532,
+    0.3532
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.041,
+    2.397,
+    -1.184
+   ],
+   "scale": [
+    1.0917,
+    1.0917,
+    1.0917
+   ]
+  }
+ }
+}

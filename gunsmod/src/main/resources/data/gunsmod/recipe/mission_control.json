@@ -1,0 +1,27 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "MCM",
+  "PPP",
+  "S S"
+ ],
+ "key": {
+  "M": {
+   "item": "minecraft:map"
+  },
+  "C": {
+   "item": "minecraft:compass"
+  },
+  "P": {
+   "item": "minecraft:oak_planks"
+  },
+  "S": {
+   "item": "gunsmod:steel_ingot"
+  }
+ },
+ "result": {
+  "id": "gunsmod:mission_control",
+  "count": 1
+ }
+}

@@ -1,0 +1,16 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/airdef/aa_zu23/arm.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "black": "gunsmod:item/vehicle/mesh/black",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "gunmetal": "gunsmod:item/vehicle/mesh/gunmetal",
+  "olive": "gunsmod:item/vehicle/mesh/olive",
+  "olive_dark": "gunsmod:item/vehicle/mesh/olive_dark",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

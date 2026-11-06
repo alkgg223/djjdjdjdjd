@@ -1,0 +1,27 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "SRS",
+  "ICI",
+  "SSS"
+ ],
+ "key": {
+  "S": {
+   "item": "gunsmod:steel_ingot"
+  },
+  "R": {
+   "item": "minecraft:redstone_block"
+  },
+  "I": {
+   "item": "minecraft:iron_block"
+  },
+  "C": {
+   "item": "minecraft:compass"
+  }
+ },
+ "result": {
+  "id": "gunsmod:vehicle_spawner",
+  "count": 1
+ }
+}

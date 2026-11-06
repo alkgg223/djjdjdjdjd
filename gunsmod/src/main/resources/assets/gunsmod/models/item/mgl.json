@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/mgl"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    2.816,
+    -0.598,
+    1.672
+   ],
+   "scale": [
+    0.6178,
+    0.6178,
+    0.6178
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.762,
+    -0.126,
+    -0.0
+   ],
+   "scale": [
+    0.3277,
+    0.3277,
+    0.3277
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    3.043,
+    -0.217,
+    -0.0
+   ],
+   "scale": [
+    0.5661,
+    0.5661,
+    0.5661
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    -0.551,
+    -7.715
+   ],
+   "scale": [
+    1.4353,
+    1.4353,
+    1.4353
+   ]
+  }
+ }
+}

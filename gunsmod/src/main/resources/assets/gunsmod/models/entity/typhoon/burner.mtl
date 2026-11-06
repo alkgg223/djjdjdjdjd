@@ -1,0 +1,11 @@
+newmtl amber
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #amber
+
+newmtl glow
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #glow

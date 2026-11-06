@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/pdw"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    2.66,
+    -0.977,
+    1.492
+   ],
+   "scale": [
+    0.8074,
+    0.8074,
+    0.8074
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.595,
+    -0.329,
+    -0.0
+   ],
+   "scale": [
+    0.4106,
+    0.4106,
+    0.4106
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    2.756,
+    -0.567,
+    -0.0
+   ],
+   "scale": [
+    0.7093,
+    0.7093,
+    0.7093
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    -1.516,
+    -7.361
+   ],
+   "scale": [
+    1.8947,
+    1.8947,
+    1.8947
+   ]
+  }
+ }
+}

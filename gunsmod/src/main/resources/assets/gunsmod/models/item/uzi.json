@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/uzi"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    4.044,
+    1.127,
+    2.823
+   ],
+   "scale": [
+    0.7968,
+    0.7968,
+    0.7968
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    2.348,
+    0.832,
+    -0.0
+   ],
+   "scale": [
+    0.3923,
+    0.3923,
+    0.3923
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    4.056,
+    1.437,
+    -0.0
+   ],
+   "scale": [
+    0.6777,
+    0.6777,
+    0.6777
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    2.415,
+    -6.818
+   ],
+   "scale": [
+    1.1392,
+    1.1392,
+    1.1392
+   ]
+  }
+ }
+}

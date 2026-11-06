@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/famas"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    2.098,
+    0.256,
+    1.175
+   ],
+   "scale": [
+    0.6075,
+    0.6075,
+    0.6075
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.162,
+    0.243,
+    -0.09
+   ],
+   "scale": [
+    0.299,
+    0.299,
+    0.299
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    2.007,
+    0.421,
+    -0.155
+   ],
+   "scale": [
+    0.5165,
+    0.5165,
+    0.5165
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.322,
+    0.873,
+    -4.166
+   ],
+   "scale": [
+    1.0723,
+    1.0723,
+    1.0723
+   ]
+  }
+ }
+}

@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/mg3"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.083,
+    -0.044,
+    0.467
+   ],
+   "scale": [
+    0.4527,
+    0.4527,
+    0.4527
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.156,
+    0.027,
+    0.173
+   ],
+   "scale": [
+    0.2234,
+    0.2234,
+    0.2234
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.27,
+    0.046,
+    0.299
+   ],
+   "scale": [
+    0.3858,
+    0.3858,
+    0.3858
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    1.292,
+    0.2,
+    -1.167
+   ],
+   "scale": [
+    1.6666,
+    1.6666,
+    1.6666
+   ]
+  }
+ }
+}

@@ -1,0 +1,61 @@
+newmtl array
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #array
+
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl glass_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #glass_dark
+
+newmtl gunmetal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #gunmetal
+
+newmtl light_grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #light_grey
+
+newmtl paint_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint_dark
+neoforge_TintIndex 0
+
+newmtl paint_mid
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint_mid
+neoforge_TintIndex 0
+
+newmtl steel
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #steel
+
+newmtl white
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #white
+
+newmtl white_mark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #white_mark

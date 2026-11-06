@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/m200"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    -0.391,
+    0.213,
+    -0.653
+   ],
+   "scale": [
+    0.4022,
+    0.4022,
+    0.4022
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.343,
+    0.036,
+    -0.184
+   ],
+   "scale": [
+    0.1989,
+    0.1989,
+    0.1989
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.593,
+    0.062,
+    -0.318
+   ],
+   "scale": [
+    0.3435,
+    0.3435,
+    0.3435
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -1.762,
+    0.343,
+    3.286
+   ],
+   "scale": [
+    1.9048,
+    1.9048,
+    1.9048
+   ]
+  }
+ }
+}

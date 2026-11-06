@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/svd"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.029,
+    0.564,
+    -0.016
+   ],
+   "scale": [
+    0.3945,
+    0.3945,
+    0.3945
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.022,
+    0.265,
+    -0.062
+   ],
+   "scale": [
+    0.1904,
+    0.1904,
+    0.1904
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.038,
+    0.457,
+    -0.107
+   ],
+   "scale": [
+    0.3288,
+    0.3288,
+    0.3288
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.488,
+    2.09,
+    0.173
+   ],
+   "scale": [
+    1.5028,
+    1.5028,
+    1.5028
+   ]
+  }
+ }
+}

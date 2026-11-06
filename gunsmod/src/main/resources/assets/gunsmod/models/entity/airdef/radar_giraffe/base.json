@@ -1,0 +1,26 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/airdef/radar_giraffe/base.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "amber": "gunsmod:item/vehicle/mesh/amber",
+  "black": "gunsmod:item/vehicle/mesh/black",
+  "bright": "gunsmod:item/vehicle/mesh/bright",
+  "burnt_metal": "gunsmod:item/vehicle/mesh/burnt_metal",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "glass": "gunsmod:item/vehicle/mesh/glass",
+  "glass_dark": "gunsmod:item/vehicle/mesh/glass_dark",
+  "grille": "gunsmod:item/vehicle/mesh/grille",
+  "light_grey": "gunsmod:item/vehicle/mesh/light_grey",
+  "red_light": "gunsmod:item/vehicle/mesh/red_light",
+  "rubber": "gunsmod:item/vehicle/mesh/rubber",
+  "sand": "gunsmod:item/vehicle/mesh/sand",
+  "steel": "gunsmod:item/vehicle/mesh/steel",
+  "tread_plate": "gunsmod:item/vehicle/mesh/tread_plate",
+  "white": "gunsmod:item/vehicle/mesh/white",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/fiveseven"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    4.112,
+    2.099,
+    3.073
+   ],
+   "scale": [
+    1.2846,
+    1.2846,
+    1.2846
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    2.916,
+    1.619,
+    -0.0
+   ],
+   "scale": [
+    0.7725,
+    0.7725,
+    0.7725
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    5.037,
+    2.797,
+    -0.0
+   ],
+   "scale": [
+    1.3343,
+    1.3343,
+    1.3343
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    2.649,
+    -4.772
+   ],
+   "scale": [
+    1.2641,
+    1.2641,
+    1.2641
+   ]
+  }
+ }
+}

@@ -1,0 +1,24 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/objective/control.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "amber": "gunsmod:item/vehicle/mesh/amber",
+  "black": "gunsmod:item/vehicle/mesh/black",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "glow": "gunsmod:item/vehicle/mesh/glow",
+  "green_mark": "gunsmod:item/vehicle/mesh/green_mark",
+  "gunmetal": "gunsmod:item/vehicle/mesh/gunmetal",
+  "olive": "gunsmod:item/vehicle/mesh/olive",
+  "olive_dark": "gunsmod:item/vehicle/mesh/olive_dark",
+  "red_mark": "gunsmod:item/vehicle/mesh/red_mark",
+  "sand": "gunsmod:item/vehicle/mesh/sand",
+  "screen": "gunsmod:item/vehicle/mesh/screen",
+  "screen_amber": "gunsmod:item/vehicle/mesh/screen_amber",
+  "wood": "gunsmod:item/vehicle/mesh/wood",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/double_barrel"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    1.06,
+    -0.16,
+    0.643
+   ],
+   "scale": [
+    0.4506,
+    0.4506,
+    0.4506
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.604,
+    -0.011,
+    -0.0
+   ],
+   "scale": [
+    0.2176,
+    0.2176,
+    0.2176
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.043,
+    -0.019,
+    -0.0
+   ],
+   "scale": [
+    0.3758,
+    0.3758,
+    0.3758
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    -0.114,
+    -6.343
+   ],
+   "scale": [
+    2.2857,
+    2.2857,
+    2.2857
+   ]
+  }
+ }
+}

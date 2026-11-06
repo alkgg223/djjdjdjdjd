@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/ak12"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.077,
+    1.756,
+    0.235
+   ],
+   "scale": [
+    0.4609,
+    0.4609,
+    0.4609
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.003,
+    0.86,
+    -0.076
+   ],
+   "scale": [
+    0.2243,
+    0.2243,
+    0.2243
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.006,
+    1.485,
+    -0.131
+   ],
+   "scale": [
+    0.3875,
+    0.3875,
+    0.3875
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.353,
+    4.009,
+    0.016
+   ],
+   "scale": [
+    1.0461,
+    1.0461,
+    1.0461
+   ]
+  }
+ }
+}

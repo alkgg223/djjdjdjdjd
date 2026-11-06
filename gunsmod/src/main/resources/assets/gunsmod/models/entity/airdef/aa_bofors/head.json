@@ -1,0 +1,15 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/airdef/aa_bofors/head.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "cushion": "gunsmod:item/vehicle/mesh/cushion",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "olive": "gunsmod:item/vehicle/mesh/olive",
+  "steel": "gunsmod:item/vehicle/mesh/steel",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

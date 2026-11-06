@@ -1,0 +1,20 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/drone/surveil/body.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "burnt_metal": "gunsmod:item/vehicle/mesh/burnt_metal",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "green_mark": "gunsmod:item/vehicle/mesh/green_mark",
+  "grey": "gunsmod:item/vehicle/mesh/grey",
+  "gunmetal": "gunsmod:item/vehicle/mesh/gunmetal",
+  "lens": "gunsmod:item/vehicle/mesh/lens",
+  "light_grey": "gunsmod:item/vehicle/mesh/light_grey",
+  "red_light": "gunsmod:item/vehicle/mesh/red_light",
+  "white": "gunsmod:item/vehicle/mesh/white",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

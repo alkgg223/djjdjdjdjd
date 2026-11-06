@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/aks74u"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    2.086,
+    1.365,
+    1.623
+   ],
+   "scale": [
+    0.5999,
+    0.5999,
+    0.5999
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.195,
+    0.813,
+    -0.0
+   ],
+   "scale": [
+    0.2914,
+    0.2914,
+    0.2914
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    2.064,
+    1.404,
+    -0.0
+   ],
+   "scale": [
+    0.5033,
+    0.5033,
+    0.5033
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    2.793,
+    -4.106
+   ],
+   "scale": [
+    1.0016,
+    1.0016,
+    1.0016
+   ]
+  }
+ }
+}

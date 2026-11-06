@@ -1,0 +1,14 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/f16/aim9_l.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "lens": "gunsmod:item/vehicle/mesh/lens",
+  "white": "gunsmod:item/vehicle/mesh/white",
+  "yellow": "gunsmod:item/vehicle/mesh/yellow",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

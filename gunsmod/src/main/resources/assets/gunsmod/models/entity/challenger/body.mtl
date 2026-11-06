@@ -1,0 +1,42 @@
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl glow
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #glow
+
+newmtl lens
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #lens
+
+newmtl light_grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #light_grey
+
+newmtl paint
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint
+neoforge_TintIndex 0
+
+newmtl red_light
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #red_light
+
+newmtl track
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #track

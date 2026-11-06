@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/auto_shotgun"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    1.843,
+    0.375,
+    1.257
+   ],
+   "scale": [
+    0.5452,
+    0.5452,
+    0.5452
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.055,
+    0.305,
+    -0.0
+   ],
+   "scale": [
+    0.2648,
+    0.2648,
+    0.2648
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.823,
+    0.527,
+    -0.0
+   ],
+   "scale": [
+    0.4574,
+    0.4574,
+    0.4574
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    1.55,
+    -5.36
+   ],
+   "scale": [
+    1.3452,
+    1.3452,
+    1.3452
+   ]
+  }
+ }
+}

@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/f16/burner.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "amber": "gunsmod:item/vehicle/mesh/amber",
+  "glow": "gunsmod:item/vehicle/mesh/glow",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

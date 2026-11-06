@@ -1,0 +1,19 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "NSN"
+ ],
+ "key": {
+  "N": {
+   "item": "minecraft:iron_nugget"
+  },
+  "S": {
+   "item": "gunsmod:steel_ingot"
+  }
+ },
+ "result": {
+  "id": "gunsmod:gun_parts",
+  "count": 2
+ }
+}

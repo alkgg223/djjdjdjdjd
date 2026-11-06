@@ -1,0 +1,21 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "N N",
+  " B ",
+  "N N"
+ ],
+ "key": {
+  "N": {
+   "item": "minecraft:iron_nugget"
+  },
+  "B": {
+   "item": "minecraft:iron_bars"
+  }
+ },
+ "result": {
+  "id": "gunsmod:barbed_wire",
+  "count": 3
+ }
+}

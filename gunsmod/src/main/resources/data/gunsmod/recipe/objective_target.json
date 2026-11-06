@@ -1,0 +1,26 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "IRI",
+  "SBS"
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "R": {
+   "item": "minecraft:redstone"
+  },
+  "S": {
+   "item": "gunsmod:steel_ingot"
+  },
+  "B": {
+   "item": "minecraft:barrel"
+  }
+ },
+ "result": {
+  "id": "gunsmod:objective_target",
+  "count": 1
+ }
+}

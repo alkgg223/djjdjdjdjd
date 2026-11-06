@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/hk416"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.732,
+    1.036,
+    0.61
+   ],
+   "scale": [
+    0.5193,
+    0.5193,
+    0.5193
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.4,
+    0.555,
+    -0.032
+   ],
+   "scale": [
+    0.2527,
+    0.2527,
+    0.2527
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.692,
+    0.958,
+    -0.055
+   ],
+   "scale": [
+    0.4364,
+    0.4364,
+    0.4364
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.136,
+    2.397,
+    -1.73
+   ],
+   "scale": [
+    1.0917,
+    1.0917,
+    1.0917
+   ]
+  }
+ }
+}

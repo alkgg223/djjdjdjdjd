@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/revolver"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    1.7,
+    -0.216,
+    1.04
+   ],
+   "scale": [
+    1.0906,
+    1.0906,
+    1.0906
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.028,
+    0.003,
+    -0.0
+   ],
+   "scale": [
+    0.5592,
+    0.5592,
+    0.5592
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.776,
+    0.005,
+    -0.0
+   ],
+   "scale": [
+    0.9659,
+    0.9659,
+    0.9659
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    0.009,
+    -3.479
+   ],
+   "scale": [
+    1.8923,
+    1.8923,
+    1.8923
+   ]
+  }
+ }
+}

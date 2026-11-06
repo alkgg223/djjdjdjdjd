@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/scar_l"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    1.173,
+    1.023,
+    0.667
+   ],
+   "scale": [
+    0.5375,
+    0.5375,
+    0.5375
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.601,
+    0.558,
+    -0.122
+   ],
+   "scale": [
+    0.2632,
+    0.2632,
+    0.2632
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.039,
+    0.964,
+    -0.21
+   ],
+   "scale": [
+    0.4547,
+    0.4547,
+    0.4547
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.492,
+    2.255,
+    -2.43
+   ],
+   "scale": [
+    1.0635,
+    1.0635,
+    1.0635
+   ]
+  }
+ }
+}

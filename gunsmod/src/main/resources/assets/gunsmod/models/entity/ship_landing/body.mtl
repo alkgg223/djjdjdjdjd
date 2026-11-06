@@ -1,0 +1,37 @@
+newmtl glass_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #glass_dark
+
+newmtl light_grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #light_grey
+
+newmtl paint
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint
+neoforge_TintIndex 0
+
+newmtl paint_mid
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint_mid
+neoforge_TintIndex 0
+
+newmtl tread_plate
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #tread_plate
+
+newmtl white
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #white

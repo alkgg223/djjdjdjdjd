@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/axmc"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    -0.14,
+    0.214,
+    -0.521
+   ],
+   "scale": [
+    0.4058,
+    0.4058,
+    0.4058
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.203,
+    0.05,
+    -0.195
+   ],
+   "scale": [
+    0.1999,
+    0.1999,
+    0.1999
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.35,
+    0.086,
+    -0.337
+   ],
+   "scale": [
+    0.3452,
+    0.3452,
+    0.3452
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -1.923,
+    0.493,
+    2.002
+   ],
+   "scale": [
+    1.9726,
+    1.9726,
+    1.9726
+   ]
+  }
+ }
+}

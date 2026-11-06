@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/m82"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    -0.04,
+    0.087,
+    -0.007
+   ],
+   "scale": [
+    0.3806,
+    0.3806,
+    0.3806
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.023,
+    0.041,
+    -0.0
+   ],
+   "scale": [
+    0.1855,
+    0.1855,
+    0.1855
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    -0.04,
+    0.07,
+    -0.0
+   ],
+   "scale": [
+    0.3203,
+    0.3203,
+    0.3203
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.0,
+    0.292,
+    0.166
+   ],
+   "scale": [
+    1.3284,
+    1.3284,
+    1.3284
+   ]
+  }
+ }
+}

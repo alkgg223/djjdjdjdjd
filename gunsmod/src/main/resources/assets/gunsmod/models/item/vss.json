@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/vss"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    1.251,
+    -0.152,
+    0.767
+   ],
+   "scale": [
+    0.527,
+    0.527,
+    0.527
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.716,
+    0.005,
+    -0.0
+   ],
+   "scale": [
+    0.2558,
+    0.2558,
+    0.2558
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.237,
+    0.009,
+    -0.0
+   ],
+   "scale": [
+    0.4419,
+    0.4419,
+    0.4419
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    0.04,
+    -5.569
+   ],
+   "scale": [
+    1.9889,
+    1.9889,
+    1.9889
+   ]
+  }
+ }
+}

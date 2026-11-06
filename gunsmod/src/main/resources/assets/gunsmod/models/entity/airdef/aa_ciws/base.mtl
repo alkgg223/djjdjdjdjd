@@ -1,0 +1,23 @@
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #grey
+
+newmtl light_grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #light_grey
+
+newmtl tread_plate
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #tread_plate

@@ -1,0 +1,107 @@
+newmtl caution
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #caution
+
+newmtl cushion
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #cushion
+
+newmtl dial_a
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dial_a
+
+newmtl dial_b
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dial_b
+
+newmtl dial_c
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dial_c
+
+newmtl frame
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #frame
+
+newmtl glass_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #glass_dark
+
+newmtl glass_in
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #glass_in
+
+newmtl hud_glass
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #hud_glass
+
+newmtl mfd_a
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #mfd_a
+
+newmtl mfd_b
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #mfd_b
+
+newmtl mfd_c
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #mfd_c
+
+newmtl pit
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #pit
+
+newmtl pit_light
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #pit_light
+
+newmtl red
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #red
+
+newmtl rubber
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #rubber
+
+newmtl switches
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #switches
+
+newmtl warning
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #warning

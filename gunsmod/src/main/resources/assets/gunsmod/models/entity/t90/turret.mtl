@@ -1,0 +1,55 @@
+newmtl black
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #black
+
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl gunmetal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #gunmetal
+
+newmtl lens
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #lens
+
+newmtl olive
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #olive
+
+newmtl paint
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint
+neoforge_TintIndex 0
+
+newmtl paint_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint_dark
+neoforge_TintIndex 0
+
+newmtl red_light
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #red_light
+
+newmtl steel
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #steel

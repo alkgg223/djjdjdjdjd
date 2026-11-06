@@ -1,0 +1,15 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/jeep/wheel.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "bright": "gunsmod:item/vehicle/mesh/bright",
+  "olive": "gunsmod:item/vehicle/mesh/olive",
+  "rubber": "gunsmod:item/vehicle/mesh/rubber",
+  "steel": "gunsmod:item/vehicle/mesh/steel",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

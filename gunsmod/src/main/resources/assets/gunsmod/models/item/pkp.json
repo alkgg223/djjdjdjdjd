@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/pkp"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.245,
+    0.537,
+    -0.214
+   ],
+   "scale": [
+    0.447,
+    0.447,
+    0.447
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.019,
+    0.238,
+    -0.199
+   ],
+   "scale": [
+    0.2209,
+    0.2209,
+    0.2209
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.032,
+    0.41,
+    -0.343
+   ],
+   "scale": [
+    0.3816,
+    0.3816,
+    0.3816
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -1.277,
+    1.525,
+    -0.121
+   ],
+   "scale": [
+    1.4187,
+    1.4187,
+    1.4187
+   ]
+  }
+ }
+}

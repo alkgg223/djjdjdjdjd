@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/m79"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    3.384,
+    -1.073,
+    1.934
+   ],
+   "scale": [
+    0.6163,
+    0.6163,
+    0.6163
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.961,
+    -0.318,
+    -0.0
+   ],
+   "scale": [
+    0.3029,
+    0.3029,
+    0.3029
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    3.388,
+    -0.549,
+    -0.0
+   ],
+   "scale": [
+    0.5232,
+    0.5232,
+    0.5232
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    -1.914,
+    -11.803
+   ],
+   "scale": [
+    1.8228,
+    1.8228,
+    1.8228
+   ]
+  }
+ }
+}

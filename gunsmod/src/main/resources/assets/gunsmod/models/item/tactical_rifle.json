@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/tactical_rifle"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    1.187,
+    0.559,
+    0.741
+   ],
+   "scale": [
+    0.5045,
+    0.5045,
+    0.5045
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.645,
+    0.34,
+    -0.055
+   ],
+   "scale": [
+    0.2449,
+    0.2449,
+    0.2449
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.115,
+    0.587,
+    -0.095
+   ],
+   "scale": [
+    0.423,
+    0.423,
+    0.423
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -0.239,
+    1.473,
+    -2.795
+   ],
+   "scale": [
+    1.0606,
+    1.0606,
+    1.0606
+   ]
+  }
+ }
+}

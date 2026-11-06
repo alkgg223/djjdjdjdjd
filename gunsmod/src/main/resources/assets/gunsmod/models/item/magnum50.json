@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/magnum50"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    2.338,
+    1.2,
+    1.749
+   ],
+   "scale": [
+    1.2533,
+    1.2533,
+    1.2533
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.445,
+    0.806,
+    -0.0
+   ],
+   "scale": [
+    0.6567,
+    0.6567,
+    0.6567
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    2.496,
+    1.392,
+    -0.0
+   ],
+   "scale": [
+    1.1343,
+    1.1343,
+    1.1343
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    1.57,
+    -2.815
+   ],
+   "scale": [
+    1.2796,
+    1.2796,
+    1.2796
+   ]
+  }
+ }
+}

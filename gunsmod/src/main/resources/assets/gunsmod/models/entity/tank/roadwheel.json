@@ -1,0 +1,14 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/tank/roadwheel.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "paint": "gunsmod:item/vehicle/mesh/paint",
+  "paint_dark": "gunsmod:item/vehicle/mesh/paint_dark",
+  "rubber": "gunsmod:item/vehicle/mesh/rubber",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

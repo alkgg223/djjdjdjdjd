@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/glock17"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    4.56,
+    1.468,
+    3.225
+   ],
+   "scale": [
+    1.3665,
+    1.3665,
+    1.3665
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    3.241,
+    1.27,
+    -0.0
+   ],
+   "scale": [
+    0.8238,
+    0.8238,
+    0.8238
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    5.598,
+    2.193,
+    -0.0
+   ],
+   "scale": [
+    1.4229,
+    1.4229,
+    1.4229
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    2.078,
+    -5.304
+   ],
+   "scale": [
+    1.348,
+    1.348,
+    1.348
+   ]
+  }
+ }
+}

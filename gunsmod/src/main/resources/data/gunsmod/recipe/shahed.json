@@ -1,0 +1,27 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "STS",
+  "SPS",
+  " F "
+ ],
+ "key": {
+  "S": {
+   "item": "gunsmod:steel_ingot"
+  },
+  "T": {
+   "item": "minecraft:tnt"
+  },
+  "P": {
+   "item": "minecraft:piston"
+  },
+  "F": {
+   "item": "minecraft:furnace"
+  }
+ },
+ "result": {
+  "id": "gunsmod:shahed",
+  "count": 1
+ }
+}

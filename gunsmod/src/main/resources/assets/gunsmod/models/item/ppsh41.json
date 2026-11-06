@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/ppsh41"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    2.6,
+    -0.424,
+    1.571
+   ],
+   "scale": [
+    0.5525,
+    0.5525,
+    0.5525
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.484,
+    -0.043,
+    -0.0
+   ],
+   "scale": [
+    0.2675,
+    0.2675,
+    0.2675
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    2.564,
+    -0.074,
+    -0.0
+   ],
+   "scale": [
+    0.462,
+    0.462,
+    0.462
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    -0.316,
+    -10.978
+   ],
+   "scale": [
+    1.978,
+    1.978,
+    1.978
+   ]
+  }
+ }
+}

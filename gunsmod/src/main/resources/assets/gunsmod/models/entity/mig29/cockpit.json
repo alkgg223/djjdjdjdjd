@@ -1,0 +1,28 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/mig29/cockpit.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "bright": "gunsmod:item/vehicle/mesh/bright",
+  "caution": "gunsmod:item/vehicle/mesh/caution",
+  "cushion": "gunsmod:item/vehicle/mesh/cushion",
+  "dial_a": "gunsmod:item/vehicle/mesh/dial_a",
+  "dial_b": "gunsmod:item/vehicle/mesh/dial_b",
+  "dial_c": "gunsmod:item/vehicle/mesh/dial_c",
+  "frame": "gunsmod:item/vehicle/mesh/frame",
+  "glass_dark": "gunsmod:item/vehicle/mesh/glass_dark",
+  "glass_in": "gunsmod:item/vehicle/mesh/glass_in",
+  "hud_glass": "gunsmod:item/vehicle/mesh/hud_glass",
+  "keypad": "gunsmod:item/vehicle/mesh/keypad",
+  "mfd_a": "gunsmod:item/vehicle/mesh/mfd_a",
+  "mfd_c": "gunsmod:item/vehicle/mesh/mfd_c",
+  "pit": "gunsmod:item/vehicle/mesh/pit",
+  "rubber": "gunsmod:item/vehicle/mesh/rubber",
+  "switches": "gunsmod:item/vehicle/mesh/switches",
+  "warning": "gunsmod:item/vehicle/mesh/warning",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

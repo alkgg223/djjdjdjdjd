@@ -1,0 +1,25 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/fuel_truck/body.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "burnt_metal": "gunsmod:item/vehicle/mesh/burnt_metal",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "glass_dark": "gunsmod:item/vehicle/mesh/glass_dark",
+  "glow": "gunsmod:item/vehicle/mesh/glow",
+  "grille": "gunsmod:item/vehicle/mesh/grille",
+  "light_grey": "gunsmod:item/vehicle/mesh/light_grey",
+  "olive_dark": "gunsmod:item/vehicle/mesh/olive_dark",
+  "paint": "gunsmod:item/vehicle/mesh/paint",
+  "paint_dark": "gunsmod:item/vehicle/mesh/paint_dark",
+  "red": "gunsmod:item/vehicle/mesh/red",
+  "red_light": "gunsmod:item/vehicle/mesh/red_light",
+  "steel": "gunsmod:item/vehicle/mesh/steel",
+  "tread_plate": "gunsmod:item/vehicle/mesh/tread_plate",
+  "warning": "gunsmod:item/vehicle/mesh/warning",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

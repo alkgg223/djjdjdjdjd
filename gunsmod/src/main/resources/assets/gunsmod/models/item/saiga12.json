@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/saiga12"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    1.058,
+    0.822,
+    0.85
+   ],
+   "scale": [
+    0.5229,
+    0.5229,
+    0.5229
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.603,
+    0.474,
+    -0.0
+   ],
+   "scale": [
+    0.2527,
+    0.2527,
+    0.2527
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.041,
+    0.818,
+    -0.0
+   ],
+   "scale": [
+    0.4364,
+    0.4364,
+    0.4364
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    2.422,
+    -3.08
+   ],
+   "scale": [
+    1.2914,
+    1.2914,
+    1.2914
+   ]
+  }
+ }
+}

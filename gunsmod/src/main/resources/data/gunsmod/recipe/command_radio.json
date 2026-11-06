@@ -1,0 +1,27 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  " R ",
+  "SCS",
+  "SBS"
+ ],
+ "key": {
+  "R": {
+   "item": "minecraft:lightning_rod"
+  },
+  "S": {
+   "item": "gunsmod:steel_ingot"
+  },
+  "C": {
+   "item": "minecraft:redstone"
+  },
+  "B": {
+   "item": "minecraft:stone_button"
+  }
+ },
+ "result": {
+  "id": "gunsmod:command_radio",
+  "count": 1
+ }
+}

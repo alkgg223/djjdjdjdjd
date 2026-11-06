@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/mosin"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.431,
+    0.058,
+    -0.182
+   ],
+   "scale": [
+    0.3859,
+    0.3859,
+    0.3859
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.129,
+    0.009,
+    -0.191
+   ],
+   "scale": [
+    0.1887,
+    0.1887,
+    0.1887
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.223,
+    0.016,
+    -0.329
+   ],
+   "scale": [
+    0.326,
+    0.326,
+    0.326
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    -1.992,
+    0.099,
+    -1.351
+   ],
+   "scale": [
+    1.9726,
+    1.9726,
+    1.9726
+   ]
+  }
+ }
+}

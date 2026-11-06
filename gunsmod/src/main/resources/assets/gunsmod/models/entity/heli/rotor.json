@@ -1,0 +1,15 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/heli/rotor.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "bright": "gunsmod:item/vehicle/mesh/bright",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "steel": "gunsmod:item/vehicle/mesh/steel",
+  "yellow": "gunsmod:item/vehicle/mesh/yellow",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}

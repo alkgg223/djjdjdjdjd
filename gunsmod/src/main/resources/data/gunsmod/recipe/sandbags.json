@@ -1,0 +1,21 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "SSS",
+  "WWW",
+  "SSS"
+ ],
+ "key": {
+  "S": {
+   "tag": "minecraft:sand"
+  },
+  "W": {
+   "item": "minecraft:string"
+  }
+ },
+ "result": {
+  "id": "gunsmod:sandbags",
+  "count": 6
+ }
+}

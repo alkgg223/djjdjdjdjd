@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/spas12"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.671,
+    -0.104,
+    0.537
+   ],
+   "scale": [
+    0.481,
+    0.481,
+    0.481
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.417,
+    0.005,
+    0.053
+   ],
+   "scale": [
+    0.2339,
+    0.2339,
+    0.2339
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.721,
+    0.008,
+    0.091
+   ],
+   "scale": [
+    0.4039,
+    0.4039,
+    0.4039
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.424,
+    0.038,
+    -3.364
+   ],
+   "scale": [
+    1.8848,
+    1.8848,
+    1.8848
+   ]
+  }
+ }
+}

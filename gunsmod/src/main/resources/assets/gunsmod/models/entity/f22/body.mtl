@@ -1,0 +1,61 @@
+newmtl black
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #black
+
+newmtl burnt_metal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #burnt_metal
+
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl glass_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #glass_dark
+
+newmtl glow
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #glow
+
+newmtl green_mark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #green_mark
+
+newmtl gunmetal
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #gunmetal
+
+newmtl red_light
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #red_light
+
+newmtl skin
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #skin
+neoforge_TintIndex 0
+
+newmtl skin_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #skin_dark
+neoforge_TintIndex 0

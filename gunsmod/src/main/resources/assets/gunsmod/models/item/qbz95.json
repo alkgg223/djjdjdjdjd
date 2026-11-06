@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/qbz95"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    1.923,
+    0.603,
+    1.357
+   ],
+   "scale": [
+    0.6239,
+    0.6239,
+    0.6239
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.106,
+    0.425,
+    -0.0
+   ],
+   "scale": [
+    0.3042,
+    0.3042,
+    0.3042
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.91,
+    0.734,
+    -0.0
+   ],
+   "scale": [
+    0.5254,
+    0.5254,
+    0.5254
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    1.525,
+    -3.967
+   ],
+   "scale": [
+    1.0914,
+    1.0914,
+    1.0914
+   ]
+  }
+ }
+}

@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/pump_shotgun"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    0.494,
+    -0.094,
+    0.442
+   ],
+   "scale": [
+    0.4433,
+    0.4433,
+    0.4433
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.318,
+    -0.0,
+    0.059
+   ],
+   "scale": [
+    0.2145,
+    0.2145,
+    0.2145
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.55,
+    -0.0,
+    0.102
+   ],
+   "scale": [
+    0.3705,
+    0.3705,
+    0.3705
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.639,
+    -0.0,
+    -3.449
+   ],
+   "scale": [
+    2.3226,
+    2.3226,
+    2.3226
+   ]
+  }
+ }
+}

@@ -1,0 +1,224 @@
+package com.gunsmod.gun;
+
+/** The guns and their stats (append only: the ordinal is saved). Damage is in health points (2 = one heart). Times are in ticks. */
+public enum GunType {
+    //  id               category           ammo             mag  dmg  delay mode            hip  ads  recoil reload range pellets kind                 sound
+    M1911("m1911", Category.PISTOL, AmmoType.PISTOL, 7, 7.0f, 4, FireMode.SEMI, 2.2f, 0.7f, 4.0f, 32, 50, 1, Kind.BULLET, "shot_pistol"),
+    P9("p9", Category.PISTOL, AmmoType.PISTOL, 17, 5.5f, 3, FireMode.SEMI, 2.0f, 0.6f, 3.0f, 30, 50, 1, Kind.BULLET, "shot_pistol"),
+    MAGNUM50("magnum50", Category.PISTOL, AmmoType.PISTOL, 7, 12.0f, 8, FireMode.SEMI, 2.5f, 0.5f, 9.0f, 38, 60, 1, Kind.BULLET, "shot_magnum"),
+    REVOLVER("revolver", Category.PISTOL, AmmoType.PISTOL, 6, 10.0f, 7, FireMode.SEMI, 2.0f, 0.4f, 7.0f, 50, 60, 1, Kind.BULLET, "shot_magnum"),
+    SMG5("smg5", Category.SMG, AmmoType.PISTOL, 30, 4.5f, 2, FireMode.AUTO, 3.0f, 1.2f, 1.6f, 40, 45, 1, Kind.BULLET, "shot_smg"),
+    MICRO_SMG("micro_smg", Category.SMG, AmmoType.PISTOL, 32, 4.0f, 2, FireMode.AUTO, 4.5f, 1.8f, 1.8f, 36, 40, 1, Kind.BULLET, "shot_smg"),
+    VORTEX("vortex", Category.SMG, AmmoType.PISTOL, 25, 4.2f, 1, FireMode.AUTO, 3.2f, 1.2f, 1.2f, 38, 45, 1, Kind.BULLET, "shot_smg"),
+    PDW("pdw", Category.SMG, AmmoType.PISTOL, 50, 4.5f, 2, FireMode.AUTO, 3.0f, 1.2f, 1.3f, 45, 50, 1, Kind.BULLET, "shot_smg"),
+    AK47("ak47", Category.RIFLE, AmmoType.RIFLE, 30, 7.5f, 2, FireMode.AUTO, 3.0f, 0.8f, 3.0f, 45, 90, 1, Kind.BULLET, "shot_rifle"),
+    M4A1("m4a1", Category.RIFLE, AmmoType.RIFLE, 30, 6.5f, 2, FireMode.AUTO, 2.5f, 0.6f, 2.2f, 42, 90, 1, Kind.BULLET, "shot_carbine"),
+    M16A4("m16a4", Category.RIFLE, AmmoType.RIFLE, 30, 7.0f, 2, FireMode.BURST, 2.0f, 0.4f, 2.4f, 42, 100, 1, Kind.BULLET, "shot_carbine"),
+    BR17("br17", Category.RIFLE, AmmoType.RIFLE, 20, 8.5f, 3, FireMode.AUTO, 2.5f, 0.5f, 3.5f, 46, 100, 1, Kind.BULLET, "shot_rifle"),
+    BR77("br77", Category.RIFLE, AmmoType.RIFLE, 30, 6.5f, 2, FireMode.AUTO, 2.4f, 0.5f, 2.0f, 44, 95, 1, Kind.BULLET, "shot_carbine"),
+    TACTICAL_RIFLE("tactical_rifle", Category.RIFLE, AmmoType.RIFLE, 30, 6.5f, 2, FireMode.AUTO, 2.4f, 0.6f, 2.1f, 42, 90, 1, Kind.BULLET, "shot_carbine"),
+    PUMP_SHOTGUN("pump_shotgun", Category.SHOTGUN, AmmoType.SHOTGUN, 6, 3.2f, 16, FireMode.SEMI, 7.0f, 5.0f, 8.0f, 50, 30, 9, Kind.BULLET, "shot_shotgun"),
+    AUTO_SHOTGUN("auto_shotgun", Category.SHOTGUN, AmmoType.SHOTGUN, 20, 2.6f, 4, FireMode.AUTO, 8.0f, 6.0f, 5.0f, 60, 28, 8, Kind.BULLET, "shot_shotgun"),
+    DOUBLE_BARREL("double_barrel", Category.SHOTGUN, AmmoType.SHOTGUN, 2, 3.6f, 5, FireMode.SEMI, 8.0f, 6.0f, 10.0f, 40, 25, 10, Kind.BULLET, "shot_shotgun"),
+    M24("m24", Category.SNIPER, AmmoType.SNIPER, 5, 20.0f, 30, FireMode.SEMI, 3.0f, 0.05f, 10.0f, 60, 220, 1, Kind.BULLET, "shot_sniper"),
+    SVD("svd", Category.SNIPER, AmmoType.SNIPER, 10, 13.0f, 6, FireMode.SEMI, 2.5f, 0.15f, 6.0f, 50, 180, 1, Kind.BULLET, "shot_sniper"),
+    M107("m107", Category.SNIPER, AmmoType.SNIPER, 10, 28.0f, 12, FireMode.SEMI, 4.0f, 0.1f, 14.0f, 70, 260, 1, Kind.BULLET, "shot_heavy"),
+    M249("m249", Category.HEAVY, AmmoType.HEAVY, 100, 6.5f, 2, FireMode.AUTO, 4.0f, 1.5f, 2.4f, 90, 90, 1, Kind.BULLET, "shot_lmg"),
+    MINIGUN("minigun", Category.HEAVY, AmmoType.HEAVY, 300, 5.0f, 1, FireMode.AUTO, 4.5f, 3.0f, 0.8f, 110, 80, 1, Kind.BULLET, "shot_minigun"),
+    RPG7("rpg7", Category.EXPLOSIVE, AmmoType.ROCKET, 1, 0.0f, 20, FireMode.SEMI, 1.5f, 0.3f, 8.0f, 60, 200, 1, Kind.ROCKET, "rocket_launch"),
+    M79("m79", Category.EXPLOSIVE, AmmoType.GRENADE, 1, 0.0f, 20, FireMode.SEMI, 2.0f, 0.6f, 6.0f, 40, 120, 1, Kind.GRENADE, "shot_grenade_launcher"),
+    FLAMETHROWER("flamethrower", Category.SPECIAL, AmmoType.FUEL, 200, 2.0f, 2, FireMode.AUTO, 6.0f, 6.0f, 0.3f, 60, 9, 1, Kind.FLAME, "flamethrower_loop"),
+    // 2.0
+    APS("aps", Category.PISTOL, AmmoType.PISTOL, 20, 5.0f, 2, FireMode.AUTO, 2.6f, 1.0f, 2.2f, 36, 45, 1, Kind.BULLET, "shot_pistol"),
+    M9("m9", Category.PISTOL, AmmoType.PISTOL, 15, 6.0f, 3, FireMode.SEMI, 2.0f, 0.6f, 3.2f, 30, 50, 1, Kind.BULLET, "shot_pistol"),
+    PPSH41("ppsh41", Category.SMG, AmmoType.PISTOL, 71, 4.2f, 1, FireMode.AUTO, 3.4f, 1.4f, 1.6f, 70, 45, 1, Kind.BULLET, "shot_smg"),
+    BIZON("bizon", Category.SMG, AmmoType.PISTOL, 64, 4.0f, 2, FireMode.AUTO, 3.0f, 1.2f, 1.3f, 60, 45, 1, Kind.BULLET, "shot_smg"),
+    UZI("uzi", Category.SMG, AmmoType.PISTOL, 32, 4.4f, 2, FireMode.AUTO, 3.6f, 1.5f, 1.8f, 38, 40, 1, Kind.BULLET, "shot_smg"),
+    M14("m14", Category.RIFLE, AmmoType.RIFLE, 20, 9.5f, 4, FireMode.SEMI, 2.4f, 0.3f, 4.0f, 48, 140, 1, Kind.BULLET, "shot_rifle"),
+    AKS74U("aks74u", Category.RIFLE, AmmoType.RIFLE, 30, 6.0f, 2, FireMode.AUTO, 3.2f, 1.0f, 2.6f, 40, 70, 1, Kind.BULLET, "shot_carbine"),
+    FAMAS("famas", Category.RIFLE, AmmoType.RIFLE, 25, 6.5f, 1, FireMode.BURST, 2.4f, 0.5f, 2.0f, 44, 95, 1, Kind.BULLET, "shot_carbine"),
+    SKS("sks", Category.RIFLE, AmmoType.RIFLE, 10, 9.0f, 4, FireMode.SEMI, 2.2f, 0.35f, 4.2f, 55, 120, 1, Kind.BULLET, "shot_rifle"),
+    MOSIN("mosin", Category.SNIPER, AmmoType.SNIPER, 5, 19.0f, 28, FireMode.SEMI, 3.0f, 0.06f, 10.0f, 70, 220, 1, Kind.BULLET, "shot_sniper"),
+    VSS("vss", Category.SNIPER, AmmoType.SNIPER, 20, 10.0f, 4, FireMode.SEMI, 2.6f, 0.18f, 3.0f, 50, 140, 1, Kind.BULLET, "shot_sniper"),
+    PKM("pkm", Category.HEAVY, AmmoType.HEAVY, 100, 7.5f, 2, FireMode.AUTO, 4.2f, 1.6f, 2.8f, 95, 110, 1, Kind.BULLET, "shot_lmg"),
+    SAIGA12("saiga12", Category.SHOTGUN, AmmoType.SHOTGUN, 8, 3.0f, 5, FireMode.SEMI, 7.0f, 5.5f, 6.5f, 48, 30, 8, Kind.BULLET, "shot_shotgun"),
+    MGL("mgl", Category.EXPLOSIVE, AmmoType.GRENADE, 6, 0.0f, 10, FireMode.SEMI, 2.0f, 0.6f, 5.0f, 90, 130, 1, Kind.GRENADE, "shot_grenade_launcher"),
+    IGLA("igla", Category.EXPLOSIVE, AmmoType.ROCKET, 1, 0.0f, 20, FireMode.SEMI, 1.5f, 0.3f, 6.0f, 80, 300, 1, Kind.ROCKET, "rocket_launch"),
+    RPG7_TBG("rpg7_tbg", Category.EXPLOSIVE, AmmoType.ROCKET, 1, 0.0f, 20, FireMode.SEMI, 1.5f, 0.3f, 8.0f, 60, 200, 1, Kind.ROCKET, "rocket_launch"),
+    // 3.0
+    HK416("hk416", Category.RIFLE, AmmoType.RIFLE, 30, 7.0f, 2, FireMode.AUTO, 2.4f, 0.5f, 2.1f, 42, 100, 1, Kind.BULLET, "shot_hk416"),
+    SCAR_L("scar_l", Category.RIFLE, AmmoType.RIFLE, 30, 7.0f, 2, FireMode.AUTO, 2.5f, 0.5f, 2.3f, 44, 100, 1, Kind.BULLET, "shot_scar_l"),
+    SCAR_H("scar_h", Category.RIFLE, AmmoType.RIFLE, 20, 10.0f, 3, FireMode.AUTO, 2.6f, 0.45f, 3.6f, 48, 130, 1, Kind.BULLET, "shot_scar_h"),
+    G36("g36", Category.RIFLE, AmmoType.RIFLE, 30, 6.8f, 2, FireMode.AUTO, 2.4f, 0.5f, 2.0f, 44, 100, 1, Kind.BULLET, "shot_g36"),
+    AUG("aug", Category.RIFLE, AmmoType.RIFLE, 30, 7.0f, 2, FireMode.AUTO, 2.3f, 0.45f, 2.0f, 46, 105, 1, Kind.BULLET, "shot_aug"),
+    QBZ95("qbz95", Category.RIFLE, AmmoType.RIFLE, 30, 6.8f, 2, FireMode.AUTO, 2.5f, 0.55f, 2.1f, 44, 95, 1, Kind.BULLET, "shot_qbz95"),
+    AK12("ak12", Category.RIFLE, AmmoType.RIFLE, 30, 7.2f, 2, FireMode.AUTO, 2.6f, 0.55f, 2.4f, 44, 95, 1, Kind.BULLET, "shot_ak12"),
+    AK103("ak103", Category.RIFLE, AmmoType.RIFLE, 30, 8.0f, 2, FireMode.AUTO, 3.0f, 0.7f, 3.0f, 45, 95, 1, Kind.BULLET, "shot_ak103"),
+    MP5("mp5", Category.SMG, AmmoType.PISTOL, 30, 4.8f, 2, FireMode.AUTO, 2.6f, 1.0f, 1.4f, 38, 50, 1, Kind.BULLET, "shot_mp5"),
+    MP7("mp7", Category.SMG, AmmoType.PISTOL, 40, 4.6f, 1, FireMode.AUTO, 2.8f, 1.1f, 1.3f, 36, 55, 1, Kind.BULLET, "shot_mp7"),
+    P90("p90", Category.SMG, AmmoType.PISTOL, 50, 4.4f, 1, FireMode.AUTO, 2.8f, 1.0f, 1.2f, 50, 55, 1, Kind.BULLET, "shot_p90"),
+    MPX("mpx", Category.SMG, AmmoType.PISTOL, 30, 4.9f, 2, FireMode.AUTO, 2.6f, 1.0f, 1.4f, 38, 50, 1, Kind.BULLET, "shot_mpx"),
+    M240("m240", Category.HEAVY, AmmoType.HEAVY, 100, 8.5f, 3, FireMode.AUTO, 4.2f, 1.6f, 3.2f, 100, 120, 1, Kind.BULLET, "shot_m240"),
+    MG3("mg3", Category.HEAVY, AmmoType.HEAVY, 100, 7.5f, 1, FireMode.AUTO, 4.6f, 1.9f, 2.8f, 95, 110, 1, Kind.BULLET, "shot_mg3"),
+    PKP("pkp", Category.HEAVY, AmmoType.HEAVY, 100, 8.0f, 2, FireMode.AUTO, 4.0f, 1.4f, 2.6f, 95, 115, 1, Kind.BULLET, "shot_pkp"),
+    M82("m82", Category.SNIPER, AmmoType.SNIPER, 10, 28.0f, 12, FireMode.SEMI, 4.0f, 0.1f, 14.0f, 70, 260, 1, Kind.BULLET, "shot_m82"),
+    AXMC("axmc", Category.SNIPER, AmmoType.SNIPER, 5, 24.0f, 26, FireMode.SEMI, 3.0f, 0.04f, 11.0f, 60, 250, 1, Kind.BULLET, "shot_axmc"),
+    M200("m200", Category.SNIPER, AmmoType.SNIPER, 7, 30.0f, 30, FireMode.SEMI, 3.2f, 0.03f, 13.0f, 70, 300, 1, Kind.BULLET, "shot_m200"),
+    BENELLI_M4("benelli_m4", Category.SHOTGUN, AmmoType.SHOTGUN, 7, 3.0f, 5, FireMode.SEMI, 6.5f, 5.0f, 6.0f, 52, 30, 8, Kind.BULLET, "shot_benelli"),
+    R870("r870", Category.SHOTGUN, AmmoType.SHOTGUN, 6, 3.4f, 16, FireMode.SEMI, 7.0f, 5.0f, 8.5f, 50, 30, 9, Kind.BULLET, "shot_r870"),
+    SPAS12("spas12", Category.SHOTGUN, AmmoType.SHOTGUN, 8, 3.2f, 8, FireMode.SEMI, 7.0f, 5.2f, 7.5f, 55, 30, 9, Kind.BULLET, "shot_spas12"),
+    GLOCK17("glock17", Category.PISTOL, AmmoType.PISTOL, 17, 5.5f, 3, FireMode.SEMI, 2.0f, 0.6f, 3.0f, 30, 50, 1, Kind.BULLET, "shot_glock"),
+    DEAGLE("deagle", Category.PISTOL, AmmoType.PISTOL, 7, 13.0f, 8, FireMode.SEMI, 2.6f, 0.5f, 10.0f, 38, 60, 1, Kind.BULLET, "shot_deagle"),
+    P320("p320", Category.PISTOL, AmmoType.PISTOL, 17, 5.8f, 3, FireMode.SEMI, 2.0f, 0.55f, 3.1f, 30, 50, 1, Kind.BULLET, "shot_p320"),
+    FIVESEVEN("fiveseven", Category.PISTOL, AmmoType.PISTOL, 20, 5.2f, 3, FireMode.SEMI, 1.9f, 0.55f, 2.6f, 30, 55, 1, Kind.BULLET, "shot_fiveseven");
+
+    public enum Category { PISTOL, SMG, RIFLE, SHOTGUN, SNIPER, HEAVY, EXPLOSIVE, SPECIAL }
+
+    public enum FireMode { SEMI, AUTO, BURST }
+
+    public enum Kind { BULLET, ROCKET, GRENADE, FLAME }
+
+    public final String id;
+    public final Category category;
+    public final AmmoType ammo;
+    public final int magSize;
+    public final float damage;
+    public final int fireDelay;
+    public final FireMode mode;
+    public final float hipSpread;
+    public final float adsSpread;
+    public final float recoil;
+    public final int reloadTicks;
+    public final int range;
+    public final int pellets;
+    public final Kind kind;
+    public final String sound;
+
+    GunType(String id, Category category, AmmoType ammo, int magSize, float damage, int fireDelay, FireMode mode, float hipSpread,
+            float adsSpread, float recoil, int reloadTicks, int range, int pellets, Kind kind, String sound) {
+        this.id = id;
+        this.category = category;
+        this.ammo = ammo;
+        this.magSize = magSize;
+        this.damage = damage;
+        this.fireDelay = fireDelay;
+        this.mode = mode;
+        this.hipSpread = hipSpread;
+        this.adsSpread = adsSpread;
+        this.recoil = recoil;
+        this.reloadTicks = reloadTicks;
+        this.range = range;
+        this.pellets = pellets;
+        this.kind = kind;
+        this.sound = sound;
+    }
+
+    /** muzzle velocity in blocks per tick (1 block = 1 m: 45 = 900 m/s) */
+    public double muzzleVelocity() {
+        return switch (this) {
+            case DEAGLE, MAGNUM50, REVOLVER -> 22;
+            case FIVESEVEN -> 32;
+            case MP7, P90 -> 34;
+            case VSS -> 15;
+            case AK47, AK103, SKS, AKS74U -> 36;
+            case M14, SCAR_H -> 42;
+            case MOSIN -> 42;
+            case M107, M82 -> 43;
+            case M200 -> 52;
+            case AXMC, M24 -> 47;
+            default -> switch (category) {
+                case PISTOL -> 18;
+                case SMG -> 20;
+                case RIFLE -> 44;
+                case SHOTGUN -> 20;
+                case SNIPER -> 45;
+                case HEAVY -> 42;
+                default -> 30;
+            };
+        };
+    }
+
+    /** how much the round can go through: glass and leaves cost 0.3, a wooden block 1.6, sand 3.5, stone 6+, metal 14 */
+    public float penetration() {
+        return switch (this) {
+            case M107, M82 -> 10f;
+            case M200 -> 8f;
+            case AXMC -> 7f;
+            case DEAGLE, MAGNUM50, FIVESEVEN -> 1.5f;
+            case MP7, P90 -> 1.6f;
+            case AK47, AK103, M14, SCAR_H, SKS, SVD, PKM, PKP, M240 -> 3.5f;
+            default -> switch (category) {
+                case PISTOL -> 0.6f;
+                case SMG -> 0.8f;
+                case RIFLE -> 2.5f;
+                case SHOTGUN -> 0.4f;
+                case SNIPER -> 5f;
+                case HEAVY -> 4f;
+                default -> 1f;
+            };
+        };
+    }
+
+    public float headshotMultiplier() {
+        return category == Category.SNIPER ? 2.2f : category == Category.SHOTGUN ? 1.3f : 1.6f;
+    }
+
+    /** built-in optic zoom (the bullpup rifle and the shoulder launched missile) */
+    public float builtInZoom() {
+        return this == BR77 ? 1.6f : this == IGLA || this == AUG || this == G36 ? 1.5f : 1.0f;
+    }
+
+    /** integrally suppressed (the VSS) */
+    public boolean silent() {
+        return this == VSS;
+    }
+
+    /** a one-round tube: the round shows on the muzzle until fired */
+    public boolean singleShotTube() {
+        return this == RPG7 || this == RPG7_TBG || this == IGLA || this == M79;
+    }
+
+    /** min / max engagement distance used by the bots */
+    public float preferredMin() {
+        return switch (category) {
+            case PISTOL -> 6;
+            case SMG -> 5;
+            case RIFLE, HEAVY -> 10;
+            case SHOTGUN -> 2;
+            case SNIPER -> 22;
+            case EXPLOSIVE -> 14;
+            case SPECIAL -> 2;
+        };
+    }
+
+    public float preferredMax() {
+        return switch (category) {
+            case PISTOL -> 18;
+            case SMG -> 16;
+            case RIFLE, HEAVY -> 32;
+            case SHOTGUN -> 8;
+            case SNIPER -> 60;
+            case EXPLOSIVE -> 40;
+            case SPECIAL -> 7;
+        };
+    }
+
+    public boolean supports(Attachment.Slot slot) {
+        if (kind != Kind.BULLET) {
+            return slot == Attachment.Slot.SCOPE && this != FLAMETHROWER;
+        }
+        return switch (slot) {
+            case SCOPE -> this != MINIGUN && this != DOUBLE_BARREL;
+            case MUZZLE -> category != Category.SHOTGUN && this != MINIGUN && this != VSS;
+            case GRIP -> category != Category.PISTOL && this != MICRO_SMG && this != UZI && this != P90;
+            case LASER -> true;
+            case MAG -> this != REVOLVER && this != DOUBLE_BARREL && this != PUMP_SHOTGUN && this != MOSIN && this != SKS && this != R870 && this != SPAS12
+                    && this != BENELLI_M4 && this != P90;
+        };
+    }
+
+    public static GunType byId(int ordinal) {
+        GunType[] v = values();
+        return ordinal >= 0 && ordinal < v.length ? v[ordinal] : AK47;
+    }
+}

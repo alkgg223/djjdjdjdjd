@@ -1,0 +1,37 @@
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl lens
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #lens
+
+newmtl paint
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint
+neoforge_TintIndex 0
+
+newmtl paint_dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint_dark
+neoforge_TintIndex 0
+
+newmtl red
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #red
+
+newmtl steel
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #steel

@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/igla"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    2.689,
+    -0.567,
+    1.675
+   ],
+   "scale": [
+    0.5159,
+    0.5159,
+    0.5159
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.572,
+    -0.101,
+    0.032
+   ],
+   "scale": [
+    0.2525,
+    0.2525,
+    0.2525
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    2.715,
+    -0.174,
+    0.055
+   ],
+   "scale": [
+    0.4362,
+    0.4362,
+    0.4362
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.196,
+    -0.626,
+    -9.743
+   ],
+   "scale": [
+    1.5652,
+    1.5652,
+    1.5652
+   ]
+  }
+ }
+}

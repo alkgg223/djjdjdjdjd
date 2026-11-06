@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/vortex"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    1.567,
+    1.24,
+    1.265
+   ],
+   "scale": [
+    0.7288,
+    0.7288,
+    0.7288
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.902,
+    0.721,
+    -0.0
+   ],
+   "scale": [
+    0.3558,
+    0.3558,
+    0.3558
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.558,
+    1.245,
+    -0.0
+   ],
+   "scale": [
+    0.6146,
+    0.6146,
+    0.6146
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    2.324,
+    -2.909
+   ],
+   "scale": [
+    1.1474,
+    1.1474,
+    1.1474
+   ]
+  }
+ }
+}

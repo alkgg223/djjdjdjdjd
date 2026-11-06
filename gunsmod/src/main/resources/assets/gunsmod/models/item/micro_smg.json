@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/micro_smg"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    1.58,
+    2.008,
+    1.436
+   ],
+   "scale": [
+    1.1752,
+    1.1752,
+    1.1752
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0.994,
+    1.207,
+    -0.0
+   ],
+   "scale": [
+    0.6272,
+    0.6272,
+    0.6272
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    1.717,
+    2.086,
+    -0.0
+   ],
+   "scale": [
+    1.0834,
+    1.0834,
+    1.0834
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    2.3,
+    -1.894
+   ],
+   "scale": [
+    1.195,
+    1.195,
+    1.195
+   ]
+  }
+ }
+}

@@ -1,0 +1,77 @@
+{
+ "parent": "builtin/entity",
+ "gui_light": "side",
+ "textures": {
+  "particle": "gunsmod:item/gun/p320"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    12,
+    -32,
+    0
+   ],
+   "translation": [
+    4.427,
+    1.524,
+    3.152
+   ],
+   "scale": [
+    1.3703,
+    1.3703,
+    1.3703
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    3.153,
+    1.296,
+    -0.0
+   ],
+   "scale": [
+    0.8276,
+    0.8276,
+    0.8276
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    5.446,
+    2.239,
+    -0.0
+   ],
+   "scale": [
+    1.4296,
+    1.4296,
+    1.4296
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0.0,
+    2.121,
+    -5.159
+   ],
+   "scale": [
+    1.3543,
+    1.3543,
+    1.3543
+   ]
+  }
+ }
+}
