@@ -16,6 +16,15 @@ import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import com.arkragnarok.registry.ModItems;
 import com.arkragnarok.species.Kibble;
+import com.arkragnarok.entity.ResourceNode;
+import com.arkragnarok.world.NodeKind;
+import com.arkragnarok.building.PieceBlock;
+import com.arkragnarok.building.PieceType;
+import com.arkragnarok.building.Placement;
+import com.arkragnarok.building.Tier;
+import com.arkragnarok.registry.ModBuilding;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -121,6 +130,12 @@ public final class ShotDirector {
         }
         ITEM_SHOTS.add(new ItemShot("item_ground", 0, 0, false));
         ITEM_SHOTS.add(new ItemShot("item_inventory", 0, 0, true));
+        ITEM_SHOTS.add(new ItemShot("nodes_overview", 8, 0, false));
+        ITEM_SHOTS.add(new ItemShot("nodes_close", 8, 0, false));
+        ITEM_SHOTS.add(new ItemShot("houses_front", 8, 0, false));
+        ITEM_SHOTS.add(new ItemShot("house_close", 8, 0, false));
+        ITEM_SHOTS.add(new ItemShot("houses_doors_open", 8, 0, false));
+        ITEM_SHOTS.add(new ItemShot("house_inside", 8, 0, false));
     }
 
     private static int itemIndex;
@@ -172,12 +187,22 @@ public final class ShotDirector {
                 mc.player.getInventory().selected = it.slot();
                 mc.options.setCameraType(it.camera() == 2 ? CameraType.THIRD_PERSON_FRONT : CameraType.FIRST_PERSON);
                 if (it.inventory()) mc.setScreen(new InventoryScreen(mc.player));
+                if (it.name().startsWith("house")) {
+                    mc.options.hideGui = true;
+                    String n = it.name();
+                    srv.execute(() -> houseView(srv, mc.player.getUUID(), n));
+                }
+                if (it.name().startsWith("nodes")) {
+                    mc.options.hideGui = true;
+                    boolean close = it.name().endsWith("close");
+                    srv.execute(() -> nodeView(srv, mc.player.getUUID(), close));
+                }
                 if (it.name().equals("item_ground")) {
                     srv.execute(() -> groundItems(srv, mc.player.getUUID()));
                     mc.player.getInventory().selected = 8;
                 }
                 phase = 6;
-                wait = it.name().equals("item_ground") ? 30 : 12;
+                wait = it.name().equals("item_ground") ? 30 : it.name().startsWith("nodes") || it.name().startsWith("house") ? 40 : 12;
                 return;
             }
             if (phase == 6) {
@@ -266,9 +291,75 @@ public final class ShotDirector {
         sp.onUpdateAbilities();
         sp.teleportTo(level, ox + 0.5, oy, oz + 0.5, 0f, 18f);
         sp.setYHeadRot(0f);
+        spawnNodes(level);
+        buildHouses(level);
         sp.getInventory().clearContent();
         for (int i = 0; i < ITEMS.size() && i < 36; i++) sp.getInventory().setItem(i, new ItemStack(ITEMS.get(i), i == 1 ? 16 : 1));
         sp.inventoryMenu.broadcastChanges();
+    }
+
+    /** a row of every resource node kind (rows) in every size (columns), north of the item spot */
+    private static void spawnNodes(ServerLevel level) {
+        for (NodeKind k : NodeKind.values()) {
+            for (int size = 0; size < 3; size++) {
+                ResourceNode n = ModEntities.RESOURCE_NODE.get().create(level);
+                if (n == null) continue;
+                double x = ox - 6 + size * 6;
+                double z = oz - 10 - k.ordinal() * 6;
+                n.moveTo(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) Math.floor(x), (int) Math.floor(z)) - 0.15, z,
+                        40f * size + 25f * k.ordinal(), 0f);
+                n.setup(k, size, 40f * size + 25f * k.ordinal());
+                level.addFreshEntity(n);
+            }
+        }
+    }
+
+    private static final List<BlockPos> DOORFRAMES = new ArrayList<>();
+
+    /** three small houses (thatch, wood, stone): foundation, three walls, a doorframe with its door, a ceiling */
+    private static void buildHouses(ServerLevel level) {
+        Tier[] tiers = {Tier.THATCH, Tier.WOOD, Tier.STONE};
+        for (int i = 0; i < 3; i++) {
+            PieceBlock b = ModBuilding.PIECE_BLOCKS.get(tiers[i]).get();
+            BlockPos c = BlockPos.containing(ox - 12 + i * 12, oy, oz + 20);
+            Placement.place(level, b, PieceType.FOUNDATION, new Placement.Plan(c, Direction.NORTH));
+            for (Direction f : new Direction[] {Direction.EAST, Direction.WEST, Direction.SOUTH}) {
+                Placement.place(level, b, PieceType.WALL, new Placement.Plan(c.relative(f, 2).above(), f));
+            }
+            BlockPos df = c.relative(Direction.NORTH, 2).above();
+            Placement.place(level, b, PieceType.DOORFRAME, new Placement.Plan(df, Direction.NORTH));
+            Placement.installDoor(level, df, tiers[i]);
+            DOORFRAMES.add(df);
+            Placement.place(level, b, PieceType.CEILING, new Placement.Plan(c.above(3), Direction.NORTH));
+        }
+    }
+
+    private static void houseView(IntegratedServer srv, UUID playerId, String name) {
+        ServerPlayer sp = srv.getPlayerList().getPlayer(playerId);
+        if (sp == null) return;
+        ServerLevel level = srv.overworld();
+        sp.getAbilities().flying = true;
+        sp.onUpdateAbilities();
+        if (name.equals("houses_doors_open")) {
+            for (BlockPos df : DOORFRAMES) {
+                BlockState st = level.getBlockState(df);
+                if (st.getBlock() instanceof PieceBlock pb) pb.toggleDoor(level, df);
+            }
+        }
+        switch (name) {
+            case "houses_front", "houses_doors_open" -> sp.teleportTo(level, ox + 0.5, oy + 4.0, oz + 6.0, 0f, 12f);
+            case "house_close" -> sp.teleportTo(level, ox + 6.5, oy + 3.5, oz + 13.0, 35f, 15f);
+            default -> sp.teleportTo(level, ox + 0.5, oy + 2.4, oz + 21.5, 180f, -25f);
+        }
+    }
+
+    private static void nodeView(IntegratedServer srv, UUID playerId, boolean close) {
+        ServerPlayer sp = srv.getPlayerList().getPlayer(playerId);
+        if (sp == null) return;
+        sp.getAbilities().flying = true;
+        sp.onUpdateAbilities();
+        if (close) sp.teleportTo(srv.overworld(), ox + 4.5, oy + 2.2, oz - 4.0, 200f, 22f);
+        else sp.teleportTo(srv.overworld(), ox, oy + 9.0, oz - 1.0, 180f, 38f);
     }
 
     private static void groundItems(IntegratedServer srv, UUID playerId) {

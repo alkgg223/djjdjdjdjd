@@ -1,0 +1,6 @@
+{
+ "type": "neoforge:add_features",
+ "biomes": "#minecraft:is_overworld",
+ "features": ["arkragnarok:surface_nodes", "arkragnarok:cave_nodes"],
+ "step": "top_layer_modification"
+}

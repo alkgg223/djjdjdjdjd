@@ -2,6 +2,9 @@ package com.arkragnarok.client;
 
 import com.arkragnarok.ArkRagnarok;
 import com.arkragnarok.client.render.ArkCreatureRenderer;
+import com.arkragnarok.client.render.PieceRenderer;
+import com.arkragnarok.client.render.ResourceNodeRenderer;
+import com.arkragnarok.registry.ModBuilding;
 import com.arkragnarok.client.render.TranqArrowRenderer;
 import com.arkragnarok.registry.ModEntities;
 import com.arkragnarok.species.Species;
@@ -19,5 +22,7 @@ public final class ClientSetup {
     public static void renderers(EntityRenderersEvent.RegisterRenderers e) {
         for (Species s : SpeciesList.all()) e.registerEntityRenderer(ModEntities.type(s.id), ctx -> new ArkCreatureRenderer(ctx, s));
         e.registerEntityRenderer(ModEntities.TRANQ_ARROW.get(), TranqArrowRenderer::new);
+        e.registerEntityRenderer(ModEntities.RESOURCE_NODE.get(), ResourceNodeRenderer::new);
+        e.registerBlockEntityRenderer(ModBuilding.PIECE_BE.get(), PieceRenderer::new);
     }
 }

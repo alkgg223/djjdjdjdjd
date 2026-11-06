@@ -2,6 +2,7 @@ package com.arkragnarok.registry;
 
 import com.arkragnarok.ArkRagnarok;
 import com.arkragnarok.entity.ArkCreature;
+import com.arkragnarok.entity.ResourceNode;
 import com.arkragnarok.entity.TranqArrow;
 import com.arkragnarok.species.Species;
 import com.arkragnarok.species.SpeciesList;
@@ -37,6 +38,10 @@ public final class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<TranqArrow>> TRANQ_ARROW = ENTITIES.register("tranq_arrow",
             () -> EntityType.Builder.<TranqArrow>of(TranqArrow::new, MobCategory.MISC).sized(0.5f, 0.5f).eyeHeight(0.13f)
                     .clientTrackingRange(4).updateInterval(20).build("tranq_arrow"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<ResourceNode>> RESOURCE_NODE = ENTITIES.register("resource_node",
+            () -> EntityType.Builder.<ResourceNode>of(ResourceNode::new, MobCategory.MISC).sized(1.9f, 1.35f).fireImmune()
+                    .clientTrackingRange(10).updateInterval(40).build("resource_node"));
 
     public static Species speciesOf(EntityType<?> type) {
         Species s = SPECIES.get(type);

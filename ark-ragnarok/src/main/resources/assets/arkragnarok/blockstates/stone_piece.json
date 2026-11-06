@@ -1,0 +1,150 @@
+{
+ "multipart": [
+  {
+   "apply": {
+    "model": "arkragnarok:block/stone_particle"
+   }
+  },
+  {
+   "when": {
+    "piece": "foundation",
+    "part": "4"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_foundation"
+   }
+  },
+  {
+   "when": {
+    "piece": "ceiling",
+    "part": "4",
+    "facing": "north"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_ceiling",
+    "y": 0
+   }
+  },
+  {
+   "when": {
+    "piece": "wall",
+    "part": "1",
+    "facing": "north"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_wall",
+    "y": 0
+   }
+  },
+  {
+   "when": {
+    "piece": "doorframe",
+    "part": "1",
+    "facing": "north"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_doorframe",
+    "y": 0
+   }
+  },
+  {
+   "when": {
+    "piece": "ceiling",
+    "part": "4",
+    "facing": "east"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_ceiling",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "piece": "wall",
+    "part": "1",
+    "facing": "east"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_wall",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "piece": "doorframe",
+    "part": "1",
+    "facing": "east"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_doorframe",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "piece": "ceiling",
+    "part": "4",
+    "facing": "south"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_ceiling",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "piece": "wall",
+    "part": "1",
+    "facing": "south"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_wall",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "piece": "doorframe",
+    "part": "1",
+    "facing": "south"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_doorframe",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "piece": "ceiling",
+    "part": "4",
+    "facing": "west"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_ceiling",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "piece": "wall",
+    "part": "1",
+    "facing": "west"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_wall",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "piece": "doorframe",
+    "part": "1",
+    "facing": "west"
+   },
+   "apply": {
+    "model": "arkragnarok:block/stone_doorframe",
+    "y": 270
+   }
+  }
+ ]
+}

@@ -1,0 +1,34 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "building",
+ "ingredients": [
+  {
+   "item": "minecraft:stick"
+  },
+  {
+   "item": "minecraft:stick"
+  },
+  {
+   "item": "minecraft:stick"
+  },
+  {
+   "item": "minecraft:stick"
+  },
+  {
+   "item": "minecraft:wheat"
+  },
+  {
+   "item": "minecraft:wheat"
+  },
+  {
+   "item": "minecraft:wheat"
+  },
+  {
+   "tag": "minecraft:logs"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:thatch_foundation",
+  "count": 1
+ }
+}

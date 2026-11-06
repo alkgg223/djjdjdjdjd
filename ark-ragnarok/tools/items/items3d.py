@@ -445,26 +445,36 @@ def egg(look):
 # ============================================================================================ export
 DISPLAY = {
     "small": {
-        "gui": {"rotation": [22, -32, 0], "translation": [0, 0, 0], "scale": [0.95, 0.95, 0.95]},
-        "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.42, 0.42, 0.42]},
+        "gui": {"rotation": [25, -35, 0], "translation": [0, 0, 0], "scale": [1.1, 1.1, 1.1]},
+        "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.32, 0.32, 0.32]},
         "fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.75, 0.75, 0.75]},
         "head": {"rotation": [0, 180, 0], "translation": [0, 13, 7], "scale": [0.8, 0.8, 0.8]},
-        "thirdperson_righthand": {"rotation": [10, -30, 0], "translation": [0, 3, 1.5], "scale": [0.42, 0.42, 0.42]},
-        "thirdperson_lefthand": {"rotation": [10, 30, 0], "translation": [0, 3, 1.5], "scale": [0.42, 0.42, 0.42]},
-        "firstperson_righthand": {"rotation": [8, -35, 4], "translation": [1.2, 3.6, 0.6], "scale": [0.5, 0.5, 0.5]},
-        "firstperson_lefthand": {"rotation": [8, 35, -4], "translation": [1.2, 3.6, 0.6], "scale": [0.5, 0.5, 0.5]},
+        "thirdperson_righthand": {"rotation": [10, -30, 0], "translation": [0, 3, 1.2], "scale": [0.5, 0.5, 0.5]},
+        "thirdperson_lefthand": {"rotation": [10, 30, 0], "translation": [0, 3, 1.2], "scale": [0.5, 0.5, 0.5]},
+        "firstperson_righthand": {"rotation": [5, -30, 0], "translation": [1.5, 4.4, 0.5], "scale": [0.36, 0.36, 0.36]},
+        "firstperson_lefthand": {"rotation": [5, 30, 0], "translation": [1.5, 4.4, 0.5], "scale": [0.36, 0.36, 0.36]},
     },
     "long": {
         "gui": {"rotation": [18, -18, 0], "translation": [0, 0, 0], "scale": [1.0, 1.0, 1.0]},
-        "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.5, 0.5, 0.5]},
+        "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.42, 0.42, 0.42]},
         "fixed": {"rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [1, 1, 1]},
         "head": {"rotation": [0, 180, 0], "translation": [0, 13, 7], "scale": [1, 1, 1]},
         "thirdperson_righthand": {"rotation": [0, -90, 55], "translation": [0, 4.0, 0.5], "scale": [0.85, 0.85, 0.85]},
         "thirdperson_lefthand": {"rotation": [0, 90, -55], "translation": [0, 4.0, 0.5], "scale": [0.85, 0.85, 0.85]},
-        "firstperson_righthand": {"rotation": [0, -90, 25], "translation": [1.13, 3.2, 1.13], "scale": [0.68, 0.68, 0.68]},
-        "firstperson_lefthand": {"rotation": [0, 90, -25], "translation": [1.13, 3.2, 1.13], "scale": [0.68, 0.68, 0.68]},
+        "firstperson_righthand": {"rotation": [0, -90, 25], "translation": [1.13, 3.6, 1.13], "scale": [0.46, 0.46, 0.46]},
+        "firstperson_lefthand": {"rotation": [0, 90, -25], "translation": [1.13, 3.6, 1.13], "scale": [0.46, 0.46, 0.46]},
     },
 }
+# per item tweaks (scale factors on top of the kind's pose)
+SCALE = {"dino_saddle": {"firstperson_righthand": 0.75, "firstperson_lefthand": 0.75, "ground": 0.8}}
+
+
+def display_for(name, kind):
+    import copy
+    d = copy.deepcopy(DISPLAY[kind])
+    for ctx, f in SCALE.get(name, {}).items():
+        d[ctx]["scale"] = [round(v * f, 4) for v in d[ctx]["scale"]]
+    return d
 
 
 def finish(m, kind):
@@ -513,7 +523,7 @@ def export(root, name, parts, ctx, tex, kind, preview=None):
     model = {"loader": "neoforge:obj", "model": "arkragnarok:models/item/obj/%s.obj" % name, "flip_v": False,
              "automatic_culling": False, "shade_quads": True, "gui_light": "side",
              "textures": {"texture": "arkragnarok:item/3d/%s" % name, "particle": "arkragnarok:item/3d/%s" % name},
-             "display": DISPLAY[kind]}
+             "display": display_for(name, kind)}
     json.dump(model, open(A + "/models/item/%s.json" % name, "w"), indent=1)
     if preview is not None:
         preview.append((name, um, img))

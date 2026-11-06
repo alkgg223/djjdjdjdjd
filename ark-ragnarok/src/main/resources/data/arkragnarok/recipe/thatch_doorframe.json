@@ -1,0 +1,25 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "building",
+ "ingredients": [
+  {
+   "item": "minecraft:stick"
+  },
+  {
+   "item": "minecraft:stick"
+  },
+  {
+   "item": "minecraft:stick"
+  },
+  {
+   "item": "minecraft:wheat"
+  },
+  {
+   "item": "minecraft:wheat"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:thatch_doorframe",
+  "count": 1
+ }
+}

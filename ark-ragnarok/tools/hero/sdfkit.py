@@ -230,7 +230,7 @@ def gradient(F, lo, cell, pts):
     return g / np.maximum(np.linalg.norm(g, axis=1, keepdims=True), 1e-9)
 
 
-def polygonize(field, targets):
+def polygonize(field, targets, aggressiveness=5, max_iterations=100):
     """marching cubes then decimate to every target triangle count (one mesh per LOD)"""
     F, lo, cell = field
     verts, faces, _, _ = measure.marching_cubes(F, level=0.0, step_size=1, allow_degenerate=False)
@@ -240,7 +240,8 @@ def polygonize(field, targets):
         s = pyfqmr.Simplify()
         s.setMesh(verts.astype(np.float64), faces.astype(np.int32))
         if len(faces) > t:
-            s.simplify_mesh(target_count=int(t), aggressiveness=5, preserve_border=False, verbose=False)
+            s.simplify_mesh(target_count=int(t), aggressiveness=aggressiveness, max_iterations=max_iterations, preserve_border=False,
+                            verbose=False)
         v, f, _ = s.getMesh()
         n = gradient(F, lo, cell, v)
         fn = np.cross(v[f[:, 1]] - v[f[:, 0]], v[f[:, 2]] - v[f[:, 0]])

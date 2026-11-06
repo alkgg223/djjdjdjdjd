@@ -3,9 +3,11 @@ package com.arkragnarok;
 import com.arkragnarok.entity.ArkCreature;
 import com.arkragnarok.species.Species;
 import com.arkragnarok.species.SpeciesList;
+import com.arkragnarok.registry.ModBuilding;
 import com.arkragnarok.registry.ModEntities;
 import com.arkragnarok.registry.ModItems;
 import com.arkragnarok.registry.ModSounds;
+import com.arkragnarok.registry.ModWorld;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -22,9 +24,13 @@ public class ArkRagnarok {
 
     public ArkRagnarok(IEventBus modBus, ModContainer container) {
         ModEntities.ENTITIES.register(modBus);
+        ModBuilding.init();
         ModItems.ITEMS.register(modBus);
         ModItems.TABS.register(modBus);
         ModSounds.SOUNDS.register(modBus);
+        ModWorld.FEATURES.register(modBus);
+        ModBuilding.BLOCKS.register(modBus);
+        ModBuilding.BLOCK_ENTITIES.register(modBus);
         modBus.addListener(ArkRagnarok::attributes);
     }
 

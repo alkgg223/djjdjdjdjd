@@ -1,0 +1,134 @@
+{
+ "loader": "neoforge:obj",
+ "model": "arkragnarok:models/block/obj/stone_wall_item.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "shade_quads": true,
+ "ambient_occlusion": false,
+ "textures": {
+  "texture": "arkragnarok:block/piece/stone_wall",
+  "particle": "arkragnarok:block/piece/stone_wall"
+ },
+ "gui_light": "side",
+ "display": {
+  "gui": {
+   "rotation": [
+    28,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.3045,
+    0.3045,
+    0.3045
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.1218,
+    0.1218,
+    0.1218
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.3045,
+    0.3045,
+    0.3045
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.1522,
+    0.1522,
+    0.1522
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.1522,
+    0.1522,
+    0.1522
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.1624,
+    0.1624,
+    0.1624
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.1624,
+    0.1624,
+    0.1624
+   ]
+  }
+ }
+}

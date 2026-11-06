@@ -87,6 +87,8 @@ public final class ModItems {
                 out.accept(RAW_PRIME_MEAT.get());
                 out.accept(COOKED_PRIME_MEAT.get());
                 out.accept(DINO_SADDLE.get());
+                for (var tier : ModBuilding.PIECE_ITEMS.values()) for (var it : tier.values()) out.accept(it.get());
+                for (var d : ModBuilding.DOORS.values()) out.accept(d.get());
                 for (DeferredItem<DeferredSpawnEggItem> e : SPAWN_EGGS.values()) out.accept(e.get());
             })
             .build());

@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "arkragnarok:models/block/obj/thatch_wall.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "shade_quads": true,
+ "ambient_occlusion": false,
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "texture": "arkragnarok:block/piece/thatch_wall",
+  "particle": "arkragnarok:block/piece/thatch_wall"
+ }
+}

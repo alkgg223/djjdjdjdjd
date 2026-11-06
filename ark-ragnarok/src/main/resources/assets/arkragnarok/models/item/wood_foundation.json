@@ -1,0 +1,134 @@
+{
+ "loader": "neoforge:obj",
+ "model": "arkragnarok:models/block/obj/wood_foundation_item.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "shade_quads": true,
+ "ambient_occlusion": false,
+ "textures": {
+  "texture": "arkragnarok:block/piece/wood_foundation",
+  "particle": "arkragnarok:block/piece/wood_foundation"
+ },
+ "gui_light": "side",
+ "display": {
+  "gui": {
+   "rotation": [
+    28,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.2714,
+    0.2714,
+    0.2714
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.1086,
+    0.1086,
+    0.1086
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.2714,
+    0.2714,
+    0.2714
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.1357,
+    0.1357,
+    0.1357
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.1357,
+    0.1357,
+    0.1357
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.1448,
+    0.1448,
+    0.1448
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.1448,
+    0.1448,
+    0.1448
+   ]
+  }
+ }
+}

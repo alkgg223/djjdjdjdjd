@@ -1,0 +1,134 @@
+{
+ "loader": "neoforge:obj",
+ "model": "arkragnarok:models/block/obj/stone_doorframe_item.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "shade_quads": true,
+ "ambient_occlusion": false,
+ "textures": {
+  "texture": "arkragnarok:block/piece/stone_doorframe",
+  "particle": "arkragnarok:block/piece/stone_doorframe"
+ },
+ "gui_light": "side",
+ "display": {
+  "gui": {
+   "rotation": [
+    28,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.3038,
+    0.3038,
+    0.3038
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.1215,
+    0.1215,
+    0.1215
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.3038,
+    0.3038,
+    0.3038
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.1519,
+    0.1519,
+    0.1519
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.1519,
+    0.1519,
+    0.1519
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.162,
+    0.162,
+    0.162
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.162,
+    0.162,
+    0.162
+   ]
+  }
+ }
+}
