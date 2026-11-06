@@ -18,7 +18,26 @@ public enum CarType {
     /** civilian double-cab pickup: soldiers ride it from place to place (two in the cab, two in the bed), no weapons */
     PICKUP(VehicleGeo.PICKUP, 70, 1.0f, false, 115, 1.5f, 3.2, 0f, 0f, 0, 0),
     /** civilian SUV: four soldiers, quick on the road, no weapons */
-    SUV(VehicleGeo.SUV, 65, 1.0f, false, 125, 1.6f, 2.8, 0f, 0f, 0, 0);
+    SUV(VehicleGeo.SUV, 65, 1.0f, false, 125, 1.6f, 2.8, 0f, 0f, 0, 0),
+    // ---- 3.0
+    /** Stryker with the 30 mm turret: quick on roads, soldiers ride on the roof */
+    STRYKER(VehicleGeo.STRYKER, 210, 0.12f, true, 100, 1.1f, 2.9, 5.0f, 3.5f, 160, 120),
+    /** Boxer with the RCT30 turret: the heaviest protection of the wheeled fighting vehicles */
+    BOXER(VehicleGeo.BOXER, 240, 0.1f, true, 100, 1.0f, 3.0, 5.0f, 3.5f, 160, 120),
+    /** MaxxPro MRAP: the V hull shrugs off mines and bullets; carries six */
+    MRAP(VehicleGeo.MRAP, 170, 0.15f, true, 105, 1.2f, 3.4, 0f, 0f, 0, 0),
+    /** JLTV: the light tactical vehicle, quick and protected, carries four */
+    JLTV(VehicleGeo.JLTV, 120, 0.25f, true, 110, 1.5f, 3.0, 0f, 0f, 0, 0),
+    /** 6x6 cargo truck: two in the cab, six soldiers under the canvas */
+    TRUCK(VehicleGeo.TRUCK, 90, 0.6f, false, 90, 1.0f, 4.0, 0f, 0f, 0, 0),
+    /** fuel tanker: goes up in a fireball when it is destroyed */
+    FUEL_TRUCK(VehicleGeo.FUEL_TRUCK, 80, 0.7f, false, 85, 0.9f, 4.0, 0f, 0f, 0, 0),
+    /** ammunition carrier: hands out magazines to the side's players round it */
+    AMMO_TRUCK(VehicleGeo.AMMO_TRUCK, 90, 0.6f, false, 85, 0.9f, 4.0, 0f, 0f, 0, 0),
+    /** command post: its masts spot the enemies round it for the side */
+    COMMAND_TRUCK(VehicleGeo.COMMAND_TRUCK, 110, 0.5f, false, 85, 0.9f, 4.0, 0f, 0f, 0, 0),
+    /** recovery truck: repairs the side's damaged vehicles round it */
+    RECOVERY_TRUCK(VehicleGeo.RECOVERY_TRUCK, 120, 0.5f, false, 80, 0.85f, 4.0, 0f, 0f, 0, 0);
 
     public final VehicleGeo.Car geo;
     public final float health, bulletFactor, accel, traverse, elevate;
@@ -51,6 +70,15 @@ public enum CarType {
             case CRAM -> VehicleKind.CRAM;
             case PICKUP -> VehicleKind.PICKUP;
             case SUV -> VehicleKind.SUV;
+            case STRYKER -> VehicleKind.STRYKER;
+            case BOXER -> VehicleKind.BOXER;
+            case MRAP -> VehicleKind.MRAP;
+            case JLTV -> VehicleKind.JLTV;
+            case TRUCK -> VehicleKind.TRUCK;
+            case FUEL_TRUCK -> VehicleKind.FUEL_TRUCK;
+            case AMMO_TRUCK -> VehicleKind.AMMO_TRUCK;
+            case COMMAND_TRUCK -> VehicleKind.COMMAND_TRUCK;
+            case RECOVERY_TRUCK -> VehicleKind.RECOVERY_TRUCK;
         };
     }
 
@@ -73,7 +101,12 @@ public enum CarType {
 
     /** civilian cars: transport only, they carry no weapons */
     public boolean civilian() {
-        return this == PICKUP || this == SUV;
+        return this == PICKUP || this == SUV || transport();
+    }
+
+    /** 3.0: military transports and support trucks: unarmed like the civilian cars, but in the side's paint */
+    public boolean transport() {
+        return this == MRAP || this == JLTV || this == TRUCK || this == FUEL_TRUCK || this == AMMO_TRUCK || this == COMMAND_TRUCK || this == RECOVERY_TRUCK;
     }
 
     /** the paint of a civilian car (the team shows on a stripe along the doors) */

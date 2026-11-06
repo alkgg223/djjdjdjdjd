@@ -107,8 +107,11 @@ def main():
     lines += ["", "    public record Car(String model, " + ", ".join(t + " " + f for f, t in CAR_FIELDS) + ") {}", ""]
     for fn in list(NV.CARS2.values()) + list(CV.CIVS.values()):
         fn()
-    for name in list(A3.CARS) + list(NV.CARS2) + list(CV.CIVS):
-        g = A3.GEO.get(name) or NV.GEO.get(name) or CV.GEO[name]
+    import trucks_mesh as TR
+    for fn in TR.CARS3.values():
+        fn()
+    for name in list(A3.CARS) + list(NV.CARS2) + list(CV.CIVS) + list(TR.CARS3):
+        g = A3.GEO.get(name) or NV.GEO.get(name) or CV.GEO.get(name) or TR.GEO[name]
         args = [jv(name)] + [jt(g[f], t) for f, t in CAR_FIELDS]
         lines.append(f"    public static final Car {name.upper()} = new Car({', '.join(args)});")
     for fn in J.JETS.values():

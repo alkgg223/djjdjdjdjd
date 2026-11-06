@@ -301,6 +301,16 @@ public final class Reg {
                 .sized((float) k.geo.size()[0], (float) k.geo.size()[1]).eyeHeight(1.8f).clientTrackingRange(16).updateInterval(1).build(id));
     }
 
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> CAR_STRYKER = car("stryker", CarType.STRYKER);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> CAR_BOXER = car("boxer", CarType.BOXER);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> CAR_MRAP = car("mrap", CarType.MRAP);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> CAR_JLTV = car("jltv", CarType.JLTV);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> CAR_TRUCK = car("military_truck", CarType.TRUCK);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> CAR_FUEL_TRUCK = car("fuel_truck", CarType.FUEL_TRUCK);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> CAR_AMMO_TRUCK = car("ammo_truck", CarType.AMMO_TRUCK);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> CAR_COMMAND_TRUCK = car("command_truck", CarType.COMMAND_TRUCK);
+    public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> CAR_RECOVERY_TRUCK = car("recovery_truck", CarType.RECOVERY_TRUCK);
+
     private static DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> car(String id, CarType k) {
         return ENTITIES.register(id, () -> EntityType.Builder.<ArmoredCarEntity>of((t, l) -> new ArmoredCarEntity(t, l, k), MobCategory.MISC)
                 .sized((float) k.geo.size()[0], (float) k.geo.size()[1]).eyeHeight(2.0f).clientTrackingRange(14).updateInterval(1).build(id));

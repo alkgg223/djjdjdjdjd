@@ -45,6 +45,9 @@ def main(only=None):
         groups.append((key, lambda fn=fn: fn()[0]))
     for key, fn in CV.CIVS.items():
         groups.append((key, lambda fn=fn: fn()[0]))
+    import trucks_mesh as TR
+    for key, fn in TR.CARS3.items():
+        groups.append((key, lambda fn=fn: fn()[0]))
     groups.append(("car", lambda: {"wheel": CM.car_wheel(), "civ_wheel": CV.civ_wheel()}))
     groups.append(("jeep", CM.jeep))
     groups.append(("jeep_tow", lambda: {"launcher": CM.tow()}))

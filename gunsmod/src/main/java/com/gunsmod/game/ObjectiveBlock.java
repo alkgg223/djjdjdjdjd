@@ -82,7 +82,7 @@ public class ObjectiveBlock extends FacingBlock implements EntityBlock {
             be.setOwner(team == null ? BotTeam.GREEN : team);
         }
         if (placer instanceof Player p) {
-            p.displayClientMessage(Component.translatable("gunsmod.obj.placed." + kind.name().toLowerCase(), be.label()).withStyle(ChatFormatting.AQUA), true);
+            p.displayClientMessage(Component.translatable("gunsmod.obj.placed." + kind.name().toLowerCase(), String.valueOf(be.label())).withStyle(ChatFormatting.AQUA), true);
         }
     }
 

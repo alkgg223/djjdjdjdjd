@@ -178,6 +178,15 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.GRAD.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.CRAM.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.PICKUP.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.CAR_STRYKER.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.CAR_BOXER.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.CAR_MRAP.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.CAR_JLTV.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.CAR_TRUCK.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.CAR_FUEL_TRUCK.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.CAR_AMMO_TRUCK.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.CAR_COMMAND_TRUCK.get(), ArmoredCarRenderer::new);
+        e.registerEntityRenderer(Reg.CAR_RECOVERY_TRUCK.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.SUV.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.F16.get(), JetRenderer::new);
         e.registerEntityRenderer(Reg.B2.get(), JetRenderer::new);

@@ -431,7 +431,59 @@ public class ArmoredCarEntity extends VehicleEntity {
             weaponsTick();
             ramTick();
             bailOutCheck();
+            if (kind.transport() && this.tickCount % 100 == 0) supportJob();
         }
+    }
+
+    /** 3.0: what the support trucks do for their side round them */
+    private void supportJob() {
+        BotTeam team = getBotTeam();
+        switch (kind) {
+            case AMMO_TRUCK -> {
+                for (net.minecraft.world.entity.player.Player p : this.level().getEntitiesOfClass(net.minecraft.world.entity.player.Player.class,
+                        this.getBoundingBox().inflate(8), p -> p.isAlive() && BotTeam.of(p) == team)) {
+                    if (!(p.getMainHandItem().getItem() instanceof com.gunsmod.item.GunItem gi)) continue;
+                    var ammo = Reg.AMMO_ITEMS.get(gi.type.ammo);
+                    if (ammo == null || p.getInventory().countItem(ammo.get()) >= 4) continue;
+                    p.getInventory().add(new net.minecraft.world.item.ItemStack(ammo.get(), 1));
+                    p.displayClientMessage(net.minecraft.network.chat.Component.translatable("gunsmod.msg.resupplied"), true);
+                    this.level().playSound(null, p.blockPosition(), Reg.sound("ui_confirm"), SoundSource.NEUTRAL, 0.6f, 1.3f);
+                }
+            }
+            case RECOVERY_TRUCK -> {
+                for (VehicleEntity v : this.level().getEntitiesOfClass(VehicleEntity.class, this.getBoundingBox().inflate(10),
+                        v -> v != this && v.isAlive() && v.getBotTeam() == team)) {
+                    boolean fixed = v.repair();
+                    if (v.getHealth() < v.getMaxHealth()) {
+                        v.heal(v.getMaxHealth() * 0.08f);
+                        fixed = true;
+                    }
+                    if (fixed) this.level().playSound(null, v.blockPosition(), Reg.sound("arm_switch"), SoundSource.NEUTRAL, 0.8f, 0.7f);
+                }
+            }
+            case COMMAND_TRUCK -> {
+                Vec3 mast = this.position().add(0, 5, 0);
+                int checks = 0;
+                for (LivingEntity e : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(72, 24, 72),
+                        e -> e.isAlive() && BotTeam.of(e) != null && BotTeam.of(e) != team)) {
+                    if (checks++ > 12) break;
+                    if (this.level().clip(new net.minecraft.world.level.ClipContext(mast, e.getEyePosition(), net.minecraft.world.level.ClipContext.Block.VISUAL,
+                            net.minecraft.world.level.ClipContext.Fluid.NONE, this)).getType() != net.minecraft.world.phys.HitResult.Type.MISS) continue;
+                    com.gunsmod.entity.ai.Spotting.spot(this.level(), team, e, 120);
+                }
+            }
+            default -> { }
+        }
+    }
+
+    /** the fuel tanker goes up in a fireball */
+    @Override
+    public void die(net.minecraft.world.damagesource.DamageSource source) {
+        if (kind == CarType.FUEL_TRUCK && !this.level().isClientSide && !this.isRemoved()) {
+            com.gunsmod.world.Blast.explode(this.level(), this, this.position().add(0, 1.5, 0), 5.5f, true, net.minecraft.world.level.Level.ExplosionInteraction.NONE,
+                    com.gunsmod.world.Blast.FX_HEAVY, 2.8f);
+        }
+        super.die(source);
     }
 
     private void clientTilt() {

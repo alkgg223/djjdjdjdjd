@@ -42,7 +42,16 @@ public enum VehicleKind {
     BRADLEY("bradley", Group.TANK),
     BMP3("bmp3", Group.TANK),
     CV90("cv90", Group.TANK),
-    BMD4("bmd4", Group.TANK);
+    BMD4("bmd4", Group.TANK),
+    STRYKER("stryker", Group.CAR),
+    BOXER("boxer", Group.CAR),
+    MRAP("mrap", Group.CAR),
+    JLTV("jltv", Group.CAR),
+    TRUCK("military_truck", Group.CAR),
+    FUEL_TRUCK("fuel_truck", Group.CAR),
+    AMMO_TRUCK("ammo_truck", Group.CAR),
+    COMMAND_TRUCK("command_truck", Group.CAR),
+    RECOVERY_TRUCK("recovery_truck", Group.CAR);
 
     public enum Group { TANK, HELI, JEEP, CAR, JET }
 
@@ -92,6 +101,15 @@ public enum VehicleKind {
             case BMP3 -> Reg.TANK_BMP3.get();
             case CV90 -> Reg.TANK_CV90.get();
             case BMD4 -> Reg.TANK_BMD4.get();
+            case STRYKER -> Reg.CAR_STRYKER.get();
+            case BOXER -> Reg.CAR_BOXER.get();
+            case MRAP -> Reg.CAR_MRAP.get();
+            case JLTV -> Reg.CAR_JLTV.get();
+            case TRUCK -> Reg.CAR_TRUCK.get();
+            case FUEL_TRUCK -> Reg.CAR_FUEL_TRUCK.get();
+            case AMMO_TRUCK -> Reg.CAR_AMMO_TRUCK.get();
+            case COMMAND_TRUCK -> Reg.CAR_COMMAND_TRUCK.get();
+            case RECOVERY_TRUCK -> Reg.CAR_RECOVERY_TRUCK.get();
         };
     }
 
@@ -147,6 +165,15 @@ public enum VehicleKind {
             case CRAM -> CarType.CRAM;
             case PICKUP -> CarType.PICKUP;
             case SUV -> CarType.SUV;
+            case STRYKER -> CarType.STRYKER;
+            case BOXER -> CarType.BOXER;
+            case MRAP -> CarType.MRAP;
+            case JLTV -> CarType.JLTV;
+            case TRUCK -> CarType.TRUCK;
+            case FUEL_TRUCK -> CarType.FUEL_TRUCK;
+            case AMMO_TRUCK -> CarType.AMMO_TRUCK;
+            case COMMAND_TRUCK -> CarType.COMMAND_TRUCK;
+            case RECOVERY_TRUCK -> CarType.RECOVERY_TRUCK;
             default -> CarType.BTR;
         };
     }

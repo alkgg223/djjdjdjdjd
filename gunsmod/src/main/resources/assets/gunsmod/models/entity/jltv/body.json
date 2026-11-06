@@ -1,0 +1,19 @@
+{
+ "loader": "neoforge:obj",
+ "model": "gunsmod:models/entity/jltv/body.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "canvas_green": "gunsmod:item/vehicle/mesh/canvas_green",
+  "dark": "gunsmod:item/vehicle/mesh/dark",
+  "glass_dark": "gunsmod:item/vehicle/mesh/glass_dark",
+  "glow": "gunsmod:item/vehicle/mesh/glow",
+  "grille": "gunsmod:item/vehicle/mesh/grille",
+  "paint": "gunsmod:item/vehicle/mesh/paint",
+  "paint_dark": "gunsmod:item/vehicle/mesh/paint_dark",
+  "red_light": "gunsmod:item/vehicle/mesh/red_light",
+  "particle": "gunsmod:item/vehicle/mesh/paint"
+ }
+}
