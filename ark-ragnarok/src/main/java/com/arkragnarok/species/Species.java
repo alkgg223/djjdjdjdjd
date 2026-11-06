@@ -28,7 +28,8 @@ public final class Species {
     public final float reach;          // melee reach beyond the hitbox (blocks)
     public final float armor;
     // model (generated from the asset build)
-    public final float modelScale, width, height, eye, hip;
+    public final float modelScale, width, height, eye, hip, headZ;
+    public final float length;
     public final float seatForward, seatHeight;
     public final boolean saddle;
     public final int lengthM;
@@ -61,6 +62,8 @@ public final class Species {
         height = m.height();
         eye = m.eye();
         hip = m.hip();
+        headZ = m.headZ();
+        length = m.length();
         seatForward = m.seatForward();
         seatHeight = m.seatHeight();
         saddle = m.saddle();

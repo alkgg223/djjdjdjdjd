@@ -17,7 +17,7 @@ import software.bernie.geckolib.model.data.EntityModelData;
 /**
  * Skeleton + animations of one species.  The geometry is the skinned mesh drawn by ArkCreatureRenderer.
  * Head tracking is spread over all neck bones, limited, and faded out while an attack / roar / hurt animation plays,
- * so the neck never folds when the creature bites something close to it.
+ * so the neck never folds when the creature bites something close to it.  The additions never accumulate: see add().
  */
 public class ArkCreatureGeoModel extends GeoModel<ArkCreature> {
     private final Species species;
@@ -69,7 +69,7 @@ public class ArkCreatureGeoModel extends GeoModel<ArkCreature> {
         float w = c.lookWeight;
         EntityModelData data = state.getData(DataTickets.ENTITY_MODEL_DATA);
         if (data != null && w > 0.01f) {
-            float yaw = Mth.clamp(data.netHeadYaw(), -50f, 50f) * Mth.DEG_TO_RAD * w;
+            float yaw = Mth.clamp(Mth.wrapDegrees(data.netHeadYaw()), -50f, 50f) * Mth.DEG_TO_RAD * w;
             float pitch = Mth.clamp(data.headPitch(), -22f, 22f) * Mth.DEG_TO_RAD * w;
             int n = Math.max(1, neck.length);
             // the neck takes 60 % of the turn, spread evenly; the head the rest
@@ -82,9 +82,15 @@ public class ArkCreatureGeoModel extends GeoModel<ArkCreature> {
         }
     }
 
+    /**
+     * Adds to the animated pose of this frame.  setRotX/Y mark the bone as "changed"; GeckoLib only clears those
+     * markers inside its own tick, so without clearing them here a bone the current animation does not key would
+     * skip its reset next frame and the look rotation would pile up frame after frame (the twisted neck).
+     */
     private static void add(GeoBone bone, float x, float y) {
         if (bone == null) return;
         bone.setRotX(bone.getRotX() + x);
         bone.setRotY(bone.getRotY() + y);
+        bone.resetStateChanges();
     }
 }

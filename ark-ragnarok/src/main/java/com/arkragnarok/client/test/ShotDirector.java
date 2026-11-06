@@ -19,6 +19,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -28,45 +29,61 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * In-game screenshot run for CI (-Dark.shots=true with --quickPlaySingleplayer): one portrait of every species at
- * real size next to a villager for scale, then the T-Rex from all sides, saddled with a rider, and frames of its
- * animations; then the game closes.
+ * In-game screenshot run for CI (-Dark.shots=true with --quickPlaySingleplayer): every species at real size next to a
+ * villager for scale plus a close-up of its face, head-tracking checks (looking up and sideways for 2 s), then the
+ * T-Rex from all sides, saddled with a rider, and frames of its animations; then the game closes.
  */
 @EventBusSubscriber(modid = ArkRagnarok.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class ShotDirector {
     private static final Logger LOG = LoggerFactory.getLogger("ARK-SHOTS");
     private static final boolean ENABLED = Boolean.getBoolean("ark.shots");
 
+    /**
+     * angle: camera around the creature (0 = in front); dist/eye/lookY in blocks; target: "body", "head" or "rex"
+     * (fixed numbers for the Rex suite); pitch/headYaw: forced look; forced: forced animation id.
+     */
     private record Shot(String name, String species, float angle, float dist, float eye, float lookY, boolean saddled, int forced,
-                        String trigger, int delay, boolean rider, float headYaw) {}
+                        String trigger, int delay, boolean rider, float headYaw, float pitch, String target) {}
 
     private static final List<Shot> SHOTS = new ArrayList<>();
 
+    private static void rex(String name, float angle, float dist, float eye, float lookY, boolean saddled, int forced, String trigger,
+                            int delay, boolean rider, float headYaw) {
+        SHOTS.add(new Shot(name, "tyrannosaurus", angle, dist, eye, lookY, saddled, forced, trigger, delay, rider, headYaw, 0, "rex"));
+    }
+
     static {
         for (Species s : SpeciesList.all()) {
-            float d = Math.max(3.5f, s.lengthM * 1.05f + 2.5f);
-            SHOTS.add(new Shot("a_" + s.id, s.id, 55, d, Math.max(1.0f, s.height * 0.75f), s.height * 0.45f, false, 0, null, 30, false, 0));
+            // whole animal from the side, a little from the front, villager in front of it for scale
+            SHOTS.add(new Shot("a_" + s.id, s.id, 70, 0, 0, 0, false, 0, null, 30, false, 0, 0, "body"));
+            // the face, three-quarter front, at eye level
+            SHOTS.add(new Shot("h_" + s.id, s.id, 38, 0, 0, 0, false, 0, null, 20, false, 0, 0, "head"));
         }
-        String r = "tyrannosaurus";
-        SHOTS.add(new Shot("rex_front", r, 0, 16, 3.6f, 3.0f, false, 0, null, 30, false, 0));
-        SHOTS.add(new Shot("rex_left", r, 90, 17, 3.0f, 2.6f, false, 0, null, 25, false, 0));
-        SHOTS.add(new Shot("rex_back", r, 180, 16, 4.0f, 2.8f, false, 0, null, 25, false, 0));
-        SHOTS.add(new Shot("rex_top", r, 60, 5, 18.0f, 1.8f, false, 0, null, 30, false, 0));
-        SHOTS.add(new Shot("rex_head", r, 35, 7, 4.6f, 4.2f, false, 0, null, 25, false, 0));
-        SHOTS.add(new Shot("rex_look_left", r, 20, 12, 3.4f, 3.4f, false, 0, null, 25, false, 45));
-        SHOTS.add(new Shot("rex_look_right", r, 340, 12, 3.4f, 3.4f, false, 0, null, 25, false, -45));
-        SHOTS.add(new Shot("rex_saddle", r, 70, 11, 7.0f, 4.0f, true, 0, null, 30, false, 0));
-        SHOTS.add(new Shot("rex_rider", r, 60, 13, 5.2f, 4.2f, true, 0, null, 35, true, 0));
-        SHOTS.add(new Shot("rex_walk", r, 90, 17, 2.8f, 2.6f, false, 1, null, 23, false, 0));
-        SHOTS.add(new Shot("rex_run", r, 90, 17, 2.8f, 2.6f, false, 2, null, 25, false, 0));
-        SHOTS.add(new Shot("rex_roar", r, 40, 15, 3.6f, 3.6f, false, 0, "roar", 26, false, 0));
-        SHOTS.add(new Shot("rex_bite", r, 40, 13, 3.0f, 3.0f, false, 0, "bite", 6, false, 0));
-        SHOTS.add(new Shot("rex_attack", r, 40, 13, 3.0f, 3.0f, false, 0, "attack", 12, false, 0));
-        SHOTS.add(new Shot("rex_death", r, 60, 15, 3.6f, 1.2f, false, 6, null, 75, false, 0));
-        SHOTS.add(new Shot("trike_attack", "triceratops", 50, 12, 2.6f, 1.6f, false, 0, "attack", 12, false, 0));
-        SHOTS.add(new Shot("stego_attack", "stegosaurus", 300, 13, 3.0f, 2.0f, false, 0, "attack", 15, false, 0));
-        SHOTS.add(new Shot("bronto_walk", "brontosaurus", 80, 30, 6.0f, 5.0f, false, 1, null, 25, false, 0));
-        SHOTS.add(new Shot("raptor_pounce", "utahraptor", 70, 8, 1.8f, 1.4f, false, 0, "attack", 13, false, 0));
+        // head tracking: looking up and to the side for 2 s - the neck must stay smooth (no twisting / winding up)
+        for (String id : new String[] {"dodo", "therizinosaurus", "gallimimus", "utahraptor", "pachycephalosaurus", "triceratops",
+                "brontosaurus", "tyrannosaurus"}) {
+            SHOTS.add(new Shot("look_" + id, id, 60, 0, 0, 0, false, 0, null, 45, false, 45, -35, "body"));
+        }
+        SHOTS.add(new Shot("look_walk_therizinosaurus", "therizinosaurus", 300, 0, 0, 0, false, 1, null, 45, false, -40, -30, "body"));
+        SHOTS.add(new Shot("look_walk_dodo", "dodo", 300, 0, 0, 0, false, 1, null, 45, false, -40, 30, "body"));
+        rex("rex_front", 0, 16, 3.6f, 3.0f, false, 0, null, 30, false, 0);
+        rex("rex_left", 90, 17, 3.0f, 2.6f, false, 0, null, 25, false, 0);
+        rex("rex_back", 180, 16, 4.0f, 2.8f, false, 0, null, 25, false, 0);
+        rex("rex_top", 60, 5, 18.0f, 1.8f, false, 0, null, 30, false, 0);
+        rex("rex_look_left", 20, 12, 3.4f, 3.4f, false, 0, null, 25, false, 45);
+        rex("rex_look_right", 340, 12, 3.4f, 3.4f, false, 0, null, 25, false, -45);
+        rex("rex_saddle", 70, 11, 7.0f, 4.0f, true, 0, null, 30, false, 0);
+        rex("rex_rider", 60, 13, 5.2f, 4.2f, true, 0, null, 35, true, 0);
+        rex("rex_walk", 90, 17, 2.8f, 2.6f, false, 1, null, 23, false, 0);
+        rex("rex_run", 90, 17, 2.8f, 2.6f, false, 2, null, 25, false, 0);
+        rex("rex_roar", 40, 15, 3.6f, 3.6f, false, 0, "roar", 26, false, 0);
+        rex("rex_bite", 40, 13, 3.0f, 3.0f, false, 0, "bite", 6, false, 0);
+        rex("rex_attack", 40, 13, 3.0f, 3.0f, false, 0, "attack", 12, false, 0);
+        rex("rex_death", 60, 15, 3.6f, 1.2f, false, 6, null, 75, false, 0);
+        SHOTS.add(new Shot("trike_attack", "triceratops", 50, 0, 0, 0, false, 0, "attack", 12, false, 0, 0, "body"));
+        SHOTS.add(new Shot("stego_attack", "stegosaurus", 300, 0, 0, 0, false, 0, "attack", 15, false, 0, 0, "body"));
+        SHOTS.add(new Shot("bronto_walk", "brontosaurus", 80, 0, 0, 0, false, 1, null, 25, false, 0, 0, "body"));
+        SHOTS.add(new Shot("raptor_pounce", "utahraptor", 70, 0, 0, 0, false, 0, "attack", 13, false, 0, 0, "body"));
     }
 
     private static int phase = -1;
@@ -149,9 +166,7 @@ public final class ShotDirector {
         oy = base.getY();
         oz = base.getZ() + 0.5;
         if (sp != null) {
-            sp.getAbilities().flying = true;
-            sp.getAbilities().mayfly = true;
-            sp.onUpdateAbilities();
+            sp.setGameMode(GameType.SPECTATOR);   // no collisions with the creatures, nothing of the player in the frame
         }
         // a villager standing beside the creature shows the real size
         Villager v = EntityType.VILLAGER.create(level);
@@ -187,13 +202,17 @@ public final class ShotDirector {
         c.moveTo(ox, oy, oz, 0f, 0f);
         c.setYBodyRot(0f);
         c.setYHeadRot(s.headYaw());
+        c.setXRot(s.pitch());
+        c.xRotO = s.pitch();
         c.setSaddled(s.saddled());
         c.setForcedAnim(s.forced());
         if (s.trigger() != null) c.triggerAnim("action", s.trigger());
         Entity scale = scaleId != null ? level.getEntity(scaleId) : null;
         if (scale != null) {
-            double side = Math.max(2.5, c.getBbWidth() * 0.5 + 1.8);
-            scale.moveTo(ox + side, oy, oz + side * 0.6, 200f, 0f);
+            // in front of the nose and a little to the side: never between the camera and the creature
+            Species sv = SpeciesList.get(s.species());
+            scale.moveTo(ox - Math.max(0.9, sv.width * 0.6), oy, oz + sv.headZ * 1.15 + Math.max(0.9, sv.length * 0.12), 200f, 0f);
+            if (scale instanceof Villager vv) vv.setInvisible(s.target().equals("head"));
         }
         if (s.rider() && riderId == null) {
             Villager v = EntityType.VILLAGER.create(level);
@@ -210,17 +229,33 @@ public final class ShotDirector {
             if (v != null) v.discard();
             riderId = null;
         }
+        Species sp_ = SpeciesList.get(s.species());
+        // what the camera looks at, and from how far
+        double tx = ox, ty, tz = oz, dist, camY;
+        if (s.target().equals("rex")) {
+            ty = oy + s.lookY();
+            dist = s.dist();
+            camY = oy + s.eye();
+        } else if (s.target().equals("head")) {
+            ty = oy + sp_.eye * 0.97;
+            tz = oz + sp_.headZ * 1.08;
+            dist = Math.max(0.75, sp_.length * 0.11 + 0.55);
+            camY = ty + dist * 0.12;
+        } else {
+            ty = oy + sp_.height * 0.5;
+            tz = oz + sp_.headZ * 1.1 - sp_.length * 0.5;
+            dist = Math.max(2.2, (sp_.length * 0.5 + 1.6) / 1.05);
+            camY = ty + dist * 0.16;
+        }
         double a = Math.toRadians(s.angle());
-        double cx = ox + Math.sin(a) * s.dist();
-        double cz = oz + Math.cos(a) * s.dist();
-        double cy = oy + s.eye();
-        double dx = ox - cx, dy = oy + s.lookY() - cy, dz = oz - cz;
+        double cx = tx + Math.sin(a) * dist;
+        double cz = tz + Math.cos(a) * dist;
+        double cy = camY;
+        double dx = tx - cx, dy = ty - cy, dz = tz - cz;
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
         float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
         ServerPlayer sp = srv.getPlayerList().getPlayer(playerId);
         if (sp != null) {
-            sp.getAbilities().flying = true;
-            sp.onUpdateAbilities();
             sp.teleportTo(level, cx, cy - sp.getEyeHeight(), cz, yaw, pitch);
             sp.setYHeadRot(yaw);
         }
