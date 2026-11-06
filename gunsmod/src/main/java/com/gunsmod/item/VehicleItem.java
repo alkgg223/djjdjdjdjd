@@ -76,6 +76,8 @@ public class VehicleItem extends Item {
 
     @Override
     public InteractionResult useOn(UseOnContext ctx) {
+        // ships go on the water (see use)
+        if (kind.group == VehicleKind.Group.SHIP) return InteractionResult.PASS;
         Level level = ctx.getLevel();
         if (!level.isClientSide) {
             BlockPos p = ctx.getClickedPos().relative(ctx.getClickedFace());
@@ -92,12 +94,44 @@ public class VehicleItem extends Item {
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
+    /** 3.0: a ship is put on the water the player looks at; sneaking it comes with a soldier crew that sails it */
+    @Override
+    public net.minecraft.world.InteractionResultHolder<ItemStack> use(Level level, net.minecraft.world.entity.player.Player player, net.minecraft.world.InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (kind.group != VehicleKind.Group.SHIP) return super.use(level, player, hand);
+        if (level.isClientSide) return net.minecraft.world.InteractionResultHolder.success(stack);
+        Vec3 eye = player.getEyePosition();
+        net.minecraft.world.phys.BlockHitResult hit = level.clip(new net.minecraft.world.level.ClipContext(eye, eye.add(player.getViewVector(1f).scale(32)),
+                net.minecraft.world.level.ClipContext.Block.OUTLINE, net.minecraft.world.level.ClipContext.Fluid.SOURCE_ONLY, player));
+        if (hit.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK || !level.getFluidState(hit.getBlockPos()).is(net.minecraft.tags.FluidTags.WATER)) {
+            player.displayClientMessage(Component.translatable("gunsmod.msg.ship_water").withStyle(ChatFormatting.RED), true);
+            return net.minecraft.world.InteractionResultHolder.fail(stack);
+        }
+        BlockPos p = hit.getBlockPos();
+        com.gunsmod.entity.ShipType st = kind.ship();
+        Mob m = create(level, stack, p.getX() + 0.5, p.getY() + 0.9 - st.waterline * 0.25, p.getZ() + 0.5, player.getYRot());
+        if (m == null) return net.minecraft.world.InteractionResultHolder.fail(stack);
+        link(m, p, null);
+        level.addFreshEntity(m);
+        if (player.isShiftKeyDown() && m instanceof com.gunsmod.entity.ShipEntity ship && level instanceof net.minecraft.server.level.ServerLevel sl) {
+            com.gunsmod.entity.BotEntity b = new com.gunsmod.entity.BotEntity(Reg.BOT.get(), sl);
+            b.moveTo(m.getX(), m.getY() + 2, m.getZ(), m.getYRot(), 0);
+            b.setup(team, sl.random, null);
+            b.home = p;
+            sl.addFreshEntity(b);
+            ship.board(b, 0);
+        }
+        if (!player.getAbilities().instabuild) stack.shrink(1);
+        return net.minecraft.world.InteractionResultHolder.success(stack);
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tip, TooltipFlag flag) {
         String k = kind == VehicleKind.B2 ? "b2" : switch (kind.group) {
             case TANK -> "tank";
             case HELI -> "heli";
             case JET -> "jet";
+            case SHIP -> "ship";
             default -> kind.item;
         };
         tip.add(Component.translatable("gunsmod.desc.vehicle." + kind.item).withStyle(ChatFormatting.GRAY));

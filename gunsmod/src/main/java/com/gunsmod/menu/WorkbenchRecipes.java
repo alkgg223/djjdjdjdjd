@@ -163,6 +163,8 @@ public final class WorkbenchRecipes {
                             ? List.of(c(steel, 96), c(Items.IRON_BLOCK, 16), c(Items.DIAMOND_BLOCK, 2), c(Items.REDSTONE_BLOCK, 12), c(Items.TNT, 32), c(dye, 4))
                             : List.of(c(steel, 64), c(Items.IRON_BLOCK, 12), c(Items.GLASS, 6), c(Items.REDSTONE_BLOCK, 8), c(Items.BLAZE_ROD, 4),
                             c(Items.TNT, 8), c(dye, 4));
+                    case SHIP -> List.of(c(steel, k == VehicleKind.CARRIER ? 160 : k == VehicleKind.PATROL_BOAT || k == VehicleKind.LANDING_CRAFT ? 32 : 72),
+                            c(Items.IRON_BLOCK, k == VehicleKind.CARRIER ? 32 : 10), c(Items.REDSTONE_BLOCK, 6), c(Items.TNT, k == VehicleKind.LANDING_CRAFT ? 2 : 12), c(dye, 4));
                     case CAR -> k == VehicleKind.PANTSIR
                             ? List.of(c(steel, 52), c(Items.IRON_BLOCK, 10), c(Items.REDSTONE_BLOCK, 8), c(Items.COMPASS, 2), c(Items.TNT, 10), c(dye, 4))
                             : List.of(c(steel, 40), c(Items.IRON_BLOCK, 8), c(Items.REDSTONE_BLOCK, 4), c(Items.TNT, 6), c(dye, 4));

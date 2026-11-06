@@ -449,7 +449,21 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         this.calculateEntityAnimation(false);
     }
 
+    /** 3.0: shot off a carrier's catapult at this speed (the pilot's game takes the speed over from the synced value) */
+    private int catapultTicks;
+
+    public void catapult(double v) {
+        speed = v;
+        velocity = forward().scale(v);
+        catapultTicks = 20;
+        this.entityData.set(DATA_SPEED, (float) v);
+    }
+
     private void physics() {
+        if (this.level().isClientSide && speed < 0.01 && !this.onGround() && this.entityData.get(DATA_SPEED) > 0.5f) {
+            speed = this.entityData.get(DATA_SPEED);
+            velocity = forward().scale(speed);
+        }
         LivingEntity pilot = getControllingPassenger();
         boolean crashing = isCrashing();
         boolean ground = this.onGround();
@@ -674,7 +688,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         lastPos = this.position();
         if (!this.isControlledByLocalInstance()) {
             velocity = moved;
-            if (!this.level().isClientSide) speed = moved.length();
+            if (!this.level().isClientSide && catapultTicks <= 0) speed = moved.length();
         }
         if (isCrashing()) roll += 9f;
         else if (lockedPilot.test(this)) {
@@ -699,6 +713,7 @@ public class JetEntity extends VehicleEntity implements Aircraft {
         visPitch = pitch();
         boolean up = isGearUp();
         gear = Mth.clamp(gear + (up ? 0.025f : -0.025f), 0f, 1f);
+        if (catapultTicks > 0) catapultTicks--;
         if (!this.level().isClientSide) {
             this.entityData.set(DATA_SPEED, (float) speed);
             this.entityData.set(DATA_THROTTLE, throttle);

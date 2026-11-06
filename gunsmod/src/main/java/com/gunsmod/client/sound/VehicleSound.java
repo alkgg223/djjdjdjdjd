@@ -25,7 +25,7 @@ import net.minecraft.world.phys.Vec3;
  * turbine), following the vehicle and cross-fading with speed / rotor speed. Also exhaust, rotor wash and damage smoke.
  */
 public class VehicleSound extends AbstractTickableSoundInstance {
-    private static final int TANK_IDLE = 0, TANK_DRIVE = 1, ROTOR = 2, CAR_IDLE = 3, CAR_DRIVE = 4, FPV = 5, SHAHED = 6, QUAD = 7, HEXA = 8, PLANE = 9, LANCET = 10;
+    private static final int TANK_IDLE = 0, TANK_DRIVE = 1, ROTOR = 2, CAR_IDLE = 3, CAR_DRIVE = 4, FPV = 5, SHAHED = 6, QUAD = 7, HEXA = 8, PLANE = 9, LANCET = 10, SHIP = 11;
     private static final Map<VehicleEntity, VehicleSound[]> ACTIVE = new WeakHashMap<>();
     private static final Map<VehicleEntity, Boolean> RUNNING = new WeakHashMap<>();
 
@@ -44,6 +44,7 @@ public class VehicleSound extends AbstractTickableSoundInstance {
             case HEXA -> "drone_hexa";
             case PLANE -> "drone_plane";
             case LANCET -> "drone_lancet";
+            case SHIP -> "ship_engine";
             default -> "heli_rotor";
         }), SoundSource.NEUTRAL, SoundInstance.createUnseededRandom());
         this.vehicle = v;
@@ -62,6 +63,14 @@ public class VehicleSound extends AbstractTickableSoundInstance {
         else if (v instanceof HelicopterEntity h) heli(h);
         else if (v instanceof ArmoredCarEntity c) car(c);
         else if (v instanceof JetEntity j) JetSound.tick(j);
+        else if (v instanceof com.gunsmod.entity.ShipEntity sh) {
+            VehicleSound[] s = ACTIVE.get(sh);
+            if (sh.isAlive() && !sh.submerged() && !playing(s)) {
+                s = new VehicleSound[]{new VehicleSound(sh, SHIP)};
+                ACTIVE.put(sh, s);
+                Minecraft.getInstance().getSoundManager().play(s[0]);
+            }
+        }
         else if (v instanceof com.gunsmod.entity.DroneEntity d) {
             drone(d);
             return;
@@ -231,12 +240,14 @@ public class VehicleSound extends AbstractTickableSoundInstance {
                 case HEXA -> 2.6f;
                 case PLANE -> 4.5f;
                 case LANCET -> 2.4f;
+                case SHIP -> (float) (3.0 + Math.min(6.0, sp * 9.0));
                 default -> 7f;
             };
             this.pitch = switch (kind) {
                 case FPV -> (float) (0.85 + Math.min(0.35, sp * 0.22));
                 case QUAD, HEXA -> (float) (0.9 + Math.min(0.25, sp * 0.3));
                 case LANCET -> (float) (0.9 + Math.min(0.3, sp * 0.12));
+                case SHIP -> (float) (0.7 + Math.min(0.35, sp * 0.4));
                 default -> (float) (0.95 + Math.min(0.1, sp * 0.05));
             };
         } else if (kind == ROTOR) {

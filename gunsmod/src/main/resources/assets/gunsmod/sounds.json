@@ -2228,5 +2228,27 @@
    }
   ],
   "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "ship_engine": {
+  "sounds": [
+   {
+    "name": "gunsmod:ship_engine",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.ship_engine"
+ },
+ "torpedo_launch": {
+  "sounds": [
+   {
+    "name": "gunsmod:torpedo_launch_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:torpedo_launch_2",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.torpedo"
  }
 }

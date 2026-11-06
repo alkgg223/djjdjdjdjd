@@ -299,6 +299,21 @@ public final class Reg {
     public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_CV90 = tank("tank_cv90", TankType.CV90);
     public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_BMD4 = tank("tank_bmd4", TankType.BMD4);
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.gunsmod.entity.ShipEntity>> SHIP_PATROL = ship("ship_patrol", com.gunsmod.entity.ShipType.PATROL);
+    public static final DeferredHolder<EntityType<?>, EntityType<com.gunsmod.entity.ShipEntity>> SHIP_FRIGATE = ship("ship_frigate", com.gunsmod.entity.ShipType.FRIGATE);
+    public static final DeferredHolder<EntityType<?>, EntityType<com.gunsmod.entity.ShipEntity>> SHIP_DESTROYER = ship("ship_destroyer", com.gunsmod.entity.ShipType.DESTROYER);
+    public static final DeferredHolder<EntityType<?>, EntityType<com.gunsmod.entity.ShipEntity>> SHIP_LANDING = ship("ship_landing", com.gunsmod.entity.ShipType.LANDING);
+    public static final DeferredHolder<EntityType<?>, EntityType<com.gunsmod.entity.ShipEntity>> SHIP_SUBMARINE = ship("ship_submarine", com.gunsmod.entity.ShipType.SUBMARINE);
+    public static final DeferredHolder<EntityType<?>, EntityType<com.gunsmod.entity.ShipEntity>> SHIP_CARRIER = ship("ship_carrier", com.gunsmod.entity.ShipType.CARRIER);
+    public static final DeferredHolder<EntityType<?>, EntityType<com.gunsmod.entity.TorpedoEntity>> TORPEDO = ENTITIES.register("torpedo",
+            () -> EntityType.Builder.<com.gunsmod.entity.TorpedoEntity>of(com.gunsmod.entity.TorpedoEntity::new, MobCategory.MISC).sized(0.6f, 0.6f)
+                    .clientTrackingRange(10).updateInterval(1).build("torpedo"));
+
+    private static DeferredHolder<EntityType<?>, EntityType<com.gunsmod.entity.ShipEntity>> ship(String id, com.gunsmod.entity.ShipType k) {
+        return ENTITIES.register(id, () -> EntityType.Builder.<com.gunsmod.entity.ShipEntity>of((t, l) -> new com.gunsmod.entity.ShipEntity(t, l, k), MobCategory.MISC)
+                .sized(k.width(), k.height()).eyeHeight(k.height() * 0.8f).clientTrackingRange(20).updateInterval(1).build(id));
+    }
+
     private static DeferredHolder<EntityType<?>, EntityType<TankEntity>> tank(String id, TankType k) {
         return ENTITIES.register(id, () -> EntityType.Builder.<TankEntity>of((t, l) -> new TankEntity(t, l, k), MobCategory.MISC)
                 .sized((float) k.geo.size()[0], (float) k.geo.size()[1]).eyeHeight(2.0f).clientTrackingRange(12).updateInterval(1).build(id));

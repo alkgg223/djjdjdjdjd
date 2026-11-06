@@ -130,6 +130,10 @@ public final class ClientSetup {
         for (String p : com.gunsmod.entity.WreckPieceEntity.KINDS) e.register(BakedRender.id("entity/debris/" + p));
         for (String p : com.gunsmod.client.render.DroneRenderer.PARTS) e.register(BakedRender.id("entity/drone/" + p));
         for (String p : com.gunsmod.client.render.ObjectiveRenderer.PARTS) e.register(BakedRender.id("entity/objective/" + p));
+        for (com.gunsmod.entity.ShipType st : com.gunsmod.entity.ShipType.values()) {
+            for (String p : com.gunsmod.client.render.ShipRenderer.PARTS) e.register(BakedRender.id("entity/" + st.model + "/" + p));
+        }
+        e.register(BakedRender.id("entity/naval/torpedo"));
         for (var g : com.gunsmod.block.airdef.AirDefenseGeo.GEO.entrySet()) {
             e.register(BakedRender.id("entity/airdef/" + g.getKey() + "/base"));
             e.register(BakedRender.id("entity/airdef/" + g.getKey() + "/head"));
@@ -174,6 +178,13 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.HELI_KA52.get(), HelicopterRenderer::new);
         e.registerEntityRenderer(Reg.HELI_UH60.get(), HelicopterRenderer::new);
         e.registerEntityRenderer(Reg.HELI_CH47.get(), HelicopterRenderer::new);
+        e.registerEntityRenderer(Reg.SHIP_PATROL.get(), com.gunsmod.client.render.ShipRenderer::new);
+        e.registerEntityRenderer(Reg.SHIP_FRIGATE.get(), com.gunsmod.client.render.ShipRenderer::new);
+        e.registerEntityRenderer(Reg.SHIP_DESTROYER.get(), com.gunsmod.client.render.ShipRenderer::new);
+        e.registerEntityRenderer(Reg.SHIP_LANDING.get(), com.gunsmod.client.render.ShipRenderer::new);
+        e.registerEntityRenderer(Reg.SHIP_SUBMARINE.get(), com.gunsmod.client.render.ShipRenderer::new);
+        e.registerEntityRenderer(Reg.SHIP_CARRIER.get(), com.gunsmod.client.render.ShipRenderer::new);
+        e.registerEntityRenderer(Reg.TORPEDO.get(), com.gunsmod.client.render.ShipRenderer.Torpedo::new);
         e.registerEntityRenderer(Reg.BTR.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.PANTSIR.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.HIMARS.get(), ArmoredCarRenderer::new);

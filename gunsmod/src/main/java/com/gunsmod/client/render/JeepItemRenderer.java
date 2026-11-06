@@ -72,6 +72,19 @@ public class JeepItemRenderer extends BlockEntityWithoutLevelRenderer {
             pose.popPose();
             return;
         }
+        if (grp == VehicleKind.Group.SHIP) {
+            com.gunsmod.entity.ShipType st = v.kind.ship();
+            float k = (float) Math.min(1.0, 48.0 / st.length);
+            pose.pushPose();
+            pose.translate(0.5f, 0.12f, 0.5f);
+            float s = (ctx == ItemDisplayContext.GUI ? 0.11f : ctx == ItemDisplayContext.NONE ? 0.2f : 0.08f) * k;
+            pose.scale(s, s, s);
+            if (ctx == ItemDisplayContext.GUI) pose.translate(0, 0.4f / k, 0);
+            pose.mulPose(Axis.YP.rotationDegrees(180));
+            ShipRenderer.renderShip(pose, buf, light, st, v.team, 0f, 0f);
+            pose.popPose();
+            return;
+        }
         pose.pushPose();
         pose.translate(0.5f, heli ? 0.08f : 0.14f, 0.5f);
         float s = ctx == ItemDisplayContext.GUI ? (heli ? 0.085f : longOne ? 0.085f : 0.115f) : ctx == ItemDisplayContext.NONE ? 0.2f : (heli ? 0.07f : 0.09f);

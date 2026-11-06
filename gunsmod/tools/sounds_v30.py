@@ -260,3 +260,55 @@ def build_jets3():
         put(name + "_flyby", [flyby(np.random.default_rng(seed + 3 + v), e) for v in range(2)], "jet_flyby")
     with open(path, "w") as fh:
         json.dump(sounds, fh, indent=1)
+
+
+def diesel(rng, L=3.0, rate=22.0):
+    """a ship's diesels: slow heavy firing pulses, the deep hull drone and the water rushing past"""
+    from sounds import _loopify, place, env_exp
+    n = int(SR * L)
+    k = np.arange(n) / SR
+    pulses = np.zeros(n)
+    tt = 0.0
+    burst = lp(noise(0.06, rng), 400) * env_exp(int(0.06 * SR), 0.008, 0.002)
+    while tt < L - 0.07:
+        place(pulses, burst * (0.8 + rng.random() * 0.4), tt)
+        tt += (1 / rate) * (1 + 0.02 * rng.standard_normal())
+    hum = sum(np.sin(2 * np.pi * rate * h * k + h) / h for h in range(1, 5)) * 0.4
+    water = bp(noise(L, rng), 200, 1400) * 0.35 * (1 + 0.2 * np.sin(2 * np.pi * 0.4 * k))
+    return _loopify(norm(lp(sat(pulses * 2.2 + hum + water, 1.6), 1800), 0.85))
+
+
+def torpedo_launch(seed):
+    rng = np.random.default_rng(seed)
+    from sounds import place, env_exp
+    n = int(SR * 1.6)
+    out = np.zeros(n)
+    thump = lp(noise(0.3, rng), 300) * env_exp(int(0.3 * SR), 0.005, 0.12) * 1.5
+    place(out, thump, 0.0)
+    whoosh = bp(noise(1.2, rng), 300, 2600) * np.linspace(0.8, 0, int(1.2 * SR))
+    place(out, whoosh, 0.05)
+    for i in range(40):
+        f = 600 + rng.random() * 1800
+        L = 0.04 + rng.random() * 0.05
+        kk = np.arange(int(L * SR)) / SR
+        place(out, np.sin(2 * np.pi * f * (1 + kk * 8) * kk) * np.exp(-kk * 40) * 0.3, 0.1 + rng.random() * 1.3)
+    return fade(norm(out, 0.9), 0.001, 0.2)
+
+
+def build_naval():
+    path = os.path.join(ROOT, "sounds.json")
+    with open(path) as fh:
+        sounds = json.load(fh)
+
+    def put(name, xs, subtitle):
+        files = []
+        for v, x in enumerate(xs):
+            fname = f"{name}_{v + 1}" if len(xs) > 1 else name
+            write_ogg(os.path.join(OUT, fname + ".ogg"), x)
+            files.append(f"gunsmod:{fname}")
+        sounds[name] = {"sounds": files, "subtitle": f"subtitles.gunsmod.{subtitle}"}
+
+    put("ship_engine", [diesel(np.random.default_rng(6200))], "ship_engine")
+    put("torpedo_launch", [torpedo_launch(6210 + v) for v in range(2)], "torpedo")
+    with open(path, "w") as fh:
+        json.dump(sounds, fh, indent=1)

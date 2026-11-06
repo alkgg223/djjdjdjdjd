@@ -34,6 +34,6 @@ public final class SoundNames {
             "fa18_flyby", "f15e_idle", "f15e_engine", "f15e_burner", "f15e_flyby", "su57_idle",
             "su57_engine", "su57_burner", "su57_flyby", "typhoon_idle", "typhoon_engine", "typhoon_burner",
             "typhoon_flyby", "rafale_idle", "rafale_engine", "rafale_burner", "rafale_flyby", "gripen_idle",
-            "gripen_engine", "gripen_burner", "gripen_flyby"
+            "gripen_engine", "gripen_burner", "gripen_flyby", "ship_engine", "torpedo_launch"
     };
 }

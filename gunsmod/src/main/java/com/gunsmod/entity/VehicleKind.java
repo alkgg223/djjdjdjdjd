@@ -59,9 +59,15 @@ public enum VehicleKind {
     RAFALE("rafale", Group.JET),
     GRIPEN("gripen", Group.JET),
     UH60("uh60", Group.HELI),
-    CH47("ch47", Group.HELI);
+    CH47("ch47", Group.HELI),
+    PATROL_BOAT("patrol_boat", Group.SHIP),
+    FRIGATE("frigate", Group.SHIP),
+    DESTROYER("destroyer", Group.SHIP),
+    LANDING_CRAFT("landing_craft", Group.SHIP),
+    SUBMARINE("submarine", Group.SHIP),
+    CARRIER("carrier", Group.SHIP);
 
-    public enum Group { TANK, HELI, JEEP, CAR, JET }
+    public enum Group { TANK, HELI, JEEP, CAR, JET, SHIP }
 
     public final String item;
     public final Group group;
@@ -126,6 +132,12 @@ public enum VehicleKind {
             case GRIPEN -> Reg.JET_GRIPEN.get();
             case UH60 -> Reg.HELI_UH60.get();
             case CH47 -> Reg.HELI_CH47.get();
+            case PATROL_BOAT -> Reg.SHIP_PATROL.get();
+            case FRIGATE -> Reg.SHIP_FRIGATE.get();
+            case DESTROYER -> Reg.SHIP_DESTROYER.get();
+            case LANDING_CRAFT -> Reg.SHIP_LANDING.get();
+            case SUBMARINE -> Reg.SHIP_SUBMARINE.get();
+            case CARRIER -> Reg.SHIP_CARRIER.get();
         };
     }
 
@@ -145,6 +157,18 @@ public enum VehicleKind {
             case RAFALE -> JetType.RAFALE;
             case GRIPEN -> JetType.GRIPEN;
             default -> JetType.F16;
+        };
+    }
+
+    public ShipType ship() {
+        return switch (this) {
+            case PATROL_BOAT -> ShipType.PATROL;
+            case FRIGATE -> ShipType.FRIGATE;
+            case DESTROYER -> ShipType.DESTROYER;
+            case LANDING_CRAFT -> ShipType.LANDING;
+            case SUBMARINE -> ShipType.SUBMARINE;
+            case CARRIER -> ShipType.CARRIER;
+            default -> ShipType.PATROL;
         };
     }
 
