@@ -180,7 +180,8 @@ public class Survivor extends PathfinderMob {
     void craft() {
         // stock up for the house it is about to build: lots of planks for wood, sticks for thatch
         int logs = count(Survivor::isLog);
-        int plankGoal = logs >= 20 || baseTier == Tier.WOOD ? 76 : 16;
+        Tier planned = baseTier != null ? baseTier : (logs * 4 + count(Survivor::isPlank) >= 72 ? Tier.WOOD : Tier.THATCH);
+        int plankGoal = planned == Tier.WOOD || planned == Tier.STONE ? 76 : 16;
         int stickGoal = baseTier == null || baseTier == Tier.THATCH ? 48 : 12;
         for (int k = 0; k < 4; k++) {
             if (count(Survivor::isPlank) < plankGoal && count(Survivor::isLog) > 4 && take(Survivor::isLog, 1)) give(new ItemStack(Items.OAK_PLANKS, 4));
@@ -444,9 +445,10 @@ public class Survivor extends PathfinderMob {
                 return;
             }
             // 4. build the base when it can afford it
-            Tier want = count(Survivor::isStone) >= 120 && count(s -> s.is(Items.IRON_INGOT)) >= 2 ? Tier.STONE
-                    : count(Survivor::isPlank) + count(Survivor::isLog) * 4 >= 80 ? Tier.WOOD : Tier.THATCH;
-            if (base == null && canAffordHouse(want)) {
+            // the best house it can actually pay for right now
+            Tier want = canAffordHouse(Tier.STONE) ? Tier.STONE : canAffordHouse(Tier.WOOD) ? Tier.WOOD
+                    : canAffordHouse(Tier.THATCH) ? Tier.THATCH : null;
+            if (base == null && want != null) {
                 BlockPos site = chooseSite();
                 if (site != null) {
                     base = site;
@@ -458,7 +460,7 @@ public class Survivor extends PathfinderMob {
                 start("build", base, null);
                 return;
             }
-            if (base != null && baseTier != null && buildStep >= 7 && baseTier.ordinal() < want.ordinal() && canAffordHouse(want)) {
+            if (base != null && baseTier != null && buildStep >= 7 && want != null && baseTier.ordinal() < want.ordinal()) {
                 demolish();
                 baseTier = want;
                 buildStep = 0;

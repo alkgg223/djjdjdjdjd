@@ -109,6 +109,9 @@ public final class SmokeTest {
 
     private static void startSystems(ServerLevel level) {
         BlockPos spawn = level.getSharedSpawnPos();
+        // keep the whole test area simulated (a server without players only ticks entities right at spawn)
+        int scx = spawn.getX() >> 4, scz = spawn.getZ() >> 4;
+        for (int cx = -5; cx <= 5; cx++) for (int cz = -5; cz <= 5; cz++) level.setChunkForced(scx + cx, scz + cz, true);
         fake = net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(level);
         dodo = ModEntities.type("dodo").spawn(level, level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn.offset(20, 0, -20)),
                 MobSpawnType.COMMAND);
@@ -138,6 +141,10 @@ public final class SmokeTest {
 
     private static void systems(MinecraftServer server, ServerLevel level) {
         int t = tick - 240;
+        if (dodo != null && (t == 5 || t == 20 || t == 40)) {
+            LOG.info("ARK-SMOKE dodo t={} torpor {} / {} unconscious {} alive {} ticking {}", t, dodo.getTorpor(), dodo.maxTorpor(), dodo.isUnconscious(),
+                    dodo.isAlive(), level.isPositionEntityTicking(dodo.blockPosition()));
+        }
         if (t == 80 && dodo != null) {
             check(dodo.isUnconscious(), "dodo knocked out by torpor");
             fake.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, com.arkragnarok.taming.Taming.preferredKibble(dodo.species()).copyWithCount(6));
