@@ -115,7 +115,15 @@ public class TankEntity extends VehicleEntity {
 
     @Override
     public int seatCount() {
-        return 1;
+        return 1 + kind.riders.length;
+    }
+
+    /** the commander first; on a fighting vehicle the soldiers of the side ride on the hull */
+    @Override
+    public int seatForBot(BotEntity bot) {
+        int n = this.getPassengers().size();
+        if (n == 0) return 0;
+        return n < seatCount() && bot.getBotTeam() == getBotTeam() ? n : -1;
     }
 
     @Override
@@ -169,6 +177,10 @@ public class TankEntity extends VehicleEntity {
 
     @Override
     protected Vec3 seatModel(int seat) {
+        if (seat > 0 && seat <= kind.riders.length) {
+            double[] r = kind.riders[seat - 1];
+            return new Vec3(r[0], r[1], r[2]);
+        }
         double[] s = geo.seat();
         return turretModel(s[0], s[1], s[2], getTurretYaw());
     }
@@ -427,9 +439,12 @@ public class TankEntity extends VehicleEntity {
         shell.setPower(kind.shellDamageArmour, kind.shellDamageSoft, kind.splash);
         shell.alignToMotion();
         this.level().addFreshEntity(shell);
-        this.level().playSound(null, muzzle.x, muzzle.y, muzzle.z, Reg.sound("tank_fire"), SoundSource.NEUTRAL, 9f, 0.95f + this.random.nextFloat() * 0.1f);
+        boolean ifv = kind.ifv();
+        this.level().playSound(null, muzzle.x, muzzle.y, muzzle.z, Reg.sound(ifv ? "aa_35mm" : "tank_fire"), SoundSource.NEUTRAL, ifv ? 6f : 9f,
+                (ifv ? 1.1f : 0.95f) + this.random.nextFloat() * 0.1f);
         if (this.level() instanceof ServerLevel sl) {
-            PacketDistributor.sendToPlayersNear(sl, null, muzzle.x, muzzle.y, muzzle.z, com.gunsmod.gun.GunLogic.SHOT_RANGE, new Net.MuzzleFx(muzzle, dir, 1.6f, this.getId()));
+            PacketDistributor.sendToPlayersNear(sl, null, muzzle.x, muzzle.y, muzzle.z, com.gunsmod.gun.GunLogic.SHOT_RANGE,
+                    new Net.MuzzleFx(muzzle, dir, ifv ? 0.55f : 1.6f, this.getId()));
             if (gunner != null) BotEntity.alertGunfire(sl, gunner, 96);
         }
     }

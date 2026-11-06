@@ -279,6 +279,18 @@ public final class Reg {
                 .updateInterval(1).build(id));
     }
 
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_M1A2SEP = tank("tank_m1a2sep", TankType.M1A2SEP);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_LEOPARD2A7 = tank("tank_leopard2a7", TankType.LEOPARD2A7);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_T14 = tank("tank_t14", TankType.T14);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_T80BVM = tank("tank_t80bvm", TankType.T80BVM);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_MERKAVA4 = tank("tank_merkava4", TankType.MERKAVA4);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_K2 = tank("tank_k2", TankType.K2);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_TYPE99A = tank("tank_type99a", TankType.TYPE99A);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_BRADLEY = tank("tank_bradley", TankType.BRADLEY);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_BMP3 = tank("tank_bmp3", TankType.BMP3);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_CV90 = tank("tank_cv90", TankType.CV90);
+    public static final DeferredHolder<EntityType<?>, EntityType<TankEntity>> TANK_BMD4 = tank("tank_bmd4", TankType.BMD4);
+
     private static DeferredHolder<EntityType<?>, EntityType<TankEntity>> tank(String id, TankType k) {
         return ENTITIES.register(id, () -> EntityType.Builder.<TankEntity>of((t, l) -> new TankEntity(t, l, k), MobCategory.MISC)
                 .sized((float) k.geo.size()[0], (float) k.geo.size()[1]).eyeHeight(2.0f).clientTrackingRange(12).updateInterval(1).build(id));

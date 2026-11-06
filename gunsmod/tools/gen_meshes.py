@@ -33,6 +33,9 @@ def main(only=None):
         groups.append((key, lambda fn=fn: fn()[0]))
     for key, fn in NV.TANKS2.items():
         groups.append((key, lambda fn=fn: fn()[0]))
+    import mbt_mesh as MB
+    for key, fn in MB.TANKS3.items():
+        groups.append((key, lambda fn=fn: fn()[0]))
     groups.append(("tank_gear", lambda: dict(TM.gear_parts())))
     for key, fn in HM.HELIS.items():
         groups.append((key, lambda fn=fn: fn()[0]))

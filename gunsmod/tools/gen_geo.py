@@ -86,6 +86,10 @@ def main():
     for k, fn in NV.TANKS2.items():
         fn()
         tanks[k] = (k, NV.GEO[k])
+    import mbt_mesh as MB
+    for k, fn in MB.TANKS3.items():
+        fn()
+        tanks[k] = (k, MB.GEO[k])
     for name, (model, g) in tanks.items():
         args = [jv(model)] + [jv(g[f]) for f in TANK_FIELDS]
         lines.append(f"    public static final Tank {name.upper()} = new Tank({', '.join(args)});")

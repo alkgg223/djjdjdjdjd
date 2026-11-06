@@ -20,8 +20,11 @@ public class ConvoyScreen extends Screen {
     private static final int[] OPTIONS = {VehicleKind.PICKUP.ordinal(), VehicleKind.SUV.ordinal(), ConvoyToolItem.JEEP, VehicleKind.TOW_HUMVEE.ordinal(), VehicleKind.BTR.ordinal(), VehicleKind.PANTSIR.ordinal(),
             VehicleKind.HIMARS.ordinal(), VehicleKind.GRAD.ordinal(), VehicleKind.ABRAMS.ordinal(), VehicleKind.LEOPARD.ordinal(),
             VehicleKind.T90.ordinal(), VehicleKind.CHALLENGER.ordinal(), VehicleKind.MAUS.ordinal(), VehicleKind.OBJ279.ordinal(),
-            VehicleKind.COBRA.ordinal(), VehicleKind.APACHE.ordinal(), VehicleKind.HIND.ordinal(), VehicleKind.KA52.ordinal()};
-    private static final int W = 360, H = 278, CELL = 42, SLOT = 32;
+            VehicleKind.COBRA.ordinal(), VehicleKind.APACHE.ordinal(), VehicleKind.HIND.ordinal(), VehicleKind.KA52.ordinal(),
+            VehicleKind.M1A2SEP.ordinal(), VehicleKind.LEOPARD2A7.ordinal(), VehicleKind.T14.ordinal(), VehicleKind.T80BVM.ordinal(), VehicleKind.MERKAVA4.ordinal(),
+            VehicleKind.K2.ordinal(), VehicleKind.TYPE99A.ordinal(), VehicleKind.BRADLEY.ordinal(), VehicleKind.BMP3.ordinal(), VehicleKind.CV90.ordinal(),
+            VehicleKind.BMD4.ordinal()};
+    private static final int W = 360, H = 278, CELL = 34, SLOT = 32, COLS = 10;
     private int left, top;
     private int team;
     private final List<Integer> column = new ArrayList<>();
@@ -52,11 +55,11 @@ public class ConvoyScreen extends Screen {
     }
 
     private int optX(int i) {
-        return left + 12 + (i % 8) * CELL;
+        return left + 12 + (i % COLS) * CELL;
     }
 
     private int optY(int i) {
-        return top + 32 + (i / 8) * CELL;
+        return top + 32 + (i / COLS) * CELL;
     }
 
     private int colX(int i) {
@@ -86,7 +89,7 @@ public class ConvoyScreen extends Screen {
             g.fill(x, y, x + CELL - 2, y + CELL - 2, over ? 0xC0000000 | c : 0x90101418);
             if (ConvoyToolItem.heli(OPTIONS[i])) g.fill(x, y, x + CELL - 2, y + 2, 0xFF60A0FF);
             ItemStack st = ConvoyToolItem.stackOf(OPTIONS[i], side());
-            icon(g, st, x + 4, y + 4, 2f);
+            icon(g, st, x + 3, y + 3, 1.6f);
             if (over) hovered = st.getHoverName();
         }
         Component head = Component.translatable("gunsmod.convoy.column", column.size(), ConvoyToolItem.MAX);

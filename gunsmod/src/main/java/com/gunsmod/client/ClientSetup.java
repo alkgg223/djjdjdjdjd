@@ -154,6 +154,17 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.TANK.get(), TankRenderer::new);
         e.registerEntityRenderer(Reg.TANK_LEOPARD.get(), TankRenderer::new);
         e.registerEntityRenderer(Reg.TANK_T90.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_M1A2SEP.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_LEOPARD2A7.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_T14.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_T80BVM.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_MERKAVA4.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_K2.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_TYPE99A.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_BRADLEY.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_BMP3.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_CV90.get(), TankRenderer::new);
+        e.registerEntityRenderer(Reg.TANK_BMD4.get(), TankRenderer::new);
         e.registerEntityRenderer(Reg.TANK_CHALLENGER.get(), TankRenderer::new);
         e.registerEntityRenderer(Reg.TANK_MAUS.get(), TankRenderer::new);
         e.registerEntityRenderer(Reg.TANK_OBJ279.get(), TankRenderer::new);

@@ -30,7 +30,19 @@ public enum VehicleKind {
     F35("f35", Group.JET),
     SU35("su35", Group.JET),
     MIG29("mig29", Group.JET),
-    A10("a10", Group.JET);
+    A10("a10", Group.JET),
+    // 3.0
+    M1A2SEP("m1a2sep", Group.TANK),
+    LEOPARD2A7("leopard2a7", Group.TANK),
+    T14("t14", Group.TANK),
+    T80BVM("t80bvm", Group.TANK),
+    MERKAVA4("merkava4", Group.TANK),
+    K2("k2", Group.TANK),
+    TYPE99A("type99a", Group.TANK),
+    BRADLEY("bradley", Group.TANK),
+    BMP3("bmp3", Group.TANK),
+    CV90("cv90", Group.TANK),
+    BMD4("bmd4", Group.TANK);
 
     public enum Group { TANK, HELI, JEEP, CAR, JET }
 
@@ -69,6 +81,17 @@ public enum VehicleKind {
             case SU35 -> Reg.SU35.get();
             case MIG29 -> Reg.MIG29.get();
             case A10 -> Reg.A10.get();
+            case M1A2SEP -> Reg.TANK_M1A2SEP.get();
+            case LEOPARD2A7 -> Reg.TANK_LEOPARD2A7.get();
+            case T14 -> Reg.TANK_T14.get();
+            case T80BVM -> Reg.TANK_T80BVM.get();
+            case MERKAVA4 -> Reg.TANK_MERKAVA4.get();
+            case K2 -> Reg.TANK_K2.get();
+            case TYPE99A -> Reg.TANK_TYPE99A.get();
+            case BRADLEY -> Reg.TANK_BRADLEY.get();
+            case BMP3 -> Reg.TANK_BMP3.get();
+            case CV90 -> Reg.TANK_CV90.get();
+            case BMD4 -> Reg.TANK_BMD4.get();
         };
     }
 
@@ -92,6 +115,17 @@ public enum VehicleKind {
             case CHALLENGER -> TankType.CHALLENGER;
             case MAUS -> TankType.MAUS;
             case OBJ279 -> TankType.OBJ279;
+            case M1A2SEP -> TankType.M1A2SEP;
+            case LEOPARD2A7 -> TankType.LEOPARD2A7;
+            case T14 -> TankType.T14;
+            case T80BVM -> TankType.T80BVM;
+            case MERKAVA4 -> TankType.MERKAVA4;
+            case K2 -> TankType.K2;
+            case TYPE99A -> TankType.TYPE99A;
+            case BRADLEY -> TankType.BRADLEY;
+            case BMP3 -> TankType.BMP3;
+            case CV90 -> TankType.CV90;
+            case BMD4 -> TankType.BMD4;
             default -> TankType.ABRAMS;
         };
     }
