@@ -785,12 +785,18 @@ final class SurvivorBrain extends Goal {
         t.tames.removeIf(id -> !(((ServerLevel) s.level()).getEntity(id) instanceof ArkCreature c) ? false : !c.isAlive());
         if (t.tames.size() >= 1 + t.stage / 2 || p.courage() + p.ambition() < 0.7f) return false;
         if (s.count(ModEconomy.WOODEN_CLUB.get()) == 0) return resolve(t, ModEconomy.WOODEN_CLUB.get(), 1, 0);
+        // from the development stage on it tranquilizes from a distance, like a player: bow and tranq arrows
+        if (t.stage >= 3) {
+            if (s.count(ModEconomy.PRIMITIVE_BOW.get()) == 0 && resolve(t, ModEconomy.PRIMITIVE_BOW.get(), 1, 0)) return true;
+            if (s.count(ModItems.TRANQ_ARROW.get()) < 8 && resolve(t, ModItems.TRANQ_ARROW.get(), 16, 0)) return true;
+        }
+        boolean ranged = s.count(ModEconomy.PRIMITIVE_BOW.get()) > 0 && s.count(ModItems.TRANQ_ARROW.get()) > 0;
         ArkCreature best = null;
         double bd = 1e18;
         for (Memory.Fact f : s.memory.all(Memory.Kind.DINO)) {
             if (f.entity() == null || f.pos().distToCenterSqr(s.position()) > 70 * 70) continue;
             Entity e = ((ServerLevel) s.level()).getEntity(f.entity());
-            if (!(e instanceof ArkCreature c) || !c.isAlive() || c.isTamed() || Perception.dangerous(c) || c.getBbHeight() > 2.6f) {
+            if (!(e instanceof ArkCreature c) || !c.isAlive() || c.isTamed() || Perception.dangerous(c) || c.getBbHeight() > (ranged ? 4.5f : 2.6f)) {
                 s.memory.forget(f);
                 continue;
             }
@@ -836,6 +842,14 @@ final class SurvivorBrain extends Goal {
             finish();
             return;
         }
+        if (!c.isUnconscious() && s.count(ModEconomy.PRIMITIVE_BOW.get()) > 0 && s.count(ModItems.TRANQ_ARROW.get()) > 0) {
+            shootTranq(t, c);
+            if (taskTicks > 3000) {
+                tameTarget = null;
+                finish();
+            }
+            return;
+        }
         if (!c.isUnconscious()) {
             s.hold(st -> st.is(ModEconomy.WOODEN_CLUB.get()));
             s.setTarget(c);                       // knock it out with the club (the melee goal does the hitting)
@@ -867,6 +881,39 @@ final class SurvivorBrain extends Goal {
             s.take(give, n - st.getCount());
             s.swing(InteractionHand.MAIN_HAND);
         }
+    }
+
+    /** keeps a safe distance and puts tranquilizer arrows into it until it falls asleep */
+    private void shootTranq(SurvivorWorld.Tribe t, ArkCreature c) {
+        s.setTarget(null);
+        s.hold(st -> st.is(ModEconomy.PRIMITIVE_BOW.get()));
+        double d = s.distanceTo(c);
+        double want = 10 + c.getBbWidth();
+        if (d > want + 6 || !s.perception.visible(c)) {
+            walkTo(c.blockPosition(), want, 1.0);
+            return;
+        }
+        if (d < want - 4) {
+            Vec3 away = s.position().subtract(c.position()).normalize().scale(6);
+            s.getNavigation().moveTo(s.getX() + away.x, s.getY(), s.getZ() + away.z, 1.1);
+        } else {
+            s.getNavigation().stop();
+        }
+        s.getLookControl().setLookAt(c, 30f, 30f);
+        if (++work % 30 != 0) return;
+        Level level = s.level();
+        com.arkragnarok.entity.TranqArrow a = new com.arkragnarok.entity.TranqArrow(level, s, new ItemStack(ModItems.TRANQ_ARROW.get()),
+                s.getMainHandItem());
+        double dx = c.getX() - s.getX(), dz = c.getZ() - s.getZ();
+        double dy = c.getY(0.5) - a.getY();
+        double h = Math.sqrt(dx * dx + dz * dz);
+        float spread = Math.max(0.5f, 5f - t.skills.level(Skills.Skill.COMBAT) * 0.15f);
+        a.shoot(dx, dy + h * 0.14, dz, 2.6f, spread);
+        level.addFreshEntity(a);
+        s.take(ModItems.TRANQ_ARROW.get(), 1);
+        s.swing(InteractionHand.MAIN_HAND);
+        level.playSound(null, s.getX(), s.getY(), s.getZ(), SoundEvents.ARROW_SHOOT, SoundSource.NEUTRAL, 1.0f, 1.0f);
+        t.skills.gain(Skills.Skill.COMBAT, 0.5f, t.personality());
     }
 
     // ============================================================================================ while nobody was near

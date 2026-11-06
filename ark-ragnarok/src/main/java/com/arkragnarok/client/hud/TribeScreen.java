@@ -128,17 +128,20 @@ public class TribeScreen extends AbstractContainerScreen<TribeMenu> {
             g.fill(x0 - 1, z0, x0, z1, 0xFFB0A080);
             g.fill(x1, z0, x1 + 1, z1, 0xFFB0A080);
         }
+        int[][] storeys = new int[cols][rowsN];
+        for (int[] c : cells) if (c[2] > 0) storeys[c[0] - minX][c[1] - minZ] = Math.max(storeys[c[0] - minX][c[1] - minZ], c[2]);
         for (int[] c : cells) {
+            if (c[2] > 0) continue;
             int px = ox + (c[0] - minX) * cs, pz = oz + (c[1] - minZ) * cs;
             int col = c[3] >= 0 ? ROOM_COLORS[c[3] % ROOM_COLORS.length] : c[3] == -1 ? 0xFF7A5A30 : c[3] == -2 ? 0xFF4A8A3A : 0xFF707070;
-            if (c[2] > 0) {
-                g.fill(px, pz, px + cs - 1, pz + cs - 1, 0xFF101010);                       // a storey above: dark frame
-                g.fill(px + 2, pz + 2, px + cs - 3, pz + cs - 3, col);
-            } else if (c[3] == -3) {
+            if (c[3] == -3) {
                 g.fill(px + cs / 4, pz + cs / 4, px + cs - cs / 4, pz + cs - cs / 4, col);
-            } else {
-                g.fill(px, pz, px + cs - 1, pz + cs - 1, col);
+                continue;
             }
+            g.fill(px, pz, px + cs - 1, pz + cs - 1, col);
+            // storeys above: one dark notch per floor in the corner
+            int st = c[3] >= 0 ? storeys[c[0] - minX][c[1] - minZ] : 0;
+            for (int k = 0; k < st; k++) g.fill(px + 1 + k * 3, pz + 1, px + 3 + k * 3, pz + 3, 0xFF101010);
         }
         // legend
         int lx = x + w - 62, ly = y;
