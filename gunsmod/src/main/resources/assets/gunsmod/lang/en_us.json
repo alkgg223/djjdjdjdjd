@@ -1205,5 +1205,11 @@
  "gunsmod.tip.ship1": "Use on water; sneak + use: with a soldier crew",
  "gunsmod.tip.ship2": "Attack: main gun, use: missiles / torpedoes",
  "subtitles.gunsmod.ship_engine": "Ship engines rumble",
- "subtitles.gunsmod.torpedo": "Torpedo launched"
+ "subtitles.gunsmod.torpedo": "Torpedo launched",
+ "gunsmod.msg.battlefield_theme": "Battlefield type: %s (from the ground you marked)",
+ "gunsmod.theme.orchard": "Orchard",
+ "gunsmod.theme.desert": "Desert",
+ "gunsmod.theme.urban": "Town",
+ "gunsmod.theme.mountain": "Mountains",
+ "gunsmod.theme.rural": "Farmland"
 }

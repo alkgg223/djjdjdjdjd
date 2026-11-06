@@ -102,6 +102,11 @@ public final class ClientFx {
         float sr = ((mapCol >> 16) & 255) / 255f, sg = ((mapCol >> 8) & 255) / 255f, sb = (mapCol & 255) / 255f;
         // earthy dust: ground colour pulled towards grey-brown
         float dr = Mth.lerp(0.55f, sr, 0.55f), dg = Mth.lerp(0.55f, sg, 0.5f), db = Mth.lerp(0.55f, sb, 0.44f);
+        // 3.0: what it goes off on changes it: on (or in) water a column of spray instead of dust and soil, high in the air a
+        // dark burst with nothing thrown up from the ground
+        boolean water = level.getFluidState(BlockPos.containing(x, ground - 0.5, z)).is(net.minecraft.tags.FluidTags.WATER)
+                || level.getFluidState(BlockPos.containing(x, y, z)).is(net.minecraft.tags.FluidTags.WATER);
+        boolean air = !water && gy < y - 6;
 
         // flash
         add(new BlastParticles.Flash(level, x, y + 0.5, z, BlastParticles.flashSprites, 2.5f * size, titan ? 10 : 4));
@@ -115,7 +120,7 @@ public final class ClientFx {
                     (0.7f + r.nextFloat() * 1.1f) * size, 12 + r.nextInt(14) + (int) (size * 3)));
         }
         // ground dust ring rolling outward
-        int nRing = (int) ((10 + 16 * size) * q);
+        int nRing = water || air ? 0 : (int) ((10 + 16 * size) * q);
         for (int i = 0; i < nRing; i++) {
             double a = r.nextDouble() * Mth.TWO_PI;
             double sp = (0.25 + r.nextDouble() * 0.5) * Math.sqrt(size);
@@ -125,7 +130,22 @@ public final class ClientFx {
                     (0.9f + r.nextFloat()) * size, (int) ((70 + r.nextInt(70)) * (0.6f + 0.25f * size)), dr * g, dg * g, db * g, 0.035f * size, 0.002f));
         }
         // shockwave ring
-        add(new BlastParticles.Shockwave(level, x, ground + 0.12, z, BlastParticles.shockwaveSprites, 6f * size, 9 + (int) (2 * size)));
+        if (!air) add(new BlastParticles.Shockwave(level, x, ground + 0.12, z, BlastParticles.shockwaveSprites, 6f * size, 9 + (int) (2 * size)));
+        if (water) {
+            // the water column: white spray thrown straight up, falling back as a ring of foam
+            int nCol = (int) ((14 + 22 * size) * q);
+            for (int i = 0; i < nCol; i++) {
+                double a = r.nextDouble() * Mth.TWO_PI, rad = r.nextDouble() * 0.5 * size;
+                float w = 0.86f + r.nextFloat() * 0.12f;
+                add(new BlastParticles.DustCloud(level, x + Math.cos(a) * rad, ground + 0.2, z + Math.sin(a) * rad,
+                        Math.cos(a) * 0.03, (0.45 + r.nextDouble() * 0.7) * Math.sqrt(size), Math.sin(a) * 0.03, BlastParticles.dustSprites,
+                        (0.8f + r.nextFloat()) * size, 40 + r.nextInt(40), w, w, Math.min(1f, w + 0.06f), 0.02f * size, -0.012f));
+            }
+            for (int i = 0; i < (int) (40 * size * q); i++) {
+                double a = r.nextDouble() * Mth.TWO_PI, sp = 0.2 + r.nextDouble() * 0.5;
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.SPLASH, x, ground + 0.3, z, Math.cos(a) * sp, 0.4 + r.nextDouble() * 0.6, Math.sin(a) * sp);
+            }
+        }
         // dark smoke column
         int nCol = (int) ((4 + 6 * size) * q);
         for (int i = 0; i < nCol; i++) {
@@ -135,7 +155,7 @@ public final class ClientFx {
                     BlastParticles.dustSprites, (1.0f + r.nextFloat()) * size, 120 + r.nextInt(100), g, g * 0.95f, g * 0.9f, 0.04f * size, 0.006f));
         }
         // block debris thrown out of the crater
-        int nDeb = (int) (22 * size * q * (eruption ? 2f : 1f));
+        int nDeb = water || air ? 0 : (int) (22 * size * q * (eruption ? 2f : 1f));
         for (int i = 0; i < nDeb; i++) {
             double a = r.nextDouble() * Mth.TWO_PI;
             double h = (0.1 + r.nextDouble() * 0.5) * Math.sqrt(size) * (eruption ? 0.5 : 1);
@@ -155,7 +175,7 @@ public final class ClientFx {
             add(new BlastParticles.Ember(level, x, y + 0.5, z, d.x * sp, d.y * sp + 0.2, d.z * sp, BlastParticles.emberSprites));
         }
         // lingering crater smoke
-        if (size >= 1.2f) {
+        if (size >= 1.2f && !water && !air) {
             int dur = (int) (60 * size);
             float gq = q;
             double cx = x, cz = z, cy = ground;

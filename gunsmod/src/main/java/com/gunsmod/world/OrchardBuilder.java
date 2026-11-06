@@ -45,8 +45,26 @@ public final class OrchardBuilder {
     private static final int FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
     private static final List<Job> JOBS = new ArrayList<>();
 
+    /** 3.0: the look of the battlefield, taken from the ground it was marked on */
+    public enum Theme { ORCHARD, DESERT, URBAN, MOUNTAIN, RURAL }
+
+    /** sand: desert; stone, bricks or concrete: town; high ground: mountains; farmland, hay or crops: farms; else orchard */
+    public static Theme themeOf(ServerLevel level, BlockPos marked) {
+        BlockState b = level.getBlockState(marked);
+        String id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(b.getBlock()).getPath();
+        if (id.contains("sand") || id.contains("terracotta")) return Theme.DESERT;
+        if (id.contains("farmland") || id.contains("hay") || id.contains("wheat") || id.contains("pumpkin")) return Theme.RURAL;
+        if (marked.getY() > 100 || id.contains("snow") || id.equals("gravel") || id.contains("andesite") || id.contains("granite")) return Theme.MOUNTAIN;
+        if (id.contains("stone") || id.contains("brick") || id.contains("concrete") || id.contains("deepslate")) return Theme.URBAN;
+        return Theme.ORCHARD;
+    }
+
     public static void start(ServerLevel level, BlockPos center, Direction fwd, ServerPlayer player) {
-        JOBS.add(new Job(level, center, fwd, player.getUUID(), false));
+        Job j = new Job(level, center, fwd, player.getUUID(), false);
+        j.theme = themeOf(level, center);
+        player.displayClientMessage(Component.translatable("gunsmod.msg.battlefield_theme", Component.translatable("gunsmod.theme." + j.theme.name().toLowerCase())),
+                false);
+        JOBS.add(j);
     }
 
     /** the whole world is the battlefield (the world type picked when the world was created) */
@@ -76,6 +94,7 @@ public final class OrchardBuilder {
         final RandomSource rnd;
         final long t0 = System.currentTimeMillis();
         int stage, row = -HL;
+        Theme theme = Theme.ORCHARD;
 
         Job(ServerLevel level, BlockPos o, Direction fwd, @Nullable UUID player, boolean world) {
             this.level = level;
@@ -157,7 +176,8 @@ public final class OrchardBuilder {
                     BlockPos p = at(x, y, z);
                     if (!level.getBlockState(p).isSolid()) level.setBlock(p, dirt, FLAGS);
                 }
-                set(x, 0, z, grass);
+                set(x, 0, z, theme == Theme.DESERT ? Blocks.SAND.defaultBlockState() : theme == Theme.URBAN ? Blocks.STONE.defaultBlockState() : grass);
+                if (theme == Theme.DESERT) set(x, -1, z, Blocks.SANDSTONE.defaultBlockState());
             }
         }
 
@@ -173,10 +193,19 @@ public final class OrchardBuilder {
                 // dirt tracks (the road network of the map): worn coarse dirt along the edges
                 if (BattleMap.isRoad(x, z)) {
                     boolean edge = !BattleMap.isRoad(x + 1, z) || !BattleMap.isRoad(x - 1, z) || !BattleMap.isRoad(x, z + 1) || !BattleMap.isRoad(x, z - 1);
-                    set(x, 0, z, edge && (r & 1) == 0 ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.DIRT_PATH.defaultBlockState());
+                    BlockState road = switch (theme) {
+                        case DESERT -> edge && (r & 1) == 0 ? Blocks.SMOOTH_SANDSTONE.defaultBlockState() : Blocks.COARSE_DIRT.defaultBlockState();
+                        case URBAN -> edge ? Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState() : Blocks.GRAY_CONCRETE.defaultBlockState();
+                        default -> edge && (r & 1) == 0 ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.DIRT_PATH.defaultBlockState();
+                    };
+                    set(x, 0, z, road);
                     continue;
                 }
                 if (base || x <= -HW + 2 || x >= HW - 3) continue;
+                if (theme != Theme.ORCHARD) {
+                    themedDetail(x, z, h, r);
+                    continue;
+                }
                 // orchard rows: a tree on some of the grid spots only, so the field stays open; none close to a road
                 if (Math.floorMod(x, 9) == 4 && Math.floorMod(z, 8) == 3 && r < 330 && !BattleMap.nearRoad(x, z, 4)) {
                     tree(x, z, h);
@@ -187,6 +216,118 @@ public final class OrchardBuilder {
                     else if (r < 285) set(x, 1, z, Blocks.FERN.defaultBlockState());
                     else if (r < 296) set(x, 1, z, flower(h));
                     else if (r < 298 && (h >> 12 & 7) == 0) hay(x, z);
+                }
+            }
+        }
+
+        /** 3.0: the other battlefields */
+        void themedDetail(int x, int z, long h, int r) {
+            boolean clear = level.getBlockState(at(x, 1, z)).isAir();
+            switch (theme) {
+                case DESERT -> {
+                    // dunes of dead scrub, a cactus here and there, sandstone ruins on a grid away from the roads
+                    if (Math.floorMod(x, 31) == 7 && Math.floorMod(z, 37) == 11 && !BattleMap.nearRoad(x, z, 7) && r < 600) ruin(x, z, h, Blocks.SANDSTONE.defaultBlockState(),
+                            Blocks.CUT_SANDSTONE.defaultBlockState());
+                    else if (clear && r < 14) set(x, 1, z, Blocks.DEAD_BUSH.defaultBlockState());
+                    else if (clear && r < 16 && !BattleMap.nearRoad(x, z, 3)) {
+                        for (int y = 1; y <= 1 + (int) (h >> 9 & 1); y++) set(x, y, z, Blocks.CACTUS.defaultBlockState());
+                    } else if (r < 60) set(x, 0, z, Blocks.RED_SAND.defaultBlockState());
+                }
+                case URBAN -> {
+                    // town blocks: a ruined building in each cell between the roads, rubble in the streets
+                    if (Math.floorMod(x, 26) == 5 && Math.floorMod(z, 28) == 6 && !BattleMap.nearRoad(x, z, 8)) building(x, z, h);
+                    else if (clear && r < 8) set(x, 1, z, (h >> 11 & 1) == 0 ? Blocks.COBBLESTONE.defaultBlockState() : Blocks.GRAVEL.defaultBlockState());
+                    else if (r < 120) set(x, 0, z, Blocks.ANDESITE.defaultBlockState());
+                }
+                case MOUNTAIN -> {
+                    // rocky ridges away from the roads, spruces on the slopes, boulders
+                    double n = Math.sin(x * 0.045 + (h & 3) * 0.01) * Math.cos(z * 0.037) + Math.sin((x + z) * 0.021);
+                    int hgt = BattleMap.nearRoad(x, z, 10) ? 0 : (int) Math.max(0, (n - 0.6) * 5);
+                    for (int y = 1; y <= hgt; y++) set(x, y, z, y == hgt && hgt > 4 ? Blocks.SNOW_BLOCK.defaultBlockState() : (h >> (y + 3) & 1) == 0
+                            ? Blocks.STONE.defaultBlockState() : Blocks.ANDESITE.defaultBlockState());
+                    if (hgt == 0 && clear) {
+                        if (Math.floorMod(x, 11) == 5 && Math.floorMod(z, 9) == 4 && r < 300 && !BattleMap.nearRoad(x, z, 4)) spruce(x, z, h);
+                        else if (r < 10) set(x, 1, z, Blocks.MOSSY_COBBLESTONE.defaultBlockState());
+                        else if (r < 160) set(x, 1, z, Blocks.SHORT_GRASS.defaultBlockState());
+                        else if (r < 260) set(x, 0, z, Blocks.COARSE_DIRT.defaultBlockState());
+                    }
+                }
+                case RURAL -> {
+                    // fields of wheat in patches with a water ditch, hedges along them, hay
+                    int cx = Math.floorMod(x, 40), cz = Math.floorMod(z, 34);
+                    boolean field = (Math.floorDiv(x, 40) + Math.floorDiv(z, 34)) % 2 == 0 && !BattleMap.nearRoad(x, z, 3);
+                    if (field && cx > 2 && cz > 2) {
+                        if (cx == 20) {
+                            set(x, 0, z, Blocks.WATER.defaultBlockState());
+                        } else {
+                            set(x, 0, z, Blocks.FARMLAND.defaultBlockState());
+                            if (clear) set(x, 1, z, Blocks.WHEAT.defaultBlockState());
+                        }
+                    } else if (field && (cx == 1 || cz == 1) && clear && r < 700) {
+                        set(x, 1, z, Blocks.OAK_LEAVES.defaultBlockState().setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true));
+                    } else if (clear) {
+                        if (r < 230) set(x, 1, z, Blocks.SHORT_GRASS.defaultBlockState());
+                        else if (r < 236) hay(x, z);
+                        else if (r < 240 && !BattleMap.nearRoad(x, z, 4) && Math.floorMod(x, 13) == 6) tree(x, z, h);
+                    }
+                }
+                default -> { }
+            }
+        }
+
+        /** a broken-down walled ruin: low walls with gaps, a fallen corner */
+        void ruin(int x, int z, long h, BlockState wall, BlockState trim) {
+            int w = 6 + (int) (h >> 5 & 3), d = 5 + (int) (h >> 8 & 3);
+            for (int i = 0; i <= w; i++) {
+                for (int k = 0; k <= d; k++) {
+                    if (i != 0 && i != w && k != 0 && k != d) continue;
+                    long q = mix(x + i, z + k);
+                    int top = 1 + (int) (q & 3);
+                    if ((q >> 4 & 7) == 0) continue;
+                    for (int y = 1; y <= top; y++) set(x + i, y, z + k, y == top ? trim : wall);
+                }
+            }
+        }
+
+        /** a ruined town house: walls of stone bricks or concrete, window holes, floors, a broken top floor */
+        void building(int x, int z, long h) {
+            int w = 9 + (int) (h >> 5 & 3), d = 8 + (int) (h >> 8 & 3), floors = 2 + (int) (h >> 11 & 1);
+            BlockState wall = (h >> 13 & 1) == 0 ? Blocks.STONE_BRICKS.defaultBlockState() : Blocks.WHITE_CONCRETE.defaultBlockState();
+            BlockState floor = Blocks.SMOOTH_STONE_SLAB.defaultBlockState();
+            int height = floors * 4;
+            for (int i = 0; i <= w; i++) {
+                for (int k = 0; k <= d; k++) {
+                    boolean edge = i == 0 || i == w || k == 0 || k == d;
+                    for (int y = 1; y <= height; y++) {
+                        long q = mix(x + i + y * 7, z + k);
+                        int broken = height - (int) (q & 3) - ((i + k) % 5 == 0 ? 3 : 0);
+                        if (y > broken) continue;
+                        if (edge) {
+                            boolean window = (y % 4 == 2 || y % 4 == 3) && (i % 3 == 1 || k % 3 == 1) && !(i == 0 && k == 0);
+                            boolean door = y <= 2 && k == 0 && i == w / 2;
+                            if (!window && !door) set(x + i, y, z + k, (q >> 6 & 15) == 0 ? Blocks.CRACKED_STONE_BRICKS.defaultBlockState() : wall);
+                        } else if (y % 4 == 0 && (q >> 3 & 7) != 0) {
+                            set(x + i, y, z + k, floor);
+                        }
+                    }
+                }
+            }
+            // a stair of rubble up to the first floor
+            for (int k = 1; k < 4; k++) set(x + 1, k, z + k, Blocks.COBBLESTONE.defaultBlockState());
+        }
+
+        /** a spruce on the mountain slopes */
+        void spruce(int x, int z, long h) {
+            int t = 5 + (int) (h >> 6 & 3);
+            for (int y = 1; y <= t; y++) set(x, y, z, Blocks.SPRUCE_LOG.defaultBlockState());
+            BlockState lv = leaves(Blocks.SPRUCE_LEAVES);
+            for (int y = 3; y <= t + 1; y++) {
+                int r = y > t - 1 ? 0 : (t + 1 - y) / 2 + 1;
+                for (int dx = -r; dx <= r; dx++) {
+                    for (int dz = -r; dz <= r; dz++) {
+                        if (Math.abs(dx) + Math.abs(dz) > r + 1 || dx == 0 && dz == 0 && y <= t) continue;
+                        if (level.getBlockState(at(x + dx, y, z + dz)).isAir()) set(x + dx, y, z + dz, lv);
+                    }
                 }
             }
         }

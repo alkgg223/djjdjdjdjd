@@ -1205,5 +1205,11 @@
  "gunsmod.tip.ship1": "استخدام على الماء؛ انحناء + استخدام: مع طاقم جنود",
  "gunsmod.tip.ship2": "الهجوم: المدفع، الاستخدام: صواريخ / طوربيدات",
  "subtitles.gunsmod.ship_engine": "هدير محركات سفينة",
- "subtitles.gunsmod.torpedo": "إطلاق طوربيد"
+ "subtitles.gunsmod.torpedo": "إطلاق طوربيد",
+ "gunsmod.msg.battlefield_theme": "نوع ساحة المعركة: %s (حسب الأرض التي علّمتها)",
+ "gunsmod.theme.orchard": "بساتين",
+ "gunsmod.theme.desert": "صحراء",
+ "gunsmod.theme.urban": "مدينة",
+ "gunsmod.theme.mountain": "جبال",
+ "gunsmod.theme.rural": "ريف وحقول"
 }
