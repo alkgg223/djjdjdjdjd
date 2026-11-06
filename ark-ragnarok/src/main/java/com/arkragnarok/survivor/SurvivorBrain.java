@@ -112,6 +112,16 @@ final class SurvivorBrain extends Goal {
         act();
     }
 
+    /** one line about what it is doing (tests and debugging) */
+    String debug() {
+        String j = job == null ? "-" : job.step().kind() + "/" + job.step().type() + "/" + job.step().furniture() + "@" + job.pos().toShortString()
+                + (job.tier() == null ? "" : " " + job.tier().id);
+        BlockPos aside = job == null ? null : builder().standAside(job);
+        return doing + " job=" + j + " target=" + (target == null ? "-" : target.toShortString()) + " at=" + s.blockPosition().toShortString()
+                + " stuck=" + stuck + " ticks=" + taskTicks + " aside=" + (aside == null ? "-" : aside.toShortString()) + " nav="
+                + (s.getNavigation().isDone() ? "done" : "moving") + " food=" + Math.round(s.food);
+    }
+
     // ============================================================================================ judging
     /** fights only what it can beat (and the dinosaur it is knocking out for taming) */
     boolean canFight(LivingEntity e) {

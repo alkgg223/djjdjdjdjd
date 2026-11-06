@@ -111,6 +111,10 @@ public class Survivor extends PathfinderMob {
         return level().isClientSide ? 0 : Builder.builtCount(tribe());
     }
 
+    public String debugState() {
+        return brain == null ? "-" : brain.debug();
+    }
+
     public int stage() {
         return level().isClientSide ? 1 : tribe().stage;
     }

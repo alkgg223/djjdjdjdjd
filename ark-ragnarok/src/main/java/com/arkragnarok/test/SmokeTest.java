@@ -200,6 +200,9 @@ public final class SmokeTest {
             level.destroyBlock(wallPart, false);
             check(level.isEmptyBlock(house.relative(net.minecraft.core.Direction.EAST, 2).above()), "breaking one block removes the whole wall");
         }
+        if (survivor != null && t % 100 == 0 && t > 0) {
+            LOG.info("ARK-SMOKE survivor-dbg t={} built={} {}", t, survivor.buildStep(), survivor.debugState());
+        }
         if (t == 900 && dodo != null) {
             check(dodo.isTamed(), "dodo tamed with kibble (level now " + dodo.getLevel() + ")");
         }
