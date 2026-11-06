@@ -63,9 +63,13 @@ class Prim:
         if self.kind == "roundbox":
             r = float(np.linalg.norm(g["h"]))
             return g["c"] - r, g["c"] + r
+        if self.kind == "func":
+            return np.asarray(g["lo"], float), np.asarray(g["hi"], float)
         raise ValueError(self.kind)
 
     def sdf(self, P):
+        if self.kind == "func":
+            return self.geo["fn"](P)
         g = self.geo
         if self.kind == "ellipsoid":
             q = (P - g["c"]) @ g["R"]
@@ -133,6 +137,11 @@ class Sculpt:
         if R is None:
             R = rot_euler(*rot) if rot is not None else np.eye(3)
         p = Prim("roundbox", group, mat, bone, op, k, c=np.asarray(c, float), h=np.asarray(h, float), rr=float(rr), R=R, **kw)
+        self.prims.append(p)
+        return p
+
+    def func(self, fn, lo, hi, mat, bone="body", group="body", op="add", k=0.2):
+        p = Prim("func", group, mat, bone, op, k, fn=fn, lo=lo, hi=hi)
         self.prims.append(p)
         return p
 

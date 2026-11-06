@@ -1,10 +1,15 @@
 name: Build mod
 on:
   push:
+    branches-ignore:
+      - ark-screens
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -18,16 +23,56 @@ jobs:
           chmod +x gradlew
           ./gradlew build --no-daemon 2>&1 | tee build.log
           test ${PIPESTATUS[0]} -eq 0
-      - name: Server smoke test
+          ls -la build/libs
+          unzip -l build/libs/ARK_Ragnarok_Ultimate-1.21.1.jar | grep -E "jarjar|geckolib|arkm|geo.json|animation.json" | head -20
+
+      - name: Dedicated server smoke test (also creates the screenshot world)
+        id: smoke
         working-directory: ark-ragnarok
-        if: hashFiles('ark-ragnarok/src/main/java/com/arkragnarok/test/SmokeTest.java') != ''
         run: |
           mkdir -p run-smoke
           echo "eula=true" > run-smoke/eula.txt
-          printf 'level-type=arkragnarok\\:ragnarok\nonline-mode=false\nspawn-protection=0\nmax-tick-time=-1\nview-distance=6\nsimulation-distance=6\n' > run-smoke/server.properties
-          timeout 1200 ./gradlew runSmoke --no-daemon > smoke.log 2>&1 || true
-          grep -E "ARK-SMOKE|\[.*ERROR\]|Exception|Caused by|at com\.arkragnarok" smoke.log | head -600 || true
+          printf 'level-type=minecraft\\:flat\nlevel-name=world\ngamemode=creative\ndifficulty=normal\nspawn-monsters=false\nspawn-animals=false\ngenerate-structures=false\nonline-mode=false\nspawn-protection=0\nmax-tick-time=-1\nview-distance=6\nsimulation-distance=6\n' > run-smoke/server.properties
+          timeout 900 ./gradlew runSmoke --no-daemon > smoke.log 2>&1 || true
+          grep -E "ARK-SMOKE|\[.*ERROR\]|Exception|Caused by|at com\.arkragnarok|at software\.bernie" smoke.log | head -300 || true
           grep -q "ARK-SMOKE RESULT PASS" smoke.log
+
+      - name: Real Minecraft client screenshots (Xvfb + Mesa)
+        if: always() && steps.smoke.outcome != 'skipped'
+        working-directory: ark-ragnarok
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri libglx-mesa0 mesa-utils > /dev/null
+          mkdir -p run-shots/saves
+          rm -rf run-shots/saves/arkshot
+          cp -r run-smoke/world run-shots/saves/arkshot
+          printf 'onboardAccessibility:false\nskipMultiplayerWarning:true\njoinedFirstServer:true\ntutorialStep:none\npauseOnLostFocus:false\nrenderDistance:6\nsimulationDistance:5\nguiScale:2\nmaxFps:60\nfov:0.0\ngamma:0.6\ngraphicsMode:1\nrenderClouds:"false"\nnarrator:0\nsoundCategory_master:0.0\nfullscreen:false\nentityShadows:true\n' > run-shots/options.txt
+          export LIBGL_ALWAYS_SOFTWARE=1
+          export MESA_GL_VERSION_OVERRIDE=4.5
+          timeout 1500 xvfb-run -a -s "-screen 0 1600x900x24" ./gradlew runShots --no-daemon > shots.log 2>&1 || true
+          grep -E "ARK-SHOTS|\[.*ERROR\]|Exception|Caused by|at com\.arkragnarok|at software\.bernie|OpenGL|GL version" shots.log | head -200 || true
+          ls -la run-shots/screenshots || true
+
+      - name: Publish screenshots to the ark-screens branch
+        if: always()
+        working-directory: ark-ragnarok
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/screens
+          cp run-shots/screenshots/*.png /tmp/screens/ 2>/dev/null || true
+          tail -n 400 shots.log > /tmp/screens/shots_tail.log 2>/dev/null || true
+          grep -E "ARK-SMOKE|ERROR|Exception|Caused by" smoke.log > /tmp/screens/smoke_summary.log 2>/dev/null || true
+          grep -E "ARK-SHOTS|ERROR|Exception|Caused by|at com\.arkragnarok|at software\.bernie" shots.log > /tmp/screens/shots_summary.log 2>/dev/null || true
+          cd /tmp/screens
+          git init -q
+          git checkout -q -b ark-screens
+          git config user.name "ark-ci"
+          git config user.email "ark-ci@users.noreply.github.com"
+          git add -A
+          git commit -q -m "In-game screenshots for ${GITHUB_SHA}" || exit 0
+          git push -f -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ark-screens
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -35,3 +80,5 @@ jobs:
           path: |
             ark-ragnarok/build/libs/ARK_Ragnarok_Ultimate-1.21.1.jar
             ark-ragnarok/smoke.log
+            ark-ragnarok/shots.log
+            ark-ragnarok/run-shots/screenshots/

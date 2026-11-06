@@ -14,6 +14,21 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 repositories {
     mavenLocal()
+    maven {
+        name = 'GeckoLib'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        content { includeGroup 'software.bernie.geckolib' }
+    }
+}
+
+dependencies {
+    // GeckoLib drives the skeleton and the keyframe animations; it is packed inside our jar (jar-in-jar)
+    jarJar(implementation("software.bernie.geckolib:geckolib-neoforge-1.21.1")) {
+        version {
+            strictly '[4.9.3,4.10)'
+            prefer '4.9.3'
+        }
+    }
 }
 
 neoForge {
@@ -32,6 +47,18 @@ neoForge {
             gameDirectory = project.file('run-smoke')
             systemProperty 'ark.smoketest', 'true'
             programArgument '--nogui'
+        }
+        // real client that loads the CI world and takes screenshots of the Rex (see client.test.ShotDirector)
+        shots {
+            client()
+            gameDirectory = project.file('run-shots')
+            systemProperty 'ark.shots', 'true'
+            programArgument '--quickPlaySingleplayer'
+            programArgument 'arkshot'
+            programArgument '--width'
+            programArgument '1600'
+            programArgument '--height'
+            programArgument '900'
         }
     }
     mods {

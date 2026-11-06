@@ -26,3 +26,10 @@ type="required"
 versionRange="[1.21.1]"
 ordering="NONE"
 side="BOTH"
+
+[[dependencies.arkragnarok]]
+modId="geckolib"
+type="required"
+versionRange="[4.9.3,)"
+ordering="AFTER"
+side="BOTH"
