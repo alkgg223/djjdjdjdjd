@@ -131,7 +131,7 @@
  "item.arkragnarok.stone_ceiling": "سقف حجري",
  "block.arkragnarok.stone_piece": "بناء حجري",
  "item.arkragnarok.survivor_command_device": "جهاز قيادة الناجين",
- "item.arkragnarok.survivor_command_device.desc": "يستدعي ناجياً مستقلاً يجمع ويحفر ويصنع ويبني",
+ "item.arkragnarok.survivor_command_device.desc": "استخدام: استدعاء ناجٍ جديد. انحناء + استخدام: إدارة القبائل وتصاميم قواعدها.",
  "entity.arkragnarok.survivor": "ناجٍ",
  "entity.arkragnarok.resource_node": "مورد",
  "msg.arkragnarok.survivor_called": "%s انضم إليك",
@@ -218,5 +218,7 @@
  "task.arkragnarok.hunt": "يصطاد",
  "task.arkragnarok.tame": "يروّض ديناصوراً",
  "task.arkragnarok.raid": "يهاجم قاعدة منافس",
- "task.arkragnarok.harvest": "يحصد زرعه"
+ "task.arkragnarok.harvest": "يحصد زرعه",
+ "screen.arkragnarok.tribes": "قبائل الناجين",
+ "task.arkragnarok.pen": "يُدخل ديناصوره إلى الحظيرة"
 }

@@ -169,6 +169,20 @@ final class Builder {
         return out;
     }
 
+    /** inside a finished dinosaur pen (its feed box), if the base has one */
+    @Nullable
+    BlockPos penSpot(SurvivorWorld.Tribe t) {
+        if (t.base == null) return null;
+        List<BaseDesign.Step> p = plan(t);
+        int ground = -design(t).depth();
+        for (int i = 0; i < p.size(); i++) {
+            BaseDesign.Step st = p.get(i);
+            if (st.kind() == BaseDesign.Kind.FURNITURE && st.room() == BaseDesign.Room.BARN && st.offset().getY() == ground && t.built[i] != 0
+                    && t.built[i] != SKIPPED) return at(t, st).above().relative(Direction.NORTH);
+        }
+        return null;
+    }
+
     @Nullable
     BlockPos bed(SurvivorWorld.Tribe t) {
         List<BlockPos> l = furniture(t, "bed");

@@ -21,6 +21,7 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void screens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent e) {
         e.register(com.arkragnarok.registry.ModMenus.STATION.get(), com.arkragnarok.client.hud.StationScreen::new);
+        e.register(com.arkragnarok.registry.ModMenus.TRIBES.get(), com.arkragnarok.client.hud.TribeScreen::new);
     }
 
     @SubscribeEvent

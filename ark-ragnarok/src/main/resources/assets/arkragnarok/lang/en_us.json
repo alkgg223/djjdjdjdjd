@@ -131,7 +131,7 @@
  "item.arkragnarok.stone_ceiling": "Stone Ceiling",
  "block.arkragnarok.stone_piece": "Stone Structure",
  "item.arkragnarok.survivor_command_device": "Survivor Command Device",
- "item.arkragnarok.survivor_command_device.desc": "Calls an autonomous survivor who gathers, mines, crafts and builds",
+ "item.arkragnarok.survivor_command_device.desc": "Use: call a new survivor. Sneak + use: manage the tribes and their base designs.",
  "entity.arkragnarok.survivor": "Survivor",
  "entity.arkragnarok.resource_node": "Resource",
  "msg.arkragnarok.survivor_called": "%s has joined you",
@@ -218,5 +218,7 @@
  "task.arkragnarok.hunt": "hunting",
  "task.arkragnarok.tame": "taming a dinosaur",
  "task.arkragnarok.raid": "raiding a rival base",
- "task.arkragnarok.harvest": "harvesting its crops"
+ "task.arkragnarok.harvest": "harvesting its crops",
+ "screen.arkragnarok.tribes": "Survivor Tribes",
+ "task.arkragnarok.pen": "bringing its dinosaur into the pen"
 }

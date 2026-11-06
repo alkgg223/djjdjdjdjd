@@ -140,6 +140,7 @@ public final class ShotDirector {
         ITEM_SHOTS.add(new ItemShot("economy_inventory", 0, 0, true));
         ITEM_SHOTS.add(new ItemShot("survivor_base", 8, 0, false));
         ITEM_SHOTS.add(new ItemShot("survivor_top", 8, 0, false));
+        ITEM_SHOTS.add(new ItemShot("tribes_screen", 0, 0, true));
         ITEM_SHOTS.add(new ItemShot("survivor_close", 8, 0, false));
     }
 
@@ -192,7 +193,13 @@ public final class ShotDirector {
                 mc.player.getInventory().selected = it.slot();
                 mc.options.setCameraType(it.camera() == 2 ? CameraType.THIRD_PERSON_FRONT : CameraType.FIRST_PERSON);
                 if (it.name().equals("economy_inventory")) srv.execute(() -> economyInventory(srv, mc.player.getUUID()));
-                if (it.inventory()) mc.setScreen(new InventoryScreen(mc.player));
+                if (it.name().equals("tribes_screen")) {
+                    UUID pid = mc.player.getUUID();
+                    srv.execute(() -> {
+                        var sp = srv.getPlayerList().getPlayer(pid);
+                        if (sp != null) com.arkragnarok.survivor.TribeMenu.open(sp);
+                    });
+                } else if (it.inventory()) mc.setScreen(new InventoryScreen(mc.player));
                 if (it.name().startsWith("house") || it.name().startsWith("survivor")) {
                     mc.options.hideGui = true;
                     String n = it.name();

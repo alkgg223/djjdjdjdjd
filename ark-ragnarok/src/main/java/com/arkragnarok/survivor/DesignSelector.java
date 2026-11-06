@@ -177,11 +177,10 @@ final class DesignSelector {
         if (site.rock > 0) sc += 3;
         // its temperament
         int pieces = d.pieceCount();
-        double size = pieces / 60.0;
-        sc += (p.ambition() - 0.45) * size * 14;
-        sc -= (1 - p.ambition()) * size * 4;
-        if (d.walled()) sc += (p.caution() - 0.4) * 30 + site.threats * 3 * p.caution() + site.rivals * 2.5;
-        sc += d.towerCount() * (p.caution() * 3 + p.aggression() * 2 + site.rivals * 0.8);
+        double size = Math.min(2.5, pieces / 60.0);
+        sc += (p.ambition() - 0.5) * size * 8;
+        if (d.walled()) sc += (p.caution() - 0.5) * 16 + site.threats * 2 * p.caution() + site.rivals * 1.5;
+        sc += d.towerCount() * (p.caution() + p.aggression() - 0.9) * 2;
         switch (a) {
             case MILITARY, GIANT_DEFENSE -> sc += (p.aggression() - 0.45) * 32 + site.threats * 2;
             case CASTLE -> sc += (p.ambition() + p.aggression() - 0.9) * 18;
@@ -199,7 +198,7 @@ final class DesignSelector {
         sc += rot == preferredRotation(s, site) ? 3 : 0;
         // nobody plans exactly alike
         Random r = new Random(t.id.getLeastSignificantBits() * 31 + d.id * 977L + rot);
-        sc += r.nextDouble() * 16;
+        sc += r.nextDouble() * 30;
         return sc;
     }
 

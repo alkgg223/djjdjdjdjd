@@ -164,7 +164,7 @@ final class SurvivorBrain extends Goal {
     private boolean committed() {
         if (taskTicks > 2400) return false;
         return switch (doing) {
-            case "build", "level", "upgrade", "craft", "fetch", "store", "tame", "raid", "chop", "mine", "quarry", "forage", "harvest", "cave" -> true;
+            case "build", "level", "upgrade", "craft", "fetch", "store", "tame", "raid", "chop", "mine", "quarry", "forage", "harvest", "cave", "pen" -> true;
             default -> false;
         };
     }
@@ -825,6 +825,12 @@ final class SurvivorBrain extends Goal {
                 t.skills.gain(Skills.Skill.TAMING, 20f, t.personality());
                 s.world().setDirty();
                 LOG.info("Survivor {} ({}) tamed a {}", s.getName().getString(), t.name, c.species().id);
+                tameTarget = null;
+                BlockPos pen = builder().penSpot(t);
+                if (pen != null) {
+                    start("pen", pen, c);                // it follows its new owner home into the pen
+                    return;
+                }
             }
             tameTarget = null;
             finish();
@@ -1000,6 +1006,15 @@ final class SurvivorBrain extends Goal {
                 if (target != null && (reach(target, 2.6, 3.5) || walkTo(target, 2.0, 1.0))) fetch(t);
             }
             case "raid" -> raid(t);
+            case "pen" -> {
+                if (target == null || taskTicks > 3000) finish();
+                else if (walkTo(target, 1.5, 1.0)) {
+                    // its dinosaurs that came along stay in the pen
+                    for (Entity e : s.level().getEntities(s, s.getBoundingBox().inflate(10), e -> e instanceof ArkCreature c && c.isTamed()
+                            && s.getUUID().equals(c.getOwnerId()))) ((ArkCreature) e).setOrder(ArkCreature.STAY);
+                    finish();
+                }
+            }
             case "tame" -> tame(t);
             default -> {
                 if (target != null && walkTo(target, 4, 1.0)) finish();

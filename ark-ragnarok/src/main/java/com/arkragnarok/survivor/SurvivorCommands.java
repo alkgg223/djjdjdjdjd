@@ -32,6 +32,10 @@ public final class SurvivorCommands {
         CommandDispatcher<CommandSourceStack> d = e.getDispatcher();
         d.register(Commands.literal("ark")
                 .then(Commands.literal("tribes").executes(SurvivorCommands::tribes))
+                .then(Commands.literal("ui").executes(c -> {
+                    TribeMenu.open(c.getSource().getPlayerOrException());
+                    return 1;
+                }))
                 .then(Commands.literal("designs").executes(SurvivorCommands::designs))
                 .then(Commands.literal("design").then(Commands.argument("id", IntegerArgumentType.integer(0, BaseDesign.COUNT - 1))
                         .executes(c -> design(c, IntegerArgumentType.getInteger(c, "id")))))

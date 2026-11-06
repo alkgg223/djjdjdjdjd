@@ -22,6 +22,11 @@ public class SurvivorDeviceItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack st = player.getItemInHand(hand);
+        if (!level.isClientSide && player.isShiftKeyDown() && player instanceof net.minecraft.server.level.ServerPlayer sp) {
+            TribeMenu.open(sp);                       // sneak + use: the survivor management screen
+            return InteractionResultHolder.sidedSuccess(st, false);
+        }
+        if (player.isShiftKeyDown()) return InteractionResultHolder.sidedSuccess(st, level.isClientSide);
         if (!level.isClientSide) {
             Survivor s = ModEntities.SURVIVOR.get().create(level);
             if (s != null) {

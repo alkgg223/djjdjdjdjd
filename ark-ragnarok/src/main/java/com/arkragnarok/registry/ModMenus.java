@@ -15,4 +15,6 @@ public final class ModMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<StationMenu>> STATION = MENUS.register("station",
             () -> IMenuTypeExtension.create(StationMenu::client));
+    public static final DeferredHolder<MenuType<?>, MenuType<com.arkragnarok.survivor.TribeMenu>> TRIBES = MENUS.register("tribes",
+            () -> IMenuTypeExtension.create(com.arkragnarok.survivor.TribeMenu::client));
 }
