@@ -11,7 +11,14 @@ import java.util.UUID;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.server.IntegratedServer;
+import net.minecraft.core.registries.BuiltInRegistries;
+import com.arkragnarok.registry.ModItems;
+import com.arkragnarok.species.Kibble;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -88,6 +95,35 @@ public final class ShotDirector {
         SHOTS.add(new Shot("raptor_pounce", "utahraptor", 70, 0, 0, 0, false, 0, "attack", 13, false, 0, 0, "body"));
     }
 
+    /** item checks: every mod item in the hand (first and third person), in the inventory and on the ground */
+    private record ItemShot(String name, int slot, int camera, boolean inventory) {}
+
+    private static final List<ItemShot> ITEM_SHOTS = new ArrayList<>();
+    private static final List<Item> ITEMS = new ArrayList<>();
+
+    private static void itemList() {
+        if (!ITEMS.isEmpty()) return;
+        ITEMS.add(ModItems.SUPER_SPYGLASS.get());
+        ITEMS.add(ModItems.TRANQ_ARROW.get());
+        ITEMS.add(ModItems.NARCOTIC.get());
+        ITEMS.add(ModItems.MEJOBERRY.get());
+        ITEMS.add(ModItems.NARCOBERRY.get());
+        ITEMS.add(ModItems.KIBBLE.get(Kibble.EXCEPTIONAL).get());
+        ITEMS.add(ModItems.RAW_PRIME_MEAT.get());
+        ITEMS.add(ModItems.COOKED_PRIME_MEAT.get());
+        ITEMS.add(ModItems.DINO_SADDLE.get());
+        for (Kibble k : Kibble.values()) if (k != Kibble.EXCEPTIONAL) ITEMS.add(ModItems.KIBBLE.get(k).get());
+        for (var egg : ModItems.SPAWN_EGGS.values()) ITEMS.add(egg.get());
+        for (int i = 0; i < 9; i++) {
+            String n = BuiltInRegistries.ITEM.getKey(ITEMS.get(i)).getPath();
+            ITEM_SHOTS.add(new ItemShot("item_fp_" + n, i, 0, false));
+            ITEM_SHOTS.add(new ItemShot("item_tp_" + n, i, 2, false));
+        }
+        ITEM_SHOTS.add(new ItemShot("item_ground", 0, 0, false));
+        ITEM_SHOTS.add(new ItemShot("item_inventory", 0, 0, true));
+    }
+
+    private static int itemIndex;
     private static int phase = -1;
     private static int wait;
     private static int index;
@@ -124,11 +160,42 @@ public final class ShotDirector {
                 wait = 40;
                 return;
             }
-            if (phase == 1) {
-                if (index >= SHOTS.size()) {
-                    LOG.info("ARK-SHOTS done ({} shots)", SHOTS.size());
+            if (phase == 5) {
+                if (itemIndex >= ITEM_SHOTS.size()) {
+                    mc.setScreen(null);
+                    LOG.info("ARK-SHOTS done ({} shots + {} item shots)", SHOTS.size(), ITEM_SHOTS.size());
                     phase = 3;
                     wait = 20;
+                    return;
+                }
+                ItemShot it = ITEM_SHOTS.get(itemIndex);
+                mc.player.getInventory().selected = it.slot();
+                mc.options.setCameraType(it.camera() == 2 ? CameraType.THIRD_PERSON_FRONT : CameraType.FIRST_PERSON);
+                if (it.inventory()) mc.setScreen(new InventoryScreen(mc.player));
+                if (it.name().equals("item_ground")) {
+                    srv.execute(() -> groundItems(srv, mc.player.getUUID()));
+                    mc.player.getInventory().selected = 8;
+                }
+                phase = 6;
+                wait = it.name().equals("item_ground") ? 30 : 12;
+                return;
+            }
+            if (phase == 6) {
+                ItemShot it = ITEM_SHOTS.get(itemIndex);
+                Screenshot.grab(mc.gameDirectory, it.name() + ".png", mc.getMainRenderTarget(), msg -> LOG.info("ARK-SHOTS {}", msg.getString()));
+                LOG.info("ARK-SHOTS captured {}", it.name());
+                itemIndex++;
+                phase = 5;
+                wait = 2;
+                return;
+            }
+            if (phase == 1) {
+                if (index >= SHOTS.size()) {
+                    itemList();
+                    srv.execute(() -> itemSetup(srv, mc.player.getUUID()));
+                    mc.options.hideGui = false;
+                    phase = 5;
+                    wait = 40;
                     return;
                 }
                 Shot s = SHOTS.get(index);
@@ -181,6 +248,37 @@ public final class ShotDirector {
             v.setInvulnerable(true);
             level.addFreshEntity(v);
             scaleId = v.getUUID();
+        }
+    }
+
+    private static void itemSetup(IntegratedServer srv, UUID playerId) {
+        ServerLevel level = srv.overworld();
+        Entity c = creatureId != null ? level.getEntity(creatureId) : null;
+        if (c != null) c.discard();
+        Entity v = scaleId != null ? level.getEntity(scaleId) : null;
+        if (v != null) v.discard();
+        ServerPlayer sp = srv.getPlayerList().getPlayer(playerId);
+        if (sp == null) return;
+        sp.setGameMode(GameType.CREATIVE);
+        AttributeInstance scale = sp.getAttribute(Attributes.SCALE);
+        if (scale != null) scale.setBaseValue(1.0);
+        sp.getAbilities().flying = false;
+        sp.onUpdateAbilities();
+        sp.teleportTo(level, ox + 0.5, oy, oz + 0.5, 0f, 18f);
+        sp.setYHeadRot(0f);
+        sp.getInventory().clearContent();
+        for (int i = 0; i < ITEMS.size() && i < 36; i++) sp.getInventory().setItem(i, new ItemStack(ITEMS.get(i), i == 1 ? 16 : 1));
+        sp.inventoryMenu.broadcastChanges();
+    }
+
+    private static void groundItems(IntegratedServer srv, UUID playerId) {
+        ServerLevel level = srv.overworld();
+        for (int i = 0; i < 9; i++) {
+            double a = (i - 4) * 0.32;
+            ItemEntity e = new ItemEntity(level, ox + 0.5 + Math.sin(a) * 2.6, oy + 0.05, oz + 0.5 + Math.cos(a) * 2.6, new ItemStack(ITEMS.get(i)));
+            e.setDeltaMovement(0, 0, 0);
+            e.setPickUpDelay(32767);
+            level.addFreshEntity(e);
         }
     }
 

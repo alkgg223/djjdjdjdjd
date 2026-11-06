@@ -1,1 +1,150 @@
-{"parent": "minecraft:item/template_spawn_egg"}
+{
+ "loader": "neoforge:obj",
+ "model": "arkragnarok:models/item/obj/spinosaurus_spawn_egg.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "shade_quads": true,
+ "gui_light": "side",
+ "textures": {
+  "texture": "arkragnarok:item/3d/spinosaurus_spawn_egg",
+  "particle": "arkragnarok:item/3d/spinosaurus_spawn_egg"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    22,
+    -32,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.95,
+    0.95,
+    0.95
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.42,
+    0.42,
+    0.42
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.75,
+    0.75,
+    0.75
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    180,
+    0
+   ],
+   "translation": [
+    0,
+    13,
+    7
+   ],
+   "scale": [
+    0.8,
+    0.8,
+    0.8
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    10,
+    -30,
+    0
+   ],
+   "translation": [
+    0,
+    3,
+    1.5
+   ],
+   "scale": [
+    0.42,
+    0.42,
+    0.42
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    10,
+    30,
+    0
+   ],
+   "translation": [
+    0,
+    3,
+    1.5
+   ],
+   "scale": [
+    0.42,
+    0.42,
+    0.42
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    8,
+    -35,
+    4
+   ],
+   "translation": [
+    1.2,
+    3.6,
+    0.6
+   ],
+   "scale": [
+    0.5,
+    0.5,
+    0.5
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    8,
+    35,
+    -4
+   ],
+   "translation": [
+    1.2,
+    3.6,
+    0.6
+   ],
+   "scale": [
+    0.5,
+    0.5,
+    0.5
+   ]
+  }
+ }
+}
