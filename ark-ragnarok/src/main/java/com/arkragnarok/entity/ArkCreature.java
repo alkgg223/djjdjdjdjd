@@ -6,10 +6,17 @@ import com.arkragnarok.registry.ModSounds;
 import com.arkragnarok.species.Diet;
 import com.arkragnarok.species.Species;
 import com.arkragnarok.species.Temper;
+import com.arkragnarok.taming.Taming;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import javax.annotation.Nullable;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -37,17 +44,20 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import java.util.EnumSet;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -65,6 +75,16 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
     private static final EntityDataAccessor<Boolean> SADDLED = SynchedEntityData.defineId(ArkCreature.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> FORCED_ANIM = SynchedEntityData.defineId(ArkCreature.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> LEVEL = SynchedEntityData.defineId(ArkCreature.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> TORPOR = SynchedEntityData.defineId(ArkCreature.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> UNCONSCIOUS = SynchedEntityData.defineId(ArkCreature.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> AFFINITY = SynchedEntityData.defineId(ArkCreature.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> EFFECTIVENESS = SynchedEntityData.defineId(ArkCreature.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(ArkCreature.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Integer> ORDER = SynchedEntityData.defineId(ArkCreature.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> HP_SCALE = SynchedEntityData.defineId(ArkCreature.class, EntityDataSerializers.FLOAT);
+
+    /** orders of a tamed creature (owner: sneak + right click with an empty hand) */
+    public static final int FOLLOW = 0, STAY = 1, WANDER = 2;
 
     /** index order of {@link #setForcedAnim} */
     public static final String[] FORCED = {"idle", "walk", "run", "sprint", "eat", "sleep", "death"};
@@ -75,6 +95,13 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
     private int roarCooldown = 200;
     private int hpPoints, meleePoints;
     private boolean hadTarget;
+    // taming
+    private final SimpleContainer tamingFood = new SimpleContainer(12);
+    private float pendingTorpor;
+    private int eatTimer;
+    private int passiveCooldown;
+    @Nullable
+    private UUID tamer;
     /** client: smoothed body yaw velocity, used to swing the tail when turning */
     public float tailLag;
     public float tailLagO;
@@ -116,6 +143,13 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
         builder.define(SADDLED, false);
         builder.define(FORCED_ANIM, -1);
         builder.define(LEVEL, 1);
+        builder.define(TORPOR, 0f);
+        builder.define(UNCONSCIOUS, false);
+        builder.define(AFFINITY, 0f);
+        builder.define(EFFECTIVENESS, 1f);
+        builder.define(OWNER, Optional.empty());
+        builder.define(ORDER, FOLLOW);
+        builder.define(HP_SCALE, 1f);
     }
 
     @Override
@@ -126,7 +160,13 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
             this.goalSelector.addGoal(1, new AvoidEntityGoal<>(this, Player.class, 14f, 1.2, s.runFactor));
         }
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, s.runFactor * 0.75, true));
-        this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.8));
+        this.goalSelector.addGoal(4, new FollowOwnerGoal());
+        this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.8) {
+            @Override
+            public boolean canUse() {
+                return (!isTamed() || getOrder() == WANDER) && super.canUse();
+            }
+        });
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 16.0f));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
         HurtByTargetGoal hurt = new HurtByTargetGoal(this);
@@ -134,15 +174,16 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
         this.targetSelector.addGoal(1, hurt);
         if (s.temper == Temper.AGGRESSIVE && s.diet != Diet.HERBIVORE) {
             this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 30, true, false,
-                    e -> !isSaddled() && e.distanceToSqr(this) < (s.big() ? 900 : 400)));
+                    e -> !isTamed() && e.distanceToSqr(this) < (s.big() ? 900 : 400)));
             this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Animal.class, 60, true, false,
-                    e -> e.getBbWidth() < getBbWidth() * 1.2f));
+                    e -> !isTamed() && e.getBbWidth() < getBbWidth() * 1.2f));
             this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, ArkCreature.class, 80, true, false,
-                    e -> e instanceof ArkCreature c && c.species.diet == Diet.HERBIVORE && c.getBbWidth() < getBbWidth()));
+                    e -> !isTamed() && e instanceof ArkCreature c && !c.isTamed() && c.species.diet == Diet.HERBIVORE
+                            && c.getBbWidth() < getBbWidth()));
         }
         if (s.temper == Temper.TERRITORIAL) {
             this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 20, true, false,
-                    e -> !isSaddled() && e.distanceToSqr(this) < 36 + getBbWidth() * getBbWidth()));
+                    e -> !isTamed() && e.distanceToSqr(this) < 36 + getBbWidth() * getBbWidth()));
         }
     }
 
@@ -165,26 +206,281 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
     public void setLevel(int level) {
         level = Mth.clamp(level, 1, 450);
         this.entityData.set(LEVEL, level);
-        int points = level - 1;
         hpPoints = 0;
         meleePoints = 0;
+        addPoints(level - 1);
+        applyStats();
+    }
+
+    private void addPoints(int points) {
         for (int i = 0; i < points; i++) {
             int k = getRandom().nextInt(5);
             if (k <= 1) hpPoints++;
             else if (k == 2) meleePoints++;
         }
-        applyStats();
     }
 
     private void applyStats() {
         Species s = species;
         double hp = s.health * Species.HEALTH_FACTOR * (1 + 0.2 * hpPoints);
         double dmg = s.damage * Species.DAMAGE_FACTOR * (1 + 0.05 * meleePoints);
+        // Minecraft caps max health at 1024: above that, health is kept in scaled units and damage is scaled down
+        float scale = (float) Math.max(1.0, hp / 1024.0);
+        this.entityData.set(HP_SCALE, scale);
         var maxHp = getAttribute(Attributes.MAX_HEALTH);
-        if (maxHp != null) maxHp.setBaseValue(hp);
+        if (maxHp != null) maxHp.setBaseValue(hp / scale);
         var atk = getAttribute(Attributes.ATTACK_DAMAGE);
         if (atk != null) atk.setBaseValue(dmg);
-        setHealth((float) hp);
+        setHealth((float) (hp / scale));
+    }
+
+    /** real health (the health bar of Minecraft holds it divided by {@link #hpScale()}) */
+    public float realHealth() {
+        return getHealth() * hpScale();
+    }
+
+    public float realMaxHealth() {
+        return getMaxHealth() * hpScale();
+    }
+
+    public float hpScale() {
+        return this.entityData.get(HP_SCALE);
+    }
+
+    @Override
+    protected void actuallyHurt(DamageSource source, float amount) {
+        super.actuallyHurt(source, amount / hpScale());
+    }
+
+    // ------------------------------------------------------------------------------------------------- taming
+    public float getTorpor() {
+        return this.entityData.get(TORPOR);
+    }
+
+    public float maxTorpor() {
+        return Taming.maxTorpor(species, getLevel());
+    }
+
+    public boolean isUnconscious() {
+        return this.entityData.get(UNCONSCIOUS);
+    }
+
+    public float getAffinity() {
+        return this.entityData.get(AFFINITY);
+    }
+
+    public float requiredAffinity() {
+        return Taming.requiredAffinity(species, getLevel());
+    }
+
+    public float getEffectiveness() {
+        return this.entityData.get(EFFECTIVENESS);
+    }
+
+    public boolean isTamed() {
+        return this.entityData.get(OWNER).isPresent();
+    }
+
+    @Nullable
+    public UUID getOwnerId() {
+        return this.entityData.get(OWNER).orElse(null);
+    }
+
+    @Nullable
+    public Player getOwner() {
+        UUID id = getOwnerId();
+        return id == null ? null : level().getPlayerByUUID(id);
+    }
+
+    public int getOrder() {
+        return this.entityData.get(ORDER);
+    }
+
+    /** tranquilizer arrows, narcotics, punches: torpor builds up over a few seconds */
+    public void addTorpor(float amount, @Nullable Entity by) {
+        if (isTamed() || level().isClientSide) return;
+        pendingTorpor += amount;
+        if (by instanceof Player p) tamer = p.getUUID();
+    }
+
+    private void setTorpor(float t) {
+        this.entityData.set(TORPOR, Mth.clamp(t, 0f, maxTorpor()));
+    }
+
+    private void knockOut() {
+        this.entityData.set(UNCONSCIOUS, true);
+        setTarget(null);
+        getNavigation().stop();
+        eatTimer = 0;
+        if (getAffinity() <= 0) this.entityData.set(EFFECTIVENESS, 1f);
+        playSound(ModSounds.REX_DEATH.get(), getSoundVolume() * 0.6f, getVoicePitch() * 0.8f);
+        Player p = tamer != null ? level().getPlayerByUUID(tamer) : null;
+        if (p != null) p.displayClientMessage(Component.translatable("msg.arkragnarok.knocked_out", species.name, getLevel())
+                .withStyle(ChatFormatting.GOLD), true);
+    }
+
+    private void wakeUp() {
+        this.entityData.set(UNCONSCIOUS, false);
+        this.entityData.set(AFFINITY, 0f);
+        this.entityData.set(EFFECTIVENESS, 1f);
+        pendingTorpor = 0;
+        for (int i = 0; i < tamingFood.getContainerSize(); i++) {
+            ItemStack st = tamingFood.removeItemNoUpdate(i);
+            if (!st.isEmpty()) spawnAtLocation(st);
+        }
+    }
+
+    private void tickTorpor() {
+        float max = maxTorpor();
+        float t = getTorpor();
+        if (pendingTorpor > 0) {
+            float d = Math.min(pendingTorpor, Math.max(4f, Taming.TRANQ_ARROW / 40f));
+            pendingTorpor -= d;
+            t += d;
+        }
+        if (!isUnconscious()) {
+            if (t >= max && !isTamed()) {
+                setTorpor(max);
+                knockOut();
+                return;
+            }
+            if (pendingTorpor <= 0) t -= Taming.awakeDrainPerSecond(species, getLevel()) / 20f;
+            setTorpor(t);
+            return;
+        }
+        t -= Taming.sleepDrainPerSecond(species, getLevel()) / 20f;
+        // it swallows narcotics from its food when it is about to wake up
+        if (t < max * 0.4f) {
+            for (int i = 0; i < tamingFood.getContainerSize(); i++) {
+                ItemStack st = tamingFood.getItem(i);
+                float tv = Taming.torporValue(st);
+                if (tv > 0) {
+                    st.shrink(1);
+                    t += tv;
+                    break;
+                }
+            }
+        }
+        setTorpor(t);
+        if (t <= 0) {
+            wakeUp();
+            return;
+        }
+        if (++eatTimer >= Taming.eatIntervalTicks(species)) {
+            eatTimer = 0;
+            eatBest();
+        }
+    }
+
+    /** eats the best item it was given (preferred kibble first) */
+    private void eatBest() {
+        int best = -1;
+        float bestValue = 0;
+        for (int i = 0; i < tamingFood.getContainerSize(); i++) {
+            float v = Taming.foodValue(species, tamingFood.getItem(i));
+            if (v > bestValue) {
+                bestValue = v;
+                best = i;
+            }
+        }
+        if (best < 0) return;
+        tamingFood.getItem(best).shrink(1);
+        gainAffinity(bestValue);
+    }
+
+    private void gainAffinity(float v) {
+        float a = getAffinity() + v;
+        this.entityData.set(AFFINITY, a);
+        playSound(SoundEvents.GENERIC_EAT, 1.0f, getVoicePitch());
+        if (level() instanceof ServerLevel sl) {
+            sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + getBbHeight() * 0.8, getZ(), 6, getBbWidth() * 0.4, 0.3,
+                    getBbWidth() * 0.4, 0.0);
+        }
+        if (a >= requiredAffinity()) {
+            Player p = tamer != null ? level().getPlayerByUUID(tamer) : null;
+            if (p != null) tame(p);
+        }
+    }
+
+    public void tame(Player owner) {
+        this.entityData.set(OWNER, Optional.of(owner.getUUID()));
+        this.entityData.set(UNCONSCIOUS, false);
+        this.entityData.set(ORDER, FOLLOW);
+        this.entityData.set(TORPOR, 0f);
+        pendingTorpor = 0;
+        int bonus = (int) Math.floor(getLevel() * 0.5f * getEffectiveness());
+        this.entityData.set(LEVEL, getLevel() + bonus);
+        addPoints(bonus);
+        applyStats();
+        setTarget(null);
+        setPersistenceRequired();
+        for (int i = 0; i < tamingFood.getContainerSize(); i++) {
+            ItemStack st = tamingFood.removeItemNoUpdate(i);
+            if (!st.isEmpty()) spawnAtLocation(st);
+        }
+        playSound(SoundEvents.PLAYER_LEVELUP, 1.0f, 1.0f);
+        if (level() instanceof ServerLevel sl) {
+            sl.sendParticles(ParticleTypes.HEART, getX(), getY() + getBbHeight(), getZ(), 12, getBbWidth() * 0.5, 0.5, getBbWidth() * 0.5, 0.1);
+        }
+        owner.displayClientMessage(Component.translatable("msg.arkragnarok.tamed", species.name, getLevel(),
+                Math.round(getEffectiveness() * 100)).withStyle(ChatFormatting.GREEN), false);
+    }
+
+    @Override
+    public boolean isImmobile() {
+        return isUnconscious() || super.isImmobile();
+    }
+
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        if (isTamed()) {
+            UUID o = getOwnerId();
+            if (target.getUUID().equals(o)) return false;
+            if (target instanceof ArkCreature c && o.equals(c.getOwnerId())) return false;
+        }
+        return super.canAttack(target);
+    }
+
+    /** a tamed creature walks after its owner when ordered to follow */
+    private class FollowOwnerGoal extends Goal {
+        FollowOwnerGoal() {
+            setFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        private boolean far(Player o) {
+            double d = 5.0 + getBbWidth() * 1.5;
+            return distanceToSqr(o) > d * d;
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!isTamed() || getOrder() != FOLLOW || isVehicle() || getTarget() != null) return false;
+            Player o = getOwner();
+            return o != null && !o.isSpectator() && far(o);
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            Player o = getOwner();
+            return o != null && isTamed() && getOrder() == FOLLOW && getTarget() == null && far(o) && !getNavigation().isDone();
+        }
+
+        @Override
+        public void start() {
+            Player o = getOwner();
+            if (o != null) getNavigation().moveTo(o, distanceToSqr(o) > 400 ? 1.4 : 1.0);
+        }
+
+        @Override
+        public void tick() {
+            Player o = getOwner();
+            if (o != null && tickCount % 10 == 0) getNavigation().moveTo(o, distanceToSqr(o) > 400 ? 1.4 : 1.0);
+        }
+
+        @Override
+        public void stop() {
+            getNavigation().stop();
+        }
     }
 
     // ------------------------------------------------------------------------------------------------- state
@@ -211,6 +507,14 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
         tag.putInt("ArkLevel", getLevel());
         tag.putInt("HpPoints", hpPoints);
         tag.putInt("MeleePoints", meleePoints);
+        tag.putFloat("Torpor", getTorpor());
+        tag.putBoolean("Unconscious", isUnconscious());
+        tag.putFloat("Affinity", getAffinity());
+        tag.putFloat("Effectiveness", getEffectiveness());
+        tag.putInt("Order", getOrder());
+        if (getOwnerId() != null) tag.putUUID("Owner", getOwnerId());
+        if (tamer != null) tag.putUUID("Tamer", tamer);
+        tag.put("TamingFood", tamingFood.createTag(level().registryAccess()));
     }
 
     @Override
@@ -225,6 +529,14 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
             applyStats();
             setHealth(Math.min(h, getMaxHealth()));
         }
+        this.entityData.set(TORPOR, tag.getFloat("Torpor"));
+        this.entityData.set(UNCONSCIOUS, tag.getBoolean("Unconscious"));
+        this.entityData.set(AFFINITY, tag.getFloat("Affinity"));
+        this.entityData.set(EFFECTIVENESS, tag.contains("Effectiveness") ? tag.getFloat("Effectiveness") : 1f);
+        this.entityData.set(ORDER, tag.getInt("Order"));
+        this.entityData.set(OWNER, tag.hasUUID("Owner") ? Optional.of(tag.getUUID("Owner")) : Optional.empty());
+        tamer = tag.hasUUID("Tamer") ? tag.getUUID("Tamer") : null;
+        if (tag.contains("TamingFood")) tamingFood.fromTag(tag.getList("TamingFood", 10), level().registryAccess());
     }
 
     // ------------------------------------------------------------------------------------------------- behaviour
@@ -246,6 +558,19 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
     public void aiStep() {
         super.aiStep();
         if (level().isClientSide || isDeadOrDying()) return;
+        tickTorpor();
+        if (passiveCooldown > 0) passiveCooldown--;
+        if (isUnconscious()) return;
+        if (isTamed()) {
+            if (getOrder() == STAY && !isVehicle() && getTarget() == null) getNavigation().stop();
+            Player o = getOwner();
+            if (o != null && tickCount % 10 == 0 && getOrder() != STAY && distanceToSqr(o) < 1600) {
+                LivingEntity a = o.getLastHurtByMob();
+                LivingEntity b = o.getLastHurtMob();
+                if (a != null && a.isAlive() && a != this && canAttack(a)) setTarget(a);
+                else if (b != null && b.isAlive() && b != this && canAttack(b) && o.tickCount - o.getLastHurtMobTimestamp() < 200) setTarget(b);
+            }
+        }
         if (roarCooldown > 0) roarCooldown--;
         boolean hasTarget = getTarget() != null && getTarget().isAlive();
         if (roars() && hasTarget && !hadTarget && roarCooldown <= 0) roar();
@@ -293,7 +618,18 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         boolean hurt = super.hurt(source, amount);
-        if (hurt && !level().isClientSide && isAlive()) triggerAnim("action", "hurt");
+        if (hurt && !level().isClientSide && isAlive()) {
+            if (isUnconscious()) {
+                float e = getEffectiveness() - 0.03f - amount / Math.max(1f, getMaxHealth()) * hpScale();
+                this.entityData.set(EFFECTIVENESS, Math.max(0f, e));
+            } else {
+                triggerAnim("action", "hurt");
+            }
+            // fists and clubs knock out too (ARK punch torpor)
+            if (source.getDirectEntity() instanceof Player p && (p.getMainHandItem().isEmpty() || p.getMainHandItem().is(Items.STICK))) {
+                addTorpor(amount * 3.5f, p);
+            }
+        }
         return hurt;
     }
 
@@ -310,6 +646,63 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        boolean owner = isTamed() && player.getUUID().equals(getOwnerId());
+        if (isUnconscious() && !stack.isEmpty() && (Taming.foodValue(species, stack) > 0 || Taming.torporValue(stack) > 0)) {
+            if (!level().isClientSide) {
+                tamer = player.getUUID();
+                float tv = Taming.torporValue(stack);
+                if (tv > 0 && player.isSecondaryUseActive()) {
+                    // sneak + right click: force-feed one narcotic right away
+                    setTorpor(getTorpor() + tv);
+                    stack.consume(1, player);
+                } else {
+                    ItemStack rest = tamingFood.addItem(stack.copy());
+                    int used = stack.getCount() - rest.getCount();
+                    if (!player.getAbilities().instabuild) stack.shrink(used);
+                    if (eatTimer < Taming.eatIntervalTicks(species) - 20) eatTimer = Taming.eatIntervalTicks(species) - 20;
+                }
+                player.displayClientMessage(Component.translatable("msg.arkragnarok.taming", species.name,
+                        Math.round(100 * getAffinity() / requiredAffinity()), Math.round(getEffectiveness() * 100)), true);
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
+        if (!isTamed() && Taming.passive(species) && getTarget() == null && Taming.foodValue(species, stack) > 0) {
+            if (!level().isClientSide) {
+                if (passiveCooldown > 0) {
+                    player.displayClientMessage(Component.translatable("msg.arkragnarok.not_hungry", (passiveCooldown + 19) / 20), true);
+                } else {
+                    tamer = player.getUUID();
+                    float v = Taming.foodValue(species, stack);
+                    stack.consume(1, player);
+                    passiveCooldown = Taming.eatIntervalTicks(species);
+                    gainAffinity(v);
+                    if (!isTamed()) player.displayClientMessage(Component.translatable("msg.arkragnarok.taming", species.name,
+                            Math.round(100 * getAffinity() / requiredAffinity()), 100), true);
+                }
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
+        if (owner && stack.isEmpty() && player.isSecondaryUseActive()) {
+            if (!level().isClientSide) {
+                int o = (getOrder() + 1) % 3;
+                this.entityData.set(ORDER, o);
+                setTarget(null);
+                player.displayClientMessage(Component.translatable("msg.arkragnarok.order." + o, species.name), true);
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
+        if (owner && !stack.isEmpty() && Taming.foodValue(species, stack) > 0 && getHealth() < getMaxHealth()) {
+            if (!level().isClientSide) {
+                heal(Taming.foodValue(species, stack) / species.affinity * getMaxHealth());
+                stack.consume(1, player);
+                playSound(SoundEvents.GENERIC_EAT, 1.0f, getVoicePitch());
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
+        if (!owner && (stack.is(ModItems.DINO_SADDLE.get()) || (isSaddled() && stack.isEmpty() && !player.isSecondaryUseActive()))) {
+            if (!level().isClientSide) player.displayClientMessage(Component.translatable("msg.arkragnarok.not_yours"), true);
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
         if (species.saddle && !isSaddled() && stack.is(ModItems.DINO_SADDLE.get())) {
             if (!level().isClientSide) {
                 setSaddled(true);
@@ -326,8 +719,8 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
         if (stack.isEmpty() && player.isSecondaryUseActive() && !level().isClientSide) {
-            player.displayClientMessage(Component.literal(species.name + "  Lv " + getLevel() + "  " + Math.round(getHealth()) + "/"
-                    + Math.round(getMaxHealth()) + " HP  " + Math.round(getAttributeValue(Attributes.ATTACK_DAMAGE)) + " dmg"), true);
+            player.displayClientMessage(Component.literal(species.name + "  Lv " + getLevel() + "  " + Math.round(realHealth()) + "/"
+                    + Math.round(realMaxHealth()) + " HP  " + Math.round(getAttributeValue(Attributes.ATTACK_DAMAGE)) + " dmg"), true);
             return InteractionResult.SUCCESS;
         }
         return super.mobInteract(player, hand);
@@ -454,6 +847,10 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
 
     private PlayState mainAnimation(AnimationState<ArkCreature> state) {
         if (this.isDeadOrDying()) return state.setAndContinue(death);
+        if (isUnconscious()) {
+            state.getController().setAnimationSpeed(1.0);
+            return state.setAndContinue(sleep);
+        }
         int f = getForcedAnim();
         if (f >= 0) {
             state.getController().setAnimationSpeed(1.0);

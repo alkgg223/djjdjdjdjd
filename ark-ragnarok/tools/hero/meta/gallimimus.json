@@ -3,15 +3,15 @@
  "name": "Gallimimus",
  "plan": "theropod",
  "length_m": 6.0,
- "scale": 0.52858,
- "height": 4.406,
- "width": 0.699,
- "hip": 2.709,
- "eye": 4.284,
- "head_z": 1.679,
+ "scale": 0.50236,
+ "height": 3.96,
+ "width": 0.664,
+ "hip": 2.574,
+ "eye": 3.878,
+ "head_z": 1.804,
  "seat": [
-  -0.046,
-  3.162
+  -0.044,
+  3.005
  ],
  "saddle": true,
  "bones": 35

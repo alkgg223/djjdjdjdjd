@@ -1,0 +1,25 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "minecraft:egg"
+  },
+  {
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "minecraft:cooked_beef"
+  },
+  {
+   "item": "minecraft:carrot"
+  },
+  {
+   "item": "minecraft:beetroot"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:regular_kibble",
+  "count": 2
+ }
+}

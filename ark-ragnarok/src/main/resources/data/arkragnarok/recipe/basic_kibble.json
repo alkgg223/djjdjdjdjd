@@ -1,0 +1,22 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "minecraft:egg"
+  },
+  {
+   "item": "minecraft:wheat"
+  },
+  {
+   "item": "minecraft:carrot"
+  },
+  {
+   "item": "minecraft:sweet_berries"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:basic_kibble",
+  "count": 2
+ }
+}

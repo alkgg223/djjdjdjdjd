@@ -212,8 +212,15 @@ class Quadruped:
         H, J = "head", "jaw"
         pachy = self.P["skull"] == "pachyrhino"
         sc.ell((0, 40.5, -55), (8.6, 8.2, 9.0), bone=H, k=2.4)
-        sc.cone((0, 38.5, -60), (0, 33.5, -77), 6.6, 3.0, bone=H, k=2.2, sq=(0.7, 1.0))
-        sc.cone((0, 32.6, -76.0), (0, 28.8, -81.0), 3.0, 0.7, bone=H, k=1.2, mat="beak", sq=(0.75, 1.0))
+        # deep, narrow, flat-sided snout (as tall as it is long near the nose), not a pointed cone
+        sc.cone((0, 38.6, -60), (0, 36.2, -74.5), 6.8, 4.6, bone=H, k=2.2, sq=(0.6, 1.0))
+        sc.ell((0, 41.4, -66.0), (3.2, 3.0, 7.5), bone=H, k=2.0)                                  # nasal bridge
+        # rostral beak: big parrot-like hook curving down over the lower beak
+        sc.ell((0, 36.4, -76.2), (2.5, 3.6, 2.8), bone=H, k=1.6, mat="beak")
+        sc.cone((0, 35.6, -78.0), (0, 29.4, -80.6), 2.6, 0.7, bone=H, k=1.2, mat="beak", sq=(0.7, 1.0))
+        for s in S:
+            sc.ell((s * 2.5, 38.2, -72.6), (0.95, 1.7, 2.2), bone=H, op="sub", k=0.6)            # large nostril
+            sc.ell((s * 4.6, 33.2, -63.0), (1.9, 2.6, 7.2), bone=H, k=1.6)                         # cheek over the teeth
         for s in S:
             # jugal (cheek) horn: a pointed boss aimed down, out and back - not a ball
             sc.ell((s * 7.4, 36.8, -57.6), (2.6, 3.4, 4.0), bone=H, k=1.8)
@@ -223,15 +230,17 @@ class Quadruped:
             sc.ell((s * 6.9, 45.35, -60.6), (1.15, 0.75, 2.2), bone=H, k=0.6, mat="lid")
             sc.ell((s * 6.95, 42.8, -60.6), (1.0, 0.55, 1.9), bone=H, k=0.5, mat="lid")
             sc.ell((s * 6.6, 46.4, -60.2), (1.9, 1.0, 3.0), bone=H, k=0.9, mat="horn_skin")          # brow ridge
-            sc.ell((s * 2.4, 37.0, -73.5), (0.8, 1.0, 1.6), bone=H, op="sub", k=0.5)
+
         hl = self.P["horn_len"]
         if not pachy:
-            sc.cone((0, 41.0, -70.5), (0, 46.0 + 1.5 * hl, -74.0), 2.0, 0.4, bone=H, k=0.8, mat="horn")
+            sc.cone((0, 42.6, -70.0), (0, 48.0 + 1.5 * hl, -73.0), 2.3, 0.4, bone=H, k=0.9, mat="horn")      # nasal horn
             for s in S:      # two long brow horns sweeping forward
                 sc.cone((s * 4.2, 46.5, -58.5), (s * 5.4, 53.0, -66.0 - 6.0 * hl), 2.6, 1.6, bone=H, k=1.0, mat="horn")
                 sc.cone((s * 5.4, 53.0, -66.0 - 6.0 * hl), (s * 5.6, 54.0, -75.0 - 9.0 * hl), 1.6, 0.25, bone=H, k=0.6, mat="horn")
         else:
-            sc.ell((0, 41.6, -67.6), (3.5, 1.7, 6.4), bone=H, k=1.4, mat="horn_skin")        # broad flat nasal boss
+            sc.ell((0, 43.6, -67.8), (3.6, 1.9, 6.6), bone=H, k=1.4, mat="horn_skin")        # broad flat nasal boss
+            for i in range(5):                                                                 # rugose (pitted) boss surface
+                sc.ell((((i % 2) - 0.5) * 2.4, 45.0, -63.8 - i * 1.8), (1.0, 0.55, 1.0), bone=H, k=0.5, mat="horn_skin")
             sc.ell((0, 46.6, -60.8), (2.8, 1.3, 3.6), bone=H, k=1.3, mat="horn_skin")        # brow boss
         # frill: thick shield tilted back, with a raised rim
         fk = self.P["frill"]
@@ -239,8 +248,9 @@ class Quadruped:
         sc.ell((0, 52.5, -44.5), fr, bone=H, k=1.4, mat="frill", rot=(-0.95, 0, 0))
         sc.ell((0, 47.0, -50.0), (11.0, 9.0, 4.5), bone=H, k=2.5, rot=(-0.95, 0, 0))
         J_ = "jaw"
-        sc.cone((0, 33.0, -56), (0, 29.8, -77.5), 4.4, 1.6, bone=J_, group="jaw", k=1.6, sq=(0.85, 0.8))
-        sc.cone((0, 29.6, -77.0), (0, 28.6, -81.0), 1.7, 0.5, bone=J_, group="jaw", k=0.8, mat="beak")
+        sc.cone((0, 32.6, -56), (0, 31.0, -76.0), 5.0, 2.3, bone=J_, group="jaw", k=1.6, sq=(0.78, 0.9))   # deep lower jaw
+        sc.ell((0, 30.2, -60.5), (3.4, 3.4, 4.0), bone=J_, group="jaw", k=1.6)                               # coronoid / jaw angle
+        sc.cone((0, 31.4, -76.0), (0, 30.2, -79.4), 2.2, 0.7, bone=J_, group="jaw", k=1.0, mat="beak", sq=(0.75, 0.9))
         sc.ell((0, 32.6, -66.0), (2.2, 0.9, 7.0), bone=J_, group="tongue", k=1.0, mat="tongue")
 
     def skull_small(self, sc):

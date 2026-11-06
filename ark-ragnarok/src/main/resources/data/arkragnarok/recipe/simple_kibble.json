@@ -1,0 +1,25 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "minecraft:egg"
+  },
+  {
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "minecraft:cooked_cod"
+  },
+  {
+   "item": "minecraft:potato"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:simple_kibble",
+  "count": 2
+ }
+}

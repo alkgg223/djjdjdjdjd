@@ -3,15 +3,15 @@
  "name": "Pachyrhinosaurus",
  "plan": "quadruped",
  "length_m": 6.0,
- "scale": 0.55776,
- "height": 2.243,
- "width": 1.154,
- "hip": 1.37,
- "eye": 1.632,
- "head_z": 1.516,
+ "scale": 0.55902,
+ "height": 2.249,
+ "width": 1.157,
+ "hip": 1.373,
+ "eye": 1.636,
+ "head_z": 1.52,
  "seat": [
-  -0.066,
-  2.053
+  -0.067,
+  2.058
  ],
  "saddle": true,
  "bones": 27

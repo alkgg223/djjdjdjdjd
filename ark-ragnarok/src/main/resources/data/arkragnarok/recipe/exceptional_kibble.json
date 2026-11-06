@@ -1,0 +1,25 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "minecraft:turtle_egg"
+  },
+  {
+   "item": "arkragnarok:cooked_prime_meat"
+  },
+  {
+   "item": "arkragnarok:cooked_prime_meat"
+  },
+  {
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "minecraft:honey_bottle"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:exceptional_kibble",
+  "count": 2
+ }
+}

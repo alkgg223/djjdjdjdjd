@@ -1,0 +1,12 @@
+{
+ "type": "minecraft:smoking",
+ "category": "food",
+ "ingredient": {
+  "item": "arkragnarok:raw_prime_meat"
+ },
+ "result": {
+  "id": "arkragnarok:cooked_prime_meat"
+ },
+ "experience": 0.35,
+ "cookingtime": 100
+}

@@ -3,15 +3,15 @@
  "name": "Carnotaurus",
  "plan": "theropod",
  "length_m": 8.0,
- "scale": 0.6698,
- "height": 3.919,
- "width": 1.114,
- "hip": 2.851,
- "eye": 3.565,
- "head_z": 2.139,
+ "scale": 0.67087,
+ "height": 3.902,
+ "width": 1.117,
+ "hip": 2.856,
+ "eye": 3.575,
+ "head_z": 2.143,
  "seat": [
   0.008,
-  3.559
+  3.565
  ],
  "saddle": true,
  "bones": 35

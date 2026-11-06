@@ -3,15 +3,15 @@
  "name": "Moschops",
  "plan": "quadruped",
  "length_m": 2.7,
- "scale": 0.44885,
- "height": 1.569,
- "width": 0.977,
- "hip": 1.027,
- "eye": 1.282,
- "head_z": 0.776,
+ "scale": 0.44425,
+ "height": 1.553,
+ "width": 0.972,
+ "hip": 1.016,
+ "eye": 1.271,
+ "head_z": 0.768,
  "seat": [
-  -0.111,
-  1.639
+  -0.11,
+  1.622
  ],
  "saddle": true,
  "bones": 27

@@ -13,33 +13,33 @@ public final class SpeciesModels {
     private static final Map<String, Meta> M = new HashMap<>();
 
     static {
-        M.put("allosaurus", new Meta("Allosaurus", "theropod", 9.5f, 0.74334f, 1.265f, 3.904f, 3.608f, 2.84f, 2.467f, 0.035f, 3.651f, true));
+        M.put("allosaurus", new Meta("Allosaurus", "theropod", 9.5f, 0.746f, 1.269f, 3.909f, 3.625f, 2.85f, 2.476f, 0.035f, 3.664f, true));
         M.put("ankylosaurus", new Meta("Ankylosaurus", "quadruped", 7.0f, 0.65587f, 2.218f, 1.837f, 1.205f, 1.178f, 1.849f, -0.035f, 1.943f, true));
         M.put("baryonyx", new Meta("Baryonyx", "theropod", 9.0f, 0.69614f, 1.092f, 3.704f, 3.471f, 2.531f, 2.401f, 0.033f, 3.248f, true));
         M.put("brontosaurus", new Meta("Brontosaurus", "sauropod", 22.0f, 1.58795f, 3.438f, 11.184f, 10.868f, 5.528f, 6.55f, -0.089f, 7.467f, true));
-        M.put("carnotaurus", new Meta("Carnotaurus", "theropod", 8.0f, 0.6698f, 1.114f, 3.919f, 3.565f, 2.851f, 2.139f, 0.008f, 3.559f, true));
-        M.put("compsognathus", new Meta("Compsognathus", "theropod", 1.0f, 0.07158f, 0.35f, 0.465f, 0.439f, 0.316f, 0.201f, 0.0f, 0.316f, false));
-        M.put("deinonychus", new Meta("Deinonychus", "theropod", 3.4f, 0.25878f, 0.35f, 1.593f, 1.485f, 1.056f, 0.717f, -0.022f, 1.269f, true));
-        M.put("dilophosaurus", new Meta("Dilophosaurus", "theropod", 7.0f, 0.53652f, 0.74f, 3.186f, 2.938f, 2.149f, 1.771f, 0.0f, 2.149f, false));
+        M.put("carnotaurus", new Meta("Carnotaurus", "theropod", 8.0f, 0.67087f, 1.117f, 3.902f, 3.575f, 2.856f, 2.143f, 0.008f, 3.565f, true));
+        M.put("compsognathus", new Meta("Compsognathus", "theropod", 1.0f, 0.07187f, 0.35f, 0.466f, 0.441f, 0.318f, 0.202f, 0.0f, 0.318f, false));
+        M.put("deinonychus", new Meta("Deinonychus", "theropod", 3.4f, 0.25981f, 0.35f, 1.602f, 1.5f, 1.068f, 0.719f, -0.022f, 1.282f, true));
+        M.put("dilophosaurus", new Meta("Dilophosaurus", "theropod", 7.0f, 0.5384f, 0.744f, 3.206f, 2.952f, 2.156f, 1.777f, 0.0f, 2.156f, false));
         M.put("diplodocus", new Meta("Diplodocus", "sauropod", 26.0f, 1.36723f, 2.48f, 6.929f, 6.619f, 4.433f, 8.896f, -0.007f, 5.88f, true));
-        M.put("dodo", new Meta("Dodo", "theropod", 1.0f, 0.17164f, 0.351f, 0.699f, 0.6f, 0.338f, 0.226f, 0.0f, 0.338f, false));
-        M.put("gallimimus", new Meta("Gallimimus", "theropod", 6.0f, 0.52858f, 0.699f, 4.406f, 4.284f, 2.709f, 1.679f, -0.046f, 3.162f, true));
-        M.put("giganotosaurus", new Meta("Giganotosaurus", "theropod", 13.0f, 0.94854f, 1.938f, 5.059f, 4.581f, 3.513f, 3.213f, 0.093f, 4.732f, true));
-        M.put("iguanodon", new Meta("Iguanodon", "quadruped", 10.0f, 0.79222f, 1.539f, 3.607f, 3.418f, 2.678f, 2.684f, -0.009f, 3.663f, true));
-        M.put("megalosaurus", new Meta("Megalosaurus", "theropod", 7.0f, 0.57619f, 1.068f, 2.887f, 2.612f, 2.02f, 1.837f, 0.026f, 2.683f, true));
-        M.put("moschops", new Meta("Moschops", "quadruped", 2.7f, 0.44885f, 0.977f, 1.569f, 1.282f, 1.027f, 0.776f, -0.111f, 1.639f, true));
-        M.put("oviraptor", new Meta("Oviraptor", "theropod", 1.8f, 0.18638f, 0.35f, 1.218f, 1.098f, 0.763f, 0.503f, 0.0f, 0.763f, false));
+        M.put("dodo", new Meta("Dodo", "theropod", 0.95f, 0.27303f, 0.473f, 0.879f, 0.796f, 0.418f, 0.242f, 0.0f, 0.418f, false));
+        M.put("gallimimus", new Meta("Gallimimus", "theropod", 6.0f, 0.50236f, 0.664f, 3.96f, 3.878f, 2.574f, 1.804f, -0.044f, 3.005f, true));
+        M.put("giganotosaurus", new Meta("Giganotosaurus", "theropod", 13.0f, 0.95272f, 1.948f, 5.074f, 4.608f, 3.529f, 3.227f, 0.094f, 4.753f, true));
+        M.put("iguanodon", new Meta("Iguanodon", "quadruped", 10.0f, 0.79474f, 1.543f, 3.618f, 3.428f, 2.687f, 2.692f, -0.009f, 3.675f, true));
+        M.put("megalosaurus", new Meta("Megalosaurus", "theropod", 7.0f, 0.57838f, 1.071f, 2.892f, 2.625f, 2.027f, 1.844f, 0.026f, 2.694f, true));
+        M.put("moschops", new Meta("Moschops", "quadruped", 2.7f, 0.44425f, 0.972f, 1.553f, 1.271f, 1.016f, 0.768f, -0.11f, 1.622f, true));
+        M.put("oviraptor", new Meta("Oviraptor", "theropod", 1.8f, 0.18651f, 0.35f, 1.189f, 1.096f, 0.764f, 0.503f, 0.0f, 0.764f, false));
         M.put("pachycephalosaurus", new Meta("Pachycephalosaurus", "theropod", 4.5f, 0.42295f, 0.692f, 2.185f, 1.941f, 1.544f, 1.134f, -0.023f, 1.995f, true));
-        M.put("pachyrhinosaurus", new Meta("Pachyrhinosaurus", "quadruped", 6.0f, 0.55776f, 1.154f, 2.243f, 1.632f, 1.37f, 1.516f, -0.066f, 2.053f, true));
-        M.put("parasaurolophus", new Meta("Parasaurolophus", "quadruped", 9.5f, 0.76418f, 1.348f, 3.807f, 3.589f, 2.728f, 2.536f, -0.035f, 3.609f, true));
+        M.put("pachyrhinosaurus", new Meta("Pachyrhinosaurus", "quadruped", 6.0f, 0.55902f, 1.157f, 2.249f, 1.636f, 1.373f, 1.52f, -0.067f, 2.058f, true));
+        M.put("parasaurolophus", new Meta("Parasaurolophus", "quadruped", 9.5f, 0.76524f, 1.352f, 4.074f, 3.594f, 2.731f, 2.54f, -0.035f, 3.614f, true));
         M.put("spinosaurus", new Meta("Spinosaurus", "theropod", 15.0f, 1.01736f, 1.789f, 5.335f, 4.665f, 3.035f, 3.913f, -0.922f, 4.068f, true));
         M.put("stegosaurus", new Meta("Stegosaurus", "quadruped", 9.0f, 0.80047f, 1.566f, 4.513f, 2.105f, 2.63f, 2.508f, -0.056f, 3.642f, true));
-        M.put("therizinosaurus", new Meta("Therizinosaurus", "theropod", 10.0f, 1.18042f, 2.414f, 9.056f, 8.842f, 4.922f, 4.141f, -0.029f, 6.545f, true));
+        M.put("therizinosaurus", new Meta("Therizinosaurus", "theropod", 10.0f, 1.11406f, 2.277f, 7.998f, 7.857f, 4.646f, 4.391f, -0.028f, 6.177f, true));
         M.put("triceratops", new Meta("Triceratops", "quadruped", 9.0f, 0.78666f, 1.877f, 3.277f, 2.326f, 1.932f, 2.36f, -0.039f, 3.008f, true));
-        M.put("troodon", new Meta("Troodon", "theropod", 2.4f, 0.18481f, 0.35f, 1.183f, 1.105f, 0.784f, 0.532f, 0.0f, 0.784f, false));
-        M.put("tyrannosaurus", new Meta("Tyrannosaurus", "theropod", 12.3f, 0.99751f, 2.037f, 5.359f, 4.825f, 3.694f, 3.18f, 0.044f, 4.952f, true));
-        M.put("utahraptor", new Meta("Utahraptor", "theropod", 6.0f, 0.45867f, 0.607f, 2.676f, 2.515f, 1.8f, 1.351f, -0.024f, 2.2f, true));
-        M.put("yutyrannus", new Meta("Yutyrannus", "theropod", 9.0f, 0.75368f, 1.398f, 3.8f, 3.44f, 2.661f, 2.308f, 0.008f, 3.537f, true));
+        M.put("troodon", new Meta("Troodon", "theropod", 2.4f, 0.18564f, 0.35f, 1.184f, 1.111f, 0.788f, 0.535f, 0.0f, 0.788f, false));
+        M.put("tyrannosaurus", new Meta("Tyrannosaurus", "theropod", 12.3f, 1.00032f, 2.044f, 5.368f, 4.846f, 3.704f, 3.189f, 0.044f, 4.966f, true));
+        M.put("utahraptor", new Meta("Utahraptor", "theropod", 6.0f, 0.46044f, 0.61f, 2.698f, 2.542f, 1.821f, 1.356f, -0.024f, 2.223f, true));
+        M.put("yutyrannus", new Meta("Yutyrannus", "theropod", 9.0f, 0.75631f, 1.402f, 3.807f, 3.456f, 2.67f, 2.316f, 0.008f, 3.549f, true));
     }
 
     public static Meta get(String id) {

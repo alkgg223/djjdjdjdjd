@@ -1,0 +1,31 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "minecraft:egg"
+  },
+  {
+   "item": "minecraft:egg"
+  },
+  {
+   "item": "arkragnarok:cooked_prime_meat"
+  },
+  {
+   "item": "arkragnarok:cooked_prime_meat"
+  },
+  {
+   "item": "minecraft:glow_berries"
+  },
+  {
+   "item": "minecraft:golden_apple"
+  },
+  {
+   "item": "minecraft:honey_bottle"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:extraordinary_kibble",
+  "count": 2
+ }
+}

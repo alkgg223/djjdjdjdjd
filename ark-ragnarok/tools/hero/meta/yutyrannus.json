@@ -3,15 +3,15 @@
  "name": "Yutyrannus",
  "plan": "theropod",
  "length_m": 9.0,
- "scale": 0.75368,
- "height": 3.8,
- "width": 1.398,
- "hip": 2.661,
- "eye": 3.44,
- "head_z": 2.308,
+ "scale": 0.75631,
+ "height": 3.807,
+ "width": 1.402,
+ "hip": 2.67,
+ "eye": 3.456,
+ "head_z": 2.316,
  "seat": [
   0.008,
-  3.537
+  3.549
  ],
  "saddle": true,
  "bones": 35

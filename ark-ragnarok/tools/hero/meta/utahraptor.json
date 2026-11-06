@@ -3,15 +3,15 @@
  "name": "Utahraptor",
  "plan": "theropod",
  "length_m": 6.0,
- "scale": 0.45867,
- "height": 2.676,
- "width": 0.607,
- "hip": 1.8,
- "eye": 2.515,
- "head_z": 1.351,
+ "scale": 0.46044,
+ "height": 2.698,
+ "width": 0.61,
+ "hip": 1.821,
+ "eye": 2.542,
+ "head_z": 1.356,
  "seat": [
   -0.024,
-  2.2
+  2.223
  ],
  "saddle": true,
  "bones": 35

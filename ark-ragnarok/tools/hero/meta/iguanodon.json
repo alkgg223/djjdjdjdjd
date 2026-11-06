@@ -3,15 +3,15 @@
  "name": "Iguanodon",
  "plan": "quadruped",
  "length_m": 10.0,
- "scale": 0.79222,
- "height": 3.607,
- "width": 1.539,
- "hip": 2.678,
- "eye": 3.418,
- "head_z": 2.684,
+ "scale": 0.79474,
+ "height": 3.618,
+ "width": 1.543,
+ "hip": 2.687,
+ "eye": 3.428,
+ "head_z": 2.692,
  "seat": [
   -0.009,
-  3.663
+  3.675
  ],
  "saddle": true,
  "bones": 27

@@ -1,0 +1,25 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "minecraft:egg"
+  },
+  {
+   "item": "arkragnarok:cooked_prime_meat"
+  },
+  {
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "minecraft:golden_carrot"
+  },
+  {
+   "item": "minecraft:sugar"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:superior_kibble",
+  "count": 2
+ }
+}

@@ -3,15 +3,15 @@
  "name": "Megalosaurus",
  "plan": "theropod",
  "length_m": 7.0,
- "scale": 0.57619,
- "height": 2.887,
- "width": 1.068,
- "hip": 2.02,
- "eye": 2.612,
- "head_z": 1.837,
+ "scale": 0.57838,
+ "height": 2.892,
+ "width": 1.071,
+ "hip": 2.027,
+ "eye": 2.625,
+ "head_z": 1.844,
  "seat": [
   0.026,
-  2.683
+  2.694
  ],
  "saddle": true,
  "bones": 35

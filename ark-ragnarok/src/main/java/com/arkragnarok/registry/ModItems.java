@@ -1,12 +1,19 @@
 package com.arkragnarok.registry;
 
 import com.arkragnarok.ArkRagnarok;
+import com.arkragnarok.item.SuperSpyglassItem;
+import com.arkragnarok.item.TranqArrowItem;
+import com.arkragnarok.species.Kibble;
 import com.arkragnarok.species.Species;
 import com.arkragnarok.species.SpeciesList;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -36,10 +43,49 @@ public final class ModItems {
     public static final DeferredItem<Item> DINO_SADDLE = ITEMS.register("dino_saddle",
             () -> new Item(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
 
+    // ------------------------------------------------------------------------------------------- taming
+    /** six kibble tiers; every species prefers one (see Species.kibble) */
+    public static final Map<Kibble, DeferredItem<Item>> KIBBLE = new EnumMap<>(Kibble.class);
+
+    static {
+        for (Kibble k : Kibble.values()) {
+            KIBBLE.put(k, ITEMS.register(k.item, () -> new Item(new Item.Properties().stacksTo(64)
+                    .rarity(k.ordinal() >= 4 ? Rarity.RARE : k.ordinal() >= 2 ? Rarity.UNCOMMON : Rarity.COMMON)
+                    .food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.3f).build()))));
+        }
+    }
+
+    public static final DeferredItem<Item> MEJOBERRY = ITEMS.register("mejoberry",
+            () -> new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(1).saturationModifier(0.2f).fast().build())));
+    public static final DeferredItem<Item> NARCOBERRY = ITEMS.register("narcoberry",
+            () -> new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(1).saturationModifier(0.1f).fast()
+                    .effect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 0), 1.0f).build())));
+    public static final DeferredItem<Item> NARCOTIC = ITEMS.register("narcotic",
+            () -> new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(0).saturationModifier(0f).alwaysEdible()
+                    .effect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 300, 1), 1.0f)
+                    .effect(new MobEffectInstance(MobEffects.CONFUSION, 200, 0), 1.0f).build())));
+    public static final DeferredItem<Item> RAW_PRIME_MEAT = ITEMS.register("raw_prime_meat",
+            () -> new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(4).saturationModifier(0.3f)
+                    .effect(new MobEffectInstance(MobEffects.HUNGER, 400, 0), 0.4f).build())));
+    public static final DeferredItem<Item> COOKED_PRIME_MEAT = ITEMS.register("cooked_prime_meat",
+            () -> new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(10).saturationModifier(0.9f).build())));
+    public static final DeferredItem<Item> TRANQ_ARROW = ITEMS.register("tranq_arrow",
+            () -> new TranqArrowItem(new Item.Properties()));
+    public static final DeferredItem<Item> SUPER_SPYGLASS = ITEMS.register("super_spyglass",
+            () -> new SuperSpyglassItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
+
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = TABS.register("main", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.arkragnarok"))
             .icon(() -> new ItemStack(SPAWN_EGGS.get("tyrannosaurus").get()))
             .displayItems((params, out) -> {
+                out.accept(SUPER_SPYGLASS.get());
+                out.accept(TRANQ_ARROW.get());
+                out.accept(NARCOTIC.get());
+                out.accept(NARCOBERRY.get());
+                out.accept(MEJOBERRY.get());
+                for (DeferredItem<Item> k : KIBBLE.values()) out.accept(k.get());
+                out.accept(RAW_PRIME_MEAT.get());
+                out.accept(COOKED_PRIME_MEAT.get());
                 out.accept(DINO_SADDLE.get());
                 for (DeferredItem<DeferredSpawnEggItem> e : SPAWN_EGGS.values()) out.accept(e.get());
             })
