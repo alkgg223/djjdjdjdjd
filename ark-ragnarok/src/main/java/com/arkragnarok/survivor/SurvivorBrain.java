@@ -153,6 +153,7 @@ final class SurvivorBrain extends Goal {
             taskTicks = 0;
             stuck = 0;
             gathered = 0;
+            lastPos = s.position();
         }
         doing = what;
         target = t;
@@ -161,6 +162,7 @@ final class SurvivorBrain extends Goal {
     }
 
     private void finish() {
+        stuck = 0;
         doing = "idle";
         target = null;
         targetEntity = null;
@@ -1082,10 +1084,14 @@ final class SurvivorBrain extends Goal {
             if (doing.equals("chop") && target != null) forgetAt(Memory.Kind.TREE, target);
             if (doing.equals("cave") && target != null) forgetAt(Memory.Kind.CAVE, target);
             if (doing.equals("quarry") && target != null) forgetAt(Memory.Kind.STONE, target);
-            if (job != null) builder().delay(job, s.level().getGameTime(), 600);
+            boolean gathering = switch (doing) {
+                case "chop", "cave", "quarry", "forage", "mine", "explore", "hunt" -> true;
+                default -> false;
+            };
+            if (job != null) builder().delay(job, s.level().getGameTime(), 300);
             if (doing.equals("raid")) s.tribe().lastRaid = s.level().getGameTime();
             finish();
-            explore(t);
+            if (gathering) explore(t);              // somewhere else, then; a stuck build step is simply tried again later
         }
     }
 
@@ -1123,7 +1129,13 @@ final class SurvivorBrain extends Goal {
         }
         BlockPos away = builder().standAside(job);
         if (away != null) {
-            walkTo(away, 0.6, 1.0);                // never build a piece into its own feet
+            // never build a piece into its own feet: step aside (or, boxed in by its own walls, climb out of the way)
+            if (++work > 100 && s.level().noCollision(s, s.getBoundingBox().move(Vec3.atBottomCenterOf(away).subtract(s.position())))) {
+                s.teleportTo(away.getX() + 0.5, away.getY(), away.getZ() + 0.5);
+                work = 0;
+            } else {
+                walkTo(away, 1.0, 1.0);
+            }
             return;
         }
         s.getNavigation().stop();
