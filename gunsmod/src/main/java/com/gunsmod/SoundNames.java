@@ -30,6 +30,10 @@ public final class SoundNames {
             "shot_m82", "shot_axmc", "shot_m200", "shot_benelli", "shot_r870", "shot_spas12",
             "shot_glock", "shot_deagle", "shot_p320", "shot_fiveseven", "impact_glass", "impact_armor",
             "ciws_burst", "drone_quad", "drone_hexa", "drone_lancet", "drone_plane", "drone_drop",
-            "ui_drone_static", "ui_drone_spot", "ui_drone_lock"
+            "ui_drone_static", "ui_drone_spot", "ui_drone_lock", "fa18_idle", "fa18_engine", "fa18_burner",
+            "fa18_flyby", "f15e_idle", "f15e_engine", "f15e_burner", "f15e_flyby", "su57_idle",
+            "su57_engine", "su57_burner", "su57_flyby", "typhoon_idle", "typhoon_engine", "typhoon_burner",
+            "typhoon_flyby", "rafale_idle", "rafale_engine", "rafale_burner", "rafale_flyby", "gripen_idle",
+            "gripen_engine", "gripen_burner", "gripen_flyby"
     };
 }

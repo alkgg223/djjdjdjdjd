@@ -1,0 +1,30 @@
+newmtl glow
+Kd 1 1 1
+Ka 1 1 1
+d 1.0
+map_Kd #glow
+
+newmtl light_grey
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #light_grey
+
+newmtl paint
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint
+neoforge_TintIndex 0
+
+newmtl rubber
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #rubber
+
+newmtl steel
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #steel

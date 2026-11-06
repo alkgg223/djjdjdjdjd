@@ -1988,5 +1988,245 @@
    "gunsmod:ui_drone_lock"
   ],
   "subtitle": "subtitles.gunsmod.drone_spot"
+ },
+ "fa18_idle": {
+  "sounds": [
+   {
+    "name": "gunsmod:fa18_idle",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "fa18_engine": {
+  "sounds": [
+   {
+    "name": "gunsmod:fa18_engine",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "fa18_burner": {
+  "sounds": [
+   {
+    "name": "gunsmod:fa18_burner",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_afterburner"
+ },
+ "fa18_flyby": {
+  "sounds": [
+   {
+    "name": "gunsmod:fa18_flyby_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:fa18_flyby_2",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "f15e_idle": {
+  "sounds": [
+   {
+    "name": "gunsmod:f15e_idle",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "f15e_engine": {
+  "sounds": [
+   {
+    "name": "gunsmod:f15e_engine",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "f15e_burner": {
+  "sounds": [
+   {
+    "name": "gunsmod:f15e_burner",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_afterburner"
+ },
+ "f15e_flyby": {
+  "sounds": [
+   {
+    "name": "gunsmod:f15e_flyby_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:f15e_flyby_2",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "su57_idle": {
+  "sounds": [
+   {
+    "name": "gunsmod:su57_idle",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "su57_engine": {
+  "sounds": [
+   {
+    "name": "gunsmod:su57_engine",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "su57_burner": {
+  "sounds": [
+   {
+    "name": "gunsmod:su57_burner",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_afterburner"
+ },
+ "su57_flyby": {
+  "sounds": [
+   {
+    "name": "gunsmod:su57_flyby_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:su57_flyby_2",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "typhoon_idle": {
+  "sounds": [
+   {
+    "name": "gunsmod:typhoon_idle",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "typhoon_engine": {
+  "sounds": [
+   {
+    "name": "gunsmod:typhoon_engine",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "typhoon_burner": {
+  "sounds": [
+   {
+    "name": "gunsmod:typhoon_burner",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_afterburner"
+ },
+ "typhoon_flyby": {
+  "sounds": [
+   {
+    "name": "gunsmod:typhoon_flyby_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:typhoon_flyby_2",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "rafale_idle": {
+  "sounds": [
+   {
+    "name": "gunsmod:rafale_idle",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "rafale_engine": {
+  "sounds": [
+   {
+    "name": "gunsmod:rafale_engine",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "rafale_burner": {
+  "sounds": [
+   {
+    "name": "gunsmod:rafale_burner",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_afterburner"
+ },
+ "rafale_flyby": {
+  "sounds": [
+   {
+    "name": "gunsmod:rafale_flyby_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:rafale_flyby_2",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
+ },
+ "gripen_idle": {
+  "sounds": [
+   {
+    "name": "gunsmod:gripen_idle",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "gripen_engine": {
+  "sounds": [
+   {
+    "name": "gunsmod:gripen_engine",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_engine"
+ },
+ "gripen_burner": {
+  "sounds": [
+   {
+    "name": "gunsmod:gripen_burner",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_afterburner"
+ },
+ "gripen_flyby": {
+  "sounds": [
+   {
+    "name": "gunsmod:gripen_flyby_1",
+    "attenuation_distance": 80
+   },
+   {
+    "name": "gunsmod:gripen_flyby_2",
+    "attenuation_distance": 80
+   }
+  ],
+  "subtitle": "subtitles.gunsmod.jet_flyby"
  }
 }

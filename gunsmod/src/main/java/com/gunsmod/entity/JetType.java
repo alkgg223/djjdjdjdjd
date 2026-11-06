@@ -20,7 +20,20 @@ public enum JetType {
     A10("a10", VehicleGeo.A10, 0.375, 0.40, 0.62, 1.70, 0.60, 0.62, 0.90, 0.85, 420, 0.05f, 1.10f, 0.35f, Role.STRIKE,
             Gun.GAU8, Ground.MAVERICK, Air.AIM9, 0b001111, 0b110000, 0b111111, 96, true),
     B2("b2", VehicleGeo.B2, 1.0, 0.50, 0.85, 1.90, 1.00, 1.30, 0.00, 0.45, 500, 0.00f, 0.00f, 0.00f, Role.BOMBER,
-            Gun.NONE, Ground.NUKE, Air.NONE, 0b111111, 0, 0, 30, false);
+            Gun.NONE, Ground.NUKE, Air.NONE, 0b111111, 0, 0, 30, false),
+    // ---- 3.0
+    FA18("fa18", VehicleGeo.FA18, 0.375, 0.50, 0.95, 2.45, 0.78, 1.00, 1.05, 1.20, 240, 0.20f, 0.85f, 0.55f, Role.MULTIROLE,
+            Gun.M61, Ground.MAVERICK, Air.AIM120, 0b001100, 0b110011, 0b111111, 60, true),
+    F15E("f15e", VehicleGeo.F15E, 0.375, 0.55, 0.95, 2.75, 0.85, 1.15, 1.20, 1.05, 280, 0.18f, 1.00f, 0.55f, Role.STRIKE,
+            Gun.M61, Ground.JDAM, Air.AIM120, 0b001100, 0b110011, 0b111111, 64, true),
+    SU57("su57", VehicleGeo.SU57, 0.375, 0.50, 1.00, 2.85, 0.85, 1.50, 1.15, 1.40, 250, 0.18f, 0.40f, 0.45f, Role.FIGHTER,
+            Gun.GSH30, Ground.MAVERICK, Air.R77, 0b001100, 0b110011, 0b111111, 60, true),
+    TYPHOON("typhoon", VehicleGeo.TYPHOON, 0.375, 0.50, 1.00, 2.80, 0.85, 1.20, 1.15, 1.30, 220, 0.20f, 0.80f, 0.55f, Role.FIGHTER,
+            Gun.GSH30, Ground.JDAM, Air.AIM120, 0b001100, 0b110011, 0b111111, 60, true),
+    RAFALE("rafale", VehicleGeo.RAFALE, 0.375, 0.48, 1.00, 2.70, 0.82, 1.10, 1.10, 1.30, 220, 0.20f, 0.75f, 0.55f, Role.MULTIROLE,
+            Gun.GSH30, Ground.MAVERICK, Air.AIM120, 0b001100, 0b110011, 0b111111, 60, true),
+    GRIPEN("gripen", VehicleGeo.GRIPEN, 0.375, 0.48, 1.00, 2.50, 0.78, 0.95, 1.10, 1.25, 180, 0.22f, 0.70f, 0.60f, Role.MULTIROLE,
+            Gun.GSH30, Ground.JDAM, Air.AIM120, 0b001100, 0b110011, 0b111111, 56, true);
 
     /** how a soldier pilot fights it */
     public enum Role { MULTIROLE, FIGHTER, STRIKE, BOMBER }
@@ -168,6 +181,12 @@ public enum JetType {
             case MIG29 -> new float[]{0.60f, 0.62f, 0.60f};
             case A10 -> new float[]{0.44f, 0.47f, 0.45f};
             case B2 -> new float[]{0.28f, 0.29f, 0.31f};
+            case FA18 -> new float[]{0.56f, 0.58f, 0.62f};
+            case F15E -> new float[]{0.38f, 0.40f, 0.42f};
+            case SU57 -> new float[]{0.48f, 0.55f, 0.62f};
+            case TYPHOON -> new float[]{0.55f, 0.57f, 0.60f};
+            case RAFALE -> new float[]{0.50f, 0.52f, 0.56f};
+            case GRIPEN -> new float[]{0.52f, 0.54f, 0.56f};
             default -> new float[]{0.74f, 0.76f, 0.78f};
         };
     }
@@ -180,6 +199,12 @@ public enum JetType {
             case MIG29 -> VehicleKind.MIG29;
             case A10 -> VehicleKind.A10;
             case B2 -> VehicleKind.B2;
+            case FA18 -> VehicleKind.FA18;
+            case F15E -> VehicleKind.F15E;
+            case SU57 -> VehicleKind.SU57;
+            case TYPHOON -> VehicleKind.TYPHOON;
+            case RAFALE -> VehicleKind.RAFALE;
+            case GRIPEN -> VehicleKind.GRIPEN;
             default -> VehicleKind.F16;
         };
     }

@@ -13,6 +13,7 @@ import newveh_mesh as NV
 import civ_mesh as CV
 import b2_mesh as BM
 import jets2_mesh as J2
+import jets3_mesh  # noqa: F401  (adds the 3.0 fighters to J2.JETS2)
 
 RES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "resources", "assets", "gunsmod")
 

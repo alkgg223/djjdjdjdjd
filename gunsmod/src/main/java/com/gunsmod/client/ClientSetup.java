@@ -191,6 +191,12 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.F16.get(), JetRenderer::new);
         e.registerEntityRenderer(Reg.B2.get(), JetRenderer::new);
         e.registerEntityRenderer(Reg.F22.get(), JetRenderer::new);
+        e.registerEntityRenderer(Reg.JET_FA18.get(), JetRenderer::new);
+        e.registerEntityRenderer(Reg.JET_F15E.get(), JetRenderer::new);
+        e.registerEntityRenderer(Reg.JET_SU57.get(), JetRenderer::new);
+        e.registerEntityRenderer(Reg.JET_TYPHOON.get(), JetRenderer::new);
+        e.registerEntityRenderer(Reg.JET_RAFALE.get(), JetRenderer::new);
+        e.registerEntityRenderer(Reg.JET_GRIPEN.get(), JetRenderer::new);
         e.registerEntityRenderer(Reg.F35.get(), JetRenderer::new);
         e.registerEntityRenderer(Reg.SU35.get(), JetRenderer::new);
         e.registerEntityRenderer(Reg.MIG29.get(), JetRenderer::new);

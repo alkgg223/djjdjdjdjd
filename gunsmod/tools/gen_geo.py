@@ -8,6 +8,7 @@ import newveh_mesh as NV
 import civ_mesh as CV
 import jet as J
 import jets2_mesh as J2
+import jets3_mesh  # noqa: F401  (adds the 3.0 fighters to J2.JETS2)
 import b2_mesh as B2
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "main", "java", "com", "gunsmod", "entity", "VehicleGeo.java")

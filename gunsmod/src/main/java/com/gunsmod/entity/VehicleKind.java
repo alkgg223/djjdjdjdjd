@@ -51,7 +51,13 @@ public enum VehicleKind {
     FUEL_TRUCK("fuel_truck", Group.CAR),
     AMMO_TRUCK("ammo_truck", Group.CAR),
     COMMAND_TRUCK("command_truck", Group.CAR),
-    RECOVERY_TRUCK("recovery_truck", Group.CAR);
+    RECOVERY_TRUCK("recovery_truck", Group.CAR),
+    FA18("fa18", Group.JET),
+    F15E("f15e", Group.JET),
+    SU57("su57", Group.JET),
+    TYPHOON("typhoon", Group.JET),
+    RAFALE("rafale", Group.JET),
+    GRIPEN("gripen", Group.JET);
 
     public enum Group { TANK, HELI, JEEP, CAR, JET }
 
@@ -110,6 +116,12 @@ public enum VehicleKind {
             case AMMO_TRUCK -> Reg.CAR_AMMO_TRUCK.get();
             case COMMAND_TRUCK -> Reg.CAR_COMMAND_TRUCK.get();
             case RECOVERY_TRUCK -> Reg.CAR_RECOVERY_TRUCK.get();
+            case FA18 -> Reg.JET_FA18.get();
+            case F15E -> Reg.JET_F15E.get();
+            case SU57 -> Reg.JET_SU57.get();
+            case TYPHOON -> Reg.JET_TYPHOON.get();
+            case RAFALE -> Reg.JET_RAFALE.get();
+            case GRIPEN -> Reg.JET_GRIPEN.get();
         };
     }
 
@@ -122,6 +134,12 @@ public enum VehicleKind {
             case SU35 -> JetType.SU35;
             case MIG29 -> JetType.MIG29;
             case A10 -> JetType.A10;
+            case FA18 -> JetType.FA18;
+            case F15E -> JetType.F15E;
+            case SU57 -> JetType.SU57;
+            case TYPHOON -> JetType.TYPHOON;
+            case RAFALE -> JetType.RAFALE;
+            case GRIPEN -> JetType.GRIPEN;
             default -> JetType.F16;
         };
     }

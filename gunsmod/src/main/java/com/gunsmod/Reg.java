@@ -268,6 +268,12 @@ public final class Reg {
     public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> F16 = jet("f16", com.gunsmod.entity.JetType.F16);
     public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> B2 = jet("b2", com.gunsmod.entity.JetType.B2);
     public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> F22 = jet("f22", com.gunsmod.entity.JetType.F22);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> JET_FA18 = jet("fa18", com.gunsmod.entity.JetType.FA18);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> JET_F15E = jet("f15e", com.gunsmod.entity.JetType.F15E);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> JET_SU57 = jet("su57", com.gunsmod.entity.JetType.SU57);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> JET_TYPHOON = jet("typhoon", com.gunsmod.entity.JetType.TYPHOON);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> JET_RAFALE = jet("rafale", com.gunsmod.entity.JetType.RAFALE);
+    public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> JET_GRIPEN = jet("gripen", com.gunsmod.entity.JetType.GRIPEN);
     public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> F35 = jet("f35", com.gunsmod.entity.JetType.F35);
     public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> SU35 = jet("su35", com.gunsmod.entity.JetType.SU35);
     public static final DeferredHolder<EntityType<?>, EntityType<JetEntity>> MIG29 = jet("mig29", com.gunsmod.entity.JetType.MIG29);

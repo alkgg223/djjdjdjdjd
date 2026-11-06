@@ -225,3 +225,38 @@ def build_drones():
     put("ui_drone_lock", [ping(5870, 900, 2400, 0.5)], "drone_spot")
     with open(path, "w") as fh:
         json.dump(sounds, fh, indent=1)
+
+
+JETS3 = {
+    "fa18": dict(roar=1500, rumble=1.6, whine=3400, howl=(520, 1200, 0.5), rough=0.35, burner=1.15),
+    "f15e": dict(roar=1700, rumble=1.9, whine=3000, howl=(450, 1000, 0.55), rough=0.3, burner=1.25),
+    "su57": dict(roar=1900, rumble=1.8, whine=4200, howl=(800, 2000, 0.4), rough=0.25, burner=1.2),
+    "typhoon": dict(roar=1650, rumble=1.5, whine=3700, howl=(600, 1500, 0.45), rough=0.3, burner=1.1),
+    "rafale": dict(roar=1550, rumble=1.4, whine=3600, howl=(560, 1350, 0.5), rough=0.35, burner=1.05),
+    "gripen": dict(roar=1450, rumble=1.2, whine=3300, howl=(500, 1150, 0.5), rough=0.4, burner=1.0),
+}
+
+
+def build_jets3():
+    """engine, idle, reheat and fly-by for the 3.0 fighters (the same synthesis as the v2.2 jets, their own voices)"""
+    from sounds_v22 import engine, burner, flyby
+    path = os.path.join(ROOT, "sounds.json")
+    with open(path) as fh:
+        sounds = json.load(fh)
+
+    def put(name, xs, subtitle):
+        files = []
+        for v, x in enumerate(xs):
+            fname = f"{name}_{v + 1}" if len(xs) > 1 else name
+            write_ogg(os.path.join(OUT, fname + ".ogg"), x)
+            files.append(f"gunsmod:{fname}")
+        sounds[name] = {"sounds": files, "subtitle": f"subtitles.gunsmod.{subtitle}"}
+
+    for i, (name, e) in enumerate(JETS3.items()):
+        seed = 6000 + i * 10
+        put(name + "_idle", [engine(np.random.default_rng(seed), e, 0.0)], "jet_engine")
+        put(name + "_engine", [engine(np.random.default_rng(seed + 1), e, 1.0)], "jet_engine")
+        put(name + "_burner", [burner(np.random.default_rng(seed + 2), e)], "jet_afterburner")
+        put(name + "_flyby", [flyby(np.random.default_rng(seed + 3 + v), e) for v in range(2)], "jet_flyby")
+    with open(path, "w") as fh:
+        json.dump(sounds, fh, indent=1)
