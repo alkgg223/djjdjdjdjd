@@ -1,8 +1,10 @@
 package com.arkragnarok.client;
 
 import com.arkragnarok.ArkRagnarok;
-import com.arkragnarok.client.render.RexRenderer;
+import com.arkragnarok.client.render.ArkCreatureRenderer;
 import com.arkragnarok.registry.ModEntities;
+import com.arkragnarok.species.Species;
+import com.arkragnarok.species.SpeciesList;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -14,6 +16,6 @@ public final class ClientSetup {
 
     @SubscribeEvent
     public static void renderers(EntityRenderersEvent.RegisterRenderers e) {
-        e.registerEntityRenderer(ModEntities.REX.get(), RexRenderer::new);
+        for (Species s : SpeciesList.all()) e.registerEntityRenderer(ModEntities.type(s.id), ctx -> new ArkCreatureRenderer(ctx, s));
     }
 }

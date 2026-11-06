@@ -1,0 +1,18 @@
+{
+ "id": "spinosaurus",
+ "name": "Spinosaurus",
+ "plan": "theropod",
+ "length_m": 15.0,
+ "scale": 1.01736,
+ "height": 5.335,
+ "width": 1.789,
+ "hip": 3.035,
+ "eye": 4.665,
+ "head_z": 3.913,
+ "seat": [
+  -0.922,
+  4.068
+ ],
+ "saddle": true,
+ "bones": 35
+}

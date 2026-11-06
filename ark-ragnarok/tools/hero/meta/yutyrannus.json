@@ -1,0 +1,18 @@
+{
+ "id": "yutyrannus",
+ "name": "Yutyrannus",
+ "plan": "theropod",
+ "length_m": 9.0,
+ "scale": 0.75368,
+ "height": 3.8,
+ "width": 1.398,
+ "hip": 2.661,
+ "eye": 3.44,
+ "head_z": 2.308,
+ "seat": [
+  0.008,
+  3.537
+ ],
+ "saddle": true,
+ "bones": 35
+}

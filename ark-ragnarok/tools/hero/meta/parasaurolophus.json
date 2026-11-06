@@ -1,0 +1,18 @@
+{
+ "id": "parasaurolophus",
+ "name": "Parasaurolophus",
+ "plan": "quadruped",
+ "length_m": 9.5,
+ "scale": 0.76418,
+ "height": 3.807,
+ "width": 1.348,
+ "hip": 2.728,
+ "eye": 3.589,
+ "head_z": 2.536,
+ "seat": [
+  -0.035,
+  3.609
+ ],
+ "saddle": true,
+ "bones": 27
+}

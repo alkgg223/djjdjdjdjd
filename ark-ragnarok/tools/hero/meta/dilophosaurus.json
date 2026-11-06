@@ -1,0 +1,15 @@
+{
+ "id": "dilophosaurus",
+ "name": "Dilophosaurus",
+ "plan": "theropod",
+ "length_m": 7.0,
+ "scale": 0.53652,
+ "height": 3.186,
+ "width": 0.74,
+ "hip": 2.149,
+ "eye": 2.938,
+ "head_z": 1.771,
+ "seat": null,
+ "saddle": false,
+ "bones": 35
+}

@@ -1,0 +1,18 @@
+{
+ "id": "baryonyx",
+ "name": "Baryonyx",
+ "plan": "theropod",
+ "length_m": 9.0,
+ "scale": 0.69614,
+ "height": 3.704,
+ "width": 1.092,
+ "hip": 2.531,
+ "eye": 3.471,
+ "head_z": 2.401,
+ "seat": [
+  0.033,
+  3.248
+ ],
+ "saddle": true,
+ "bones": 35
+}

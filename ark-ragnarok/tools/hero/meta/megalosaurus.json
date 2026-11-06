@@ -1,0 +1,18 @@
+{
+ "id": "megalosaurus",
+ "name": "Megalosaurus",
+ "plan": "theropod",
+ "length_m": 7.0,
+ "scale": 0.57619,
+ "height": 2.887,
+ "width": 1.068,
+ "hip": 2.02,
+ "eye": 2.612,
+ "head_z": 1.837,
+ "seat": [
+  0.026,
+  2.683
+ ],
+ "saddle": true,
+ "bones": 35
+}

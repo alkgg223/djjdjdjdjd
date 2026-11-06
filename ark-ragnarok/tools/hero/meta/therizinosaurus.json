@@ -1,0 +1,18 @@
+{
+ "id": "therizinosaurus",
+ "name": "Therizinosaurus",
+ "plan": "theropod",
+ "length_m": 10.0,
+ "scale": 1.18042,
+ "height": 9.056,
+ "width": 2.414,
+ "hip": 4.922,
+ "eye": 8.842,
+ "head_z": 4.141,
+ "seat": [
+  -0.029,
+  6.545
+ ],
+ "saddle": true,
+ "bones": 35
+}

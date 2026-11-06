@@ -1,0 +1,18 @@
+{
+ "id": "iguanodon",
+ "name": "Iguanodon",
+ "plan": "quadruped",
+ "length_m": 10.0,
+ "scale": 0.79222,
+ "height": 3.607,
+ "width": 1.539,
+ "hip": 2.678,
+ "eye": 3.418,
+ "head_z": 2.684,
+ "seat": [
+  -0.009,
+  3.663
+ ],
+ "saddle": true,
+ "bones": 27
+}

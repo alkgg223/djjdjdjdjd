@@ -30,7 +30,7 @@ def unwrap(m, resolution=1024, padding=4):
     return out
 
 
-def bake(um, shade_fn, W, H, ctx_base=None, dilate=6):
+def bake(um, shade_fn, W, H, ctx_base=None, dilate=6, region_fn=None):
     img = np.zeros((H, W, 3))
     filled = np.zeros((H, W), dtype=bool)
     uv = um["uv"] * np.array([W, H])
@@ -65,9 +65,10 @@ def bake(um, shade_fn, W, H, ctx_base=None, dilate=6):
         Nn = N[a] * l1[:, None] + N[b] * l2[:, None] + N[c] * l3[:, None]
         A = AO[a] * l1 + AO[b] * l2 + AO[c] * l3
         al = AL[a] * l1 + AL[b] * l2 + AL[c] * l3
-        key = (um["tmat"][ti], um["grp"][ti], int(EY[a]))
+        reg = region_fn(int(um["bi"][a, 0])) if region_fn is not None else "torso"
+        key = (um["tmat"][ti], um["grp"][ti], int(EY[a]), reg)
         jobs.setdefault(key, []).append((xx.ravel()[ins], yy.ravel()[ins], P, Nn, A, al))
-    for (mat, grp, eye), lst in jobs.items():
+    for (mat, grp, eye, reg), lst in jobs.items():
         X = np.concatenate([j[0] for j in lst])
         Y = np.concatenate([j[1] for j in lst])
         P = np.concatenate([j[2] for j in lst])
@@ -76,7 +77,7 @@ def bake(um, shade_fn, W, H, ctx_base=None, dilate=6):
         A = np.concatenate([j[4] for j in lst])
         al = np.concatenate([j[5] for j in lst])
         ctx = dict(ctx_base or {})
-        ctx.update(grp=grp, along=al)
+        ctx.update(grp=grp, along=al, region=np.array([reg] * len(P)))
         if eye >= 0:
             ctx["eye"] = ctx_base["eyes"][eye]
         img[Y, X] = shade_fn(mat, P, Nn, A, ctx)

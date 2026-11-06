@@ -1,0 +1,18 @@
+{
+ "id": "triceratops",
+ "name": "Triceratops",
+ "plan": "quadruped",
+ "length_m": 9.0,
+ "scale": 0.78666,
+ "height": 3.277,
+ "width": 1.877,
+ "hip": 1.932,
+ "eye": 2.326,
+ "head_z": 2.36,
+ "seat": [
+  -0.039,
+  3.008
+ ],
+ "saddle": true,
+ "bones": 27
+}

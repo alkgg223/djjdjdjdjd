@@ -1,0 +1,18 @@
+{
+ "id": "gallimimus",
+ "name": "Gallimimus",
+ "plan": "theropod",
+ "length_m": 6.0,
+ "scale": 0.52858,
+ "height": 4.406,
+ "width": 0.699,
+ "hip": 2.709,
+ "eye": 4.284,
+ "head_z": 1.679,
+ "seat": [
+  -0.046,
+  3.162
+ ],
+ "saddle": true,
+ "bones": 35
+}

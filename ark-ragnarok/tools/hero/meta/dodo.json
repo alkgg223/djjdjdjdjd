@@ -1,0 +1,15 @@
+{
+ "id": "dodo",
+ "name": "Dodo",
+ "plan": "theropod",
+ "length_m": 1.0,
+ "scale": 0.17164,
+ "height": 0.699,
+ "width": 0.351,
+ "hip": 0.338,
+ "eye": 0.6,
+ "head_z": 0.226,
+ "seat": null,
+ "saddle": false,
+ "bones": 35
+}

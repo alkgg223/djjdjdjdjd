@@ -1,0 +1,18 @@
+{
+ "id": "pachycephalosaurus",
+ "name": "Pachycephalosaurus",
+ "plan": "theropod",
+ "length_m": 4.5,
+ "scale": 0.42295,
+ "height": 2.185,
+ "width": 0.692,
+ "hip": 1.544,
+ "eye": 1.941,
+ "head_z": 1.134,
+ "seat": [
+  -0.023,
+  1.995
+ ],
+ "saddle": true,
+ "bones": 35
+}

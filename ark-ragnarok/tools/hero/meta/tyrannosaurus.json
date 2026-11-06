@@ -1,0 +1,18 @@
+{
+ "id": "tyrannosaurus",
+ "name": "Tyrannosaurus",
+ "plan": "theropod",
+ "length_m": 12.3,
+ "scale": 0.99751,
+ "height": 5.359,
+ "width": 2.037,
+ "hip": 3.694,
+ "eye": 4.825,
+ "head_z": 3.18,
+ "seat": [
+  0.044,
+  4.952
+ ],
+ "saddle": true,
+ "bones": 35
+}

@@ -1,8 +1,10 @@
 package com.arkragnarok.client.test;
 
 import com.arkragnarok.ArkRagnarok;
-import com.arkragnarok.entity.RexEntity;
+import com.arkragnarok.entity.ArkCreature;
 import com.arkragnarok.registry.ModEntities;
+import com.arkragnarok.species.Species;
+import com.arkragnarok.species.SpeciesList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -16,6 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -25,54 +28,54 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * In-game screenshot run for CI (-Dark.shots=true, started with --quickPlaySingleplayer).  Spawns the Rex in the
- * world, flies the camera around it and saves screenshots of every side, close-ups, the saddle with a rider, and
- * frames of its animations; then closes the game.
+ * In-game screenshot run for CI (-Dark.shots=true with --quickPlaySingleplayer): one portrait of every species at
+ * real size next to a villager for scale, then the T-Rex from all sides, saddled with a rider, and frames of its
+ * animations; then the game closes.
  */
 @EventBusSubscriber(modid = ArkRagnarok.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class ShotDirector {
     private static final Logger LOG = LoggerFactory.getLogger("ARK-SHOTS");
     private static final boolean ENABLED = Boolean.getBoolean("ark.shots");
 
-    /** a camera position around the Rex: angle (deg, 0 = in front of it), distance, eye height, look-at height, state */
-    private record Shot(String name, float angle, float dist, float eye, float lookY, boolean saddled, int forced, String trigger,
-                        int delay, boolean rider) {}
+    private record Shot(String name, String species, float angle, float dist, float eye, float lookY, boolean saddled, int forced,
+                        String trigger, int delay, boolean rider, float headYaw) {}
 
     private static final List<Shot> SHOTS = new ArrayList<>();
 
     static {
-        SHOTS.add(new Shot("01_front", 0, 13, 3.0f, 2.6f, false, 0, null, 40, false));
-        SHOTS.add(new Shot("02_front_left", 45, 13, 3.4f, 2.4f, false, 0, null, 30, false));
-        SHOTS.add(new Shot("03_left", 90, 14, 2.6f, 2.2f, false, 0, null, 30, false));
-        SHOTS.add(new Shot("04_back_left", 135, 13, 3.6f, 2.2f, false, 0, null, 30, false));
-        SHOTS.add(new Shot("05_back", 180, 13, 3.4f, 2.4f, false, 0, null, 30, false));
-        SHOTS.add(new Shot("06_back_right", 225, 13, 3.6f, 2.2f, false, 0, null, 30, false));
-        SHOTS.add(new Shot("07_right", 270, 14, 2.6f, 2.2f, false, 0, null, 30, false));
-        SHOTS.add(new Shot("08_front_right", 315, 13, 3.4f, 2.4f, false, 0, null, 30, false));
-        SHOTS.add(new Shot("09_top", 60, 4, 15.0f, 1.5f, false, 0, null, 40, false));
-        SHOTS.add(new Shot("10_low_front", 20, 9, 0.6f, 3.0f, false, 0, null, 30, false));
-        SHOTS.add(new Shot("11_head_closeup", 35, 5.5f, 3.6f, 3.3f, false, 0, null, 30, false));
-        SHOTS.add(new Shot("12_feet_closeup", 60, 5.5f, 0.9f, 0.4f, false, 0, null, 30, false));
-        SHOTS.add(new Shot("13_saddle", 70, 9, 5.5f, 3.2f, true, 0, null, 40, false));
-        SHOTS.add(new Shot("14_saddle_closeup", 110, 5.5f, 4.6f, 3.3f, true, 0, null, 30, false));
-        SHOTS.add(new Shot("15_rider", 60, 11, 4.2f, 3.4f, true, 0, null, 40, true));
-        SHOTS.add(new Shot("16_walk_a", 90, 14, 2.4f, 2.2f, false, 1, null, 23, false));
-        SHOTS.add(new Shot("17_walk_b", 90, 14, 2.4f, 2.2f, false, 1, null, 16, false));
-        SHOTS.add(new Shot("18_run", 90, 14, 2.4f, 2.2f, false, 2, null, 30, false));
-        SHOTS.add(new Shot("19_sprint", 90, 14, 2.4f, 2.2f, false, 3, null, 30, false));
-        SHOTS.add(new Shot("20_roar", 40, 12, 3.0f, 3.0f, false, 0, "roar", 26, false));
-        SHOTS.add(new Shot("21_bite", 40, 11, 2.6f, 2.4f, false, 0, "bite", 6, false));
-        SHOTS.add(new Shot("22_attack", 40, 11, 2.6f, 2.4f, false, 0, "attack", 12, false));
-        SHOTS.add(new Shot("23_eat", 60, 12, 2.6f, 1.6f, false, 4, null, 30, false));
-        SHOTS.add(new Shot("24_sleep", 60, 11, 2.6f, 1.0f, false, 5, null, 40, false));
-        SHOTS.add(new Shot("25_death", 60, 13, 3.0f, 1.0f, false, 6, null, 75, false));
+        for (Species s : SpeciesList.all()) {
+            float d = Math.max(3.5f, s.lengthM * 1.05f + 2.5f);
+            SHOTS.add(new Shot("a_" + s.id, s.id, 55, d, Math.max(1.0f, s.height * 0.75f), s.height * 0.45f, false, 0, null, 30, false, 0));
+        }
+        String r = "tyrannosaurus";
+        SHOTS.add(new Shot("rex_front", r, 0, 16, 3.6f, 3.0f, false, 0, null, 30, false, 0));
+        SHOTS.add(new Shot("rex_left", r, 90, 17, 3.0f, 2.6f, false, 0, null, 25, false, 0));
+        SHOTS.add(new Shot("rex_back", r, 180, 16, 4.0f, 2.8f, false, 0, null, 25, false, 0));
+        SHOTS.add(new Shot("rex_top", r, 60, 5, 18.0f, 1.8f, false, 0, null, 30, false, 0));
+        SHOTS.add(new Shot("rex_head", r, 35, 7, 4.6f, 4.2f, false, 0, null, 25, false, 0));
+        SHOTS.add(new Shot("rex_look_left", r, 20, 12, 3.4f, 3.4f, false, 0, null, 25, false, 45));
+        SHOTS.add(new Shot("rex_look_right", r, 340, 12, 3.4f, 3.4f, false, 0, null, 25, false, -45));
+        SHOTS.add(new Shot("rex_saddle", r, 70, 11, 7.0f, 4.0f, true, 0, null, 30, false, 0));
+        SHOTS.add(new Shot("rex_rider", r, 60, 13, 5.2f, 4.2f, true, 0, null, 35, true, 0));
+        SHOTS.add(new Shot("rex_walk", r, 90, 17, 2.8f, 2.6f, false, 1, null, 23, false, 0));
+        SHOTS.add(new Shot("rex_run", r, 90, 17, 2.8f, 2.6f, false, 2, null, 25, false, 0));
+        SHOTS.add(new Shot("rex_roar", r, 40, 15, 3.6f, 3.6f, false, 0, "roar", 26, false, 0));
+        SHOTS.add(new Shot("rex_bite", r, 40, 13, 3.0f, 3.0f, false, 0, "bite", 6, false, 0));
+        SHOTS.add(new Shot("rex_attack", r, 40, 13, 3.0f, 3.0f, false, 0, "attack", 12, false, 0));
+        SHOTS.add(new Shot("rex_death", r, 60, 15, 3.6f, 1.2f, false, 6, null, 75, false, 0));
+        SHOTS.add(new Shot("trike_attack", "triceratops", 50, 12, 2.6f, 1.6f, false, 0, "attack", 12, false, 0));
+        SHOTS.add(new Shot("stego_attack", "stegosaurus", 300, 13, 3.0f, 2.0f, false, 0, "attack", 15, false, 0));
+        SHOTS.add(new Shot("bronto_walk", "brontosaurus", 80, 30, 6.0f, 5.0f, false, 1, null, 25, false, 0));
+        SHOTS.add(new Shot("raptor_pounce", "utahraptor", 70, 8, 1.8f, 1.4f, false, 0, "attack", 13, false, 0));
     }
 
     private static int phase = -1;
     private static int wait;
     private static int index;
-    private static UUID rexId;
+    private static UUID creatureId;
+    private static String creatureSpecies;
     private static UUID riderId;
+    private static UUID scaleId;
     private static double ox, oy, oz;
 
     private ShotDirector() {}
@@ -117,7 +120,7 @@ public final class ShotDirector {
             }
             if (phase == 2) {
                 Shot s = SHOTS.get(index);
-                Screenshot.grab(mc.gameDirectory, "rex_" + s.name() + ".png", mc.getMainRenderTarget(), msg -> LOG.info("ARK-SHOTS {}", msg.getString()));
+                Screenshot.grab(mc.gameDirectory, s.name() + ".png", mc.getMainRenderTarget(), msg -> LOG.info("ARK-SHOTS {}", msg.getString()));
                 LOG.info("ARK-SHOTS captured {}", s.name());
                 index++;
                 phase = 1;
@@ -138,49 +141,68 @@ public final class ShotDirector {
         ServerLevel level = srv.overworld();
         level.setDayTime(6000);
         level.setWeatherParameters(12000, 0, false, false);
-        srv.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DAYLIGHT).set(false, srv);
-        srv.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING).set(false, srv);
+        srv.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, srv);
+        srv.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false, srv);
         ServerPlayer sp = srv.getPlayerList().getPlayer(playerId);
         BlockPos base = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, sp != null ? sp.blockPosition() : level.getSharedSpawnPos());
         ox = base.getX() + 0.5;
         oy = base.getY();
         oz = base.getZ() + 0.5;
-        RexEntity rex = ModEntities.REX.get().create(level);
-        if (rex == null) throw new IllegalStateException("could not create the rex");
-        rex.moveTo(ox, oy, oz, 0f, 0f);
-        rex.setYBodyRot(0f);
-        rex.setYHeadRot(0f);
-        rex.setNoAi(true);
-        rex.setPersistenceRequired();
-        rex.setInvulnerable(true);
-        level.addFreshEntity(rex);
-        rexId = rex.getUUID();
         if (sp != null) {
             sp.getAbilities().flying = true;
             sp.getAbilities().mayfly = true;
             sp.onUpdateAbilities();
         }
-        LOG.info("ARK-SHOTS rex spawned at {} {} {}", ox, oy, oz);
+        // a villager standing beside the creature shows the real size
+        Villager v = EntityType.VILLAGER.create(level);
+        if (v != null) {
+            v.moveTo(ox + 4, oy, oz + 3, 200f, 0f);
+            v.setNoAi(true);
+            v.setInvulnerable(true);
+            level.addFreshEntity(v);
+            scaleId = v.getUUID();
+        }
+    }
+
+    private static ArkCreature creature(ServerLevel level, String id) {
+        Entity ent = creatureId != null ? level.getEntity(creatureId) : null;
+        if (ent instanceof ArkCreature c && id.equals(creatureSpecies)) return c;
+        if (ent != null) ent.discard();
+        ArkCreature c = ModEntities.type(id).create(level);
+        if (c == null) throw new IllegalStateException("could not create " + id);
+        c.setLevel(1);
+        c.moveTo(ox, oy, oz, 0f, 0f);
+        c.setNoAi(true);
+        c.setPersistenceRequired();
+        c.setInvulnerable(true);
+        level.addFreshEntity(c);
+        creatureId = c.getUUID();
+        creatureSpecies = id;
+        return c;
     }
 
     private static void stage(IntegratedServer srv, UUID playerId, Shot s) {
         ServerLevel level = srv.overworld();
-        Entity ent = level.getEntity(rexId);
-        if (!(ent instanceof RexEntity rex)) return;
-        rex.moveTo(ox, oy, oz, 0f, 0f);
-        rex.setYBodyRot(0f);
-        rex.setYHeadRot(0f);
-        rex.setSaddled(s.saddled());
-        rex.setForcedAnim(s.forced());
-        if (s.trigger() != null) rex.triggerAnim("action", s.trigger());
+        ArkCreature c = creature(level, s.species());
+        c.moveTo(ox, oy, oz, 0f, 0f);
+        c.setYBodyRot(0f);
+        c.setYHeadRot(s.headYaw());
+        c.setSaddled(s.saddled());
+        c.setForcedAnim(s.forced());
+        if (s.trigger() != null) c.triggerAnim("action", s.trigger());
+        Entity scale = scaleId != null ? level.getEntity(scaleId) : null;
+        if (scale != null) {
+            double side = Math.max(2.5, c.getBbWidth() * 0.5 + 1.8);
+            scale.moveTo(ox + side, oy, oz + side * 0.6, 200f, 0f);
+        }
         if (s.rider() && riderId == null) {
             Villager v = EntityType.VILLAGER.create(level);
             if (v != null) {
-                v.moveTo(ox, oy + 4, oz, 0f, 0f);
+                v.moveTo(ox, oy + 6, oz, 0f, 0f);
                 v.setNoAi(true);
                 v.setInvulnerable(true);
                 level.addFreshEntity(v);
-                v.startRiding(rex, true);
+                v.startRiding(c, true);
                 riderId = v.getUUID();
             }
         } else if (!s.rider() && riderId != null) {
@@ -188,13 +210,11 @@ public final class ShotDirector {
             if (v != null) v.discard();
             riderId = null;
         }
-        // the Rex faces +z (south) at yaw 0; angle 0 puts the camera in front of it
         double a = Math.toRadians(s.angle());
         double cx = ox + Math.sin(a) * s.dist();
         double cz = oz + Math.cos(a) * s.dist();
         double cy = oy + s.eye();
-        double tx = ox, ty = oy + s.lookY(), tz = oz;
-        double dx = tx - cx, dy = ty - cy, dz = tz - cz;
+        double dx = ox - cx, dy = oy + s.lookY() - cy, dz = oz - cz;
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
         float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
         ServerPlayer sp = srv.getPlayerList().getPlayer(playerId);

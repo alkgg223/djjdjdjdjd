@@ -1,0 +1,18 @@
+{
+ "id": "diplodocus",
+ "name": "Diplodocus",
+ "plan": "sauropod",
+ "length_m": 26.0,
+ "scale": 1.36723,
+ "height": 6.929,
+ "width": 2.48,
+ "hip": 4.433,
+ "eye": 6.619,
+ "head_z": 8.896,
+ "seat": [
+  -0.007,
+  5.88
+ ],
+ "saddle": true,
+ "bones": 34
+}

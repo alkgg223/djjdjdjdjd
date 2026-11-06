@@ -1,0 +1,18 @@
+{
+ "id": "brontosaurus",
+ "name": "Brontosaurus",
+ "plan": "sauropod",
+ "length_m": 22.0,
+ "scale": 1.58795,
+ "height": 11.184,
+ "width": 3.438,
+ "hip": 5.528,
+ "eye": 10.868,
+ "head_z": 6.55,
+ "seat": [
+  -0.089,
+  7.467
+ ],
+ "saddle": true,
+ "bones": 34
+}

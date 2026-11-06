@@ -77,30 +77,37 @@ import rex_anim
 
 
 def write_mesh(path, um, bones):
-    v = (um["v"] / 16.0).astype("<f4")                       # model pixels -> blocks
+    """ARKM v2: quantised positions (uint16 in the bounding box), int8 normals, uint16 uvs, 4 bones + 4 weights,
+    uint16 or int32 triangle indices"""
+    v = (um["v"] / 16.0)
+    lo, hi = v.min(axis=0), v.max(axis=0)
+    span = np.maximum(hi - lo, 1e-6)
+    q = np.round((v - lo) / span * 65535).astype("<u2")
     n = np.clip(np.round(um["n"] * 127), -127, 127).astype("<i1")
-    uv = um["uv"].astype("<f4")
+    uv = np.round(np.clip(um["uv"], 0, 1) * 65535).astype("<u2")
     bi = um["bi"].astype("<u1")
-    bw = um["bw"]
-    q = np.round(bw * 255).astype(int)
-    q[:, 0] += 255 - q.sum(axis=1)                            # weights sum exactly to 255
-    bw8 = np.clip(q, 0, 255).astype("<u1")
-    f = um["f"].astype("<i4")
+    qw = np.round(um["bw"] * 255).astype(int)
+    qw[:, 0] += 255 - qw.sum(axis=1)
+    bw8 = np.clip(qw, 0, 255).astype("<u1")
+    wide = len(v) >= 65536
+    f = um["f"].astype("<i4" if wide else "<u2")
     with open(path, "wb") as fh:
         fh.write(b"ARKM")
-        fh.write(struct.pack("<i", 1))
+        fh.write(struct.pack("<i", 2))
         fh.write(struct.pack("<i", len(bones)))
         for b in bones:
             enc = b.encode("utf-8")
             fh.write(struct.pack("<H", len(enc)))
             fh.write(enc)
         fh.write(struct.pack("<i", len(v)))
-        fh.write(v.tobytes())
+        fh.write(struct.pack("<6f", *lo, *hi))
+        fh.write(q.tobytes())
         fh.write(n.tobytes())
         fh.write(uv.tobytes())
         fh.write(bi.tobytes())
         fh.write(bw8.tobytes())
         fh.write(struct.pack("<i", len(f)))
+        fh.write(struct.pack("<B", 1 if wide else 0))
         fh.write(f.tobytes())
 
 

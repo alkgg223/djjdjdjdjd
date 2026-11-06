@@ -1,0 +1,18 @@
+{
+ "id": "deinonychus",
+ "name": "Deinonychus",
+ "plan": "theropod",
+ "length_m": 3.4,
+ "scale": 0.25878,
+ "height": 1.593,
+ "width": 0.35,
+ "hip": 1.056,
+ "eye": 1.485,
+ "head_z": 0.717,
+ "seat": [
+  -0.022,
+  1.269
+ ],
+ "saddle": true,
+ "bones": 35
+}

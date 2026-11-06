@@ -24,7 +24,9 @@ def build_lods(mod, lod_targets, cells=None, verbose=True):
             print("  %-7s raw %d tris -> %s" % (grp, raw, [len(m[1]) for m in meshes]))
         for li, (v, f, n) in enumerate(meshes):
             ao = K.ambient_occlusion(field, v, n)
-            bi, bw, near = K.skin_weights(v, prims, bones, s=0.9)
+            bi, bw, near = K.skin_weights(v, prims, bones, s=1.1)
+            if grp == "body":
+                bi, bw = spline_override(v, bi, bw, sc, bones)
             adds = [p for p in prims if p.op == "add"]
             vmat = np.array([adds[i].mat for i in near])
             # triangle material = majority of its vertices
@@ -32,6 +34,56 @@ def build_lods(mod, lod_targets, cells=None, verbose=True):
             lods[li]["parts"].append(dict(v=v, n=n, f=f, bi=bi, bw=bw, ao=ao, tmat=tm, grp=grp,
                                           along=np.zeros(len(v)), eye=np.full(len(v), -1)))
     return sc, lods, fields
+
+
+def spline_override(v, bi, bw, sc, bones):
+    """vertices around a neck or tail chain take their weights from their position along the chain (smooth bending)"""
+    idx = {b: i for i, b in enumerate(bones)}
+    nv = len(v)
+    W = np.zeros((nv, len(bones)))
+    for k in range(bi.shape[1]):
+        np.add.at(W, (np.arange(nv), bi[:, k]), bw[:, k])
+    top = bi[:, 0]
+    for spl in sc.splines:
+        if not any(b.startswith(("neck", "tail")) for b in spl["bones"]):
+            continue
+        prims = spl["prims"]
+        allowed = set(spl["bones"]) | {"torso", "body"}
+        ok = np.array([bones[t] in allowed for t in top])
+        best_d = np.full(nv, 1e9)
+        best_j = np.zeros(nv, dtype=int)
+        best_t = np.zeros(nv)
+        best_r = np.ones(nv)
+        for j, p in enumerate(prims):
+            a, b = p.geo["a"], p.geo["b"]
+            ab = b - a
+            L2 = max(float(ab @ ab), 1e-9)
+            t = np.clip(((v - a) @ ab) / L2, 0, 1)
+            d = np.linalg.norm(v - (a + np.outer(t, ab)), axis=1)
+            r = (p.geo["ra"] * (1 - t) + p.geo["rb"] * t) * max(p.geo["sq"])
+            better = d < best_d
+            best_d = np.where(better, d, best_d)
+            best_j = np.where(better, j, best_j)
+            best_t = np.where(better, t, best_t)
+            best_r = np.where(better, r, best_r)
+        mask = np.clip((best_r * 1.9 - best_d) / np.maximum(best_r * 0.7, 1e-6), 0, 1) * ok
+        if not mask.any():
+            continue
+        Ws = np.zeros_like(W)
+        bl = spl["bl"]
+        for vi in np.nonzero(mask > 0)[0]:
+            j = best_j[vi]
+            t = best_t[vi]
+            for nm, w in bl[j]:
+                Ws[vi, idx[nm]] += w * (1 - t)
+            for nm, w in bl[min(j + 1, len(bl) - 1)]:
+                Ws[vi, idx[nm]] += w * t
+        W = W * (1 - mask[:, None]) + Ws * mask[:, None]
+    order = np.argsort(-W, axis=1)[:, :4]
+    w = np.take_along_axis(W, order, axis=1)
+    w[w < 0.03] = 0
+    w = w / np.maximum(w.sum(axis=1, keepdims=True), 1e-9)
+    return order, w
 
 
 def rigid_part(v, f, n, bone, bones, mat, grp="body", ao=1.0, along=None, eye=-1):

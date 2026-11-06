@@ -1,0 +1,15 @@
+{
+ "id": "troodon",
+ "name": "Troodon",
+ "plan": "theropod",
+ "length_m": 2.4,
+ "scale": 0.18481,
+ "height": 1.183,
+ "width": 0.35,
+ "hip": 0.784,
+ "eye": 1.105,
+ "head_z": 0.532,
+ "seat": null,
+ "saddle": false,
+ "bones": 35
+}

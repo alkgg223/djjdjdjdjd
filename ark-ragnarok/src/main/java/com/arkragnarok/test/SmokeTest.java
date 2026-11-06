@@ -1,7 +1,9 @@
 package com.arkragnarok.test;
 
 import com.arkragnarok.ArkRagnarok;
-import com.arkragnarok.entity.RexEntity;
+import com.arkragnarok.entity.ArkCreature;
+import com.arkragnarok.species.Species;
+import com.arkragnarok.species.SpeciesList;
 import com.arkragnarok.registry.ModEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -24,7 +26,8 @@ public final class SmokeTest {
     private static final Logger LOG = LoggerFactory.getLogger("ARK-SMOKE");
     private static final boolean ENABLED = Boolean.getBoolean("ark.smoketest");
     private static int tick = -1;
-    private static RexEntity rex;
+    private static ArkCreature rex;
+    private static final java.util.List<ArkCreature> ALL = new java.util.ArrayList<>();
     private static int failures;
 
     private SmokeTest() {}
@@ -46,9 +49,23 @@ public final class SmokeTest {
             if (tick == 20) {
                 BlockPos spawn = level.getSharedSpawnPos();
                 BlockPos at = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn.offset(8, 0, 8));
-                rex = ModEntities.REX.get().spawn(level, at, MobSpawnType.COMMAND);
+                rex = ModEntities.type("tyrannosaurus").spawn(level, at, MobSpawnType.COMMAND);
                 check(rex != null, "rex spawned");
-                if (rex != null) LOG.info("ARK-SMOKE rex at {} hp {}", rex.blockPosition(), rex.getHealth());
+                if (rex != null) LOG.info("ARK-SMOKE rex at {} hp {} dmg {} level {}", rex.blockPosition(), rex.getHealth(),
+                        rex.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE), rex.getLevel());
+                int i = 0;
+                for (Species sp : SpeciesList.all()) {
+                    BlockPos p = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn.offset(-40 + (i % 6) * 14, 0, 30 + (i / 6) * 22));
+                    ArkCreature c = ModEntities.type(sp.id).spawn(level, p, MobSpawnType.COMMAND);
+                    check(c != null, "spawned " + sp.id);
+                    if (c != null) {
+                        ALL.add(c);
+                        LOG.info("ARK-SMOKE {} lv {} hp {} dmg {} size {}x{}", sp.id, c.getLevel(), Math.round(c.getMaxHealth()),
+                                Math.round(c.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)),
+                                c.getBbWidth(), c.getBbHeight());
+                    }
+                    i++;
+                }
             }
             if (rex == null) {
                 if (tick > 40) finish(server);
@@ -62,6 +79,10 @@ public final class SmokeTest {
             }
             if (tick == 120) {
                 check(rex.isAlive(), "alive after AI ticks");
+                int alive = 0;
+                for (ArkCreature c : ALL) if (c.isAlive()) alive++;
+                LOG.info("ARK-SMOKE {} of {} creatures alive after 100 AI ticks", alive, ALL.size());
+                for (ArkCreature c : ALL) if (c != rex) c.discard();
                 rex.hurt(level.damageSources().generic(), 30f);
                 check(rex.getHealth() < rex.getMaxHealth(), "takes damage");
             }

@@ -13,8 +13,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 
 /**
- * A skinned triangle mesh (.arkm, little endian): bone names, positions (blocks, GeckoLib model space),
- * normals (int8), uvs, 4 bone indices and 4 weights (uint8, sum 255) per vertex, then triangles.
+ * A skinned triangle mesh (.arkm, little endian): bone names, positions (blocks, GeckoLib model space; v2 stores them as
+ * uint16 inside the bounding box), normals (int8), uvs (v2: uint16), 4 bone indices and 4 weights (uint8, sum 255) per
+ * vertex, then triangles (v2: uint16 when the mesh has fewer than 65536 vertices).
  */
 public final class ArkMesh {
     public final String[] bones;
@@ -33,7 +34,7 @@ public final class ArkMesh {
         b.get(magic);
         if (magic[0] != 'A' || magic[1] != 'R' || magic[2] != 'K' || magic[3] != 'M') throw new IllegalStateException("not an ARKM mesh");
         int version = b.getInt();
-        if (version != 1) throw new IllegalStateException("unsupported ARKM version " + version);
+        if (version != 1 && version != 2) throw new IllegalStateException("unsupported ARKM version " + version);
         int nb = b.getInt();
         bones = new String[nb];
         for (int i = 0; i < nb; i++) {
@@ -45,18 +46,32 @@ public final class ArkMesh {
         int n = b.getInt();
         vertexCount = n;
         pos = new float[n * 3];
-        for (int i = 0; i < n * 3; i++) pos[i] = b.getFloat();
+        if (version == 1) {
+            for (int i = 0; i < n * 3; i++) pos[i] = b.getFloat();
+        } else {
+            float[] lo = {b.getFloat(), b.getFloat(), b.getFloat()};
+            float[] hi = {b.getFloat(), b.getFloat(), b.getFloat()};
+            for (int i = 0; i < n * 3; i++) {
+                int c = i % 3;
+                pos[i] = lo[c] + (b.getShort() & 0xFFFF) / 65535f * (hi[c] - lo[c]);
+            }
+        }
         nrm = new float[n * 3];
         for (int i = 0; i < n * 3; i++) nrm[i] = b.get() / 127f;
         uv = new float[n * 2];
-        for (int i = 0; i < n * 2; i++) uv[i] = b.getFloat();
+        if (version == 1) {
+            for (int i = 0; i < n * 2; i++) uv[i] = b.getFloat();
+        } else {
+            for (int i = 0; i < n * 2; i++) uv[i] = (b.getShort() & 0xFFFF) / 65535f;
+        }
         boneIdx = new byte[n * 4];
         b.get(boneIdx);
         weight = new float[n * 4];
         for (int i = 0; i < n * 4; i++) weight[i] = (b.get() & 0xFF) / 255f;
         int nt = b.getInt();
         tris = new int[nt * 3];
-        for (int i = 0; i < nt * 3; i++) tris[i] = b.getInt();
+        boolean wide = version == 1 || b.get() != 0;
+        for (int i = 0; i < nt * 3; i++) tris[i] = wide ? b.getInt() : (b.getShort() & 0xFFFF);
     }
 
     /** loads (once) from the client resource manager; returns null if the file is missing or broken */

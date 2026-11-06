@@ -1,0 +1,18 @@
+{
+ "id": "stegosaurus",
+ "name": "Stegosaurus",
+ "plan": "quadruped",
+ "length_m": 9.0,
+ "scale": 0.80047,
+ "height": 4.513,
+ "width": 1.566,
+ "hip": 2.63,
+ "eye": 2.105,
+ "head_z": 2.508,
+ "seat": [
+  -0.056,
+  3.642
+ ],
+ "saddle": true,
+ "bones": 27
+}

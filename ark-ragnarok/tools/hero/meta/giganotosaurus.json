@@ -1,0 +1,18 @@
+{
+ "id": "giganotosaurus",
+ "name": "Giganotosaurus",
+ "plan": "theropod",
+ "length_m": 13.0,
+ "scale": 0.94854,
+ "height": 5.059,
+ "width": 1.938,
+ "hip": 3.513,
+ "eye": 4.581,
+ "head_z": 3.213,
+ "seat": [
+  0.093,
+  4.732
+ ],
+ "saddle": true,
+ "bones": 35
+}

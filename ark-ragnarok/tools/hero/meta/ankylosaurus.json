@@ -1,0 +1,18 @@
+{
+ "id": "ankylosaurus",
+ "name": "Ankylosaurus",
+ "plan": "quadruped",
+ "length_m": 7.0,
+ "scale": 0.65587,
+ "height": 1.837,
+ "width": 2.218,
+ "hip": 1.178,
+ "eye": 1.205,
+ "head_z": 1.849,
+ "seat": [
+  -0.035,
+  1.943
+ ],
+ "saddle": true,
+ "bones": 27
+}

@@ -110,6 +110,7 @@ class Sculpt:
         self.prims = []
         self.bones = {}      # name -> (parent, pivot)
         self.bone_order = []
+        self.splines = []    # neck / tail chains, used for smooth spline skin weights
 
     # ---------------- skeleton
     def bone(self, name, parent, pivot):
@@ -166,6 +167,8 @@ class Sculpt:
         rs.append(radii[-1])
         bl.append([(bones_at[-1], 1.0)])
         out = []
+        rec = dict(bl=bl, prims=out, bones=set(bones_at))
+        self.splines.append(rec)
         for j in range(len(samples) - 1):
             b = [(nm, w * 0.5) for nm, w in bl[j]] + [(nm, w * 0.5) for nm, w in bl[j + 1]]
             merged = {}
