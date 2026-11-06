@@ -1,5 +1,6 @@
 package com.arkragnarok.entity;
 
+import com.arkragnarok.economy.ModEconomy;
 import com.arkragnarok.world.NodeKind;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -156,24 +157,24 @@ public class ResourceNode extends Entity {
         NodeKind k = kind();
         switch (k) {
             case ROCK -> {
-                give(sink, Items.COBBLESTONE, (axe ? 2.6f : pick ? 1.2f : 0.7f) * m, r);
-                give(sink, Items.FLINT, (pick ? 1.3f : axe ? 0.35f : 0.25f) * m, r);
+                give(sink, ModEconomy.STONE.get(), (axe ? 2.6f : pick ? 1.2f : 0.7f) * m, r);
+                give(sink, ModEconomy.FLINT.get(), (pick ? 1.3f : axe ? 0.35f : 0.25f) * m, r);
             }
             case METAL -> {
-                give(sink, Items.RAW_IRON, (pick ? 1.2f : 0.25f) * m, r);
-                give(sink, Items.COBBLESTONE, (axe ? 1.6f : 0.8f) * m, r);
-                if (pick && r.nextFloat() < 0.12f * m) give(sink, Items.RAW_GOLD, 1, r);
-                if (pick && r.nextFloat() < 0.2f * m) give(sink, Items.RAW_COPPER, 1.5f, r);
+                give(sink, ModEconomy.METAL_ORE.get(), (pick ? 1.2f : 0.25f) * m, r);
+                give(sink, ModEconomy.STONE.get(), (axe ? 1.6f : 0.8f) * m, r);
+                if (pick && r.nextFloat() < 0.12f * m) give(sink, ModEconomy.METAL_ORE.get(), 2, r);
+                if (pick && r.nextFloat() < 0.2f * m) give(sink, ModEconomy.CRYSTAL.get(), 1, r);
             }
             case OBSIDIAN -> {
-                if (pick && tier >= 8) give(sink, Items.OBSIDIAN, 0.8f * m, r);
-                else if (pick) give(sink, Items.FLINT, 0.6f * m, r);
+                if (pick && tier >= 6) give(sink, ModEconomy.OBSIDIAN.get(), 0.8f * m, r);
+                else if (pick) give(sink, ModEconomy.FLINT.get(), 0.6f * m, r);
                 else by.hurt(damageSources().generic(), 1.0f);       // bare hands on glassy obsidian hurt
             }
             case CRYSTAL -> {
-                give(sink, Items.AMETHYST_SHARD, (pick ? 1.5f : 0.4f) * m, r);
-                if (pick) give(sink, Items.QUARTZ, 0.8f * m, r);
-                give(sink, Items.COBBLESTONE, 0.4f * m, r);
+                give(sink, ModEconomy.CRYSTAL.get(), (pick ? 1.5f : 0.4f) * m, r);
+                if (pick) give(sink, ModEconomy.CRYSTAL.get(), 0.8f * m, r);
+                give(sink, ModEconomy.STONE.get(), 0.4f * m, r);
             }
         }
         if (!tool.isEmpty() && (pick || axe)) tool.hurtAndBreak(1, by, EquipmentSlot.MAINHAND);

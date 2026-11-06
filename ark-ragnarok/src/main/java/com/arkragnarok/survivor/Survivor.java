@@ -102,6 +102,12 @@ public class Survivor extends PathfinderMob {
         return buildStep;
     }
 
+    /** inside its own base (5x5 house around the anchor) */
+    public boolean ownsPosition(BlockPos p) {
+        return base != null && Math.abs(p.getX() - base.getX()) <= 3 && Math.abs(p.getZ() - base.getZ()) <= 3 && p.getY() >= base.getY() - 1
+                && p.getY() <= base.getY() + 5;
+    }
+
     public int skin() {
         return this.entityData.get(SKIN);
     }
@@ -244,6 +250,7 @@ public class Survivor extends PathfinderMob {
             case WOOD -> door ? new int[]{0, 6, 0, 0, 0, 0} : p == PieceType.FOUNDATION ? new int[]{4, 8, 0, 0, 0, 0} : new int[]{0, 10, 0, 0, 0, 0};
             case STONE -> door ? new int[]{0, 6, 0, 0, 0, 2} : p == PieceType.FOUNDATION ? new int[]{0, 4, 0, 0, 24, 0}
                     : p == PieceType.CEILING ? new int[]{0, 4, 0, 0, 16, 0} : new int[]{0, 0, 0, 0, 18, 0};
+            default -> door ? new int[]{0, 6, 0, 0, 0, 4} : new int[]{0, 0, 0, 0, 12, 6};
         };
     }
 

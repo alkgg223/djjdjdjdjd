@@ -51,6 +51,12 @@ class P_:
         v, f, nn = K.tube_mesh([np.asarray(p, float) for p in path], radii, n=n)
         self.meshes.append(HB.rigid_part(v, f, nn, "root", BONES, mat + ".0", ao=0.9))
 
+    def hexbolt(self, c, axis, r):
+        a = normalize(np.asarray(axis, float))
+        c = np.asarray(c, float)
+        v, f, nn = K.tube_mesh([c - a * 0.25, c + a * 0.25], [r, r], n=6)
+        self.meshes.append(HB.rigid_part(v, f, nn, "root", BONES, "rivet.0", ao=0.9))
+
     def sphere(self, c, r, mat):
         v, f, nn = K.sphere_mesh(c, r, 8, 6)
         self.meshes.append(HB.rigid_part(v, f, nn, "root", BONES, mat + ".0", ao=0.85))
@@ -288,6 +294,166 @@ def thatch_ceiling(p):
         z += 2.45
 
 
+# ============================================================================================ iron and steel tiers
+def girder(p, a, b, h, w, mat="girder"):
+    """I-beam between a and b (axis aligned): two flanges and a web"""
+    a = np.asarray(a, float)
+    b = np.asarray(b, float)
+    c = (a + b) / 2
+    L = np.abs(b - a)
+    ax = int(np.argmax(L))
+    half = np.full(3, w / 2)
+    half[ax] = L[ax] / 2
+    up = 1 if ax != 1 else 0
+    for s_ in (-1, 1):
+        off = np.zeros(3)
+        off[up] = s_ * (h / 2 - 0.35)
+        hh = half.copy()
+        hh[up] = 0.35
+        p.box(tuple(c + off), tuple(hh), mat, rr=0.12, k=0.03)
+    web = half.copy()
+    web[up] = h / 2 - 0.4
+    side = 3 - ax - up
+    web[side] = 0.3
+    p.box(tuple(c), tuple(web), mat, rr=0.1, k=0.03)
+
+
+def plate_wall(p, x0, x1, y0, y1, z0, z1, mat, cell=(8.0, 8.0), rivet=0.42, skip=None, bolt="rivet"):
+    nx = max(1, int(round((x1 - x0) / cell[0])))
+    ny = max(1, int(round((y1 - y0) / cell[1])))
+    w = (x1 - x0) / nx
+    h = (y1 - y0) / ny
+    for i in range(nx):
+        for j in range(ny):
+            cx, cy = x0 + (i + 0.5) * w, y0 + (j + 0.5) * h
+            if skip is not None and skip(cx, cy):
+                continue
+            p.box((cx, cy, (z0 + z1) / 2 + jitter(0.06)), (w / 2 - 0.18, h / 2 - 0.18, (z1 - z0) / 2), mat, rr=0.25, k=0.03)
+            for (u, v) in ((-1, -1), (-1, 1), (1, -1), (1, 1), (0, -1), (0, 1), (-1, 0), (1, 0)):
+                p.sphere((cx + u * (w / 2 - 0.9), cy + v * (h / 2 - 0.9), z0 - 0.15), rivet, bolt)
+
+
+def iron_foundation(p):
+    for s_ in (-1, 1):
+        girder(p, (-24, 13.5, s_ * 22.5), (24, 13.5, s_ * 22.5), 4.0, 2.6)
+        girder(p, (s_ * 22.5, 13.5, -24), (s_ * 22.5, 13.5, 24), 4.0, 2.6)
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            p.box((sx * 22, 6.5, sz * 22), (1.8, 6.5, 1.8), "girder", rr=0.3)
+    girder(p, (-22, 13.0, 0), (22, 13.0, 0), 3.2, 2.2)
+    girder(p, (0, 13.0, -22), (0, 13.0, 22), 3.2, 2.2)
+    for i in range(3):
+        for j in range(3):
+            p.box((-16 + i * 16, 15.4, -16 + j * 16), (7.85, 0.6, 7.85), "checker", rr=0.15, k=0.03)
+    for s_ in (-1, 1):
+        for xx in np.linspace(-20, 20, 9):
+            p.sphere((xx, 16.05, s_ * 22.5), 0.45, "rivet")
+
+
+def iron_wall(p, door=False):
+    skip = (lambda cx, cy: abs(cx) < 8.1 and cy < 32) if door else None
+    plate_wall(p, -22, 22, 0.3, 47.7, -7.4, -5.2, "ironplate", cell=(7.33, 8.0), skip=skip)
+    for s_ in (-1, 1):
+        girder(p, (s_ * 22.5, 0, -6.0), (s_ * 22.5, 48, -6.0), 3.0, 3.0)
+    for yb in (1.0, 47.0):
+        girder(p, (-22, yb, -4.2), (22, yb, -4.2), 2.2, 1.6)
+    if door:
+        for s_ in (-1, 1):
+            p.box((s_ * 8.9, 16.5, -6.0), (1.0, 16.4, 2.0), "girder", rr=0.2)
+        p.box((0, 32.8, -6.0), (9.9, 1.0, 2.0), "girder", rr=0.2)
+    else:
+        girder(p, (-22, 24, -4.2), (22, 24, -4.2), 2.2, 1.6)
+
+
+def iron_door(p):
+    plate_wall(p, -7.5, 7.5, 0.4, 31.6, -7.3, -5.3, "ironplate", cell=(7.5, 7.9), rivet=0.36)
+    for yb in (5.0, 27.0):
+        p.box((-5.0, yb, -7.55), (3.0, 1.0, 0.25), "girder", rr=0.1)
+        p.log((-7.8, yb - 1.6, -6.2), (-7.8, yb + 1.6, -6.2), 0.6, mat="girder")
+    v, f, n = ring_wheel((4.8, 16.0, -8.0), 1.4)
+    p.meshes.append(HB.rigid_part(v, f, n, "root", BONES, "rivet.0", ao=0.9))
+
+
+def ring_wheel(c, R):
+    vs, fs, ns = [], [], []
+    from sdfkit import frame_from
+    parts = []
+    path = [np.array([c[0] + R * math.cos(t), c[1] + R * math.sin(t), c[2]]) for t in np.linspace(0, 2 * math.pi, 19)]
+    v, f, n = K.tube_mesh(path, [0.22] * 19, n=6)
+    for k in range(3):
+        a = k * math.pi / 3
+        pa = np.array([c[0] + R * math.cos(a), c[1] + R * math.sin(a), c[2]])
+        pb = np.array([c[0] - R * math.cos(a), c[1] - R * math.sin(a), c[2]])
+        v2, f2, n2 = K.tube_mesh([pa, pb], [0.16, 0.16], n=5)
+        f = np.concatenate([f, f2 + len(v)])
+        v = np.concatenate([v, v2])
+        n = np.concatenate([n, n2])
+    return v, f, n
+
+
+def iron_ceiling(p):
+    for s_ in (-1, 1):
+        girder(p, (-24, 1.6, s_ * 12), (24, 1.6, s_ * 12), 3.2, 2.0)
+    for i in range(3):
+        for j in range(3):
+            p.box((-16 + i * 16, 3.5, -16 + j * 16), (7.85, 0.5, 7.85), "checker", rr=0.15, k=0.03)
+
+
+def steel_foundation(p):
+    p.box((0, 8, 0), (23.6, 7.6, 23.6), "steelplate", rr=1.2, k=0.05)
+    for s_ in (-1, 1):
+        for i in range(3):
+            p.box((-16 + i * 16, 8, s_ * 23.8), (7.4, 6.6, 0.7), "steelplate", rr=0.6, k=0.03)
+            p.box((s_ * 23.8, 8, -16 + i * 16), (0.7, 6.6, 7.4), "steelplate", rr=0.6, k=0.03)
+    for i in range(3):
+        for j in range(3):
+            p.box((-16 + i * 16, 15.6, -16 + j * 16), (7.6, 0.45, 7.6), "steelplate", rr=0.3, k=0.03)
+            for (u, v) in ((-1, -1), (-1, 1), (1, -1), (1, 1)):
+                p.hexbolt((-16 + i * 16 + u * 6.3, 16.1, -16 + j * 16 + v * 6.3), (0, 1, 0), 0.75)
+
+
+def steel_wall(p, door=False):
+    skip = (lambda cx, cy: abs(cx) < 8.1 and cy < 32) if door else None
+    nx, ny = 3, 3
+    for i in range(nx):
+        for j in range(ny):
+            cx, cy = -14.67 + i * 14.67, 8 + j * 16
+            if skip is not None and skip(cx, cy):
+                if door and j < 2:
+                    for s_ in (-1, 1):
+                        p.box((s_ * 11.4, cy, -6.2), (3.3, 7.8, 1.6), "steelplate", rr=0.5, k=0.03)
+                continue
+            p.box((cx, cy, -6.2), (7.2, 7.8, 1.6), "steelplate", rr=0.7, k=0.03)
+            p.box((cx, cy, -7.6), (5.6, 6.2, 0.35), "steelplate", rr=0.4, k=0.03)
+            for (u, v) in ((-1, -1), (-1, 1), (1, -1), (1, 1)):
+                p.hexbolt((cx + u * 6.0, cy + v * 6.6, -7.9), (0, 0, -1), 0.6)
+    for s_ in (-1, 1):
+        p.box((s_ * 22.6, 24, -6.0), (1.6, 24, 2.2), "steelplate", rr=0.5, k=0.03)
+    if door:
+        for s_ in (-1, 1):
+            p.box((s_ * 8.6, 16.5, -6.0), (0.8, 16.4, 2.4), "hazard", rr=0.3, k=0.03)
+        p.box((0, 32.9, -6.0), (9.4, 0.9, 2.4), "hazard", rr=0.3, k=0.03)
+
+
+def steel_door(p):
+    p.box((0, 16, -6.2), (7.4, 15.6, 1.3), "steelplate", rr=0.6, k=0.03)
+    for yb in (4.0, 12.0, 20.0, 28.0):
+        p.box((0, yb, -7.6), (7.0, 1.1, 0.4), "steelplate", rr=0.3, k=0.03)
+        for xx in (-5.5, 0.0, 5.5):
+            p.hexbolt((xx, yb, -8.0), (0, 0, -1), 0.45)
+    for yb in (5.0, 27.0):
+        p.log((-7.8, yb - 2.0, -6.2), (-7.8, yb + 2.0, -6.2), 0.75, mat="steelplate")
+    v, f, n = ring_wheel((3.6, 16.0, -8.2), 2.2)
+    p.meshes.append(HB.rigid_part(v, f, n, "root", BONES, "rivet.0", ao=0.9))
+
+
+def steel_ceiling(p):
+    for i in range(3):
+        for j in range(3):
+            p.box((-16 + i * 16, 2.0, -16 + j * 16), (7.7, 1.9, 7.7), "steelplate", rr=0.5, k=0.03)
+            p.hexbolt((-16 + i * 16, 4.1, -16 + j * 16), (0, 1, 0), 0.7)
+
+
 PIECES = {
     "thatch": dict(foundation=thatch_foundation, wall=thatch_wall, doorframe=lambda p: thatch_wall(p, True), door=thatch_door,
                    ceiling=thatch_ceiling),
@@ -295,6 +461,10 @@ PIECES = {
                  ceiling=wood_ceiling),
     "stone": dict(foundation=stone_foundation, wall=stone_wall, doorframe=lambda p: stone_wall(p, True), door=stone_door,
                   ceiling=stone_ceiling),
+    "iron": dict(foundation=iron_foundation, wall=iron_wall, doorframe=lambda p: iron_wall(p, True), door=iron_door,
+                 ceiling=iron_ceiling),
+    "steel": dict(foundation=steel_foundation, wall=steel_wall, doorframe=lambda p: steel_wall(p, True), door=steel_door,
+                  ceiling=steel_ceiling),
 }
 
 
@@ -348,6 +518,30 @@ def shade(mat, P, N, AO, ctx):
         col = mixc(col, hx("#8a7a4a"), sm(0.7, 0.9, vnoise(P, 1.5, seed + 3)) * 0.3)
     elif base == "rope":
         col = np.tile(hx("#b89a62"), (n, 1)) * (0.7 + 0.35 * np.abs(np.sin((x + y + z) * 5.0)))[:, None]
+    elif base in ("ironplate", "girder", "checker"):
+        tone = {"ironplate": hx("#6e737a"), "girder": hx("#4e5258"), "checker": hx("#8a8e94")}[base] * (0.92 + 0.12 * r)
+        col = np.tile(tone, (n, 1)) * (0.85 + 0.2 * fbm(P, 1.2, seed, 3))[:, None]
+        scratch = np.abs(np.sin((x * 0.7 + y * 2.3 + z * 1.1) * 3.0 + fbm(P, 0.4, seed + 3, 2) * 8))
+        col = col * (0.95 + 0.08 * sm(0.9, 1.0, scratch))[:, None]
+        rust = sm(0.62, 0.85, fbm(P * np.array([1.0, 0.25, 1.0]), 1.5, seed + 5, 3)) * sm(0.3, -0.4, N[:, 1] + (y - 24) / 60)
+        col = mixc(col, hx("#7a3e1e"), rust * 0.6)                                                   # rust streaks
+        if base == "checker":
+            dia = (np.abs(np.sin((x + z) * 1.6)) > 0.86) & (np.abs(np.sin((x - z) * 1.6)) > 0.86)
+            col = mixc(col, col * 1.3, dia.astype(float) * 0.6)
+        col = col + (spec * 0.45)[:, None]
+    elif base == "steelplate":
+        tone = hx("#3e4650") * (0.9 + 0.15 * r)
+        brushed = 0.92 + 0.08 * np.abs(np.sin((y if True else x) * 14.0 + fbm(P, 0.5, seed, 2) * 4))
+        col = np.tile(tone, (n, 1)) * brushed[:, None] * (0.9 + 0.15 * fbm(P, 2.0, seed + 2, 3))[:, None]
+        edge = sm(0.0, 0.15, 1 - np.abs(N[:, 2]))
+        col = mixc(col, hx("#7a8490"), edge * 0.25)                                                  # worn edges
+        col = col + (spec * 0.7)[:, None]
+    elif base == "hazard":
+        stripe = (np.floor((x + y) / 2.2) % 2 == 0)
+        col = np.where(stripe[:, None], hx("#d8b020")[None, :], hx("#1e1e1e")[None, :]) * (0.85 + 0.15 * vnoise(P, 0.6, seed))[:, None]
+        col = col + (spec * 0.2)[:, None]
+    elif base == "rivet":
+        col = np.tile(hx("#9aa0a8"), (n, 1)) * (0.75 + 0.4 * lit)[:, None] + (spec * 0.8)[:, None]
     elif base == "iron":
         col = np.tile(hx("#3e3c3a"), (n, 1)) * (0.8 + 0.4 * vnoise(P, 0.5, seed))[:, None] + (spec * 0.5)[:, None]
         col = mixc(col, hx("#8a4a22"), sm(0.6, 0.85, vnoise(P, 0.8, seed + 3)) * 0.45)

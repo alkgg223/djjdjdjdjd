@@ -1,0 +1,20 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "arkragnarok:block/campfire",
+   "y": 0
+  },
+  "facing=east": {
+   "model": "arkragnarok:block/campfire",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "arkragnarok:block/campfire",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "arkragnarok:block/campfire",
+   "y": 270
+  }
+ }
+}

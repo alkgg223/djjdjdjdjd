@@ -136,6 +136,8 @@ public final class ShotDirector {
         ITEM_SHOTS.add(new ItemShot("house_close", 8, 0, false));
         ITEM_SHOTS.add(new ItemShot("houses_doors_open", 8, 0, false));
         ITEM_SHOTS.add(new ItemShot("house_inside", 8, 0, false));
+        ITEM_SHOTS.add(new ItemShot("house_stations", 8, 0, false));
+        ITEM_SHOTS.add(new ItemShot("economy_inventory", 0, 0, true));
         ITEM_SHOTS.add(new ItemShot("survivor_base", 8, 0, false));
         ITEM_SHOTS.add(new ItemShot("survivor_close", 8, 0, false));
     }
@@ -188,6 +190,7 @@ public final class ShotDirector {
                 ItemShot it = ITEM_SHOTS.get(itemIndex);
                 mc.player.getInventory().selected = it.slot();
                 mc.options.setCameraType(it.camera() == 2 ? CameraType.THIRD_PERSON_FRONT : CameraType.FIRST_PERSON);
+                if (it.name().equals("economy_inventory")) srv.execute(() -> economyInventory(srv, mc.player.getUUID()));
                 if (it.inventory()) mc.setScreen(new InventoryScreen(mc.player));
                 if (it.name().startsWith("house")) {
                     mc.options.hideGui = true;
@@ -296,6 +299,7 @@ public final class ShotDirector {
         sp.setYHeadRot(0f);
         spawnNodes(level);
         buildHouses(level);
+        placeStations(level);
         sp.getInventory().clearContent();
         for (int i = 0; i < ITEMS.size() && i < 36; i++) sp.getInventory().setItem(i, new ItemStack(ITEMS.get(i), i == 1 ? 16 : 1));
         sp.inventoryMenu.broadcastChanges();
@@ -321,10 +325,10 @@ public final class ShotDirector {
 
     /** three small houses (thatch, wood, stone): foundation, three walls, a doorframe with its door, a ceiling */
     private static void buildHouses(ServerLevel level) {
-        Tier[] tiers = {Tier.THATCH, Tier.WOOD, Tier.STONE};
-        for (int i = 0; i < 3; i++) {
+        Tier[] tiers = Tier.values();
+        for (int i = 0; i < tiers.length; i++) {
             PieceBlock b = ModBuilding.PIECE_BLOCKS.get(tiers[i]).get();
-            BlockPos c = BlockPos.containing(ox - 12 + i * 12, oy, oz + 20);
+            BlockPos c = BlockPos.containing(ox - 24 + i * 12, oy, oz + 20);
             Placement.place(level, b, PieceType.FOUNDATION, new Placement.Plan(c, Direction.NORTH));
             for (Direction f : new Direction[] {Direction.EAST, Direction.WEST, Direction.SOUTH}) {
                 Placement.place(level, b, PieceType.WALL, new Placement.Plan(c.relative(f, 2).above(), f));
@@ -335,6 +339,45 @@ public final class ShotDirector {
             DOORFRAMES.add(df);
             Placement.place(level, b, PieceType.CEILING, new Placement.Plan(c.above(3), Direction.NORTH));
         }
+    }
+
+    /** every station, storage box, the bed and crop plots in all stages in a row */
+    private static void placeStations(ServerLevel level) {
+        java.util.List<BlockState> row = new java.util.ArrayList<>();
+        for (var b : new net.minecraft.world.level.block.Block[]{com.arkragnarok.economy.ModEconomy.CAMPFIRE.get(),
+                com.arkragnarok.economy.ModEconomy.MORTAR.get(), com.arkragnarok.economy.ModEconomy.SMITHY.get(),
+                com.arkragnarok.economy.ModEconomy.REFINING_FORGE.get(), com.arkragnarok.economy.ModEconomy.FABRICATOR.get(),
+                com.arkragnarok.economy.ModEconomy.STORAGE_BOX.get(), com.arkragnarok.economy.ModEconomy.LARGE_STORAGE_BOX.get()}) {
+            row.add(b.defaultBlockState().setValue(com.arkragnarok.economy.StationBlock.FACING, Direction.NORTH));
+        }
+        for (int a = 0; a < 3; a++) row.add(com.arkragnarok.economy.ModEconomy.CROP_PLOT.get().defaultBlockState().setValue(
+                com.arkragnarok.economy.CropPlotBlock.AGE, a));
+        int x0 = (int) Math.floor(ox) - row.size();
+        int z = (int) Math.floor(oz) - 36;
+        int y = (int) Math.floor(oy);
+        for (int i = 0; i < row.size(); i++) level.setBlock(new BlockPos(x0 + i * 2, y, z), row.get(i), 3);
+        // the bed (head + foot)
+        BlockPos head = new BlockPos(x0 + row.size() * 2 + 1, y, z);
+        var bed = com.arkragnarok.economy.ModEconomy.HIDE_BED.get().defaultBlockState()
+                .setValue(net.minecraft.world.level.block.BedBlock.FACING, Direction.SOUTH);
+        level.setBlock(head.north(), bed.setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.FOOT), 3);
+        level.setBlock(head, bed.setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.HEAD), 3);
+    }
+
+    private static void economyInventory(IntegratedServer srv, UUID playerId) {
+        ServerPlayer sp = srv.getPlayerList().getPlayer(playerId);
+        if (sp == null) return;
+        sp.setGameMode(GameType.SURVIVAL);
+        sp.getAbilities().mayfly = true;
+        sp.getAbilities().flying = true;
+        sp.onUpdateAbilities();
+        sp.getInventory().clearContent();
+        int i = 0;
+        for (var it : com.arkragnarok.economy.ModEconomy.ALL) {
+            if (i >= 36) break;
+            sp.getInventory().setItem(i++, new ItemStack(it.get(), 1 + (i % 5) * 3));
+        }
+        sp.inventoryMenu.broadcastChanges();
     }
 
     private static void houseView(IntegratedServer srv, UUID playerId, String name) {
@@ -363,9 +406,11 @@ public final class ShotDirector {
             else sp.teleportTo(level, sv.getX() + 2.5, sv.getY() + 1.6, sv.getZ() + 2.5, 135f, 10f);
             return;
         }
+        if (name.equals("house_stations")) name = "stations";
         switch (name) {
-            case "houses_front", "houses_doors_open" -> sp.teleportTo(level, ox + 0.5, oy + 4.0, oz + 6.0, 0f, 12f);
-            case "house_close" -> sp.teleportTo(level, ox + 6.5, oy + 3.5, oz + 13.0, 35f, 15f);
+            case "houses_front", "houses_doors_open" -> sp.teleportTo(level, ox + 0.5, oy + 6.0, oz - 4.0, 0f, 14f);
+            case "house_close" -> sp.teleportTo(level, ox + 0.5, oy + 2.6, oz + 13.0, 0f, 6f);
+            case "stations" -> sp.teleportTo(level, ox + 0.5, oy + 3.0, oz - 42.0, 0f, 20f);
             default -> sp.teleportTo(level, ox + 0.5, oy + 2.4, oz + 21.5, 180f, -25f);
         }
     }

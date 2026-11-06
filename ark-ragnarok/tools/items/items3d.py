@@ -42,7 +42,7 @@ def sdf_part(prims, cell, tris):
     (v, f, n), = K.polygonize(field, [tris])[0]
     adds = [p for p in prims if p.op == "add"]
     D = np.stack([p.sdf(v) for p in adds], axis=1)
-    vmat = np.array([adds[i].mat for i in D.argmin(axis=1)])
+    vmat = np.array([adds[i].mat for i in np.abs(D).argmin(axis=1)])    # the primitive whose surface this is
     ao = item_ao(field, v, n)
     part = HB.rigid_part(v, f, n, "root", BONES, "x", ao=ao)
     part["tmat"] = vmat[part["f"][:, 0]]

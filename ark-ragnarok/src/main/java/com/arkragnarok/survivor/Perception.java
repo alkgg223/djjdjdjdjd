@@ -52,6 +52,7 @@ public final class Perception {
             BlockPos p = hit.getBlockPos();
             BlockState st = level.getBlockState(p);
             if (st.is(BlockTags.LOGS)) s.memory.see(Memory.Kind.TREE, p, now, null, "");
+            else if (st.getBlock() instanceof com.arkragnarok.building.PieceBlock && !s.ownsPosition(p)) s.memory.see(Memory.Kind.BASE, p, now, null, "");
             else if (!st.getFluidState().isEmpty() && st.getFluidState().isSource()) s.memory.see(Memory.Kind.WATER, p, now, null, "");
             BlockPos before = BlockPos.containing(hit.getLocation().subtract(dir.scale(0.4)));
             if (level.isEmptyBlock(before)) {
@@ -68,13 +69,17 @@ public final class Perception {
             entityScan = 0;
             int budget = 24;
             AABB box = s.getBoundingBox().inflate(RANGE, 48, RANGE);
-            for (Entity e : level.getEntities(s, box, e -> e instanceof ResourceNode || e instanceof ArkCreature)) {
+            for (Entity e : level.getEntities(s, box, e -> e instanceof ResourceNode || e instanceof ArkCreature
+                    || e instanceof net.minecraft.world.entity.animal.Animal)) {
                 if (budget-- <= 0) break;
                 if (e.distanceToSqr(s) > RANGE * RANGE || !visible(e)) continue;
                 if (e instanceof ResourceNode n && !n.depleted()) {
                     s.memory.see(Memory.Kind.NODE, e.blockPosition(), now, e.getUUID(), n.kind().id);
-                } else if (e instanceof ArkCreature c && !c.isTamed() && dangerous(c)) {
-                    s.memory.see(Memory.Kind.THREAT, e.blockPosition(), now, e.getUUID(), c.species().id);
+                } else if (e instanceof ArkCreature c && !c.isTamed()) {
+                    if (dangerous(c)) s.memory.see(Memory.Kind.THREAT, e.blockPosition(), now, e.getUUID(), c.species().id);
+                    s.memory.see(Memory.Kind.DINO, e.blockPosition(), now, e.getUUID(), c.species().id);
+                } else if (e instanceof net.minecraft.world.entity.animal.Animal) {
+                    s.memory.see(Memory.Kind.PREY, e.blockPosition(), now, e.getUUID(), "");
                 }
             }
         }

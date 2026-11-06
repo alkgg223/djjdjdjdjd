@@ -1,0 +1,37 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "arkragnarok:wood"
+  },
+  {
+   "item": "arkragnarok:wood"
+  },
+  {
+   "item": "arkragnarok:wood"
+  },
+  {
+   "item": "arkragnarok:wood"
+  },
+  {
+   "item": "arkragnarok:wood"
+  },
+  {
+   "item": "arkragnarok:thatch"
+  },
+  {
+   "item": "arkragnarok:thatch"
+  },
+  {
+   "item": "arkragnarok:thatch"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:storage_box",
+  "count": 1
+ }
+}

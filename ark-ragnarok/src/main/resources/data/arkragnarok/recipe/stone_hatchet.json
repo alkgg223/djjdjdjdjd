@@ -1,0 +1,25 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "arkragnarok:wood"
+  },
+  {
+   "item": "arkragnarok:flint"
+  },
+  {
+   "item": "arkragnarok:stone"
+  },
+  {
+   "item": "arkragnarok:thatch"
+  },
+  {
+   "item": "arkragnarok:thatch"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:stone_hatchet",
+  "count": 1
+ }
+}

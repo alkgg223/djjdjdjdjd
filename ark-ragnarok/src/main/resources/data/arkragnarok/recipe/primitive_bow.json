@@ -1,0 +1,31 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "arkragnarok:wood"
+  },
+  {
+   "item": "arkragnarok:wood"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:primitive_bow",
+  "count": 1
+ }
+}

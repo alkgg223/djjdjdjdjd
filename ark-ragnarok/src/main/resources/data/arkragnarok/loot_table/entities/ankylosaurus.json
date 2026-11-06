@@ -6,7 +6,7 @@
    "entries": [
     {
      "type": "minecraft:item",
-     "name": "minecraft:beef",
+     "name": "arkragnarok:raw_meat",
      "functions": [
       {
        "function": "minecraft:set_count",
@@ -25,14 +25,33 @@
    "entries": [
     {
      "type": "minecraft:item",
-     "name": "minecraft:leather",
+     "name": "arkragnarok:hide",
      "functions": [
       {
        "function": "minecraft:set_count",
        "count": {
         "type": "minecraft:uniform",
-        "min": 2,
-        "max": 5
+        "min": 3,
+        "max": 6
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "rolls": 1,
+   "entries": [
+    {
+     "type": "minecraft:item",
+     "name": "arkragnarok:dino_bone",
+     "functions": [
+      {
+       "function": "minecraft:set_count",
+       "count": {
+        "type": "minecraft:uniform",
+        "min": 1,
+        "max": 2
        }
       }
      ]
@@ -63,14 +82,14 @@
    "entries": [
     {
      "type": "minecraft:item",
-     "name": "minecraft:bone",
+     "name": "arkragnarok:keratin",
      "functions": [
       {
        "function": "minecraft:set_count",
        "count": {
         "type": "minecraft:uniform",
         "min": 1,
-        "max": 4
+        "max": 5
        }
       }
      ]

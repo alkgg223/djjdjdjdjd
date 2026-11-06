@@ -19,6 +19,11 @@ public final class ClientSetup {
     private ClientSetup() {}
 
     @SubscribeEvent
+    public static void screens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent e) {
+        e.register(com.arkragnarok.registry.ModMenus.STATION.get(), com.arkragnarok.client.hud.StationScreen::new);
+    }
+
+    @SubscribeEvent
     public static void renderers(EntityRenderersEvent.RegisterRenderers e) {
         for (Species s : SpeciesList.all()) e.registerEntityRenderer(ModEntities.type(s.id), ctx -> new ArkCreatureRenderer(ctx, s));
         e.registerEntityRenderer(ModEntities.TRANQ_ARROW.get(), TranqArrowRenderer::new);

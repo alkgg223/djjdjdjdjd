@@ -1,18 +1,24 @@
 {
  "type": "minecraft:crafting_shapeless",
- "category": "building",
+ "category": "misc",
  "ingredients": [
   {
-   "tag": "minecraft:planks"
+   "item": "arkragnarok:wood"
   },
   {
-   "tag": "minecraft:planks"
+   "item": "arkragnarok:wood"
   },
   {
-   "item": "minecraft:stick"
+   "item": "arkragnarok:wood"
   },
   {
-   "item": "minecraft:iron_nugget"
+   "item": "arkragnarok:wood"
+  },
+  {
+   "item": "arkragnarok:thatch"
+  },
+  {
+   "item": "arkragnarok:fiber"
   }
  ],
  "result": {

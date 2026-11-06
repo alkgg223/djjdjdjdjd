@@ -1,0 +1,20 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "arkragnarok:block/smithy",
+   "y": 0
+  },
+  "facing=east": {
+   "model": "arkragnarok:block/smithy",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "arkragnarok:block/smithy",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "arkragnarok:block/smithy",
+   "y": 270
+  }
+ }
+}

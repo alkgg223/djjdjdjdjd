@@ -1,0 +1,34 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "arkragnarok:stone"
+  },
+  {
+   "item": "arkragnarok:stone"
+  },
+  {
+   "item": "arkragnarok:stone"
+  },
+  {
+   "item": "arkragnarok:stone"
+  },
+  {
+   "item": "arkragnarok:stone"
+  },
+  {
+   "item": "arkragnarok:stone"
+  },
+  {
+   "item": "arkragnarok:hide"
+  },
+  {
+   "item": "arkragnarok:hide"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:mortar_and_pestle",
+  "count": 1
+ }
+}

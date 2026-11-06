@@ -25,11 +25,15 @@ public class ArkRagnarok {
     public ArkRagnarok(IEventBus modBus, ModContainer container) {
         ModEntities.ENTITIES.register(modBus);
         ModBuilding.init();
+        com.arkragnarok.economy.ModEconomy.init();
         ModItems.ITEMS.register(modBus);
         ModItems.TABS.register(modBus);
         ModSounds.SOUNDS.register(modBus);
         ModWorld.FEATURES.register(modBus);
         ModBuilding.BLOCKS.register(modBus);
+        com.arkragnarok.economy.ModEconomy.BLOCKS.register(modBus);
+        com.arkragnarok.economy.ModEconomy.BLOCK_ENTITIES.register(modBus);
+        com.arkragnarok.registry.ModMenus.MENUS.register(modBus);
         ModBuilding.BLOCK_ENTITIES.register(modBus);
         modBus.addListener(ArkRagnarok::attributes);
     }

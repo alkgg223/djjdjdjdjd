@@ -288,10 +288,29 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
         return this.entityData.get(OWNER).orElse(null);
     }
 
+    /** the owner: a player, or a survivor that tamed it */
     @Nullable
-    public Player getOwner() {
+    public LivingEntity getOwner() {
         UUID id = getOwnerId();
-        return id == null ? null : level().getPlayerByUUID(id);
+        if (id == null) return null;
+        Player p = level().getPlayerByUUID(id);
+        if (p != null) return p;
+        return level() instanceof ServerLevel sl && sl.getEntity(id) instanceof LivingEntity le ? le : null;
+    }
+
+    /** a survivor (or any non-player) feeding an unconscious creature it wants to tame */
+    public boolean feedForTaming(LivingEntity feeder, ItemStack stack) {
+        if (!isUnconscious() || level().isClientSide || (Taming.foodValue(species, stack) <= 0 && Taming.torporValue(stack) <= 0)) return false;
+        tamer = feeder.getUUID();
+        ItemStack rest = tamingFood.addItem(stack.copy());
+        stack.setCount(rest.getCount());
+        if (eatTimer < Taming.eatIntervalTicks(species) - 20) eatTimer = Taming.eatIntervalTicks(species) - 20;
+        return true;
+    }
+
+    /** an order from a non-player owner */
+    public void setOrder(int order) {
+        this.entityData.set(ORDER, Math.floorMod(order, 3));
     }
 
     public int getOrder() {
@@ -452,7 +471,7 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
             setFlags(EnumSet.of(Goal.Flag.MOVE));
         }
 
-        private boolean far(Player o) {
+        private boolean far(LivingEntity o) {
             double d = 5.0 + getBbWidth() * 1.5;
             return distanceToSqr(o) > d * d;
         }
@@ -460,25 +479,25 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
         @Override
         public boolean canUse() {
             if (!isTamed() || getOrder() != FOLLOW || isVehicle() || getTarget() != null) return false;
-            Player o = getOwner();
+            LivingEntity o = getOwner();
             return o != null && !o.isSpectator() && far(o);
         }
 
         @Override
         public boolean canContinueToUse() {
-            Player o = getOwner();
+            LivingEntity o = getOwner();
             return o != null && isTamed() && getOrder() == FOLLOW && getTarget() == null && far(o) && !getNavigation().isDone();
         }
 
         @Override
         public void start() {
-            Player o = getOwner();
+            LivingEntity o = getOwner();
             if (o != null) getNavigation().moveTo(o, distanceToSqr(o) > 400 ? 1.4 : 1.0);
         }
 
         @Override
         public void tick() {
-            Player o = getOwner();
+            LivingEntity o = getOwner();
             if (o != null && tickCount % 10 == 0) getNavigation().moveTo(o, distanceToSqr(o) > 400 ? 1.4 : 1.0);
         }
 
@@ -568,7 +587,7 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
         if (isUnconscious()) return;
         if (isTamed()) {
             if (getOrder() == STAY && !isVehicle() && getTarget() == null) getNavigation().stop();
-            Player o = getOwner();
+            LivingEntity o = getOwner();
             if (o != null && tickCount % 10 == 0 && getOrder() != STAY && distanceToSqr(o) < 1600) {
                 LivingEntity a = o.getLastHurtByMob();
                 LivingEntity b = o.getLastHurtMob();
@@ -633,6 +652,9 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
             // fists and clubs knock out too (ARK punch torpor)
             if (source.getDirectEntity() instanceof Player p && (p.getMainHandItem().isEmpty() || p.getMainHandItem().is(Items.STICK))) {
                 addTorpor(amount * 3.5f, p);
+            }
+            if (source.getDirectEntity() instanceof LivingEntity le && le.getMainHandItem().is(com.arkragnarok.economy.ModEconomy.WOODEN_CLUB.get())) {
+                addTorpor(amount * 7f, le);                                  // the club is made for knocking out
             }
         }
         return hurt;

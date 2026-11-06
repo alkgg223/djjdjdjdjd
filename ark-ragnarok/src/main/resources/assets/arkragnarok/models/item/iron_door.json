@@ -1,0 +1,134 @@
+{
+ "loader": "neoforge:obj",
+ "model": "arkragnarok:models/block/obj/iron_door_item.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "shade_quads": true,
+ "ambient_occlusion": false,
+ "textures": {
+  "texture": "arkragnarok:block/piece/iron_door",
+  "particle": "arkragnarok:block/piece/iron_door"
+ },
+ "gui_light": "side",
+ "display": {
+  "gui": {
+   "rotation": [
+    28,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.4669,
+    0.4669,
+    0.4669
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.1868,
+    0.1868,
+    0.1868
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.4669,
+    0.4669,
+    0.4669
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.2335,
+    0.2335,
+    0.2335
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.2335,
+    0.2335,
+    0.2335
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.249,
+    0.249,
+    0.249
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.249,
+    0.249,
+    0.249
+   ]
+  }
+ }
+}

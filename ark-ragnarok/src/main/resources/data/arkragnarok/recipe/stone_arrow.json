@@ -1,0 +1,25 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "arkragnarok:thatch"
+  },
+  {
+   "item": "arkragnarok:thatch"
+  },
+  {
+   "item": "arkragnarok:flint"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:stone_arrow",
+  "count": 2
+ }
+}

@@ -81,6 +81,7 @@ public final class ModItems {
             .icon(() -> new ItemStack(SPAWN_EGGS.get("tyrannosaurus").get()))
             .displayItems((params, out) -> {
                 out.accept(SURVIVOR_DEVICE.get());
+                for (var it : com.arkragnarok.economy.ModEconomy.ALL) out.accept(it.get());
                 out.accept(SUPER_SPYGLASS.get());
                 out.accept(TRANQ_ARROW.get());
                 out.accept(NARCOTIC.get());

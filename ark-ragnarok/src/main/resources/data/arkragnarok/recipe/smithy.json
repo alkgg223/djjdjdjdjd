@@ -1,0 +1,37 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "arkragnarok:stone"
+  },
+  {
+   "item": "arkragnarok:stone"
+  },
+  {
+   "item": "arkragnarok:stone"
+  },
+  {
+   "item": "arkragnarok:wood"
+  },
+  {
+   "item": "arkragnarok:wood"
+  },
+  {
+   "item": "arkragnarok:wood"
+  },
+  {
+   "item": "arkragnarok:hide"
+  },
+  {
+   "item": "arkragnarok:hide"
+  },
+  {
+   "item": "arkragnarok:hide"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:smithy",
+  "count": 1
+ }
+}

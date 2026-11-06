@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "arkragnarok:models/block/obj/crop_plot_1.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "shade_quads": true,
+ "ambient_occlusion": false,
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "texture": "arkragnarok:block/station/crop_plot_1",
+  "particle": "arkragnarok:block/station/crop_plot_1"
+ }
+}

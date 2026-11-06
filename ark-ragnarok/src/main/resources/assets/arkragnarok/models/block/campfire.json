@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "arkragnarok:models/block/obj/campfire.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "shade_quads": true,
+ "ambient_occlusion": false,
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "texture": "arkragnarok:block/station/campfire",
+  "particle": "arkragnarok:block/station/campfire"
+ }
+}

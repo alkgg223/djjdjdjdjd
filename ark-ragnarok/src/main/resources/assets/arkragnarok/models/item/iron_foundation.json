@@ -1,0 +1,134 @@
+{
+ "loader": "neoforge:obj",
+ "model": "arkragnarok:models/block/obj/iron_foundation_item.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "shade_quads": true,
+ "ambient_occlusion": false,
+ "textures": {
+  "texture": "arkragnarok:block/piece/iron_foundation",
+  "particle": "arkragnarok:block/piece/iron_foundation"
+ },
+ "gui_light": "side",
+ "display": {
+  "gui": {
+   "rotation": [
+    28,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.2994,
+    0.2994,
+    0.2994
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.1198,
+    0.1198,
+    0.1198
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.2994,
+    0.2994,
+    0.2994
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.1497,
+    0.1497,
+    0.1497
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    75,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    2.5,
+    0
+   ],
+   "scale": [
+    0.1497,
+    0.1497,
+    0.1497
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.1597,
+    0.1597,
+    0.1597
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.1597,
+    0.1597,
+    0.1597
+   ]
+  }
+ }
+}
