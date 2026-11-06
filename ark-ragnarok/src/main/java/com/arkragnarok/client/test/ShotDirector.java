@@ -139,6 +139,7 @@ public final class ShotDirector {
         ITEM_SHOTS.add(new ItemShot("house_stations", 8, 0, false));
         ITEM_SHOTS.add(new ItemShot("economy_inventory", 0, 0, true));
         ITEM_SHOTS.add(new ItemShot("survivor_base", 8, 0, false));
+        ITEM_SHOTS.add(new ItemShot("survivor_top", 8, 0, false));
         ITEM_SHOTS.add(new ItemShot("survivor_close", 8, 0, false));
     }
 
@@ -192,7 +193,7 @@ public final class ShotDirector {
                 mc.options.setCameraType(it.camera() == 2 ? CameraType.THIRD_PERSON_FRONT : CameraType.FIRST_PERSON);
                 if (it.name().equals("economy_inventory")) srv.execute(() -> economyInventory(srv, mc.player.getUUID()));
                 if (it.inventory()) mc.setScreen(new InventoryScreen(mc.player));
-                if (it.name().startsWith("house")) {
+                if (it.name().startsWith("house") || it.name().startsWith("survivor")) {
                     mc.options.hideGui = true;
                     String n = it.name();
                     srv.execute(() -> houseView(srv, mc.player.getUUID(), n));
@@ -207,7 +208,8 @@ public final class ShotDirector {
                     mc.player.getInventory().selected = 8;
                 }
                 phase = 6;
-                wait = it.name().equals("item_ground") ? 30 : it.name().startsWith("nodes") || it.name().startsWith("house") ? 40 : 12;
+                wait = it.name().equals("item_ground") ? 30 : it.name().startsWith("survivor") ? 80
+                        : it.name().startsWith("nodes") || it.name().startsWith("house") ? 40 : 12;
                 return;
             }
             if (phase == 6) {
@@ -402,7 +404,8 @@ public final class ShotDirector {
             com.arkragnarok.survivor.Survivor sv = list.get(0);
             BlockPos b = sv.base() != null ? sv.base() : sv.blockPosition();
             LOG.info("ARK-SHOTS survivor {} task {} base {} step {}", sv.getName().getString(), sv.task(), sv.base(), sv.buildStep());
-            if (name.equals("survivor_base")) sp.teleportTo(level, b.getX() + 8.5, b.getY() + 5.0, b.getZ() - 8.5, 45f, 22f);
+            if (name.equals("survivor_base")) sp.teleportTo(level, b.getX() + 11.5, b.getY() + 7.0, b.getZ() - 11.5, 45f, 24f);
+            else if (name.equals("survivor_top")) sp.teleportTo(level, b.getX() + 0.5, b.getY() + 26.0, b.getZ() + 6.5, 180f, 72f);
             else sp.teleportTo(level, sv.getX() + 2.5, sv.getY() + 1.6, sv.getZ() + 2.5, 135f, 10f);
             return;
         }
