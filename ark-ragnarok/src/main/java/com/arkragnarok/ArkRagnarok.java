@@ -3,6 +3,7 @@ package com.arkragnarok;
 import com.arkragnarok.entity.RexEntity;
 import com.arkragnarok.registry.ModEntities;
 import com.arkragnarok.registry.ModItems;
+import com.arkragnarok.registry.ModSounds;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -21,6 +22,7 @@ public class ArkRagnarok {
         ModEntities.ENTITIES.register(modBus);
         ModItems.ITEMS.register(modBus);
         ModItems.TABS.register(modBus);
+        ModSounds.SOUNDS.register(modBus);
         modBus.addListener(ArkRagnarok::attributes);
     }
 

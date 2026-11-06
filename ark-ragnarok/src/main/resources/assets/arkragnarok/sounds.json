@@ -1,0 +1,71 @@
+{
+ "rex.roar": {
+  "subtitle": "subtitles.arkragnarok.rex.roar",
+  "sounds": [
+   {
+    "name": "arkragnarok:rex/roar1",
+    "attenuation_distance": 64
+   },
+   {
+    "name": "arkragnarok:rex/roar2",
+    "attenuation_distance": 64
+   },
+   {
+    "name": "arkragnarok:rex/roar3",
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "rex.growl": {
+  "subtitle": "subtitles.arkragnarok.rex.growl",
+  "sounds": [
+   {
+    "name": "arkragnarok:rex/growl1",
+    "attenuation_distance": 32
+   },
+   {
+    "name": "arkragnarok:rex/growl2",
+    "attenuation_distance": 32
+   }
+  ]
+ },
+ "rex.hurt": {
+  "subtitle": "subtitles.arkragnarok.rex.hurt",
+  "sounds": [
+   "arkragnarok:rex/hurt1",
+   "arkragnarok:rex/hurt2"
+  ]
+ },
+ "rex.death": {
+  "subtitle": "subtitles.arkragnarok.rex.death",
+  "sounds": [
+   {
+    "name": "arkragnarok:rex/death",
+    "attenuation_distance": 48
+   }
+  ]
+ },
+ "rex.bite": {
+  "subtitle": "subtitles.arkragnarok.rex.bite",
+  "sounds": [
+   "arkragnarok:rex/bite"
+  ]
+ },
+ "rex.step": {
+  "subtitle": "subtitles.arkragnarok.rex.step",
+  "sounds": [
+   {
+    "name": "arkragnarok:rex/step1",
+    "attenuation_distance": 32
+   },
+   {
+    "name": "arkragnarok:rex/step2",
+    "attenuation_distance": 32
+   },
+   {
+    "name": "arkragnarok:rex/step3",
+    "attenuation_distance": 32
+   }
+  ]
+ }
+}

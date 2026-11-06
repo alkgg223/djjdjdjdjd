@@ -1,6 +1,12 @@
 {
-  "itemGroup.arkragnarok": "آرك: راغناروك",
-  "entity.arkragnarok.tyrannosaurus": "تيرانوصور",
-  "item.arkragnarok.tyrannosaurus_spawn_egg": "بيضة استدعاء تيرانوصور",
-  "item.arkragnarok.rex_saddle": "سرج التيرانوصور"
+ "itemGroup.arkragnarok": "آرك: راغناروك",
+ "entity.arkragnarok.tyrannosaurus": "تيرانوصور",
+ "item.arkragnarok.tyrannosaurus_spawn_egg": "بيضة استدعاء تيرانوصور",
+ "item.arkragnarok.rex_saddle": "سرج التيرانوصور",
+ "subtitles.arkragnarok.rex.roar": "زئير التيرانوصور",
+ "subtitles.arkragnarok.rex.growl": "زمجرة التيرانوصور",
+ "subtitles.arkragnarok.rex.hurt": "التيرانوصور يتألم",
+ "subtitles.arkragnarok.rex.death": "موت التيرانوصور",
+ "subtitles.arkragnarok.rex.bite": "عضة التيرانوصور",
+ "subtitles.arkragnarok.rex.step": "خطوات ثقيلة"
 }

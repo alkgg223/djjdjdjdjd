@@ -1,6 +1,12 @@
 {
-  "itemGroup.arkragnarok": "ARK: Ragnarok",
-  "entity.arkragnarok.tyrannosaurus": "Tyrannosaurus",
-  "item.arkragnarok.tyrannosaurus_spawn_egg": "Tyrannosaurus Spawn Egg",
-  "item.arkragnarok.rex_saddle": "Rex Saddle"
+ "itemGroup.arkragnarok": "ARK: Ragnarok",
+ "entity.arkragnarok.tyrannosaurus": "Tyrannosaurus",
+ "item.arkragnarok.tyrannosaurus_spawn_egg": "Tyrannosaurus Spawn Egg",
+ "item.arkragnarok.rex_saddle": "Rex Saddle",
+ "subtitles.arkragnarok.rex.roar": "Tyrannosaurus roars",
+ "subtitles.arkragnarok.rex.growl": "Tyrannosaurus growls",
+ "subtitles.arkragnarok.rex.hurt": "Tyrannosaurus hurts",
+ "subtitles.arkragnarok.rex.death": "Tyrannosaurus dies",
+ "subtitles.arkragnarok.rex.bite": "Tyrannosaurus bites",
+ "subtitles.arkragnarok.rex.step": "Heavy footsteps"
 }

@@ -1,6 +1,7 @@
 package com.arkragnarok.entity;
 
 import com.arkragnarok.registry.ModItems;
+import com.arkragnarok.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -161,7 +162,7 @@ public class RexEntity extends PathfinderMob implements GeoEntity {
     public void roar() {
         roarCooldown = 400;
         triggerAnim("action", "roar");
-        playSound(SoundEvents.RAVAGER_ROAR, 4.0f, 0.55f);
+        playSound(ModSounds.REX_ROAR.get(), 5.0f, 0.95f + getRandom().nextFloat() * 0.1f);
         AABB area = getBoundingBox().inflate(14);
         for (LivingEntity e : level().getEntitiesOfClass(LivingEntity.class, area, e -> e != this && e.getBbHeight() < 2.2f)) {
             if (e instanceof Player p && (p.isCreative() || p.isSpectator())) continue;
@@ -172,7 +173,10 @@ public class RexEntity extends PathfinderMob implements GeoEntity {
     @Override
     public boolean doHurtTarget(Entity target) {
         boolean hit = super.doHurtTarget(target);
-        if (hit) triggerAnim("action", getRandom().nextInt(3) == 0 ? "attack" : "bite");
+        if (hit) {
+            triggerAnim("action", getRandom().nextInt(3) == 0 ? "attack" : "bite");
+            playSound(ModSounds.REX_BITE.get(), 2.0f, 0.9f + getRandom().nextFloat() * 0.2f);
+        }
         return hit;
     }
 
@@ -273,22 +277,22 @@ public class RexEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return SoundEvents.RAVAGER_AMBIENT;
+        return ModSounds.REX_GROWL.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.RAVAGER_HURT;
+        return ModSounds.REX_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return SoundEvents.RAVAGER_DEATH;
+        return ModSounds.REX_DEATH.get();
     }
 
     @Override
     public float getVoicePitch() {
-        return 0.55f + getRandom().nextFloat() * 0.1f;
+        return 0.92f + getRandom().nextFloat() * 0.16f;
     }
 
     @Override
@@ -303,7 +307,7 @@ public class RexEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     protected void playStepSound(BlockPos pos, BlockState state) {
-        playSound(SoundEvents.RAVAGER_STEP, 0.9f, 0.6f);
+        playSound(ModSounds.REX_STEP.get(), 1.4f, 0.9f + getRandom().nextFloat() * 0.2f);
     }
 
     // ------------------------------------------------------------------------------------------------- GeckoLib

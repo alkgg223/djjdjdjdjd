@@ -36,7 +36,7 @@ public final class ShotDirector {
 
     /** a camera position around the Rex: angle (deg, 0 = in front of it), distance, eye height, look-at height, state */
     private record Shot(String name, float angle, float dist, float eye, float lookY, boolean saddled, int forced, String trigger,
-                        int wait, boolean rider) {}
+                        int delay, boolean rider) {}
 
     private static final List<Shot> SHOTS = new ArrayList<>();
 
@@ -112,7 +112,7 @@ public final class ShotDirector {
                 Shot s = SHOTS.get(index);
                 srv.execute(() -> stage(srv, mc.player.getUUID(), s));
                 phase = 2;
-                wait = s.wait();
+                wait = s.delay();
                 return;
             }
             if (phase == 2) {
