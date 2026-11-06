@@ -3,6 +3,7 @@ on:
   push:
     branches-ignore:
       - ark-screens
+      - ark-jar
   workflow_dispatch:
 permissions:
   contents: write
@@ -25,6 +26,21 @@ jobs:
           test ${PIPESTATUS[0]} -eq 0
           ls -la build/libs
           unzip -l build/libs/ARK_Ragnarok_Ultimate-1.21.1.jar | grep -E "jarjar|geckolib|arkm|geo.json|animation.json" | head -20
+
+      - name: Publish the jar to the ark-jar branch
+        working-directory: ark-ragnarok
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/jar && cp build/libs/ARK_Ragnarok_Ultimate-1.21.1.jar /tmp/jar/
+          cd /tmp/jar
+          git init -q
+          git checkout -q -b ark-jar
+          git config user.name "ark-ci"
+          git config user.email "ark-ci@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Jar for ${GITHUB_SHA}"
+          git push -f -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ark-jar
 
       - name: Dedicated server smoke test (also creates the screenshot world)
         id: smoke
