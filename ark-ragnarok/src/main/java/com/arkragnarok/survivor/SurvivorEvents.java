@@ -3,7 +3,6 @@ package com.arkragnarok.survivor;
 import com.arkragnarok.ArkRagnarok;
 import com.arkragnarok.building.PieceBlock;
 import com.arkragnarok.economy.ModEconomy;
-import com.arkragnarok.entity.ArkCreature;
 import com.arkragnarok.survivor.world.SurvivorWorld;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.animal.Animal;
@@ -21,7 +20,7 @@ public final class SurvivorEvents {
 
     @SubscribeEvent
     public static void butcher(LivingDropsEvent e) {
-        if (!(e.getSource().getEntity() instanceof Survivor) || !(e.getEntity() instanceof Animal a) || a instanceof ArkCreature) return;
+        if (!(e.getSource().getEntity() instanceof Survivor) || !(e.getEntity() instanceof Animal a)) return;
         e.getDrops().clear();
         float size = a.getBbWidth() * a.getBbHeight();
         int meat = 1 + (int) (size * 1.5f) + a.getRandom().nextInt(2);
