@@ -283,9 +283,23 @@ public final class ClientSetup {
         // night vision: the post effect over the world, before any other layer
         e.registerBelowAll(Reg.id("night_vision"), NightVision::layer);
         e.registerBelowAll(Reg.id("thermal"), Thermal::layer);
-        e.registerAbove(VanillaGuiLayers.HOTBAR, Reg.id("match"), MatchHud::layer);
-        e.registerAboveAll(Reg.id("drone"), DroneClient::layer);
+        e.registerAbove(VanillaGuiLayers.HOTBAR, Reg.id("match"), (g, dt) -> safe("match", () -> MatchHud.layer(g, dt)));
+        e.registerAboveAll(Reg.id("drone"), (g, dt) -> safe("drone", () -> DroneClient.layer(g, dt)));
         e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Reg.id("battle_score"), (g, dt) -> g.drawManaged(() -> BattleHud.render(g, dt)));
         e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Reg.id("squad"), (g, dt) -> g.drawManaged(() -> SquadHud.render(g, dt)));
+    }
+
+    private static final java.util.Set<String> FAILED = new java.util.HashSet<>();
+
+    /** 3.0: a display layer that fails is logged once and skipped instead of taking the game down */
+    private static void safe(String name, Runnable r) {
+        try {
+            r.run();
+        } catch (RuntimeException | LinkageError ex) {
+            if (FAILED.add(name)) {
+                System.err.println("gunsmod: the " + name + " display failed and is switched off");
+                ex.printStackTrace();
+            }
+        }
     }
 }

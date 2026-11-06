@@ -524,6 +524,7 @@ D com/gunsmod/client/ClientNet.muzzle:(Lcom/gunsmod/net/Net$MuzzleFx;)V
 D com/gunsmod/client/ClientNet.muzzleFire:(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;FZ)V
 D com/gunsmod/client/ClientNet.shotFx:(Lcom/gunsmod/net/Net$ShotFx;)V
 D com/gunsmod/client/ClientNet.tracer:(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)V
+D com/gunsmod/client/ClientSetup.<clinit>:()V
 D com/gunsmod/client/ClientSetup.<init>:()V
 D com/gunsmod/client/ClientSetup.extensions:(Lnet/neoforged/neoforge/client/extensions/common/RegisterClientExtensionsEvent;)V
 D com/gunsmod/client/ClientSetup.gui:(Lnet/neoforged/neoforge/client/event/RegisterGuiLayersEvent;)V
@@ -542,6 +543,10 @@ D com/gunsmod/client/ClientSetup.lambda$gui$18:(Lnet/minecraft/client/gui/GuiGra
 D com/gunsmod/client/ClientSetup.lambda$gui$19:(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V
 D com/gunsmod/client/ClientSetup.lambda$gui$20:(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V
 D com/gunsmod/client/ClientSetup.lambda$gui$21:(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V
+D com/gunsmod/client/ClientSetup.lambda$gui$22:(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V
+D com/gunsmod/client/ClientSetup.lambda$gui$23:(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V
+D com/gunsmod/client/ClientSetup.lambda$gui$24:(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V
+D com/gunsmod/client/ClientSetup.lambda$gui$25:(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V
 D com/gunsmod/client/ClientSetup.lambda$gui$8:(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V
 D com/gunsmod/client/ClientSetup.lambda$gui$9:(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V
 D com/gunsmod/client/ClientSetup.lambda$particles$6:(Lnet/minecraft/client/particle/SpriteSet;)Lnet/minecraft/client/particle/ParticleProvider;
@@ -553,6 +558,7 @@ D com/gunsmod/client/ClientSetup.lambda$setup$3:()I
 D com/gunsmod/client/ClientSetup.models:(Lnet/neoforged/neoforge/client/event/ModelEvent$RegisterAdditional;)V
 D com/gunsmod/client/ClientSetup.particles:(Lnet/neoforged/neoforge/client/event/RegisterParticleProvidersEvent;)V
 D com/gunsmod/client/ClientSetup.renderers:(Lnet/neoforged/neoforge/client/event/EntityRenderersEvent$RegisterRenderers;)V
+D com/gunsmod/client/ClientSetup.safe:(Ljava/lang/String;Ljava/lang/Runnable;)V
 D com/gunsmod/client/ClientSetup.screens:(Lnet/neoforged/neoforge/client/event/RegisterMenuScreensEvent;)V
 D com/gunsmod/client/ClientSetup.setup:(Lnet/neoforged/fml/event/lifecycle/FMLClientSetupEvent;)V
 D com/gunsmod/client/DroneClient$1.<clinit>:()V
@@ -4100,7 +4106,7 @@ R IM net/minecraft/core/DefaultedRegistry.getKey:(Ljava/lang/Object;)Lnet/minecr
 R IM net/minecraft/core/Holder.is:(Lnet/minecraft/resources/ResourceKey;)Z
 R IM net/minecraft/core/Registry.getHolderOrThrow:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/core/Holder$Reference;
 R IM net/minecraft/core/RegistryAccess.registryOrThrow:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/core/Registry;
-R IM net/minecraft/network/chat/Component.empty:()Lnet/minecraft/network/chat/Component;
+R IM net/minecraft/network/chat/Component.empty:()Lnet/minecraft/network/chat/MutableComponent;
 R IM net/minecraft/network/chat/Component.getString:()Ljava/lang/String;
 R IM net/minecraft/network/chat/Component.literal:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
 R IM net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
@@ -4462,7 +4468,7 @@ R M net/minecraft/network/RegistryFriendlyByteBuf.readVarInt:()I
 R M net/minecraft/network/RegistryFriendlyByteBuf.readVarIntArray:()[I
 R M net/minecraft/network/RegistryFriendlyByteBuf.writeBlockPos:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/network/FriendlyByteBuf;
 R M net/minecraft/network/RegistryFriendlyByteBuf.writeBoolean:(Z)Lnet/minecraft/network/FriendlyByteBuf;
-R M net/minecraft/network/RegistryFriendlyByteBuf.writeByte:(I)Lnet/minecraft/network/FriendlyByteBuf;
+R M net/minecraft/network/RegistryFriendlyByteBuf.writeByte:(B)Lnet/minecraft/network/FriendlyByteBuf;
 R M net/minecraft/network/RegistryFriendlyByteBuf.writeByteArray:([B)Lnet/minecraft/network/FriendlyByteBuf;
 R M net/minecraft/network/RegistryFriendlyByteBuf.writeDouble:(D)Lnet/minecraft/network/FriendlyByteBuf;
 R M net/minecraft/network/RegistryFriendlyByteBuf.writeFloat:(F)Lnet/minecraft/network/FriendlyByteBuf;
