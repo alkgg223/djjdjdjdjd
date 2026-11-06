@@ -132,6 +132,10 @@ public final class ModEconomy {
     public static final DeferredBlock<HideBedBlock> HIDE_BED = BLOCKS.register("hide_bed", () -> new HideBedBlock(wood().strength(0.6f)));
     public static final DeferredItem<BedItem> HIDE_BED_ITEM = item("hide_bed", () -> new BedItem(HIDE_BED.get(), new Item.Properties().stacksTo(1)));
 
+    /** tamped earth with pebbles: levels the ground under foundations and wall footings */
+    public static final DeferredBlock<Block> RAMMED_EARTH = block("rammed_earth", () -> new Block(BlockBehaviour.Properties.of()
+            .mapColor(MapColor.DIRT).strength(1.4f, 4f).sound(SoundType.ROOTED_DIRT)));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StorageBoxEntity>> STORAGE_BE = BLOCK_ENTITIES.register("storage_box",
             () -> BlockEntityType.Builder.of(StorageBoxEntity::new, STORAGE_BOX.get(), LARGE_STORAGE_BOX.get()).build(null));
 

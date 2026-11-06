@@ -135,6 +135,12 @@ public class PieceBlock extends Block implements EntityBlock {
         return shape(s, true);
     }
 
+    /** walls, foundations and ceilings are solid for path finding; doorways are passable (survivors open their own doors) */
+    @Override
+    protected boolean isPathfindable(BlockState s, net.minecraft.world.level.pathfinder.PathComputationType type) {
+        return type == net.minecraft.world.level.pathfinder.PathComputationType.LAND && s.getValue(PIECE) == PieceType.DOORFRAME && isOpening(s);
+    }
+
     @Override
     protected boolean propagatesSkylightDown(BlockState s, BlockGetter level, BlockPos pos) {
         return s.getValue(PIECE) != PieceType.FOUNDATION;

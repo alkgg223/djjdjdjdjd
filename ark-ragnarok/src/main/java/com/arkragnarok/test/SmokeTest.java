@@ -104,7 +104,7 @@ public final class SmokeTest {
     private static ArkCreature dodo;
     private static net.minecraft.world.entity.player.Player fake;
     private static com.arkragnarok.entity.ResourceNode node;
-    private static com.arkragnarok.survivor.Survivor survivor;
+    private static com.arkragnarok.survivor.Survivor survivor, rival;
     private static BlockPos house;
 
     private static void startSystems(ServerLevel level) {
@@ -133,10 +133,27 @@ public final class SmokeTest {
             BlockPos sp = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn.offset(30, 0, 30));
             survivor.moveTo(sp.getX() + 0.5, sp.getY(), sp.getZ() + 0.5, 0, 0);
             survivor.init(3);
-            survivor.inv.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_LOG, 40));
-            survivor.inv.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_LEAVES, 40));
+            // the mod's own resources only (what it would have gathered in its first hour)
+            survivor.inv.addItem(new net.minecraft.world.item.ItemStack(com.arkragnarok.economy.ModEconomy.WOOD.get(), 64));
+            survivor.inv.addItem(new net.minecraft.world.item.ItemStack(com.arkragnarok.economy.ModEconomy.THATCH.get(), 64));
+            survivor.inv.addItem(new net.minecraft.world.item.ItemStack(com.arkragnarok.economy.ModEconomy.THATCH.get(), 32));
+            survivor.inv.addItem(new net.minecraft.world.item.ItemStack(com.arkragnarok.economy.ModEconomy.FIBER.get(), 40));
+            survivor.inv.addItem(new net.minecraft.world.item.ItemStack(com.arkragnarok.economy.ModEconomy.STONE.get(), 24));
+            survivor.inv.addItem(new net.minecraft.world.item.ItemStack(com.arkragnarok.economy.ModEconomy.FLINT.get(), 8));
+            survivor.inv.addItem(new net.minecraft.world.item.ItemStack(com.arkragnarok.economy.ModEconomy.HIDE.get(), 10));
             level.addFreshEntity(survivor);
         }
+        // a rival with nothing: it has to look after itself
+        rival = ModEntities.SURVIVOR.get().create(level);
+        if (rival != null) {
+            BlockPos rp = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn.offset(-40, 0, 40));
+            rival.moveTo(rp.getX() + 0.5, rp.getY(), rp.getZ() + 0.5, 0, 0);
+            rival.init(8);
+            level.addFreshEntity(rival);
+        }
+        int planned = 0;
+        for (com.arkragnarok.survivor.BaseDesign d : com.arkragnarok.survivor.BaseDesign.all()) if (!d.plan().isEmpty()) planned++;
+        check(planned == com.arkragnarok.survivor.BaseDesign.COUNT, "all " + com.arkragnarok.survivor.BaseDesign.COUNT + " base designs have a build plan");
     }
 
     private static void systems(MinecraftServer server, ServerLevel level) {
@@ -161,8 +178,8 @@ public final class SmokeTest {
                 node.hurt(level.damageSources().playerAttack(fake), 4f);
                 hits++;
             }
-            int stone = fake.getInventory().countItem(net.minecraft.world.item.Items.COBBLESTONE);
-            int flint = fake.getInventory().countItem(net.minecraft.world.item.Items.FLINT);
+            int stone = fake.getInventory().countItem(com.arkragnarok.economy.ModEconomy.STONE.get());
+            int flint = fake.getInventory().countItem(com.arkragnarok.economy.ModEconomy.FLINT.get());
             LOG.info("ARK-SMOKE rock node: {} hits -> {} stone, {} flint", hits, stone, flint);
             check(node.depleted() && stone + flint > 0, "resource node gives stone/flint and crumbles");
         }
@@ -188,11 +205,34 @@ public final class SmokeTest {
         }
         if (t == 1300) {
             if (survivor != null) {
-                LOG.info("ARK-SMOKE survivor alive={} task={} base={} step={} planks={} sticks={}", survivor.isAlive(), survivor.task(), survivor.base(),
-                        survivor.buildStep(), survivor.inv.countItem(net.minecraft.world.item.Items.OAK_PLANKS),
-                        survivor.inv.countItem(net.minecraft.world.item.Items.STICK));
+                var tr = survivor.tribe();
+                LOG.info("ARK-SMOKE survivor alive={} task={} base={} design=#{} {} stage={} built={} pieces={} wood={} thatch={}", survivor.isAlive(),
+                        survivor.task(), survivor.base(), tr.design, tr.base == null ? "-" : com.arkragnarok.survivor.BaseDesign.get(tr.design).describe(),
+                        tr.stage, survivor.buildStep(), tr.piecesBuilt, survivor.count(com.arkragnarok.economy.ModEconomy.WOOD.get()),
+                        survivor.count(com.arkragnarok.economy.ModEconomy.THATCH.get()));
                 check(survivor.isAlive(), "survivor alive");
-                check(survivor.base() != null && survivor.buildStep() > 0, "survivor chose a base site and started building");
+                check(survivor.base() != null && survivor.buildStep() > 0, "survivor chose a site and a design and started building");
+                check(tr.piecesBuilt > 0, "survivor placed structure pieces of its design");
+                boolean foundation = false;
+                if (tr.base != null) {
+                    for (BlockPos q : BlockPos.betweenClosed(tr.base.offset(-12, -6, -12), tr.base.offset(12, 2, 12))) {
+                        if (level.getBlockState(q).getBlock() instanceof com.arkragnarok.building.PieceBlock) {
+                            foundation = true;
+                            break;
+                        }
+                    }
+                }
+                check(foundation, "its pieces stand in the world");
+                check(tr.personality != null, "survivor has a personality (" + tr.personality().temperament() + ")");
+                var saved = com.arkragnarok.survivor.world.SurvivorWorld.get(level).save(new net.minecraft.nbt.CompoundTag(), level.registryAccess());
+                var loaded = com.arkragnarok.survivor.world.SurvivorWorld.load(saved, level.registryAccess());
+                var lt = loaded.find(survivor.getUUID());
+                check(lt != null && lt.design == tr.design && java.util.Objects.equals(lt.base, tr.base) && lt.built.length == tr.built.length,
+                        "tribe saves and loads with its base");
+            }
+            if (rival != null) {
+                LOG.info("ARK-SMOKE rival alive={} task={} base={} food={}", rival.isAlive(), rival.task(), rival.base(), rival.foodItems());
+                check(rival.isAlive(), "rival survivor alive");
             }
             finish(server);
         }

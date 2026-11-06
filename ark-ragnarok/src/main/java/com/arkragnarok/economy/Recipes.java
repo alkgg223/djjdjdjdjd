@@ -31,6 +31,17 @@ public final class Recipes {
     }
 
     private static final Map<Station, List<Recipe>> BY_STATION = new EnumMap<>(Station.class);
+    private static final List<Recipe> HAND = new ArrayList<>();
+
+    /** what is made in the hands, without a station (the same as the crafting-grid recipes of the data pack) */
+    public static List<Recipe> hand() {
+        if (BY_STATION.isEmpty()) init();
+        return HAND;
+    }
+
+    private static void hand(String id, Supplier<? extends Item> result, int count, Ing... ings) {
+        HAND.add(new Recipe(id, result::get, count, List.of(ings)));
+    }
 
     public static List<Recipe> of(Station s) {
         if (BY_STATION.isEmpty()) init();
@@ -46,6 +57,20 @@ public final class Recipes {
     }
 
     private static void init() {
+        hand("stone_pick", ModEconomy.STONE_PICK, 1, i(ModEconomy.WOOD, 1), i(ModEconomy.STONE, 1), i(ModEconomy.THATCH, 3));
+        hand("stone_hatchet", ModEconomy.STONE_HATCHET, 1, i(ModEconomy.WOOD, 1), i(ModEconomy.FLINT, 1), i(ModEconomy.STONE, 1), i(ModEconomy.THATCH, 2));
+        hand("wooden_club", ModEconomy.WOODEN_CLUB, 1, i(ModEconomy.WOOD, 4), i(ModEconomy.FIBER, 2));
+        hand("stone_spear", ModEconomy.STONE_SPEAR, 1, i(ModEconomy.WOOD, 2), i(ModEconomy.FLINT, 2), i(ModEconomy.FIBER, 2));
+        hand("primitive_bow", ModEconomy.PRIMITIVE_BOW, 1, i(ModEconomy.WOOD, 2), i(ModEconomy.FIBER, 5));
+        hand("stone_arrow", ModEconomy.STONE_ARROW, 2, i(ModEconomy.THATCH, 2), i(ModEconomy.FLINT, 1), i(ModEconomy.FIBER, 2));
+        hand("campfire", () -> ModEconomy.CAMPFIRE.get().asItem(), 1, i(ModEconomy.THATCH, 3), i(ModEconomy.FLINT, 1), i(ModEconomy.STONE, 3),
+                i(ModEconomy.WOOD, 2));
+        hand("mortar_and_pestle", () -> ModEconomy.MORTAR.get().asItem(), 1, i(ModEconomy.STONE, 6), i(ModEconomy.HIDE, 2));
+        hand("smithy", () -> ModEconomy.SMITHY.get().asItem(), 1, i(ModEconomy.STONE, 3), i(ModEconomy.WOOD, 3), i(ModEconomy.HIDE, 3));
+        hand("storage_box", () -> ModEconomy.STORAGE_BOX.get().asItem(), 1, i(ModEconomy.WOOD, 5), i(ModEconomy.THATCH, 3), i(ModEconomy.FIBER, 1));
+        hand("hide_bed", ModEconomy.HIDE_BED_ITEM, 1, i(ModEconomy.WOOD, 3), i(ModEconomy.HIDE, 3), i(ModEconomy.FIBER, 2), i(ModEconomy.THATCH, 1));
+        hand("crop_plot", () -> ModEconomy.CROP_PLOT.get().asItem(), 1, i(ModEconomy.WOOD, 3), i(ModEconomy.THATCH, 2), i(ModEconomy.STONE, 2),
+                i(ModEconomy.FIBER, 2));
         // campfire
         add(Station.CAMPFIRE, "cooked_meat", ModEconomy.COOKED_MEAT, 1, i(ModEconomy.RAW_MEAT, 1), i(ModEconomy.WOOD, 1));
         add(Station.CAMPFIRE, "cooked_prime_meat", ModItems.COOKED_PRIME_MEAT, 1, i(ModItems.RAW_PRIME_MEAT, 1), i(ModEconomy.WOOD, 1));

@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
  * animals, each with the time it was last seen.  Places that turn out to be gone are forgotten when revisited.
  */
 public final class Memory {
-    public enum Kind { TREE, CAVE, WATER, NODE, THREAT, FLAT, DINO, PREY, BASE }
+    public enum Kind { TREE, CAVE, WATER, NODE, THREAT, FLAT, DINO, PREY, BASE, STONE }
 
     public record Fact(Kind kind, BlockPos pos, long seen, @Nullable UUID entity, String detail) {}
 
@@ -29,7 +29,7 @@ public final class Memory {
     public void see(Kind kind, BlockPos pos, long time, @Nullable UUID entity, String detail) {
         Map<Long, Fact> m = facts.computeIfAbsent(kind, k -> new HashMap<>());
         long key = entity != null ? entity.getLeastSignificantBits() : (kind == Kind.TREE || kind == Kind.WATER || kind == Kind.FLAT
-                || kind == Kind.BASE
+                || kind == Kind.BASE || kind == Kind.STONE
                 ? BlockPos.asLong(pos.getX() >> 2, pos.getY() >> 2, pos.getZ() >> 2) : pos.asLong());
         m.put(key, new Fact(kind, pos.immutable(), time, entity, detail));
         if (m.size() > MAX_PER_KIND) {

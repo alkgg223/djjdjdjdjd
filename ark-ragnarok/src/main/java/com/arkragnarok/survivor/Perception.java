@@ -54,6 +54,7 @@ public final class Perception {
             if (st.is(BlockTags.LOGS)) s.memory.see(Memory.Kind.TREE, p, now, null, "");
             else if (st.getBlock() instanceof com.arkragnarok.building.PieceBlock && !s.ownsPosition(p)) s.memory.see(Memory.Kind.BASE, p, now, null, "");
             else if (!st.getFluidState().isEmpty() && st.getFluidState().isSource()) s.memory.see(Memory.Kind.WATER, p, now, null, "");
+            else if (st.is(BlockTags.BASE_STONE_OVERWORLD) && level.isEmptyBlock(p.above()) && !s.ownsPosition(p)) s.memory.see(Memory.Kind.STONE, p, now, null, "");
             BlockPos before = BlockPos.containing(hit.getLocation().subtract(dir.scale(0.4)));
             if (level.isEmptyBlock(before)) {
                 int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, before.getX(), before.getZ());
