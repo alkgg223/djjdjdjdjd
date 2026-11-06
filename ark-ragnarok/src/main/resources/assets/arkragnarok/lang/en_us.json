@@ -129,5 +129,20 @@
  "item.arkragnarok.stone_doorframe": "Stone Doorframe",
  "item.arkragnarok.stone_door": "Reinforced Door",
  "item.arkragnarok.stone_ceiling": "Stone Ceiling",
- "block.arkragnarok.stone_piece": "Stone Structure"
+ "block.arkragnarok.stone_piece": "Stone Structure",
+ "item.arkragnarok.survivor_command_device": "Survivor Command Device",
+ "item.arkragnarok.survivor_command_device.desc": "Calls an autonomous survivor who gathers, mines, crafts and builds",
+ "entity.arkragnarok.survivor": "Survivor",
+ "entity.arkragnarok.resource_node": "Resource",
+ "msg.arkragnarok.survivor_called": "%s has joined you",
+ "msg.arkragnarok.survivor": "%s - %s | food %s | knows %s trees, %s rocks/metal, %s caves, %s predators | base: %s | %s",
+ "task.arkragnarok.idle": "resting",
+ "task.arkragnarok.flee": "running from a predator",
+ "task.arkragnarok.forage": "looking for food",
+ "task.arkragnarok.shelter": "sheltering for the night",
+ "task.arkragnarok.build": "building the base",
+ "task.arkragnarok.chop": "chopping a tree",
+ "task.arkragnarok.mine": "mining",
+ "task.arkragnarok.cave": "exploring a cave",
+ "task.arkragnarok.explore": "exploring"
 }

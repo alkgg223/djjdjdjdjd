@@ -71,6 +71,8 @@ public final class ModItems {
             () -> new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(10).saturationModifier(0.9f).build())));
     public static final DeferredItem<Item> TRANQ_ARROW = ITEMS.register("tranq_arrow",
             () -> new TranqArrowItem(new Item.Properties()));
+    public static final DeferredItem<Item> SURVIVOR_DEVICE = ITEMS.register("survivor_command_device",
+            () -> new com.arkragnarok.survivor.SurvivorDeviceItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final DeferredItem<Item> SUPER_SPYGLASS = ITEMS.register("super_spyglass",
             () -> new SuperSpyglassItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
 
@@ -78,6 +80,7 @@ public final class ModItems {
             .title(Component.translatable("itemGroup.arkragnarok"))
             .icon(() -> new ItemStack(SPAWN_EGGS.get("tyrannosaurus").get()))
             .displayItems((params, out) -> {
+                out.accept(SURVIVOR_DEVICE.get());
                 out.accept(SUPER_SPYGLASS.get());
                 out.accept(TRANQ_ARROW.get());
                 out.accept(NARCOTIC.get());

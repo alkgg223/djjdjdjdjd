@@ -24,5 +24,6 @@ public final class ClientSetup {
         e.registerEntityRenderer(ModEntities.TRANQ_ARROW.get(), TranqArrowRenderer::new);
         e.registerEntityRenderer(ModEntities.RESOURCE_NODE.get(), ResourceNodeRenderer::new);
         e.registerBlockEntityRenderer(ModBuilding.PIECE_BE.get(), PieceRenderer::new);
+        e.registerEntityRenderer(ModEntities.SURVIVOR.get(), com.arkragnarok.client.render.SurvivorRenderer::new);
     }
 }

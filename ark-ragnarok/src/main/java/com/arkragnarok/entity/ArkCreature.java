@@ -177,6 +177,8 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
                     e -> !isTamed() && e.distanceToSqr(this) < (s.big() ? 900 : 400)));
             this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Animal.class, 60, true, false,
                     e -> !isTamed() && e.getBbWidth() < getBbWidth() * 1.2f));
+            this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, com.arkragnarok.survivor.Survivor.class, 40, true, false,
+                    e -> !isTamed() && e.distanceToSqr(this) < (s.big() ? 900 : 400)));
             this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, ArkCreature.class, 80, true, false,
                     e -> !isTamed() && e instanceof ArkCreature c && !c.isTamed() && c.species.diet == Diet.HERBIVORE
                             && c.getBbWidth() < getBbWidth()));
@@ -396,14 +398,17 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
             sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + getBbHeight() * 0.8, getZ(), 6, getBbWidth() * 0.4, 0.3,
                     getBbWidth() * 0.4, 0.0);
         }
-        if (a >= requiredAffinity()) {
-            Player p = tamer != null ? level().getPlayerByUUID(tamer) : null;
-            if (p != null) tame(p);
+        if (a >= requiredAffinity() && tamer != null) {
+            tameBy(tamer, level().getPlayerByUUID(tamer));       // the one who fed it owns it, even if offline now
         }
     }
 
     public void tame(Player owner) {
-        this.entityData.set(OWNER, Optional.of(owner.getUUID()));
+        tameBy(owner.getUUID(), owner);
+    }
+
+    public void tameBy(UUID ownerId, @Nullable Player owner) {
+        this.entityData.set(OWNER, Optional.of(ownerId));
         this.entityData.set(UNCONSCIOUS, false);
         this.entityData.set(ORDER, FOLLOW);
         this.entityData.set(TORPOR, 0f);
@@ -422,7 +427,7 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
         if (level() instanceof ServerLevel sl) {
             sl.sendParticles(ParticleTypes.HEART, getX(), getY() + getBbHeight(), getZ(), 12, getBbWidth() * 0.5, 0.5, getBbWidth() * 0.5, 0.1);
         }
-        owner.displayClientMessage(Component.translatable("msg.arkragnarok.tamed", species.name, getLevel(),
+        if (owner != null) owner.displayClientMessage(Component.translatable("msg.arkragnarok.tamed", species.name, getLevel(),
                 Math.round(getEffectiveness() * 100)).withStyle(ChatFormatting.GREEN), false);
     }
 

@@ -129,5 +129,20 @@
  "item.arkragnarok.stone_doorframe": "إطار باب حجري",
  "item.arkragnarok.stone_door": "باب مدعّم",
  "item.arkragnarok.stone_ceiling": "سقف حجري",
- "block.arkragnarok.stone_piece": "بناء حجري"
+ "block.arkragnarok.stone_piece": "بناء حجري",
+ "item.arkragnarok.survivor_command_device": "جهاز قيادة الناجين",
+ "item.arkragnarok.survivor_command_device.desc": "يستدعي ناجياً مستقلاً يجمع ويحفر ويصنع ويبني",
+ "entity.arkragnarok.survivor": "ناجٍ",
+ "entity.arkragnarok.resource_node": "مورد",
+ "msg.arkragnarok.survivor_called": "%s انضم إليك",
+ "msg.arkragnarok.survivor": "%s - %s | الطعام %s | يعرف %s أشجار، %s صخور/معادن، %s كهوف، %s مفترسات | القاعدة: %s | %s",
+ "task.arkragnarok.idle": "يستريح",
+ "task.arkragnarok.flee": "يهرب من مفترس",
+ "task.arkragnarok.forage": "يبحث عن طعام",
+ "task.arkragnarok.shelter": "يحتمي ليلاً",
+ "task.arkragnarok.build": "يبني القاعدة",
+ "task.arkragnarok.chop": "يقطع شجرة",
+ "task.arkragnarok.mine": "يحفر",
+ "task.arkragnarok.cave": "يستكشف كهفاً",
+ "task.arkragnarok.explore": "يستكشف"
 }

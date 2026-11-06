@@ -215,6 +215,22 @@ def shade(mat, P, N, AO, ctx):
             m = st(P)
             col = mixc(col, hx("#e0d2b0"), m)
         col = col + (spec * 0.18)[:, None]
+    elif mat == "rubber":
+        col = np.tile(hx("#3a4034"), (n, 1)) * (0.8 + 0.25 * fbm(P, 0.5, seed, 3))[:, None]
+        col = mixc(col, hx("#7a6a3a"), sm(0.72, 0.9, vnoise(P, 1.2, seed + 3)) * 0.35)        # worn, dusty
+        col = col + (spec * 0.12)[:, None]
+    elif mat == "screen":
+        flat = sm(0.85, 0.95, N[:, 2])
+        scan = 0.85 + 0.15 * np.abs(np.sin(y * 9.0))
+        glow = hx("#3ad8c8") * scan[:, None] * (0.6 + 0.6 * sm(1.0, -1.0, np.hypot(x, y - 1.6) / 2.6))[:, None]
+        grid = ((np.abs(np.sin(x * 4.0)) > 0.96) | (np.abs(np.sin((y - 1.6) * 4.0)) > 0.96)).astype(float)
+        col = mixc(np.tile(hx("#1a2224"), (n, 1)), glow + grid[:, None] * 0.15, flat)
+        col = col + (spec * 0.5)[:, None]
+        AO = np.maximum(AO, 0.95)
+    elif mat == "button":
+        col = np.tile(hx("#c84a2a"), (n, 1)) * (0.85 + 0.2 * lit)[:, None] + (spec * 0.4)[:, None]
+    elif mat == "metal_dark":
+        col = np.tile(hx("#4a4a4e"), (n, 1)) * (0.75 + 0.4 * lit)[:, None] + (spec * 0.6)[:, None]
     elif mat == "lens":
         col = np.tile(hx("#3a6a8a"), (n, 1)) + (spec * 1.2)[:, None] + (sm(0.5, 0.0, np.hypot(y, z) / 1.6) * 0.2)[:, None]
         AO = np.ones(n)
@@ -428,6 +444,27 @@ def dino_saddle():
     return parts, dict(pal=dict(leather=hx("#6e4426")), stitch=stitch), 256, "small"
 
 
+def command_device():
+    """rugged handheld radio-computer: rubber-armoured body, glowing screen, keypad, antenna, wrist strap"""
+    sc = Sculpt()
+    sc.bone("root", None, (0, 0, 0))
+    sc.rbox((0, 0, 0), (3.6, 5.6, 1.3), 0.9, mat="rubber", bone="root", k=0.2)
+    sc.rbox((0, 1.6, 1.05), (2.8, 2.6, 0.5), 0.35, mat="screen", bone="root", k=0.15)
+    sc.rbox((0, 1.6, 1.35), (2.5, 2.3, 0.3), 0.2, mat="screen", bone="root", op="sub", k=0.12)
+    for (bx, by) in ((-1.6, -2.6), (0, -2.6), (1.6, -2.6), (-1.6, -4.1), (0, -4.1), (1.6, -4.1)):
+        sc.rbox((bx, by, 1.15), (0.55, 0.45, 0.35), 0.18, mat="button", bone="root", k=0.1)
+    for s in (-1, 1):
+        sc.rbox((s * 3.7, 0, 0), (0.5, 4.8, 1.0), 0.4, mat="metal_dark", bone="root", k=0.2)
+    parts = [sdf_part(sc.prims, 0.06, 3200)]
+    v, f, n = K.tube_mesh([np.array([2.2, 5.4, -0.2]), np.array([2.3, 9.2, -0.3]), np.array([2.35, 9.9, -0.3])], [0.32, 0.22, 0.12], n=8)
+    parts.append(mesh_part(v, f, n, "rubber"))
+    v, f, n = K.sphere_mesh((2.35, 10.0, -0.3), 0.32, 8, 6)
+    parts.append(mesh_part(v, f, n, "button"))
+    v, f, n = ring_mesh((0, -6.0, 0), (1, 0, 0), 1.0, 0.22, 16, 6)
+    parts.append(mesh_part(v, f, n, "leather"))
+    return parts, dict(pal=dict(leather=hx("#3a3026"))), 256, "small"
+
+
 def egg(look):
     sc = Sculpt()
     sc.bone("root", None, (0, 0, 0))
@@ -546,6 +583,7 @@ def all_items():
     out["tranq_arrow"] = tranq_arrow
     out["super_spyglass"] = super_spyglass
     out["dino_saddle"] = dino_saddle
+    out["survivor_command_device"] = command_device
     for sid in dinos.ALL:
         out[sid + "_spawn_egg"] = (lambda sid=sid: egg(dinos.LOOK[sid]))
     return out

@@ -136,6 +136,8 @@ public final class ShotDirector {
         ITEM_SHOTS.add(new ItemShot("house_close", 8, 0, false));
         ITEM_SHOTS.add(new ItemShot("houses_doors_open", 8, 0, false));
         ITEM_SHOTS.add(new ItemShot("house_inside", 8, 0, false));
+        ITEM_SHOTS.add(new ItemShot("survivor_base", 8, 0, false));
+        ITEM_SHOTS.add(new ItemShot("survivor_close", 8, 0, false));
     }
 
     private static int itemIndex;
@@ -209,6 +211,7 @@ public final class ShotDirector {
                 ItemShot it = ITEM_SHOTS.get(itemIndex);
                 Screenshot.grab(mc.gameDirectory, it.name() + ".png", mc.getMainRenderTarget(), msg -> LOG.info("ARK-SHOTS {}", msg.getString()));
                 LOG.info("ARK-SHOTS captured {}", it.name());
+                if (it.inventory()) mc.setScreen(null);
                 itemIndex++;
                 phase = 5;
                 wait = 2;
@@ -345,6 +348,20 @@ public final class ShotDirector {
                 BlockState st = level.getBlockState(df);
                 if (st.getBlock() instanceof PieceBlock pb) pb.toggleDoor(level, df);
             }
+        }
+        if (name.startsWith("survivor")) {
+            // the house the survivor of the smoke test built by itself (and the survivor)
+            var list = level.getEntities(ModEntities.SURVIVOR.get(), e -> true);
+            if (list.isEmpty()) {
+                LOG.info("ARK-SHOTS no survivor in the world");
+                return;
+            }
+            com.arkragnarok.survivor.Survivor sv = list.get(0);
+            BlockPos b = sv.base() != null ? sv.base() : sv.blockPosition();
+            LOG.info("ARK-SHOTS survivor {} task {} base {} step {}", sv.getName().getString(), sv.task(), sv.base(), sv.buildStep());
+            if (name.equals("survivor_base")) sp.teleportTo(level, b.getX() + 8.5, b.getY() + 5.0, b.getZ() - 8.5, 45f, 22f);
+            else sp.teleportTo(level, sv.getX() + 2.5, sv.getY() + 1.6, sv.getZ() + 2.5, 135f, 10f);
+            return;
         }
         switch (name) {
             case "houses_front", "houses_doors_open" -> sp.teleportTo(level, ox + 0.5, oy + 4.0, oz + 6.0, 0f, 12f);

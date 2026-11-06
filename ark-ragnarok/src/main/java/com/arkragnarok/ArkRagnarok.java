@@ -40,5 +40,6 @@ public class ArkRagnarok {
 
     private static void attributes(EntityAttributeCreationEvent e) {
         for (Species s : SpeciesList.all()) e.put(ModEntities.type(s.id), ArkCreature.createAttributes(s).build());
+        e.put(ModEntities.SURVIVOR.get(), com.arkragnarok.survivor.Survivor.createAttributes().build());
     }
 }

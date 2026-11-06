@@ -18,6 +18,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -135,8 +136,18 @@ public class ResourceNode extends Entity {
     public boolean hurt(DamageSource source, float amount) {
         if (level().isClientSide || depleted() || isInvulnerableTo(source)) return false;
         if (!(source.getEntity() instanceof Player p)) return false;
+        return harvest(p, p.getMainHandItem(), amount, st -> {
+            if (!p.getInventory().add(st)) p.drop(st, false);
+        });
+    }
+
+    /**
+     * one hit by a player or a survivor: resources go to {@code sink}, the tool wears, the node loses health and
+     * crumbles when used up
+     */
+    public boolean harvest(LivingEntity by, ItemStack tool, float amount, java.util.function.Consumer<ItemStack> sink) {
+        if (level().isClientSide || depleted()) return false;
         if (health < 0) health = maxHealth();
-        ItemStack tool = p.getMainHandItem();
         boolean pick = tool.is(ItemTags.PICKAXES);
         boolean axe = tool.is(ItemTags.AXES);
         float tier = tool.getItem() instanceof TieredItem t ? t.getTier().getSpeed() : 1f;
@@ -145,27 +156,27 @@ public class ResourceNode extends Entity {
         NodeKind k = kind();
         switch (k) {
             case ROCK -> {
-                give(p, Items.COBBLESTONE, (axe ? 2.6f : pick ? 1.2f : 0.7f) * m, r);
-                give(p, Items.FLINT, (pick ? 1.3f : axe ? 0.35f : 0.25f) * m, r);
+                give(sink, Items.COBBLESTONE, (axe ? 2.6f : pick ? 1.2f : 0.7f) * m, r);
+                give(sink, Items.FLINT, (pick ? 1.3f : axe ? 0.35f : 0.25f) * m, r);
             }
             case METAL -> {
-                give(p, Items.RAW_IRON, (pick ? 1.2f : 0.25f) * m, r);
-                give(p, Items.COBBLESTONE, (axe ? 1.6f : 0.8f) * m, r);
-                if (pick && r.nextFloat() < 0.12f * m) give(p, Items.RAW_GOLD, 1, r);
-                if (pick && r.nextFloat() < 0.2f * m) give(p, Items.RAW_COPPER, 1.5f, r);
+                give(sink, Items.RAW_IRON, (pick ? 1.2f : 0.25f) * m, r);
+                give(sink, Items.COBBLESTONE, (axe ? 1.6f : 0.8f) * m, r);
+                if (pick && r.nextFloat() < 0.12f * m) give(sink, Items.RAW_GOLD, 1, r);
+                if (pick && r.nextFloat() < 0.2f * m) give(sink, Items.RAW_COPPER, 1.5f, r);
             }
             case OBSIDIAN -> {
-                if (pick && tier >= 8) give(p, Items.OBSIDIAN, 0.8f * m, r);
-                else if (pick) give(p, Items.FLINT, 0.6f * m, r);
-                else p.hurt(damageSources().generic(), 1.0f);       // bare hands on glassy obsidian hurt
+                if (pick && tier >= 8) give(sink, Items.OBSIDIAN, 0.8f * m, r);
+                else if (pick) give(sink, Items.FLINT, 0.6f * m, r);
+                else by.hurt(damageSources().generic(), 1.0f);       // bare hands on glassy obsidian hurt
             }
             case CRYSTAL -> {
-                give(p, Items.AMETHYST_SHARD, (pick ? 1.5f : 0.4f) * m, r);
-                if (pick) give(p, Items.QUARTZ, 0.8f * m, r);
-                give(p, Items.COBBLESTONE, 0.4f * m, r);
+                give(sink, Items.AMETHYST_SHARD, (pick ? 1.5f : 0.4f) * m, r);
+                if (pick) give(sink, Items.QUARTZ, 0.8f * m, r);
+                give(sink, Items.COBBLESTONE, 0.4f * m, r);
             }
         }
-        if (!tool.isEmpty() && (pick || axe)) tool.hurtAndBreak(1, p, EquipmentSlot.MAINHAND);
+        if (!tool.isEmpty() && (pick || axe)) tool.hurtAndBreak(1, by, EquipmentSlot.MAINHAND);
         health -= Math.max(1f, amount) * (pick ? 1.2f : axe ? 1.0f : 0.6f);
         level().broadcastEntityEvent(this, (byte) 4);
         BlockState bs = particleBlock();
@@ -182,11 +193,9 @@ public class ResourceNode extends Entity {
         return true;
     }
 
-    private static void give(Player p, Item item, float expected, RandomSource r) {
+    private static void give(java.util.function.Consumer<ItemStack> sink, Item item, float expected, RandomSource r) {
         int n = (int) expected + (r.nextFloat() < expected - (int) expected ? 1 : 0);
-        if (n <= 0) return;
-        ItemStack st = new ItemStack(item, n);
-        if (!p.getInventory().add(st)) p.drop(st, false);
+        if (n > 0) sink.accept(new ItemStack(item, n));
     }
 
     public BlockState particleBlock() {
