@@ -1118,5 +1118,11 @@
  "item.gunsmod.red_rafale": "رافال حمراء",
  "entity.gunsmod.gripen": "جاس 39 غريبن",
  "item.gunsmod.green_gripen": "جاس 39 غريبن خضراء",
- "item.gunsmod.red_gripen": "جاس 39 غريبن حمراء"
+ "item.gunsmod.red_gripen": "جاس 39 غريبن حمراء",
+ "entity.gunsmod.heli_uh60": "يو إتش-60 بلاك هوك",
+ "item.gunsmod.green_uh60": "يو إتش-60 بلاك هوك خضراء",
+ "item.gunsmod.red_uh60": "يو إتش-60 بلاك هوك حمراء",
+ "entity.gunsmod.heli_ch47": "سي إتش-47 شينوك",
+ "item.gunsmod.green_ch47": "سي إتش-47 شينوك خضراء",
+ "item.gunsmod.red_ch47": "سي إتش-47 شينوك حمراء"
 }

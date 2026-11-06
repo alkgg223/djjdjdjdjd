@@ -99,6 +99,10 @@ def main():
     helis = {"cobra": ("heli", cobra())}
     for k in A2.HELIS:
         helis[k] = ("heli_" + k, A2.GEO[k])
+    import helis3_mesh as H3
+    for k, fn in H3.HELIS3.items():
+        fn()
+        helis[k[5:]] = (k, H3.GEO[k[5:]])
     lines += ["", "    public record Heli(String model, " + ", ".join(t + " " + f for f, t in HELI_FIELDS) + ") {}", ""]
     for name, (model, g) in helis.items():
         args = [jv(model)] + [jt(g[f], t) for f, t in HELI_FIELDS]

@@ -172,6 +172,8 @@ public final class ClientSetup {
         e.registerEntityRenderer(Reg.HELI_APACHE.get(), HelicopterRenderer::new);
         e.registerEntityRenderer(Reg.HELI_HIND.get(), HelicopterRenderer::new);
         e.registerEntityRenderer(Reg.HELI_KA52.get(), HelicopterRenderer::new);
+        e.registerEntityRenderer(Reg.HELI_UH60.get(), HelicopterRenderer::new);
+        e.registerEntityRenderer(Reg.HELI_CH47.get(), HelicopterRenderer::new);
         e.registerEntityRenderer(Reg.BTR.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.PANTSIR.get(), ArmoredCarRenderer::new);
         e.registerEntityRenderer(Reg.HIMARS.get(), ArmoredCarRenderer::new);

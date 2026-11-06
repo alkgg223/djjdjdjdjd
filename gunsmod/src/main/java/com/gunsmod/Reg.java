@@ -258,6 +258,8 @@ public final class Reg {
     public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELI_APACHE = heli("heli_apache", HeliType.APACHE);
     public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELI_HIND = heli("heli_hind", HeliType.HIND);
     public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELI_KA52 = heli("heli_ka52", HeliType.KA52);
+    public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELI_UH60 = heli("heli_uh60", HeliType.UH60);
+    public static final DeferredHolder<EntityType<?>, EntityType<HelicopterEntity>> HELI_CH47 = heli("heli_ch47", HeliType.CH47);
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> BTR = car("btr82", CarType.BTR);
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> PANTSIR = car("pantsir", CarType.PANTSIR);
     public static final DeferredHolder<EntityType<?>, EntityType<ArmoredCarEntity>> HIMARS = car("himars", CarType.HIMARS);

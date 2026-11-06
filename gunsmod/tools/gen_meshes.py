@@ -40,6 +40,9 @@ def main(only=None):
     groups.append(("tank_gear", lambda: dict(TM.gear_parts())))
     for key, fn in HM.HELIS.items():
         groups.append((key, lambda fn=fn: fn()[0]))
+    import helis3_mesh as H3
+    for key, fn in H3.HELIS3.items():
+        groups.append((key, lambda fn=fn: fn()[0]))
     for key, fn in CM.CARS.items():
         groups.append((key, lambda fn=fn: fn()[0]))
     for key, fn in NV.CARS2.items():

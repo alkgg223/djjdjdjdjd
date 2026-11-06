@@ -57,7 +57,9 @@ public enum VehicleKind {
     SU57("su57", Group.JET),
     TYPHOON("typhoon", Group.JET),
     RAFALE("rafale", Group.JET),
-    GRIPEN("gripen", Group.JET);
+    GRIPEN("gripen", Group.JET),
+    UH60("uh60", Group.HELI),
+    CH47("ch47", Group.HELI);
 
     public enum Group { TANK, HELI, JEEP, CAR, JET }
 
@@ -122,6 +124,8 @@ public enum VehicleKind {
             case TYPHOON -> Reg.JET_TYPHOON.get();
             case RAFALE -> Reg.JET_RAFALE.get();
             case GRIPEN -> Reg.JET_GRIPEN.get();
+            case UH60 -> Reg.HELI_UH60.get();
+            case CH47 -> Reg.HELI_CH47.get();
         };
     }
 
@@ -171,6 +175,8 @@ public enum VehicleKind {
             case APACHE -> HeliType.APACHE;
             case HIND -> HeliType.HIND;
             case KA52 -> HeliType.KA52;
+            case UH60 -> HeliType.UH60;
+            case CH47 -> HeliType.CH47;
             default -> HeliType.COBRA;
         };
     }

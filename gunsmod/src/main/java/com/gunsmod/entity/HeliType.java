@@ -16,14 +16,21 @@ public enum HeliType {
     /** Mi-24 Hind: flying tank, fast but heavy to turn; 12.7 mm gatling, S-8 rocket salvos, FAB-250 bombs, Shturm missiles */
     HIND(VehicleGeo.HIND, 320, 0.15f, 1.5, 0.028, 2.4f, 0.28, 48, Gun.YAKB, Weapon.S8, Weapon.BOMB, Weapon.SHTURM),
     /** Ka-52 Alligator: coaxial rotors, turns fastest and climbs best; fixed 30 mm cannon, laser-beam Vikhr missiles, S-8 */
-    KA52(VehicleGeo.KA52, 210, 0.2f, 1.45, 0.036, 4.2f, 0.38, 40, Gun.SHIPUNOV, Weapon.VIKHR, Weapon.S8);
+    KA52(VehicleGeo.KA52, 210, 0.2f, 1.45, 0.036, 4.2f, 0.38, 40, Gun.SHIPUNOV, Weapon.VIKHR, Weapon.S8),
+    /** 3.0: UH-60M Black Hawk: the utility helicopter, a door minigun, Hydra pods on the stub wings, four soldiers in the cabin */
+    UH60(VehicleGeo.UH60, 200, 0.25f, 1.45, 0.032, 3.0f, 0.34, 36, Gun.M134, Weapon.HYDRA),
+    /** 3.0: CH-47F Chinook: tandem rotors, the heavy lifter; a door gun and rocket pods on the pylons, six soldiers aboard */
+    CH47(VehicleGeo.CH47, 300, 0.25f, 1.3, 0.024, 1.8f, 0.26, 40, Gun.M240H, Weapon.HYDRA);
 
     /** what each fire button does: machine gun / cannon, and the stores under the wings */
     public enum Gun {
         M197(3, 11f, 0f, 0.9f, -3, 110f, -15f, 60f),
         M230(5, 15f, 1.3f, 0.7f, -4, 100f, -10f, 60f),
         YAKB(1, 6f, 0f, 1.3f, -5, 60f, -10f, 60f),
-        SHIPUNOV(4, 16f, 1.3f, 0.5f, -4, 9f, -5f, 13f);
+        SHIPUNOV(4, 16f, 1.3f, 0.5f, -4, 9f, -5f, 13f),
+        /** door guns: they swing wide to the side */
+        M134(1, 5f, 0f, 1.4f, -5, 100f, -10f, 70f),
+        M240H(2, 6f, 0f, 1.1f, -5, 100f, -10f, 70f);
 
         public final int cooldown, fx;
         public final float damage, splash, spread, yawLimit, pitchMin, pitchMax;
@@ -109,6 +116,8 @@ public enum HeliType {
             case APACHE -> VehicleKind.APACHE;
             case HIND -> VehicleKind.HIND;
             case KA52 -> VehicleKind.KA52;
+            case UH60 -> VehicleKind.UH60;
+            case CH47 -> VehicleKind.CH47;
         };
     }
 

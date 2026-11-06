@@ -85,6 +85,8 @@ public class HelicopterRenderer extends EntityRenderer<HelicopterEntity> {
             rotor(pose, buf, light, dir, hx, hy, hz, rotorAngle, geo.blades(), 0f);
             // Ka-52: the lower rotor turns the other way
             if (geo.hub2() > 0) rotor(pose, buf, light, dir, hx, (float) geo.hub2() / 16f, hz, -rotorAngle, geo.blades(), 60f);
+            // Chinook: the rear rotor of the tandem pair (hub2 < 0 holds its z) turns the other way, its blades between the front ones
+            if (geo.hub2() < 0) rotor(pose, buf, light, dir, hx, hy + 0.8f / 16f, (float) -geo.hub2() / 16f, -rotorAngle, geo.blades(), 60f);
         }
         // tail rotor
         if (geo.tail() != null) {
@@ -115,6 +117,7 @@ public class HelicopterRenderer extends EntityRenderer<HelicopterEntity> {
             float rad = (float) geo.rotorR() / 16f;
             disc(pose, buf, light, hx, hy + 0.2f / 16f, hz, rad, rotorAngle * 0.1f, a);
             if (geo.hub2() > 0) disc(pose, buf, light, hx, (float) geo.hub2() / 16f + 0.2f / 16f, hz, rad, -rotorAngle * 0.1f, a);
+            if (geo.hub2() < 0) disc(pose, buf, light, hx, hy + 1.0f / 16f, (float) -geo.hub2() / 16f, rad, -rotorAngle * 0.1f, a);
         }
         pose.popPose();
     }

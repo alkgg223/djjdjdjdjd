@@ -24,7 +24,7 @@ public class ConvoyScreen extends Screen {
             VehicleKind.M1A2SEP.ordinal(), VehicleKind.LEOPARD2A7.ordinal(), VehicleKind.T14.ordinal(), VehicleKind.T80BVM.ordinal(), VehicleKind.MERKAVA4.ordinal(),
             VehicleKind.K2.ordinal(), VehicleKind.TYPE99A.ordinal(), VehicleKind.BRADLEY.ordinal(), VehicleKind.BMP3.ordinal(), VehicleKind.CV90.ordinal(),
             VehicleKind.BMD4.ordinal(),
-            VehicleKind.STRYKER.ordinal(), VehicleKind.BOXER.ordinal(), VehicleKind.MRAP.ordinal(), VehicleKind.JLTV.ordinal(), VehicleKind.TRUCK.ordinal(), VehicleKind.FUEL_TRUCK.ordinal(), VehicleKind.AMMO_TRUCK.ordinal(), VehicleKind.COMMAND_TRUCK.ordinal(), VehicleKind.RECOVERY_TRUCK.ordinal()};
+            VehicleKind.STRYKER.ordinal(), VehicleKind.BOXER.ordinal(), VehicleKind.MRAP.ordinal(), VehicleKind.JLTV.ordinal(), VehicleKind.TRUCK.ordinal(), VehicleKind.FUEL_TRUCK.ordinal(), VehicleKind.AMMO_TRUCK.ordinal(), VehicleKind.COMMAND_TRUCK.ordinal(), VehicleKind.RECOVERY_TRUCK.ordinal(), VehicleKind.UH60.ordinal(), VehicleKind.CH47.ordinal()};
     private static final int W = 360, H = 278, CELL = 34, SLOT = 32, COLS = 10;
     private int left, top;
     private int team;

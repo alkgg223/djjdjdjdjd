@@ -1118,5 +1118,11 @@
  "item.gunsmod.red_rafale": "Red Rafale",
  "entity.gunsmod.gripen": "JAS 39 Gripen",
  "item.gunsmod.green_gripen": "Green JAS 39 Gripen",
- "item.gunsmod.red_gripen": "Red JAS 39 Gripen"
+ "item.gunsmod.red_gripen": "Red JAS 39 Gripen",
+ "entity.gunsmod.heli_uh60": "UH-60M Black Hawk",
+ "item.gunsmod.green_uh60": "Green UH-60M Black Hawk",
+ "item.gunsmod.red_uh60": "Red UH-60M Black Hawk",
+ "entity.gunsmod.heli_ch47": "CH-47F Chinook",
+ "item.gunsmod.green_ch47": "Green CH-47F Chinook",
+ "item.gunsmod.red_ch47": "Red CH-47F Chinook"
 }
