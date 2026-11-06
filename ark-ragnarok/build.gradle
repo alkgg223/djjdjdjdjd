@@ -1,0 +1,60 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.78'
+}
+
+version = '1.21.1'
+group = 'com.arkragnarok'
+
+base {
+    archivesName = 'ARK_Ragnarok_Ultimate'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+repositories {
+    mavenLocal()
+}
+
+neoForge {
+    version = project.neo_version
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+        // dedicated server that runs the built-in self test (see com.arkragnarok.test.SmokeTest) and stops
+        smoke {
+            server()
+            gameDirectory = project.file('run-smoke')
+            systemProperty 'ark.smoketest', 'true'
+            programArgument '--nogui'
+        }
+    }
+    mods {
+        arkragnarok {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-Xmaxerrs' << '3000' << '-Xlint:-removal'
+}
+
+tasks.named('processResources', ProcessResources) {
+    def props = [mod_version: project.mod_version, neo_version: project.neo_version]
+    inputs.properties props
+    filesMatching('META-INF/neoforge.mods.toml') { expand props }
+}
+
+tasks.named('jar', Jar) {
+    archiveFileName = 'ARK_Ragnarok_Ultimate-1.21.1.jar'
+    manifest {
+        attributes('Implementation-Title': 'ARK Ragnarok Ultimate', 'Implementation-Version': project.mod_version)
+    }
+}

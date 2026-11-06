@@ -1,0 +1,28 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="arkragnarok"
+version="${mod_version}"
+displayName="ARK - Ragnarok Ultimate Survival"
+authors="ARK Ragnarok Ultimate team"
+description='''
+An ARK-style survival overhaul: 100+ creatures with their own models, knockout and passive taming, riding,
+breeding with genetics and mutations, autonomous AI survivors that gather, craft, tame and build bases on
+their own (also while you are away), a Ragnarok world type, engrams, building tiers, firearms and bosses.
+'''
+
+[[dependencies.arkragnarok]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.264,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.arkragnarok]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1]"
+ordering="NONE"
+side="BOTH"

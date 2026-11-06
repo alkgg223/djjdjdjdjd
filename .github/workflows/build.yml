@@ -12,17 +12,26 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.10.2'
-      - name: Unpack and build
+      - name: Build
+        working-directory: ark-ragnarok
         run: |
-          unzip -q eggsteal-mod-src-v3.zip -d proj
-          find proj -maxdepth 3 | head -30
-          D=$(dirname "$(find proj -name build.gradle | head -1)")
-          echo "Building in: $D"
-          cd "$D"
-          gradle build --no-daemon
+          chmod +x gradlew
+          ./gradlew build --no-daemon 2>&1 | tee build.log
+          test ${PIPESTATUS[0]} -eq 0
+      - name: Server smoke test
+        working-directory: ark-ragnarok
+        if: hashFiles('ark-ragnarok/src/main/java/com/arkragnarok/test/SmokeTest.java') != ''
+        run: |
+          mkdir -p run-smoke
+          echo "eula=true" > run-smoke/eula.txt
+          printf 'level-type=arkragnarok\\:ragnarok\nonline-mode=false\nspawn-protection=0\nmax-tick-time=-1\nview-distance=6\nsimulation-distance=6\n' > run-smoke/server.properties
+          timeout 1200 ./gradlew runSmoke --no-daemon > smoke.log 2>&1 || true
+          grep -E "ARK-SMOKE|\[.*ERROR\]|Exception|Caused by|at com\.arkragnarok" smoke.log | head -600 || true
+          grep -q "ARK-SMOKE RESULT PASS" smoke.log
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: gunsmod-jar
-          path: proj/**/build/libs/*.jar
+          name: ARK_Ragnarok_Ultimate-1.21.1
+          path: |
+            ark-ragnarok/build/libs/ARK_Ragnarok_Ultimate-1.21.1.jar
+            ark-ragnarok/smoke.log
