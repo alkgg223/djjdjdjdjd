@@ -181,7 +181,7 @@ class Sauropod:
 
     def eyes(self):
         out = [(tuple(self.F((s * 2.9, 105.8, -70.6), "head")), normalize((s * 0.95, 0.05, -0.3))) for s in S]
-        return out, 0.75 * self.P["head_scale"] * self.P["eye_size"]
+        return out, 0.6 * self.P["head_scale"] * self.P["eye_size"]
 
     def teeth_specs(self):
         return []

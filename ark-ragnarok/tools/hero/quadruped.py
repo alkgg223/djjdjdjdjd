@@ -215,9 +215,14 @@ class Quadruped:
         sc.cone((0, 38.5, -60), (0, 33.5, -77), 6.6, 3.0, bone=H, k=2.2, sq=(0.7, 1.0))
         sc.cone((0, 32.6, -76.0), (0, 28.8, -81.0), 3.0, 0.7, bone=H, k=1.2, mat="beak", sq=(0.75, 1.0))
         for s in S:
-            sc.ell((s * 8.2, 35.5, -58.5), (2.6, 3.2, 4.2), bone=H, k=1.4, mat="horn_skin")
-            sc.ell((s * 7.4, 44.0, -60.5), (1.9, 1.8, 2.2), bone=H, op="sub", k=0.6)
-            sc.ell((s * 6.9, 45.4, -60.6), (1.1, 0.8, 2.3), bone=H, k=0.7, mat="lid")
+            # jugal (cheek) horn: a pointed boss aimed down, out and back - not a ball
+            sc.ell((s * 7.4, 36.8, -57.6), (2.6, 3.4, 4.0), bone=H, k=1.8)
+            sc.cone((s * 8.0, 35.6, -57.0), (s * 10.6, 31.4, -54.6), 2.3, 0.55, bone=H, k=1.0, mat="horn_skin")
+            sc.ell((s * 6.2, 38.0, -66.0), (2.0, 3.6, 7.0), bone=H, k=1.8)                           # deep, flat-sided face
+            sc.ell((s * 7.3, 44.0, -60.5), (1.6, 1.5, 1.9), bone=H, op="sub", k=0.5)
+            sc.ell((s * 6.9, 45.35, -60.6), (1.15, 0.75, 2.2), bone=H, k=0.6, mat="lid")
+            sc.ell((s * 6.95, 42.8, -60.6), (1.0, 0.55, 1.9), bone=H, k=0.5, mat="lid")
+            sc.ell((s * 6.6, 46.4, -60.2), (1.9, 1.0, 3.0), bone=H, k=0.9, mat="horn_skin")          # brow ridge
             sc.ell((s * 2.4, 37.0, -73.5), (0.8, 1.0, 1.6), bone=H, op="sub", k=0.5)
         hl = self.P["horn_len"]
         if not pachy:
@@ -226,8 +231,8 @@ class Quadruped:
                 sc.cone((s * 4.2, 46.5, -58.5), (s * 5.4, 53.0, -66.0 - 6.0 * hl), 2.6, 1.6, bone=H, k=1.0, mat="horn")
                 sc.cone((s * 5.4, 53.0, -66.0 - 6.0 * hl), (s * 5.6, 54.0, -75.0 - 9.0 * hl), 1.6, 0.25, bone=H, k=0.6, mat="horn")
         else:
-            sc.ell((0, 42.8, -68.0), (4.2, 2.6, 6.0), bone=H, k=1.0, mat="horn_skin")        # nasal boss
-            sc.ell((0, 47.6, -60.5), (3.0, 1.9, 3.8), bone=H, k=1.0, mat="horn_skin")        # brow boss
+            sc.ell((0, 41.6, -67.6), (3.5, 1.7, 6.4), bone=H, k=1.4, mat="horn_skin")        # broad flat nasal boss
+            sc.ell((0, 46.6, -60.8), (2.8, 1.3, 3.6), bone=H, k=1.3, mat="horn_skin")        # brow boss
         # frill: thick shield tilted back, with a raised rim
         fk = self.P["frill"]
         fr = (19.0 * fk, 17.0 * fk, 1.8) if not pachy else (15.0 * fk, 12.5 * fk, 1.8)
@@ -271,12 +276,13 @@ class Quadruped:
         H, J = "head", "jaw"
         sc.ell((0, 41.0, -54), (8.4, 8.6, 8.0), bone=H, k=2.6)
         sc.ell((0, 46.5, -55), (7.0, 4.5, 7.0), bone=H, k=2.0, mat="horn_skin")
-        sc.cone((0, 39.5, -59), (0, 35.5, -68), 6.2, 4.0, bone=H, k=2.2, sq=(0.85, 1.0))
+        sc.cone((0, 39.5, -59), (0, 35.8, -69.5), 6.0, 3.6, bone=H, k=2.2, sq=(0.8, 1.0))
         for s in S:
-            sc.ell((s * 6.8, 42.8, -59.5), (1.7, 1.6, 2.0), bone=H, op="sub", k=0.6)
-            sc.ell((s * 6.4, 44.1, -59.6), (1.0, 0.7, 2.1), bone=H, k=0.6, mat="lid")
-            sc.ell((s * 7.8, 37.0, -55.5), (2.8, 3.4, 4.5), bone=H, k=1.6)
-            sc.ell((s * 2.0, 37.6, -67.6), (0.7, 0.8, 1.2), bone=H, op="sub", k=0.4)
+            sc.ell((s * 6.1, 42.9, -58.8), (1.5, 1.4, 1.8), bone=H, op="sub", k=0.5)
+            sc.ell((s * 5.75, 44.1, -58.9), (1.0, 0.7, 2.0), bone=H, k=0.6, mat="lid")
+            sc.ell((s * 6.8, 38.0, -56.0), (2.4, 3.6, 5.0), bone=H, k=2.2)                         # cheek
+            sc.ell((s * 6.4, 45.0, -59.4), (1.7, 1.0, 2.8), bone=H, k=0.9, mat="horn_skin")          # brow ridge
+            sc.ell((s * 2.0, 37.6, -68.6), (0.7, 0.8, 1.2), bone=H, op="sub", k=0.4)
         sc.cone((0, 33.8, -55), (0, 33.6, -67), 5.4, 3.2, bone=J, group="jaw", k=1.6, sq=(0.9, 0.75))
         sc.ell((0, 35.0, -61.0), (2.6, 0.9, 4.5), bone=J, group="tongue", k=0.8, mat="tongue")
 
@@ -285,15 +291,16 @@ class Quadruped:
         H, J = "head", "jaw"
         sc.ell((0, 40.0, -54), (5.6, 5.8, 6.4), bone=H, k=2.0)
         sc.cone((0, 39.0, -57), (0, 35.5, -70), 4.6, 3.2, bone=H, k=1.8, sq=(0.78, 1.0))
-        sc.ell((0, 34.4, -71.0), (4.4, 2.0, 3.6), bone=H, k=1.2, mat="beak")                    # duck bill
-        sc.cone((0, 44.0, -58.0), (0, 50.5, -40.0), 1.9, 1.6, bone=H, k=1.2, mat="frill")       # tube crest
-        sc.ell((0, 50.6, -39.6), (1.7, 1.7, 1.7), bone=H, k=0.8, mat="frill")
+        sc.ell((0, 34.6, -70.6), (3.9, 1.35, 3.8), bone=H, k=1.4, mat="beak")                   # flat duck bill
+        sc.cone((0, 41.6, -63.5), (0, 47.6, -55.5), 1.7, 1.75, bone=H, k=1.4, mat="frill")      # crest rises from the snout
+        sc.cone((0, 47.6, -55.5), (0, 53.4, -47.0), 1.75, 1.55, bone=H, k=1.0, mat="frill")     # ... sweeps up and back
+        sc.cone((0, 53.4, -47.0), (0, 56.4, -41.0), 1.55, 1.05, bone=H, k=0.8, mat="frill")     # ... tapers
         for s in S:
             sc.ell((s * 4.6, 41.6, -58.0), (1.5, 1.4, 1.7), bone=H, op="sub", k=0.5)
             sc.ell((s * 4.2, 42.7, -58.1), (0.9, 0.7, 1.8), bone=H, k=0.5, mat="lid")
             sc.ell((s * 1.7, 37.0, -68.0), (0.6, 0.6, 1.2), bone=H, op="sub", k=0.4)
         sc.cone((0, 35.6, -55), (0, 33.6, -70), 3.6, 2.2, bone=J, group="jaw", k=1.4, sq=(0.85, 0.75))
-        sc.ell((0, 33.2, -70.5), (3.8, 1.2, 3.0), bone=J, group="jaw", k=0.9, mat="beak")
+        sc.ell((0, 33.3, -70.2), (3.4, 0.9, 3.0), bone=J, group="jaw", k=0.9, mat="beak")
         sc.ell((0, 35.4, -62.0), (1.8, 0.7, 5.0), bone=J, group="tongue", k=0.8, mat="tongue")
 
     def skull_iguanodon(self, sc):
@@ -301,7 +308,7 @@ class Quadruped:
         H, J = "head", "jaw"
         sc.ell((0, 40.0, -54), (5.8, 6.2, 6.6), bone=H, k=2.0)
         sc.cone((0, 39.2, -57), (0, 35.0, -73), 5.0, 2.8, bone=H, k=1.8, sq=(0.72, 1.0))
-        sc.cone((0, 34.2, -72.5), (0, 32.6, -76.0), 2.6, 1.0, bone=H, k=1.0, mat="beak", sq=(0.8, 0.8))
+        sc.cone((0, 34.4, -72.0), (0, 33.0, -75.6), 2.3, 0.9, bone=H, k=1.2, mat="beak", sq=(0.85, 0.62))
         for s in S:
             sc.ell((s * 4.8, 42.0, -58.0), (1.5, 1.4, 1.7), bone=H, op="sub", k=0.5)
             sc.ell((s * 4.4, 43.1, -58.1), (0.9, 0.7, 1.8), bone=H, k=0.5, mat="lid")
@@ -326,12 +333,12 @@ class Quadruped:
     # ------------------------------------------------------------------ explicit details
     def eyes(self):
         P = self.P
-        c, fwd, r = {"trike": ((6.9, 44.0, -60.5), (0.9, 0.05, -0.4), 1.45), "pachyrhino": ((6.9, 44.0, -60.5), (0.9, 0.05, -0.4), 1.45),
+        c, fwd, r = {"trike": ((6.85, 44.0, -60.6), (0.9, 0.05, -0.4), 1.2), "pachyrhino": ((6.85, 44.0, -60.6), (0.9, 0.05, -0.4), 1.2),
                      "stego": ((3.9, 41.2, -57.5), (0.95, 0.05, -0.3), 1.0), "anky": ((6.1, 40.6, -59.5), (0.95, 0.1, -0.3), 1.05),
-                     "moschops": ((6.3, 42.8, -59.5), (0.9, 0.05, -0.4), 1.25), "hadro": ((4.2, 41.6, -58.0), (0.95, 0.05, -0.3), 1.15),
+                     "moschops": ((5.6, 42.9, -58.8), (0.9, 0.05, -0.4), 1.1), "hadro": ((4.2, 41.6, -58.0), (0.95, 0.05, -0.3), 1.15),
                      "iguanodon": ((4.4, 42.0, -58.0), (0.95, 0.05, -0.3), 1.15)}[P["skull"]]
         out = [(tuple(self.F((s * c[0], c[1], c[2]), "head")), normalize((s * fwd[0], fwd[1], fwd[2]))) for s in S]
-        return out, r * P["head_scale"] * P["eye_size"]
+        return out, 0.9 * r * P["head_scale"] * P["eye_size"]
 
     def teeth_specs(self):
         return []

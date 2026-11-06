@@ -17,6 +17,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
@@ -167,6 +169,9 @@ public final class ShotDirector {
         oz = base.getZ() + 0.5;
         if (sp != null) {
             sp.setGameMode(GameType.SPECTATOR);   // no collisions with the creatures, nothing of the player in the frame
+            // a tiny camera holder: its eye can go down to the eye level of a Compy or a Dodo
+            AttributeInstance scale = sp.getAttribute(Attributes.SCALE);
+            if (scale != null) scale.setBaseValue(0.0625);
         }
         // a villager standing beside the creature shows the real size
         Villager v = EntityType.VILLAGER.create(level);
@@ -211,7 +216,8 @@ public final class ShotDirector {
         if (scale != null) {
             // in front of the nose and a little to the side: never between the camera and the creature
             Species sv = SpeciesList.get(s.species());
-            scale.moveTo(ox - Math.max(0.9, sv.width * 0.6), oy, oz + sv.headZ * 1.15 + Math.max(0.9, sv.length * 0.12), 200f, 0f);
+            double side = Math.sin(Math.toRadians(s.angle())) >= 0 ? -1 : 1;     // the side away from the camera
+            scale.moveTo(ox + side * Math.max(0.9, sv.width * 0.6), oy, oz + sv.headZ * 1.15 + Math.max(0.9, sv.length * 0.12), 200f, 0f);
             if (scale instanceof Villager vv) vv.setInvisible(s.target().equals("head"));
         }
         if (s.rider() && riderId == null) {
@@ -239,12 +245,12 @@ public final class ShotDirector {
         } else if (s.target().equals("head")) {
             ty = oy + sp_.eye * 0.97;
             tz = oz + sp_.headZ * 1.08;
-            dist = Math.max(0.75, sp_.length * 0.11 + 0.55);
+            dist = Math.max(0.45, sp_.length * 0.11 + 0.35);
             camY = ty + dist * 0.12;
         } else {
             ty = oy + sp_.height * 0.5;
             tz = oz + sp_.headZ * 1.1 - sp_.length * 0.5;
-            dist = Math.max(2.2, (sp_.length * 0.5 + 1.6) / 1.05);
+            dist = Math.max(1.5, (sp_.length * 0.5 + 1.2) / 1.05);
             camY = ty + dist * 0.16;
         }
         double a = Math.toRadians(s.angle());

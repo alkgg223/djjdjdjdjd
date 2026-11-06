@@ -193,9 +193,10 @@ class Theropod:
         sc.bone("jaw", "head", (0, 60.6, -54.5))
         for s in S:
             n = side_name(s)
-            sc.bone("arm_" + n, "torso", (s * 9.8, 45, -29.5))
-            sc.bone("forearm_" + n, "arm_" + n, (s * 11.4, 39.8, -31.2))
-            sc.bone("hand_" + n, "forearm_" + n, (s * 11.8, 36.6, -35.0))
+            sh, el, wr, hc, fd = self.arm_pts(s)
+            sc.bone("arm_" + n, "torso", sh)
+            sc.bone("forearm_" + n, "arm_" + n, el)
+            sc.bone("hand_" + n, "forearm_" + n, wr)
             sc.bone("thigh_" + n, "body", (s * (LX0 - 1.6), 50.5, 10))
             sc.bone("shin_" + n, "thigh_" + n, (s * LX0, 31.6, 0.5))
             sc.bone("ankle_" + n, "shin_" + n, (s * LX0, 13.4, 9.0))
@@ -234,7 +235,11 @@ class Theropod:
         sc.cone((0, 58.5, -25), (0, 61.6, 6), 6.0, 6.8, bone=[("torso", 0.6), ("body", 0.4)], k=5.5, sq=(1.15, 1.0))
 
     def neck(self, sc):
-        sc.spline_tube([(0, 55.5, -28), (0, 60.0, -37.5), (0, 63.0, -45.0), (0, 64.8, -51.5)], [12.6, 11.0, 10.0, 9.4],
+        r_end = 9.4
+        if self.P["skull"] == "beak":
+            # small-headed species: the neck tapers into the head instead of being thicker than it
+            r_end = min(9.4, 5.7 * self.hs * 0.8 / self.P["neck_thick"])
+        sc.spline_tube([(0, 55.5, -28), (0, 60.0, -37.5), (0, 63.0, -45.0), (0, 64.8, -51.5)], [12.6, 11.0, (10.0 + r_end) / 2, r_end],
                        ["torso", "neck1", "neck2", "head"], k=3.5, sq=(0.88, 1.0), sub=4)
         for s in S:
             sc.ell((s * 5.8, 59.0, -39), (4.0, 7.4, 8.6), bone=[("neck1", 0.55), ("neck2", 0.25), ("torso", 0.2)], k=2.8,
@@ -243,50 +248,55 @@ class Theropod:
 
     # ------------------------------------------------------------------ skulls
     def skull_rex(self, sc):
+        """tyrannosaurid skull: narrow roof, flat tall snout sides, broad cheeks and jaw joints at the bottom back
+        (keyhole-shaped from above), small eyes deep under a brow ridge, rough nasal ridge"""
         H = "head"
-        sc.ell((0, 66.4, -56.0), (9.6, 8.2, 6.8), bone=H, k=2.4)
+        f = self.P["features"]
+        sc.ell((0, 69.4, -56.0), (5.0, 4.2, 6.6), bone=H, k=2.0)                                  # skull roof (narrow)
+        sc.ell((0, 64.6, -55.6), (6.2, 5.6, 5.8), bone=H, k=2.4)                                  # braincase / occiput
         for s in S:
-            sc.ell((s * 7.6, 65.6, -55.4), (3.7, 5.4, 5.2), bone=H, k=2.0)
-        sc.cone((0, 66.5, -60.0), (0, 64.0, -78.6), 7.3, 4.7, bone=H, k=2.0, sq=(0.7, 1.0))
+            sc.ell((s * 6.9, 64.4, -55.4), (3.8, 5.6, 5.4), bone=H, k=1.8)                        # jaw muscles (wide, low)
+            sc.ell((s * 7.7, 61.4, -60.2), (2.3, 2.5, 5.6), bone=H, k=1.4)                        # jugal cheek
+            sc.ell((s * 8.3, 59.6, -54.8), (2.4, 2.6, 2.7), bone=H, k=1.2)                        # quadratojugal corner
+        sc.cone((0, 66.2, -59.0), (0, 63.8, -78.4), 7.0, 4.5, bone=H, k=1.4, sq=(0.58, 1.0))        # snout, flat sides
+        sc.cone((0, 72.4, -59.5), (0, 67.9, -78.0), 1.7, 1.25, bone=H, k=1.2)                      # nasal ridge
+        sc.ell((0, 63.9, -79.3), (2.6, 4.1, 2.1), bone=H, k=1.2)                                   # snout tip
         for s in S:
-            sc.cone((s * 4.75, 61.9, -59.5), (s * 3.15, 61.1, -78.0), 2.85, 1.9, bone=H, k=1.8)
-        sc.ell((0, 63.9, -79.6), (3.3, 4.5, 2.6), bone=H, k=1.6)
-        for i in range(8):
-            z = -61.5 - i * 2.2
-            t = (z + 60.0) / -18.6
-            ytop = 66.5 + 7.3 - t * (66.5 + 7.3 - 64.0 - 4.7)
-            sc.ell((0, ytop - 0.4, z), (1.8 - 0.08 * i, 1.0, 1.25), bone=H, k=0.8, mat="horn_skin")
-        horn = "horns" in self.P["features"]
+            sc.cone((s * 3.9, 61.9, -59.5), (s * 2.55, 61.1, -78.0), 2.4, 1.55, bone=H, k=1.2)    # upper lip line
+        for i in range(8):                                                                         # nasal rugosities
+            z = -61.0 - i * 2.2
+            t = (z + 59.5) / -18.5
+            ytop = 72.4 + 1.7 - t * (72.4 + 1.7 - 67.9 - 1.25)
+            sc.ell((0, ytop - 0.25, z), (1.3 - 0.05 * i, 0.7, 1.0), bone=H, k=0.6, mat="horn_skin")
         for s in S:
-            sc.ell((s * 6.7, 71.4, -59.4), (2.7, 1.9, 2.9), bone=H, k=1.4, rot=(0, 0, s * 0.3))
-            sc.ell((s * 4.8, 72.5, -63.4), (1.9, 1.7, 2.5), bone=H, k=1.2, mat="horn_skin")
-            sc.ell((s * 7.7, 62.9, -59.5), (2.5, 3.3, 5.1), bone=H, k=1.6)
-            sc.ell((s * 8.7, 61.6, -56.8), (1.4, 1.6, 1.9), bone=H, k=1.0, mat="horn_skin")
-            sc.ell((s * 8.3, 68.2, -61.4), (2.0, 1.85, 2.3), bone=H, op="sub", k=0.6)
-            sc.ell((s * 7.85, 69.55, -61.5), (1.15, 0.8, 2.4), bone=H, k=0.7, mat="lid")
-            sc.ell((s * 7.8, 66.75, -61.6), (0.95, 0.65, 2.1), bone=H, k=0.6, mat="lid")
-            sc.ell((s * 2.65, 66.1, -78.9), (0.85, 0.75, 1.6), bone=H, op="sub", k=0.5, rot=(0.25, s * 0.35, 0))
-            if "lacrimal_crests" in self.P["features"]:
-                sc.ell((s * 4.2, 73.6, -65.0), (1.3, 2.0, 3.8), bone=H, k=0.9, mat="horn_skin")
-            if horn:
-                sc.cone((s * 6.0, 72.0, -59.5), (s * 10.5, 76.0, -60.5), 2.6, 0.7, bone=H, k=1.0, mat="horn")
-        sc.cone((0, 59.3, -59.0), (0, 59.4, -77.0), 2.8, 1.7, bone=H, op="sub", k=0.9, sq=(1.0, 0.55))
+            sc.ell((s * 3.7, 72.1, -63.2), (1.25, 1.35, 2.0), bone=H, k=0.8, mat="horn_skin")       # lacrimal horn
+            sc.ell((s * 5.5, 71.0, -58.9), (1.8, 1.05, 2.4), bone=H, k=0.9, mat="horn_skin")        # postorbital boss
+            sc.ell((s * 6.0, 70.35, -61.9), (1.5, 0.95, 3.2), bone=H, k=0.9, rot=(0, -s * 0.25, 0)) # brow ridge (hood)
+            sc.ell((s * 7.0, 68.3, -61.6), (1.45, 1.2, 1.65), bone=H, op="sub", k=0.45)             # eye socket
+            sc.ell((s * 6.75, 69.25, -61.7), (1.25, 0.6, 1.9), bone=H, k=0.5, mat="lid")             # upper eyelid
+            sc.ell((s * 6.7, 67.35, -61.7), (1.1, 0.5, 1.7), bone=H, k=0.45, mat="lid")              # lower eyelid
+            sc.ell((s * 2.3, 66.3, -78.6), (0.75, 0.7, 1.5), bone=H, op="sub", k=0.45, rot=(0.25, s * 0.35, 0))  # nostril
+            if "lacrimal_crests" in f:
+                sc.ell((s * 3.4, 73.4, -66.0), (1.1, 1.9, 4.2), bone=H, k=0.8, mat="horn_skin")
+            if "horns" in f:
+                sc.cone((s * 5.0, 71.5, -60.0), (s * 9.5, 75.5, -61.0), 2.4, 0.6, bone=H, k=0.9, mat="horn")
+        sc.cone((0, 59.4, -59.0), (0, 59.6, -77.0), 2.6, 1.6, bone=H, op="sub", k=0.8, sq=(1.0, 0.55))   # palate
         self.jaw_rex(sc)
-        if "double_crest" in self.P["features"]:
+        if "double_crest" in f:
             for s in S:
-                sc.ell((s * 2.2, 74.8, -66.0), (0.7, 3.4, 9.5), bone=H, k=0.6, mat="frill", rot=(0.12, 0, s * 0.15))
-        if "head_crest" in self.P["features"]:
-            sc.ell((0, 76.0, -63.0), (1.2, 5.5, 6.0), bone=H, k=0.8, mat="frill", rot=(-0.3, 0, 0))
+                sc.ell((s * 1.9, 75.2, -66.0), (0.6, 3.4, 9.5), bone=H, k=0.5, mat="frill", rot=(0.12, 0, s * 0.12))
+        if "head_crest" in f:
+            sc.ell((0, 76.0, -63.0), (1.1, 5.5, 6.0), bone=H, k=0.7, mat="frill", rot=(-0.3, 0, 0))
 
     def jaw_rex(self, sc):
         J = "jaw"
-        sc.cone((0, 58.2, -53.6), (0, 58.7, -78.0), 5.6, 2.9, bone=J, group="jaw", k=1.8, sq=(0.92, 0.85))
-        sc.ell((0, 56.2, -55.2), (5.6, 4.4, 4.8), bone=J, group="jaw", k=2.6)
-        sc.ell((0, 58.5, -77.4), (2.8, 2.6, 2.0), bone=J, group="jaw", k=1.3)
+        sc.cone((0, 58.3, -53.8), (0, 59.0, -78.0), 5.7, 2.7, bone=J, group="jaw", k=1.5, sq=(0.82, 0.86))  # mandible
+        sc.ell((0, 55.8, -56.0), (5.0, 4.6, 5.4), bone=J, group="jaw", k=2.2)                              # surangular
+        sc.ell((0, 58.4, -77.2), (2.4, 2.4, 1.9), bone=J, group="jaw", k=1.1)                              # chin
         for s in S:
-            sc.cone((s * 3.45, 61.2, -55.2), (s * 2.35, 60.7, -77.0), 1.7, 1.15, bone=J, group="jaw", k=1.2)
-        sc.cone((0, 62.0, -56.5), (0, 61.0, -76.0), 2.6, 1.4, bone=J, group="jaw", op="sub", k=0.9, sq=(1.0, 0.7))
-        sc.ell((0, 60.0, -66.0), (2.6, 1.05, 9.0), bone=J, group="tongue", k=1.0, mat="tongue")
+            sc.cone((s * 3.2, 61.2, -55.5), (s * 2.1, 60.8, -77.0), 1.55, 1.05, bone=J, group="jaw", k=1.0)  # dentary lips
+        sc.cone((0, 62.0, -56.5), (0, 61.1, -76.0), 2.4, 1.3, bone=J, group="jaw", op="sub", k=0.8, sq=(1.0, 0.7))
+        sc.ell((0, 60.1, -66.0), (2.3, 0.95, 9.0), bone=J, group="tongue", k=1.0, mat="tongue")
 
     def skull_croc(self, sc):
         """spinosaurid: long, low, narrow snout with a rosette of teeth at the tip and a small crest"""
@@ -312,22 +322,29 @@ class Theropod:
         sc.ell((0, 60.0, -70.0), (2.0, 0.9, 12.0), bone=J, group="tongue", k=1.0, mat="tongue")
 
     def skull_beak(self, sc):
-        """beaked head (oviraptor, gallimimus, therizinosaurus): rounded cranium, keratin beak, no teeth"""
+        """beaked head (oviraptor, gallimimus, therizinosaurus): small low cranium, long flat-sided snout ending in a
+        keratin beak with a sharp cutting edge, eyes under a brow ridge, no teeth"""
         H = "head"
         bl = self.P.get("beak_len", 1.0)
-        sc.ell((0, 66.8, -57.0), (6.6, 6.8, 6.8), bone=H, k=2.4)
-        sc.cone((0, 66.4, -60.0), (0, 64.5, -60.0 - 12 * bl), 5.6, 3.4, bone=H, k=2.2, sq=(0.8, 1.0))
-        sc.cone((0, 64.8, -60.0 - 11 * bl), (0, 61.8, -60.0 - 17 * bl), 3.0, 0.9, bone=H, k=1.2, mat="beak", sq=(0.8, 1.0))
+        zb = -60.0 - 11.5 * bl            # beak base
+        zt = -60.0 - 18.5 * bl            # beak tip
+        sc.ell((0, 66.8, -56.6), (5.7, 5.5, 6.4), bone=H, k=2.2)                                   # cranium
+        sc.ell((0, 64.2, -56.4), (5.2, 4.4, 5.0), bone=H, k=2.0)                                   # jaw muscles
+        sc.cone((0, 66.4, -60.0), (0, 64.6, zb), 4.6, 2.7, bone=H, k=1.8, sq=(0.7, 1.0))            # snout, flat sides
+        sc.cone((0, 64.9, zb + 1.0), (0, 62.6, zt), 2.7, 0.55, bone=H, k=1.2, mat="beak", sq=(0.72, 0.9))
         for s in S:
-            sc.ell((s * 5.6, 68.2, -60.8), (2.3, 2.2, 2.6), bone=H, op="sub", k=0.6)
-            sc.ell((s * 5.2, 69.8, -60.9), (1.2, 0.8, 2.6), bone=H, k=0.7, mat="lid")
-            sc.ell((s * 1.6, 65.6, -60.0 - 13 * bl), (0.6, 0.6, 1.0), bone=H, op="sub", k=0.4)
+            sc.ell((s * 5.1, 67.9, -60.4), (1.75, 1.6, 2.0), bone=H, op="sub", k=0.5)              # eye socket
+            sc.ell((s * 4.75, 69.35, -60.5), (1.25, 0.75, 2.4), bone=H, k=0.6, mat="lid")            # upper lid / brow
+            sc.ell((s * 4.95, 66.6, -60.5), (1.05, 0.5, 1.9), bone=H, k=0.45, mat="lid")             # lower lid
+            sc.ell((s * 1.7, 65.4, zb + 0.6), (0.55, 0.55, 1.0), bone=H, op="sub", k=0.35)          # nostril
         if "head_crest" in self.P["features"]:
-            sc.ell((0, 75.0, -62.0), (1.3, 6.0, 5.4), bone=H, k=1.0, mat="frill", rot=(-0.25, 0, 0))
+            # tall narrow casque rising from the snout (oviraptorid), not a rooster comb
+            sc.ell((0, 72.6, -61.0), (1.1, 5.6, 4.6), bone=H, k=1.4, mat="frill", rot=(-0.35, 0, 0))
+            sc.cone((0, 67.5, zb + 2.5), (0, 76.0, -62.5), 1.6, 0.9, bone=H, k=1.2, mat="frill")
         J = "jaw"
-        sc.cone((0, 59.8, -55.5), (0, 61.2, -60.0 - 14 * bl), 4.2, 1.6, bone=J, group="jaw", k=1.6, sq=(0.85, 0.75))
-        sc.cone((0, 61.4, -60.0 - 9 * bl), (0, 61.0, -60.0 - 16 * bl), 2.2, 0.7, bone=J, group="jaw", k=1.0, mat="beak")
-        sc.ell((0, 61.4, -62.0), (1.8, 0.8, 5.0), bone=J, group="tongue", k=1.0, mat="tongue")
+        sc.cone((0, 60.6, -55.5), (0, 61.7, zb + 1.5), 3.6, 1.7, bone=J, group="jaw", k=1.6, sq=(0.82, 0.75))
+        sc.cone((0, 61.6, zb + 2.0), (0, 61.9, zt + 1.0), 1.7, 0.45, bone=J, group="jaw", k=1.0, mat="beak", sq=(0.8, 0.7))
+        sc.ell((0, 61.6, -61.0), (1.4, 0.55, 3.6), bone=J, group="tongue", k=0.8, mat="tongue")
 
     def skull_dome(self, sc):
         """pachycephalosaurid: thick bony dome ringed with knobs, short snout, small leaf teeth"""
@@ -336,16 +353,20 @@ class Theropod:
         sc.ell((0, 72.6, -57.2), (7.2, 5.6, 7.6), bone=H, k=1.6, mat="horn_skin")            # dome
         for i in range(9):
             a = -math.pi * 0.9 + i * math.pi * 1.8 / 8
-            sc.ell((math.sin(a) * 7.4, 69.6, -57.2 + math.cos(a) * 7.6), (1.3, 1.3, 1.3), bone=H, k=0.5, mat="horn")
+            sc.ell((math.sin(a) * 7.4, 69.6, -57.2 + math.cos(a) * 7.6), (1.15, 1.0, 1.15), bone=H, k=0.7, mat="horn_skin")
         for i in range(4):
-            sc.ell((0.0, 66.4 + i * 0.5, -64.5 - i * 1.6), (1.1, 1.0, 1.0), bone=H, k=0.5, mat="horn")
+            sc.ell((0.0, 66.4 + i * 0.5, -64.5 - i * 1.6), (0.95, 0.8, 0.95), bone=H, k=0.6, mat="horn_skin")
+        for s in S:
+            sc.ell((s * 5.4, 62.2, -60.2), (2.5, 2.7, 4.8), bone=H, k=1.6)                          # cheeks over the jaw joint
+            sc.ell((s * 5.6, 70.0, -61.3), (1.5, 0.9, 2.6), bone=H, k=0.8, mat="horn_skin")          # brow ridge
         sc.cone((0, 65.4, -61.0), (0, 63.2, -72.0), 5.4, 2.8, bone=H, k=2.0, sq=(0.75, 1.0))
         for s in S:
-            sc.ell((s * 6.3, 68.0, -61.0), (1.9, 1.8, 2.2), bone=H, op="sub", k=0.6)
-            sc.ell((s * 5.9, 69.4, -61.1), (1.1, 0.8, 2.3), bone=H, k=0.7, mat="lid")
+            sc.ell((s * 6.3, 68.0, -61.0), (1.6, 1.5, 1.9), bone=H, op="sub", k=0.5)
+            sc.ell((s * 5.9, 69.2, -61.1), (1.1, 0.75, 2.2), bone=H, k=0.6, mat="lid")
+            sc.ell((s * 5.95, 66.9, -61.1), (1.0, 0.55, 1.9), bone=H, k=0.5, mat="lid")
             sc.ell((s * 1.7, 64.4, -71.6), (0.6, 0.6, 1.1), bone=H, op="sub", k=0.4)
         J = "jaw"
-        sc.cone((0, 59.6, -56.0), (0, 60.8, -71.0), 4.4, 2.0, bone=J, group="jaw", k=1.6, sq=(0.85, 0.75))
+        sc.cone((0, 59.8, -56.0), (0, 61.0, -71.0), 4.2, 1.9, bone=J, group="jaw", k=1.6, sq=(0.85, 0.75))
         sc.ell((0, 61.2, -63.0), (2.0, 0.9, 5.5), bone=J, group="tongue", k=1.0, mat="tongue")
 
     # ------------------------------------------------------------------ limbs and tail
@@ -354,14 +375,31 @@ class Theropod:
         nf = P["fingers"]
         for s in S:
             n = side_name(s)
-            sc.cone((s * 9.8, 45.0, -29.5), (s * 11.4, 39.8, -31.2), 2.15, 1.55, bone="arm_" + n, k=1.2)
-            sc.cone((s * 11.4, 39.8, -31.2), (s * 11.8, 36.6, -35.0), 1.55, 1.2, bone="forearm_" + n, k=1.0)
-            sc.ell((s * 11.45, 39.9, -31.1), (1.5, 1.5, 1.65), bone=[("arm_" + n, 0.5), ("forearm_" + n, 0.5)], k=0.8)
-            sc.ell((s * 11.85, 36.1, -35.8), (1.1, 1.2, 1.4), bone="hand_" + n, k=0.8)
+            sh, el, wr, hc, fd = self.arm_pts(s)
+            sc.cone(sh, el, 2.15, 1.55, bone="arm_" + n, k=1.2)
+            sc.cone(el, wr, 1.55, 1.2, bone="forearm_" + n, k=1.0)
+            sc.ell(el + np.array([s * 0.05, 0.1, 0.1]), (1.5, 1.5, 1.65), bone=[("arm_" + n, 0.5), ("forearm_" + n, 0.5)], k=0.8)
+            sc.ell(hc, (1.1, 1.2, 1.4), bone="hand_" + n, k=0.8)
             for dx in self.finger_offsets():
-                a = np.array([s * (11.85 + dx), 35.7, -36.4])
-                b = a + np.array([s * dx * 0.3, -1.3, -1.7])
+                a = hc + np.array([s * dx, -0.4, -0.6])
+                b = a + np.array([s * dx * 0.3, fd[1], fd[2]])
                 sc.cone(a, b, 0.6, 0.44, bone="hand_" + n, k=0.5)
+
+    def arm_pts(self, s):
+        """shoulder, elbow, wrist, hand centre, finger direction (rex space).  "fold": the arms of raptors and other
+        long-armed small theropods are held folded like a bird's wing (upper arm back, forearm forward, hands down),
+        not dangling in front of the chest"""
+        sh = np.array([s * 9.8, 45.0, -29.5])
+        if self.P.get("arm_pose") == "fold":
+            el = sh + normalize(np.array([s * 0.2, -0.7, 0.68])) * 5.7
+            wr = el + normalize(np.array([s * 0.06, -0.3, -0.95])) * 5.0
+            fd = np.array([0.0, -1.75, -1.0])
+        else:
+            el = np.array([s * 11.4, 39.8, -31.2])
+            wr = np.array([s * 11.8, 36.6, -35.0])
+            fd = np.array([0.0, -1.3, -1.7])
+        hc = wr + normalize(wr - el) * 0.95
+        return sh, el, wr, hc, fd
 
     def finger_offsets(self):
         return {2: (-0.45, 0.5), 3: (-0.7, 0.0, 0.7)}[self.P["fingers"]]
@@ -490,9 +528,10 @@ class Theropod:
             out.append(("ankle_" + n, [a + d * (1.6 * k / 3.0) + np.array([0, -0.15 * (k / 3.0) ** 2, 0]) for k in range(4)],
                         [0.62 * cs, 0.48 * cs, 0.3 * cs, 0.05]))
             hc = P["hand_claw"]
+            _, _, _, hcen, fd = self.arm_pts(s)
             for dx in self.finger_offsets():
-                a = np.array([s * (11.85 + dx), 35.7, -36.4]) + np.array([s * dx * 0.3, -1.3, -1.7])
-                d = normalize(np.array([0, -0.75, -0.9]))
+                a = hcen + np.array([s * dx, -0.4, -0.6]) + np.array([s * dx * 0.3, fd[1], fd[2]])
+                d = normalize(np.array([0, fd[1] * 0.58, fd[2] * 0.53]))
                 L = 1.5 * hc
                 pts = [a + d * (L * k / 4.0) + np.array([0, -0.35 * hc * (k / 4.0) ** 2, 0.25 * hc * (k / 4.0) ** 2]) for k in range(5)]
                 out.append(("hand_" + n, pts, [0.42 * min(hc, 1.8), 0.34 * min(hc, 1.8), 0.24 * min(hc, 1.8), 0.13, 0.03]))
@@ -504,19 +543,19 @@ class Theropod:
 
     def eyes(self):
         if self.P["skull"] == "rex":
-            c, fwd = (7.55, 68.2, -61.55), (0.85, 0.06, -0.55)
-            r = 1.5
+            c, fwd = (6.55, 68.3, -61.65), (0.78, 0.05, -0.62)
+            r = 1.02
         elif self.P["skull"] == "croc":
             c, fwd, r = (5.65, 68.6, -59.9), (0.9, 0.1, -0.4), 1.25
         elif self.P["skull"] == "beak":
-            c, fwd, r = (5.1, 68.2, -60.9), (0.95, 0.05, -0.3), 1.75
+            c, fwd, r = (4.95, 67.95, -60.5), (0.93, 0.05, -0.36), 1.42
         else:
-            c, fwd, r = (5.8, 68.0, -61.0), (0.9, 0.05, -0.45), 1.45
+            c, fwd, r = (5.85, 68.0, -61.1), (0.9, 0.05, -0.45), 1.3
         out = []
         for s in S:
             p = self.F((s * c[0], c[1], c[2]), "head")
             out.append((tuple(p), normalize((s * fwd[0], fwd[1], fwd[2]))))
-        return out, r * self.hs * self.P["head_rel"] * float(np.mean(self.sk[:2])) * self.P["eye_size"]
+        return out, 0.84 * r * self.hs * self.P["head_rel"] * float(np.mean(self.sk[:2])) * self.P["eye_size"]
 
 
 def curved_tooth(base, h, r0, back=0.25, up=False):

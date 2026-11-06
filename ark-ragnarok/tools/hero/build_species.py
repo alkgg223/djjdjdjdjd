@@ -66,7 +66,9 @@ def build(sid, res_root, lod_count=3, verbose=True):
             if grp == "body":
                 bi, bw = HB.spline_override(v, bi, bw, sc, bones)
             vmat = np.array([adds[i].mat for i in near])
-            lods[li].append(dict(v=v, n=n, f=f, bi=bi, bw=bw, ao=ao, tmat=vmat[f[:, 0]], grp=grp, along=np.zeros(len(v)),
+            tm = vmat[f[:, 0]]
+            tm = np.where(np.isin(tm, PS.SOFT), "skin", tm)      # soft-edged materials are blended per texel by the painter
+            lods[li].append(dict(v=v, n=n, f=f, bi=bi, bw=bw, ao=ao, tmat=tm, grp=grp, along=np.zeros(len(v)),
                                  eye=np.full(len(v), -1)))
     eyes, eye_r = B.eyes()
     extra_parts = extras.build(sid, B, sc)
@@ -86,6 +88,7 @@ def build(sid, res_root, lod_count=3, verbose=True):
     ctx = dict(eyes=eyes, pal=pal, spec=look, eye_y=eyes[0][0][1], eye_z=eyes[0][0][2], eye_x=abs(eyes[0][0][0]), head_s=hs,
                jaw_y=jaw_y, jaw_z=sc.bones["jaw"][1][2],
                knee_y=sc.bones[shin][1][1], detail=1.0, neck_dir=nd, joints=joints, rex_wrinkles=(sid == "tyrannosaurus"))
+    ctx["soft"] = {g: [p for p in sc.prims if p.group == g and p.op == "add"] for g in ("body", "jaw")}
     rfn = region_fn_for(bones, spec["plan"])
     a = res_root + "/assets/arkragnarok"
     for d in ("arkmesh", "textures/entity/" + sid, "geo/entity", "animations/entity"):

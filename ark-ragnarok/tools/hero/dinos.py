@@ -27,36 +27,37 @@ BIPEDS = {
         leg_len=0.95, leg_thick=0.9, tail_thick=0.9)),
     "therizinosaurus": dict(name="Therizinosaurus", length_m=10.0, geo=dict(
         skull="beak", beak_len=0.7, head_scale=0.62, teeth=False, torso=(1.0, 1.15, 0.9), belly=1.2, neck_len=2.3,
-        neck_thick=0.55, neck_raise=0.6, arm_scale=3.0, arm_thick=0.6, fingers=3, hand_claw=5.0, leg_len=1.15,
+        neck_thick=0.55, neck_raise=0.42, arm_scale=3.0, arm_thick=0.6, fingers=3, hand_claw=5.0, leg_len=1.15,
         leg_thick=0.8, tail_len=0.55, tail_thick=0.8, feathers="full")),
-    "utahraptor": dict(name="Utahraptor", length_m=6.0, geo=dict(
+    "utahraptor": dict(name="Utahraptor", length_m=6.0, geo=dict(arm_pose="fold", 
         skull_k=(0.62, 0.72, 1.2), head_scale=0.95, torso=(0.62, 0.66, 0.85), neck_len=1.25, neck_thick=0.55,
-        neck_raise=0.25, arm_scale=2.8, arm_thick=0.5, fingers=3, hand_claw=1.8, leg_len=1.1, leg_thick=0.55, leg_x=0.7,
+        neck_raise=0.25, arm_scale=2.6, arm_thick=0.55, fingers=3, hand_claw=1.8, leg_len=1.1, leg_thick=0.68, leg_x=0.7, tooth_size=0.75,
         toes="raptor", toe_thick=0.7, tail_len=1.25, tail_thick=0.5, feathers="full", features=("quill_crest", "wing_feathers",
                                                                                                          "tail_fan"))),
-    "deinonychus": dict(name="Deinonychus", length_m=3.4, geo=dict(
+    "deinonychus": dict(name="Deinonychus", length_m=3.4, geo=dict(arm_pose="fold", 
         skull_k=(0.6, 0.7, 1.15), head_scale=1.0, torso=(0.58, 0.62, 0.8), neck_len=1.25, neck_thick=0.5, neck_raise=0.3,
-        arm_scale=2.9, arm_thick=0.48, fingers=3, hand_claw=1.8, leg_len=1.15, leg_thick=0.5, leg_x=0.62, toes="raptor",
+        arm_scale=2.7, arm_thick=0.52, fingers=3, hand_claw=1.8, leg_len=1.15, leg_thick=0.62, leg_x=0.62, toes="raptor",
+        tooth_size=0.75,
         toe_thick=0.65, tail_len=1.3, tail_thick=0.45, feathers="full", features=("wing_feathers", "tail_fan"))),
-    "dilophosaurus": dict(name="Dilophosaurus", length_m=7.0, geo=dict(
+    "dilophosaurus": dict(name="Dilophosaurus", length_m=7.0, geo=dict(arm_pose="fold", 
         skull_k=(0.6, 0.7, 1.15), head_scale=0.9, features=("double_crest",), torso=(0.65, 0.7, 0.95), neck_len=1.3,
         neck_thick=0.6, neck_raise=0.2, arm_scale=2.0, arm_thick=0.55, fingers=3, leg_len=1.12, leg_thick=0.6, leg_x=0.75,
         tail_len=1.2, tail_thick=0.6)),
-    "troodon": dict(name="Troodon", length_m=2.4, geo=dict(
+    "troodon": dict(name="Troodon", length_m=2.4, geo=dict(arm_pose="fold", 
         skull_k=(0.55, 0.62, 1.05), head_scale=1.1, eye_size=1.6, torso=(0.55, 0.6, 0.8), neck_len=1.35, neck_thick=0.48,
         neck_raise=0.3, arm_scale=2.6, arm_thick=0.45, fingers=3, leg_len=1.2, leg_thick=0.45, leg_x=0.6, toes="raptor",
         toe_thick=0.55, tail_len=1.25, tail_thick=0.42, feathers="full", features=("wing_feathers", "tail_fan"))),
-    "compsognathus": dict(name="Compsognathus", length_m=1.0, geo=dict(
+    "compsognathus": dict(name="Compsognathus", length_m=1.0, geo=dict(arm_pose="fold", 
         skull_k=(0.55, 0.62, 1.0), head_scale=1.0, eye_size=1.3, torso=(0.5, 0.55, 0.75), neck_len=1.4, neck_thick=0.45,
         neck_raise=0.3, arm_scale=2.0, arm_thick=0.45, leg_len=1.25, leg_thick=0.45, leg_x=0.6, toe_thick=0.6,
         tail_len=1.5, tail_thick=0.4)),
-    "oviraptor": dict(name="Oviraptor", length_m=1.8, geo=dict(
+    "oviraptor": dict(name="Oviraptor", length_m=1.8, geo=dict(arm_pose="fold", 
         skull="beak", beak_len=0.55, head_scale=0.8, teeth=False, features=("head_crest", "wing_feathers", "tail_fan"),
         torso=(0.6, 0.66, 0.75), neck_len=1.35, neck_thick=0.55, neck_raise=0.35, arm_scale=2.6, arm_thick=0.5, fingers=3,
         leg_len=1.15, leg_thick=0.55, leg_x=0.7, toe_thick=0.65, tail_len=0.9, tail_thick=0.55, feathers="full")),
-    "gallimimus": dict(name="Gallimimus", length_m=6.0, geo=dict(
-        skull="beak", beak_len=1.1, head_scale=0.5, teeth=False, eye_size=1.2, torso=(0.62, 0.65, 0.8), neck_len=2.2,
-        neck_thick=0.42, neck_raise=0.6, arm_scale=2.2, arm_thick=0.45, fingers=3, leg_len=1.45, leg_thick=0.55, leg_x=0.6,
+    "gallimimus": dict(name="Gallimimus", length_m=6.0, geo=dict(arm_pose="fold", 
+        skull="beak", beak_len=1.1, head_scale=0.55, teeth=False, eye_size=1.0, torso=(0.62, 0.65, 0.8), neck_len=2.2,
+        neck_thick=0.42, neck_raise=0.42, arm_scale=2.2, arm_thick=0.45, fingers=3, leg_len=1.45, leg_thick=0.55, leg_x=0.6,
         toe_thick=0.6, tail_len=1.15, tail_thick=0.5, feathers="partial", features=("wing_feathers",))),
     "pachycephalosaurus": dict(name="Pachycephalosaurus", length_m=4.5, geo=dict(
         skull="dome", head_scale=0.9, torso=(0.78, 0.85, 0.85), neck_len=0.9, neck_thick=0.8, arm_scale=1.5, fingers=3,
@@ -64,10 +65,7 @@ BIPEDS = {
     "yutyrannus": dict(name="Yutyrannus", length_m=9.0, geo=dict(
         skull_k=(0.85, 0.9, 1.05), head_scale=1.05, torso=(0.9, 0.92, 0.95), arm_scale=1.5, fingers=3, leg_len=0.95,
         feathers="full", features=("neck_mane", "tail_fan"))),
-    "dodo": dict(name="Dodo", length_m=1.0, geo=dict(
-        skull="beak", beak_len=1.35, head_scale=1.35, teeth=False, eye_size=0.8, torso=(1.0, 1.15, 0.6), belly=1.1,
-        neck_len=0.45, neck_thick=0.9, neck_raise=0.45, arm_scale=0.9, arm_thick=0.9, leg_len=0.5, leg_thick=0.85, leg_x=0.75,
-        tail_len=0.12, tail_thick=0.6, feathers="full", features=("wing_feathers", "tail_tuft"))),
+    "dodo": dict(name="Dodo", length_m=0.95, builder="dodo", geo=dict()),
 }
 
 QUADS = {
@@ -110,6 +108,9 @@ for _plan, _d in (("theropod", BIPEDS), ("quadruped", QUADS), ("sauropod", SAURO
 
 def builder(sid):
     spec = ALL[sid]
+    if spec.get("builder") == "dodo":
+        from bird import Dodo
+        return Dodo(spec["geo"])
     if spec["plan"] == "theropod":
         from theropod import Theropod
         return Theropod(spec["geo"])
@@ -123,21 +124,21 @@ def builder(sid):
 LOOK = {
     "tyrannosaurus": dict(pattern="stripes", scars=True),
     "triceratops": dict(pal=dict(dorsal="#5a4a30", flank="#8e7550", belly="#d7c39a", stripe="#3a2c1c", frill="#a8582a",
-                                 accent="#c06a2c", horn="#7a6e58", beak="#2e2620", iris="#c89030"), pattern="bands", pattern_scale=1.3),
+                                 accent="#c06a2c", horn="#7a6e58", beak="#4a4034", iris="#c89030"), pattern="bands", pattern_scale=1.3),
     "stegosaurus": dict(pal=dict(dorsal="#4f5a36", flank="#7f8a55", belly="#d3c99a", stripe="#2f3520", plate="#6a4a2a",
-                                 accent="#b8572a", horn="#6e6252", beak="#2e2a20"), pattern="spots", pattern_scale=0.8),
+                                 accent="#b8572a", horn="#6e6252", beak="#585040"), pattern="spots", pattern_scale=0.8),
     "brontosaurus": dict(pal=dict(dorsal="#5a5248", flank="#8c8070", belly="#d0c4ae", stripe="#3e3830"), pattern="bands",
-                         pattern_strength=0.35, pattern_scale=1.6, skin="smooth", round_pupil=True),
+                         pattern_strength=0.35, pattern_scale=1.6, skin="smooth"),
     "diplodocus": dict(pal=dict(dorsal="#6a5a3a", flank="#a08858", belly="#e0d2a8", stripe="#4a3a22"), pattern="chevrons",
-                       pattern_scale=1.4, skin="smooth", round_pupil=True),
+                       pattern_scale=1.4, skin="smooth"),
     "ankylosaurus": dict(pal=dict(dorsal="#5c4e36", flank="#8a7652", belly="#c9b88e", plate="#4a3e2c", accent="#9a7a4a",
-                                  horn="#6e6252", beak="#2e2a22"), pattern="mottled"),
+                                  horn="#4c4234", beak="#585040"), pattern="mottled"),
     "parasaurolophus": dict(pal=dict(dorsal="#4a6a5a", flank="#7da08a", belly="#e1dcc0", stripe="#2c4034", frill="#c0542a",
-                                     accent="#d06a30", beak="#3a3328"), pattern="stripes", round_pupil=True),
-    "iguanodon": dict(pal=dict(dorsal="#5a5a3e", flank="#8f8e64", belly="#dcd6b4", stripe="#3a3a26", beak="#2e2a20",
+                                     accent="#d06a30", beak="#5a5244"), pattern="stripes", round_pupil=True),
+    "iguanodon": dict(pal=dict(dorsal="#5a5a3e", flank="#8f8e64", belly="#dcd6b4", stripe="#3a3a26", beak="#5c5444",
                                horn="#6e665a"), pattern="bands", round_pupil=True),
     "gallimimus": dict(pal=dict(dorsal="#6e5c44", flank="#a8916a", belly="#e8dcc0", feather="#8c7656", feather2="#4a3a28",
-                                stripe="#3c3020", beak="#3a3024"), pattern="stripes", feathers="partial", round_pupil=True),
+                                stripe="#3c3020", beak="#5a4e3c"), pattern="stripes", feathers="partial", round_pupil=True),
     "carnotaurus": dict(pal=dict(dorsal="#5a2e1e", flank="#9a4e2e", belly="#d8b894", stripe="#2e1810", accent="#c0442a",
                                  horn="#4a3a2a", iris="#e8c030"), pattern="stripes", pattern2="spots"),
     "allosaurus": dict(pal=dict(dorsal="#5a4430", flank="#9a7448", belly="#dcc49a", stripe="#2e2216", accent="#b4542a"),
@@ -151,7 +152,7 @@ LOOK = {
     "megalosaurus": dict(pal=dict(dorsal="#2c2c30", flank="#4e4e58", belly="#a8a49a", stripe="#18181c", accent="#6a2a3a",
                                   iris="#e05a1a"), pattern="stripes"),
     "therizinosaurus": dict(pal=dict(dorsal="#5a4c38", flank="#8a7858", belly="#d8ccb0", feather="#7a6a52", feather2="#3a3024",
-                                     accent="#b86a3a", claw="#3a3228", claw_base="#d8ccb4", beak="#2e2a24"), pattern="stripes",
+                                     accent="#b86a3a", claw="#3a3228", claw_base="#d8ccb4", beak="#4e463a"), pattern="stripes",
                             feathers="full", round_pupil=True),
     "utahraptor": dict(pal=dict(dorsal="#5a3e2c", flank="#9a6e4c", belly="#e0cca8", feather="#6a4a36", feather2="#2a1c14",
                                 stripe="#2a1a10", accent="#c0502a"), pattern="stripes", feathers="full"),
@@ -164,19 +165,22 @@ LOOK = {
     "compsognathus": dict(pal=dict(dorsal="#4a5a2e", flank="#7a9048", belly="#dcdca8", stripe="#2a3418", accent="#c0a030"),
                           pattern="stripes"),
     "oviraptor": dict(pal=dict(dorsal="#3a4450", flank="#6a7a8a", belly="#e0e0d8", feather="#5a6a7a", feather2="#222a34",
-                               frill="#d0502a", accent="#d0502a", beak="#2a2622"), pattern="stripes", feathers="full",
+                               frill="#b4583a", accent="#b4583a", beak="#4a443c"), pattern="stripes", feathers="full",
                       round_pupil=True),
     "pachycephalosaurus": dict(pal=dict(dorsal="#5a4a3a", flank="#8e7a62", belly="#d8c8ac", horn="#6e6050", accent="#b06a3a"),
                                pattern="bands"),
     "pachyrhinosaurus": dict(pal=dict(dorsal="#5a5040", flank="#8a8066", belly="#d4c8aa", frill="#8a5a3a", accent="#c07a3a",
-                                      horn="#7a6e58", beak="#2e2a22"), pattern="mottled"),
+                                      horn="#7a6e58", beak="#4c4438"), pattern="mottled"),
     "moschops": dict(pal=dict(dorsal="#6a5a4a", flank="#9a8872", belly="#d8ccb8", stripe="#4a3e32"), pattern="blotch",
                      skin="smooth", round_pupil=True),
     "yutyrannus": dict(pal=dict(dorsal="#5a4c3a", flank="#9a8a6a", belly="#e4dcc8", feather="#8a7a62", feather2="#3a3226",
                                 accent="#a8683a"), pattern="stripes", pattern_strength=0.45, feathers="full"),
-    "dodo": dict(pal=dict(dorsal="#5a5a62", flank="#8a8a92", belly="#c8c4bc", feather="#7a7a82", feather2="#3a3a42",
-                          beak="#c8a86a", accent="#a8a8b0", iris="#f0e0a0", foot="#8a7a52", leg="#9a8a5a"),
-                 pattern="none", feathers="full", round_pupil=True),
+    "dodo": dict(pal=dict(dorsal="#6a6570", flank="#8c8792", belly="#c9c2b8", feather="#8e8994", feather2="#56525c",
+                          stripe="#4a4650", beak="#ddd3a4", beak2="#b2a66e", lid="#a3a09a", accent="#8e8a94", iris="#d4b468",
+                          iris_dark="#8a6a30", leg="#c9a43c", foot="#b08a30", plume="#e6e0d2", plume2="#a8a098", throat="#9c96a0",
+                          claw="#3a3228", claw_base="#6a5a3a"),
+                 pattern="none", feathers="full", round_pupil=True, mask=0.0, brow=0.0, hood=0.2, lid_mix=0.9, feather_size=0.55,
+                 scale_size=0.45),
 }
 
 # attack animation family

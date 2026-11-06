@@ -13,6 +13,46 @@ REX_PAL = dict(
 )
 
 
+# materials that share the skin surface and get soft, per-texel borders (instead of per-triangle steps)
+SOFT = ("lid", "horn_skin", "beak", "beak2")
+
+
+def soft_weights(P, prims):
+    """per-texel weight of each soft material: like the nearest-primitive material choice of the mesher, but with a
+    smooth border (the distance to the material's primitives against the distance to every other primitive)"""
+    n = len(P)
+    big = 1e6
+    Dm = {m: np.full(n, big) for m in SOFT}
+    Km = {m: np.full(n, 1.0) for m in SOFT}
+    Do = np.full(n, big)
+    for p in prims:
+        lo, hi = p.bbox
+        pad = 2.0 * p.k + 1.5
+        sel = np.all((P > lo - pad) & (P < hi + pad), axis=1)
+        if not sel.any():
+            continue
+        d = np.full(n, big)
+        d[sel] = p.sdf(P[sel])
+        if p.mat in Dm:
+            closer = d < Dm[p.mat]
+            Km[p.mat] = np.where(closer, p.k, Km[p.mat])
+            Dm[p.mat] = np.minimum(Dm[p.mat], d)
+        else:
+            Do = np.minimum(Do, d)
+    out = {}
+    for m in SOFT:
+        if not (Dm[m] < big).any():
+            out[m] = None
+            continue
+        other = Do.copy()
+        for m2 in SOFT:
+            if m2 != m:
+                other = np.minimum(other, Dm[m2])
+        tau = 0.15 + 0.22 * Km[m]
+        out[m] = sm(tau, -tau, Dm[m] - other)
+    return out
+
+
 def cells_id(P, scale, seed):
     """F1, F2 and a per-cell random id"""
     f1, f2, vec = cells(P, scale, seed)
@@ -107,10 +147,12 @@ def shade(mat, P, N, AO, ctx):
         ey, ez = ctx["eye_y"], ctx["eye_z"]
         hs = ctx["head_s"]
         mask = head * (1 - sm(1.6 * hs, 3.4 * hs, np.abs(y - ey + 0.12 * (z - ez)))) * sm(ez - 9 * hs, ez - 3 * hs, z) * sp.get("mask", 1.0)
-        col = mixc(col, pal["mask"], mask * 0.7)
-        brow = head * sm(ey + 0.8 * hs, ey + 2.4 * hs, y) * (1 - sm(3.5 * hs, 6.0 * hs, np.abs(z - ez)))
-        col = mixc(col, pal["accent"], brow * sp.get("brow", 0.6))
-        st = stripes(P, N, seed, ps, sp.get("pattern", "stripes")) * (1 - bel) * (1 - head * 0.6)
+        col = mixc(col, pal["mask"], mask * 0.45)
+        # a faint accent on the brow ridge only (a bright cap over the whole skull looks like a toy)
+        brow = head * sm(ey + 0.8 * hs, ey + 1.8 * hs, y) * (1 - sm(ey + 3.0 * hs, ey + 4.2 * hs, y)) \
+            * (1 - sm(2.0 * hs, 3.5 * hs, np.abs(z - ez))) * sm(ctx["eye_x"] * 0.45, ctx["eye_x"] * 0.8, np.abs(x))
+        col = mixc(col, pal["accent"], brow * sp.get("brow", 0.35))
+        st = stripes(P, N, seed, ps, sp.get("pattern", "stripes")) * (1 - bel) * (1 - head * 0.85)
         col = mixc(col, pal["stripe"], st * sp.get("pattern_strength", 0.75))
         if sp.get("pattern2"):
             st2 = stripes(P, N, seed + 77, ps * 1.7, sp["pattern2"]) * (1 - bel)
@@ -123,6 +165,9 @@ def shade(mat, P, N, AO, ctx):
             fmask = (reg != "head") & (reg != "leg") if sp["feathers"] == "full" else ((reg == "neck") | ((reg == "torso") & (ny > -0.2)))
             if sp["feathers"] == "full":
                 fmask = fmask | ((reg == "leg") & (y > ctx["knee_y"]))
+            if sp.get("hood") is not None and mat == "skin":
+                # feathered hood: the back of the head is feathered, the face in front of the eyes stays bare
+                fmask = fmask | ((reg == "head") & (z > ctx["eye_z"] + sp["hood"] * ctx["head_s"]))
             feathered = fmask.astype(float)
         fs = sp.get("scale_size", 1.0) * ctx["detail"]
         big, _ = scale_relief(P, N, 2.1 * fs, seed + 101, 1.0)
@@ -151,16 +196,33 @@ def shade(mat, P, N, AO, ctx):
         if sp.get("scars"):
             from rex_paint import scars
             col = mixc(col, pal["scar"], scars(P) * 0.85)
+        soft = ctx.get("soft", {}).get(ctx.get("grp")) if mat == "skin" else None
+        ws = soft_weights(P, soft) if soft else {m: None for m in SOFT}
         if mat == "lid":
-            col = mixc(col, pal["lid"], 0.6)
+            ws["lid"] = np.ones(n)
         if mat == "horn_skin":
-            col = mixc(col, pal["horn"], 0.55) * (0.8 + 0.25 * fbm(P, 0.6, seed + 55, 2))[:, None]
+            ws["horn_skin"] = np.ones(n)
+        if ws["lid"] is not None:
+            col = mixc(col, pal["lid"], ws["lid"] * sp.get("lid_mix", 0.6))
+        if ws["horn_skin"] is not None:
+            horn = mixc(col, pal["horn"], 0.55) * (0.8 + 0.25 * fbm(P, 0.6, seed + 55, 2))[:, None]
+            col = mixc(col, horn, ws["horn_skin"])
+        for m in ("beak", "beak2"):
+            if ws[m] is not None and ws[m].max() > 0.005:
+                bc = np.tile(pal.get(m, pal["beak"]), (n, 1)) * (0.85 + 0.2 * vnoise(P * np.array([3, 1, 3]), 0.8, 71))[:, None]
+                bc = bc + (sm(0.6, 0.95, (N * LIGHT).sum(axis=1)) * 0.1)[:, None]
+                col = mixc(col, bc, ws[m])
         mw = ctx["eye_x"] * 0.5
+        nb = np.ones(n)
+        for m in ("beak", "beak2"):
+            if ws[m] is not None:
+                nb = nb * (1 - ws[m])
         if ctx.get("grp") == "body":
-            palate = head * sm(-0.55, -0.85, ny) * (np.abs(x) < mw) * (y < ctx["jaw_y"] + 0.4 * hs) * (z < ctx["jaw_z"])
+            # the mouth colour only where it is hidden inside the mouth (low occlusion), never on the visible face
+            palate = head * nb * sm(0.62, 0.4, AO) * sm(-0.55, -0.85, ny) * (np.abs(x) < mw) * (y < ctx["jaw_y"] + 0.4 * hs) * (z < ctx["jaw_z"])
             col = mixc(col, pal["mouth"] * (0.85 + 0.15 * np.abs(np.sin(z * 2.4)))[:, None], palate)
         elif ctx.get("grp") == "jaw":
-            floor = sm(0.45, 0.8, ny) * (np.abs(x) < mw * 0.8) * (y > ctx["jaw_y"] - 0.2 * hs)
+            floor = nb * sm(0.62, 0.4, AO) * sm(0.45, 0.8, ny) * (np.abs(x) < mw * 0.8) * (y > ctx["jaw_y"] - 0.2 * hs)
             col = mixc(col, pal["mouth"], floor)
     elif mat == "tongue":
         col = pal["tongue"][None, :] * (1 - 0.3 * (1 - sm(0.0, 0.35, np.abs(x))))[:, None] * (0.9 + 0.15 * vnoise(P, 0.5, 9))[:, None]
@@ -173,12 +235,12 @@ def shade(mat, P, N, AO, ctx):
         AO = np.maximum(AO, 0.8)
     elif mat == "horn":
         t = ctx["along"]
-        base = pal["horn"] * 1.9
+        base = pal["horn"] * 1.6
         col = mixc(np.tile(np.clip(base, 0, 1), (n, 1)), np.tile(pal["horn"] * 0.7, (n, 1)), sm(0.2, 1.0, t) * 0.8 + 0.1)
         col = col * (0.9 + 0.15 * vnoise(P * np.array([4, 0.6, 4]), 1.0, 61))[:, None]
         AO = np.maximum(AO, 0.75)
-    elif mat == "beak":
-        col = np.tile(pal["beak"], (n, 1)) * (0.85 + 0.2 * vnoise(P * np.array([3, 1, 3]), 0.8, 71))[:, None]
+    elif mat in ("beak", "beak2"):
+        col = np.tile(pal.get(mat, pal["beak"]), (n, 1)) * (0.85 + 0.2 * vnoise(P * np.array([3, 1, 3]), 0.8, 71))[:, None]
         col = col + (sm(0.6, 0.95, (N * LIGHT).sum(axis=1)) * 0.1)[:, None]
     elif mat in ("frill", "sail"):
         base = pal[mat]
@@ -193,6 +255,10 @@ def shade(mat, P, N, AO, ctx):
         f1, f2, cid = cells_id(P, 2.2, seed + 51)
         col = base[None, :] * (0.65 + 0.35 * sm(0.0, 0.14, f2 - f1)[:, None]) * (0.92 + 0.12 * cid[:, None])
         col = mixc(col, pal["accent"], sm(0.6, 1.0, (y - y.min()) / max(np.ptp(y), 1e-6)) * 0.5)
+    elif mat == "plume":
+        fr = feather_relief(P * 2.6, N, seed + 331, 1.0)
+        col = mixc(pal.get("plume", pal["feather"]), pal.get("plume2", pal["feather2"]), (1 - fr) * 0.9)
+        AO = np.maximum(AO, 0.7)
     elif mat == "feather":
         fr = feather_relief(P * 2.0, N, seed + 301, 1.0)
         col = mixc(pal["feather"], pal["feather2"], (1 - fr) * 1.5)
@@ -204,18 +270,19 @@ def shade(mat, P, N, AO, ctx):
         d = P - np.array(c)
         d /= np.maximum(np.linalg.norm(d, axis=1, keepdims=True), 1e-9)
         cs = d @ fwd
-        iris = sm(0.25, 0.35, cs)
-        col = mixc(np.tile(np.array([0.12, 0.08, 0.05]), (n, 1)), pal["iris"], iris)
-        col = mixc(col, pal["iris_dark"], sm(0.55, 0.35, cs) * iris)
+        # reptile eye: dark glossy eyeball, small iris disc that darkens towards its rim, no white
+        iris = sm(0.62, 0.7, cs)
+        col = mixc(np.tile(np.array([0.06, 0.045, 0.03]), (n, 1)), pal["iris"] * 0.78, iris)
+        col = mixc(col, pal["iris_dark"] * 0.8, sm(0.86, 0.7, cs) * iris)
         side = np.cross(fwd, np.array([0, 1.0, 0]))
         side /= max(np.linalg.norm(side), 1e-9)
         if sp.get("round_pupil"):
-            pupil = cs > 0.85
+            pupil = cs > 0.9
         else:
-            pupil = (np.abs(d @ side) < 0.16 * (0.5 + 0.5 * sm(0.6, 1.0, cs))) & (cs > 0.62)
+            pupil = (np.abs(d @ side) < 0.11 * (0.5 + 0.5 * sm(0.7, 1.0, cs))) & (cs > 0.72)
         col[pupil] = np.array([0.02, 0.015, 0.01])
-        hl = (d @ (fwd * 0.7 + np.array([0, 0.55, 0]) + side * 0.3) / np.linalg.norm(fwd * 0.7 + np.array([0, 0.55, 0]) + side * 0.3)) > 0.95
-        col[hl] = np.array([0.96, 0.95, 0.9])
+        hl = (d @ (fwd * 0.7 + np.array([0, 0.55, 0]) + side * 0.3) / np.linalg.norm(fwd * 0.7 + np.array([0, 0.55, 0]) + side * 0.3)) > 0.985
+        col[hl] = np.array([0.8, 0.79, 0.74])
         AO = np.ones(n)
     else:
         col = np.tile(np.array([1.0, 0.0, 1.0]), (n, 1))

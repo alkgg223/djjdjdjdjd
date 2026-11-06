@@ -106,7 +106,7 @@ def rigid(v, f, n, bone, sc, mat):
 def build(sid, B, sc):
     """B: the species builder (Theropod / Quadruped / Sauropod) after build()"""
     feats = set(B.P.get("features", ()))
-    parts = []
+    parts = list(B.extra_parts(sc)) if hasattr(B, "extra_parts") else []
     piv = lambda b: sc.bones[b][1]
     if "sail" in feats:              # spinosaurus
         zs = np.linspace(piv("neck1")[2] + 4, piv("tail2")[2], 26)
