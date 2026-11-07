@@ -236,6 +236,13 @@ final class Builder {
         Direction f = facing(t, st);
         switch (st.kind()) {
             case GROUND -> {
+                if (!st.furniture().equals("ramp") && i + 1 < plan(t).size()) {
+                    BaseDesign.Step next = plan(t).get(i + 1);
+                    if (next.type() == PieceType.FOUNDATION) {
+                        Tier tier = chooseTier(t, PieceType.FOUNDATION, false, next.phase());
+                        return new Job(i, st, pos, f, null, Recipes.pieceCost(tier, PieceType.FOUNDATION, false), false);
+                    }
+                }
                 return new Job(i, st, pos, f, null, List.of(), false);
             }
             case PIECE -> {

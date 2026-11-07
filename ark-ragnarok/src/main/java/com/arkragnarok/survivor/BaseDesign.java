@@ -630,8 +630,11 @@ public final class BaseDesign {
         List<Seg> segs = segments();
         if (segs == null) segs = List.of();
         // 1. the house: ground, foundations edge to edge, the outside walls with the main door, one roof of ceilings
-        for (Cell c : cells) out.add(new Step(Kind.GROUND, null, modulePos(c.x, c.z), Direction.NORTH, "", 1, c.room));
-        for (Cell c : cells) out.add(new Step(Kind.PIECE, PieceType.FOUNDATION, modulePos(c.x, c.z).below(), Direction.NORTH, "", 1, c.room));
+        for (Cell c : cells) {
+            // each plot is levelled right before its foundation goes down, so no open pit waits for materials
+            out.add(new Step(Kind.GROUND, null, modulePos(c.x, c.z), Direction.NORTH, "", 1, c.room));
+            out.add(new Step(Kind.PIECE, PieceType.FOUNDATION, modulePos(c.x, c.z).below(), Direction.NORTH, "", 1, c.room));
+        }
         // the main door: in the run on the entrance module's north side (else any side of it), in the piece over its middle
         Direction doorSide = null;
         for (Direction d : new Direction[]{Direction.NORTH, Direction.EAST, Direction.WEST, Direction.SOUTH}) {
