@@ -20,7 +20,7 @@ public final class StaticMeshRenderer {
     public static void draw(PoseStack.Pose pose, ArkMesh mesh, ResourceLocation texture, MultiBufferSource buffers, int light,
                             int overlay, int colour) {
         if (mesh == null) return;
-        VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
+        VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(JpegTextures.ensure(texture)));
         Matrix4f m = pose.pose();
         Matrix3f nm = pose.normal();
         int[] T = mesh.tris;

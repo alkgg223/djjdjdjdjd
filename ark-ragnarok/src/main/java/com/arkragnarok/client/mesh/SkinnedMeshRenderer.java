@@ -101,7 +101,7 @@ public final class SkinnedMeshRenderer {
             tNrm[v * 3 + 1] = qy;
             tNrm[v * 3 + 2] = qz;
         }
-        VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
+        VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(JpegTextures.ensure(texture)));
         float[] UV = mesh.uv;
         int[] T = mesh.tris;
         for (int t = 0; t < T.length; t += 3) {

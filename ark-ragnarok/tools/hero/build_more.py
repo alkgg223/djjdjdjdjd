@@ -19,4 +19,6 @@ for sid in ids:
     print("built", sid, meta["height"], meta["width"], flush=True)
     tiles.append(view.render(um["v"], um["n"], um["f"], size=(260, 190), yaw=-0.75, pitch=-0.12, tex=img, uv=um["uv"], ground=False))
     Image.fromarray((view.sheet(tiles, 5) * 255).astype(np.uint8)).save(preview)
+import subprocess
+subprocess.run([sys.executable, os.path.join(HERE, "compact_assets.py"), root], check=True)
 print("all done")

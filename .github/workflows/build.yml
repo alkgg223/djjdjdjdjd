@@ -34,6 +34,12 @@ jobs:
         run: |
           mkdir -p /tmp/jar && cp build/libs/ARK_Ragnarok_Ultimate-1.21.1.jar /tmp/jar/
           cd /tmp/jar
+          # GitHub refuses files over 100 MB: a big jar goes up in 90 MB parts (cat them back together)
+          if [ $(stat -c %s ARK_Ragnarok_Ultimate-1.21.1.jar) -gt 95000000 ]; then
+            split -b 90000000 -d ARK_Ragnarok_Ultimate-1.21.1.jar ARK_Ragnarok_Ultimate-1.21.1.jar.part
+            sha256sum ARK_Ragnarok_Ultimate-1.21.1.jar > ARK_Ragnarok_Ultimate-1.21.1.jar.sha256
+            rm ARK_Ragnarok_Ultimate-1.21.1.jar
+          fi
           git init -q
           git checkout -q -b ark-jar
           git config user.name "ark-ci"

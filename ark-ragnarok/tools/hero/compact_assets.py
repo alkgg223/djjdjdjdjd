@@ -1,4 +1,4 @@
-"""Shrink built assets: ARKM v1 -> v2 meshes, palette PNG textures, smaller saddle textures."""
+"""Shrink built assets: ARKM v1 -> v2 meshes, JPEG creature textures, smaller saddle textures."""
 import glob, os, struct, sys
 import numpy as np
 from PIL import Image
@@ -41,15 +41,27 @@ after = sum(os.path.getsize(p) for p in glob.glob(root + "/arkmesh/*.arkm"))
 print("meshes %.1f MB -> %.1f MB" % (before / 1e6, after / 1e6))
 tb = 0
 ta = 0
+# creature skins and saddles become JPEG (decoded in game by Minecraft's own stb_image, see client/mesh/JpegTextures):
+# full colour at a quarter of the PNG size. Doors, nodes and projectiles stay PNG.
+SKIP = {"door", "node", "projectiles"}
 for p in glob.glob(root + "/textures/entity/*/*.png"):
+    if os.path.basename(os.path.dirname(p)) in SKIP:
+        continue
     tb += os.path.getsize(p)
     im = Image.open(p).convert("RGB")
+    a = np.asarray(im)
+    empty = a.max(axis=2) == 0
+    if empty.any() and not empty.all():
+        # bleed the UV islands into the black gaps so JPEG blocks at island edges keep their colour
+        from scipy import ndimage
+        idx = ndimage.distance_transform_edt(empty, return_distances=False, return_indices=True)
+        im = Image.fromarray(a[idx[0], idx[1]])
     if "_saddle_" in p:
-        w = im.size[0]
         tgt = {0: 512, 1: 256, 2: 128}[int(p[-5])]
-        if w > tgt:
+        if im.size[0] > tgt:
             im = im.resize((tgt, tgt), Image.LANCZOS)
-    q = im.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
-    q.save(p, optimize=True)
-    ta += os.path.getsize(p)
+    out = p[:-4] + ".jpg"
+    im.save(out, "JPEG", quality=90, subsampling=0, optimize=True)
+    os.remove(p)
+    ta += os.path.getsize(out)
 print("textures %.1f MB -> %.1f MB" % (tb / 1e6, ta / 1e6))

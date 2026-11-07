@@ -39,7 +39,7 @@ public class ArkCreatureGeoModel extends GeoModel<ArkCreature> {
 
     @Override
     public ResourceLocation getTextureResource(ArkCreature animatable) {
-        return tex;
+        return com.arkragnarok.client.mesh.JpegTextures.ensure(tex);
     }
 
     @Override

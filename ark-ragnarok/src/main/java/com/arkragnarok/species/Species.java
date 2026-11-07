@@ -75,7 +75,7 @@ public final class Species {
     }
 
     public ResourceLocation texture(int lod) {
-        return ArkRagnarok.id("textures/entity/" + id + "/" + id + "_lod" + lod + ".png");
+        return ArkRagnarok.id("textures/entity/" + id + "/" + id + "_lod" + lod + ".jpg");
     }
 
     public ResourceLocation saddleMesh(int lod) {
@@ -83,7 +83,7 @@ public final class Species {
     }
 
     public ResourceLocation saddleTexture(int lod) {
-        return ArkRagnarok.id("textures/entity/" + id + "/" + id + "_saddle_lod" + lod + ".png");
+        return ArkRagnarok.id("textures/entity/" + id + "/" + id + "_saddle_lod" + lod + ".jpg");
     }
 
     public String anim(String name) {
