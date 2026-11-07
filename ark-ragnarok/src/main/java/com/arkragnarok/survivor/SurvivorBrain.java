@@ -362,6 +362,18 @@ final class SurvivorBrain extends Goal {
             l.add(ing(ModEconomy.COOKED_MEAT.get(), s.count(ModEconomy.COOKED_MEAT.get()) + s.count(ModEconomy.RAW_MEAT.get())));
         }
         if (t.stage >= 2 && s.count(ModEconomy.STONE_SPEAR.get()) + s.count(ModEconomy.METAL_SWORD.get()) == 0) l.add(ing(ModEconomy.STONE_SPEAR.get(), 1));
+        // armour for its stage: cloth or hide at first, chitin, then flak, riot at the end
+        String set = t.stage >= 6 ? "riot" : t.stage >= 4 ? "flak" : t.stage >= 3 ? "chitin" : t.stage >= 2 ? "hide" : "cloth";
+        net.minecraft.world.entity.EquipmentSlot[] slots = {net.minecraft.world.entity.EquipmentSlot.HEAD, net.minecraft.world.entity.EquipmentSlot.CHEST,
+                net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET};
+        List<String> order = List.of("cloth", "hide", "chitin", "flak", "riot");
+        for (int k = 0; k < 4; k++) {
+            Item want = ModEconomy.ARMOR.get(set).get(k).get();
+            ItemStack worn = s.getItemBySlot(slots[k]);
+            int wornRank = -1;
+            for (int r = 0; r < order.size(); r++) if (worn.is(ModEconomy.ARMOR.get(order.get(r)).get(k).get())) wornRank = r;
+            if (wornRank < order.indexOf(set) && s.count(want) == 0) l.add(ing(want, 1));
+        }
         if (t.stage >= 3) {
             l.add(ing(ModEconomy.METAL_PICK.get(), 1));
             l.add(ing(ModEconomy.METAL_HATCHET.get(), 1));
@@ -896,10 +908,12 @@ final class SurvivorBrain extends Goal {
         if (t.tames.size() >= 1 + t.stage / 2 || (p.caution() > 0.85f && p.courage() < 0.3f)) return false;
         // a bow and tranquilizer arrows it makes in its hands (flint, fiber, narcoberries, thatch), a club as a fallback
         if (s.count(ModEconomy.PRIMITIVE_BOW.get()) == 0 && resolve(t, ModEconomy.PRIMITIVE_BOW.get(), 1, 0)) return true;
-        if (s.count(ModItems.TRANQ_ARROW.get()) < 6 && resolve(t, ModItems.TRANQ_ARROW.get(), 12, 0)) return true;
-        if (s.count(ModEconomy.WOODEN_CLUB.get()) == 0 && s.count(ModItems.TRANQ_ARROW.get()) == 0) return resolve(t, ModEconomy.WOODEN_CLUB.get(), 1, 0);
+        if (tranqCount() < 6 && resolve(t, betterTranq(t), 12, 0)) return true;
+        if (tranqCount() < 6 && resolve(t, ModItems.TRANQ_ARROW.get(), 12, 0)) return true;
+        if (s.count(ModEconomy.WOODEN_CLUB.get()) == 0 && tranqCount() == 0) return resolve(t, ModEconomy.WOODEN_CLUB.get(), 1, 0);
         boolean bow = s.count(ModEconomy.PRIMITIVE_BOW.get()) > 0;
-        int arrows = s.count(ModItems.TRANQ_ARROW.get());
+        int arrows = tranqCount();
+        float dose = bestTranq() instanceof com.arkragnarok.item.TranqArrowItem ti ? ti.torpor : Taming.TRANQ_ARROW;
         long now = s.level().getGameTime();
         // the one worth most for what it costs: level, can it be ridden, size, a hunter for defence - against the
         // arrows it takes to put it to sleep, the distance, and predators around it
@@ -917,7 +931,7 @@ final class SurvivorBrain extends Goal {
             boolean danger = Perception.dangerous(c);
             if (danger && !(bow && t.stage >= 4 && p.courage() > 0.6f)) continue;
             float torpor = c.maxTorpor();
-            int need = (int) Math.ceil(torpor / Taming.TRANQ_ARROW * 1.35) + 1;            // some arrows miss
+            int need = (int) Math.ceil(torpor / dose * 1.35) + 1;                            // some arrows miss
             boolean club = torpor <= 400 && c.getBbHeight() < 2.6f && !danger;
             if (!(bow && need <= 48) && !club) continue;
             boolean threatened = false;
@@ -937,6 +951,7 @@ final class SurvivorBrain extends Goal {
         }
         if (best == null) return false;
         // enough arrows before it starts (made by hand: flint, fiber, narcoberries, thatch)
+        if (bow && arrows < bestNeed && resolve(t, betterTranq(t), Math.min(64, bestNeed + 2), 0)) return true;
         if (bow && arrows < bestNeed && resolve(t, ModItems.TRANQ_ARROW.get(), Math.min(64, bestNeed + 2), 0)) return true;
         // enough taming food for the whole taming: its favourite kibble when the campfire can make it, else plain food
         boolean meat = best.species().diet != Diet.HERBIVORE;
@@ -978,7 +993,7 @@ final class SurvivorBrain extends Goal {
             finish();
             return;
         }
-        if (!c.isUnconscious() && s.count(ModEconomy.PRIMITIVE_BOW.get()) > 0 && s.count(ModItems.TRANQ_ARROW.get()) > 0) {
+        if (!c.isUnconscious() && s.count(ModEconomy.PRIMITIVE_BOW.get()) > 0 && tranqCount() > 0) {
             shootTranq(t, c);
             if (taskTicks > 3000) {
                 tameTarget = null;
@@ -1025,6 +1040,27 @@ final class SurvivorBrain extends Goal {
         }
     }
 
+    /** every tranquilizer projectile it carries */
+    private int tranqCount() {
+        return s.count(ModItems.TRANQ_ARROW.get()) + s.count(ModEconomy.NARCO_DART.get()) + s.count(ModEconomy.POTENT_TRANQ_ARROW.get())
+                + s.count(ModEconomy.SHOCK_TRANQ_ARROW.get()) + s.count(ModEconomy.TRANQ_BOLT.get());
+    }
+
+    /** the strongest one it has */
+    private Item bestTranq() {
+        Item[] strongFirst = {ModEconomy.TRANQ_BOLT.get(), ModEconomy.SHOCK_TRANQ_ARROW.get(), ModEconomy.POTENT_TRANQ_ARROW.get(),
+                ModItems.TRANQ_ARROW.get(), ModEconomy.NARCO_DART.get()};
+        for (Item it : strongFirst) if (s.count(it) > 0) return it;
+        return ModItems.TRANQ_ARROW.get();
+    }
+
+    /** the best one its stations can make: shock arrows at the fabricator, potent ones at the mortar, else plain ones by hand */
+    private Item betterTranq(SurvivorWorld.Tribe t) {
+        if (t.stage >= 5 && builder().station(t, Station.FABRICATOR) != null) return ModEconomy.SHOCK_TRANQ_ARROW.get();
+        if (t.stage >= 3 && builder().station(t, Station.MORTAR) != null) return ModEconomy.POTENT_TRANQ_ARROW.get();
+        return ModItems.TRANQ_ARROW.get();
+    }
+
     /** keeps a safe distance and puts tranquilizer arrows into it until it falls asleep */
     private void shootTranq(SurvivorWorld.Tribe t, ArkCreature c) {
         s.setTarget(null);
@@ -1044,15 +1080,15 @@ final class SurvivorBrain extends Goal {
         s.getLookControl().setLookAt(c, 30f, 30f);
         if (++work % 30 != 0) return;
         Level level = s.level();
-        com.arkragnarok.entity.TranqArrow a = new com.arkragnarok.entity.TranqArrow(level, s, new ItemStack(ModItems.TRANQ_ARROW.get()),
-                s.getMainHandItem());
+        Item ammo = bestTranq();
+        com.arkragnarok.entity.TranqArrow a = new com.arkragnarok.entity.TranqArrow(level, s, new ItemStack(ammo), s.getMainHandItem());
         double dx = c.getX() - s.getX(), dz = c.getZ() - s.getZ();
         double dy = c.getY(0.5) - a.getY();
         double h = Math.sqrt(dx * dx + dz * dz);
         float spread = Math.max(0.5f, 5f - t.skills.level(Skills.Skill.COMBAT) * 0.15f);
         a.shoot(dx, dy + h * 0.14, dz, 2.6f, spread);
         level.addFreshEntity(a);
-        s.take(ModItems.TRANQ_ARROW.get(), 1);
+        s.take(ammo, 1);
         s.swing(InteractionHand.MAIN_HAND);
         level.playSound(null, s.getX(), s.getY(), s.getZ(), SoundEvents.ARROW_SHOOT, SoundSource.NEUTRAL, 1.0f, 1.0f);
         t.skills.gain(Skills.Skill.COMBAT, 0.5f, t.personality());

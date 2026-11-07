@@ -32,6 +32,7 @@ public class ArkRagnarok {
         ModWorld.FEATURES.register(modBus);
         ModBuilding.BLOCKS.register(modBus);
         com.arkragnarok.economy.ModEconomy.BLOCKS.register(modBus);
+        com.arkragnarok.economy.ModEconomy.ARMOR_MATERIALS.register(modBus);
         com.arkragnarok.economy.ModEconomy.BLOCK_ENTITIES.register(modBus);
         com.arkragnarok.registry.ModMenus.MENUS.register(modBus);
         ModBuilding.BLOCK_ENTITIES.register(modBus);

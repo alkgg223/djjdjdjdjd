@@ -36,7 +36,7 @@ public class TranqArrowRenderer extends EntityRenderer<TranqArrow> {
         // the item model lies on the diagonal (tip up and right): turn the tip onto +x, the flight direction
         pose.mulPose(Axis.ZP.rotationDegrees(-45.0f));
         pose.scale(0.72f, 0.72f, 0.72f);
-        items.renderStatic(stack, ItemDisplayContext.NONE, light, OverlayTexture.NO_OVERLAY, pose, buffers, arrow.level(), arrow.getId());
+        items.renderStatic(arrow.variant(), ItemDisplayContext.NONE, light, OverlayTexture.NO_OVERLAY, pose, buffers, arrow.level(), arrow.getId());
         pose.popPose();
         super.render(arrow, yaw, partialTick, pose, buffers, light);
     }

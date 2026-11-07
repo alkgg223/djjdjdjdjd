@@ -100,6 +100,66 @@ public final class ModEconomy {
     public static final DeferredItem<BowItem> PRIMITIVE_BOW = item("primitive_bow", () -> new BowItem(new Item.Properties().durability(384)));
     public static final DeferredItem<ArrowItem> STONE_ARROW = item("stone_arrow", () -> new ArrowItem(new Item.Properties()));
 
+    // ------------------------------------------------------------------------------------------ tranquilizer projectiles
+    public static final DeferredItem<com.arkragnarok.item.TranqArrowItem> NARCO_DART = item("narco_dart",
+            () -> new com.arkragnarok.item.TranqArrowItem(new Item.Properties(), 70f, 0.4));
+    public static final DeferredItem<com.arkragnarok.item.TranqArrowItem> POTENT_TRANQ_ARROW = item("potent_tranq_arrow",
+            () -> new com.arkragnarok.item.TranqArrowItem(new Item.Properties(), 260f, 1.2));
+    public static final DeferredItem<com.arkragnarok.item.TranqArrowItem> SHOCK_TRANQ_ARROW = item("shock_tranq_arrow",
+            () -> new com.arkragnarok.item.TranqArrowItem(new Item.Properties(), 450f, 1.0));
+    public static final DeferredItem<com.arkragnarok.item.TranqArrowItem> TRANQ_BOLT = item("tranq_bolt",
+            () -> new com.arkragnarok.item.TranqArrowItem(new Item.Properties(), 700f, 3.0));
+
+    // ------------------------------------------------------------------------------------------ armour
+    public static final DeferredRegister<net.minecraft.world.item.ArmorMaterial> ARMOR_MATERIALS = DeferredRegister.create(Registries.ARMOR_MATERIAL,
+            ArkRagnarok.MODID);
+
+    /** defence: boots, leggings, chestplate, helmet */
+    private static DeferredHolder<net.minecraft.world.item.ArmorMaterial, net.minecraft.world.item.ArmorMaterial> material(String id, int[] def,
+            int ench, net.minecraft.core.Holder<net.minecraft.sounds.SoundEvent> sound, float tough, float kb, Supplier<? extends Item> repair) {
+        return ARMOR_MATERIALS.register(id, () -> {
+            java.util.EnumMap<net.minecraft.world.item.ArmorItem.Type, Integer> m = new java.util.EnumMap<>(net.minecraft.world.item.ArmorItem.Type.class);
+            m.put(net.minecraft.world.item.ArmorItem.Type.BOOTS, def[0]);
+            m.put(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, def[1]);
+            m.put(net.minecraft.world.item.ArmorItem.Type.CHESTPLATE, def[2]);
+            m.put(net.minecraft.world.item.ArmorItem.Type.HELMET, def[3]);
+            m.put(net.minecraft.world.item.ArmorItem.Type.BODY, def[2]);
+            return new net.minecraft.world.item.ArmorMaterial(m, ench, sound, () -> net.minecraft.world.item.crafting.Ingredient.of(repair.get()),
+                    List.of(new net.minecraft.world.item.ArmorMaterial.Layer(ArkRagnarok.id(id))), tough, kb);
+        });
+    }
+
+    public static final DeferredHolder<net.minecraft.world.item.ArmorMaterial, net.minecraft.world.item.ArmorMaterial> CLOTH_MAT = material("cloth",
+            new int[]{1, 2, 3, 1}, 15, net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_LEATHER, 0f, 0f, FIBER);
+    public static final DeferredHolder<net.minecraft.world.item.ArmorMaterial, net.minecraft.world.item.ArmorMaterial> HIDE_MAT = material("hide",
+            new int[]{1, 3, 4, 2}, 12, net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_LEATHER, 0f, 0f, HIDE);
+    public static final DeferredHolder<net.minecraft.world.item.ArmorMaterial, net.minecraft.world.item.ArmorMaterial> CHITIN_MAT = material("chitin",
+            new int[]{2, 5, 6, 2}, 10, net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_TURTLE, 1f, 0f, KERATIN);
+    public static final DeferredHolder<net.minecraft.world.item.ArmorMaterial, net.minecraft.world.item.ArmorMaterial> FLAK_MAT = material("flak",
+            new int[]{3, 6, 7, 3}, 9, net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_IRON, 2f, 0f, METAL_INGOT);
+    public static final DeferredHolder<net.minecraft.world.item.ArmorMaterial, net.minecraft.world.item.ArmorMaterial> RIOT_MAT = material("riot",
+            new int[]{3, 7, 8, 3}, 10, net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_NETHERITE, 3.5f, 0.1f, POLYMER);
+
+    public static final java.util.Map<String, java.util.List<DeferredItem<net.minecraft.world.item.ArmorItem>>> ARMOR = new java.util.LinkedHashMap<>();
+
+    private static void armorSet(String id, DeferredHolder<net.minecraft.world.item.ArmorMaterial, net.minecraft.world.item.ArmorMaterial> mat, int dur) {
+        java.util.List<DeferredItem<net.minecraft.world.item.ArmorItem>> l = new java.util.ArrayList<>();
+        for (net.minecraft.world.item.ArmorItem.Type t : new net.minecraft.world.item.ArmorItem.Type[]{net.minecraft.world.item.ArmorItem.Type.HELMET,
+                net.minecraft.world.item.ArmorItem.Type.CHESTPLATE, net.minecraft.world.item.ArmorItem.Type.LEGGINGS, net.minecraft.world.item.ArmorItem.Type.BOOTS}) {
+            String suffix = t.getName();
+            l.add(item(id + "_" + suffix, () -> new net.minecraft.world.item.ArmorItem(mat, t, new Item.Properties().durability(t.getDurability(dur)))));
+        }
+        ARMOR.put(id, l);
+    }
+
+    static {
+        armorSet("cloth", CLOTH_MAT, 5);
+        armorSet("hide", HIDE_MAT, 9);
+        armorSet("chitin", CHITIN_MAT, 16);
+        armorSet("flak", FLAK_MAT, 25);
+        armorSet("riot", RIOT_MAT, 33);
+    }
+
     // ------------------------------------------------------------------------------------------ stations, storage, bed, farm
     private static BlockBehaviour.Properties wood() {
         return BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5f, 4f).sound(SoundType.WOOD).noOcclusion()

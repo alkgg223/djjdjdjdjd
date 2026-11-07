@@ -2,6 +2,10 @@
  "replace": false,
  "values": [
   "arkragnarok:tranq_arrow",
-  "arkragnarok:stone_arrow"
+  "arkragnarok:stone_arrow",
+  "arkragnarok:narco_dart",
+  "arkragnarok:potent_tranq_arrow",
+  "arkragnarok:shock_tranq_arrow",
+  "arkragnarok:tranq_bolt"
  ]
 }

@@ -105,6 +105,9 @@ public final class SmokeTest {
     private static net.minecraft.world.entity.player.Player fake;
     private static com.arkragnarok.entity.ResourceNode node;
     private static com.arkragnarok.survivor.Survivor survivor, rival;
+    private static ArkCreature runner;
+    private static net.minecraft.world.phys.Vec3 runnerStart;
+    private static java.util.UUID rivalId;
     private static BlockPos house;
 
     private static void startSystems(ServerLevel level) {
@@ -151,6 +154,26 @@ public final class SmokeTest {
             rival.init(8);
             level.addFreshEntity(rival);
         }
+        // a second dodo that is only hit (not knocked out): it must run away, not fight back
+        runner = ModEntities.type("dodo").spawn(level, level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn.offset(-25, 0, 25)),
+                MobSpawnType.COMMAND);
+        // wild levels: up to 500, high ones rare
+        int over150 = 0, over450 = 0, max = 0;
+        for (int k = 0; k < 20000; k++) {
+            int lv = com.arkragnarok.world.DinoSpawner.wildLevel(level.random);
+            max = Math.max(max, lv);
+            if (lv > 150) over150++;
+            if (lv > 450) over450++;
+        }
+        LOG.info("ARK-SMOKE wild levels: max {}, above 150: {}%, above 450: {}%", max, over150 / 200.0, over450 / 200.0);
+        check(max <= 500 && max > 400 && over150 < 20000 * 0.2 && over450 < 20000 * 0.01, "wild levels reach 500 but high levels are rare");
+        // the tranquilizer family gets stronger
+        check(com.arkragnarok.economy.ModEconomy.NARCO_DART.get().torpor < ((com.arkragnarok.item.TranqArrowItem) com.arkragnarok.registry.ModItems.TRANQ_ARROW.get()).torpor
+                && ((com.arkragnarok.item.TranqArrowItem) com.arkragnarok.registry.ModItems.TRANQ_ARROW.get()).torpor < com.arkragnarok.economy.ModEconomy.POTENT_TRANQ_ARROW.get().torpor
+                && com.arkragnarok.economy.ModEconomy.POTENT_TRANQ_ARROW.get().torpor < com.arkragnarok.economy.ModEconomy.SHOCK_TRANQ_ARROW.get().torpor
+                && com.arkragnarok.economy.ModEconomy.SHOCK_TRANQ_ARROW.get().torpor < com.arkragnarok.economy.ModEconomy.TRANQ_BOLT.get().torpor,
+                "five tranquilizer projectiles with rising doses");
+        check(com.arkragnarok.economy.ModEconomy.ARMOR.size() == 5, "five armour sets");
         int planned = 0;
         for (com.arkragnarok.survivor.BaseDesign d : com.arkragnarok.survivor.BaseDesign.all()) if (!d.plan().isEmpty()) planned++;
         check(planned == com.arkragnarok.survivor.BaseDesign.COUNT, "all " + com.arkragnarok.survivor.BaseDesign.COUNT + " base designs have a build plan");
@@ -199,6 +222,34 @@ public final class SmokeTest {
             BlockPos wallPart = house.relative(net.minecraft.core.Direction.EAST, 2).above(2).north();
             level.destroyBlock(wallPart, false);
             check(level.isEmptyBlock(house.relative(net.minecraft.core.Direction.EAST, 2).above()), "breaking one block removes the whole wall");
+        }
+        if (t == 60 && runner != null) {
+            runnerStart = runner.position();
+            runner.hurt(level.damageSources().playerAttack(fake), 1.0f);
+        }
+        if (t == 160 && runner != null) {
+            double moved = runner.position().distanceTo(runnerStart);
+            LOG.info("ARK-SMOKE hit dodo moved {} blocks, target {}", Math.round(moved * 10) / 10.0, runner.getTarget());
+            check(runner.isAlive() && moved > 3 && runner.getTarget() == null, "a hit dodo runs away instead of fighting back");
+        }
+        if (t == 200 && survivor != null) {
+            survivor.inv.addItem(new net.minecraft.world.item.ItemStack(com.arkragnarok.economy.ModEconomy.ARMOR.get("hide").get(0).get()));
+        }
+        if (t == 400 && survivor != null) {
+            check(survivor.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).is(com.arkragnarok.economy.ModEconomy.ARMOR.get("hide").get(0).get()),
+                    "a survivor puts on armour it carries");
+        }
+        if (t == 900 && rival != null) {
+            rivalId = rival.getUUID();
+            rival.inv.addItem(new net.minecraft.world.item.ItemStack(com.arkragnarok.economy.ModEconomy.FLINT.get(), 5));
+            rival.hurt(level.damageSources().genericKill(), 10000f);
+        }
+        if (t == 1250 && rivalId != null) {
+            var back = level.getEntity(rivalId);
+            var tr = com.arkragnarok.survivor.world.SurvivorWorld.get(level).find(rivalId);
+            LOG.info("ARK-SMOKE rival after death: {} task {} deathPos {}", back, back instanceof com.arkragnarok.survivor.Survivor sv ? sv.task() : "-",
+                    tr == null ? null : tr.deathPos);
+            check(back instanceof com.arkragnarok.survivor.Survivor sv && sv.isAlive(), "a dead survivor wakes up again (same survivor, same tribe)");
         }
         if (survivor != null && t % 100 == 0 && t > 0) {
             LOG.info("ARK-SMOKE survivor-dbg t={} built={} {}", t, survivor.buildStep(), survivor.debugState());
@@ -259,8 +310,7 @@ public final class SmokeTest {
                         "tribe saves and loads with its base");
             }
             if (rival != null) {
-                LOG.info("ARK-SMOKE rival alive={} task={} base={} food={}", rival.isAlive(), rival.task(), rival.base(), rival.foodItems());
-                check(rival.isAlive(), "rival survivor alive");
+                LOG.info("ARK-SMOKE rival (first life) alive={} task={} base={}", rival.isAlive(), rival.task(), rival.base());
             }
             finish(server);
         }

@@ -67,7 +67,7 @@ public final class SurvivorRespawner {
             if (level.isLoaded(t.base)) return level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, t.base);
             return t.base;
         }
-        BlockPos near = t.deathPos != null ? t.deathPos.offset(level.random.nextInt(41) - 20, 0, level.random.nextInt(41) - 20) : t.lastPos;
+        BlockPos near = t.deathPos != null ? t.deathPos.offset(level.random.nextInt(13) - 6, 0, level.random.nextInt(13) - 6) : t.lastPos;
         if (!level.isLoaded(near)) return near;
         return level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, near);
     }

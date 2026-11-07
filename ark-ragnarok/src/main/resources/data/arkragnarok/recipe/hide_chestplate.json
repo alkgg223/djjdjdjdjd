@@ -1,0 +1,34 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "equipment",
+ "ingredients": [
+  {
+   "item": "arkragnarok:hide"
+  },
+  {
+   "item": "arkragnarok:hide"
+  },
+  {
+   "item": "arkragnarok:hide"
+  },
+  {
+   "item": "arkragnarok:hide"
+  },
+  {
+   "item": "arkragnarok:hide"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:hide_chestplate",
+  "count": 1
+ }
+}

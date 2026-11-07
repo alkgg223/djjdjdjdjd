@@ -69,6 +69,9 @@ public final class Recipes {
         hand("smithy", () -> ModEconomy.SMITHY.get().asItem(), 1, i(ModEconomy.STONE, 3), i(ModEconomy.WOOD, 3), i(ModEconomy.HIDE, 3));
         hand("storage_box", () -> ModEconomy.STORAGE_BOX.get().asItem(), 1, i(ModEconomy.WOOD, 5), i(ModEconomy.THATCH, 3), i(ModEconomy.FIBER, 1));
         hand("hide_bed", ModEconomy.HIDE_BED_ITEM, 1, i(ModEconomy.WOOD, 3), i(ModEconomy.HIDE, 3), i(ModEconomy.FIBER, 2), i(ModEconomy.THATCH, 1));
+        hand("narco_dart", ModEconomy.NARCO_DART, 4, i(ModItems.NARCOBERRY, 2), i(ModEconomy.FIBER, 1), i(ModEconomy.THATCH, 1));
+        armour(null, "cloth", new int[][]{{5}, {8}, {7}, {4}}, ModEconomy.FIBER);
+        armour(null, "hide", new int[][]{{3, 2}, {5, 3}, {4, 3}, {2, 2}}, ModEconomy.HIDE, ModEconomy.FIBER);
         hand("tranq_arrow", ModItems.TRANQ_ARROW, 2, i(ModEconomy.FLINT, 1), i(ModEconomy.FIBER, 2), i(ModItems.NARCOBERRY, 3), i(ModEconomy.THATCH, 1));
         hand("crop_plot", () -> ModEconomy.CROP_PLOT.get().asItem(), 1, i(ModEconomy.WOOD, 3), i(ModEconomy.THATCH, 2), i(ModEconomy.STONE, 2),
                 i(ModEconomy.FIBER, 2));
@@ -96,6 +99,8 @@ public final class Recipes {
         add(Station.MORTAR, "cementing_paste_bone", ModEconomy.CEMENTING_PASTE, 1, i(ModEconomy.STONE, 4), i(ModEconomy.DINO_BONE, 1));
         add(Station.MORTAR, "narcotic", ModItems.NARCOTIC, 2, i(ModItems.NARCOBERRY, 5), i(ModEconomy.RAW_MEAT, 1));
         add(Station.MORTAR, "tranq_arrow", ModItems.TRANQ_ARROW, 4, i(ModEconomy.STONE_ARROW, 4), i(ModItems.NARCOTIC, 1));
+        add(Station.MORTAR, "potent_tranq_arrow", ModEconomy.POTENT_TRANQ_ARROW, 4, i(ModEconomy.STONE_ARROW, 4), i(ModItems.NARCOTIC, 2),
+                i(ModEconomy.METAL_INGOT, 1));
         // refining forge
         add(Station.FORGE, "metal_ingot", ModEconomy.METAL_INGOT, 1, i(ModEconomy.METAL_ORE, 2), i(ModEconomy.WOOD, 1));
         add(Station.FORGE, "metal_ingot_charcoal", ModEconomy.METAL_INGOT, 3, i(ModEconomy.METAL_ORE, 6), i(ModEconomy.CHARCOAL, 1));
@@ -113,12 +118,33 @@ public final class Recipes {
         add(Station.SMITHY, "fabricator", () -> ModEconomy.FABRICATOR.get().asItem(), 1, i(ModEconomy.METAL_INGOT, 12), i(ModEconomy.CEMENTING_PASTE, 4),
                 i(ModEconomy.CRYSTAL, 4), i(ModEconomy.SPARKPOWDER, 4));
         for (Tier t : new Tier[]{Tier.STONE, Tier.IRON}) pieceRecipes(Station.SMITHY, t);
+        armour(Station.SMITHY, "chitin", new int[][]{{3, 2, 2}, {5, 3, 3}, {4, 3, 2}, {2, 2, 2}}, ModEconomy.KERATIN, ModEconomy.HIDE, ModEconomy.FIBER);
+        armour(Station.SMITHY, "flak", new int[][]{{4, 2, 2}, {8, 3, 3}, {6, 3, 3}, {3, 2, 2}}, ModEconomy.METAL_INGOT, ModEconomy.HIDE, ModEconomy.FIBER);
+        add(Station.SMITHY, "tranq_bolt", ModEconomy.TRANQ_BOLT, 2, i(ModEconomy.METAL_INGOT, 2), i(ModItems.NARCOTIC, 3), i(ModEconomy.WOOD, 2));
         // fabricator
         add(Station.FABRICATOR, "polymer", ModEconomy.POLYMER, 2, i(ModEconomy.OBSIDIAN, 2), i(ModEconomy.CEMENTING_PASTE, 2), i(ModEconomy.CRYSTAL, 1));
         add(Station.FABRICATOR, "electronics", ModEconomy.ELECTRONICS, 1, i(ModEconomy.METAL_INGOT, 1), i(ModEconomy.CRYSTAL, 2));
         add(Station.FABRICATOR, "survivor_command_device", ModItems.SURVIVOR_DEVICE, 1, i(ModEconomy.ELECTRONICS, 4), i(ModEconomy.POLYMER, 2),
                 i(ModEconomy.CRYSTAL, 4));
         pieceRecipes(Station.FABRICATOR, Tier.STEEL);
+        armour(Station.FABRICATOR, "riot", new int[][]{{3, 4, 2, 2}, {5, 8, 3, 3}, {4, 6, 2, 3}, {2, 4, 1, 2}}, ModEconomy.POLYMER,
+                ModEconomy.METAL_INGOT, ModEconomy.CRYSTAL, ModEconomy.CEMENTING_PASTE);
+        add(Station.FABRICATOR, "shock_tranq_arrow", ModEconomy.SHOCK_TRANQ_ARROW, 4, i(ModEconomy.STONE_ARROW, 4), i(ModItems.NARCOTIC, 2),
+                i(ModEconomy.ELECTRONICS, 1));
+    }
+
+    /** a set of armour: helmet, chestplate, leggings, boots, each with its counts of the given materials (station null = in the hands) */
+    @SafeVarargs
+    private static void armour(Station st, String set, int[][] counts, Supplier<? extends Item>... mats) {
+        String[] piece = {"helmet", "chestplate", "leggings", "boots"};
+        for (int k = 0; k < 4; k++) {
+            final int idx = k;
+            Supplier<Item> result = () -> ModEconomy.ARMOR.get(set).get(idx).get();
+            Ing[] ings = new Ing[mats.length];
+            for (int m = 0; m < mats.length; m++) ings[m] = i(mats[m], counts[k][m]);
+            if (st == null) HAND.add(new Recipe(set + "_" + piece[k], result, 1, List.of(ings)));
+            else BY_STATION.computeIfAbsent(st, x -> new ArrayList<>()).add(new Recipe(set + "_" + piece[k], result, 1, List.of(ings)));
+        }
     }
 
     /** {material ingredients} of a structure piece in a tier - also what survivors pay */

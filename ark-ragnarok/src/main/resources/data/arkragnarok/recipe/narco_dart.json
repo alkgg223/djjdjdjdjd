@@ -1,0 +1,22 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "equipment",
+ "ingredients": [
+  {
+   "item": "arkragnarok:narcoberry"
+  },
+  {
+   "item": "arkragnarok:narcoberry"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:thatch"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:narco_dart",
+  "count": 4
+ }
+}

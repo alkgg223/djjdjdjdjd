@@ -250,6 +250,7 @@ public class Survivor extends PathfinderMob {
         if (tickCount % 20 == 0 && isInWall()) unstick();
         if (tickCount % 4 == 0) doors(t);
         if (tickCount % 10 == 0) pickUp();
+        if (tickCount % 100 == 0) equipArmour();
         if (tickCount % 200 == 0) {
             t.lastPos = blockPosition();
             t.lastSim = now;
@@ -308,6 +309,30 @@ public class Survivor extends PathfinderMob {
                 detourTicks = 30;
             }
             return;
+        }
+    }
+
+    /** wears the best armour it carries (the one it took off goes back into its pack) */
+    void equipArmour() {
+        for (EquipmentSlot slot : new EquipmentSlot[]{EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
+            ItemStack worn = getItemBySlot(slot);
+            int have = worn.getItem() instanceof net.minecraft.world.item.ArmorItem a ? a.getDefense() * 10 + (int) a.getToughness() : -1;
+            int best = -1;
+            int bestVal = have;
+            for (int i = 0; i < inv.getContainerSize(); i++) {
+                ItemStack st = inv.getItem(i);
+                if (!(st.getItem() instanceof net.minecraft.world.item.ArmorItem a) || a.getEquipmentSlot() != slot) continue;
+                int val = a.getDefense() * 10 + (int) a.getToughness();
+                if (val > bestVal) {
+                    bestVal = val;
+                    best = i;
+                }
+            }
+            if (best < 0) continue;
+            ItemStack put = inv.getItem(best).split(1);
+            setItemSlot(slot, put);
+            if (!worn.isEmpty()) give(worn);
+            playSound(net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_LEATHER.value(), 0.6f, 1.0f);
         }
     }
 
@@ -421,6 +446,13 @@ public class Survivor extends PathfinderMob {
                 if (drop != null) drop.setUnlimitedLifetime();
             }
             inv.clearContent();
+            for (EquipmentSlot slot : new EquipmentSlot[]{EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
+                ItemStack worn = getItemBySlot(slot);
+                if (worn.isEmpty()) continue;
+                ItemEntity drop = spawnAtLocation(worn.copy());
+                if (drop != null) drop.setUnlimitedLifetime();
+                setItemSlot(slot, ItemStack.EMPTY);
+            }
             SurvivorWorld.Tribe t = tribe();
             t.deathPos = blockPosition();
             t.respawnAt = level().getGameTime() + 100;
