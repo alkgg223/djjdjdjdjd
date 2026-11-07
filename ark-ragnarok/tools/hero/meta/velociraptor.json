@@ -1,0 +1,18 @@
+{
+ "id": "velociraptor",
+ "name": "Velociraptor",
+ "plan": "theropod",
+ "length_m": 2.0,
+ "scale": 0.14764,
+ "height": 0.944,
+ "width": 0.35,
+ "hip": 0.617,
+ "eye": 0.879,
+ "head_z": 0.415,
+ "seat": [
+  -0.015,
+  0.73
+ ],
+ "saddle": true,
+ "bones": 35
+}

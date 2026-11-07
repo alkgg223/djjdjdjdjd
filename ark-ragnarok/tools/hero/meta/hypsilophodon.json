@@ -1,0 +1,15 @@
+{
+ "id": "hypsilophodon",
+ "name": "Hypsilophodon",
+ "plan": "theropod",
+ "length_m": 1.8,
+ "scale": 0.14508,
+ "height": 0.936,
+ "width": 0.35,
+ "hip": 0.668,
+ "eye": 0.904,
+ "head_z": 0.394,
+ "seat": null,
+ "saddle": false,
+ "bones": 35
+}

@@ -1,0 +1,18 @@
+{
+ "id": "cryolophosaurus",
+ "name": "Cryolophosaurus",
+ "plan": "theropod",
+ "length_m": 6.5,
+ "scale": 0.49884,
+ "height": 3.002,
+ "width": 0.736,
+ "hip": 1.972,
+ "eye": 2.693,
+ "head_z": 1.626,
+ "seat": [
+  0.007,
+  2.458
+ ],
+ "saddle": true,
+ "bones": 35
+}

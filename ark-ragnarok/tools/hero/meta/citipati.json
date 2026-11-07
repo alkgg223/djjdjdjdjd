@@ -1,0 +1,15 @@
+{
+ "id": "citipati",
+ "name": "Citipati",
+ "plan": "theropod",
+ "length_m": 2.9,
+ "scale": 0.30551,
+ "height": 2.063,
+ "width": 0.404,
+ "hip": 1.304,
+ "eye": 1.901,
+ "head_z": 0.852,
+ "seat": null,
+ "saddle": false,
+ "bones": 35
+}

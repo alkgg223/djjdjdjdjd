@@ -1,0 +1,18 @@
+{
+ "id": "camarasaurus",
+ "name": "Camarasaurus",
+ "plan": "sauropod",
+ "length_m": 15.0,
+ "scale": 1.2946,
+ "height": 8.834,
+ "width": 2.812,
+ "hip": 4.704,
+ "eye": 8.513,
+ "head_z": 3.712,
+ "seat": [
+  -0.172,
+  6.323
+ ],
+ "saddle": true,
+ "bones": 34
+}

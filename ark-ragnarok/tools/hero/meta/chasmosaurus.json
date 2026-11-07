@@ -1,0 +1,18 @@
+{
+ "id": "chasmosaurus",
+ "name": "Chasmosaurus",
+ "plan": "quadruped",
+ "length_m": 5.0,
+ "scale": 0.46658,
+ "height": 2.029,
+ "width": 0.931,
+ "hip": 1.146,
+ "eye": 1.371,
+ "head_z": 1.242,
+ "seat": [
+  -0.062,
+  1.69
+ ],
+ "saddle": true,
+ "bones": 27
+}

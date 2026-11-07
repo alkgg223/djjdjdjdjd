@@ -1,0 +1,18 @@
+{
+ "id": "edmontosaurus",
+ "name": "Edmontosaurus",
+ "plan": "quadruped",
+ "length_m": 12.0,
+ "scale": 0.89893,
+ "height": 4.335,
+ "width": 1.847,
+ "hip": 3.229,
+ "eye": 4.082,
+ "head_z": 3.314,
+ "seat": [
+  0.034,
+  4.39
+ ],
+ "saddle": true,
+ "bones": 27
+}

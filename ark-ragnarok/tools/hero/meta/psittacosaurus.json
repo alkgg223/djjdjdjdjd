@@ -1,0 +1,15 @@
+{
+ "id": "psittacosaurus",
+ "name": "Psittacosaurus",
+ "plan": "quadruped",
+ "length_m": 2.0,
+ "scale": 0.20025,
+ "height": 0.799,
+ "width": 0.35,
+ "hip": 0.606,
+ "eye": 0.639,
+ "head_z": 0.495,
+ "seat": null,
+ "saddle": false,
+ "bones": 27
+}

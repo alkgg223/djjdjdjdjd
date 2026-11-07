@@ -1,0 +1,18 @@
+{
+ "id": "carcharodontosaurus",
+ "name": "Carcharodontosaurus",
+ "plan": "theropod",
+ "length_m": 12.5,
+ "scale": 0.90556,
+ "height": 4.883,
+ "width": 1.816,
+ "hip": 3.404,
+ "eye": 4.438,
+ "head_z": 3.068,
+ "seat": [
+  0.089,
+  4.547
+ ],
+ "saddle": true,
+ "bones": 35
+}

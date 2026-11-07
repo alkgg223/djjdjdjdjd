@@ -1,0 +1,18 @@
+{
+ "id": "ornithomimus",
+ "name": "Ornithomimus",
+ "plan": "theropod",
+ "length_m": 3.8,
+ "scale": 0.32882,
+ "height": 2.553,
+ "width": 0.423,
+ "hip": 1.747,
+ "eye": 2.514,
+ "head_z": 1.111,
+ "seat": [
+  -0.033,
+  2.019
+ ],
+ "saddle": true,
+ "bones": 35
+}

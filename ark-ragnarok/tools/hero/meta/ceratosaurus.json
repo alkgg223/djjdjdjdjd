@@ -1,0 +1,18 @@
+{
+ "id": "ceratosaurus",
+ "name": "Ceratosaurus",
+ "plan": "theropod",
+ "length_m": 6.5,
+ "scale": 0.49901,
+ "height": 2.618,
+ "width": 0.783,
+ "hip": 1.855,
+ "eye": 2.385,
+ "head_z": 1.631,
+ "seat": [
+  0.017,
+  2.376
+ ],
+ "saddle": true,
+ "bones": 35
+}

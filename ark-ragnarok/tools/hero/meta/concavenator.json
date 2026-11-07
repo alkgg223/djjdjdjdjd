@@ -1,0 +1,18 @@
+{
+ "id": "concavenator",
+ "name": "Concavenator",
+ "plan": "theropod",
+ "length_m": 6.0,
+ "scale": 0.46261,
+ "height": 2.633,
+ "width": 0.683,
+ "hip": 1.829,
+ "eye": 2.488,
+ "head_z": 1.48,
+ "seat": [
+  0.007,
+  2.291
+ ],
+ "saddle": true,
+ "bones": 35
+}

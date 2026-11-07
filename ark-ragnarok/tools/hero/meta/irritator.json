@@ -1,0 +1,18 @@
+{
+ "id": "irritator",
+ "name": "Irritator",
+ "plan": "theropod",
+ "length_m": 7.0,
+ "scale": 0.53297,
+ "height": 2.875,
+ "width": 0.806,
+ "hip": 1.934,
+ "eye": 2.716,
+ "head_z": 1.85,
+ "seat": [
+  0.026,
+  2.47
+ ],
+ "saddle": true,
+ "bones": 35
+}

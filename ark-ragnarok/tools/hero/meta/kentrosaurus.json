@@ -1,0 +1,18 @@
+{
+ "id": "kentrosaurus",
+ "name": "Kentrosaurus",
+ "plan": "quadruped",
+ "length_m": 4.5,
+ "scale": 0.38897,
+ "height": 2.05,
+ "width": 0.81,
+ "hip": 1.189,
+ "eye": 1.03,
+ "head_z": 1.158,
+ "seat": [
+  -0.037,
+  1.635
+ ],
+ "saddle": true,
+ "bones": 27
+}

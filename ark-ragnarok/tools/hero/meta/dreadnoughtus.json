@@ -1,0 +1,18 @@
+{
+ "id": "dreadnoughtus",
+ "name": "Dreadnoughtus",
+ "plan": "sauropod",
+ "length_m": 26.0,
+ "scale": 1.91737,
+ "height": 15.616,
+ "width": 4.651,
+ "hip": 7.451,
+ "eye": 15.257,
+ "head_z": 6.788,
+ "seat": [
+  -0.111,
+  10.005
+ ],
+ "saddle": true,
+ "bones": 34
+}

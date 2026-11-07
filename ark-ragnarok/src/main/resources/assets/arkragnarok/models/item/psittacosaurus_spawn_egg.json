@@ -1,0 +1,150 @@
+{
+ "loader": "neoforge:obj",
+ "model": "arkragnarok:models/item/obj/psittacosaurus_spawn_egg.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "shade_quads": true,
+ "gui_light": "side",
+ "textures": {
+  "texture": "arkragnarok:item/3d/psittacosaurus_spawn_egg",
+  "particle": "arkragnarok:item/3d/psittacosaurus_spawn_egg"
+ },
+ "display": {
+  "gui": {
+   "rotation": [
+    25,
+    -35,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    1.1,
+    1.1,
+    1.1
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.32,
+    0.32,
+    0.32
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.75,
+    0.75,
+    0.75
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    180,
+    0
+   ],
+   "translation": [
+    0,
+    13,
+    7
+   ],
+   "scale": [
+    0.8,
+    0.8,
+    0.8
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    10,
+    -30,
+    0
+   ],
+   "translation": [
+    0,
+    3,
+    1.2
+   ],
+   "scale": [
+    0.5,
+    0.5,
+    0.5
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    10,
+    30,
+    0
+   ],
+   "translation": [
+    0,
+    3,
+    1.2
+   ],
+   "scale": [
+    0.5,
+    0.5,
+    0.5
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    5,
+    -30,
+    0
+   ],
+   "translation": [
+    1.5,
+    4.4,
+    0.5
+   ],
+   "scale": [
+    0.36,
+    0.36,
+    0.36
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    5,
+    30,
+    0
+   ],
+   "translation": [
+    1.5,
+    4.4,
+    0.5
+   ],
+   "scale": [
+    0.36,
+    0.36,
+    0.36
+   ]
+  }
+ }
+}

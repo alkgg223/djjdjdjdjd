@@ -1,0 +1,18 @@
+{
+ "id": "majungasaurus",
+ "name": "Majungasaurus",
+ "plan": "theropod",
+ "length_m": 6.5,
+ "scale": 0.56413,
+ "height": 2.705,
+ "width": 0.992,
+ "hip": 1.878,
+ "eye": 2.441,
+ "head_z": 1.691,
+ "seat": [
+  0.007,
+  2.494
+ ],
+ "saddle": true,
+ "bones": 35
+}

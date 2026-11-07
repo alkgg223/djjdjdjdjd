@@ -1,0 +1,15 @@
+{
+ "id": "protoceratops",
+ "name": "Protoceratops",
+ "plan": "quadruped",
+ "length_m": 2.0,
+ "scale": 0.20148,
+ "height": 0.785,
+ "width": 0.371,
+ "hip": 0.474,
+ "eye": 0.578,
+ "head_z": 0.519,
+ "seat": null,
+ "saddle": false,
+ "bones": 27
+}

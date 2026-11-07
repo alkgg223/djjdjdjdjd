@@ -1,0 +1,18 @@
+{
+ "id": "brachiosaurus",
+ "name": "Brachiosaurus",
+ "plan": "sauropod",
+ "length_m": 22.0,
+ "scale": 2.08655,
+ "height": 21.81,
+ "width": 4.095,
+ "hip": 9.327,
+ "eye": 21.4,
+ "head_z": 5.542,
+ "seat": [
+  -0.274,
+  11.878
+ ],
+ "saddle": true,
+ "bones": 34
+}

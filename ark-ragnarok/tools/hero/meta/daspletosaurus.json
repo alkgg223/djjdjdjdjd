@@ -1,0 +1,18 @@
+{
+ "id": "daspletosaurus",
+ "name": "Daspletosaurus",
+ "plan": "theropod",
+ "length_m": 9.0,
+ "scale": 0.73649,
+ "height": 3.977,
+ "width": 1.436,
+ "hip": 2.717,
+ "eye": 3.546,
+ "head_z": 2.311,
+ "seat": [
+  0.023,
+  3.603
+ ],
+ "saddle": true,
+ "bones": 35
+}

@@ -1,0 +1,18 @@
+{
+ "id": "acrocanthosaurus",
+ "name": "Acrocanthosaurus",
+ "plan": "theropod",
+ "length_m": 11.5,
+ "scale": 0.86431,
+ "height": 4.541,
+ "width": 1.57,
+ "hip": 3.18,
+ "eye": 4.146,
+ "head_z": 2.998,
+ "seat": [
+  0.075,
+  4.245
+ ],
+ "saddle": true,
+ "bones": 35
+}

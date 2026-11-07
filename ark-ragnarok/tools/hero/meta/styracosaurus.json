@@ -1,0 +1,18 @@
+{
+ "id": "styracosaurus",
+ "name": "Styracosaurus",
+ "plan": "quadruped",
+ "length_m": 5.5,
+ "scale": 0.50609,
+ "height": 2.085,
+ "width": 1.039,
+ "hip": 1.243,
+ "eye": 1.487,
+ "head_z": 1.404,
+ "seat": [
+  -0.053,
+  1.863
+ ],
+ "saddle": true,
+ "bones": 27
+}

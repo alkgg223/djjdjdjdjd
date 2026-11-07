@@ -1,0 +1,18 @@
+{
+ "id": "mamenchisaurus",
+ "name": "Mamenchisaurus",
+ "plan": "sauropod",
+ "length_m": 26.0,
+ "scale": 1.69124,
+ "height": 16.182,
+ "width": 3.165,
+ "hip": 5.762,
+ "eye": 15.879,
+ "head_z": 9.782,
+ "seat": [
+  -0.172,
+  7.615
+ ],
+ "saddle": true,
+ "bones": 34
+}

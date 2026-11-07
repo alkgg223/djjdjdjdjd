@@ -82,6 +82,72 @@ public final class SpeciesList {
                 .passive().kibble(Kibble.SIMPLE).affinity(500, 10).attack("bite", 0.8f).armor(2));
         add(b("dodo").stats(40, 5, 50, 100, 50).speed(0.18f, 1.5f).diet(Diet.HERBIVORE).temper(Temper.SKITTISH)
                 .kibble(Kibble.BASIC).affinity(100, 6).attack("peck", 0.3f));
+        // --------------------------------------------------------------------- 35 more: theropods
+        add(b("velociraptor").stats(140, 10, 120, 150, 100).speed(0.33f, 2.05f).kibble(Kibble.BASIC).affinity(300, 8).pack().attack("pounce", 0.6f));
+        add(b("coelophysis").stats(100, 8, 90, 150, 70).speed(0.31f, 2.0f).kibble(Kibble.BASIC).affinity(250, 8).pack().attack("pounce", 0.5f));
+        add(b("ceratosaurus").stats(600, 36, 900, 320, 320).speed(0.25f, 1.85f).kibble(Kibble.SUPERIOR).affinity(1300, 16).attack("shake", 1.7f).armor(3));
+        add(b("albertosaurus").stats(650, 40, 1100, 350, 330).speed(0.27f, 1.95f).kibble(Kibble.SUPERIOR).affinity(1400, 16).pack()
+                .attack("shake", 1.8f).armor(3));
+        add(b("daspletosaurus").stats(950, 55, 1400, 400, 450).speed(0.24f, 1.85f).kibble(Kibble.EXCEPTIONAL).affinity(1800, 18)
+                .attack("shake", 2.0f).armor(5));
+        add(b("tarbosaurus").stats(1000, 58, 1450, 410, 470).speed(0.24f, 1.85f).kibble(Kibble.EXCEPTIONAL).affinity(1850, 20)
+                .attack("shake", 2.1f).armor(5));
+        add(b("acrocanthosaurus").stats(1200, 60, 1600, 400, 550).speed(0.24f, 1.85f).kibble(Kibble.EXCEPTIONAL).affinity(2200, 22)
+                .attack("shake", 2.2f).armor(5));
+        add(b("carcharodontosaurus").stats(2000, 70, 1900, 400, 650).speed(0.25f, 1.9f).kibble(Kibble.EXTRAORDINARY).affinity(4200, 28)
+                .attack("shake", 2.5f).armor(7));
+        add(b("torvosaurus").stats(1100, 55, 1500, 380, 500).speed(0.24f, 1.85f).kibble(Kibble.EXCEPTIONAL).affinity(2000, 20)
+                .attack("shake", 2.1f).armor(5));
+        add(b("suchomimus").stats(650, 32, 900, 380, 330).speed(0.25f, 1.85f).diet(Diet.PISCIVORE).kibble(Kibble.SUPERIOR).affinity(1400, 16)
+                .attack("shake", 2.0f).armor(3));
+        add(b("irritator").stats(380, 24, 600, 300, 220).speed(0.27f, 1.85f).diet(Diet.PISCIVORE).kibble(Kibble.REGULAR).affinity(900, 12)
+                .attack("shake", 1.4f).armor(2));
+        add(b("cryolophosaurus").stats(400, 28, 650, 300, 240).speed(0.28f, 1.9f).kibble(Kibble.REGULAR).affinity(900, 12).attack("shake", 1.4f).armor(2));
+        add(b("majungasaurus").stats(480, 34, 900, 320, 300).speed(0.25f, 1.8f).kibble(Kibble.REGULAR).affinity(1000, 14).attack("shake", 1.5f).armor(3));
+        add(b("concavenator").stats(420, 30, 700, 320, 260).speed(0.28f, 1.9f).kibble(Kibble.REGULAR).affinity(950, 12).attack("shake", 1.4f).armor(2));
+        add(b("herrerasaurus").stats(220, 16, 260, 200, 140).speed(0.3f, 1.95f).kibble(Kibble.SIMPLE).affinity(500, 10).attack("pounce", 0.8f));
+        add(b("ornithomimus").stats(110, 5, 100, 300, 120).speed(0.35f, 2.25f).diet(Diet.HERBIVORE).temper(Temper.SKITTISH)
+                .kibble(Kibble.SIMPLE).affinity(350, 8).pack().attack("peck", 0.5f));
+        add(b("deinocheirus").stats(1100, 32, 1500, 300, 600).speed(0.22f, 1.7f).diet(Diet.HERBIVORE).temper(Temper.TERRITORIAL)
+                .kibble(Kibble.EXCEPTIONAL).affinity(2200, 20).attack("slash", 2.4f).armor(3));
+        add(b("citipati").stats(120, 12, 110, 120, 70).speed(0.3f, 1.9f).diet(Diet.OMNIVORE).temper(Temper.SKITTISH)
+                .kibble(Kibble.BASIC).affinity(280, 8).attack("peck", 0.4f));
+        add(b("hypsilophodon").stats(60, 4, 50, 150, 30).speed(0.3f, 2.2f).diet(Diet.HERBIVORE).temper(Temper.SKITTISH)
+                .kibble(Kibble.BASIC).affinity(150, 6).pack().attack("peck", 0.3f));
+        // --------------------------------------------------------------------- 35 more: plant eaters on four legs
+        add(b("edmontosaurus").stats(500, 14, 500, 300, 450).speed(0.24f, 1.85f).diet(Diet.HERBIVORE).temper(Temper.NEUTRAL)
+                .kibble(Kibble.SIMPLE).affinity(1000, 14).pack().attack("rear", 1.3f).armor(2));
+        add(b("maiasaura").stats(380, 10, 400, 280, 380).speed(0.23f, 1.8f).diet(Diet.HERBIVORE).temper(Temper.NEUTRAL)
+                .kibble(Kibble.SIMPLE).affinity(800, 12).pack().attack("rear", 1.1f).armor(2));
+        add(b("psittacosaurus").stats(90, 6, 80, 150, 60).speed(0.25f, 1.8f).diet(Diet.HERBIVORE).temper(Temper.SKITTISH)
+                .kibble(Kibble.BASIC).affinity(200, 6).attack("bite", 0.4f));
+        add(b("styracosaurus").stats(320, 26, 260, 160, 300).speed(0.22f, 1.8f).diet(Diet.HERBIVORE).temper(Temper.TERRITORIAL)
+                .kibble(Kibble.REGULAR).affinity(900, 12).attack("horn", 1.5f).armor(5));
+        add(b("centrosaurus").stats(300, 22, 260, 160, 280).speed(0.22f, 1.8f).diet(Diet.HERBIVORE).temper(Temper.TERRITORIAL)
+                .kibble(Kibble.REGULAR).affinity(850, 12).pack().attack("horn", 1.4f).armor(5));
+        add(b("chasmosaurus").stats(280, 20, 240, 170, 260).speed(0.22f, 1.8f).diet(Diet.HERBIVORE).temper(Temper.TERRITORIAL)
+                .kibble(Kibble.REGULAR).affinity(800, 12).attack("horn", 1.3f).armor(5));
+        add(b("protoceratops").stats(120, 8, 100, 150, 90).speed(0.22f, 1.7f).diet(Diet.HERBIVORE).temper(Temper.NEUTRAL)
+                .kibble(Kibble.BASIC).affinity(300, 8).attack("bite", 0.5f).armor(2));
+        add(b("kentrosaurus").stats(380, 30, 500, 200, 280).speed(0.21f, 1.65f).diet(Diet.HERBIVORE).temper(Temper.TERRITORIAL)
+                .kibble(Kibble.REGULAR).affinity(900, 14).attack("tail", 2.5f).armor(5));
+        add(b("euoplocephalus").stats(650, 45, 420, 175, 260).speed(0.17f, 1.5f).diet(Diet.HERBIVORE).temper(Temper.TERRITORIAL)
+                .kibble(Kibble.REGULAR).affinity(1100, 16).attack("tail", 2.8f).armor(13));
+        add(b("nodosaurus").stats(700, 25, 450, 160, 300).speed(0.16f, 1.45f).diet(Diet.HERBIVORE).temper(Temper.NEUTRAL)
+                .kibble(Kibble.REGULAR).affinity(1100, 16).attack("bite", 1.0f).armor(15));
+        // --------------------------------------------------------------------- 35 more: sauropods
+        add(b("brachiosaurus").stats(2600, 40, 2200, 240, 1800).speed(0.17f, 1.45f).diet(Diet.HERBIVORE).temper(Temper.NEUTRAL)
+                .kibble(Kibble.SUPERIOR).affinity(4000, 26).attack("stomp", 3.8f).armor(6));
+        add(b("argentinosaurus").stats(3600, 60, 3000, 240, 2600).speed(0.16f, 1.4f).diet(Diet.HERBIVORE).temper(Temper.NEUTRAL)
+                .kibble(Kibble.EXCEPTIONAL).affinity(6000, 30).attack("stomp", 4.5f).armor(8));
+        add(b("apatosaurus").stats(2200, 45, 2100, 240, 1700).speed(0.18f, 1.5f).diet(Diet.HERBIVORE).temper(Temper.NEUTRAL)
+                .kibble(Kibble.SUPERIOR).affinity(3600, 24).attack("tail", 4.5f).armor(6));
+        add(b("camarasaurus").stats(1600, 35, 1500, 230, 1200).speed(0.18f, 1.5f).diet(Diet.HERBIVORE).temper(Temper.NEUTRAL)
+                .kibble(Kibble.REGULAR).affinity(2600, 22).attack("stomp", 3.2f).armor(5));
+        add(b("mamenchisaurus").stats(1900, 30, 1700, 220, 1300).speed(0.18f, 1.5f).diet(Diet.HERBIVORE).temper(Temper.NEUTRAL)
+                .passive().kibble(Kibble.SUPERIOR).affinity(3000, 24).attack("tail", 4.8f).armor(4));
+        add(b("dreadnoughtus").stats(3000, 55, 2600, 240, 2200).speed(0.16f, 1.4f).diet(Diet.HERBIVORE).temper(Temper.NEUTRAL)
+                .kibble(Kibble.EXCEPTIONAL).affinity(5000, 28).attack("stomp", 4.2f).armor(7));
     }
 
     public static Species get(String id) {

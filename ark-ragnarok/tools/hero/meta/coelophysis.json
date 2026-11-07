@@ -1,0 +1,15 @@
+{
+ "id": "coelophysis",
+ "name": "Coelophysis",
+ "plan": "theropod",
+ "length_m": 3.0,
+ "scale": 0.20114,
+ "height": 1.381,
+ "width": 0.35,
+ "hip": 0.888,
+ "eye": 1.29,
+ "head_z": 0.647,
+ "seat": null,
+ "saddle": false,
+ "bones": 35
+}

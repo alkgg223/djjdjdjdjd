@@ -1,0 +1,18 @@
+{
+ "id": "maiasaura",
+ "name": "Maiasaura",
+ "plan": "quadruped",
+ "length_m": 9.0,
+ "scale": 0.72467,
+ "height": 3.358,
+ "width": 1.408,
+ "hip": 2.517,
+ "eye": 3.192,
+ "head_z": 2.426,
+ "seat": [
+  -0.024,
+  3.403
+ ],
+ "saddle": true,
+ "bones": 27
+}

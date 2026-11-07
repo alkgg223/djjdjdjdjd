@@ -1,0 +1,18 @@
+{
+ "id": "euoplocephalus",
+ "name": "Euoplocephalus",
+ "plan": "quadruped",
+ "length_m": 6.0,
+ "scale": 0.56008,
+ "height": 1.637,
+ "width": 1.461,
+ "hip": 1.068,
+ "eye": 1.116,
+ "head_z": 1.5,
+ "seat": [
+  -0.049,
+  1.717
+ ],
+ "saddle": true,
+ "bones": 27
+}

@@ -1,0 +1,18 @@
+{
+ "id": "nodosaurus",
+ "name": "Nodosaurus",
+ "plan": "quadruped",
+ "length_m": 6.0,
+ "scale": 0.53563,
+ "height": 1.634,
+ "width": 1.555,
+ "hip": 1.067,
+ "eye": 1.129,
+ "head_z": 1.565,
+ "seat": [
+  -0.02,
+  1.709
+ ],
+ "saddle": true,
+ "bones": 27
+}

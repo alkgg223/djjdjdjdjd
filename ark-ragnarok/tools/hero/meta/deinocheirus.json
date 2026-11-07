@@ -1,0 +1,18 @@
+{
+ "id": "deinocheirus",
+ "name": "Deinocheirus",
+ "plan": "theropod",
+ "length_m": 11.0,
+ "scale": 1.06766,
+ "height": 6.616,
+ "width": 2.082,
+ "hip": 3.945,
+ "eye": 6.402,
+ "head_z": 4.062,
+ "seat": [
+  0.048,
+  5.382
+ ],
+ "saddle": true,
+ "bones": 35
+}

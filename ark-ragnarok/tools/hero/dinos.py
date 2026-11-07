@@ -99,6 +99,11 @@ SAUROPODS = {
         leg_thick=0.82, tail_len=1.4, tail_thick=0.72)),
 }
 
+import dinos_more as _more
+BIPEDS.update(_more.BIPEDS)
+QUADS.update(_more.QUADS)
+SAUROPODS.update(_more.SAUROPODS)
+
 ALL = {}
 for _plan, _d in (("theropod", BIPEDS), ("quadruped", QUADS), ("sauropod", SAUROPODS)):
     for _k, _v in _d.items():
@@ -194,3 +199,7 @@ ATTACK = {"tyrannosaurus": "shake", "giganotosaurus": "shake", "yutyrannus": "sh
 RIDEABLE = {"tyrannosaurus", "giganotosaurus", "yutyrannus", "allosaurus", "megalosaurus", "carnotaurus", "spinosaurus", "baryonyx",
             "utahraptor", "deinonychus", "therizinosaurus", "pachycephalosaurus", "gallimimus", "triceratops", "pachyrhinosaurus",
             "stegosaurus", "ankylosaurus", "parasaurolophus", "iguanodon", "brontosaurus", "diplodocus", "moschops"}
+
+LOOK.update(_more.LOOK)
+ATTACK.update(_more.ATTACK)
+RIDEABLE |= _more.RIDEABLE

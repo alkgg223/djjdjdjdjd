@@ -1,0 +1,18 @@
+{
+ "id": "argentinosaurus",
+ "name": "Argentinosaurus",
+ "plan": "sauropod",
+ "length_m": 33.0,
+ "scale": 2.46784,
+ "height": 19.339,
+ "width": 5.0,
+ "hip": 9.512,
+ "eye": 18.892,
+ "head_z": 9.952,
+ "seat": [
+  -0.026,
+  12.929
+ ],
+ "saddle": true,
+ "bones": 34
+}

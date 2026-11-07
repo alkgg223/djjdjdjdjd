@@ -1,0 +1,18 @@
+{
+ "id": "apatosaurus",
+ "name": "Apatosaurus",
+ "plan": "sauropod",
+ "length_m": 21.0,
+ "scale": 1.39762,
+ "height": 9.049,
+ "width": 3.177,
+ "hip": 4.719,
+ "eye": 8.768,
+ "head_z": 5.977,
+ "seat": [
+  -0.08,
+  6.444
+ ],
+ "saddle": true,
+ "bones": 34
+}

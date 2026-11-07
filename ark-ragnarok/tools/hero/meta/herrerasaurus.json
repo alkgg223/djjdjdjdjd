@@ -1,0 +1,18 @@
+{
+ "id": "herrerasaurus",
+ "name": "Herrerasaurus",
+ "plan": "theropod",
+ "length_m": 4.5,
+ "scale": 0.33544,
+ "height": 2.022,
+ "width": 0.444,
+ "hip": 1.377,
+ "eye": 1.907,
+ "head_z": 1.013,
+ "seat": [
+  -0.011,
+  1.671
+ ],
+ "saddle": true,
+ "bones": 35
+}
