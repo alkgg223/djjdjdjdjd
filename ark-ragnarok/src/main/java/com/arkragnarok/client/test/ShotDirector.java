@@ -402,18 +402,26 @@ public final class ShotDirector {
             }
         }
         if (name.startsWith("survivor")) {
-            // the house the survivor of the smoke test built by itself (and the survivor)
+            // the base a survivor of the smoke test built by itself (from the saved tribes: the survivor may be away gathering)
+            com.arkragnarok.survivor.world.SurvivorWorld.Tribe best = null;
+            for (var t : com.arkragnarok.survivor.world.SurvivorWorld.get(level).all()) {
+                if (t.base != null && (best == null || t.piecesBuilt > best.piecesBuilt)) best = t;
+            }
             var list = level.getEntities(ModEntities.SURVIVOR.get(), e -> true);
-            if (list.isEmpty()) {
+            if (best == null && list.isEmpty()) {
                 LOG.info("ARK-SHOTS no survivor in the world");
                 return;
             }
-            com.arkragnarok.survivor.Survivor sv = list.get(0);
-            BlockPos b = sv.base() != null ? sv.base() : sv.blockPosition();
-            LOG.info("ARK-SHOTS survivor {} task {} base {} step {}", sv.getName().getString(), sv.task(), sv.base(), sv.buildStep());
-            if (name.equals("survivor_base")) sp.teleportTo(level, b.getX() + 11.5, b.getY() + 7.0, b.getZ() - 11.5, 45f, 24f);
-            else if (name.equals("survivor_top")) sp.teleportTo(level, b.getX() + 0.5, b.getY() + 26.0, b.getZ() + 6.5, 180f, 72f);
-            else sp.teleportTo(level, sv.getX() + 2.5, sv.getY() + 1.6, sv.getZ() + 2.5, 135f, 10f);
+            BlockPos b = best != null ? best.base : list.get(0).blockPosition();
+            LOG.info("ARK-SHOTS survivor base of {} at {} design #{} pieces {}", best == null ? "-" : best.name, b, best == null ? -1 : best.design,
+                    best == null ? 0 : best.piecesBuilt);
+            if (name.equals("survivor_base")) sp.teleportTo(level, b.getX() + 13.5, b.getY() + 9.0, b.getZ() - 13.5, 45f, 28f);
+            else if (name.equals("survivor_top")) sp.teleportTo(level, b.getX() + 0.5, b.getY() + 28.0, b.getZ() + 8.5, 180f, 72f);
+            else {
+                com.arkragnarok.survivor.Survivor sv = list.isEmpty() ? null : list.get(0);
+                if (sv != null) sp.teleportTo(level, sv.getX() + 2.5, sv.getY() + 1.6, sv.getZ() + 2.5, 135f, 10f);
+                else sp.teleportTo(level, b.getX() + 6.5, b.getY() + 3.0, b.getZ() - 6.5, 45f, 12f);
+            }
             return;
         }
         if (name.equals("house_stations")) name = "stations";
