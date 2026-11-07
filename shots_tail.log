@@ -1,0 +1,400 @@
+[11:11:05] [Server thread/INFO] [minecraft/PlayerList]: Dev[local:E:4cb1c6e3] logged in with entity id 14 at (10.5, -60.0, 0.5)
+[11:11:05] [Server thread/INFO] [minecraft/MinecraftServer]: Dev joined the game
+[11:11:05] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 2 advancements
+[11:11:06] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS world loaded, preparing
+[11:11:15] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_tyrannosaurus
+[11:11:15] [IO-Worker-2/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_tyrannosaurus.png
+[11:11:16] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_tyrannosaurus
+[11:11:17] [IO-Worker-4/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_tyrannosaurus.png
+[11:11:18] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_giganotosaurus
+[11:11:18] [IO-Worker-2/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_giganotosaurus.png
+[11:11:19] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_giganotosaurus
+[11:11:19] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_giganotosaurus.png
+[11:11:21] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_spinosaurus
+[11:11:21] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_spinosaurus.png
+[11:11:22] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_spinosaurus
+[11:11:22] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_spinosaurus.png
+[11:11:24] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_allosaurus
+[11:11:24] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_allosaurus.png
+[11:11:25] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_allosaurus
+[11:11:25] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_allosaurus.png
+[11:11:27] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_carnotaurus
+[11:11:27] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_carnotaurus.png
+[11:11:28] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_carnotaurus
+[11:11:28] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_carnotaurus.png
+[11:11:30] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_yutyrannus
+[11:11:30] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_yutyrannus.png
+[11:11:31] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_yutyrannus
+[11:11:31] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_yutyrannus.png
+[11:11:33] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_megalosaurus
+[11:11:33] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_megalosaurus.png
+[11:11:34] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_megalosaurus
+[11:11:34] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_megalosaurus.png
+[11:11:35] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_baryonyx
+[11:11:36] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_baryonyx.png
+[11:11:37] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_baryonyx
+[11:11:37] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_baryonyx.png
+[11:11:38] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_therizinosaurus
+[11:11:39] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_therizinosaurus.png
+[11:11:40] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_therizinosaurus
+[11:11:40] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_therizinosaurus.png
+[11:11:41] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_utahraptor
+[11:11:41] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_utahraptor.png
+[11:11:42] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_utahraptor
+[11:11:43] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_utahraptor.png
+[11:11:44] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_deinonychus
+[11:11:44] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_deinonychus.png
+[11:11:45] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_deinonychus
+[11:11:45] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_deinonychus.png
+[11:11:47] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_dilophosaurus
+[11:11:47] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_dilophosaurus.png
+[11:11:48] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_dilophosaurus
+[11:11:48] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_dilophosaurus.png
+[11:11:50] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_troodon
+[11:11:50] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_troodon.png
+[11:11:51] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_troodon
+[11:11:51] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_troodon.png
+[11:11:53] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_compsognathus
+[11:11:53] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_compsognathus.png
+[11:11:54] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_compsognathus
+[11:11:54] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_compsognathus.png
+[11:11:56] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_oviraptor
+[11:11:56] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_oviraptor.png
+[11:11:57] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_oviraptor
+[11:11:57] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_oviraptor.png
+[11:11:59] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_triceratops
+[11:11:59] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_triceratops.png
+[11:12:00] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_triceratops
+[11:12:00] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_triceratops.png
+[11:12:02] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_pachyrhinosaurus
+[11:12:02] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_pachyrhinosaurus.png
+[11:12:03] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_pachyrhinosaurus
+[11:12:03] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_pachyrhinosaurus.png
+[11:12:04] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_stegosaurus
+[11:12:05] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_stegosaurus.png
+[11:12:06] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_stegosaurus
+[11:12:06] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_stegosaurus.png
+[11:12:07] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_ankylosaurus
+[11:12:07] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_ankylosaurus.png
+[11:12:09] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_ankylosaurus
+[11:12:09] [IO-Worker-9/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_ankylosaurus.png
+[11:12:10] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_brontosaurus
+[11:12:10] [IO-Worker-1/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_brontosaurus.png
+[11:12:11] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_brontosaurus
+[11:12:12] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_brontosaurus.png
+[11:12:13] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_diplodocus
+[11:12:13] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_diplodocus.png
+[11:12:14] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_diplodocus
+[11:12:15] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_diplodocus.png
+[11:12:16] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_parasaurolophus
+[11:12:16] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_parasaurolophus.png
+[11:12:17] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_parasaurolophus
+[11:12:17] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_parasaurolophus.png
+[11:12:19] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_iguanodon
+[11:12:19] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_iguanodon.png
+[11:12:20] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_iguanodon
+[11:12:20] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_iguanodon.png
+[11:12:22] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_gallimimus
+[11:12:22] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_gallimimus.png
+[11:12:23] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_gallimimus
+[11:12:23] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_gallimimus.png
+[11:12:25] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_pachycephalosaurus
+[11:12:25] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_pachycephalosaurus.png
+[11:12:26] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_pachycephalosaurus
+[11:12:26] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_pachycephalosaurus.png
+[11:12:28] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_moschops
+[11:12:28] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_moschops.png
+[11:12:29] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_moschops
+[11:12:29] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_moschops.png
+[11:12:31] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_dodo
+[11:12:31] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_dodo.png
+[11:12:32] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_dodo
+[11:12:32] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_dodo.png
+[11:12:33] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_velociraptor
+[11:12:34] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_velociraptor.png
+[11:12:35] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_velociraptor
+[11:12:35] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_velociraptor.png
+[11:12:36] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_coelophysis
+[11:12:36] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_coelophysis.png
+[11:12:38] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_coelophysis
+[11:12:38] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_coelophysis.png
+[11:12:39] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_ceratosaurus
+[11:12:39] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_ceratosaurus.png
+[11:12:40] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_ceratosaurus
+[11:12:41] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_ceratosaurus.png
+[11:12:42] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_albertosaurus
+[11:12:42] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_albertosaurus.png
+[11:12:43] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_albertosaurus
+[11:12:44] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_albertosaurus.png
+[11:12:45] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_daspletosaurus
+[11:12:45] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_daspletosaurus.png
+[11:12:46] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_daspletosaurus
+[11:12:46] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_daspletosaurus.png
+[11:12:48] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_tarbosaurus
+[11:12:48] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_tarbosaurus.png
+[11:12:49] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_tarbosaurus
+[11:12:49] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_tarbosaurus.png
+[11:12:51] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_acrocanthosaurus
+[11:12:51] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_acrocanthosaurus.png
+[11:12:52] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_acrocanthosaurus
+[11:12:52] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_acrocanthosaurus.png
+[11:12:54] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_carcharodontosaurus
+[11:12:54] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_carcharodontosaurus.png
+[11:12:55] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_carcharodontosaurus
+[11:12:55] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_carcharodontosaurus.png
+[11:12:57] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_torvosaurus
+[11:12:57] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_torvosaurus.png
+[11:12:58] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_torvosaurus
+[11:12:58] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_torvosaurus.png
+[11:13:00] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_suchomimus
+[11:13:00] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_suchomimus.png
+[11:13:01] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_suchomimus
+[11:13:01] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_suchomimus.png
+[11:13:02] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_irritator
+[11:13:03] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_irritator.png
+[11:13:04] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_irritator
+[11:13:04] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_irritator.png
+[11:13:05] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_cryolophosaurus
+[11:13:05] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_cryolophosaurus.png
+[11:13:07] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_cryolophosaurus
+[11:13:07] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_cryolophosaurus.png
+[11:13:08] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_majungasaurus
+[11:13:08] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_majungasaurus.png
+[11:13:09] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_majungasaurus
+[11:13:10] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_majungasaurus.png
+[11:13:11] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_concavenator
+[11:13:11] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_concavenator.png
+[11:13:12] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_concavenator
+[11:13:13] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_concavenator.png
+[11:13:14] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_herrerasaurus
+[11:13:14] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_herrerasaurus.png
+[11:13:15] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_herrerasaurus
+[11:13:15] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_herrerasaurus.png
+[11:13:17] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_ornithomimus
+[11:13:17] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_ornithomimus.png
+[11:13:18] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_ornithomimus
+[11:13:18] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_ornithomimus.png
+[11:13:20] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_deinocheirus
+[11:13:20] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_deinocheirus.png
+[11:13:21] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_deinocheirus
+[11:13:21] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_deinocheirus.png
+[11:13:23] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_citipati
+[11:13:23] [IO-Worker-10/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_citipati.png
+[11:13:24] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_citipati
+[11:13:24] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_citipati.png
+[11:13:26] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_hypsilophodon
+[11:13:26] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_hypsilophodon.png
+[11:13:27] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_hypsilophodon
+[11:13:27] [IO-Worker-11/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_hypsilophodon.png
+[11:13:29] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_edmontosaurus
+[11:13:29] [IO-Worker-11/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_edmontosaurus.png
+[11:13:30] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_edmontosaurus
+[11:13:30] [IO-Worker-11/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_edmontosaurus.png
+[11:13:31] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_maiasaura
+[11:13:32] [IO-Worker-10/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_maiasaura.png
+[11:13:33] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_maiasaura
+[11:13:33] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_maiasaura.png
+[11:13:34] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_psittacosaurus
+[11:13:34] [IO-Worker-10/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_psittacosaurus.png
+[11:13:36] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_psittacosaurus
+[11:13:36] [IO-Worker-10/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_psittacosaurus.png
+[11:13:37] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_styracosaurus
+[11:13:37] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_styracosaurus.png
+[11:13:38] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_styracosaurus
+[11:13:39] [IO-Worker-10/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_styracosaurus.png
+[11:13:40] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_centrosaurus
+[11:13:40] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_centrosaurus.png
+[11:13:41] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_centrosaurus
+[11:13:42] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_centrosaurus.png
+[11:13:43] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_chasmosaurus
+[11:13:43] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_chasmosaurus.png
+[11:13:44] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_chasmosaurus
+[11:13:44] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_chasmosaurus.png
+[11:13:46] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_protoceratops
+[11:13:46] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_protoceratops.png
+[11:13:47] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_protoceratops
+[11:13:47] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_protoceratops.png
+[11:13:49] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_kentrosaurus
+[11:13:49] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_kentrosaurus.png
+[11:13:50] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_kentrosaurus
+[11:13:50] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_kentrosaurus.png
+[11:13:52] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_euoplocephalus
+[11:13:52] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_euoplocephalus.png
+[11:13:53] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_euoplocephalus
+[11:13:53] [IO-Worker-12/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_euoplocephalus.png
+[11:13:55] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_nodosaurus
+[11:13:55] [IO-Worker-10/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_nodosaurus.png
+[11:13:56] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_nodosaurus
+[11:13:56] [IO-Worker-10/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_nodosaurus.png
+[11:13:57] [Server thread/INFO] [co.ar.su.SurvivorRespawner/]: Survivor Hana (Hana of the Iron Fang) wakes up again at BlockPos{x=-19, y=-60, z=-80} and goes back for its things at BlockPos{x=-22, y=-60, z=-81}
+[11:13:58] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_brachiosaurus
+[11:13:58] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_brachiosaurus.png
+[11:13:58] [Server thread/INFO] [co.ar.su.SurvivorBrain/]: Survivor Hana (Hana of the Iron Fang) got its belongings back
+[11:13:59] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_brachiosaurus
+[11:13:59] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_brachiosaurus.png
+[11:14:00] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_argentinosaurus
+[11:14:01] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_argentinosaurus.png
+[11:14:02] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_argentinosaurus
+[11:14:02] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_argentinosaurus.png
+[11:14:03] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_apatosaurus
+[11:14:04] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_apatosaurus.png
+[11:14:05] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_apatosaurus
+[11:14:05] [IO-Worker-12/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_apatosaurus.png
+[11:14:06] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_camarasaurus
+[11:14:06] [IO-Worker-6/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_camarasaurus.png
+[11:14:07] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_camarasaurus
+[11:14:08] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_camarasaurus.png
+[11:14:09] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_mamenchisaurus
+[11:14:09] [IO-Worker-12/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_mamenchisaurus.png
+[11:14:10] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_mamenchisaurus
+[11:14:11] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_mamenchisaurus.png
+[11:14:12] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured a_dreadnoughtus
+[11:14:12] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as a_dreadnoughtus.png
+[11:14:13] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured h_dreadnoughtus
+[11:14:13] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as h_dreadnoughtus.png
+[11:14:16] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured look_dodo
+[11:14:16] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as look_dodo.png
+[11:14:18] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured look_therizinosaurus
+[11:14:18] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as look_therizinosaurus.png
+[11:14:21] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured look_gallimimus
+[11:14:21] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as look_gallimimus.png
+[11:14:23] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured look_utahraptor
+[11:14:23] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as look_utahraptor.png
+[11:14:25] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured look_pachycephalosaurus
+[11:14:26] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as look_pachycephalosaurus.png
+[11:14:28] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured look_triceratops
+[11:14:28] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as look_triceratops.png
+[11:14:30] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured look_brontosaurus
+[11:14:31] [IO-Worker-13/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as look_brontosaurus.png
+[11:14:33] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured look_tyrannosaurus
+[11:14:33] [IO-Worker-13/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as look_tyrannosaurus.png
+[11:14:35] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured look_walk_therizinosaurus
+[11:14:35] [IO-Worker-13/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as look_walk_therizinosaurus.png
+[11:14:38] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured look_walk_dodo
+[11:14:38] [IO-Worker-13/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as look_walk_dodo.png
+[11:14:39] [Server thread/INFO] [minecraft/LivingEntity]: Named entity Survivor['Karim'/10, l='ServerLevel[world]', x=35.84, y=-60.00, z=100.88] died: Karim was slain by Yutyrannus
+[11:14:39] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_front
+[11:14:40] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_front.png
+[11:14:41] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_left
+[11:14:41] [IO-Worker-12/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_left.png
+[11:14:42] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_back
+[11:14:43] [IO-Worker-7/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_back.png
+[11:14:44] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_top
+[11:14:44] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_top.png
+[11:14:45] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_look_left
+[11:14:46] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_look_left.png
+[11:14:47] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_look_right
+[11:14:47] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_look_right.png
+[11:14:49] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_saddle
+[11:14:49] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_saddle.png
+[11:14:51] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_rider
+[11:14:51] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_rider.png
+[11:14:52] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_walk
+[11:14:52] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_walk.png
+[11:14:53] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_run
+[11:14:53] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_run.png
+[11:14:55] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_roar
+[11:14:55] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_roar.png
+[11:14:55] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_bite
+[11:14:56] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_bite.png
+[11:14:56] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_attack
+[11:14:56] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_attack.png
+[11:15:00] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured rex_death
+[11:15:00] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as rex_death.png
+[11:15:01] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured trike_attack
+[11:15:01] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as trike_attack.png
+[11:15:02] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured stego_attack
+[11:15:02] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as stego_attack.png
+[11:15:03] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured bronto_walk
+[11:15:04] [IO-Worker-13/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as bronto_walk.png
+[11:15:04] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured raptor_pounce
+[11:15:04] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as raptor_pounce.png
+[11:15:05] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 3 advancements
+[11:15:07] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_fp_super_spyglass
+[11:15:07] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_fp_super_spyglass.png
+[11:15:08] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_tp_super_spyglass
+[11:15:08] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_tp_super_spyglass.png
+[11:15:09] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_fp_tranq_arrow
+[11:15:09] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_fp_tranq_arrow.png
+[11:15:09] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_tp_tranq_arrow
+[11:15:10] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_tp_tranq_arrow.png
+[11:15:10] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_fp_narcotic
+[11:15:10] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_fp_narcotic.png
+[11:15:11] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_tp_narcotic
+[11:15:11] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_tp_narcotic.png
+[11:15:12] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_fp_mejoberry
+[11:15:12] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_fp_mejoberry.png
+[11:15:13] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_tp_mejoberry
+[11:15:13] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_tp_mejoberry.png
+[11:15:13] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_fp_narcoberry
+[11:15:14] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_fp_narcoberry.png
+[11:15:14] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_tp_narcoberry
+[11:15:14] [IO-Worker-3/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_tp_narcoberry.png
+[11:15:15] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_fp_exceptional_kibble
+[11:15:15] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_fp_exceptional_kibble.png
+[11:15:16] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_tp_exceptional_kibble
+[11:15:16] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_tp_exceptional_kibble.png
+[11:15:17] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_fp_raw_prime_meat
+[11:15:17] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_fp_raw_prime_meat.png
+[11:15:17] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_tp_raw_prime_meat
+[11:15:18] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_tp_raw_prime_meat.png
+[11:15:18] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_fp_cooked_prime_meat
+[11:15:18] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_fp_cooked_prime_meat.png
+[11:15:19] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_tp_cooked_prime_meat
+[11:15:19] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_tp_cooked_prime_meat.png
+[11:15:20] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_fp_dino_saddle
+[11:15:20] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_fp_dino_saddle.png
+[11:15:21] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_tp_dino_saddle
+[11:15:21] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_tp_dino_saddle.png
+[11:15:22] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_ground
+[11:15:22] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_ground.png
+[11:15:23] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured item_inventory
+[11:15:23] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as item_inventory.png
+[11:15:25] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured nodes_overview
+[11:15:26] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as nodes_overview.png
+[11:15:28] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured nodes_close
+[11:15:28] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as nodes_close.png
+[11:15:30] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured houses_front
+[11:15:30] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as houses_front.png
+[11:15:32] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured house_close
+[11:15:32] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as house_close.png
+[11:15:34] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured houses_doors_open
+[11:15:34] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as houses_doors_open.png
+[11:15:35] [Server thread/INFO] [co.ar.su.SurvivorRespawner/]: Survivor Karim (Karim of the Raptor Claw) wakes up again at BlockPos{x=26, y=-60, z=31} and goes back for its things at BlockPos{x=35, y=-60, z=100}
+[11:15:36] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured house_inside
+[11:15:36] [IO-Worker-14/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as house_inside.png
+[11:15:39] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured house_stations
+[11:15:39] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as house_stations.png
+[11:15:39] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured economy_inventory
+[11:15:40] [IO-Worker-12/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as economy_inventory.png
+[11:15:40] [Server thread/INFO] [ARK-SHOTS/]: ARK-SHOTS survivor base of Karim of the Raptor Claw at BlockPos{x=26, y=-60, z=31} design #2 pieces 9
+[11:15:44] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured survivor_base
+[11:15:44] [Server thread/INFO] [ARK-SHOTS/]: ARK-SHOTS survivor base of Karim of the Raptor Claw at BlockPos{x=26, y=-60, z=31} design #2 pieces 9
+[11:15:44] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as survivor_base.png
+[11:15:48] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured survivor_top
+[11:15:48] [IO-Worker-13/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as survivor_top.png
+[11:15:49] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured tribes_screen
+[11:15:49] [Server thread/INFO] [ARK-SHOTS/]: ARK-SHOTS survivor base of Karim of the Raptor Claw at BlockPos{x=26, y=-60, z=31} design #2 pieces 9
+[11:15:49] [IO-Worker-11/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as tribes_screen.png
+[11:15:49] [Server thread/INFO] [co.ar.su.SurvivorBrain/]: Survivor Karim (Karim of the Raptor Claw) got its belongings back
+[11:15:53] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS captured survivor_close
+[11:15:53] [IO-Worker-5/INFO] [ARK-SHOTS/]: ARK-SHOTS Saved screenshot as survivor_close.png
+[11:15:53] [Render thread/INFO] [ARK-SHOTS/]: ARK-SHOTS done (152 shots + 32 item shots)
+[11:15:54] [Render thread/INFO] [minecraft/Minecraft]: Stopping!
+[11:15:54] [Server thread/INFO] [minecraft/ServerGamePacketListenerImpl]: Dev lost connection: Disconnected
+[11:15:54] [Server thread/INFO] [minecraft/MinecraftServer]: Dev left the game
+[11:15:54] [Server thread/INFO] [minecraft/ServerCommonPacketListenerImpl]: Stopping singleplayer server as player logged out
+[11:15:54] [Server thread/INFO] [minecraft/MinecraftServer]: Stopping server
+[11:15:54] [Server thread/INFO] [minecraft/MinecraftServer]: Saving players
+[11:15:54] [Server thread/INFO] [minecraft/MinecraftServer]: Saving worlds
+[11:15:54] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[11:15:55] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[11:15:55] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[11:15:55] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage (arkshot): All chunks are saved
+[11:15:55] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[11:15:55] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[11:15:55] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_3-1794049832191.json
+
+BUILD SUCCESSFUL in 5m 26s
+7 actionable tasks: 3 executed, 4 up-to-date

@@ -1,0 +1,182 @@
+[11:08:49] [main/ERROR] [minecraft/DedicatedServerProperties]: No key layers in MapLike[{}]
+[11:08:51] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE start
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   rex spawned
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE rex at BlockPos{x=8, y=-60, z=8} hp 1024.0 dmg 33.480001544952394 level 37
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned tyrannosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE tyrannosaurus lv 38 hp 1024 dmg 33 size 3.2400002x4.8312
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned giganotosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE giganotosaurus lv 73 hp 1024 dmg 49 size 3.5100002x4.5666
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned spinosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE spinosaurus lv 6 hp 448 dmg 16 size 4.05x4.8015
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned allosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE allosaurus lv 16 hp 504 dmg 17 size 2.7x3.5180998
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned carnotaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE carnotaurus lv 17 hp 336 dmg 17 size 2.16x3.5117998
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned yutyrannus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE yutyrannus lv 40 hp 1024 dmg 19 size 2.43x3.4262998
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned megalosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE megalosaurus lv 2 hp 300 dmg 16 size 1.8900001x2.6028
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned baryonyx
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE baryonyx lv 134 hp 1024 dmg 20 size 2.43x3.3335998
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned therizinosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE therizinosaurus lv 22 hp 905 dmg 21 size 2.7x7.1981997
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned utahraptor
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE utahraptor lv 18 hp 192 dmg 7 size 1.6200001x2.4282
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned deinonychus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE deinonychus lv 19 hp 224 dmg 9 size 0.81000006x1.4418
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned dilophosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE dilophosaurus lv 2 hp 52 dmg 4 size 1.8900001x2.8854
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned troodon
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE troodon lv 19 hp 112 dmg 5 size 0.54x1.0656
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned compsognathus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE compsognathus lv 98 hp 164 dmg 3 size 0.35x0.41939998
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned oviraptor
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE oviraptor lv 83 hp 414 dmg 11 size 0.54x1.0701
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned triceratops
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE triceratops lv 20 hp 390 dmg 14 size 2.43x2.9492998
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned pachyrhinosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE pachyrhinosaurus lv 90 hp 790 dmg 13 size 1.6200001x2.0241
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned stegosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE stegosaurus lv 87 hp 1024 dmg 23 size 2.43x4.0617
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned ankylosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ankylosaurus lv 58 hp 1024 dmg 32 size 2.218x1.6532999
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned brontosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE brontosaurus lv 91 hp 1024 dmg 31 size 5.0x10.065599
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned diplodocus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE diplodocus lv 118 hp 1024 dmg 16 size 5.0x6.2360997
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned parasaurolophus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE parasaurolophus lv 66 hp 544 dmg 6 size 2.7x3.6665998
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned iguanodon
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE iguanodon lv 449 hp 1024 dmg 42 size 2.7x3.2561998
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned gallimimus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE gallimimus lv 284 hp 1024 dmg 5 size 1.6200001x3.564
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned pachycephalosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE pachycephalosaurus lv 107 hp 1024 dmg 15 size 1.35x1.9664999
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned moschops
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE moschops lv 139 hp 1024 dmg 12 size 0.972x1.3977
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned dodo
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE dodo lv 78 hp 109 dmg 4 size 0.473x0.79109997
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned velociraptor
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE velociraptor lv 34 hp 235 dmg 5 size 0.54x0.84959996
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned coelophysis
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE coelophysis lv 98 hp 344 dmg 6 size 0.81000006x1.2429
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned ceratosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ceratosaurus lv 33 hp 1024 dmg 18 size 1.8900001x2.3562
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned albertosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE albertosaurus lv 3 hp 312 dmg 16 size 2.43x3.5621998
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned daspletosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE daspletosaurus lv 119 hp 1024 dmg 47 size 2.43x3.5793
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned tarbosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE tarbosaurus lv 176 hp 1024 dmg 66 size 2.7x3.7673998
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned acrocanthosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE acrocanthosaurus lv 6 hp 672 dmg 28 size 3.2400002x4.0868998
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned carcharodontosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE carcharodontosaurus lv 106 hp 1024 dmg 60 size 3.5100002x4.3946996
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned torvosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE torvosaurus lv 185 hp 1024 dmg 74 size 2.7x3.7079997
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned suchomimus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE suchomimus lv 52 hp 1024 dmg 20 size 2.97x3.7664998
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned irritator
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE irritator lv 194 hp 1024 dmg 29 size 1.8900001x2.5874999
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned cryolophosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE cryolophosaurus lv 60 hp 896 dmg 18 size 1.8900001x2.7018
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned majungasaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE majungasaurus lv 7 hp 269 dmg 15 size 1.8900001x2.4345
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned concavenator
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE concavenator lv 194 hp 1024 dmg 36 size 1.6200001x2.3697
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned herrerasaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE herrerasaurus lv 96 hp 722 dmg 14 size 1.35x1.8198
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned ornithomimus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ornithomimus lv 56 hp 238 dmg 3 size 1.08x2.2977
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned deinocheirus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE deinocheirus lv 6 hp 528 dmg 13 size 2.97x5.9544
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned citipati
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE citipati lv 53 hp 269 dmg 6 size 0.81000006x1.8567
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned hypsilophodon
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE hypsilophodon lv 33 hp 86 dmg 2 size 0.54x0.84239995
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned edmontosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE edmontosaurus lv 429 hp 1024 dmg 31 size 3.2400002x3.9015
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned maiasaura
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE maiasaura lv 54 hp 851 dmg 6 size 2.43x3.0221999
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned psittacosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE psittacosaurus lv 253 hp 655 dmg 8 size 0.54x0.7191
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned styracosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE styracosaurus lv 76 hp 922 dmg 20 size 1.6200001x1.8765
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned centrosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE centrosaurus lv 240 hp 1024 dmg 33 size 1.6200001x2.0511
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned chasmosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE chasmosaurus lv 28 hp 314 dmg 12 size 1.35x1.8261
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned protoceratops
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE protoceratops lv 69 hp 317 dmg 5 size 0.54x0.7065
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned kentrosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE kentrosaurus lv 150 hp 1024 dmg 33 size 1.35x1.8449999
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned euoplocephalus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE euoplocephalus lv 18 hp 572 dmg 23 size 1.6200001x1.4733
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned nodosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE nodosaurus lv 45 hp 1024 dmg 13 size 1.6200001x1.4705999
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned brachiosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE brachiosaurus lv 87 hp 1024 dmg 34 size 5.0x19.629
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned argentinosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE argentinosaurus lv 58 hp 1024 dmg 38 size 5.0x17.4051
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned apatosaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE apatosaurus lv 40 hp 1024 dmg 23 size 5.0x8.144099
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned camarasaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE camarasaurus lv 8 hp 1024 dmg 15 size 4.05x7.9505997
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned mamenchisaurus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE mamenchisaurus lv 1 hp 760 dmg 12 size 5.0x14.563799
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   spawned dreadnoughtus
+[11:08:52] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE dreadnoughtus lv 12 hp 1024 dmg 23 size 5.0x14.0543995
+[11:08:54] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   saddle state
+[11:08:57] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   alive after AI ticks
+[11:08:57] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE 62 of 62 creatures alive after 100 AI ticks
+[11:08:57] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   takes damage
+[11:08:59] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   death animation phase
+[11:09:03] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   corpse removed after the death animation
+[11:09:04] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   dodo spawned
+[11:09:04] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE wild levels: max 500, above 150: 14.31%, above 450: 0.295%
+[11:09:04] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   wild levels reach 500 but high levels are rare
+[11:09:04] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   five tranquilizer projectiles with rising doses
+[11:09:04] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   five armour sets
+[11:09:04] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   all 25 base designs have a build plan
+[11:09:04] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE dodo t=5 torpor 20.0 / 50.0 unconscious false alive true ticking true
+[11:09:04] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE dodo t=20 torpor 49.99375 / 50.0 unconscious true alive true ticking true
+[11:09:05] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE dodo t=40 torpor 49.868782 / 50.0 unconscious true alive true ticking true
+[11:09:07] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   dodo knocked out by torpor
+[11:09:07] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE dodo torpor 50 / 50, affinity needed 100
+[11:09:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE rock node: 13 hits -> 23 stone, 26 flint
+[11:09:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   resource node gives stone/flint and crumbles
+[11:09:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=100 built=0 level job=GROUND/null/@26, -60, 31 target=26, -60, 31 at=30, -60, 30 stuck=0 ticks=15 aside=- nav=done food=20
+[11:09:09] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   foundation, doorframe, door and wall placed
+[11:09:09] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   door opens
+[11:09:09] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   breaking one block removes the whole wall
+[11:09:11] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE hit dodo moved 5.5 blocks, target null
+[11:09:11] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   a hit dodo runs away instead of fighting back
+[11:09:13] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=200 built=6 level job=GROUND/null/@26, -60, 37 target=26, -60, 37 at=27, -60, 32 stuck=0 ticks=17 aside=- nav=moving food=19
+[11:09:18] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=300 built=11 build job=PIECE/FOUNDATION/@26, -61, 34 thatch target=26, -61, 34 at=29, -60, 35 stuck=0 ticks=6 aside=- nav=done food=19
+[11:09:23] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   a survivor puts on armour it carries
+[11:09:23] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=400 built=18 explore job=- target=97, -60, 14 at=30, -60, 35 stuck=1 ticks=4 aside=- nav=moving food=19
+[11:09:28] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=500 built=18 explore job=- target=97, -60, 14 at=48, -60, 28 stuck=0 ticks=104 aside=- nav=moving food=19
+[11:09:33] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=600 built=18 explore job=- target=97, -60, 14 at=67, -60, 23 stuck=0 ticks=204 aside=- nav=moving food=18
+[11:09:38] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=700 built=18 explore job=- target=97, -60, 14 at=86, -60, 17 stuck=0 ticks=304 aside=- nav=moving food=18
+[11:09:43] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=800 built=18 explore job=- target=55, -60, -58 at=85, -60, 7 stuck=0 ticks=58 aside=- nav=moving food=18
+[11:09:48] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=900 built=18 explore job=- target=55, -60, -58 at=70, -60, -8 stuck=0 ticks=158 aside=- nav=moving food=18
+[11:09:48] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   dodo tamed with kibble (level now 1)
+[11:09:53] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=1000 built=18 explore job=- target=55, -60, -58 at=64, -60, -26 stuck=0 ticks=258 aside=- nav=moving food=17
+[11:09:58] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=1100 built=18 explore job=- target=55, -60, -58 at=59, -60, -45 stuck=0 ticks=358 aside=- nav=moving food=17
+[11:10:03] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=1200 built=18 explore job=- target=-19, -60, 62 at=49, -60, -47 stuck=0 ticks=50 aside=- nav=moving food=17
+[11:10:06] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE rival after death: Survivor['Hana'/73, l='ServerLevel[world]', x=-21.49, y=-60.00, z=-80.10] task explore deathPos BlockPos{x=-22, y=-60, z=-81}
+[11:10:06] [Server thread/ERROR] [ARK-SMOKE/]: ARK-SMOKE FAIL a dead survivor wakes up again (same survivor, same tribe)
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor-dbg t=1300 built=18 explore job=- target=-19, -60, 62 at=34, -60, -32 stuck=0 ticks=150 aside=- nav=moving food=17
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE survivor alive=true task=explore base=BlockPos{x=26, y=-60, z=31} design=#2 castle (3x3, 9 parts, 6 towers, 1 pens, wall ring) stage=1 built=18 pieces=9 wood=26 thatch=1
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   survivor alive
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   survivor chose a site and a design and started building
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   survivor placed structure pieces of its design
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   its pieces stand in the world
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE house: 81 foundation blocks (81 flush with the ground), 0 gaps between them, 0 earth blocks above ground
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   foundations lie flush with the ground
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   the foundations of the house touch (one connected floor)
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   no rammed-earth plinth built up above the ground
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   survivor has a personality (resource_baron)
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE ok   tribe saves and loads with its base
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE rival (first life) alive=false task=explore base=null
+[11:10:08] [Server thread/INFO] [ARK-SMOKE/]: ARK-SMOKE RESULT FAIL (1 failures)
