@@ -1,9 +1,9 @@
 package com.arkragnarok.survivor;
 
 import com.arkragnarok.building.PieceType;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,30 +15,33 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
 /**
- * One of {@link #COUNT} base blueprints.  They are generated from 20 architectural archetypes (cabins, stone forts,
- * castles, mountain strongholds, forest villages, harbours, island bases, desert courtyards, underground bunkers, cave
- * bases, farms, breeding ranches, taming centres, military camps, research stations, industrial works, mining camps,
- * trade posts, advanced complexes and anti-giant fortresses), each in many variants that differ in layout - not
- * colour: room count and arrangement (row, block, L, ring around a courtyard, cluster of huts, cross, terraces),
- * storeys, what every room is for, interior doors, towers, perimeter walls and gates, dinosaur pens and crop fields.
- * Every design is checked to be different from all others.  Every design can grow into a full base: rooms the
- * progression needs (workshop, smelter, laboratory) are added as annexes when the archetype has none.
+ * One of {@link #COUNT} base blueprints, generated from 20 architectural archetypes (cabins, stone forts, castles,
+ * mountain strongholds, forest lodges, harbours, island bases, desert courtyards, underground bunkers, cave bases,
+ * farmsteads, breeding ranches, taming centres, military camps, research stations, industrial works, mining camps,
+ * trade halls, advanced complexes and anti-giant fortresses) in variants that differ in shape and purpose - not
+ * colour: square, rectangle, long hall, L, T or cross; what each part of the house is for; wall rings with corner
+ * watchtowers and a gate; towers rising from the house; dinosaur pens; crop fields.  Every design is checked to be
+ * different from all others.
  *
- * Grid: rooms are 3x3 foundation cells on a 4-block pitch, so neighbouring rooms share the wall between them (a
- * wall or an interior doorway) and every room keeps its own ceiling.  Coordinates are relative to the anchor room
- * and unrotated (main entrance to the north); {@link #rotate} turns them for the site.
+ * Like an ARK base it is ONE connected building: 3x3 foundations laid edge to edge (flush with the ground), one
+ * roof of ceilings over all of them, an open interior, walls standing on the ground all around the outside, and a
+ * single main door.  Coordinates are relative to the anchor (the middle of the first module, at ground level), with
+ * the main door to the north; {@link #rotate} turns them for the site.
  */
 public final class BaseDesign {
     public static final int COUNT = 25;
-    public static final int PITCH = 4;
+    /** a module is one 3x3 foundation; modules lie edge to edge */
+    public static final int PITCH = 3;
+    /** bumped whenever the blueprints change shape: a tribe with an older plan settles again */
+    public static final int PLAN_VERSION = 2;
 
     public enum Archetype {
         CABIN("cabin", "flat"), STONE_FORT("stone fort", "flat"), CASTLE("castle", "flat"), MOUNTAIN("mountain stronghold", "mountain"),
-        FOREST_VILLAGE("forest village", "forest"), HARBOUR("coastal harbour", "coast"), ISLAND("island base", "coast"),
-        DESERT("desert courtyard", "desert"), UNDERGROUND("underground bunker", "any"), CAVE("cave base", "cave"),
+        FOREST_VILLAGE("forest lodge", "forest"), HARBOUR("coastal harbour", "coast"), ISLAND("island base", "coast"),
+        DESERT("desert stronghold", "desert"), UNDERGROUND("underground bunker", "any"), CAVE("cave base", "cave"),
         FARM("farmstead", "flat"), BREEDING("breeding ranch", "flat"), TAMING("taming centre", "flat"), MILITARY("military camp", "flat"),
         RESEARCH("research station", "any"), INDUSTRIAL("industrial works", "flat"), MINING("mining camp", "metal"),
-        TRADE("trade post", "flat"), ADVANCED("advanced complex", "flat"), GIANT_DEFENSE("anti-giant fortress", "flat");
+        TRADE("trade hall", "flat"), ADVANCED("advanced complex", "flat"), GIANT_DEFENSE("anti-giant fortress", "flat");
 
         public final String label, site;
 
@@ -55,8 +58,8 @@ public final class BaseDesign {
     /**
      * one build action: a structure piece (type + facing), hanging a door, placing a furniture block (furniture =
      * "bed", "storage_box", "large_storage_box", "campfire", "mortar_and_pestle", "smithy", "refining_forge",
-     * "fabricator"), a crop plot, or preparing ground (furniture "" = level the 5x5 plot of a room or tower,
-     * "ramp" = dig the stairway of an underground base); phase 1 shelter .. 5 expansion; room = the room it belongs to.
+     * "fabricator"), a crop plot, or preparing ground (furniture "" = level a module's plot, "ramp" = dig the
+     * stairway of an underground base); phase 1 the house .. 5 expansion; room = the part of the house it belongs to.
      * A bed's offset is its head, its facing points from the head to the foot.
      */
     public record Step(Kind kind, @Nullable PieceType type, BlockPos offset, Direction facing, String furniture, int phase, @Nullable Room room) {
@@ -67,24 +70,27 @@ public final class BaseDesign {
 
     record Cell(int x, int z, int floor, Room room) {}
 
+    /** a straight run of outside wall along one side of the house: blocks lo..hi on a line, facing outwards */
+    private record Seg(Direction out, int line, int lo, int hi) {}
+
+    private static final Direction[] H = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+
     public final int id;
     public final Archetype archetype;
     public final int variant;
     public final String layout;
-    public final int floors;
-    final List<Cell> cells = new ArrayList<>();
-    final Set<Long> doors = new HashSet<>();          // edges with a doorway: key(cell) * 4 + direction index
-    final List<int[]> pens = new ArrayList<>();         // {x0, z0, w, d} in cells
-    final List<int[]> fields = new ArrayList<>();       // {x0, z0, w, d} in cells, crop plots
-    final List<int[]> towers = new ArrayList<>();       // {block x, block z, floors, 1 = corner tower of the wall ring}
-    int ring = -1;                                      // perimeter wall margin in cells (-1 none)
-    int ring2 = -1;                                     // second (outer) wall ring
-    int depth;                                          // underground: anchor below the surface
-    int annexes;                                        // rooms added so the base can progress
+    public final int floors = 1;
+    final List<Cell> cells = new ArrayList<>();           // modules of the house (floor 0)
+    final List<int[]> pens = new ArrayList<>();         // {x0, z0, w, d} in modules
+    final List<int[]> fields = new ArrayList<>();       // {x0, z0, w, d} in modules
+    final List<int[]> raised = new ArrayList<>();       // {module x, module z, levels}: towers rising out of the house
+    final List<int[]> towers = new ArrayList<>();       // {block x, block z, levels}: watchtowers in the corners of the wall ring
+    int ring = -1;                                      // wall ring margin in modules (-1 none)
+    int ring2 = -1;                                     // second (outer) ring
+    int depth;                                          // underground: how deep the house is dug in
     private int cornerTowers;
     private List<Step> plan;
-
-    private static final Direction[] H = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+    private boolean valid = true;
 
     private static final BaseDesign[] ALL = new BaseDesign[COUNT];
 
@@ -94,7 +100,7 @@ public final class BaseDesign {
             BaseDesign d = null;
             for (int attempt = 0; attempt < 40; attempt++) {
                 d = new BaseDesign(i, attempt);
-                if (seen.add(d.signature())) break;
+                if (d.valid && seen.add(d.signature())) break;
             }
             ALL[i] = d;
         }
@@ -118,297 +124,235 @@ public final class BaseDesign {
         this.variant = id / at.length;
         Random r = new Random(id * 1000003L + attempt * 7919L + 17);
         int v = variant + attempt;
-        int f;
         String lay;
+        Room[] rooms;
         switch (archetype) {
             case CABIN -> {
-                lay = pick(v, "single", "pair", "L", "row3");
-                block(lay, 0, 0, Room.SLEEP, Room.STORAGE, Room.KITCHEN);
-                f = 1;
+                lay = pick(v, "3x1", "L3", "2x2", "L4");
+                rooms = new Room[]{Room.SLEEP, Room.WORKSHOP, Room.SMELTER, Room.KITCHEN};
             }
             case STONE_FORT -> {
-                lay = pick(v, "block2x2", "block3x2", "ring3", "T");
-                block(lay, 0, 0, Room.HALL, Room.STORAGE, Room.SLEEP, Room.ARMORY, Room.WORKSHOP, Room.KITCHEN, Room.STORAGE, Room.SLEEP);
-                f = 1 + v % 2;
+                lay = pick(v, "2x2", "3x2", "3x3", "T4");
+                rooms = new Room[]{Room.SLEEP, Room.STORAGE, Room.WORKSHOP, Room.ARMORY, Room.SMELTER, Room.KITCHEN, Room.STORAGE, Room.HALL, Room.LAB};
                 ring = 1;
-                cornerTowers = 2 + v % 2;
+                cornerTowers = 2 + v % 3;
             }
             case CASTLE -> {
-                lay = pick(v, "block2x2", "block3x3", "block2x3", "cross");
-                block(lay, 0, 0, Room.HALL, Room.SLEEP, Room.STORAGE, Room.ARMORY, Room.KITCHEN, Room.WORKSHOP, Room.SLEEP, Room.STORAGE, Room.LAB);
-                f = 2 + v % 2;
-                ring = 2;
+                lay = pick(v, "3x3", "4x3", "plus5", "T5");
+                rooms = new Room[]{Room.SLEEP, Room.HALL, Room.STORAGE, Room.ARMORY, Room.KITCHEN, Room.WORKSHOP, Room.SMELTER, Room.STORAGE, Room.LAB,
+                        Room.SLEEP, Room.ARMORY, Room.STORAGE};
+                ring = 1;
                 cornerTowers = 4;
-                pens.add(new int[]{-3, 1, 1 + v % 2, 1});
+                raisedCorners(2, 3);
+                pens.add(new int[]{-4, 0, 2, 2});
             }
             case MOUNTAIN -> {
-                lay = pick(v, "single", "pair", "terrace", "L");
-                block(lay, 0, 0, Room.SLEEP, Room.STORAGE, Room.WORKSHOP, Room.SMELTER);
-                f = 2 + v % 2;
-                tower(lay.equals("single") ? 1 : -1, 0, f + 1);
+                lay = pick(v, "L3", "3x1", "2x2", "L4");
+                rooms = new Room[]{Room.SLEEP, Room.STORAGE, Room.WORKSHOP, Room.SMELTER, Room.LAB};
+                raisedCorners(1, 3 + v % 2);
             }
             case FOREST_VILLAGE -> {
-                lay = pick(v, "huts3", "huts4", "huts5", "huts3+");
-                int n = lay.equals("huts3") || lay.equals("huts3+") ? 3 : lay.equals("huts4") ? 4 : 5;
-                Room[] rooms = {Room.SLEEP, Room.STORAGE, Room.KITCHEN, Room.WORKSHOP, Room.SLEEP};
-                int[][] spots = {{0, 0}, {2, 0}, {0, 2}, {2, 2}, {-2, 1}, {1, -2}};
-                for (int i = 0; i < n; i++) cells.add(new Cell(spots[(i + v) % spots.length][0], spots[(i + v) % spots.length][1], 0, rooms[i]));
-                if (lay.equals("huts3+")) fields.add(new int[]{4, 0, 1, 2});
-                f = 1;
+                lay = pick(v, "L4", "T4", "4x1", "L5");
+                rooms = new Room[]{Room.SLEEP, Room.KITCHEN, Room.STORAGE, Room.WORKSHOP, Room.SMELTER, Room.SLEEP};
+                fields.add(new int[]{0, 3, 2, 1});
             }
             case HARBOUR -> {
-                lay = pick(v, "pier3", "pier4", "quay", "pierL");
-                int n = lay.equals("pier3") ? 3 : lay.equals("pier4") ? 4 : 3;
-                for (int i = 0; i < n; i++) cells.add(new Cell(0, i, 0, i == 0 ? Room.SLEEP : i == 1 ? Room.STORAGE : Room.MARKET));
-                if (lay.equals("quay")) cells.add(new Cell(1, 0, 0, Room.KITCHEN));
-                if (lay.equals("pierL")) cells.add(new Cell(1, n - 1, 0, Room.STORAGE));
-                f = 1 + v % 2;
-                tower(-1, n - 1, 2 + v % 2);
+                lay = pick(v, "4x1", "3x1", "L4", "3x2");
+                rooms = new Room[]{Room.SLEEP, Room.STORAGE, Room.MARKET, Room.WORKSHOP, Room.SMELTER, Room.KITCHEN};
+                raisedCorners(1, 3);
             }
             case ISLAND -> {
-                lay = pick(v, "ring3", "block2x2", "cross", "pair");
-                block(lay, 0, 0, Room.SLEEP, Room.STORAGE, Room.KITCHEN, Room.WORKSHOP, Room.STORAGE, Room.SLEEP, Room.LAB, Room.ARMORY);
-                f = 1 + v % 2;
+                lay = pick(v, "2x2", "plus5", "L3", "3x2");
+                rooms = new Room[]{Room.SLEEP, Room.STORAGE, Room.KITCHEN, Room.WORKSHOP, Room.SMELTER, Room.LAB};
                 cornerTowers = 1 + v % 3;
             }
             case DESERT -> {
-                lay = pick(v, "ring3", "ringU", "block2x3", "ring3");
-                block(lay, 0, 0, Room.SLEEP, Room.STORAGE, Room.KITCHEN, Room.WORKSHOP, Room.SLEEP, Room.STORAGE, Room.MARKET, Room.LAB);
-                f = 1 + (v / 2) % 2;
+                lay = pick(v, "3x3", "3x2", "2x2", "T5");
+                rooms = new Room[]{Room.SLEEP, Room.STORAGE, Room.KITCHEN, Room.WORKSHOP, Room.SMELTER, Room.MARKET, Room.LAB, Room.STORAGE, Room.HALL};
                 if (v % 2 == 1) ring = 1;
             }
             case UNDERGROUND -> {
-                lay = pick(v, "row3", "block2x2", "L", "cross");
-                block(lay, 0, 0, Room.HALL, Room.STORAGE, Room.SLEEP, Room.WORKSHOP, Room.SMELTER, Room.LAB);
-                f = 1;
-                depth = 4 + v % 3;
+                lay = pick(v, "3x1", "2x2", "L4", "plus5");
+                rooms = new Room[]{Room.SLEEP, Room.STORAGE, Room.WORKSHOP, Room.SMELTER, Room.LAB, Room.HALL};
+                depth = 3 + v % 2;
             }
             case CAVE -> {
-                lay = pick(v, "pair", "row3", "L", "single");
-                block(lay, 0, 0, Room.SLEEP, Room.STORAGE, Room.SMELTER, Room.WORKSHOP);
-                f = 1;
+                lay = pick(v, "3x1", "L3", "2x2", "4x1");
+                rooms = new Room[]{Room.SLEEP, Room.STORAGE, Room.SMELTER, Room.WORKSHOP};
             }
             case FARM -> {
-                lay = pick(v, "pair", "L", "row3", "single");
-                block(lay, 0, 0, Room.SLEEP, Room.BARN, Room.KITCHEN, Room.STORAGE);
-                f = 1;
-                fields.add(new int[]{2, 0, 2 + v % 2, 2 + (v / 2) % 2});
-                if (v % 3 == 2) fields.add(new int[]{-3, 0, 2, 2});
-                ring = v % 2 == 0 ? -1 : 2;
+                lay = pick(v, "3x1", "L3", "L4", "2x2");
+                rooms = new Room[]{Room.SLEEP, Room.BARN, Room.KITCHEN, Room.WORKSHOP, Room.SMELTER};
+                fields.add(new int[]{0, 3, 2 + v % 2, 2});
+                if (v % 3 == 2) fields.add(new int[]{-4, 0, 2, 2});
+                if (v % 2 == 1) ring = 2;
             }
             case BREEDING -> {
-                lay = pick(v, "pair", "row3", "L", "pair");
-                block(lay, 0, 0, Room.NURSERY, Room.STORAGE, Room.SLEEP, Room.KITCHEN);
-                f = 1 + v % 2;
-                pens.add(new int[]{0, 2, 2 + v % 2, 2});
-                if (v >= 3) pens.add(new int[]{-3, 0, 2, 2 + v % 2});
+                lay = pick(v, "3x1", "L3", "2x2", "L4");
+                rooms = new Room[]{Room.SLEEP, Room.NURSERY, Room.STORAGE, Room.WORKSHOP, Room.SMELTER};
+                pens.add(new int[]{0, 3, 2 + v % 2, 2});
+                if (v >= 3) pens.add(new int[]{-5, 0, 2, 2});
             }
             case TAMING -> {
-                lay = pick(v, "single", "pair", "L", "row3");
-                block(lay, 0, 0, Room.KITCHEN, Room.STORAGE, Room.SLEEP, Room.WORKSHOP);
-                f = 1;
-                pens.add(new int[]{2, 0, 1 + v % 2, 2});
-                tower(-1, -1, 2);
+                lay = pick(v, "3x1", "L3", "2x2", "4x1");
+                rooms = new Room[]{Room.SLEEP, Room.KITCHEN, Room.WORKSHOP, Room.SMELTER, Room.STORAGE};
+                pens.add(new int[]{5, 0, 2, 2});
+                raisedCorners(1, 3);
             }
             case MILITARY -> {
-                lay = pick(v, "row3", "block3x2", "T", "row4");
-                block(lay, 0, 0, Room.SLEEP, Room.SLEEP, Room.ARMORY, Room.STORAGE, Room.WORKSHOP, Room.KITCHEN, Room.SLEEP, Room.ARMORY);
-                f = 2;
+                lay = pick(v, "3x2", "4x2", "T4", "4x1");
+                rooms = new Room[]{Room.SLEEP, Room.ARMORY, Room.STORAGE, Room.WORKSHOP, Room.SMELTER, Room.KITCHEN, Room.SLEEP, Room.ARMORY};
                 ring = 1;
                 if (v % 2 == 1) ring2 = 3;
                 cornerTowers = 2 + v % 3;
             }
             case RESEARCH -> {
-                lay = pick(v, "block2x2", "cross", "L", "row3");
-                block(lay, 0, 0, Room.LAB, Room.LAB, Room.STORAGE, Room.SLEEP, Room.WORKSHOP, Room.KITCHEN);
-                f = 1 + v % 3;
-                tower(2, -1, 3);
+                lay = pick(v, "2x2", "plus5", "L4", "3x2");
+                rooms = new Room[]{Room.SLEEP, Room.LAB, Room.STORAGE, Room.WORKSHOP, Room.SMELTER, Room.KITCHEN};
+                raisedCorners(1, 3);
             }
             case INDUSTRIAL -> {
-                lay = pick(v, "block3x2", "row4", "block2x2", "L");
-                block(lay, 0, 0, Room.SMELTER, Room.WORKSHOP, Room.STORAGE, Room.STORAGE, Room.SMELTER, Room.WORKSHOP, Room.SLEEP, Room.LAB);
-                f = 1 + v % 2;
-                tower(-1, 0, 3 + v % 2);         // chimney / lookout
+                lay = pick(v, "3x2", "4x1", "2x2", "L5");
+                rooms = new Room[]{Room.SLEEP, Room.SMELTER, Room.WORKSHOP, Room.STORAGE, Room.STORAGE, Room.SMELTER, Room.LAB};
+                raisedCorners(1, 3 + v % 2);                     // chimney / lookout
             }
             case MINING -> {
-                lay = pick(v, "pair", "row3", "L", "single");
-                block(lay, 0, 0, Room.SMELTER, Room.STORAGE, Room.SLEEP, Room.WORKSHOP);
-                f = 1;
-                if (v % 2 == 0) tower(1, 1, 2);
+                lay = pick(v, "3x1", "L3", "2x2", "L4");
+                rooms = new Room[]{Room.SLEEP, Room.SMELTER, Room.STORAGE, Room.WORKSHOP};
+                if (v % 2 == 0) raisedCorners(1, 2);
             }
             case TRADE -> {
-                lay = pick(v, "plaza", "plazaU", "row4", "plaza");
-                if (lay.startsWith("plaza")) {
-                    int[][] stalls = {{-1, -1}, {0, -1}, {1, -1}, {-1, 1}, {0, 1}, {1, 1}, {-1, 0}, {1, 0}};
-                    int n = lay.equals("plaza") ? 6 + v % 3 : 5;
-                    for (int i = 0; i < n; i++) cells.add(new Cell(stalls[i][0], stalls[i][1], 0, i < 2 ? (i == 0 ? Room.SLEEP : Room.STORAGE) : Room.MARKET));
-                } else {
-                    block(lay, 0, 0, Room.SLEEP, Room.MARKET, Room.MARKET, Room.STORAGE);
-                }
-                f = 1;
+                lay = pick(v, "4x2", "3x2", "T5", "4x1");
+                rooms = new Room[]{Room.SLEEP, Room.MARKET, Room.MARKET, Room.STORAGE, Room.WORKSHOP, Room.SMELTER, Room.MARKET, Room.KITCHEN};
             }
             case ADVANCED -> {
-                lay = pick(v, "block2x2", "block3x2", "cross", "ring3");
-                block(lay, 0, 0, Room.LAB, Room.HALL, Room.STORAGE, Room.SMELTER, Room.WORKSHOP, Room.SLEEP, Room.ARMORY, Room.LAB);
-                f = 2 + v % 2;
-                ring = 2;
+                lay = pick(v, "3x3", "4x3", "plus5", "3x2");
+                rooms = new Room[]{Room.SLEEP, Room.LAB, Room.HALL, Room.STORAGE, Room.SMELTER, Room.WORKSHOP, Room.ARMORY, Room.LAB, Room.STORAGE};
+                ring = 1;
                 cornerTowers = 2 + v % 3;
-                pens.add(new int[]{-4, 0, 2, 2});
+                pens.add(new int[]{-5, 0, 2, 2});
             }
             default -> {          // GIANT_DEFENSE
-                lay = pick(v, "block2x2", "single", "T", "block2x2");
-                block(lay, 0, 0, Room.HALL, Room.STORAGE, Room.SLEEP, Room.ARMORY, Room.KITCHEN);
-                f = 1 + v % 2;
+                lay = pick(v, "2x2", "3x2", "3x3", "T4");
+                rooms = new Room[]{Room.SLEEP, Room.STORAGE, Room.ARMORY, Room.WORKSHOP, Room.SMELTER, Room.KITCHEN, Room.HALL};
                 ring = 1;
                 ring2 = 3;
                 cornerTowers = 4;
             }
         }
         this.layout = lay;
-        ensure(Room.SLEEP);
-        ensure(Room.WORKSHOP);
-        ensure(Room.SMELTER);
-        ensure(Room.LAB);
-        shelterFirst();
+        shape(lay, rooms);
         separate();
         if (cornerTowers > 0) corners(cornerTowers, r);
-        // storeys: every room of the main block gets the same number (towers and huts stay single unless stated)
-        this.floors = f;
-        if (f > 1) {
-            List<Cell> upper = new ArrayList<>();
-            for (int fl = 1; fl < f; fl++) {
-                for (Cell c : cells) {
-                    if (archetype == Archetype.FOREST_VILLAGE || c.floor != 0) continue;
-                    Room up = fl == 1 ? (c.room == Room.STORAGE ? Room.SLEEP : c.room == Room.HALL ? Room.LAB : Room.STORAGE) : Room.ARMORY;
-                    upper.add(new Cell(c.x, c.z, fl, up));
-                }
-            }
-            cells.addAll(upper);
-        }
-        // doors: the main entrance on the north of the first room, interior doorways linking neighbouring rooms
-        Cell first = cells.get(0);
-        doors.add(edgeKey(first.x, first.z, first.floor, Direction.NORTH));
-        for (Cell a : cells) {
-            for (Direction d : new Direction[]{Direction.EAST, Direction.SOUTH}) {
-                Cell b = at(a.x + d.getStepX(), a.z + d.getStepZ(), a.floor);
-                if (b != null && (r.nextInt(3) != 0 || a.room == Room.HALL)) addDoor(a, b, d);
-            }
-        }
-        if (archetype == Archetype.FOREST_VILLAGE || archetype == Archetype.TRADE) {
-            for (Cell c : cells) {
-                if (c.floor != 0) continue;
-                Direction d = archetype == Archetype.TRADE && c.z > 0 ? Direction.SOUTH : Direction.NORTH;
-                if (at(c.x + d.getStepX(), c.z + d.getStepZ(), 0) == null) doors.add(edgeKey(c.x, c.z, 0, d));
-            }
-        }
-        connect();
+        // the walls must close the house without two pieces in the same place
+        if (segments() == null) valid = false;
     }
 
     private static String pick(int v, String... options) {
         return options[Math.floorMod(v, options.length)];
     }
 
-    private void tower(int cx, int cz, int fl) {
-        towers.add(new int[]{cx * PITCH, cz * PITCH, fl, 0});
-    }
-
-    private static int cellOf(int block) {
-        return Math.floorDiv(block + 2, PITCH);
-    }
-
-    private void block(String lay, int x0, int z0, Room... rooms) {
-        int[][] shape = switch (lay) {
-            case "single" -> new int[][]{{0, 0}};
-            case "pair" -> new int[][]{{0, 0}, {1, 0}};
-            case "L" -> new int[][]{{0, 0}, {1, 0}, {0, 1}};
-            case "row3" -> new int[][]{{0, 0}, {1, 0}, {2, 0}};
-            case "row4" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {3, 0}};
-            case "block2x2" -> new int[][]{{0, 0}, {1, 0}, {0, 1}, {1, 1}};
-            case "block3x2" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {0, 1}, {1, 1}, {2, 1}};
-            case "block2x3" -> new int[][]{{0, 0}, {1, 0}, {0, 1}, {1, 1}, {0, 2}, {1, 2}};
-            case "block3x3" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {0, 1}, {1, 1}, {2, 1}, {0, 2}, {1, 2}, {2, 2}};
-            case "ring3" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {0, 1}, {2, 1}, {0, 2}, {1, 2}, {2, 2}};     // courtyard in the middle
-            case "ringU" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {0, 1}, {2, 1}, {0, 2}, {2, 2}};
-            case "T" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {1, 1}, {1, 2}};
-            case "cross" -> new int[][]{{1, 0}, {0, 1}, {1, 1}, {2, 1}, {1, 2}};
-            case "terrace" -> new int[][]{{0, 0}, {0, 1}};
-            default -> new int[][]{{0, 0}};
+    /** the modules of the house; the parts that keep the base going (bed, workshop, smelter) go where there is wall to stand against */
+    private void shape(String lay, Room[] rooms) {
+        int[][] s = switch (lay) {
+            case "3x1" -> new int[][]{{0, 0}, {1, 0}, {2, 0}};
+            case "4x1" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {3, 0}};
+            case "L3" -> new int[][]{{0, 0}, {1, 0}, {0, 1}};
+            case "L4" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {0, 1}};
+            case "L5" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {0, 1}, {0, 2}};
+            case "2x2" -> new int[][]{{0, 0}, {1, 0}, {0, 1}, {1, 1}};
+            case "3x2" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {0, 1}, {1, 1}, {2, 1}};
+            case "4x2" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {3, 0}, {0, 1}, {1, 1}, {2, 1}, {3, 1}};
+            case "3x3" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {0, 1}, {1, 1}, {2, 1}, {0, 2}, {1, 2}, {2, 2}};
+            case "4x3" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {3, 0}, {0, 1}, {1, 1}, {2, 1}, {3, 1}, {0, 2}, {1, 2}, {2, 2}, {3, 2}};
+            case "T4" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {1, 1}};
+            case "T5" -> new int[][]{{0, 0}, {1, 0}, {2, 0}, {1, 1}, {1, 2}};
+            case "plus5" -> new int[][]{{1, 0}, {0, 1}, {1, 1}, {2, 1}, {1, 2}};
+            default -> new int[][]{{0, 0}, {1, 0}, {2, 0}};
         };
-        for (int i = 0; i < shape.length; i++) cells.add(new Cell(x0 + shape[i][0], z0 + shape[i][1], 0, rooms[i % rooms.length]));
-    }
-
-    /** adds an annex room when the archetype has none of this kind (every base must be able to progress) */
-    private void ensure(Room room) {
-        for (Cell c : cells) if (c.room == room) return;
-        Direction[] order = {Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.NORTH};
-        for (int i = cells.size() - 1; i >= 0; i--) {
-            Cell c = cells.get(i);
-            if (c.floor != 0) continue;
-            for (Direction d : order) {
-                if (i == 0 && d == Direction.NORTH) continue;          // keep the main entrance free
-                int x = c.x + d.getStepX(), z = c.z + d.getStepZ();
-                if (freeCell(x, z)) {
-                    cells.add(new Cell(x, z, 0, room));
-                    annexes++;
-                    return;
-                }
-            }
+        // the entrance module first (its north side is outside wall), then the ones with the most outside wall
+        List<int[]> order = new ArrayList<>(List.of(s));
+        Set<Long> set = new HashSet<>();
+        for (int[] c : s) set.add(key(c[0], c[1]));
+        order.sort((a, b) -> {
+            int ea = exteriorSides(set, a[0], a[1]), eb = exteriorSides(set, b[0], b[1]);
+            boolean na = !set.contains(key(a[0], a[1] - 1)), nb = !set.contains(key(b[0], b[1] - 1));
+            if (na != nb) return na ? -1 : 1;
+            if (ea != eb) return Integer.compare(eb, ea);
+            return Integer.compare(a[1] * 10 + a[0], b[1] * 10 + b[0]);
+        });
+        List<Room> list = new ArrayList<>(List.of(rooms));
+        for (Room must : new Room[]{Room.SLEEP, Room.WORKSHOP, Room.SMELTER}) {
+            if (!list.subList(0, Math.min(list.size(), order.size())).contains(must)) list.add(Math.min(list.size(), order.size()) - 1, must);
         }
-    }
-
-    private boolean freeCell(int x, int z) {
-        if (at(x, z, 0) != null) return false;
-        for (int[] t : towers) if (cellOf(t[0]) == x && cellOf(t[1]) == z) return false;
-        return true;
-    }
-
-    /** the shelter (first room, next to the entrance, built first) is where it sleeps */
-    private void shelterFirst() {
-        Cell c0 = cells.get(0);
-        if (c0.room == Room.SLEEP) return;
-        for (int k = 1; k < cells.size(); k++) {
-            Cell ck = cells.get(k);
-            if (ck.room == Room.SLEEP && ck.floor == 0) {
-                cells.set(0, new Cell(c0.x, c0.z, 0, Room.SLEEP));
-                cells.set(k, new Cell(ck.x, ck.z, 0, c0.room));
-                return;
-            }
+        for (int i = 0; i < order.size(); i++) {
+            Room room = i < list.size() ? list.get(i) : Room.STORAGE;
+            if (exteriorSides(set, order.get(i)[0], order.get(i)[1]) == 0) room = Room.HALL;      // the middle of a big house stays open
+            cells.add(new Cell(order.get(i)[0], order.get(i)[1], 0, room));
         }
+        // the first module is the bedroom (shelter)
+        if (cells.get(0).room != Room.SLEEP) cells.set(0, new Cell(cells.get(0).x, cells.get(0).z, 0, Room.SLEEP));
     }
 
-    /** pens and fields keep a free cell to the rooms and to each other, towers stand clear of rooms and pens */
+    private static int exteriorSides(Set<Long> set, int x, int z) {
+        int n = 0;
+        for (Direction d : H) if (!set.contains(key(x + d.getStepX(), z + d.getStepZ()))) n++;
+        return n;
+    }
+
+    private static long key(int x, int z) {
+        return ((long) (x + 1000) << 20) | (z + 1000);
+    }
+
+    boolean isModule(int x, int z) {
+        return at(x, z) != null;
+    }
+
+    Cell at(int x, int z) {
+        for (Cell c : cells) if (c.x == x && c.z == z) return c;
+        return null;
+    }
+
+    /** towers rising out of the house corners furthest from the entrance */
+    private void raisedCorners(int n, int levels) {
+        pendingRaised = n;
+        pendingLevels = levels;
+    }
+
+    private int pendingRaised, pendingLevels;
+
+    /** pens and fields keep their distance from the house and from each other */
     private void separate() {
+        if (pendingRaised > 0) {
+            List<Cell> cand = new ArrayList<>();
+            Set<Long> set = new HashSet<>();
+            for (Cell c : cells) set.add(key(c.x, c.z));
+            for (Cell c : cells) if (exteriorSides(set, c.x, c.z) >= 2 && c != cells.get(0)) cand.add(c);
+            Cell first = cells.get(0);
+            cand.sort((a, b) -> Integer.compare(Math.abs(b.x - first.x) + Math.abs(b.z - first.z), Math.abs(a.x - first.x) + Math.abs(a.z - first.z)));
+            for (int i = 0; i < Math.min(pendingRaised, cand.size()); i++) raised.add(new int[]{cand.get(i).x, cand.get(i).z, pendingLevels});
+        }
         List<int[]> placed = new ArrayList<>();
         for (List<int[]> group : List.of(pens, fields)) {
+            int gap = group == pens ? 2 : 1;
             for (int[] p : group) {
                 int sx = p[0] >= 0 ? 1 : -1;
-                for (int k = 0; k < 14 && rectBlocked(p, placed); k++) {
-                    if (k < 9) p[0] += sx;
+                for (int k = 0; k < 16 && rectBlocked(p, placed, gap); k++) {
+                    if (k < 10) p[0] += sx;
                     else p[1] += 1;
                 }
                 placed.add(p);
             }
         }
-        for (int[] t : towers) {
-            for (int k = 0; k < 8 && towerBlocked(t, placed); k++) t[0] += t[0] >= 0 ? PITCH : -PITCH;
-        }
     }
 
-    private boolean rectBlocked(int[] p, List<int[]> placed) {
-        for (int x = p[0] - 1; x <= p[0] + p[2]; x++) {
-            for (int z = p[1] - 1; z <= p[1] + p[3]; z++) {
-                if (at(x, z, 0) != null) return true;
-                for (int[] t : towers) if (cellOf(t[0]) == x && cellOf(t[1]) == z) return true;
-                for (int[] q : placed) if (x >= q[0] && x < q[0] + q[2] && z >= q[1] && z < q[1] + q[3]) return true;
+    private boolean rectBlocked(int[] p, List<int[]> placed, int gap) {
+        for (int x = p[0] - gap; x < p[0] + p[2] + gap; x++) {
+            for (int z = p[1] - gap; z < p[1] + p[3] + gap; z++) {
+                if (isModule(x, z)) return true;
+                for (int[] q : placed) if (x >= q[0] - 1 && x < q[0] + q[2] + 1 && z >= q[1] - 1 && z < q[1] + q[3] + 1) return true;
             }
         }
-        return false;
-    }
-
-    private boolean towerBlocked(int[] t, List<int[]> placed) {
-        int x = cellOf(t[0]), z = cellOf(t[1]);
-        if (at(x, z, 0) != null) return true;
-        for (int[] q : placed) if (x >= q[0] - 1 && x <= q[0] + q[2] && z >= q[1] - 1 && z <= q[1] + q[3]) return true;
         return false;
     }
 
@@ -416,11 +360,11 @@ public final class BaseDesign {
     private void corners(int n, Random r) {
         int[] rr = ringRect(ring >= 0 ? ring : 1);
         int[][] c = {{rr[0] + 2, rr[2] + 2}, {rr[1] - 2, rr[3] - 2}, {rr[1] - 2, rr[2] + 2}, {rr[0] + 2, rr[3] - 2}};
-        for (int i = 0; i < Math.min(4, n); i++) towers.add(new int[]{c[i][0], c[i][1], 2 + r.nextInt(2), 1});
+        for (int i = 0; i < Math.min(4, n); i++) towers.add(new int[]{c[i][0], c[i][1], 2 + r.nextInt(2)});
     }
 
-    /** rooms, pens, fields and free-standing towers in cells: {x0, x1, z0, z1} */
-    private int[] cellBounds() {
+    /** house, pens and fields in modules: {x0, x1, z0, z1} */
+    private int[] moduleBounds() {
         int x0 = 99, x1 = -99, z0 = 99, z1 = -99;
         for (Cell c : cells) {
             x0 = Math.min(x0, c.x);
@@ -436,103 +380,108 @@ public final class BaseDesign {
                 z1 = Math.max(z1, p[1] + p[3] - 1);
             }
         }
-        for (int[] t : towers) {
-            if (t[3] == 1) continue;
-            x0 = Math.min(x0, cellOf(t[0]));
-            x1 = Math.max(x1, cellOf(t[0]));
-            z0 = Math.min(z0, cellOf(t[1]));
-            z1 = Math.max(z1, cellOf(t[1]));
-        }
         return new int[]{x0, x1, z0, z1};
     }
 
-    /** a wall ring m cells outside everything, sized so its sides tile exactly with 3-wide wall pieces */
+    /** a wall ring m modules outside everything, sized so its sides tile exactly with 3-wide wall pieces */
     private int[] ringRect(int m) {
-        int[] b = cellBounds();
-        int xW = (b[0] - m) * PITCH - 2, xE = (b[1] + m) * PITCH + 2, zN = (b[2] - m) * PITCH - 2, zS = (b[3] + m) * PITCH + 2;
+        int[] b = moduleBounds();
+        int g = m * PITCH + 4;                 // room for a 5x5 watchtower and a passage between it and the house
+        int xW = b[0] * PITCH - 2 - g, xE = b[1] * PITCH + 2 + g, zN = b[2] * PITCH - 2 - g, zS = b[3] * PITCH + 2 + g;
         xE += Math.floorMod(2 - (xE - xW + 1), 3);
         zS += Math.floorMod(2 - (zS - zN + 1), 3);
         return new int[]{xW, xE, zN, zS};
     }
 
-    Cell at(int x, int z, int floor) {
-        for (Cell c : cells) if (c.x == x && c.z == z && c.floor == floor) return c;
-        return null;
-    }
-
-    private static long edgeKey(int x, int z, int floor, Direction d) {
-        // edges are stored from the west / north cell so both rooms see the same doorway
-        if (d == Direction.WEST) return edgeKey(x - 1, z, floor, Direction.EAST);
-        if (d == Direction.NORTH) return (((long) (x + 500) * 1000 + (z + 500)) * 10 + floor) * 4;
-        if (d == Direction.SOUTH) return edgeKey(x, z + 1, floor, Direction.NORTH);
-        return (((long) (x + 500) * 1000 + (z + 500)) * 10 + floor) * 4 + 1;
-    }
-
-    private boolean hasDoor(Cell c, Direction d) {
-        return doors.contains(edgeKey(c.x, c.z, c.floor, d));
-    }
-
-    private int doorCount(Cell c) {
-        int n = 0;
-        for (Direction d : H) if (hasDoor(c, d)) n++;
-        return n;
-    }
-
-    /** bedrooms keep at least one solid wall for the bed */
-    private void addDoor(Cell a, Cell b, Direction d) {
-        if ((a.room == Room.SLEEP && doorCount(a) >= 3) || (b.room == Room.SLEEP && doorCount(b) >= 3)) return;
-        doors.add(edgeKey(a.x, a.z, a.floor, d));
-    }
-
-    /** every room of a storey can be reached from its first room */
-    private void connect() {
-        for (int fl = 0; fl < floors; fl++) {
-            Cell start = null;
-            for (Cell c : cells) if (c.floor == fl) {
-                start = c;
-                break;
-            }
-            if (start == null) continue;
-            for (int guard = 0; guard < 40; guard++) {
-                Set<Cell> reach = new HashSet<>();
-                ArrayDeque<Cell> q = new ArrayDeque<>();
-                q.add(start);
-                while (!q.isEmpty()) {
-                    Cell c = q.poll();
-                    if (!reach.add(c)) continue;
-                    for (Direction d : H) {
-                        Cell n = at(c.x + d.getStepX(), c.z + d.getStepZ(), fl);
-                        if (n != null && hasDoor(c, d)) q.add(n);
-                    }
-                }
-                boolean added = false;
-                for (Cell c : cells) {
-                    if (c.floor != fl || reach.contains(c) || added) continue;
-                    if (archetype == Archetype.FOREST_VILLAGE || archetype == Archetype.TRADE) {
-                        if (fl == 0 && doorCount(c) > 0) continue;       // huts and stalls have their own doors
-                    }
-                    for (Direction d : H) {
-                        Cell n = at(c.x + d.getStepX(), c.z + d.getStepZ(), fl);
-                        if (n != null && reach.contains(n)) {
-                            doors.add(edgeKey(c.x, c.z, fl, d));
-                            added = true;
-                            break;
-                        }
-                    }
-                }
-                if (!added) break;
+    // ============================================================================================ outside walls
+    /**
+     * The outside walls of the house as straight runs.  Each side of the house is one run of 3-wide pieces one block
+     * outside the foundations.  Where two runs meet in an inner corner they would share a block: one of them moves
+     * one block along its line, into the free outer corner at its other end.  Null if a shape cannot be closed.
+     */
+    @Nullable
+    private List<Seg> segments() {
+        // unit sides grouped into runs per outward direction and line
+        Map<String, List<int[]>> runs = new LinkedHashMap<>();
+        for (Cell c : cells) {
+            for (Direction d : H) {
+                if (isModule(c.x + d.getStepX(), c.z + d.getStepZ())) continue;
+                boolean alongX = d.getAxis() == Direction.Axis.Z;
+                int line = alongX ? c.z * PITCH + d.getStepZ() * 2 : c.x * PITCH + d.getStepX() * 2;
+                int along = alongX ? c.x : c.z;
+                runs.computeIfAbsent(d.name() + ":" + line, k -> new ArrayList<>()).add(new int[]{along});
             }
         }
+        List<Seg> segs = new ArrayList<>();
+        for (Map.Entry<String, List<int[]>> e : runs.entrySet()) {
+            String[] k = e.getKey().split(":");
+            Direction d = Direction.valueOf(k[0]);
+            int line = Integer.parseInt(k[1]);
+            List<Integer> a = new ArrayList<>();
+            for (int[] v : e.getValue()) a.add(v[0]);
+            Collections.sort(a);
+            int start = a.get(0), prev = a.get(0);
+            for (int i = 1; i <= a.size(); i++) {
+                if (i < a.size() && a.get(i) == prev + 1) {
+                    prev = a.get(i);
+                    continue;
+                }
+                segs.add(new Seg(d, line, start * PITCH - 1, prev * PITCH + 1));
+                if (i < a.size()) {
+                    start = a.get(i);
+                    prev = a.get(i);
+                }
+            }
+        }
+        // inner corners: two runs claiming the same block
+        Map<Long, List<Integer>> claims = new HashMap<>();
+        for (int i = 0; i < segs.size(); i++) {
+            Seg s = segs.get(i);
+            for (int t : new int[]{s.lo, s.hi}) claims.computeIfAbsent(blockKey(s, t), q -> new ArrayList<>()).add(i);
+        }
+        Seg[] fixed = segs.toArray(new Seg[0]);
+        boolean[] moved = new boolean[fixed.length];
+        for (Map.Entry<Long, List<Integer>> c : claims.entrySet()) {
+            if (c.getValue().size() < 2) continue;
+            if (c.getValue().size() > 2) return null;
+            int a = c.getValue().get(0), b = c.getValue().get(1);
+            int pick = !moved[a] && freeOtherEnd(fixed, a, c.getKey(), claims) ? a : !moved[b] && freeOtherEnd(fixed, b, c.getKey(), claims) ? b : -1;
+            if (pick < 0) return null;
+            Seg s = fixed[pick];
+            boolean atLo = blockKey(s, s.lo) == c.getKey();
+            fixed[pick] = atLo ? new Seg(s.out, s.line, s.lo + 1, s.hi + 1) : new Seg(s.out, s.line, s.lo - 1, s.hi - 1);
+            moved[pick] = true;
+        }
+        // nothing may overlap after the moves
+        Set<Long> used = new HashSet<>();
+        for (Seg s : fixed) for (int t = s.lo; t <= s.hi; t++) if (!used.add(blockKey(s, t))) return null;
+        return List.of(fixed);
+    }
+
+    /** the other end of the run is an outer corner nobody else claims */
+    private static boolean freeOtherEnd(Seg[] segs, int i, long corner, Map<Long, List<Integer>> claims) {
+        Seg s = segs[i];
+        boolean atLo = blockKey(s, s.lo) == corner;
+        long other = blockKey(s, atLo ? s.hi : s.lo);
+        long beyond = blockKey(s, atLo ? s.hi + 1 : s.lo - 1);
+        return claims.getOrDefault(other, List.of()).size() == 1 && !claims.containsKey(beyond);
+    }
+
+    private static long blockKey(Seg s, int t) {
+        boolean alongX = s.out.getAxis() == Direction.Axis.Z;
+        int x = alongX ? t : s.line, z = alongX ? s.line : t;
+        return ((long) (x + 100000) << 20) | (z + 100000);
     }
 
     public String signature() {
-        StringBuilder b = new StringBuilder(archetype.name()).append('|').append(layout).append('|').append(floors).append('|');
+        StringBuilder b = new StringBuilder(archetype.name()).append('|').append(layout).append('|');
         List<String> cs = new ArrayList<>();
-        for (Cell c : cells) cs.add(c.x + "," + c.z + "," + c.floor + "," + c.room);
+        for (Cell c : cells) cs.add(c.x + "," + c.z + "," + c.room);
         Collections.sort(cs);
-        b.append(cs).append(pens.size()).append(fields.size()).append(towers.size()).append(ring).append(ring2).append(depth);
+        b.append(cs).append(pens.size()).append(fields.size()).append(raised.size()).append(towers.size()).append(ring).append(ring2).append(depth);
         for (int[] p : pens) b.append(p[0]).append(p[1]).append(p[2]).append(p[3]);
         for (int[] p : fields) b.append(p[0]).append(p[1]).append(p[2]).append(p[3]);
+        for (int[] t : raised) b.append(t[0]).append(t[1]).append(t[2]);
         for (int[] t : towers) b.append(t[0]).append(t[1]).append(t[2]);
         return b.toString();
     }
@@ -561,7 +510,7 @@ public final class BaseDesign {
     }
 
     public int towerCount() {
-        return towers.size();
+        return towers.size() + raised.size();
     }
 
     public boolean walled() {
@@ -608,7 +557,6 @@ public final class BaseDesign {
         return new int[]{x0, x1, z0, z1, b[4], b[5]};
     }
 
-    /** material demand: pieces of the whole plan */
     public int pieceCount() {
         int n = 0;
         for (Step s : plan()) if (s.kind == Kind.PIECE) n++;
@@ -616,26 +564,30 @@ public final class BaseDesign {
     }
 
     public String describe() {
-        return archetype.label + " (" + layout + ", " + cells.size() + " rooms, " + floors + (floors == 1 ? " floor" : " floors")
-                + (towers.isEmpty() ? "" : ", " + towers.size() + " towers") + (pens.isEmpty() ? "" : ", " + pens.size() + " pens")
-                + (fields.isEmpty() ? "" : ", fields") + (ring >= 0 ? (ring2 >= 0 ? ", double walls" : ", walls") : "")
-                + (depth > 0 ? ", underground" : "") + ")";
+        return archetype.label + " (" + layout + ", " + cells.size() + " parts" + (towerCount() == 0 ? "" : ", " + towerCount() + " towers")
+                + (pens.isEmpty() ? "" : ", " + pens.size() + " pens") + (fields.isEmpty() ? "" : ", fields")
+                + (ring >= 0 ? (ring2 >= 0 ? ", double wall ring" : ", wall ring") : "") + (depth > 0 ? ", underground" : "") + ")";
     }
 
-    /** list of rooms and their use, for the blueprint viewer */
+    /** the parts of the house and their use, for the blueprint viewer */
     public Map<String, Integer> roomSummary() {
         Map<String, Integer> m = new LinkedHashMap<>();
         for (Cell c : cells) m.merge(c.room.name().toLowerCase(), 1, Integer::sum);
         return m;
     }
 
-    /** top-down cells for the blueprint viewer: {x, z, floor, room ordinal} plus pens (-1), fields (-2), towers (-3) */
+    /** top-down cells for the blueprint viewer: {x, z, storeys above, room ordinal} plus pens (-1), fields (-2), towers (-3) */
     public List<int[]> mapCells() {
         List<int[]> out = new ArrayList<>();
-        for (Cell c : cells) out.add(new int[]{c.x, c.z, c.floor, c.room.ordinal()});
+        for (Cell c : cells) {
+            int up = 0;
+            for (int[] t : raised) if (t[0] == c.x && t[1] == c.z) up = t[2] - 1;
+            out.add(new int[]{c.x, c.z, 0, c.room.ordinal()});
+            for (int k = 1; k <= up; k++) out.add(new int[]{c.x, c.z, k, c.room.ordinal()});
+        }
         for (int[] p : pens) for (int x = 0; x < p[2]; x++) for (int z = 0; z < p[3]; z++) out.add(new int[]{p[0] + x, p[1] + z, 0, -1});
         for (int[] p : fields) for (int x = 0; x < p[2]; x++) for (int z = 0; z < p[3]; z++) out.add(new int[]{p[0] + x, p[1] + z, 0, -2});
-        for (int[] t : towers) out.add(new int[]{cellOf(t[0]), cellOf(t[1]), 0, -3});
+        for (int[] t : towers) out.add(new int[]{Math.floorDiv(t[0] + 1, PITCH), Math.floorDiv(t[1] + 1, PITCH), 0, -3});
         return out;
     }
 
@@ -663,90 +615,105 @@ public final class BaseDesign {
         return plan;
     }
 
-    private static BlockPos cellPos(int x, int z, int floor) {
-        return new BlockPos(x * PITCH, floor * 3, z * PITCH);
+    /** ground-level centre of a module (y = the air just above the ground; the foundation goes one lower, flush with the ground) */
+    private BlockPos modulePos(int x, int z) {
+        return new BlockPos(x * PITCH, -depth, z * PITCH);
     }
 
-    private int roomPhase(Cell c, int idx, int[] seen) {
-        if (c.floor > 0) return 5;
-        if (idx == 0) return 1;
-        return switch (c.room) {
-            case KITCHEN, WORKSHOP -> 2;
-            case STORAGE -> seen[0]++ == 0 ? 2 : 4;
-            case SMELTER -> 3;
-            case LAB -> 5;
-            default -> idx < 3 ? 2 : 4;
-        };
-    }
+    private BlockPos doorMaster;
+    private Direction doorFacing;
 
     private List<Step> buildPlan() {
         List<Step> out = new ArrayList<>();
         int y0 = -depth;
-        // rooms, storey by storey; the first room (shelter) and its neighbours come first
-        List<Cell> order = new ArrayList<>(cells);
         Cell first = cells.get(0);
-        order.sort((a, b) -> a == b ? 0 : a.floor != b.floor ? Integer.compare(a.floor, b.floor)
-                : a == first ? -1 : b == first ? 1
-                : Integer.compare(Math.abs(a.x - first.x) + Math.abs(a.z - first.z), Math.abs(b.x - first.x) + Math.abs(b.z - first.z)));
+        List<Seg> segs = segments();
+        if (segs == null) segs = List.of();
+        // 1. the house: ground, foundations edge to edge, the outside walls with the main door, one roof of ceilings
+        for (Cell c : cells) out.add(new Step(Kind.GROUND, null, modulePos(c.x, c.z), Direction.NORTH, "", 1, c.room));
+        for (Cell c : cells) out.add(new Step(Kind.PIECE, PieceType.FOUNDATION, modulePos(c.x, c.z).below(), Direction.NORTH, "", 1, c.room));
+        // the main door: in the run on the entrance module's north side (else any side of it), in the piece over its middle
+        Direction doorSide = null;
+        for (Direction d : new Direction[]{Direction.NORTH, Direction.EAST, Direction.WEST, Direction.SOUTH}) {
+            if (!isModule(first.x + d.getStepX(), first.z + d.getStepZ())) {
+                doorSide = d;
+                break;
+            }
+        }
+        BlockPos firstPos = modulePos(first.x, first.z);
+        List<Step> walls = new ArrayList<>();
+        for (Seg s : segs) {
+            boolean alongX = s.out.getAxis() == Direction.Axis.Z;
+            for (int t = s.lo + 1; t + 1 <= s.hi; t += 3) {
+                BlockPos m = alongX ? new BlockPos(t, y0, s.line) : new BlockPos(s.line, y0, t);
+                boolean door = false;
+                if (doorMaster == null && s.out == doorSide) {
+                    BlockPos mid = firstPos.relative(doorSide, 2);
+                    int along = alongX ? mid.getX() : mid.getZ();
+                    int line = alongX ? mid.getZ() : mid.getX();
+                    if (line == s.line && Math.abs(along - t) <= 1) {
+                        door = true;
+                        doorMaster = m;
+                        doorFacing = s.out;
+                    }
+                }
+                Step w = new Step(Kind.PIECE, door ? PieceType.DOORFRAME : PieceType.WALL, m, s.out, "", 1, null);
+                if (door) walls.add(0, w);
+                else walls.add(w);
+            }
+        }
+        out.addAll(walls);
+        if (doorMaster != null) out.add(new Step(Kind.DOOR, PieceType.DOORFRAME, doorMaster, doorFacing, "", 1, Room.SLEEP));
+        if (depth > 0 && doorMaster != null) out.add(new Step(Kind.GROUND, null, doorMaster, doorFacing, "ramp", 1, Room.SLEEP));
+        for (Cell c : cells) out.add(new Step(Kind.PIECE, PieceType.CEILING, modulePos(c.x, c.z).above(2), Direction.NORTH, "", 1, c.room));
+        // 2. furniture where each part of the house has wall to stand against
+        Set<BlockPos> keepFree = new HashSet<>();
+        if (doorMaster != null) {
+            keepFree.add(doorMaster.relative(doorFacing.getOpposite()));
+            keepFree.add(doorMaster.relative(doorFacing.getOpposite()).relative(doorFacing.getClockWise()));
+            keepFree.add(doorMaster.relative(doorFacing.getOpposite()).relative(doorFacing.getCounterClockWise()));
+        }
         boolean kitchen = count(Room.KITCHEN) + count(Room.NURSERY) > 0;
-        Set<Long> wallsDone = new HashSet<>();
-        Set<BlockPos> masters = new HashSet<>();            // wall lines already planned (towers attached to rooms share them)
+        boolean lab = count(Room.LAB) > 0;
         int[] seen = new int[1];
         int idx = 0;
-        for (Cell c : order) {
-            int phase = roomPhase(c, idx, seen);
-            idx++;
-            BlockPos base = cellPos(c.x, c.z, c.floor).above(y0);
-            if (c.floor == 0) {
-                out.add(new Step(Kind.GROUND, null, base, Direction.NORTH, "", phase, c.room));
-                if (c == first && depth > 0) {
-                    out.add(new Step(Kind.GROUND, null, base.relative(Direction.NORTH, 2).above(1), Direction.NORTH, "ramp", 1, c.room));
-                }
-                out.add(new Step(Kind.PIECE, PieceType.FOUNDATION, base, Direction.NORTH, "", phase, c.room));
+        for (Cell c : cells) furnish(out, c, roomPhase(c, idx++, seen), c == first && !kitchen, c.room == Room.SMELTER && !lab, keepFree);
+        // 3. towers rising out of the house: walls stacked on all four sides, a lookout roof on top
+        for (int[] t : raised) {
+            BlockPos base = modulePos(t[0], t[1]);
+            for (int lv = 1; lv < t[2]; lv++) {
+                for (Direction d : H) out.add(new Step(Kind.PIECE, PieceType.WALL, base.relative(d, 2).above(lv * 3), d, "", 3, null));
             }
-            List<Step> doorSteps = new ArrayList<>();
-            for (Direction d : H) {
-                long key = edgeKey(c.x, c.z, c.floor, d);
-                if (!wallsDone.add(key)) continue;          // shared wall already planned by the neighbour
-                BlockPos m = base.relative(d, 2).above(1);
-                masters.add(m);
-                boolean door = doors.contains(key);
-                out.add(new Step(Kind.PIECE, door ? PieceType.DOORFRAME : PieceType.WALL, m, d, "", phase, c.room));
-                if (door) doorSteps.add(new Step(Kind.DOOR, PieceType.DOORFRAME, m, d, "", phase, c.room));
-            }
-            out.addAll(doorSteps);
-            out.add(new Step(Kind.PIECE, PieceType.CEILING, base.above(3), Direction.NORTH, "", phase, c.room));
-            furnish(out, c, base.above(1), phase, c == first && !kitchen);
+            out.add(new Step(Kind.PIECE, PieceType.CEILING, base.above(2 + (t[2] - 1) * 3), Direction.NORTH, "", 3, null));
         }
-        // towers: stacked single rooms with a lookout on top
+        // 4. watchtowers in the corners of the wall ring
         for (int[] t : towers) {
             BlockPos base = new BlockPos(t[0], y0, t[1]);
+            Direction in = t[1] < 0 ? Direction.SOUTH : Direction.NORTH;
             out.add(new Step(Kind.GROUND, null, base, Direction.NORTH, "", 3, null));
-            out.add(new Step(Kind.PIECE, PieceType.FOUNDATION, base, Direction.NORTH, "", 3, null));
-            for (int fl = 0; fl < t[2]; fl++) {
+            out.add(new Step(Kind.PIECE, PieceType.FOUNDATION, base.below(), Direction.NORTH, "", 3, null));
+            for (int lv = 0; lv < t[2]; lv++) {
                 for (Direction d : H) {
-                    boolean door = fl == 0 && d == Direction.SOUTH;
-                    BlockPos m = base.relative(d, 2).above(1 + fl * 3);
-                    if (!masters.add(m)) continue;
+                    boolean door = lv == 0 && d == in;
+                    BlockPos m = base.relative(d, 2).above(lv * 3);
                     out.add(new Step(Kind.PIECE, door ? PieceType.DOORFRAME : PieceType.WALL, m, d, "", 3, null));
                     if (door) out.add(new Step(Kind.DOOR, PieceType.DOORFRAME, m, d, "", 3, null));
                 }
-                out.add(new Step(Kind.PIECE, PieceType.CEILING, base.above(3 + fl * 3), Direction.NORTH, "", 3, null));
             }
+            out.add(new Step(Kind.PIECE, PieceType.CEILING, base.above(2 + (t[2] - 1) * 3), Direction.NORTH, "", 3, null));
         }
-        // perimeter walls (corner towers fill their corners) with a gate in the north side
+        // 5. the wall ring(s) with a gate towards the main door
         if (ring >= 0) {
             int[] rr = ringRect(ring);
             boolean[] tw = new boolean[4];
             for (int[] t : towers) {
-                if (t[3] != 1) continue;
                 boolean w = t[0] == rr[0] + 2, n = t[1] == rr[2] + 2;
                 tw[(n ? 0 : 2) + (w ? 0 : 1)] = true;
             }
             fence(out, rr, y0, 3, tw, first.x * PITCH, false);
         }
         if (ring2 >= 0) fence(out, ringRect(ring2), y0, 4, new boolean[4], first.x * PITCH, false);
-        // dinosaur pens: fenced yards with a wide opening in the north side, a feed store inside
+        // 6. dinosaur pens: fenced yards with a wide opening, a feed store inside
         for (int[] p : pens) {
             int[] rr = {p[0] * PITCH - 2, (p[0] + p[2] - 1) * PITCH + 2, p[1] * PITCH - 2, (p[1] + p[3] - 1) * PITCH + 2};
             rr[1] += Math.floorMod(2 - (rr[1] - rr[0] + 1), 3);
@@ -754,9 +721,9 @@ public final class BaseDesign {
             fence(out, rr, y0, 4, new boolean[4], 0, true);
             out.add(new Step(Kind.FURNITURE, null, new BlockPos(rr[0] + 1, y0, rr[3] - 1), Direction.NORTH, "storage_box", 4, Room.BARN));
         }
-        // crop fields: rows of crop plots with a path every third row
-        for (int[] fdl : fields) {
-            int x0 = fdl[0] * PITCH - 1, x1 = (fdl[0] + fdl[2] - 1) * PITCH + 1, z0 = fdl[1] * PITCH - 1, z1 = (fdl[1] + fdl[3] - 1) * PITCH + 1;
+        // 7. crop fields: rows of crop plots with a path every third row
+        for (int[] f : fields) {
+            int x0 = f[0] * PITCH - 1, x1 = (f[0] + f[2] - 1) * PITCH + 1, z0 = f[1] * PITCH - 1, z1 = (f[1] + f[3] - 1) * PITCH + 1;
             for (int x = x0; x <= x1; x++) {
                 for (int z = z0; z <= z1; z++) {
                     if ((z - z0) % 3 == 2) continue;
@@ -767,13 +734,23 @@ public final class BaseDesign {
         return out;
     }
 
+    private int roomPhase(Cell c, int idx, int[] seen) {
+        if (idx == 0) return 1;
+        return switch (c.room) {
+            case KITCHEN, WORKSHOP -> 2;
+            case STORAGE -> seen[0]++ == 0 ? 2 : 4;
+            case SMELTER -> 3;
+            case LAB -> 5;
+            default -> idx < 3 ? 2 : 4;
+        };
+    }
+
     /**
-     * a rectangle of wall pieces {xW, xE, zN, zS}; corners with a tower (tw = NW, NE, SW, SE) are left to the tower,
-     * other corners stay as a closed post gap; a gate (doorframe + door) or, for pens, a wide opening in the north row
+     * a rectangle of wall pieces {xW, xE, zN, zS} standing on the ground; corners with a tower (tw = NW, NE, SW, SE)
+     * are left to the tower, other corners stay a closed post gap; a gate (doorframe + door) or, for pens, a wide opening
      */
     private void fence(List<Step> out, int[] rr, int y0, int phase, boolean[] tw, int gateX, boolean pen) {
         int xW = rr[0], xE = rr[1], zN = rr[2], zS = rr[3];
-        int y = y0 + 1;
         for (int row = 0; row < 2; row++) {
             boolean north = row == 0;
             int z = north ? zN : zS;
@@ -792,7 +769,7 @@ public final class BaseDesign {
                 }
             }
             for (int i = 0; i < xs.size(); i++) {
-                BlockPos m = new BlockPos(xs.get(i), y, z);
+                BlockPos m = new BlockPos(xs.get(i), y0, z);
                 Direction f = north ? Direction.NORTH : Direction.SOUTH;
                 if (i == gate || i == gate2) {
                     if (pen) continue;
@@ -808,7 +785,7 @@ public final class BaseDesign {
             int x = west ? xW : xE;
             int[] span = span(zN, zS, tw[west ? 0 : 1], tw[west ? 2 : 3]);
             for (int z = span[0] + 1; z + 1 <= span[1]; z += 3) {
-                out.add(new Step(Kind.PIECE, PieceType.WALL, new BlockPos(x, y, z), west ? Direction.WEST : Direction.EAST, "", phase, null));
+                out.add(new Step(Kind.PIECE, PieceType.WALL, new BlockPos(x, y0, z), west ? Direction.WEST : Direction.EAST, "", phase, null));
             }
         }
     }
@@ -822,8 +799,11 @@ public final class BaseDesign {
         return new int[]{s, s + Math.max(0, (e - s + 1) / 3 * 3) - 1};
     }
 
-    /** furniture of a room in its corners (the middle and the doorways stay free); the bed lies along a solid wall */
-    private void furnish(List<Step> out, Cell c, BlockPos floor, int phase, boolean campfireHere) {
+    /**
+     * the furniture of one part of the house, in the corners that touch an outside wall (the middle cells stay free
+     * as walkways between the parts); the bed lies along an outside wall without a door
+     */
+    private void furnish(List<Step> out, Cell c, int phase, boolean campfireHere, boolean labHere, Set<BlockPos> keepFree) {
         List<String> items = new ArrayList<>();
         switch (c.room) {
             case SLEEP -> items.add("storage_box");
@@ -843,6 +823,7 @@ public final class BaseDesign {
             }
             case SMELTER -> {
                 items.add("refining_forge");
+                if (labHere) items.add("fabricator");
                 items.add("storage_box");
             }
             case LAB -> {
@@ -856,7 +837,6 @@ public final class BaseDesign {
             case BARN -> {
                 items.add("large_storage_box");
                 items.add("storage_box");
-                items.add("storage_box");
             }
             case MARKET -> {
                 items.add("storage_box");
@@ -867,18 +847,43 @@ public final class BaseDesign {
                 items.add("campfire");
             }
             default -> {
-                items.add("storage_box");
-                items.add("large_storage_box");
+                return;               // halls stay open
             }
         }
         if (campfireHere) items.add(0, "campfire");
-        List<BlockPos> corners = new ArrayList<>(List.of(floor.offset(-1, 0, 1), floor.offset(1, 0, 1), floor.offset(1, 0, -1), floor.offset(-1, 0, -1)));
+        BlockPos floor = modulePos(c.x, c.z);
+        boolean[] outside = new boolean[4];
+        for (int i = 0; i < 4; i++) outside[i] = !isModule(c.x + H[i].getStepX(), c.z + H[i].getStepZ());
+        List<BlockPos> corners = new ArrayList<>();
+        if (c.room == Room.SLEEP) {
+            boolean any = false;
+            for (int i = 0; i < 4; i++) any |= outside[i];
+            if (!any) return;
+        }
+        for (int[] q : new int[][]{{-1, 1}, {1, 1}, {1, -1}, {-1, -1}}) {
+            boolean wallX = outside[q[0] > 0 ? 1 : 3], wallZ = outside[q[1] > 0 ? 2 : 0];
+            BlockPos p = floor.offset(q[0], 0, q[1]);
+            if ((wallX || wallZ) && !keepFree.contains(p)) corners.add(p);
+        }
         if (c.room == Room.SLEEP) {
             for (Direction d : new Direction[]{Direction.EAST, Direction.WEST, Direction.SOUTH, Direction.NORTH}) {
-                if (hasDoor(c, d)) continue;
-                BlockPos head = floor.relative(d, 1).relative(d.getClockWise(), 1);
-                out.add(new Step(Kind.FURNITURE, null, head, d.getCounterClockWise(), "bed", phase, c.room));
+                int di = d == Direction.NORTH ? 0 : d == Direction.EAST ? 1 : d == Direction.SOUTH ? 2 : 3;
+                BlockPos mid = floor.relative(d, 1);
+                if (!outside[di] || keepFree.contains(mid)) continue;
+                BlockPos head = null;
+                Direction toFoot = null;
+                for (Direction side : new Direction[]{d.getClockWise(), d.getCounterClockWise()}) {
+                    BlockPos h = mid.relative(side, 1);
+                    if (!keepFree.contains(h)) {
+                        head = h;
+                        toFoot = side.getOpposite();
+                        break;
+                    }
+                }
+                if (head == null) continue;
+                out.add(new Step(Kind.FURNITURE, null, head, toFoot, "bed", phase, c.room));
                 corners.remove(head);
+                keepFree.add(mid);
                 break;
             }
         }
@@ -896,15 +901,15 @@ public final class BaseDesign {
         }
     }
 
-    /** where to stand inside at night: the first room */
+    /** where to stand inside at night: the middle of the first module */
     public BlockPos shelterOffset() {
         Cell c = cells.get(0);
-        return cellPos(c.x, c.z, 0).above(1 - depth);
+        return modulePos(c.x, c.z);
     }
 
-    /** the main door (north side of the first room) */
+    /** the main door */
     public BlockPos doorOffset() {
-        Cell c = cells.get(0);
-        return cellPos(c.x, c.z, 0).relative(Direction.NORTH, 2).above(1 - depth);
+        plan();
+        return doorMaster != null ? doorMaster : shelterOffset().relative(Direction.NORTH, 2);
     }
 }

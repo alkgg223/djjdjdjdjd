@@ -3,19 +3,31 @@
  "category": "misc",
  "ingredients": [
   {
-   "item": "minecraft:egg"
+   "item": "arkragnarok:mejoberry"
   },
   {
    "item": "arkragnarok:mejoberry"
   },
   {
-   "item": "minecraft:cooked_beef"
+   "item": "arkragnarok:mejoberry"
   },
   {
-   "item": "minecraft:carrot"
+   "item": "arkragnarok:mejoberry"
   },
   {
-   "item": "minecraft:beetroot"
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:cooked_meat"
+  },
+  {
+   "item": "arkragnarok:cooked_meat"
   }
  ],
  "result": {

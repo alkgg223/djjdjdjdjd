@@ -3,16 +3,28 @@
  "category": "misc",
  "ingredients": [
   {
-   "item": "minecraft:egg"
+   "item": "arkragnarok:mejoberry"
   },
   {
-   "item": "minecraft:wheat"
+   "item": "arkragnarok:mejoberry"
   },
   {
-   "item": "minecraft:carrot"
+   "item": "arkragnarok:mejoberry"
   },
   {
-   "item": "minecraft:sweet_berries"
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:fiber"
   }
  ],
  "result": {

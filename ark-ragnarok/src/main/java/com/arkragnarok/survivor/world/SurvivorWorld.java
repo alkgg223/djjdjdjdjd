@@ -120,6 +120,7 @@ public class SurvivorWorld extends SavedData {
         public final com.arkragnarok.survivor.Skills skills = new com.arkragnarok.survivor.Skills();
         public int ingots, electronics, tamed, kills, crafted;
         public long lastRaid;
+        public int planVersion;
 
         Tribe(UUID id) {
             this.id = id;
@@ -189,6 +190,7 @@ public class SurvivorWorld extends SavedData {
             if (personality != null) t.put("Personality", personality.save());
             t.put("Skills", skills.save());
             t.putLong("LastRaid", lastRaid);
+            t.putInt("PlanV", planVersion);
             return t;
         }
 
@@ -231,6 +233,7 @@ public class SurvivorWorld extends SavedData {
             if (t.contains("Personality")) r.personality = com.arkragnarok.survivor.Personality.load(t.getCompound("Personality"));
             r.skills.load(t.getCompound("Skills"));
             r.lastRaid = t.getLong("LastRaid");
+            r.planVersion = t.getInt("PlanV");
             return r;
         }
     }

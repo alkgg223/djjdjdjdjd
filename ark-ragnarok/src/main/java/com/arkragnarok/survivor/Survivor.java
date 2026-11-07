@@ -72,6 +72,7 @@ public class Survivor extends PathfinderMob {
     UUID lastAttacker;
     long lastAttacked = -100000;
     private final List<BlockPos> openedDoors = new ArrayList<>();
+    int detourTicks;                       // walking round a boulder; its planner leaves the path alone meanwhile
 
     public Survivor(EntityType<? extends Survivor> type, Level level) {
         super(type, level);
@@ -241,6 +242,8 @@ public class Survivor extends PathfinderMob {
             if ((d >= 23300 || d < 12000) || food < 3) stopSleeping();
             return;
         }
+        if (detourTicks > 0) detourTicks--;
+        avoidRocks();
         if (tickCount % 20 == 0 && isInWall()) unstick();
         if (tickCount % 4 == 0) doors(t);
         if (tickCount % 10 == 0) pickUp();
@@ -270,6 +273,38 @@ public class Survivor extends PathfinderMob {
             BlockState st = level.getBlockState(m);
             if (st.getBlock() instanceof PieceBlock pb && st.getValue(PieceBlock.DOOR) == DoorState.OPEN) pb.toggleDoor(level, m);
             it.remove();
+        }
+    }
+
+    /**
+     * Resource rocks are solid, and path finding does not know about them: walking into a small or medium rock it
+     * jumps up onto it and over; a big boulder it walks round.
+     */
+    private void avoidRocks() {
+        if (!horizontalCollision) return;
+        for (com.arkragnarok.entity.ResourceNode n : level().getEntitiesOfClass(com.arkragnarok.entity.ResourceNode.class,
+                getBoundingBox().inflate(0.45, 0.1, 0.45), x -> !x.depleted())) {
+            float h = n.getBbHeight();
+            if (h <= 1.45f) {
+                if (onGround()) {
+                    Vec3 v = getDeltaMovement();
+                    Vec3 fwd = getLookAngle().multiply(1, 0, 1).normalize().scale(0.12);
+                    setDeltaMovement(v.x + fwd.x, h <= 0.8f ? 0.42 : 0.53, v.z + fwd.z);
+                    hasImpulse = true;
+                }
+            } else if (detourTicks <= 0) {
+                BlockPos goalPos = getNavigation().getTargetPos();
+                Vec3 goal = goalPos != null ? Vec3.atBottomCenterOf(goalPos) : position().add(getLookAngle().scale(4));
+                Vec3 m = goal.subtract(position()).multiply(1, 0, 1);
+                m = m.lengthSqr() < 1e-4 ? getLookAngle().multiply(1, 0, 1).normalize() : m.normalize();
+                Vec3 side = new Vec3(-m.z, 0, m.x);
+                if (side.dot(position().subtract(n.position())) < 0) side = side.scale(-1);
+                double r = n.getBbWidth() * 0.5 + 1.4;
+                Vec3 p = n.position().add(side.scale(r)).add(m.scale(r));
+                getNavigation().moveTo(p.x, getY(), p.z, 1.0);
+                detourTicks = 30;
+            }
+            return;
         }
     }
 

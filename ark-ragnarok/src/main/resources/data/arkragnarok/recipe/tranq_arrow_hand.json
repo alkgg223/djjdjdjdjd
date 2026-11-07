@@ -1,0 +1,31 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "arkragnarok:flint"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:narcoberry"
+  },
+  {
+   "item": "arkragnarok:narcoberry"
+  },
+  {
+   "item": "arkragnarok:narcoberry"
+  },
+  {
+   "item": "arkragnarok:thatch"
+  }
+ ],
+ "result": {
+  "id": "arkragnarok:tranq_arrow",
+  "count": 2
+ }
+}

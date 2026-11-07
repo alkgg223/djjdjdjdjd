@@ -3,19 +3,31 @@
  "category": "misc",
  "ingredients": [
   {
-   "item": "minecraft:turtle_egg"
-  },
-  {
-   "item": "arkragnarok:cooked_prime_meat"
-  },
-  {
-   "item": "arkragnarok:cooked_prime_meat"
+   "item": "arkragnarok:mejoberry"
   },
   {
    "item": "arkragnarok:mejoberry"
   },
   {
-   "item": "minecraft:honey_bottle"
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "arkragnarok:fiber"
+  },
+  {
+   "item": "arkragnarok:cooked_prime_meat"
+  },
+  {
+   "item": "arkragnarok:cooked_prime_meat"
+  },
+  {
+   "item": "arkragnarok:keratin"
   }
  ],
  "result": {

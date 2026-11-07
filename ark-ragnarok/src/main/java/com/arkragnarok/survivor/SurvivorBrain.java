@@ -188,6 +188,14 @@ final class SurvivorBrain extends Goal {
         SurvivorWorld.Tribe t = s.tribe();
         Personality p = t.personality();
         Vec3 me = s.position();
+        if (t.base != null && t.planVersion != BaseDesign.PLAN_VERSION) {
+            // its blueprint is from an older version of the designs: it settles again (what stands stays as ruins)
+            LOG.info("Survivor {} ({}) has an old blueprint and will settle again", s.getName().getString(), t.name);
+            t.base = null;
+            t.built = new int[0];
+            t.footprint = new int[0];
+            s.world().setDirty();
+        }
         advance(t);
         if (t.base != null && now - lastScan > 200 && t.base.distToCenterSqr(me) < 64 * 64) {
             lastScan = now;
@@ -268,7 +276,7 @@ final class SurvivorBrain extends Goal {
         if (t.stage >= 3 && tryRaid(t, p, now)) return;
         // 9. tame a dinosaur when it is settled and has the means
         exploreOk = false;
-        if (t.stage >= 2 && tryTame(t, p)) return;
+        if ((t.stage >= 2 || Builder.phaseDone(t, 1) >= 0.5f) && tryTame(t, p)) return;
         // 10. the base: next step of the blueprint (repairs come back here too), else an upgrade
         Builder.Job j = builder().next(t, now);
         if (j == null) j = builder().upgrade(t);
@@ -795,13 +803,11 @@ final class SurvivorBrain extends Goal {
     private boolean tryTame(SurvivorWorld.Tribe t, Personality p) {
         if (doing.equals("tame")) return true;
         t.tames.removeIf(id -> !(((ServerLevel) s.level()).getEntity(id) instanceof ArkCreature c) ? false : !c.isAlive());
-        if (t.tames.size() >= 1 + t.stage / 2 || p.courage() + p.ambition() < 0.7f) return false;
-        if (s.count(ModEconomy.WOODEN_CLUB.get()) == 0) return resolve(t, ModEconomy.WOODEN_CLUB.get(), 1, 0);
-        // from the development stage on it tranquilizes from a distance, like a player: bow and tranq arrows
-        if (t.stage >= 3) {
-            if (s.count(ModEconomy.PRIMITIVE_BOW.get()) == 0 && resolve(t, ModEconomy.PRIMITIVE_BOW.get(), 1, 0)) return true;
-            if (s.count(ModItems.TRANQ_ARROW.get()) < 8 && resolve(t, ModItems.TRANQ_ARROW.get(), 16, 0)) return true;
-        }
+        if (t.tames.size() >= 1 + t.stage / 2 || (p.caution() > 0.85f && p.courage() < 0.3f)) return false;
+        // a bow and tranquilizer arrows it makes in its hands (flint, fiber, narcoberries, thatch), a club as a fallback
+        if (s.count(ModEconomy.PRIMITIVE_BOW.get()) == 0 && resolve(t, ModEconomy.PRIMITIVE_BOW.get(), 1, 0)) return true;
+        if (s.count(ModItems.TRANQ_ARROW.get()) < 6 && resolve(t, ModItems.TRANQ_ARROW.get(), 12, 0)) return true;
+        if (s.count(ModEconomy.WOODEN_CLUB.get()) == 0 && s.count(ModItems.TRANQ_ARROW.get()) == 0) return resolve(t, ModEconomy.WOODEN_CLUB.get(), 1, 0);
         boolean ranged = s.count(ModEconomy.PRIMITIVE_BOW.get()) > 0 && s.count(ModItems.TRANQ_ARROW.get()) > 0;
         ArkCreature best = null;
         double bd = 1e18;
@@ -822,7 +828,10 @@ final class SurvivorBrain extends Goal {
         // taming food first: its kibble if it has some, else berries for plant eaters and meat for meat eaters
         boolean meat = best.species().diet != Diet.HERBIVORE;
         Item foodItem = meat ? ModEconomy.RAW_MEAT.get() : ModItems.MEJOBERRY.get();
-        if (s.count(Taming.preferredKibble(best.species()).getItem()) == 0 && s.count(foodItem) < 12) return resolve(t, foodItem, 16, 0);
+        Item kibble = Taming.preferredKibble(best.species()).getItem();
+        // its favourite kibble when its campfire can cook it, else plain food
+        if (s.count(kibble) < 3 && builder().station(t, Station.CAMPFIRE) != null && resolve(t, kibble, 4, 1)) return true;
+        if (s.count(kibble) == 0 && s.count(foodItem) < 12) return resolve(t, foodItem, 16, 0);
         tameTarget = best.getUUID();
         start("tame", best.blockPosition(), best);
         LOG.info("Survivor {} ({}) goes to tame a {}", s.getName().getString(), t.name, best.species().id);
@@ -860,6 +869,12 @@ final class SurvivorBrain extends Goal {
                 tameTarget = null;
                 finish();
             }
+            return;
+        }
+        if (!c.isUnconscious() && s.count(ModEconomy.WOODEN_CLUB.get()) == 0) {
+            tameTarget = null;                    // out of arrows and no club: bare hands would kill it, not tame it
+            s.setTarget(null);
+            finish();
             return;
         }
         if (!c.isUnconscious()) {
@@ -1019,6 +1034,7 @@ final class SurvivorBrain extends Goal {
             s.getLookControl().setLookAt(c.x, c.y + 0.5, c.z);
             return true;
         }
+        if (s.detourTicks > 0) return false;           // going round a boulder first
         if (s.getNavigation().isDone() || s.tickCount % 20 == 0) {
             Vec3 goal = c;
             if (s.position().distanceTo(c) > 80) goal = s.position().add(c.subtract(s.position()).normalize().scale(60));

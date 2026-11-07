@@ -226,6 +226,31 @@ public final class SmokeTest {
                     }
                 }
                 check(foundation, "its pieces stand in the world");
+                if (tr.base != null) {
+                    // one connected house: foundations flush with the ground and edge to edge, no earth built up above the ground
+                    int flush = 0, raisedEarth = 0, gaps = 0;
+                    java.util.Set<BlockPos> fcells = new java.util.HashSet<>();
+                    for (BlockPos q : BlockPos.betweenClosed(tr.base.offset(-30, -3, -30), tr.base.offset(30, 4, 30))) {
+                        var st = level.getBlockState(q);
+                        if (st.getBlock() instanceof com.arkragnarok.building.PieceBlock
+                                && st.getValue(com.arkragnarok.building.PieceBlock.PIECE) == com.arkragnarok.building.PieceType.FOUNDATION) {
+                            if (q.getY() == tr.base.getY() - 1) flush++;
+                            fcells.add(q.immutable());
+                        }
+                        if (st.is(com.arkragnarok.economy.ModEconomy.RAMMED_EARTH.get()) && q.getY() >= tr.base.getY()) raisedEarth++;
+                    }
+                    // between two foundation blocks two apart on a line there must not be a hole
+                    for (BlockPos q : fcells) {
+                        for (net.minecraft.core.Direction d : new net.minecraft.core.Direction[]{net.minecraft.core.Direction.EAST, net.minecraft.core.Direction.SOUTH}) {
+                            if (fcells.contains(q.relative(d, 2)) && !fcells.contains(q.relative(d))) gaps++;
+                        }
+                    }
+                    LOG.info("ARK-SMOKE house: {} foundation blocks ({} flush with the ground), {} gaps between them, {} earth blocks above ground",
+                            fcells.size(), flush, gaps, raisedEarth);
+                    check(fcells.size() > 0 && flush == fcells.size(), "foundations lie flush with the ground");
+                    check(gaps == 0, "the foundations of the house touch (one connected floor)");
+                    check(raisedEarth == 0, "no rammed-earth plinth built up above the ground");
+                }
                 check(tr.personality != null, "survivor has a personality (" + tr.personality().temperament() + ")");
                 var saved = com.arkragnarok.survivor.world.SurvivorWorld.get(level).save(new net.minecraft.nbt.CompoundTag(), level.registryAccess());
                 var loaded = com.arkragnarok.survivor.world.SurvivorWorld.load(saved, level.registryAccess());

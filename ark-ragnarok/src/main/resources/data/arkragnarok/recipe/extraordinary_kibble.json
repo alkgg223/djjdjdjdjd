@@ -3,10 +3,22 @@
  "category": "misc",
  "ingredients": [
   {
-   "item": "minecraft:egg"
+   "item": "arkragnarok:mejoberry"
   },
   {
-   "item": "minecraft:egg"
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "arkragnarok:mejoberry"
+  },
+  {
+   "item": "arkragnarok:fiber"
   },
   {
    "item": "arkragnarok:cooked_prime_meat"
@@ -15,13 +27,7 @@
    "item": "arkragnarok:cooked_prime_meat"
   },
   {
-   "item": "minecraft:glow_berries"
-  },
-  {
-   "item": "minecraft:golden_apple"
-  },
-  {
-   "item": "minecraft:honey_bottle"
+   "item": "arkragnarok:crystal"
   }
  ],
  "result": {

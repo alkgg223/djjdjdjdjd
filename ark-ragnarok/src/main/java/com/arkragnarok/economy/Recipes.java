@@ -69,24 +69,26 @@ public final class Recipes {
         hand("smithy", () -> ModEconomy.SMITHY.get().asItem(), 1, i(ModEconomy.STONE, 3), i(ModEconomy.WOOD, 3), i(ModEconomy.HIDE, 3));
         hand("storage_box", () -> ModEconomy.STORAGE_BOX.get().asItem(), 1, i(ModEconomy.WOOD, 5), i(ModEconomy.THATCH, 3), i(ModEconomy.FIBER, 1));
         hand("hide_bed", ModEconomy.HIDE_BED_ITEM, 1, i(ModEconomy.WOOD, 3), i(ModEconomy.HIDE, 3), i(ModEconomy.FIBER, 2), i(ModEconomy.THATCH, 1));
+        hand("tranq_arrow", ModItems.TRANQ_ARROW, 2, i(ModEconomy.FLINT, 1), i(ModEconomy.FIBER, 2), i(ModItems.NARCOBERRY, 3), i(ModEconomy.THATCH, 1));
         hand("crop_plot", () -> ModEconomy.CROP_PLOT.get().asItem(), 1, i(ModEconomy.WOOD, 3), i(ModEconomy.THATCH, 2), i(ModEconomy.STONE, 2),
                 i(ModEconomy.FIBER, 2));
         // campfire
         add(Station.CAMPFIRE, "cooked_meat", ModEconomy.COOKED_MEAT, 1, i(ModEconomy.RAW_MEAT, 1), i(ModEconomy.WOOD, 1));
         add(Station.CAMPFIRE, "cooked_prime_meat", ModItems.COOKED_PRIME_MEAT, 1, i(ModItems.RAW_PRIME_MEAT, 1), i(ModEconomy.WOOD, 1));
         add(Station.CAMPFIRE, "charcoal", ModEconomy.CHARCOAL, 2, i(ModEconomy.WOOD, 3));
+        // kibble: berries and fiber for the basic ones, cooked meat, then prime meat, hide, keratin and crystal for the best
         add(Station.CAMPFIRE, "basic_kibble", () -> ModItems.KIBBLE.get(com.arkragnarok.species.Kibble.BASIC).get(), 2,
-                i(ModItems.MEJOBERRY, 6), i(ModEconomy.FIBER, 4), i(ModEconomy.COOKED_MEAT, 1));
+                i(ModItems.MEJOBERRY, 5), i(ModEconomy.FIBER, 3));
         add(Station.CAMPFIRE, "simple_kibble", () -> ModItems.KIBBLE.get(com.arkragnarok.species.Kibble.SIMPLE).get(), 2,
-                i(ModItems.MEJOBERRY, 8), i(ModEconomy.FIBER, 5), i(ModEconomy.COOKED_MEAT, 2));
+                i(ModItems.MEJOBERRY, 6), i(ModEconomy.FIBER, 3), i(ModEconomy.COOKED_MEAT, 1));
         add(Station.CAMPFIRE, "regular_kibble", () -> ModItems.KIBBLE.get(com.arkragnarok.species.Kibble.REGULAR).get(), 2,
-                i(ModItems.MEJOBERRY, 10), i(ModEconomy.FIBER, 6), i(ModItems.COOKED_PRIME_MEAT, 1));
+                i(ModItems.MEJOBERRY, 8), i(ModEconomy.FIBER, 4), i(ModEconomy.COOKED_MEAT, 2));
         add(Station.CAMPFIRE, "superior_kibble", () -> ModItems.KIBBLE.get(com.arkragnarok.species.Kibble.SUPERIOR).get(), 2,
-                i(ModItems.MEJOBERRY, 12), i(ModEconomy.FIBER, 8), i(ModItems.COOKED_PRIME_MEAT, 2), i(ModEconomy.HIDE, 1));
+                i(ModItems.MEJOBERRY, 10), i(ModEconomy.FIBER, 5), i(ModItems.COOKED_PRIME_MEAT, 1), i(ModEconomy.HIDE, 1));
         add(Station.CAMPFIRE, "exceptional_kibble", () -> ModItems.KIBBLE.get(com.arkragnarok.species.Kibble.EXCEPTIONAL).get(), 2,
-                i(ModItems.MEJOBERRY, 16), i(ModEconomy.FIBER, 10), i(ModItems.COOKED_PRIME_MEAT, 3), i(ModEconomy.KERATIN, 2));
+                i(ModItems.MEJOBERRY, 12), i(ModEconomy.FIBER, 6), i(ModItems.COOKED_PRIME_MEAT, 2), i(ModEconomy.KERATIN, 1));
         add(Station.CAMPFIRE, "extraordinary_kibble", () -> ModItems.KIBBLE.get(com.arkragnarok.species.Kibble.EXTRAORDINARY).get(), 2,
-                i(ModItems.MEJOBERRY, 20), i(ModEconomy.FIBER, 12), i(ModItems.COOKED_PRIME_MEAT, 4), i(ModEconomy.CRYSTAL, 2));
+                i(ModItems.MEJOBERRY, 14), i(ModEconomy.FIBER, 8), i(ModItems.COOKED_PRIME_MEAT, 3), i(ModEconomy.CRYSTAL, 1));
         // mortar and pestle
         add(Station.MORTAR, "sparkpowder", ModEconomy.SPARKPOWDER, 2, i(ModEconomy.FLINT, 2), i(ModEconomy.STONE, 1));
         add(Station.MORTAR, "gunpowder", ModEconomy.GUNPOWDER, 2, i(ModEconomy.SPARKPOWDER, 2), i(ModEconomy.CHARCOAL, 2));

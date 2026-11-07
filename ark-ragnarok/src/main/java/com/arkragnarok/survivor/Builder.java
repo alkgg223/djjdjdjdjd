@@ -79,6 +79,7 @@ final class Builder {
         BaseDesign d = BaseDesign.get(design);
         t.built = new int[d.plan().size()];
         t.footprint = d.bounds(t.rotation);
+        t.planVersion = BaseDesign.PLAN_VERSION;
     }
 
     static List<BaseDesign.Step> plan(SurvivorWorld.Tribe t) {
@@ -308,12 +309,6 @@ final class Builder {
         else if (st.kind() == BaseDesign.Kind.FURNITURE || st.kind() == BaseDesign.Kind.CROP) {
             cells.add(j.pos());
             if (st.furniture().equals("bed")) cells.add(j.pos().relative(j.facing()));
-        } else if (st.kind() == BaseDesign.Kind.GROUND && !st.furniture().equals("ramp")) {
-            // levelling: stand in the middle of the plot (only its ring and the ground below are filled)
-            BlockPos c = j.pos();
-            if (!s.level().isEmptyBlock(c) || !s.level().getBlockState(c.below()).isFaceSturdy(s.level(), c.below(), Direction.UP)) return null;
-            double dx = s.getX() - (c.getX() + 0.5), dz = s.getZ() - (c.getZ() + 0.5);
-            return Math.abs(dx) < 1.2 && Math.abs(dz) < 1.2 && Math.abs(s.getY() - c.getY()) < 1.5 ? null : c;
         }
         boolean inside = false;
         for (BlockPos c : cells) if (me.intersects(new net.minecraft.world.phys.AABB(c))) inside = true;
@@ -545,7 +540,9 @@ final class Builder {
             }
             return q;
         }
-        for (int dy = 3; dy >= 0; dy--) {
+        // a module: clear the room (and the line its outside walls stand on), take off the turf so the foundation lies
+        // flush with the ground, fill holes under the foundation and under the walls - nothing is built up above the ground
+        for (int dy = 2; dy >= 0; dy--) {
             for (int dx = -2; dx <= 2; dx++) {
                 for (int dz = -2; dz <= 2; dz++) {
                     BlockPos p = c.offset(dx, dy, dz);
@@ -553,19 +550,38 @@ final class Builder {
                 }
             }
         }
-        for (int dy = -2; dy <= 0; dy++) {
-            for (int dx = -2; dx <= 2; dx++) {
-                for (int dz = -2; dz <= 2; dz++) {
-                    boolean ring = Math.abs(dx) == 2 || Math.abs(dz) == 2;
-                    if (dy == 0 && !ring) continue;
-                    BlockPos p = c.offset(dx, dy, dz);
-                    BlockState st = level.getBlockState(p);
-                    if (dy == -2 && !st.isAir() && st.getFluidState().isEmpty()) continue;
-                    if (st.canBeReplaced() || st.isAir() || diggable(level, p) && dy == 0) q.add(new Op(p, true));
-                }
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                BlockPos p = c.offset(dx, -1, dz);
+                if (diggable(level, p)) q.add(new Op(p, false));
+                BlockPos u = c.offset(dx, -2, dz);
+                BlockState us = level.getBlockState(u);
+                if (us.isAir() || us.canBeReplaced()) q.add(new Op(u, true));
+            }
+        }
+        java.util.Set<BlockPos> floors = foundationCells(s.tribe());
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (Math.abs(dx) < 2 && Math.abs(dz) < 2) continue;
+                BlockPos p = c.offset(dx, -1, dz);
+                if (floors.contains(p)) continue;                    // a neighbouring module's foundation goes there
+                BlockState st = level.getBlockState(p);
+                if (st.isAir() || st.canBeReplaced()) q.add(new Op(p, true));
             }
         }
         return q;
+    }
+
+    /** every block the tribe's foundations will cover */
+    private java.util.Set<BlockPos> foundationCells(SurvivorWorld.Tribe t) {
+        java.util.Set<BlockPos> out = new java.util.HashSet<>();
+        if (t.base == null) return out;
+        for (BaseDesign.Step st : plan(t)) {
+            if (st.kind() != BaseDesign.Kind.PIECE || st.type() != PieceType.FOUNDATION) continue;
+            BlockPos m = at(t, st);
+            for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) out.add(m.offset(dx, 0, dz));
+        }
+        return out;
     }
 
     /** rammed earth under a wall or crop plot where the ground is missing (up to three blocks down) */
@@ -593,6 +609,7 @@ final class Builder {
 
     private static boolean diggable(Level level, BlockPos p) {
         BlockState st = level.getBlockState(p);
+        if (st.is(ModEconomy.RAMMED_EARTH.get())) return true;              // its own fill, taken up again where something goes
         if (st.getBlock() instanceof net.minecraft.world.level.block.LiquidBlock) return false;
         return natural(st) && st.getDestroySpeed(level, p) >= 0 && st.getDestroySpeed(level, p) < 30;
     }
