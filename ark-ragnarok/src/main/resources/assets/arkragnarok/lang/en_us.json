@@ -220,5 +220,6 @@
  "task.arkragnarok.raid": "raiding a rival base",
  "task.arkragnarok.harvest": "harvesting its crops",
  "screen.arkragnarok.tribes": "Survivor Tribes",
- "task.arkragnarok.pen": "bringing its dinosaur into the pen"
+ "task.arkragnarok.pen": "bringing its dinosaur into the pen",
+ "task.arkragnarok.recover": "fetching its belongings where it died"
 }

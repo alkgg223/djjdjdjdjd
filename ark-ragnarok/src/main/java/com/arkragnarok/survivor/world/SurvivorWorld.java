@@ -121,6 +121,12 @@ public class SurvivorWorld extends SavedData {
         public int ingots, electronics, tamed, kills, crafted;
         public long lastRaid;
         public int planVersion;
+        public String person = "";                    // the survivor's own name
+        public int skin;
+        @Nullable
+        public BlockPos deathPos;                      // where it died and its belongings lie
+        public long respawnAt;                         // > 0: it comes back to life at its base at this time
+        public int deaths;
 
         Tribe(UUID id) {
             this.id = id;
@@ -191,6 +197,11 @@ public class SurvivorWorld extends SavedData {
             t.put("Skills", skills.save());
             t.putLong("LastRaid", lastRaid);
             t.putInt("PlanV", planVersion);
+            t.putString("Person", person);
+            t.putInt("Skin", skin);
+            if (deathPos != null) t.putLong("DeathPos", deathPos.asLong());
+            t.putLong("RespawnAt", respawnAt);
+            t.putInt("Deaths", deaths);
             return t;
         }
 
@@ -234,6 +245,11 @@ public class SurvivorWorld extends SavedData {
             r.skills.load(t.getCompound("Skills"));
             r.lastRaid = t.getLong("LastRaid");
             r.planVersion = t.getInt("PlanV");
+            r.person = t.getString("Person");
+            r.skin = t.getInt("Skin");
+            r.deathPos = t.contains("DeathPos") ? BlockPos.of(t.getLong("DeathPos")) : null;
+            r.respawnAt = t.getLong("RespawnAt");
+            r.deaths = t.getInt("Deaths");
             return r;
         }
     }

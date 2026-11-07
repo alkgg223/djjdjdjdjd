@@ -176,7 +176,8 @@ final class SurvivorBrain extends Goal {
     private boolean committed() {
         if (taskTicks > 2400) return false;
         return switch (doing) {
-            case "build", "level", "upgrade", "craft", "fetch", "store", "tame", "raid", "chop", "mine", "quarry", "forage", "harvest", "cave", "pen" -> true;
+            case "build", "level", "upgrade", "craft", "fetch", "store", "tame", "raid", "chop", "mine", "quarry", "forage", "harvest", "cave", "pen",
+                    "recover" -> true;
             default -> false;
         };
     }
@@ -227,6 +228,17 @@ final class SurvivorBrain extends Goal {
         // 2. hunger
         if (s.food < 11) s.eatSomething();
         if (s.food < 7 && getFood(t)) return;
+        // 2b. back to where it died, for its belongings (they lie there until somebody takes them)
+        if (t.deathPos != null && !doing.equals("recover")) {
+            boolean danger = false;
+            for (Memory.Fact f : s.memory.all(Memory.Kind.THREAT)) {
+                if (now - f.seen() < 600 && f.pos().distSqr(t.deathPos) < 14 * 14) danger = true;
+            }
+            if (!danger && !night(p)) {
+                start("recover", t.deathPos, null);
+                return;
+            }
+        }
         // 3. night: its bed, or at least inside its shelter with the door shut
         if (night(p) && t.base != null && Builder.phaseDone(t, 1) >= 0.5f && !doing.equals("raid")) {
             BlockPos bed = builder().bed(t);
@@ -238,8 +250,8 @@ final class SurvivorBrain extends Goal {
         if (doing.equals("flee")) finish();
         // 4. keep at what it is doing
         if (committed()) return;
-        // 5. a full pack goes into the stores
-        if (s.freeSlots() < 5 && t.base != null && !builder().boxes(t).isEmpty()) {
+        // 5. what it brought home goes into its storage boxes (not only when the pack is full)
+        if (t.base != null && (s.freeSlots() < 8 || (depositable() >= 48 && t.base.distToCenterSqr(me) < 40 * 40)) && !builder().boxes(t).isEmpty()) {
             BlockPos box = nearestBox(t, null);
             if (box != null) {
                 start("store", box, null);
@@ -415,9 +427,15 @@ final class SurvivorBrain extends Goal {
         Level level = s.level();
         switch (src) {
             case TREE -> {
-                Memory.Fact tree = s.memory.nearest(Memory.Kind.TREE, me, 140);
-                if (tree != null) {
-                    start("chop", tree.pos(), null);
+                for (int k = 0; k < 6; k++) {
+                    Memory.Fact tree = s.memory.nearest(Memory.Kind.TREE, me, 140);
+                    if (tree == null) break;
+                    BlockPos base = trunkBase(level, tree.pos());
+                    if (base == null || s.ownsPosition(base)) {
+                        s.memory.forget(tree);                   // gone, or part of a base
+                        continue;
+                    }
+                    start("chop", base, null);
                     return true;
                 }
             }
@@ -464,6 +482,28 @@ final class SurvivorBrain extends Goal {
         if (!exploreOk) return false;
         explore(t);
         return true;
+    }
+
+    /** the lowest log of the trunk it saw a part of (a branch or the top may be out of reach), null if no tree is there any more */
+    @Nullable
+    private static BlockPos trunkBase(Level level, BlockPos seen) {
+        if (!level.isLoaded(seen) || !level.getBlockState(seen).is(BlockTags.LOGS)) return null;
+        BlockPos p = seen;
+        for (int k = 0; k < 40; k++) {
+            BlockPos down = null;
+            if (level.getBlockState(p.below()).is(BlockTags.LOGS)) down = p.below();
+            else {
+                for (BlockPos q : BlockPos.betweenClosed(p.offset(-1, -1, -1), p.offset(1, -1, 1))) {
+                    if (level.getBlockState(q).is(BlockTags.LOGS)) {
+                        down = q.immutable();
+                        break;
+                    }
+                }
+            }
+            if (down == null) break;
+            p = down;
+        }
+        return p;
     }
 
     @Nullable
@@ -614,6 +654,20 @@ final class SurvivorBrain extends Goal {
         return best;
     }
 
+    /** how many items it carries that belong in its boxes */
+    private int depositable() {
+        int n = 0;
+        java.util.Map<Item, Integer> kept = new java.util.HashMap<>();
+        for (int i = 0; i < s.inv.getContainerSize(); i++) {
+            ItemStack st = s.inv.getItem(i);
+            if (st.isEmpty() || st.getMaxStackSize() == 1) continue;
+            int k = keep(st) - kept.getOrDefault(st.getItem(), 0);
+            kept.merge(st.getItem(), Math.min(st.getCount(), Math.max(0, k)), Integer::sum);
+            n += Math.max(0, st.getCount() - Math.max(0, k));
+        }
+        return n;
+    }
+
     /** how much of a stack it keeps in the pack */
     private int keep(ItemStack st) {
         if (st.getMaxStackSize() == 1) return st.getCount();
@@ -709,9 +763,42 @@ final class SurvivorBrain extends Goal {
         t.lastRaid = now;
         raidTribe = victim.id;
         raidPhase = 0;
-        start("raid", victim.base.offset(BaseDesign.rotate(Builder.design(victim).doorOffset(), victim.rotation)), null);
+        start("raid", weakestPiece(victim), null);
         LOG.info("Survivor {} ({}) raids {}", s.getName().getString(), t.name, victim.name);
         return true;
+    }
+
+    /** the weakest outside wall or door of a base (the cheapest material, then the nearest) - where a raider breaks in */
+    private BlockPos weakestPiece(SurvivorWorld.Tribe v) {
+        BlockPos best = v.base.offset(BaseDesign.rotate(Builder.design(v).doorOffset(), v.rotation));
+        int bestTier = 99;
+        double bd = 1e18;
+        List<BaseDesign.Step> plan = Builder.plan(v);
+        for (int i = 0; i < plan.size(); i++) {
+            BaseDesign.Step st = plan.get(i);
+            int b = v.built[i];
+            if (st.kind() != BaseDesign.Kind.PIECE || st.type() == null || st.type().flat() || b == 0 || b == Builder.SKIPPED) continue;
+            if (st.offset().getY() > -Builder.design(v).depth() + 1) continue;          // ground level only
+            BlockPos p = Builder.at(v, st);
+            double d = p.distToCenterSqr(s.position());
+            if (b - 1 < bestTier || (b - 1 == bestTier && d < bd)) {
+                bestTier = b - 1;
+                bd = d;
+                best = p;
+            }
+        }
+        return best;
+    }
+
+    /** seconds to break a piece by hand, by its material (a better weapon and more fighting experience go faster) */
+    private static int breakSeconds(com.arkragnarok.building.Tier tier) {
+        return switch (tier) {
+            case THATCH -> 8;
+            case WOOD -> 20;
+            case STONE -> 50;
+            case IRON -> 120;
+            case STEEL -> 240;
+        };
     }
 
     private void raid(SurvivorWorld.Tribe t) {
@@ -736,8 +823,11 @@ final class SurvivorBrain extends Goal {
                 s.swing(InteractionHand.MAIN_HAND);
                 s.level().playSound(null, target, pb.tier.sound.getHitSound(), SoundSource.BLOCKS, 1.0f, 0.7f);
             }
-            float speed = (float) s.getAttributeValue(Attributes.ATTACK_DAMAGE) * t.skills.speed(Skills.Skill.COMBAT);
-            if (work < (int) (pb.tier.hardness * 60 / Math.max(1f, speed))) return;
+            double speed = (0.7 + s.getAttributeValue(Attributes.ATTACK_DAMAGE) * 0.08) * t.skills.speed(Skills.Skill.COMBAT);
+            int need = (int) (breakSeconds(pb.tier) * 20 / speed);
+            s.level().destroyBlockProgress(s.getId(), target, Math.min(9, work * 10 / Math.max(1, need)));
+            if (work < need) return;
+            s.level().destroyBlockProgress(s.getId(), target, -1);
             BlockPos m = PieceBlock.master(target, bs);
             s.level().destroyBlock(m, false, s);
             s.world().event(t.id, v.id, "raided", -25, s.level().getGameTime());
@@ -808,30 +898,55 @@ final class SurvivorBrain extends Goal {
         if (s.count(ModEconomy.PRIMITIVE_BOW.get()) == 0 && resolve(t, ModEconomy.PRIMITIVE_BOW.get(), 1, 0)) return true;
         if (s.count(ModItems.TRANQ_ARROW.get()) < 6 && resolve(t, ModItems.TRANQ_ARROW.get(), 12, 0)) return true;
         if (s.count(ModEconomy.WOODEN_CLUB.get()) == 0 && s.count(ModItems.TRANQ_ARROW.get()) == 0) return resolve(t, ModEconomy.WOODEN_CLUB.get(), 1, 0);
-        boolean ranged = s.count(ModEconomy.PRIMITIVE_BOW.get()) > 0 && s.count(ModItems.TRANQ_ARROW.get()) > 0;
+        boolean bow = s.count(ModEconomy.PRIMITIVE_BOW.get()) > 0;
+        int arrows = s.count(ModItems.TRANQ_ARROW.get());
+        long now = s.level().getGameTime();
+        // the one worth most for what it costs: level, can it be ridden, size, a hunter for defence - against the
+        // arrows it takes to put it to sleep, the distance, and predators around it
         ArkCreature best = null;
-        double bd = 1e18;
+        double bestScore = -1e9;
+        int bestNeed = 0;
+        int owned = t.tames.size();
         for (Memory.Fact f : s.memory.all(Memory.Kind.DINO)) {
-            if (f.entity() == null || f.pos().distToCenterSqr(s.position()) > 70 * 70) continue;
+            if (f.entity() == null || f.pos().distToCenterSqr(s.position()) > 80 * 80) continue;
             Entity e = ((ServerLevel) s.level()).getEntity(f.entity());
-            if (!(e instanceof ArkCreature c) || !c.isAlive() || c.isTamed() || Perception.dangerous(c) || c.getBbHeight() > (ranged ? 4.5f : 2.6f)) {
+            if (!(e instanceof ArkCreature c) || !c.isAlive() || c.isTamed()) {
                 s.memory.forget(f);
                 continue;
             }
-            double d = c.distanceToSqr(s);
-            if (d < bd) {
-                bd = d;
+            boolean danger = Perception.dangerous(c);
+            if (danger && !(bow && t.stage >= 4 && p.courage() > 0.6f)) continue;
+            float torpor = c.maxTorpor();
+            int need = (int) Math.ceil(torpor / Taming.TRANQ_ARROW * 1.35) + 1;            // some arrows miss
+            boolean club = torpor <= 400 && c.getBbHeight() < 2.6f && !danger;
+            if (!(bow && need <= 48) && !club) continue;
+            boolean threatened = false;
+            for (Memory.Fact th : s.memory.all(Memory.Kind.THREAT)) {
+                if (now - th.seen() < 600 && !c.getUUID().equals(th.entity()) && th.pos().distSqr(c.blockPosition()) < 18 * 18) threatened = true;
+            }
+            if (threatened) continue;
+            double d = Math.sqrt(c.distanceToSqr(s));
+            double sc = c.getLevel() * 0.12 + (c.species().rideable ? 10 : 0) + Math.min(6, c.getBbHeight() * 2)
+                    + (c.species().diet != Diet.HERBIVORE ? 3 * p.aggression() : 0) - d * 0.12 - (bow ? need * 0.25 : 0);
+            for (UUID own : t.tames) if (((ServerLevel) s.level()).getEntity(own) instanceof ArkCreature o && o.species() == c.species()) sc -= 4;
+            if (sc > bestScore) {
+                bestScore = sc;
                 best = c;
+                bestNeed = bow ? need : 0;
             }
         }
         if (best == null) return false;
-        // taming food first: its kibble if it has some, else berries for plant eaters and meat for meat eaters
+        // enough arrows before it starts (made by hand: flint, fiber, narcoberries, thatch)
+        if (bow && arrows < bestNeed && resolve(t, ModItems.TRANQ_ARROW.get(), Math.min(64, bestNeed + 2), 0)) return true;
+        // enough taming food for the whole taming: its favourite kibble when the campfire can make it, else plain food
         boolean meat = best.species().diet != Diet.HERBIVORE;
         Item foodItem = meat ? ModEconomy.RAW_MEAT.get() : ModItems.MEJOBERRY.get();
         Item kibble = Taming.preferredKibble(best.species()).getItem();
-        // its favourite kibble when its campfire can cook it, else plain food
-        if (s.count(kibble) < 3 && builder().station(t, Station.CAMPFIRE) != null && resolve(t, kibble, 4, 1)) return true;
-        if (s.count(kibble) == 0 && s.count(foodItem) < 12) return resolve(t, foodItem, 16, 0);
+        float remaining = Math.max(1f, best.requiredAffinity() - best.getAffinity());
+        int kibbleNeed = Math.min(16, Taming.countNeeded(remaining, Math.max(1f, Taming.foodValue(best.species(), new ItemStack(kibble)))));
+        int plainNeed = Math.min(48, Taming.countNeeded(remaining, Math.max(1f, Taming.foodValue(best.species(), new ItemStack(foodItem)))));
+        if (s.count(kibble) < kibbleNeed && builder().station(t, Station.CAMPFIRE) != null && resolve(t, kibble, kibbleNeed, 1)) return true;
+        if (s.count(kibble) < kibbleNeed && s.count(foodItem) < plainNeed) return resolve(t, foodItem, plainNeed, 0);
         tameTarget = best.getUUID();
         start("tame", best.blockPosition(), best);
         LOG.info("Survivor {} ({}) goes to tame a {}", s.getName().getString(), t.name, best.species().id);
@@ -1081,6 +1196,7 @@ final class SurvivorBrain extends Goal {
                 if (target != null && (reach(target, 2.6, 3.5) || walkTo(target, 2.0, 1.0))) fetch(t);
             }
             case "raid" -> raid(t);
+            case "recover" -> recover(t);
             case "pen" -> {
                 if (target == null || taskTicks > 3000) finish();
                 else if (walkTo(target, 1.5, 1.0)) {
@@ -1109,6 +1225,39 @@ final class SurvivorBrain extends Goal {
             finish();
             if (gathering) explore(t);              // somewhere else, then; a stuck build step is simply tried again later
         }
+    }
+
+    /** walks back to where it died and picks up its belongings from the ground */
+    private void recover(SurvivorWorld.Tribe t) {
+        if (t.deathPos == null || taskTicks > 4000) {
+            t.deathPos = null;
+            finish();
+            return;
+        }
+        if (target == null) target = t.deathPos;
+        if (!reach(t.deathPos, 6.0, 6.0) && target.equals(t.deathPos)) {
+            walkTo(t.deathPos, 2.0, 1.15);
+            return;
+        }
+        net.minecraft.world.entity.item.ItemEntity best = null;
+        double bd = 1e9;
+        for (net.minecraft.world.entity.item.ItemEntity it : s.level().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                new net.minecraft.world.phys.AABB(t.deathPos).inflate(10, 4, 10), it -> it.isAlive() && Economy.isMod(it.getItem()))) {
+            double d = it.distanceToSqr(s);
+            if (d < bd) {
+                bd = d;
+                best = it;
+            }
+        }
+        if (best == null || s.freeSlots() == 0) {
+            LOG.info("Survivor {} ({}) got its belongings back", s.getName().getString(), t.name);
+            t.deathPos = null;
+            s.world().setDirty();
+            finish();
+            return;
+        }
+        target = best.blockPosition();
+        walkTo(target, 0.8, 1.1);
     }
 
     private void forgetAt(Memory.Kind k, BlockPos p) {
@@ -1231,23 +1380,20 @@ final class SurvivorBrain extends Goal {
         java.util.HashSet<BlockPos> seen = new java.util.HashSet<>();
         q.add(start);
         var r = s.getRandom();
-        while (!q.isEmpty() && logs < 24) {
+        while (!q.isEmpty() && logs < 64) {
             BlockPos p = q.poll();
             if (!seen.add(p)) continue;
             BlockState st = level.getBlockState(p);
-            if (!st.is(BlockTags.LOGS) || s.ownsPosition(p)) continue;
+            if (!st.is(BlockTags.LOGS) || s.ownsPosition(p) || p.getY() < start.getY()) continue;
             level.destroyBlock(p, false, s);
             s.give(new ItemStack(ModEconomy.WOOD.get(), (axe ? 2 : 1) + r.nextInt(2)));
             s.give(new ItemStack(ModEconomy.THATCH.get(), (axe ? 1 : 2) + r.nextInt(2)));
             logs++;
-            for (Direction d : Direction.values()) q.add(p.relative(d));
-            q.add(p.above().north());
-            q.add(p.above().south());
-            q.add(p.above().east());
-            q.add(p.above().west());
+            // the whole tree: trunks two wide, branches going sideways and diagonally
+            for (int dx = -1; dx <= 1; dx++) for (int dy = 0; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++) if (dx != 0 || dy != 0 || dz != 0) q.add(p.offset(dx, dy, dz));
         }
-        for (BlockPos p : BlockPos.betweenClosed(start.offset(-3, 2, -3), start.offset(3, 10, 3))) {
-            if (leaves >= 30) break;
+        for (BlockPos p : BlockPos.betweenClosed(start.offset(-4, 2, -4), start.offset(4, 14, 4))) {
+            if (leaves >= 40) break;
             BlockState st = level.getBlockState(p);
             if (st.is(BlockTags.LEAVES)) {
                 level.destroyBlock(p, false, s);

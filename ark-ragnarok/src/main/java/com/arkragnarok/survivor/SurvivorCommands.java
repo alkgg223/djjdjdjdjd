@@ -42,7 +42,36 @@ public final class SurvivorCommands {
                 .then(Commands.literal("assign")
                         .then(Commands.argument("id", IntegerArgumentType.integer(0, BaseDesign.COUNT - 1))
                                 .executes(c -> assign(c, IntegerArgumentType.getInteger(c, "id")))))
-                .then(Commands.literal("auto").executes(c -> assign(c, -1))));
+                .then(Commands.literal("auto").executes(c -> assign(c, -1)))
+                .then(Commands.literal("spawning")
+                        .then(Commands.literal("on").executes(c -> spawning(c, true)))
+                        .then(Commands.literal("off").executes(c -> spawning(c, false))))
+                .then(Commands.literal("density").then(Commands.argument("per3x3Chunks", IntegerArgumentType.integer(0, 40))
+                        .executes(c -> density(c, IntegerArgumentType.getInteger(c, "per3x3Chunks")))))
+                .then(Commands.literal("maxlevel").then(Commands.argument("level", IntegerArgumentType.integer(1, 500))
+                        .executes(c -> maxLevel(c, IntegerArgumentType.getInteger(c, "level"))))));
+    }
+
+    private static int spawning(CommandContext<CommandSourceStack> c, boolean on) {
+        com.arkragnarok.ArkConfig.SPAWNING.set(on);
+        com.arkragnarok.ArkConfig.SPAWNING.save();
+        say(c.getSource(), on ? "Wild dinosaurs spawn again (" + com.arkragnarok.ArkConfig.DENSITY.get() + " per 3x3 chunks)."
+                : "Wild dinosaurs no longer spawn by themselves.", ChatFormatting.GREEN);
+        return 1;
+    }
+
+    private static int density(CommandContext<CommandSourceStack> c, int n) {
+        com.arkragnarok.ArkConfig.DENSITY.set(n);
+        com.arkragnarok.ArkConfig.DENSITY.save();
+        say(c.getSource(), "Up to " + n + " wild dinosaurs per 3x3 chunks" + (n == 0 ? " (spawning off)" : "") + ".", ChatFormatting.GREEN);
+        return 1;
+    }
+
+    private static int maxLevel(CommandContext<CommandSourceStack> c, int n) {
+        com.arkragnarok.ArkConfig.MAX_LEVEL.set(n);
+        com.arkragnarok.ArkConfig.MAX_LEVEL.save();
+        say(c.getSource(), "Wild dinosaurs now reach level " + n + " at most (high levels stay rare).", ChatFormatting.GREEN);
+        return 1;
     }
 
     private static void say(CommandSourceStack src, String text, ChatFormatting f) {

@@ -78,6 +78,7 @@ public class Survivor extends PathfinderMob {
         super(type, level);
         setPersistenceRequired();
         setCanPickUpLoot(false);
+        for (EquipmentSlot slot : EquipmentSlot.values()) setDropChance(slot, 0f);     // what it holds is in its pack and drops from there
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -145,6 +146,8 @@ public class Survivor extends PathfinderMob {
         if (level() instanceof ServerLevel) {
             SurvivorWorld.Tribe t = tribe();
             t.name = name + " of the " + TRIBES[Math.floorMod(index * 7 + getUUID().hashCode(), TRIBES.length)];
+            t.person = name;
+            t.skin = skin();
             t.personality = Personality.random(getUUID().getLeastSignificantBits() ^ index);
             t.lastPos = blockPosition();
             world().setDirty();
@@ -402,6 +405,10 @@ public class Survivor extends PathfinderMob {
         world().event(who, getUUID(), what, delta, level().getGameTime());
     }
 
+    /**
+     * Death is not the end, like in ARK: its belongings stay where it fell (they do not vanish - anybody may loot
+     * them), and a few seconds later it wakes up in its bed at its base and goes back to fetch them.
+     */
     @Override
     public void die(DamageSource source) {
         super.die(source);
@@ -409,11 +416,30 @@ public class Survivor extends PathfinderMob {
             if (source.getEntity() instanceof Survivor k) k.tribe().kills++;
             for (int i = 0; i < inv.getContainerSize(); i++) {
                 ItemStack st = inv.getItem(i);
-                if (!st.isEmpty()) spawnAtLocation(st.copy());
+                if (st.isEmpty()) continue;
+                ItemEntity drop = spawnAtLocation(st.copy());
+                if (drop != null) drop.setUnlimitedLifetime();
             }
             inv.clearContent();
-            world().remove(getUUID());          // the base stays as ruins anybody may loot
+            SurvivorWorld.Tribe t = tribe();
+            t.deathPos = blockPosition();
+            t.respawnAt = level().getGameTime() + 100;
+            t.deaths++;
+            if (source.getEntity() != null && !(source.getEntity() instanceof Survivor s && s.getUUID().equals(getUUID()))) {
+                remember(source.getEntity().getUUID(), "killed", -40);
+                if (source.getEntity() instanceof ArkCreature c) memory.see(Memory.Kind.THREAT, c.blockPosition(), level().getGameTime(), c.getUUID(), c.species().id);
+            }
+            world().setDirty();
         }
+    }
+
+    /** a survivor coming back to life for its tribe: same person, same look */
+    void restore(SurvivorWorld.Tribe t) {
+        this.entityData.set(SKIN, t.skin);
+        setCustomName(Component.literal(t.person.isEmpty() ? t.name.split(" ")[0] : t.person));
+        setCustomNameVisible(true);
+        lastTick = level().getGameTime();
+        food = 14f;
     }
 
     @Override

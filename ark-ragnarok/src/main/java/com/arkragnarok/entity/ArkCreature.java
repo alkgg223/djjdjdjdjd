@@ -156,10 +156,30 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
     protected void registerGoals() {
         Species s = ModEntities.speciesOf(getType());
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        if (s.temper == Temper.SKITTISH) {
-            this.goalSelector.addGoal(1, new AvoidEntityGoal<>(this, Player.class, 14f, 1.2, s.runFactor));
+        boolean skittish = s.temper == Temper.SKITTISH;
+        if (skittish) {
+            // like the dodo in ARK: it never fights - hurt, it runs; wild, it keeps away from people
+            this.goalSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.PanicGoal(this, s.runFactor * 0.9) {
+                @Override
+                public boolean canUse() {
+                    return !isImmobile() && super.canUse();
+                }
+            });
+            this.goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Player.class, 12f, 1.0, s.runFactor * 0.9) {
+                @Override
+                public boolean canUse() {
+                    return !isTamed() && !isImmobile() && super.canUse();
+                }
+            });
+            this.goalSelector.addGoal(2, new AvoidEntityGoal<>(this, com.arkragnarok.survivor.Survivor.class, 10f, 1.0, s.runFactor * 0.9) {
+                @Override
+                public boolean canUse() {
+                    return !isTamed() && !isImmobile() && super.canUse();
+                }
+            });
+        } else {
+            this.goalSelector.addGoal(2, new MeleeAttackGoal(this, s.runFactor * 0.75, true));
         }
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, s.runFactor * 0.75, true));
         this.goalSelector.addGoal(4, new FollowOwnerGoal());
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.8) {
             @Override
@@ -169,9 +189,11 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
         });
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 16.0f));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
-        HurtByTargetGoal hurt = new HurtByTargetGoal(this);
-        if (s.pack) hurt.setAlertOthers();
-        this.targetSelector.addGoal(1, hurt);
+        if (!skittish) {
+            HurtByTargetGoal hurt = new HurtByTargetGoal(this);
+            if (s.pack) hurt.setAlertOthers();
+            this.targetSelector.addGoal(1, hurt);
+        }
         if (s.temper == Temper.AGGRESSIVE && s.diet != Diet.HERBIVORE) {
             this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 30, true, false,
                     e -> !isTamed() && e.distanceToSqr(this) < (s.big() ? 900 : 400)));
@@ -194,10 +216,9 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType reason,
                                         @Nullable SpawnGroupData data) {
         SpawnGroupData out = super.finalizeSpawn(level, difficulty, reason, data);
-        // ARK-like wild level distribution 1..150, low levels are more common
-        double r = getRandom().nextDouble();
-        int lvl = 1 + (int) Math.floor(Math.pow(r, 1.6) * 149.0);
-        setLevel(lvl);
+        // ARK-like wild levels: mostly 1-150 (low ones most common), high levels up to 500 are rare
+        setLevel(com.arkragnarok.world.DinoSpawner.wildLevel(getRandom()));
+        if (reason != MobSpawnType.NATURAL && reason != MobSpawnType.CHUNK_GENERATION) setPersistenceRequired();
         return out;
     }
 
@@ -206,7 +227,7 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
     }
 
     public void setLevel(int level) {
-        level = Mth.clamp(level, 1, 450);
+        level = Mth.clamp(level, 1, 500);
         this.entityData.set(LEVEL, level);
         hpPoints = 0;
         meleePoints = 0;
@@ -808,7 +829,8 @@ public class ArkCreature extends PathfinderMob implements GeoEntity {
 
     @Override
     public boolean removeWhenFarAway(double distance) {
-        return false;
+        // wild animals that came by themselves leave again when nobody is near; tamed, named and sleeping ones stay
+        return !isTamed() && !hasCustomName() && !isUnconscious() && getTorpor() <= 0f;
     }
 
     @Override

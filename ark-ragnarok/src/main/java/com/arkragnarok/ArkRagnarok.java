@@ -36,6 +36,7 @@ public class ArkRagnarok {
         com.arkragnarok.registry.ModMenus.MENUS.register(modBus);
         ModBuilding.BLOCK_ENTITIES.register(modBus);
         modBus.addListener(ArkRagnarok::attributes);
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, ArkConfig.SPEC);
     }
 
     public static ResourceLocation id(String path) {
