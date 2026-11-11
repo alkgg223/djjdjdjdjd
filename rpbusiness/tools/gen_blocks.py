@@ -163,6 +163,33 @@ def textures():
     bl = tex(16, 16, C('2f6fc0'), 32, 0.04)
     t['blue_panel'] = bl
     t['green_panel'] = tex(16, 16, C('2f9a5a'), 33, 0.04)
+    gf = Canvas()
+    gf.rect(0, 0, 15, 15, C('cfe6f5', 90))
+    gf.rect(0, 0, 15, 0, C('8f9aa2')); gf.rect(0, 15, 15, 15, C('8f9aa2')); gf.rect(0, 0, 0, 15, C('8f9aa2')); gf.rect(15, 0, 15, 15, C('8f9aa2'))
+    gf.line(3, 3, 6, 6, C('ffffff', 160))
+    t['glass_front'] = gf
+    at = Canvas()
+    at.rect(0, 0, 15, 15, C('3d4455'))
+    at.rect(2, 1, 13, 6, C('2b7fd0')); at.rect(3, 2, 10, 2, C('cfe8ff')); at.rect(3, 4, 8, 4, C('cfe8ff'))
+    for yy in (8, 10, 12):
+        for xx in (3, 5, 7):
+            at.rect(xx, yy, xx, yy, C('d9dde0'))
+    at.rect(10, 8, 13, 9, C('1e2124')); at.rect(10, 12, 13, 13, C('2f9a5a'))
+    t['atm_front'] = at
+    sf = Canvas()
+    sf.rect(0, 0, 15, 15, C('3a3f47')); sf.rect(1, 1, 14, 14, C('4a5059'))
+    sf.ellipse(6, 8, 3.2, 3.2, C('c3cbd1')); sf.ellipse(6, 8, 1.6, 1.6, C('2b2f33'))
+    sf.rect(11, 5, 12, 11, C('c3cbd1'))
+    t['safe_front'] = sf
+    t['safe_side'] = brushed('3a3f47', 40)
+    so = tex(16, 16, C('1c2733'), 41, 0.02)
+    so.rect(1, 1, 14, 14, C('e8a33d'))
+    so.rect(3, 3, 12, 4, C('fff3d6')); so.rect(3, 7, 8, 11, C('c8955a')); so.rect(10, 8, 12, 10, C('ffffff'))
+    t['screen_orange'] = so
+    sp = tex(16, 16, C('1c2733'), 42, 0.02)
+    sp.rect(1, 1, 14, 14, C('3f5a8a'))
+    sp.rect(3, 3, 12, 4, C('ffd166')); sp.rect(3, 7, 12, 7, C('cfe8ff')); sp.rect(3, 10, 9, 10, C('cfe8ff'))
+    t['screen_bank'] = sp
     sh = tex(16, 16, C('7a563b'), 34, 0.05)
     r = random.Random(34)
     for yy in (1, 6, 11):
@@ -306,6 +333,26 @@ def build_models():
         el((4, 6, 3.5), (12, 8, 4), 'd')])
     M['delivery_crate'] = model({'particle': T('crate'), 'c': T('crate')}, [el((1, 0, 1), (15, 14, 15), 'c')])
     M['package'] = model({'particle': T('cardboard'), 'c': T('cardboard')}, [el((3, 0, 3), (13, 8, 13), 'c')])
+    shelf_els = [el((0, 0, 14), (16, 16, 16), 'w'), el((0, 0, 0), (1, 16, 14), 'w'), el((15, 0, 0), (16, 16, 14), 'w'),
+                 el((1, 0, 0), (15, 1, 14), 'b'), el((1, 5, 0), (15, 6, 14), 'b'), el((1, 10, 0), (15, 11, 14), 'b'), el((0, 15, 0), (16, 16, 16), 'w')]
+    M['display_shelf'] = model({'particle': T('oak_light'), 'w': T('walnut'), 'b': T('oak_light')}, shelf_els)
+    M['fridge_display'] = model({'particle': T('steel'), 'w': T('steel_edge'), 'b': T('white'), 'g': T('glass_front')}, shelf_els + [
+        el((1, 1, 0.5), (15, 15, 0.6), {'north': 'g', 'south': 'g'})], extra={'render_type': 'minecraft:translucent'})
+    M['bank_counter'] = model({'particle': T('marble'), 'm': T('marble'), 'w': T('walnut'), 'f': T('cabinet_front'), 'g': T('glass_front'), 'k': T('steel_dark')}, [
+        el((0, 0, 0), (16, 14, 16), sides('w', front='f')), el((-0.5, 14, -0.5), (16.5, 15, 16.5), 'm'),
+        el((1, 15, 7.5), (15, 30, 8.5), {'north': 'g', 'south': 'g'}), el((0, 15, 7), (1, 30, 9), 'k'), el((15, 15, 7), (16, 30, 9), 'k'),
+        el((0, 30, 7), (16, 31, 9), 'k')], extra={'render_type': 'minecraft:translucent'})
+    M['bank_computer'] = model({'particle': T('black'), 'k': T('black'), 'sc': T('screen_bank'), 'w': T('white')}, [
+        el((6, 0, 9), (10, 1, 12), 'k'), el((7.5, 1, 10), (8.5, 4, 11), 'k'),
+        el((1, 4, 9.5), (15, 12, 10.5), {'north': 'sc', 'south': 'k', 'east': 'k', 'west': 'k', 'up': 'k', 'down': 'k'}),
+        el((2, 0, 3), (14, 0.8, 7), sides('k', top='w'))])
+    M['atm'] = model({'particle': T('steel_dark'), 'd': T('steel_dark'), 'f': T('atm_front'), 'k': T('black')}, [
+        el((1, 0, 3), (15, 16, 14), sides('d', front='f')), el((2, 11, 2), (14, 16, 3), 'k'), el((4, 6, 2.5), (12, 7, 3), 'k')])
+    M['safe'] = model({'particle': T('safe_side'), 's': T('safe_side'), 'f': T('safe_front')}, [el((0, 0, 0), (16, 16, 16), sides('s', front='f'))])
+    M['delivery_terminal'] = model({'particle': T('black'), 'k': T('black'), 'sc': T('screen_orange'), 'w': T('cardboard')}, [
+        el((6, 0, 9), (10, 1, 12), 'k'), el((7.5, 1, 10), (8.5, 4, 11), 'k'),
+        el((1, 4, 9.5), (15, 12, 10.5), {'north': 'sc', 'south': 'k', 'east': 'k', 'west': 'k', 'up': 'k', 'down': 'k'}),
+        el((2, 0, 3), (7, 4, 7), 'w')])
     # GeckoLib-rendered blocks: blockstate model only provides the break particle
     M['fridge_particle'] = {'textures': {'particle': T('steel')}}
     M['freezer_particle'] = {'textures': {'particle': T('steel')}}
@@ -328,7 +375,8 @@ def blockstates():
         return {'variants': {f'facing={f}{extra}': {'model': f'{MOD}:block/{mn}', 'y': y} for f, y in FACING.items()}}
     for n in ['kitchen_counter', 'counter_cabinet', 'cutting_board', 'prep_station', 'drink_machine', 'pantry_shelf', 'serving_counter',
               'dining_chair', 'bar_stool', 'sofa', 'pendant_lamp', 'menu_board', 'potted_plant', 'cash_register', 'payment_terminal',
-              'business_computer', 'supplier_terminal', 'delivery_crate', 'package']:
+              'business_computer', 'supplier_terminal', 'delivery_crate', 'package', 'display_shelf', 'fridge_display',
+              'bank_counter', 'bank_computer', 'atm', 'safe', 'delivery_terminal']:
         bs[n] = facing(n)
     for n in ['grill', 'fryer', 'oven', 'cooking_pot']:
         v = {}

@@ -1,6 +1,12 @@
 {
  "replace": false,
  "values": [
+  "rpbusiness:fridge_display",
+  "rpbusiness:bank_counter",
+  "rpbusiness:bank_computer",
+  "rpbusiness:atm",
+  "rpbusiness:safe",
+  "rpbusiness:delivery_terminal",
   "rpbusiness:kitchen_counter",
   "rpbusiness:grill",
   "rpbusiness:fryer",

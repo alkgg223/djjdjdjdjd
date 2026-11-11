@@ -61,4 +61,8 @@ public class ChairBlock extends HorizontalDirectionalBlock {
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
+
+    /** NPCs must walk around furniture and equipment, never through it. */
+    @Override
+    protected boolean isPathfindable(BlockState state, net.minecraft.world.level.pathfinder.PathComputationType type) { return false; }
 }

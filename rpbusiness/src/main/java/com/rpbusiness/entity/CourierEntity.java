@@ -29,6 +29,8 @@ import java.util.UUID;
 public class CourierEntity extends NpcEntity {
     public UUID businessId;
     public int supplyId;
+    /** >= 0: this NPC is a customer bringing a parcel to the player's delivery company. */
+    public int jobId = -1;
     public final SimpleContainer cargo = new SimpleContainer(27);
     private boolean delivered;
     private BlockPos origin;
@@ -42,7 +44,7 @@ public class CourierEntity extends NpcEntity {
     protected void think() {
         if (!(level() instanceof ServerLevel sl)) return;
         ticks += thinkDelta;
-        setOutfit(6);
+        setOutfit(jobId >= 0 ? 0 : 6);
         Business b = BusinessManager.data(sl).byId(businessId);
         if (b == null) { discard(); return; }
         if (delivered) {
@@ -54,14 +56,20 @@ public class CourierEntity extends NpcEntity {
             if (ticks > 2400) discard();
             return;
         }
-        hold(new ItemStack(ModBlocks.PACKAGE.get()));
+        hold(new ItemStack(jobId >= 0 ? com.rpbusiness.core.ModItems.PARCEL.get() : ModBlocks.PACKAGE.get().asItem()));
         setAction(ACT_CARRY);
         BlockPos crate = BusinessManager.findEquip(sl, b, Equip.CRATE, b.entranceOrCenter(),
                 be -> be instanceof net.minecraft.world.Container c && com.rpbusiness.block.ContainerUtil.hasSpace(c));
+        if (crate == null && jobId >= 0)
+            crate = BusinessManager.findStorageWithSpace(sl, b, null, b.entranceOrCenter());
         BlockPos target = crate != null ? standSpotFor(crate) : b.entranceOrCenter();
         boolean arrived = walkTo(target, 1.2, 1.0) || (crate != null && near(crate, 2.0));
         if (!arrived && ticks > 3000 && !b.contains(position()) && blockPosition().distSqr(b.entranceOrCenter()) > 36) {
             // lost on the way: send the order out again with a new courier (cargo stays with the order, no duplication)
+            if (jobId >= 0) {
+                var j = com.rpbusiness.delivery.Deliveries.job(b, jobId);
+                if (j != null) j.status = com.rpbusiness.delivery.DeliveryJob.Status.OFFERED;
+            }
             for (SupplyOrder o : b.supplyOrders) if (o.id == supplyId && o.status == SupplyOrder.Status.IN_TRANSIT) {
                 o.status = SupplyOrder.Status.ORDERED;
                 o.eta = sl.getGameTime() + 200;
@@ -99,6 +107,13 @@ public class CourierEntity extends NpcEntity {
     }
 
     private void finish(ServerLevel sl, Business b, boolean byHand) {
+        if (jobId >= 0) {
+            com.rpbusiness.delivery.Deliveries.parcelDropped(sl, b, jobId);
+            delivered = true;
+            ticks = 0;
+            setCustomNameVisible(false);
+            return;
+        }
         BusinessManager.notifyOwner(sl, b, Component.translatable(byHand ? "msg.rpbusiness.delivery_hand" : "msg.rpbusiness.delivery_done", b.name).withStyle(ChatFormatting.GREEN), false);
         for (SupplyOrder o : b.supplyOrders) if (o.id == supplyId) o.status = SupplyOrder.Status.DELIVERED;
         BusinessManager.data(sl).setDirty();
@@ -126,6 +141,7 @@ public class CourierEntity extends NpcEntity {
         super.addAdditionalSaveData(t);
         if (businessId != null) t.putUUID("Business", businessId);
         t.putInt("Supply", supplyId);
+        t.putInt("Job", jobId);
         t.put("Cargo", cargo.createTag(registryAccess()));
         t.putBoolean("Delivered", delivered);
         if (origin != null) t.put("Origin", NbtUtils.writeBlockPos(origin));
@@ -137,6 +153,7 @@ public class CourierEntity extends NpcEntity {
         super.readAdditionalSaveData(t);
         businessId = t.hasUUID("Business") ? t.getUUID("Business") : null;
         supplyId = t.getInt("Supply");
+        jobId = t.contains("Job") ? t.getInt("Job") : -1;
         cargo.fromTag(t.getList("Cargo", Tag.TAG_COMPOUND), registryAccess());
         delivered = t.getBoolean("Delivered");
         origin = NbtUtils.readBlockPos(t, "Origin").orElse(null);

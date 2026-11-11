@@ -11,7 +11,8 @@ import java.util.TreeMap;
 
 /** Separate financial records of one business: per-day ledger and a transaction log. */
 public class Finance {
-    public enum Cat { FOOD_SALES, DRINK_SALES, TIPS, DEPOSIT, SALARIES, SUPPLIES, DELIVERY, HIRING, WITHDRAW, OTHER }
+    public enum Cat { FOOD_SALES, DRINK_SALES, TIPS, DEPOSIT, SALARIES, SUPPLIES, DELIVERY, HIRING, WITHDRAW, OTHER,
+        PRODUCT_SALES, DELIVERY_INCOME, BANK_TRANSFER }
 
     public static class Day {
         public final long[] amounts = new long[Cat.values().length];
@@ -19,7 +20,8 @@ public class Finance {
         public int lostCustomers;
 
         public long income() {
-            return amounts[Cat.FOOD_SALES.ordinal()] + amounts[Cat.DRINK_SALES.ordinal()] + amounts[Cat.TIPS.ordinal()];
+            return amounts[Cat.FOOD_SALES.ordinal()] + amounts[Cat.DRINK_SALES.ordinal()] + amounts[Cat.TIPS.ordinal()]
+                    + amounts[Cat.PRODUCT_SALES.ordinal()] + amounts[Cat.DELIVERY_INCOME.ordinal()];
         }
         public long expenses() {
             return amounts[Cat.SALARIES.ordinal()] + amounts[Cat.SUPPLIES.ordinal()] + amounts[Cat.DELIVERY.ordinal()]
@@ -43,7 +45,7 @@ public class Finance {
     /** Records a movement. amount > 0 is money into the business, < 0 out. */
     public void record(long day, int hour, Cat cat, long amount, String desc) {
         day(day).amounts[cat.ordinal()] += Math.abs(amount);
-        if (cat != Cat.DEPOSIT && cat != Cat.WITHDRAW) {
+        if (cat != Cat.DEPOSIT && cat != Cat.WITHDRAW && cat != Cat.BANK_TRANSFER) {
             if (amount > 0) totalIncome += amount; else totalExpenses -= amount;
         }
         log.addFirst(new Tx(day, hour, amount, cat, desc));

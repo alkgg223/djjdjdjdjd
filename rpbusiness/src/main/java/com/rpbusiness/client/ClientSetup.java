@@ -29,6 +29,7 @@ public final class ClientSetup {
         e.registerBlockEntityRenderer(ModBlockEntities.DRINK_MACHINE.get(), FoodRenderers.Drink::new);
         e.registerBlockEntityRenderer(ModBlockEntities.SERVING_COUNTER.get(), FoodRenderers.Serving::new);
         e.registerBlockEntityRenderer(ModBlockEntities.ANIMATED_STORAGE.get(), c -> new StorageGeoRenderer());
+        e.registerBlockEntityRenderer(ModBlockEntities.DISPLAY.get(), FoodRenderers.Display::new);
     }
 
     @SubscribeEvent

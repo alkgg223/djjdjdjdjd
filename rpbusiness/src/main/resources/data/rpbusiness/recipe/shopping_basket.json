@@ -1,0 +1,20 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "S S",
+  "RRR"
+ ],
+ "key": {
+  "S": {
+   "item": "minecraft:stick"
+  },
+  "R": {
+   "item": "minecraft:red_dye"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:shopping_basket",
+  "count": 1
+ }
+}

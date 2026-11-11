@@ -49,6 +49,16 @@ public class Business {
     public List<Candidate> candidates = new ArrayList<>();
     public long candidateDay = -1;
     public long lastSalaryDay = -1;
+    /** Separate bank account of this business (card payments go here). */
+    public String bankAccount;
+    /** Global price control: percent applied to every price of this business, and a discount percent. */
+    public int priceMultiplier = 100, discount;
+    /** Shop product prices by item id (player-set; defaults to the item's base value). */
+    public final LinkedHashMap<String, Integer> prices = new LinkedHashMap<>();
+    /** Delivery company: fee per job (base) in percent of the standard rate. */
+    public int deliveryRate = 100;
+    public final List<com.rpbusiness.delivery.DeliveryJob> deliveries = new ArrayList<>();
+    public long requestDay = -1;
 
     // -------- transient runtime state --------
     public final transient Map<BlockPos, UUID> seatClaims = new HashMap<>();
@@ -84,6 +94,11 @@ public class Business {
     }
 
     public float stars() { return reputation / 200f; }
+
+    /** Final price customers pay after the global multiplier and discount. */
+    public int effective(int price) {
+        return Math.max(1, Math.round(price * priceMultiplier / 100f * (100 - discount) / 100f));
+    }
 
     public List<Dish> enabledDishes() {
         List<Dish> l = new ArrayList<>();
@@ -178,6 +193,17 @@ public class Business {
         t.put("candidates", cl);
         t.putLong("candDay", candidateDay);
         t.putLong("salaryDay", lastSalaryDay);
+        if (bankAccount != null) t.putString("bank", bankAccount);
+        t.putInt("mult", priceMultiplier);
+        t.putInt("discount", discount);
+        CompoundTag pr = new CompoundTag();
+        for (var e : prices.entrySet()) pr.putInt(e.getKey(), e.getValue());
+        t.put("prices", pr);
+        t.putInt("drate", deliveryRate);
+        ListTag dj = new ListTag();
+        for (var j : deliveries) dj.add(j.save());
+        t.put("deliveries", dj);
+        t.putLong("reqDay", requestDay);
         return t;
     }
 
@@ -243,6 +269,15 @@ public class Business {
         for (int i = 0; i < cl.size(); i++) b.candidates.add(Candidate.load(cl.getCompound(i)));
         b.candidateDay = t.getLong("candDay");
         b.lastSalaryDay = t.getLong("salaryDay");
+        if (t.contains("bank")) b.bankAccount = t.getString("bank");
+        b.priceMultiplier = t.contains("mult") ? t.getInt("mult") : 100;
+        b.discount = t.getInt("discount");
+        CompoundTag pr = t.getCompound("prices");
+        for (String k : pr.getAllKeys()) b.prices.put(k, pr.getInt(k));
+        b.deliveryRate = t.contains("drate") ? t.getInt("drate") : 100;
+        ListTag dj = t.getList("deliveries", Tag.TAG_COMPOUND);
+        for (int i = 0; i < dj.size(); i++) b.deliveries.add(com.rpbusiness.delivery.DeliveryJob.load(dj.getCompound(i)));
+        b.requestDay = t.contains("reqDay") ? t.getLong("reqDay") : -1;
         return b;
     }
 }

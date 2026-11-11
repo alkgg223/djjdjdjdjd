@@ -6,6 +6,7 @@ import com.rpbusiness.economy.Money;
 import com.rpbusiness.economy.Suppliers;
 import com.rpbusiness.food.Dish;
 import com.rpbusiness.network.Net;
+import com.rpbusiness.business.Finance;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -35,6 +36,57 @@ public final class Actions {
         switch (action) {
             case "refresh" -> {}
             case "open_supplier" -> { Net.openSupplier(p, b); refresh = false; }
+            case "to_bank" -> {
+                long amt = d.getLong("amount") < 0 ? b.cash : Math.min(b.cash, d.getLong("amount"));
+                if (amt > 0) {
+                    var bank = com.rpbusiness.bank.Bank.get(sl);
+                    b.cash -= amt;
+                    bank.credit(sl, bank.businessAccount(sl, b), amt, "Cash drawer deposit");
+                    b.finance.record(Business.day(sl), Business.hour(sl), Finance.Cat.BANK_TRANSFER, -amt, "Drawer -> bank");
+                }
+            }
+            case "from_bank" -> {
+                var bank = com.rpbusiness.bank.Bank.get(sl);
+                long amt = d.getLong("amount");
+                if (bank.debit(sl, bank.businessAccount(sl, b), amt, "To cash drawer")) {
+                    b.cash += amt;
+                    b.finance.record(Business.day(sl), Business.hour(sl), Finance.Cat.BANK_TRANSFER, amt, "Bank -> drawer");
+                } else p.displayClientMessage(Component.translatable("msg.rpbusiness.bank_insufficient").withStyle(ChatFormatting.RED), false);
+            }
+            case "product_price" -> {
+                String id = d.getString("item");
+                var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(id));
+                int cur = b.prices.getOrDefault(id, com.rpbusiness.economy.Values.base(item));
+                b.prices.put(id, Math.max(1, Math.min(99999, cur + d.getInt("delta"))));
+            }
+            case "product_reset" -> b.prices.remove(d.getString("item"));
+            case "mult" -> b.priceMultiplier = Math.max(50, Math.min(300, b.priceMultiplier + d.getInt("delta")));
+            case "discount" -> b.discount = Math.max(0, Math.min(90, b.discount + d.getInt("delta")));
+            case "mult_of" -> {
+                Business o = data.byId(d.getUUID("other"));
+                if (o != null && BusinessManager.isOwner(p, o)) o.priceMultiplier = Math.max(50, Math.min(300, o.priceMultiplier + d.getInt("delta")));
+            }
+            case "all_mult" -> {
+                for (Business o : data.businesses.values())
+                    if (BusinessManager.isOwner(p, o)) o.priceMultiplier = Math.max(50, Math.min(300, o.priceMultiplier + d.getInt("delta")));
+            }
+            case "delivery_rate" -> b.deliveryRate = Math.max(30, Math.min(300, b.deliveryRate + d.getInt("delta")));
+            case "accept_job" -> {
+                if (!com.rpbusiness.delivery.Deliveries.accept(p, b, d.getInt("job")))
+                    p.displayClientMessage(Component.translatable("msg.rpbusiness.job_failed").withStyle(ChatFormatting.RED), false);
+            }
+            case "cancel_job" -> {
+                var j = com.rpbusiness.delivery.Deliveries.job(b, d.getInt("job"));
+                if (j != null && (j.status == com.rpbusiness.delivery.DeliveryJob.Status.OFFERED || j.status == com.rpbusiness.delivery.DeliveryJob.Status.AWAITING_PICKUP) && j.driver == null)
+                    j.status = com.rpbusiness.delivery.DeliveryJob.Status.CANCELLED;
+            }
+            case "create_transfer" -> {
+                Business from = data.byId(d.getUUID("from")), to = data.byId(d.getUUID("to"));
+                var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(d.getString("item")));
+                var j = com.rpbusiness.delivery.Deliveries.createTransfer(p, b, from, to, item, d.getInt("count"));
+                if (j == null) p.displayClientMessage(Component.translatable("msg.rpbusiness.job_failed").withStyle(ChatFormatting.RED), false);
+                else p.displayClientMessage(Component.translatable("msg.rpbusiness.transfer_created", j.id, Money.fmt(j.reward)).withStyle(ChatFormatting.GREEN), false);
+            }
             case "rename" -> {
                 String n = d.getString("name").trim();
                 if (!n.isEmpty()) b.name = n.length() > 32 ? n.substring(0, 32) : n;
@@ -86,7 +138,7 @@ public final class Actions {
             case "emp_job" -> {
                 EmployeeRecord r = b.employees.get(d.getUUID("emp"));
                 if (r != null) {
-                    r.job = r.job.next();
+                    r.job = r.job.nextFor(b.type);
                     r.salary = BusinessManager.salaryFor(r.job, r.skill, r.rank);
                 }
             }
@@ -124,7 +176,7 @@ public final class Actions {
             case "rescan" -> {
                 BusinessManager.scan(sl, b);
                 BlockPos e = BusinessManager.findEntrance(sl, b);
-                if (e != null && b.entrance == null) b.entrance = e;
+                if (e != null) b.entrance = e;
                 p.displayClientMessage(Component.translatable("msg.rpbusiness.rescanned").withStyle(ChatFormatting.GREEN), true);
             }
             case "entrance_here" -> {
@@ -171,7 +223,7 @@ public final class Actions {
                 }
                 if (goods.size() > 27) {
                     p.displayClientMessage(Component.translatable("msg.rpbusiness.order_too_big").withStyle(ChatFormatting.RED), false);
-                } else BusinessManager.placeSupplyOrder(p, b, goods, sup, cost, d.getBoolean("payCash"));
+                } else BusinessManager.placeSupplyOrder(p, b, goods, sup, cost, d.contains("payMode") ? d.getInt("payMode") : (d.getBoolean("payCash") ? 1 : 0));
                 Net.openSupplier(p, b);
                 refresh = false;
             }

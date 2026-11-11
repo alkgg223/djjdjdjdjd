@@ -1,0 +1,27 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "III",
+  "IGI",
+  "SES"
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "G": {
+   "item": "minecraft:glass_pane"
+  },
+  "S": {
+   "item": "minecraft:stone_slab"
+  },
+  "E": {
+   "item": "minecraft:emerald"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:bank_computer",
+  "count": 1
+ }
+}

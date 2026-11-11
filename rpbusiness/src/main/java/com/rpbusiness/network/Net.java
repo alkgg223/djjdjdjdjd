@@ -43,7 +43,10 @@ public final class Net {
     public static void register(RegisterPayloadHandlersEvent e) {
         PayloadRegistrar r = e.registrar("1");
         r.playToServer(Action.TYPE, Action.CODEC, (msg, ctx) -> ctx.enqueueWork(() -> {
-            if (ctx.player() instanceof ServerPlayer sp) Actions.handle(sp, msg.action(), msg.data());
+            if (ctx.player() instanceof ServerPlayer sp) {
+                if (msg.action().startsWith("bank_")) com.rpbusiness.bank.BankActions.handle(sp, msg.action(), msg.data());
+                else Actions.handle(sp, msg.action(), msg.data());
+            }
         }));
         r.playToClient(Screen.TYPE, Screen.CODEC, (msg, ctx) -> ctx.enqueueWork(() ->
                 com.rpbusiness.client.ClientHooks.openScreen(msg.screen(), msg.data())));
@@ -77,6 +80,23 @@ public final class Net {
             if (b != null) t.put("b", NbtUtils.writeBlockPos(b));
         }
         send(p, "register", t);
+    }
+
+    public static void openBank(ServerPlayer p, String selected, boolean manager) {
+        send(p, "bank", com.rpbusiness.bank.BankActions.snapshot(p, selected, manager));
+    }
+
+    public static void openAtm(ServerPlayer p, String accountId) {
+        com.rpbusiness.bank.Bank bank = com.rpbusiness.bank.Bank.get(p.serverLevel());
+        com.rpbusiness.bank.Account a = bank.account(accountId);
+        if (a == null || !bank.canUse(p, a)) {
+            p.displayClientMessage(net.minecraft.network.chat.Component.translatable("msg.rpbusiness.card_invalid").withStyle(net.minecraft.ChatFormatting.RED), true);
+            return;
+        }
+        CompoundTag t = new CompoundTag();
+        t.put("account", com.rpbusiness.bank.BankActions.accountTag(a, 12));
+        t.putLong("cash", com.rpbusiness.economy.Money.countCash(p));
+        send(p, "atm", t);
     }
 
     public static ItemStack findPlanner(ServerPlayer p) {

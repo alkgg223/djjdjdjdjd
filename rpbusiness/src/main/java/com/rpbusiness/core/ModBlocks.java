@@ -70,5 +70,18 @@ public final class ModBlocks {
     public static final DeferredBlock<StorageBlock> DELIVERY_CRATE = add("delivery_crate", p -> new StorageBlock(p, 27, StorageBlock.CRATE), wood());
     public static final DeferredBlock<StorageBlock> PACKAGE = add("package", p -> new StorageBlock(p, 9, StorageBlock.PACKAGE), wood().strength(0.5f));
 
+    // ---------- shops ----------
+    public static final DeferredBlock<DisplayBlock> DISPLAY_SHELF = add("display_shelf", p -> new DisplayBlock(p, false), wood());
+    public static final DeferredBlock<DisplayBlock> FRIDGE_DISPLAY = add("fridge_display", p -> new DisplayBlock(p, true), metal().lightLevel(s -> 6));
+
+    // ---------- banking ----------
+    public static final DeferredBlock<ShapedBlock> BANK_COUNTER = add("bank_counter", p -> new ShapedBlock(p, ShapedBlock.Kind.BANK), stone().noOcclusion());
+    public static final DeferredBlock<ShapedBlock> BANK_COMPUTER = add("bank_computer", p -> new ShapedBlock(p, ShapedBlock.Kind.BANK_COMPUTER), metal());
+    public static final DeferredBlock<ShapedBlock> ATM = add("atm", p -> new ShapedBlock(p, ShapedBlock.Kind.ATM), metal().lightLevel(s -> 4));
+    public static final DeferredBlock<SafeBlock> SAFE = add("safe", SafeBlock::new, metal().strength(25f, 1200f));
+
+    // ---------- delivery ----------
+    public static final DeferredBlock<ShapedBlock> DELIVERY_TERMINAL = add("delivery_terminal", p -> new ShapedBlock(p, ShapedBlock.Kind.DELIVERY), metal());
+
     private ModBlocks() {}
 }

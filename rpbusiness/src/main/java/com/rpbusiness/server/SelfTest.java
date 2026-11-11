@@ -57,6 +57,12 @@ public final class SelfTest {
                     + " employees=" + existing.employees.size() + " rep=" + existing.reputation + " orders=" + existing.orders.size()
                     + " history=" + existing.history.size() + " supply=" + existing.supplyOrders.size()
                     + " txlog=" + existing.finance.log.size() + " equipment=" + existing.equipment.get(Equip.CHAIR).size() + " chairs");
+            var bank = com.rpbusiness.bank.Bank.get(sl);
+            log("VERIFY bank accounts=" + bank.accounts.size() + " loans=" + bank.loans.stream().map(l -> l.id + ":" + l.remaining + "/" + l.status).toList()
+                    + " credit=" + bank.creditScore(OWNER) + " balances=" + bank.accounts.values().stream().map(a -> a.id + "=" + a.balance).toList());
+            for (Business x : data.businesses.values())
+                log("VERIFY " + x.name + " type=" + x.type + " served=" + x.customersServed + " cash=" + x.cash + " staff=" + x.employees.size()
+                        + " jobs=" + x.deliveries.stream().map(j -> j.id + "/" + j.status).toList() + " prices=" + x.prices.size());
             origin = existing.min;
             for (int dx = -1; dx <= 2; dx++) for (int dz = -1; dz <= 2; dz++)
                 sl.setChunkForced((origin.getX() >> 4) + dx, (origin.getZ() >> 4) + dz, true);
@@ -66,7 +72,7 @@ public final class SelfTest {
         if (existing != null) { log("already built"); return; }
         BlockPos spawn = sl.getSharedSpawnPos();
         int ox = spawn.getX() + 30, oz = spawn.getZ() + 30;
-        for (int dx = -1; dx <= 2; dx++) for (int dz = -1; dz <= 2; dz++) sl.setChunkForced((ox >> 4) + dx, (oz >> 4) + dz, true);
+        for (int dx = -2; dx <= 3; dx++) for (int dz = -1; dz <= 2; dz++) sl.setChunkForced((ox >> 4) + dx, (oz >> 4) + dz, true);
         int y = sl.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(ox + 6, 0, oz + 6)).getY();
         origin = new BlockPos(ox, y, oz);
         build(sl, origin);
@@ -94,9 +100,105 @@ public final class SelfTest {
         // supplier order: arrives by courier
         BusinessManager.createSupplyOrder(sl, b, List.of(new ItemStack(ModItems.TOMATO.get(), 16), new ItemStack(ModItems.POTATO.get(), 8)),
                 "Green Valley Farms", 22, 10, true);
+        buildStage2(sl, data, b);
         data.setDirty();
         startTick = sl.getGameTime();
         log("built at " + origin);
+    }
+
+    private static Business shop, office;
+
+    private static void room(ServerLevel sl, BlockPos o, int size) {
+        for (int x = 0; x <= size; x++) for (int z = 0; z <= size; z++) {
+            for (int y = 0; y <= 5; y++) set(sl, o.offset(x, y, z), Blocks.AIR.defaultBlockState());
+            set(sl, o.offset(x, -1, z), ModBlocks.KITCHEN_TILES.get().defaultBlockState());
+            set(sl, o.offset(x, 4, z), Blocks.SPRUCE_PLANKS.defaultBlockState());
+            if (x == 0 || z == 0 || x == size || z == size) for (int y = 0; y < 4; y++) set(sl, o.offset(x, y, z), Blocks.STONE_BRICKS.defaultBlockState());
+        }
+        for (int x = size / 2 - 1; x <= size / 2 + 1; x++) for (int z = size + 1; z <= size + 4; z++) {
+            set(sl, o.offset(x, -1, z), Blocks.STONE_BRICKS.defaultBlockState());
+            for (int y = 0; y < 3; y++) set(sl, o.offset(x, y, z), Blocks.AIR.defaultBlockState());
+        }
+        BlockPos door = o.offset(size / 2, 0, size);
+        set(sl, door, Blocks.OAK_DOOR.defaultBlockState().setValue(DoorBlock.FACING, Direction.SOUTH).setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER));
+        set(sl, door.above(), Blocks.OAK_DOOR.defaultBlockState().setValue(DoorBlock.FACING, Direction.SOUTH).setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER));
+    }
+
+    private static Business register(ServerLevel sl, BusinessData data, String name, BusinessType type, BlockPos min, BlockPos max) {
+        Business b = new Business();
+        b.id = UUID.randomUUID();
+        b.name = name;
+        b.type = type;
+        b.owner = OWNER;
+        b.ownerName = "Tester";
+        b.min = min;
+        b.max = max;
+        b.openHour = 0;
+        b.closeHour = 0;
+        b.cash = 500;
+        data.businesses.put(b.id, b);
+        b.entrance = BusinessManager.findEntrance(sl, b);
+        BusinessManager.scan(sl, b);
+        com.rpbusiness.bank.Bank.get(sl).businessAccount(sl, b);
+        return b;
+    }
+
+    private static void buildStage2(ServerLevel sl, BusinessData data, Business diner) {
+        // ---- grocery store (east of the diner)
+        BlockPos so = origin.offset(16, 0, 0);
+        room(sl, so, 10);
+        Direction s = Direction.SOUTH;
+        Item[][] products = {{net.minecraft.world.item.Items.BREAD, net.minecraft.world.item.Items.APPLE, net.minecraft.world.item.Items.COOKIE},
+                {ModItems.TOMATO.get(), ModItems.CHEESE_BLOCK.get(), ModItems.BURGER_BUN.get()},
+                {net.minecraft.world.item.Items.CARROT, net.minecraft.world.item.Items.PUMPKIN_PIE, net.minecraft.world.item.Items.MELON_SLICE},
+                {ModItems.COLA.get(), ModItems.COFFEE.get(), net.minecraft.world.item.Items.HONEY_BOTTLE}};
+        for (int i = 0; i < 4; i++) {
+            BlockPos d = so.offset(2 + i * 2, 0, 1);
+            set(sl, d, facing(i % 2 == 0 ? ModBlocks.DISPLAY_SHELF.get() : ModBlocks.FRIDGE_DISPLAY.get(), s));
+            if (sl.getBlockEntity(d) instanceof com.rpbusiness.block.DisplayBE de)
+                for (int k = 0; k < 9; k++) de.setItem(k, new ItemStack(products[i][k % 3], 6));
+        }
+        set(sl, so.offset(1, 0, 4), facing(ModBlocks.PANTRY_SHELF.get(), Direction.EAST));
+        if (sl.getBlockEntity(so.offset(1, 0, 4)) instanceof StorageBE st) {
+            for (Item[] row : products) for (Item it : row) st.insert(new ItemStack(it, 16));
+            st.insert(new ItemStack(ModItems.POTATO.get(), 32)); // warehouse stock for the transfer test
+        }
+        set(sl, so.offset(8, 0, 6), facing(ModBlocks.KITCHEN_COUNTER.get(), s));
+        set(sl, so.offset(8, 1, 6), facing(ModBlocks.CASH_REGISTER.get(), s));
+        set(sl, so.offset(3, 0, 7), facing(ModBlocks.PAYMENT_TERMINAL.get(), s));
+        set(sl, so.offset(9, 0, 1), facing(ModBlocks.DELIVERY_CRATE.get(), s));
+        shop = register(sl, data, "SelfTest Grocery", BusinessType.GROCERY, so.offset(0, -1, 0), so.offset(10, 4, 10));
+        BlockPos in = so.offset(5, 0, 5);
+        BusinessManager.spawnEmployee(sl, shop, new Candidate("Rana Cash", 3, 35, Job.CASHIER, 1), Job.CASHIER, in, 0);
+        BusinessManager.spawnEmployee(sl, shop, new Candidate("Sami Stock", 3, 36, Job.STOCK_MANAGER, 2), Job.STOCK_MANAGER, in, 0);
+        BusinessManager.spawnEmployee(sl, shop, new Candidate("Dana Help", 2, 32, Job.SALES_ASSISTANT, 3), Job.SALES_ASSISTANT, in, 0);
+        // ---- delivery office (west of the diner)
+        BlockPos oo = origin.offset(-12, 0, 0);
+        room(sl, oo, 8);
+        set(sl, oo.offset(2, 0, 1), facing(ModBlocks.DELIVERY_CRATE.get(), s));
+        set(sl, oo.offset(4, 0, 1), facing(ModBlocks.DELIVERY_TERMINAL.get(), s));
+        set(sl, oo.offset(6, 0, 1), facing(ModBlocks.PANTRY_SHELF.get(), s));
+        // a road connecting the three businesses (players build their own roads)
+        for (int x = -14; x <= 30; x++) for (int z = 13; z <= 15; z++) {
+            set(sl, origin.offset(x, -1, z), Blocks.STONE_BRICKS.defaultBlockState());
+            for (int y = 0; y < 4; y++) set(sl, origin.offset(x, y, z), Blocks.AIR.defaultBlockState());
+        }
+        office = register(sl, data, "SelfTest Delivery", BusinessType.DELIVERY, oo.offset(0, -1, 0), oo.offset(8, 4, 8));
+        BusinessManager.spawnEmployee(sl, office, new Candidate("Driver Zaid", 3, 45, Job.DELIVERY_DRIVER, 0), Job.DELIVERY_DRIVER, oo.offset(4, 0, 4), 0);
+        var tr = com.rpbusiness.delivery.Deliveries.createTransfer(sl, office, shop, diner, ModItems.POTATO.get(), 8);
+        log("transfer job " + (tr == null ? "FAILED" : tr.id + " fee " + tr.reward));
+        com.rpbusiness.delivery.Deliveries.generateOffers(sl, office);
+
+        // ---- bank
+        var bank = com.rpbusiness.bank.Bank.get(sl);
+        var acc = bank.open(sl, OWNER, "Tester", com.rpbusiness.bank.Account.Type.CHECKING, "Checking", null);
+        bank.credit(sl, acc, 1000, "Test deposit");
+        boolean t1 = bank.transfer(sl, acc, bank.businessAccount(sl, diner), 250, "Capital");
+        boolean t2 = bank.transfer(sl, acc, bank.businessAccount(sl, diner), 5000, "Too much");
+        var loan = bank.takeLoan(sl, OWNER, acc.id, 2000, 0);
+        log("BANK acc=" + acc.id + " bal=" + acc.balance + " transferOk=" + t1 + " overdraftBlocked=" + !t2 + " diner=" + bank.businessAccount(sl, diner).balance
+                + " loan=" + (loan == null ? "denied" : loan.id + " total " + loan.totalDue + " inst " + loan.installment + " rate " + loan.interestPercent)
+                + " max=" + bank.maxLoan(OWNER) + " credit=" + bank.creditScore(OWNER));
     }
 
     private static void set(ServerLevel sl, BlockPos p, BlockState s) { sl.setBlock(p, s, 3); }
@@ -242,6 +344,39 @@ public final class SelfTest {
             for (BlockPos p : b.equipment.get(Equip.TABLE)) if (sl.getBlockState(p).getBlock() instanceof TableBlock && sl.getBlockState(p).getValue(TableBlock.DIRTY)) dirty++;
             sb.append(dirty);
             log(sb.toString());
+            if (shop != null) {
+                StringBuilder s2 = new StringBuilder("SHOP served=" + shop.customersServed + " lost=" + shop.customersLost + " cash=" + shop.cash
+                        + " bank=" + com.rpbusiness.bank.Bank.get(sl).businessAccount(sl, shop).balance + " staff=[");
+                for (EmployeeRecord r : shop.employees.values()) s2.append(r.job).append('=').append(r.status).append(' ');
+                s2.append("] shoppers=").append(BusinessManager.shoppers(sl, shop));
+                s2.append(" OFFICE jobs=[");
+                for (var j : office.deliveries) s2.append(j.id).append(':').append(j.kind).append('/').append(j.status).append(' ');
+                s2.append("] bank=").append(com.rpbusiness.bank.Bank.get(sl).businessAccount(sl, office).balance);
+                for (EmployeeRecord r : office.employees.values()) {
+                    EmployeeEntity e = BusinessManager.employee(sl, r.id);
+                    s2.append(" driver=").append(r.status).append(e == null ? "(missing)" : "@" + e.blockPosition().toShortString());
+                }
+                log(s2.toString());
+            }
+        }
+        if (MODE.equals("build") && t == 200 && office != null) {
+            for (var j : office.deliveries) if (j.status == com.rpbusiness.delivery.DeliveryJob.Status.OFFERED) {
+                j.dest = origin.offset(26, 0, 14); // a house at the end of the road
+                boolean ok = com.rpbusiness.delivery.Deliveries.accept(sl, null, office, j.id);
+                log("accepted request " + j.id + " -> " + ok + " reward " + j.reward);
+                break;
+            }
+        }
+        if (MODE.equals("build") && t == 3000) {
+            // advance one in-game day: salaries and the loan installment must be processed
+            var bank = com.rpbusiness.bank.Bank.get(sl);
+            long before = bank.accountsOf(OWNER).stream().filter(a -> a.type == com.rpbusiness.bank.Account.Type.CHECKING).mapToLong(a -> a.balance).sum();
+            sl.setDayTime(sl.getDayTime() + 24000);
+            bank.tickDay(sl);
+            for (Business x : BusinessData.get(sl).businesses.values()) BusinessManager.tickBusiness(sl, x);
+            long after = bank.accountsOf(OWNER).stream().filter(a -> a.type == com.rpbusiness.bank.Account.Type.CHECKING).mapToLong(a -> a.balance).sum();
+            String loans = bank.loans.stream().map(l -> l.id + ":" + l.remaining + "/" + l.status + " paid=" + l.paidInstallments).toList().toString();
+            log("DAY ADVANCE checking " + before + " -> " + after + " loans " + loans + " credit " + bank.creditScore(OWNER));
         }
         long limit = Long.getLong("rpbusiness.selftest.ticks", 7200);
         if (t == limit) {

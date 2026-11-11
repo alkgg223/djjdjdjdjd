@@ -1,6 +1,7 @@
 {
  "replace": false,
  "values": [
+  "rpbusiness:display_shelf",
   "rpbusiness:counter_cabinet",
   "rpbusiness:cutting_board",
   "rpbusiness:pantry_shelf",

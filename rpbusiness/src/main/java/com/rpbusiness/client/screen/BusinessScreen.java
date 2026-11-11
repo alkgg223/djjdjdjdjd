@@ -22,7 +22,17 @@ import java.util.*;
 
 /** Business computer: overview, menu & prices, orders, staff, hiring, finances, settings and empire overview. */
 public class BusinessScreen extends BaseScreen {
-    private static final String[] TABS = {"overview", "menu", "orders", "staff", "hire", "finance", "settings", "empire"};
+    private static final String[] FOOD_TABS = {"overview", "menu", "orders", "staff", "hire", "finance", "settings", "empire"};
+    private static final String[] SHOP_TABS = {"overview", "products", "staff", "hire", "finance", "settings", "empire"};
+    private static final String[] DELIVERY_TABS = {"overview", "deliveries", "staff", "hire", "finance", "settings", "empire"};
+    private int trFrom, trTo = 1, trItem, trCount = 16;
+
+    private String[] tabs() {
+        BusinessType t = BusinessType.byName(data.getString("type"));
+        if (t.delivery()) return DELIVERY_TABS;
+        if (t.retail && !t.foodService) return SHOP_TABS;
+        return FOOD_TABS;
+    }
     private CompoundTag data;
     private String tab;
     private UUID biz;
@@ -84,7 +94,7 @@ public class BusinessScreen extends BaseScreen {
     protected void init() {
         layout(470, 300);
         int ty = top + 26;
-        for (String t : TABS) {
+        for (String t : tabs()) {
             Button b = button(left + 6, ty, 80, 20, Component.translatable("tab.rpbusiness." + t), () -> {
                 tab = t;
                 scroll = 0;
@@ -103,7 +113,10 @@ public class BusinessScreen extends BaseScreen {
             case "staff" -> initStaff();
             case "hire" -> initHire();
             case "settings" -> initSettings();
-            case "finance", "empire" -> {}
+            case "products" -> initProducts();
+            case "deliveries" -> initDeliveries();
+            case "empire" -> initEmpire();
+            case "finance" -> {}
         }
     }
 
@@ -113,6 +126,79 @@ public class BusinessScreen extends BaseScreen {
         button(x + bw + 4, y, bw, 20, Component.translatable("gui.rpbusiness.withdraw_all"), () -> act("withdraw", tag("amount", -1L)));
         button(x + (bw + 4) * 2, y, bw, 20, Component.translatable("gui.rpbusiness.deposit_all"), () -> act("deposit", tag("amount", -1L)));
         button(x + (bw + 4) * 3, y, bw, 20, Component.translatable(data.getBoolean("mclosed") ? "gui.rpbusiness.open_now" : "gui.rpbusiness.close_now"), () -> act("toggle_open"));
+        button(x, y - 24, bw, 20, Component.translatable("gui.rpbusiness.drawer_to_bank"), () -> act("to_bank", tag("amount", -1L)));
+        button(x + bw + 4, y - 24, bw, 20, Component.translatable("gui.rpbusiness.bank_to_drawer"), () -> act("from_bank", tag("amount", 100L)));
+    }
+
+    private void initProducts() {
+        List<CompoundTag> prods = list("products");
+        int rows = rows(22, 16);
+        scroll = Math.min(scroll, Math.max(0, prods.size() - rows));
+        int y = cy() + 14;
+        int bx = cx() + cw() - 5 * 22 - 2;
+        for (int i = scroll; i < Math.min(prods.size(), scroll + rows); i++) {
+            String item = prods.get(i).getString("item");
+            int[] deltas = {-5, -1, 1, 5};
+            for (int k = 0; k < 4; k++) {
+                int dlt = deltas[k];
+                button(bx + k * 22, y, 20, 18, Component.literal((dlt > 0 ? "+" : "") + dlt), () -> act("product_price", tag("item", item, "delta", dlt)));
+            }
+            button(bx + 88, y, 20, 18, Component.literal("\u27F2"), () -> act("product_reset", tag("item", item)));
+            y += 22;
+        }
+    }
+
+    private List<CompoundTag> owned() { return list("owned"); }
+
+    private void initDeliveries() {
+        int x = cx(), y = cy() + 12;
+        button(cx() + cw() - 92, top + 4, 44, 14, Component.literal("-10%"), () -> act("delivery_rate", tag("delta", -10)));
+        button(cx() + cw() - 46, top + 4, 44, 14, Component.literal("+10%"), () -> act("delivery_rate", tag("delta", 10)));
+        List<CompoundTag> jobs = list("jobs");
+        int shown = 0;
+        for (CompoundTag j : jobs) {
+            String st = j.getString("status");
+            if (st.equals("DELIVERED") || st.equals("CANCELLED")) continue;
+            if (shown++ >= 6) break;
+            int id = j.getInt("id");
+            if (st.equals("OFFERED")) button(x + cw() - 108, y, 52, 16, Component.translatable("gui.rpbusiness.accept"), () -> act("accept_job", tag("job", id)));
+            if (st.equals("OFFERED") || st.equals("AWAITING_PICKUP")) button(x + cw() - 54, y, 52, 16, Component.translatable("gui.rpbusiness.cancel"), () -> act("cancel_job", tag("job", id)));
+            y += 20;
+        }
+        // create a transfer between your own businesses
+        List<CompoundTag> own = owned();
+        if (own.size() >= 2) {
+            int by = top + h - 48;
+            trFrom %= own.size(); trTo %= own.size();
+            button(x, by, 100, 18, Component.literal(clip(own.get(trFrom).getString("name"), 90)), () -> { trFrom = (trFrom + 1) % owned().size(); trItem = 0; rebuildWidgets(); });
+            button(x + 104, by, 100, 18, Component.literal("\u2192 " + clip(own.get(trTo).getString("name"), 80)), () -> { trTo = (trTo + 1) % owned().size(); rebuildWidgets(); });
+            ListTag stock = own.get(trFrom).getList("stock", Tag.TAG_COMPOUND);
+            String label = stock.isEmpty() ? "-" : new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse(stock.getCompound(trItem % stock.size()).getString("item")))).getHoverName().getString();
+            button(x, by + 22, 130, 18, Component.literal(clip(label, 120)), () -> { trItem++; rebuildWidgets(); });
+            button(x + 134, by + 22, 40, 18, Component.literal("x" + trCount), () -> { trCount = trCount >= 64 ? 8 : trCount * 2; rebuildWidgets(); });
+            Button go = button(x + 178, by + 22, 90, 18, Component.translatable("gui.rpbusiness.create_transfer"), () -> {
+                ListTag st2 = owned().get(trFrom).getList("stock", Tag.TAG_COMPOUND);
+                if (st2.isEmpty()) return;
+                CompoundTag t = tag("item", st2.getCompound(trItem % st2.size()).getString("item"), "count", trCount);
+                t.putUUID("from", owned().get(trFrom).getUUID("id"));
+                t.putUUID("to", owned().get(trTo).getUUID("id"));
+                act("create_transfer", t);
+            });
+            go.active = !stock.isEmpty() && trFrom != trTo;
+        }
+    }
+
+    private void initEmpire() {
+        int y = cy() + 14;
+        for (CompoundTag b : list("all")) {
+            if (!b.hasUUID("id")) continue;
+            java.util.UUID id = b.getUUID("id");
+            button(cx() + cw() - 64, y - 2, 30, 12, Component.literal("-"), () -> { CompoundTag t = tag("delta", -10); t.putUUID("other", id); act("mult_of", t); });
+            button(cx() + cw() - 32, y - 2, 30, 12, Component.literal("+"), () -> { CompoundTag t = tag("delta", 10); t.putUUID("other", id); act("mult_of", t); });
+            y += 22;
+        }
+        button(cx(), top + h - 26, 120, 20, Component.translatable("gui.rpbusiness.all_prices_down"), () -> act("all_mult", tag("delta", -10)));
+        button(cx() + 124, top + h - 26, 120, 20, Component.translatable("gui.rpbusiness.all_prices_up"), () -> act("all_mult", tag("delta", 10)));
     }
 
     private List<CompoundTag> list(String key) {
@@ -200,7 +286,7 @@ public class BusinessScreen extends BaseScreen {
             Job pref = Job.byName(c.get(i).getString("job"));
             Job chosen = hireJob.getOrDefault(i, pref);
             button(cx() + cw() - 150, y, 96, 18, Component.translatable(chosen.key()), () -> {
-                hireJob.put(idx, hireJob.getOrDefault(idx, pref).next());
+                hireJob.put(idx, hireJob.getOrDefault(idx, pref).nextFor(BusinessType.byName(data.getString("type"))));
                 rebuildWidgets();
             });
             button(cx() + cw() - 50, y, 48, 18, Component.translatable("gui.rpbusiness.hire"), () -> {
@@ -230,7 +316,12 @@ public class BusinessScreen extends BaseScreen {
         button(x + 42, y, 40, 18, Component.literal("O+"), () -> act("hours", tag("open", 1, "close", 0)));
         button(x + 100, y, 40, 18, Component.literal("C-"), () -> act("hours", tag("open", 0, "close", -1)));
         button(x + 142, y, 40, 18, Component.literal("C+"), () -> act("hours", tag("open", 0, "close", 1)));
-        y += 30;
+        y += 22;
+        button(x, y, 40, 18, Component.literal("P-"), () -> act("mult", tag("delta", -10)));
+        button(x + 42, y, 40, 18, Component.literal("P+"), () -> act("mult", tag("delta", 10)));
+        button(x + 100, y, 40, 18, Component.literal("D-"), () -> act("discount", tag("delta", -5)));
+        button(x + 142, y, 40, 18, Component.literal("D+"), () -> act("discount", tag("delta", 5)));
+        y += 26;
         int bw = (cw() - 8) / 2;
         button(x, y, bw, 20, Component.translatable("gui.rpbusiness.entrance_here"), () -> act("entrance_here"));
         button(x + bw + 4, y, bw, 20, Component.translatable("gui.rpbusiness.rescan"), () -> act("rescan"));
@@ -263,6 +354,8 @@ public class BusinessScreen extends BaseScreen {
             case "finance" -> renderFinance(g);
             case "settings" -> renderSettings(g);
             case "empire" -> renderEmpire(g);
+            case "products" -> renderProducts(g);
+            case "deliveries" -> renderDeliveries(g);
         }
         super.render(g, mx, my, pt);
     }
@@ -288,6 +381,9 @@ public class BusinessScreen extends BaseScreen {
         y += 12;
         text(g, Component.translatable("gui.rpbusiness.your_cash"), x, y, DIM);
         text(g, Money.fmt(data.getLong("playerCash")), x + 110, y, TEXT);
+        y += 12;
+        text(g, Component.translatable("gui.rpbusiness.bank_account", data.getString("bankId")), x, y, DIM);
+        text(g, Money.fmt(data.getLong("bankBalance")), x + 110, y, GOOD);
         y += 16;
         CompoundTag today = list("days").isEmpty() ? new CompoundTag() : list("days").get(0);
         long[] a = today.getLongArray("a");
@@ -463,9 +559,56 @@ public class BusinessScreen extends BaseScreen {
     private void renderSettings(GuiGraphics g) {
         int x = cx(), y = cy() + 52;
         text(g, Component.translatable("gui.rpbusiness.hours_label", String.format("%02d:00", data.getInt("open")), String.format("%02d:00", data.getInt("close"))), x + 190, y + 5, TEXT);
+        text(g, Component.translatable("gui.rpbusiness.price_label", data.getInt("mult"), data.getInt("discount")), x + 190, y + 27, TEXT);
         int[] mn = data.getIntArray("min"), mx = data.getIntArray("max");
         if (mn.length == 3 && mx.length == 3)
             text(g, clip(Component.translatable("gui.rpbusiness.area", mn[0] + "," + mn[1] + "," + mn[2], mx[0] + "," + mx[1] + "," + mx[2]).getString(), cw()), x, top + h - 16, DIM);
+    }
+
+    private void renderProducts(GuiGraphics g) {
+        text(g, Component.translatable("gui.rpbusiness.products_header"), cx(), cy(), DIM);
+        List<CompoundTag> prods = list("products");
+        if (prods.isEmpty()) text(g, Component.translatable("gui.rpbusiness.no_products"), cx(), cy() + 16, DIM);
+        int rows = rows(22, 16);
+        int y = cy() + 14;
+        int bx = cx() + cw() - 5 * 22 - 2;
+        for (int i = scroll; i < Math.min(prods.size(), scroll + rows); i++) {
+            CompoundTag m = prods.get(i);
+            ItemStack icon = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse(m.getString("item"))));
+            g.renderItem(icon, cx(), y + 1);
+            text(g, clip(icon.getHoverName().getString(), bx - cx() - 70), cx() + 20, y + 1, TEXT);
+            int fin = m.getInt("final"), base = m.getInt("base");
+            text(g, Money.fmt(fin), bx - 44, y + 1, fin > base * 1.5 ? BAD : fin < base * 0.8 ? WARN : GOOD);
+            text(g, clip(Component.translatable("gui.rpbusiness.product_sub", m.getInt("shelf"), m.getInt("store"), Money.fmt(base)).getString(), bx - cx() - 24), cx() + 20, y + 11,
+                    m.getInt("shelf") == 0 ? BAD : DIM);
+            y += 22;
+        }
+    }
+
+    private void renderDeliveries(GuiGraphics g) {
+        int x = cx(), y = cy();
+        text(g, Component.translatable("gui.rpbusiness.delivery_header", data.getInt("deliveryRate")), x, y - 1, ACCENT);
+        y += 12;
+        int shown = 0;
+        for (CompoundTag j : list("jobs")) {
+            String st = j.getString("status");
+            if (st.equals("DELIVERED") || st.equals("CANCELLED")) continue;
+            if (shown++ >= 6) break;
+            String line = "#" + j.getInt("id") + " " + (j.getString("kind").equals("TRANSFER")
+                    ? j.getString("fromName") + " \u2192 " + j.getString("client") + " (" + j.getInt("count") + "x)"
+                    : j.getString("client")) + "  " + Money.fmt(j.getLong("reward"));
+            text(g, clip(line, cw() - 112), x, y, TEXT);
+            int[] dp = j.getIntArray("dest");
+            String sub = Component.translatable("delivery_status.rpbusiness." + st.toLowerCase(Locale.ROOT)).getString() + (dp.length == 3 ? "  @" + dp[0] + "," + dp[1] + "," + dp[2] : "");
+            text(g, clip(sub, cw() - 112), x, y + 9, st.equals("OFFERED") ? WARN : DIM);
+            y += 20;
+        }
+        if (shown == 0) text(g, Component.translatable("gui.rpbusiness.no_jobs"), x, y, DIM);
+        if (owned().size() >= 2) text(g, Component.translatable("gui.rpbusiness.transfer_header"), x, top + h - 60, ACCENT);
+        int done = 0;
+        long earned = 0;
+        for (CompoundTag j : list("jobs")) if (j.getString("status").equals("DELIVERED")) { done++; earned += j.getLong("reward"); }
+        text(g, Component.translatable("gui.rpbusiness.delivered_count", done, Money.fmt(earned)), x + 150, top + h - 60, DIM);
     }
 
     private void renderEmpire(GuiGraphics g) {
@@ -477,12 +620,14 @@ public class BusinessScreen extends BaseScreen {
         for (CompoundTag b : list("all")) {
             text(g, clip(b.getString("name"), 120), x, y, TEXT);
             text(g, clip(Component.translatable(BusinessType.byName(b.getString("type")).key()).getString(), 70), x + 124, y, DIM);
-            text(g, Money.fmt(b.getLong("cash")), x + 198, y, GOOD);
-            if (cw() > 300) text(g, "+" + Money.fmt(b.getLong("income")) + " / -" + Money.fmt(b.getLong("expenses")), x + 262, y, DIM);
-            y += 11;
+            text(g, Money.fmt(b.getLong("cash")) + " + " + Money.fmt(b.getLong("bank")), x + 198, y, GOOD);
+            text(g, clip("+" + Money.fmt(b.getLong("income")) + " / -" + Money.fmt(b.getLong("expenses")) + "   " + Component.translatable("gui.rpbusiness.price_short", b.getInt("mult")).getString(), cw() - 70), x, y + 10, DIM);
+            y += 22;
+            cash += b.getLong("bank");
             cash += b.getLong("cash"); inc += b.getLong("income"); exp += b.getLong("expenses"); staff += b.getInt("staff");
         }
         y += 6;
         text(g, Component.translatable("gui.rpbusiness.empire_total", Money.fmt(cash), Money.fmt(inc), Money.fmt(exp), staff), x, y, WARN);
+        text(g, Component.translatable("gui.rpbusiness.empire_debt", Money.fmt(data.getLong("debt"))), x, y + 11, data.getLong("debt") > 0 ? BAD : DIM);
     }
 }

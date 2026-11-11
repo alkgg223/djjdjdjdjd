@@ -65,4 +65,8 @@ public class TableBlock extends Block {
         BlockState s = level.getBlockState(pos);
         if (s.getBlock() instanceof TableBlock && !s.getValue(DIRTY)) level.setBlock(pos, s.setValue(DIRTY, true), 3);
     }
+
+    /** NPCs must walk around furniture and equipment, never through it. */
+    @Override
+    protected boolean isPathfindable(BlockState state, net.minecraft.world.level.pathfinder.PathComputationType type) { return false; }
 }

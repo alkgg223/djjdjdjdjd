@@ -40,6 +40,7 @@ public final class ServerEvents {
         ServerLevel ow = server.overworld();
         long t = ow.getGameTime();
         if (t % 20 != 0) return;
+        com.rpbusiness.bank.Bank.get(server).tickDay(ow);
         BusinessData data = BusinessData.get(server);
         if (data.businesses.isEmpty()) return;
         for (Business b : data.businesses.values()) {
@@ -65,7 +66,8 @@ public final class ServerEvents {
         // lunch and dinner rush hours
         double rush = (hour >= 12 && hour < 14) || (hour >= 18 && hour < 21) ? 1.8 : (hour >= 22 || hour < 7) ? 0.35 : 1.0;
         for (Business b : data.businesses.values()) {
-            if (!b.type.foodService || !b.isOpen(ow) || b.enabledDishes().isEmpty()) continue;
+            if (!b.isOpen(ow)) continue;
+            if (b.type.foodService ? b.enabledDishes().isEmpty() : !b.type.retail) continue;
             BlockPos c = b.entranceOrCenter();
             Player p = ow.getNearestPlayer(c.getX(), c.getY(), c.getZ(), range, false);
             if (p == null || !ow.isLoaded(c)) continue;
@@ -73,7 +75,9 @@ public final class ServerEvents {
             if (t < next) continue;
             double interval = Config.SPAWN_INTERVAL_SECONDS.get() * 20 / rush / (0.6 + b.reputation / 500.0);
             NEXT_SPAWN.put(b.id, t + (long) (interval * (0.7 + ow.getRandom().nextDouble() * 0.6)));
-            if (BusinessManager.freeSeats(ow, b) == 0 || BusinessManager.availableDishes(ow, b).isEmpty()) continue;
+            if (b.type.foodService) {
+                if (BusinessManager.freeSeats(ow, b) == 0 || BusinessManager.availableDishes(ow, b).isEmpty()) continue;
+            } else if (!BusinessManager.hasProducts(ow, b) || BusinessManager.shoppers(ow, b) >= 6) continue;
             BusinessManager.spawnCustomerFor(ow, b);
             if (++alive >= max) return;
         }

@@ -35,6 +35,7 @@ public class EmployeeEntity extends NpcEntity {
     private final SimpleContainer pockets = new SimpleContainer(9);
     private final Deque<Steps.Step> steps = new ArrayDeque<>();
     private int currentOrder = -1;
+    private int currentJob = -1;
     private int routeIndex;
     private int failures;
     private long lastReport, quitSince = -1, lastPayTick;
@@ -146,8 +147,10 @@ public class EmployeeEntity extends NpcEntity {
             if (r == Steps.DONE) {
                 steps.remove(s);
                 failures = 0;
-                if (steps.isEmpty()) currentOrder = -1;
+                if (steps.isEmpty()) { currentOrder = -1; currentJob = -1; }
             } else if (r == Steps.FAILED) {
+                if (com.rpbusiness.server.SelfTest.active())
+                    com.rpbusiness.RPBusiness.LOG.info("[SELFTEST] step failed: " + rec.job + " " + s.label() + " at " + blockPosition().toShortString());
                 onFail(sl, b);
             }
             label(rec);
@@ -161,7 +164,11 @@ public class EmployeeEntity extends NpcEntity {
             case WAITER -> { if (!pickDelivery(sl, b) && !(BusinessManager.countJob(b, Job.CHEF) == 0 && pickOrder(sl, b, rec, true))) patrol(sl, b, rec); }
             case CASHIER -> cashier(sl, b, rec);
             case CLEANER -> { if (!pickCleaning(sl, b)) patrol(sl, b, rec); }
-            case MANAGER -> manager(sl, b, rec);
+            case MANAGER, DELIVERY_MANAGER -> manager(sl, b, rec);
+            case SALES_ASSISTANT -> salesAssistant(sl, b, rec);
+            case STOCK_MANAGER -> { if (!restock(sl, b) && !sortCrate(sl, b)) patrol(sl, b, rec); }
+            case WAREHOUSE_WORKER, PACKAGE_HANDLER -> { if (!sortCrate(sl, b)) patrol(sl, b, rec); }
+            case DELIVERY_DRIVER -> { if (!pickDeliveryJob(sl, b)) idle(sl, b, rec); }
         }
         label(rec);
     }
@@ -174,6 +181,7 @@ public class EmployeeEntity extends NpcEntity {
 
     private void onFail(ServerLevel sl, Business b) {
         steps.clear();
+        releaseJob(b);
         hold(ItemStack.EMPTY);
         setAction(ACT_NONE);
         if (currentOrder >= 0) {
@@ -184,8 +192,20 @@ public class EmployeeEntity extends NpcEntity {
         failures++;
     }
 
+    private void releaseJob(Business b) {
+        if (b == null || currentJob < 0) return;
+        var j = com.rpbusiness.delivery.Deliveries.job(b, currentJob);
+        if (j != null && j.status != com.rpbusiness.delivery.DeliveryJob.Status.DELIVERED && getUUID().equals(j.driver)) {
+            j.driver = null;
+            j.status = com.rpbusiness.delivery.DeliveryJob.Status.AWAITING_PICKUP;
+            j.statusTick = level().getGameTime();
+        }
+        currentJob = -1;
+    }
+
     /** Abandons the current plan and frees the order for someone else. */
     private void dropWork(Business b) {
+        releaseJob(b);
         if (b != null && currentOrder >= 0) {
             Order o = b.order(currentOrder);
             if (o != null && o.status == Order.Status.COOKING && getUUID().equals(o.cook)) { o.status = Order.Status.PENDING; o.cook = null; }
@@ -225,6 +245,95 @@ public class EmployeeEntity extends NpcEntity {
         currentOrder = pick.id;
         steps.addAll(plan);
         return true;
+    }
+
+    // ------------------------------------------------------------------ shop & delivery jobs
+    private void salesAssistant(ServerLevel sl, Business b, EmployeeRecord rec) {
+        setStatus("helping");
+        CustomerEntity near = null;
+        for (CustomerEntity c : sl.getEntitiesOfClass(CustomerEntity.class, getBoundingBox().inflate(8)))
+            if (b.id.equals(c.businessId) && c.state == CustomerEntity.State.SHOP) { near = c; break; }
+        if (near != null) {
+            getLookControl().setLookAt(near);
+            if (distanceTo(near) > 2.5) walkTo(near.blockPosition(), 2.0, 0.9);
+            else setAction(ACT_TALK);
+            return;
+        }
+        setAction(ACT_NONE);
+        if (!rec.route.isEmpty()) { patrol(sl, b, rec); return; }
+        List<BlockPos> displays = BusinessManager.equip(sl, b, Equip.DISPLAY);
+        if (!displays.isEmpty() && (getNavigation().isDone() && getRandom().nextInt(10) == 0))
+            walkTo(standSpotFor(displays.get(getRandom().nextInt(displays.size()))), 1.0, 0.8);
+    }
+
+    /** Keeps every shelf stocked with the products the player put there. */
+    private boolean restock(ServerLevel sl, Business b) {
+        if (sl.getGameTime() % 3 != 0) return false;
+        Map<Item, Integer> store = BusinessManager.storageCounts(sl, b);
+        EmployeeRecord rec = record();
+        List<BlockPos> displays = BusinessManager.equip(sl, b, Equip.DISPLAY);
+        if (rec != null && rec.stations.stream().anyMatch(displays::contains)) displays = rec.stations.stream().filter(displays::contains).toList();
+        for (BlockPos p : displays) {
+            if (!(sl.getBlockEntity(p) instanceof com.rpbusiness.block.DisplayBE d)) continue;
+            for (int i = 0; i < 9; i++) {
+                String id = d.planogram[i];
+                if (id == null) continue;
+                Item it = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(id));
+                ItemStack cur = d.getItem(i);
+                if (!cur.isEmpty() && (!cur.is(it) || cur.getCount() >= Math.min(8, cur.getMaxStackSize()))) continue;
+                if (store.getOrDefault(it, 0) <= 0) continue;
+                steps.add(new Steps.Fetch(it, 16));
+                steps.add(new Steps.Restock(p, it));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Warehouse work: unpacks delivery crates into the shelves/storage. */
+    private boolean sortCrate(ServerLevel sl, Business b) {
+        if (sl.getGameTime() % 4 != 0) return false;
+        for (BlockPos c : BusinessManager.equip(sl, b, Equip.CRATE)) {
+            if (!(sl.getBlockEntity(c) instanceof net.minecraft.world.Container cont)) continue;
+            for (int i = 0; i < cont.getContainerSize(); i++) {
+                ItemStack st = cont.getItem(i);
+                if (st.isEmpty() || st.is(com.rpbusiness.core.ModItems.PARCEL.get())) continue;
+                if (BusinessManager.findStorageWithSpace(sl, b, null, blockPosition()) == null) return false;
+                Item it = st.getItem();
+                Steps.Fetch f = new Steps.Fetch(x -> x.is(it), it.getDescriptionId(), 32);
+                f.target = c;
+                steps.add(f);
+                steps.add(new Steps.Store(it));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean pickDeliveryJob(ServerLevel sl, Business b) {
+        if (!b.type.delivery()) return false;
+        for (com.rpbusiness.delivery.DeliveryJob j : com.rpbusiness.delivery.Deliveries.openJobs(b)) {
+            if (sl.getGameTime() - j.statusTick < 200 && j.statusTick > 0 && j.status == com.rpbusiness.delivery.DeliveryJob.Status.AWAITING_PICKUP && j.driver == null && failures > 0) continue;
+            j.driver = getUUID();
+            currentJob = j.id;
+            if (j.kind == com.rpbusiness.delivery.DeliveryJob.Kind.REQUEST) {
+                int id = j.id;
+                steps.add(new Steps.Fetch(s -> com.rpbusiness.delivery.Deliveries.isParcelFor(s, id), "parcel", 1));
+                steps.add(new Steps.DeliverParcel(id));
+            } else {
+                Business from = BusinessManager.data(sl).byId(j.fromBusiness);
+                Business to = BusinessManager.data(sl).byId(j.toBusiness);
+                if (from == null || to == null) { j.status = com.rpbusiness.delivery.DeliveryJob.Status.CANCELLED; continue; }
+                Item it = com.rpbusiness.delivery.Deliveries.itemOf(j);
+                Steps.Fetch f = new Steps.Fetch(it, Math.min(64, j.count));
+                f.from = from;
+                steps.add(f);
+                steps.add(new Steps.Store(it, to, () -> com.rpbusiness.delivery.Deliveries.complete(sl, b, j)));
+            }
+            steps.add(new Steps.ReturnTo(b.entranceOrCenter()));
+            return true;
+        }
+        return false;
     }
 
     private boolean tidy(ServerLevel sl, Business b) {
@@ -331,12 +440,51 @@ public class EmployeeEntity extends NpcEntity {
     private void idle(ServerLevel sl, Business b, EmployeeRecord rec) {
         if (!statusKey.equals("strike") && !statusKey.equals("off_duty") && !statusKey.equals("no_register") && !statusKey.equals("shortage")) setStatus("idle");
         setAction(ACT_NONE);
-        BlockPos home = rec.standPos != null ? rec.standPos : rec.servicePos != null ? rec.servicePos : rec.workPos;
-        if (home == null) home = b.center();
+        BlockPos home = rec.standPos != null ? rec.standPos : rec.servicePos != null ? rec.servicePos : null;
+        if (home == null) home = idleSpot(sl, b, rec);
         if (!walkTo(home, 1.2, 0.8) && isStuck()) { clearStuck(); getNavigation().stop(); }
         if (!steps.isEmpty()) return;
         // leftovers are returned before idling
         if (!peek(s -> Dish.servedBy(s.getItem()) != null).isEmpty() && b.equipment.get(Equip.SERVING).size() > 0) steps.add(new Steps.ReturnDish());
+    }
+
+    private BlockPos idleSpotCache;
+    private long idleSpotTick = -10000;
+
+    /** Without a player-set position, staff wait next to their own kind of equipment, each at a different spot. */
+    private BlockPos idleSpot(ServerLevel sl, Business b, EmployeeRecord rec) {
+        if (idleSpotCache != null && sl.getGameTime() - idleSpotTick < 600) return idleSpotCache;
+        idleSpotTick = sl.getGameTime();
+        Equip[] pref = switch (rec.job) {
+            case CHEF, ASSISTANT_CHEF -> new Equip[]{Equip.GRILL, Equip.CUTTING_BOARD, Equip.PREP, Equip.OVEN};
+            case WAITER -> new Equip[]{Equip.SERVING, Equip.TABLE};
+            case CASHIER -> new Equip[]{Equip.REGISTER, Equip.TERMINAL};
+            case STOCK_MANAGER, WAREHOUSE_WORKER, PACKAGE_HANDLER -> new Equip[]{Equip.STORAGE, Equip.CRATE};
+            case SALES_ASSISTANT -> new Equip[]{Equip.DISPLAY};
+            case DELIVERY_DRIVER, DELIVERY_MANAGER -> new Equip[]{Equip.DELIVERY_TERMINAL, Equip.CRATE};
+            default -> new Equip[]{Equip.DECOR, Equip.COMPUTER};
+        };
+        int salt = Math.floorMod(getUUID().hashCode(), 97);
+        BlockPos spot = null;
+        if (rec.workPos != null) spot = standSpotFor(rec.workPos);
+        for (Equip e : pref) {
+            if (spot != null) break;
+            List<BlockPos> l = BusinessManager.equip(sl, b, e);
+            if (!l.isEmpty()) spot = standSpotFor(l.get(salt % l.size()));
+        }
+        if (spot == null) {
+            // any free walkable spot inside, picked per employee so they do not all stand together
+            for (int i = 0; i < 20 && spot == null; i++) {
+                int x = b.min.getX() + 1 + Math.floorMod(salt * 31 + i * 17, Math.max(1, b.max.getX() - b.min.getX() - 1));
+                int z = b.min.getZ() + 1 + Math.floorMod(salt * 13 + i * 29, Math.max(1, b.max.getZ() - b.min.getZ() - 1));
+                for (int y = b.min.getY(); y <= b.min.getY() + 3; y++) {
+                    BlockPos p = new BlockPos(x, y, z);
+                    if (walkable(p)) { spot = p; break; }
+                }
+            }
+        }
+        idleSpotCache = spot != null ? spot : b.entranceOrCenter();
+        return idleSpotCache;
     }
 
     private void quit(ServerLevel sl, Business b) {

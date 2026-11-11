@@ -330,3 +330,99 @@ SUBS = {'chop': ('Knife chops', 'تقطيع بالسكين'), 'sizzle': ('Food s
         'happy': ('Customer is happy', 'زبون سعيد'), 'unhappy': ('Customer is unhappy', 'زبون منزعج')}
 for k, (en, ar) in SUBS.items():
     add(f'subtitles.rpbusiness.{k}', en, ar)
+
+# ======================================================================== Stage 2
+for k, (en, ar) in {'bank_card': ('Bank Card', 'بطاقة بنكية'), 'shopping_basket': ('Shopping Basket', 'سلة تسوق'),
+                    'shopping_cart': ('Shopping Cart', 'عربة تسوق'), 'parcel': ('Parcel', 'طرد بريدي')}.items():
+    add(f'item.rpbusiness.{k}', en, ar)
+for k, (en, ar) in {'display_shelf': ('Display Shelf', 'رف عرض'), 'fridge_display': ('Refrigerated Display', 'ثلاجة عرض'),
+                    'bank_counter': ('Bank Counter', 'شباك البنك'), 'bank_computer': ('Bank Management Computer', 'حاسوب إدارة البنك'),
+                    'atm': ('ATM', 'صراف آلي'), 'safe': ('Safe', 'خزنة'), 'delivery_terminal': ('Delivery Management Terminal', 'جهاز إدارة التوصيل')}.items():
+    add(f'block.rpbusiness.{k}', en, ar)
+S2 = [
+    ('gui.rpbusiness.accept', 'Accept', 'قبول'), ('gui.rpbusiness.all_prices_down', 'All prices -10%', 'كل الأسعار -10%'),
+    ('gui.rpbusiness.all_prices_up', 'All prices +10%', 'كل الأسعار +10%'), ('gui.rpbusiness.amount', 'Amount: %s', 'المبلغ: %s'),
+    ('gui.rpbusiness.balance', 'Balance: %s', 'الرصيد: %s'), ('gui.rpbusiness.bank_account', 'Bank %s', 'البنك %s'),
+    ('gui.rpbusiness.bank_stats', 'Bank: %s accounts, deposits %s, loans %s', 'البنك: %s حساب، الودائع %s، القروض %s'),
+    ('gui.rpbusiness.bank_title', 'Bank', 'البنك'), ('gui.rpbusiness.bank_to_drawer', 'Bank -> $100', 'من البنك 100$'),
+    ('gui.rpbusiness.drawer_to_bank', 'Cash -> Bank', 'النقد -> البنك'),
+    ('gui.rpbusiness.card_info', 'Issue a bank card for account %s (fee $5)', 'إصدار بطاقة للحساب %s (الرسوم 5$)'),
+    ('gui.rpbusiness.card_info2', 'Use it at ATMs. Keep it safe!', 'استخدمها في الصراف الآلي. احتفظ بها!'),
+    ('gui.rpbusiness.create_transfer', 'Create job', 'إنشاء مهمة'), ('gui.rpbusiness.delivered_count', 'Delivered: %s (%s)', 'تم توصيل: %s (%s)'),
+    ('gui.rpbusiness.delivery_header', 'Delivery jobs  (price %s%%)', 'مهام التوصيل  (السعر %s%%)'),
+    ('gui.rpbusiness.deposit_all_cash', 'Deposit all my cash', 'إيداع كل نقدي'), ('gui.rpbusiness.deposit_amount', 'Deposit', 'إيداع'),
+    ('gui.rpbusiness.withdraw_amount', 'Withdraw', 'سحب'),
+    ('gui.rpbusiness.empire_debt', 'Bank loans outstanding: %s', 'القروض المتبقية: %s'),
+    ('gui.rpbusiness.history_of', 'History of %s (balance %s)', 'سجل %s (الرصيد %s)'), ('gui.rpbusiness.issue_card', 'Issue bank card ($5)', 'إصدار بطاقة بنكية (5$)'),
+    ('gui.rpbusiness.loan_amount', 'Loan amount: %s', 'مبلغ القرض: %s'), ('gui.rpbusiness.loan_apply', 'Apply for loan', 'طلب قرض'),
+    ('gui.rpbusiness.loan_confirm', 'CONFIRM these terms', 'تأكيد هذه الشروط'),
+    ('gui.rpbusiness.loan_info', 'Credit score %s - max loan %s - current debt %s', 'التقييم الائتماني %s - أقصى قرض %s - الدين الحالي %s'),
+    ('gui.rpbusiness.loan_line', 'Loan #%s: %s left, %s/day, next day %s, missed %s', 'قرض #%s: متبقي %s، %s يومياً، اليوم القادم %s، فائت %s'),
+    ('gui.rpbusiness.loan_note', 'Installments are taken from this account every morning. You can repay early.', 'تُخصم الأقساط من هذا الحساب كل صباح. يمكنك السداد المبكر.'),
+    ('gui.rpbusiness.loan_terms', 'Interest %s%% - total %s - %s per day from day %s to %s', 'الفائدة %s%% - الإجمالي %s - %s يومياً من اليوم %s إلى %s'),
+    ('gui.rpbusiness.loan_too_high', 'Amount above your limit', 'المبلغ أعلى من حدك'),
+    ('gui.rpbusiness.memo', 'Memo (optional)', 'ملاحظة (اختياري)'), ('gui.rpbusiness.my_other_account', 'My account ▸', 'حسابي ▸'),
+    ('gui.rpbusiness.no_accounts', 'No account yet - open one in the Accounts tab', 'لا يوجد حساب - افتح حساباً من تبويب الحسابات'),
+    ('gui.rpbusiness.no_jobs', 'No delivery jobs right now - new requests arrive every day', 'لا مهام الآن - تصل طلبات جديدة كل يوم'),
+    ('gui.rpbusiness.no_products', 'Put products on Display Shelves inside the shop', 'ضع المنتجات على رفوف العرض داخل المتجر'),
+    ('gui.rpbusiness.open_checking', 'Open checking account', 'فتح حساب جاري'), ('gui.rpbusiness.open_savings', 'Open savings account', 'فتح حساب توفير'),
+    ('gui.rpbusiness.pay_bank', 'Pay: business bank', 'الدفع: بنك المشروع'), ('gui.rpbusiness.pay_installment', 'Pay day', 'قسط'),
+    ('gui.rpbusiness.repay_all', 'Repay all', 'سداد كامل'),
+    ('gui.rpbusiness.price_label', 'Prices %s%%  discount %s%%', 'الأسعار %s%%  الخصم %s%%'), ('gui.rpbusiness.price_short', 'prices %s%%', 'الأسعار %s%%'),
+    ('gui.rpbusiness.product_sub', 'on shelves %s, in storage %s, value %s', 'على الرفوف %s، في المخزن %s، القيمة %s'),
+    ('gui.rpbusiness.products_header', 'Products on your shelves                Price', 'المنتجات على رفوفك                السعر'),
+    ('gui.rpbusiness.recent', 'Recent transactions', 'آخر المعاملات'), ('gui.rpbusiness.select', 'Select', 'اختيار'), ('gui.rpbusiness.selected', 'Selected', 'مختار'),
+    ('gui.rpbusiness.send_transfer', 'Transfer', 'تحويل'), ('gui.rpbusiness.term', '%s days', '%s أيام'),
+    ('gui.rpbusiness.transfer_header', 'Transfer goods between your businesses:', 'نقل بضائع بين مشاريعك:'),
+    ('gui.rpbusiness.transfer_to', 'To account:', 'إلى الحساب:'), ('gui.rpbusiness.withdraw_quick', 'Quick withdrawal', 'سحب سريع'),
+    ('gui.rpbusiness.your_accounts', 'Your accounts', 'حساباتك'),
+    ('msg.rpbusiness.bank_failed', 'Transaction failed', 'فشلت العملية'), ('msg.rpbusiness.bank_insufficient', 'Insufficient funds', 'الرصيد غير كافٍ'),
+    ('msg.rpbusiness.bank_no_account', 'Account %s does not exist', 'الحساب %s غير موجود'), ('msg.rpbusiness.bank_opened', 'Account %s opened', 'تم فتح الحساب %s'),
+    ('msg.rpbusiness.bank_too_many', 'You already have the maximum number of accounts', 'لديك العدد الأقصى من الحسابات'),
+    ('msg.rpbusiness.bank_transferred', 'Transferred %s to %s', 'تم تحويل %s إلى %s'),
+    ('msg.rpbusiness.c_nothing_shop', '%s left: did not find anything to buy', 'غادر %s: لم يجد ما يشتريه'),
+    ('msg.rpbusiness.card_invalid', 'This card is not linked to one of your accounts', 'هذه البطاقة غير مرتبطة بأحد حساباتك'),
+    ('msg.rpbusiness.card_issued', 'Bank card issued for %s', 'تم إصدار بطاقة للحساب %s'),
+    ('msg.rpbusiness.delivery_complete', 'Delivery #%s completed: +%s to the company account', 'تم إنجاز التوصيل #%s: +%s لحساب الشركة'),
+    ('msg.rpbusiness.job_failed', 'Could not do that', 'تعذر تنفيذ ذلك'),
+    ('msg.rpbusiness.loan_approved', 'Loan #%s approved: %s paid into %s. Total to repay %s over %s days (%s per day).', 'تمت الموافقة على القرض #%s: أُودع %s في %s. الإجمالي %s على %s يوماً (%s يومياً).'),
+    ('msg.rpbusiness.loan_denied', 'Loan denied. Your maximum is %s', 'رُفض القرض. حدك الأقصى %s'),
+    ('msg.rpbusiness.loan_installment', 'Loan #%s: installment %s paid, %s left', 'القرض #%s: دُفع قسط %s، المتبقي %s'),
+    ('msg.rpbusiness.loan_missed', 'Loan #%s: could not take the installment of %s from %s - your credit score dropped!', 'القرض #%s: تعذر خصم القسط %s من %s - انخفض تقييمك الائتماني!'),
+    ('msg.rpbusiness.loan_paid', 'Loan #%s: paid. Remaining %s', 'القرض #%s: تم الدفع. المتبقي %s'),
+    ('msg.rpbusiness.need_card', 'Hold or carry a bank card linked to your account', 'احمل بطاقة بنكية مرتبطة بحسابك'),
+    ('msg.rpbusiness.no_path_office', 'No customer can reach your office - check the entrance', 'لا يستطيع الزبائن الوصول لمكتبك - تحقق من المدخل'),
+    ('msg.rpbusiness.parcel_dropped', 'Parcel for job #%s dropped off by %s', 'سلّم %s الطرد للمهمة #%s'),
+    ('msg.rpbusiness.parcel_far', 'Destination is %s blocks away (%s, %s, %s)', 'الوجهة على بعد %s كتلة (%s، %s، %s)'),
+    ('msg.rpbusiness.safe_locked', 'This safe is locked', 'هذه الخزنة مقفلة'),
+    ('msg.rpbusiness.transfer_created', 'Delivery job #%s created (fee %s)', 'تم إنشاء مهمة توصيل #%s (الرسوم %s)'),
+    ('tooltip.rpbusiness.basket', 'Used by shoppers', 'يستخدمها المتسوقون'), ('tooltip.rpbusiness.cart', 'Used by shoppers buying a lot', 'يستخدمها من يشتري كثيراً'),
+    ('tooltip.rpbusiness.card_account', 'Account %s', 'الحساب %s'), ('tooltip.rpbusiness.card_blank', 'Blank card - get yours at a Bank Counter', 'بطاقة فارغة - احصل على بطاقتك من شباك البنك'),
+    ('tooltip.rpbusiness.card_holder', 'Holder: %s', 'حاملها: %s'), ('tooltip.rpbusiness.card_use', 'Right-click an ATM', 'انقر على صراف آلي'),
+    ('tooltip.rpbusiness.parcel_dest', 'Deliver to %s, %s, %s', 'التوصيل إلى %s، %s، %s'), ('tooltip.rpbusiness.parcel_job', 'Delivery job #%s', 'مهمة توصيل #%s'),
+    ('tooltip.rpbusiness.parcel_use', 'Right-click at the destination to hand it over', 'انقر عند الوجهة لتسليمه'),
+]
+for k, en, ar in S2:
+    add(k, en, ar)
+for k, (en, ar) in {'accounts': ('Accounts', 'الحسابات'), 'cash': ('Cash', 'النقد'), 'transfer': ('Transfer', 'تحويل'),
+                    'history': ('History', 'السجل'), 'loans': ('Loans', 'القروض'), 'cards': ('Cards', 'البطاقات')}.items():
+    add(f'banktab.rpbusiness.{k}', en, ar)
+for k, (en, ar) in {'checking': ('Checking', 'جاري'), 'savings': ('Savings', 'توفير'), 'business': ('Business', 'تجاري')}.items():
+    add(f'acctype.rpbusiness.{k}', en, ar)
+for k, (en, ar) in {'offered': ('New request - accept?', 'طلب جديد - قبول؟'), 'sender_coming': ('Sender bringing the parcel', 'المرسل يحضر الطرد'),
+                    'awaiting_pickup': ('Waiting for a driver', 'بانتظار سائق'), 'on_the_way': ('On the way', 'في الطريق'),
+                    'delivered': ('Delivered', 'تم التوصيل'), 'cancelled': ('Cancelled', 'ملغى')}.items():
+    add(f'delivery_status.rpbusiness.{k}', en, ar)
+for k, (en, ar) in {'helping': ('Helping shoppers', 'يساعد المتسوقين'), 'restock': ('Restocking shelves', 'يملأ الرفوف'),
+                    'parcel': ('Delivering a parcel', 'يوصل طرداً'), 'returning': ('Returning to the office', 'يعود للمكتب')}.items():
+    add(f'status.rpbusiness.{k}', en, ar)
+for k, (en, ar) in {'sales_assistant': ('Sales Assistant', 'مساعد مبيعات'), 'stock_manager': ('Stock Manager', 'مسؤول المخزون'),
+                    'delivery_driver': ('Delivery Driver', 'سائق توصيل'), 'warehouse_worker': ('Warehouse Worker', 'عامل مستودع'),
+                    'package_handler': ('Package Handler', 'عامل الطرود'), 'delivery_manager': ('Delivery Manager', 'مدير التوصيل')}.items():
+    add(f'job.rpbusiness.{k}', en, ar)
+for k, (en, ar) in {'product_sales': ('Product sale', 'بيع منتج'), 'delivery_income': ('Delivery income', 'دخل التوصيل'),
+                    'bank_transfer': ('Bank transfer', 'تحويل بنكي')}.items():
+    add(f'fincat.rpbusiness.{k}', en, ar)
+for k, (en, ar) in {'display': ('Displays', 'رفوف عرض'), 'atm': ('ATMs', 'صرافات'), 'bank': ('Bank', 'بنك'), 'delivery_terminal': ('Delivery', 'توصيل')}.items():
+    add(f'equip.rpbusiness.{k}', en, ar)
+add('state.rpbusiness.shop', 'shopping', 'يتسوق')

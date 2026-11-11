@@ -26,5 +26,10 @@ public final class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AnimatedStorageBE>> ANIMATED_STORAGE = REG.register("animated_storage",
             () -> BlockEntityType.Builder.of(AnimatedStorageBE::new, ModBlocks.FRIDGE.get(), ModBlocks.FREEZER.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DisplayBE>> DISPLAY = REG.register("display",
+            () -> BlockEntityType.Builder.of(DisplayBE::new, ModBlocks.DISPLAY_SHELF.get(), ModBlocks.FRIDGE_DISPLAY.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SafeBE>> SAFE = REG.register("safe",
+            () -> BlockEntityType.Builder.of(SafeBE::new, ModBlocks.SAFE.get()).build(null));
+
     private ModBlockEntities() {}
 }

@@ -116,6 +116,33 @@ public final class FoodRenderers {
         }
     }
 
+    /** Products on a shop display: a 3 x 3 grid on the three shelf levels, facing the customer. */
+    public static class Display implements BlockEntityRenderer<DisplayBE> {
+        public Display(BlockEntityRendererProvider.Context c) {}
+        @Override
+        public void render(DisplayBE be, float pt, PoseStack ps, MultiBufferSource buf, int light, int overlay) {
+            var st = be.getBlockState();
+            Direction f = st.hasProperty(HorizontalDirectionalBlock.FACING) ? st.getValue(HorizontalDirectionalBlock.FACING) : Direction.NORTH;
+            int l = be.getLevel() == null ? light : LevelRenderer.getLightColor(be.getLevel(), be.getBlockPos().relative(f));
+            for (int i = 0; i < 9; i++) {
+                ItemStack s = be.getItem(i);
+                if (s.isEmpty()) continue;
+                int col = i % 3, row = i / 3;
+                ps.pushPose();
+                ps.translate(0.5, 0, 0.5);
+                ps.mulPose(Axis.YP.rotationDegrees(-f.toYRot() + 180));
+                ps.translate((col - 1) * 0.3, 0.8 - row * 0.3125, -0.18);
+                ps.scale(0.26f, 0.26f, 0.26f);
+                Minecraft.getInstance().getItemRenderer().renderStatic(s, ItemDisplayContext.FIXED, l, OverlayTexture.NO_OVERLAY, ps, buf, be.getLevel(), i);
+                if (s.getCount() > 1) {
+                    ps.translate(0.1, 0.05, 0.6);
+                    Minecraft.getInstance().getItemRenderer().renderStatic(s, ItemDisplayContext.FIXED, l, OverlayTexture.NO_OVERLAY, ps, buf, be.getLevel(), i + 9);
+                }
+                ps.popPose();
+            }
+        }
+    }
+
     @SuppressWarnings("unused")
     private static Direction unused() { return Direction.NORTH; }
     @SuppressWarnings("unused")

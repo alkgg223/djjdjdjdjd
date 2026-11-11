@@ -21,6 +21,14 @@ public final class ClientHooks {
                 if (mc.screen instanceof SupplierScreen ss && ss.sameBusiness(data)) ss.update(data);
                 else mc.setScreen(new SupplierScreen(data));
             }
+            case "bank" -> {
+                if (mc.screen instanceof BankScreen bs) bs.update(data);
+                else mc.setScreen(new BankScreen(data));
+            }
+            case "atm" -> {
+                if (mc.screen instanceof AtmScreen as) as.update(data);
+                else mc.setScreen(new AtmScreen(data));
+            }
             case "register" -> mc.setScreen(new RegisterScreen(NbtUtils.readBlockPos(data, "a").orElse(null), NbtUtils.readBlockPos(data, "b").orElse(null)));
             default -> {}
         }

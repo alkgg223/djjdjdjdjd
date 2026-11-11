@@ -86,4 +86,8 @@ public class StorageBlock extends BaseEntityBlock {
         if (level.isClientSide || !animated()) return null;
         return (l, p, s, be) -> { if (be instanceof AnimatedStorageBE a) a.serverTick(); };
     }
+
+    /** NPCs must walk around furniture and equipment, never through it. */
+    @Override
+    protected boolean isPathfindable(BlockState state, net.minecraft.world.level.pathfinder.PathComputationType type) { return false; }
 }

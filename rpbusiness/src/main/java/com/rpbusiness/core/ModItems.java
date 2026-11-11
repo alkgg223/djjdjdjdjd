@@ -51,6 +51,12 @@ public final class ModItems {
     public static final DeferredItem<CashItem> CASH_100 = cash("cash_100", 100);
     public static final DeferredItem<CashItem> CASH_BUNDLE = add("cash_bundle", REG.registerItem("cash_bundle", p -> new CashItem(1000, p.stacksTo(64).rarity(Rarity.UNCOMMON))));
 
+    // ---------- banking, shops, delivery ----------
+    public static final DeferredItem<BankCardItem> BANK_CARD = add("bank_card", REG.registerItem("bank_card", p -> new BankCardItem(p.stacksTo(1))));
+    public static final DeferredItem<ToolItem> SHOPPING_BASKET = add("shopping_basket", REG.registerItem("shopping_basket", p -> new ToolItem("tooltip.rpbusiness.basket", p.stacksTo(1))));
+    public static final DeferredItem<ToolItem> SHOPPING_CART = add("shopping_cart", REG.registerItem("shopping_cart", p -> new ToolItem("tooltip.rpbusiness.cart", p.stacksTo(1))));
+    public static final DeferredItem<ParcelItem> PARCEL = add("parcel", REG.registerItem("parcel", p -> new ParcelItem(p.stacksTo(1))));
+
     // ---------- raw ingredients ----------
     public static final DeferredItem<FoodItem> TOMATO = food("tomato", 2, 0.3f);
     public static final DeferredItem<FoodItem> ONION = food("onion", 1, 0.2f);

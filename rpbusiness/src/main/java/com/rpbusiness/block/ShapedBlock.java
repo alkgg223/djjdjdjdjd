@@ -32,7 +32,11 @@ public class ShapedBlock extends HorizontalDirectionalBlock {
         REGISTER(Shapes.of(bx(2, 0, 3, 14, 9, 14))),
         TERMINAL(Shapes.of(bx(3, 0, 4, 13, 16, 12))),
         COMPUTER(Shapes.of(bx(1, 0, 4, 15, 12, 14))),
-        SUPPLIER(Shapes.of(bx(3, 0, 4, 13, 16, 12)));
+        SUPPLIER(Shapes.of(bx(3, 0, 4, 13, 16, 12))),
+        BANK(Shapes.of(bx(0, 0, 0, 16, 16, 16))),
+        BANK_COMPUTER(Shapes.of(bx(1, 0, 4, 15, 12, 14))),
+        ATM(Shapes.of(bx(1, 0, 3, 15, 16, 14))),
+        DELIVERY(Shapes.of(bx(1, 0, 4, 15, 12, 14)));
 
         final EnumMap<Direction, VoxelShape> shapes;
         Kind(EnumMap<Direction, VoxelShape> s) { shapes = s; }
@@ -64,11 +68,15 @@ public class ShapedBlock extends HorizontalDirectionalBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         switch (kind) {
-            case REGISTER, TERMINAL, COMPUTER, SUPPLIER, MENU_BOARD -> {
+            case REGISTER, TERMINAL, COMPUTER, SUPPLIER, MENU_BOARD, BANK, BANK_COMPUTER, ATM, DELIVERY -> {
                 if (!level.isClientSide && player instanceof ServerPlayer sp) BusinessManager.useFunctionalBlock(sp, pos, kind);
                 return InteractionResult.sidedSuccess(level.isClientSide);
             }
             default -> { return InteractionResult.PASS; }
         }
     }
+
+    /** NPCs must walk around furniture and equipment, never through it. */
+    @Override
+    protected boolean isPathfindable(BlockState state, net.minecraft.world.level.pathfinder.PathComputationType type) { return false; }
 }

@@ -120,6 +120,8 @@ public final class BusinessManager {
 
     public static Equip classify(BlockState s, BlockEntity be) {
         var blk = s.getBlock();
+        if (blk instanceof DisplayBlock) return Equip.DISPLAY;
+        if (blk instanceof SafeBlock) return null;
         if (blk instanceof ChairBlock) return Equip.CHAIR;
         if (blk instanceof TableBlock) return Equip.TABLE;
         if (blk instanceof CuttingBoardBlock) return Equip.CUTTING_BOARD;
@@ -134,6 +136,9 @@ public final class BusinessManager {
                 case COMPUTER -> Equip.COMPUTER;
                 case SUPPLIER -> Equip.SUPPLIER;
                 case LAMP, PLANT, MENU_BOARD -> Equip.DECOR;
+                case BANK, BANK_COMPUTER -> Equip.BANK;
+                case ATM -> Equip.ATM;
+                case DELIVERY -> Equip.DELIVERY_TERMINAL;
                 default -> null;
             };
         }
@@ -334,13 +339,18 @@ public final class BusinessManager {
         Business best = null;
         double bs = -1e9;
         for (Business b : data(sl).businesses.values()) {
-            if (!b.type.foodService || !b.isOpen(sl)) continue;
+            if (!(b.type.foodService || b.type.retail) || !b.isOpen(sl)) continue;
             double dist = Math.sqrt(b.center().distSqr(c.blockPosition()));
             if (dist > 96) continue;
-            List<Dish> avail = availableDishes(sl, b);
-            if (avail.isEmpty() || freeSeats(sl, b) == 0) continue;
-            double score = b.reputation / 200.0 + c.getRandom().nextDouble() * 1.5 - dist / 48.0;
-            for (Dish d : avail) if (d.category == c.favorite) { score += 1.5; break; }
+            double score = b.reputation / 200.0 + c.getRandom().nextDouble() * 1.5 - dist / 48.0
+                    + (100 - b.priceMultiplier) / 40.0 + b.discount / 15.0;
+            if (b.type.foodService) {
+                List<Dish> avail = availableDishes(sl, b);
+                if (avail.isEmpty() || freeSeats(sl, b) == 0) continue;
+                for (Dish d : avail) if (d.category == c.favorite) { score += 1.5; break; }
+            } else {
+                if (!hasProducts(sl, b) || shoppers(sl, b) >= 6 + equip(sl, b, Equip.DISPLAY).size() / 2) continue;
+            }
             if (score > bs) { bs = score; best = b; }
         }
         return best;
@@ -453,6 +463,101 @@ public final class BusinessManager {
         return false;
     }
 
+    // =================================================================== shops
+
+    public static boolean hasProducts(ServerLevel sl, Business b) {
+        for (BlockPos p : equip(sl, b, Equip.DISPLAY)) if (sl.getBlockEntity(p) instanceof DisplayBE d && d.hasProducts()) return true;
+        return false;
+    }
+
+    public static int shoppers(ServerLevel sl, Business b) {
+        int n = 0;
+        for (CustomerEntity c : sl.getEntities(ModEntities.CUSTOMER.get(), x -> b.id.equals(x.businessId) && x.state != CustomerEntity.State.LEAVE)) n++;
+        return n;
+    }
+
+    public static int priceOf(Business b, Item item) {
+        String id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item).toString();
+        return b.effective(b.prices.getOrDefault(id, com.rpbusiness.economy.Values.base(item)));
+    }
+
+    public static boolean assistantOnDuty(ServerLevel sl, Business b) {
+        int h = Business.hour(sl);
+        for (EmployeeRecord r : b.employees.values())
+            if (r.job == Job.SALES_ASSISTANT && !r.onStrike() && r.onShift(h) && employee(sl, r.id) != null) return true;
+        return false;
+    }
+
+    public static BlockPos pickDisplay(ServerLevel sl, Business b, List<BlockPos> visited, CustomerEntity c) {
+        List<BlockPos> opts = new ArrayList<>();
+        for (BlockPos p : equip(sl, b, Equip.DISPLAY))
+            if (!visited.contains(p) && sl.getBlockEntity(p) instanceof DisplayBE d && d.hasProducts()) opts.add(p);
+        if (opts.isEmpty()) return null;
+        return opts.get(c.getRandom().nextInt(opts.size()));
+    }
+
+    /** The customer looks at the products on one shelf and takes what they like and can afford. */
+    public static void shopAtDisplay(ServerLevel sl, Business b, CustomerEntity c, BlockPos pos) {
+        if (!(sl.getBlockEntity(pos) instanceof DisplayBE d)) return;
+        boolean helper = assistantOnDuty(sl, b);
+        int spend = Math.min(c.money, (int) (c.budget * 1.3)) - c.bill;
+        boolean tooExpensive = false;
+        for (int i = 0; i < d.getContainerSize(); i++) {
+            ItemStack st = d.getItem(i);
+            if (!com.rpbusiness.economy.Values.sellable(st)) continue;
+            int price = priceOf(b, st.getItem());
+            double ratio = price / (double) Math.max(1, com.rpbusiness.economy.Values.base(st.getItem()));
+            double pWant = 0.45 * Math.exp(-Math.max(0, ratio - 0.9) * 2.0 * c.priceSensitivity) * (helper ? 1.35 : 1.0);
+            if (c.getRandom().nextDouble() > pWant) { if (ratio > 1.6) tooExpensive = true; continue; }
+            int qty = 1 + c.getRandom().nextInt(3);
+            qty = Math.min(qty, st.getCount());
+            while (qty > 0 && price * qty > spend) qty--;
+            if (qty <= 0) { tooExpensive = true; continue; }
+            ItemStack taken = d.removeItem(i, qty);
+            ItemStack rem = c.basket.addItem(taken);
+            if (!rem.isEmpty()) { d.insert(rem); qty -= rem.getCount(); }
+            c.bill += price * qty;
+            spend -= price * qty;
+        }
+        if (c.countBasket() == 0 && tooExpensive) c.servedCount = -1; // remembers "too expensive" for the leave message
+        sl.playSound(null, pos, ModSounds.PLACE_FOOD.get(), SoundSource.BLOCKS, 0.4f, 1.3f);
+        b.stockTick = -1000;
+    }
+
+    public static int shopSatisfaction(ServerLevel sl, Business b, CustomerEntity c) {
+        int items = c.countBasket();
+        double ratioSum = 0;
+        int n = 0;
+        for (int i = 0; i < c.basket.getContainerSize(); i++) {
+            ItemStack s = c.basket.getItem(i);
+            if (s.isEmpty()) continue;
+            ratioSum += priceOf(b, s.getItem()) / (double) Math.max(1, com.rpbusiness.economy.Values.base(s.getItem()));
+            n++;
+        }
+        double ratio = n > 0 ? ratioSum / n : 1;
+        double v = 50 + Math.min(20, items * 4) + 20 * Math.max(0, Math.min(1, (1.6 - ratio) / 1.1)) + Math.min(10, ambience(b) * 2)
+                + (assistantOnDuty(sl, b) ? 10 : 0);
+        return (int) Math.max(0, Math.min(100, v));
+    }
+
+    /** Puts a customer's unpaid products back on the shelves (or into storage). Nothing is lost or duplicated. */
+    public static void returnBasket(ServerLevel sl, Business b, CustomerEntity c) {
+        for (int i = 0; i < c.basket.getContainerSize(); i++) {
+            ItemStack s = c.basket.removeItemNoUpdate(i);
+            if (s.isEmpty()) continue;
+            for (BlockPos p : equip(sl, b, Equip.DISPLAY)) {
+                if (s.isEmpty()) break;
+                if (sl.getBlockEntity(p) instanceof DisplayBE d) s = d.insert(s);
+            }
+            if (!s.isEmpty()) {
+                BlockPos st = findStorageWithSpace(sl, b, null, c.blockPosition());
+                if (st != null && sl.getBlockEntity(st) instanceof Container cont) s = ContainerUtil.insert(cont, s);
+            }
+            if (!s.isEmpty()) c.spawnAtLocation(s);
+        }
+        c.bill = 0;
+    }
+
     // =================================================================== orders
 
     public static Order placeOrder(ServerLevel sl, Business b, CustomerEntity c, Dish d) {
@@ -462,7 +567,7 @@ public final class BusinessManager {
         o.customer = c.getUUID();
         o.customerName = c.npcName();
         o.dish = d;
-        o.price = b.menu.get(d).price;
+        o.price = b.effective(b.menu.get(d).price);
         o.seat = c.seat;
         o.created = sl.getGameTime();
         b.orders.add(o);
@@ -622,11 +727,17 @@ public final class BusinessManager {
     /** Takes the customer's money (only what they have) and books it into the business. */
     public static boolean processPayment(ServerLevel sl, Business b, CustomerEntity c, String method) {
         if (c.state != CustomerEntity.State.WAIT_PAY && !method.equals("table")) return false;
-        int tip = Math.max(0, c.tip());
+        boolean shop = !b.type.foodService;
+        int tip = shop ? 0 : Math.max(0, c.tip());
         int amount = Math.min(c.money, c.bill + tip);
         tip = Math.max(0, amount - c.bill);
         c.money -= amount;
-        b.cash += amount;
+        boolean electronic = method.equals("card");
+        if (electronic) {
+            c.hold(new ItemStack(ModItems.BANK_CARD.get()));
+            com.rpbusiness.bank.Bank bank = com.rpbusiness.bank.Bank.get(sl);
+            bank.credit(sl, bank.businessAccount(sl, b), amount, "Card payment - " + c.npcName());
+        } else b.cash += amount;
         long day = Business.day(sl);
         int hour = Business.hour(sl);
         int food = 0, drink = 0;
@@ -641,6 +752,7 @@ public final class BusinessManager {
             drink = amount - tip - food;
         }
         String who = c.npcName();
+        if (shop && amount > 0) b.finance.record(day, hour, Finance.Cat.PRODUCT_SALES, amount, who + " (" + method + ")");
         if (food > 0) b.finance.record(day, hour, Finance.Cat.FOOD_SALES, food, who + " (" + method + ")");
         if (drink > 0) b.finance.record(day, hour, Finance.Cat.DRINK_SALES, drink, who + " (" + method + ")");
         if (tip > 0) b.finance.record(day, hour, Finance.Cat.TIPS, tip, who);
@@ -703,7 +815,8 @@ public final class BusinessManager {
         RandomSource r = sl.getRandom();
         for (int i = 0; i < 6; i++) {
             int skill = 1 + r.nextInt(3) + (r.nextInt(6) == 0 ? 2 : 0);
-            Job job = Job.values()[r.nextInt(Job.values().length)];
+            Job[] jobs = Job.jobsFor(b.type);
+            Job job = jobs[r.nextInt(jobs.length)];
             int salary = (int) Math.round(job.baseSalary * (0.75 + 0.15 * skill) * (0.9 + r.nextDouble() * 0.2));
             b.candidates.add(new Candidate(Names.random(r), Math.min(5, skill), salary, job, r.nextInt(4)));
         }
@@ -764,9 +877,13 @@ public final class BusinessManager {
     private static void paySalaries(ServerLevel sl, Business b, long day) {
         for (EmployeeRecord r : b.employees.values()) {
             if (r.hiredDay == day) continue;
+            com.rpbusiness.bank.Bank bank = com.rpbusiness.bank.Bank.get(sl);
             if (b.cash >= r.salary) {
                 b.cash -= r.salary;
                 b.finance.record(day, 0, Finance.Cat.SALARIES, -r.salary, r.name);
+                if (r.unpaidDays > 0) r.unpaidDays = 0;
+            } else if (bank.debit(sl, bank.businessAccount(sl, b), r.salary, "Salary " + r.name)) {
+                b.finance.record(day, 0, Finance.Cat.SALARIES, -r.salary, r.name + " (bank)");
                 if (r.unpaidDays > 0) r.unpaidDays = 0;
             } else {
                 r.unpaidDays++;
@@ -818,8 +935,9 @@ public final class BusinessManager {
         b.min = min;
         b.max = max;
         b.entrance = findEntrance(sl, b);
-        for (Dish dish : new Dish[]{Dish.BURGER, Dish.FRIES, Dish.COLA}) b.menu.get(dish).enabled = true;
+        if (type.foodService) for (Dish dish : new Dish[]{Dish.BURGER, Dish.FRIES, Dish.COLA}) b.menu.get(dish).enabled = true;
         d.businesses.put(b.id, b);
+        com.rpbusiness.bank.Bank.get(sl).businessAccount(sl, b);
         scan(sl, b);
         refreshCandidates(sl, b, true);
         b.lastSalaryDay = Business.day(sl);
@@ -828,20 +946,47 @@ public final class BusinessManager {
         return b;
     }
 
-    /** Looks for a door on the area boundary and returns the spot just outside it. */
+    /**
+     * Finds how customers get in: any door inside (or right next to) the area, otherwise an open doorway in the
+     * walls. Returns a walkable spot just outside it.
+     */
     public static BlockPos findEntrance(ServerLevel sl, Business b) {
         BlockPos c = b.center();
-        for (BlockPos p : BlockPos.betweenClosed(b.min, b.max)) {
-            boolean edge = p.getX() == b.min.getX() || p.getX() == b.max.getX() || p.getZ() == b.min.getZ() || p.getZ() == b.max.getZ();
-            if (!edge) continue;
+        BlockPos best = null;
+        double bestScore = -1e9;
+        for (BlockPos p : BlockPos.betweenClosed(b.min.offset(-1, 0, -1), b.max.offset(1, 0, 1))) {
+            if (!sl.isLoaded(p)) continue;
             BlockState s = sl.getBlockState(p);
-            if (s.getBlock() instanceof DoorBlock && s.getValue(DoorBlock.HALF) == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER) {
+            if (!(s.getBlock() instanceof DoorBlock || s.getBlock() instanceof net.minecraft.world.level.block.FenceGateBlock)) continue;
+            if (s.hasProperty(DoorBlock.HALF) && s.getValue(DoorBlock.HALF) != net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER) continue;
+            Direction f = s.getValue(HorizontalDirectionalBlock.FACING);
+            for (Direction out : new Direction[]{f, f.getOpposite()}) {
+                BlockPos o1 = p.relative(out), o2 = p.relative(out, 2);
+                double away = Math.sqrt(o1.distSqr(c)) - Math.sqrt(p.distSqr(c));
+                double score = away * 10 + (b.contains(o1) ? 0 : 50) + (b.contains(o2) ? 0 : 50) + (isOpenSpot(sl, o2) ? 20 : 0)
+                        - Math.abs(p.getY() - b.min.getY()) * 2;
+                if (score > bestScore) { bestScore = score; best = isOpenSpot(sl, o2) ? o2.immutable() : o1.immutable(); }
+            }
+        }
+        if (best != null) return best;
+        // no door: look for a 2-high gap in the outer wall
+        int fy = b.min.getY();
+        for (int y = fy; y <= Math.min(b.max.getY(), fy + 3); y++) {
+            for (BlockPos p : BlockPos.betweenClosed(new BlockPos(b.min.getX(), y, b.min.getZ()), new BlockPos(b.max.getX(), y, b.max.getZ()))) {
+                boolean edge = p.getX() == b.min.getX() || p.getX() == b.max.getX() || p.getZ() == b.min.getZ() || p.getZ() == b.max.getZ();
+                if (!edge || !isOpenSpot(sl, p)) continue;
                 Direction out = Direction.getNearest(p.getX() - c.getX(), 0, p.getZ() - c.getZ());
-                if (out.getAxis().isVertical()) out = Direction.NORTH;
-                return p.relative(out, 2).immutable();
+                if (out.getAxis().isVertical()) continue;
+                BlockPos o = p.relative(out);
+                if (isOpenSpot(sl, o) && isOpenSpot(sl, p.relative(out.getOpposite()))) return o.relative(out).immutable();
             }
         }
         return null;
+    }
+
+    private static boolean isOpenSpot(ServerLevel sl, BlockPos p) {
+        return sl.getBlockState(p).getCollisionShape(sl, p).isEmpty() && sl.getBlockState(p.above()).getCollisionShape(sl, p.above()).isEmpty()
+                && !sl.getBlockState(p.below()).getCollisionShape(sl, p.below()).isEmpty();
     }
 
     public static void deleteBusiness(ServerLevel sl, Business b) {
@@ -853,11 +998,23 @@ public final class BusinessManager {
     // =================================================================== supplier orders
 
     public static boolean placeSupplyOrder(ServerPlayer p, Business b, List<ItemStack> goods, String supplier, long cost, boolean payCash) {
+        return placeSupplyOrder(p, b, goods, supplier, cost, payCash ? 1 : 0);
+    }
+
+    /** payMode: 0 business cash drawer, 1 the player's own cash, 2 the business bank account. */
+    public static boolean placeSupplyOrder(ServerPlayer p, Business b, List<ItemStack> goods, String supplier, long cost, int payMode) {
         ServerLevel sl = p.serverLevel();
         if (goods.isEmpty()) return false;
         long fee = 8 + goods.size() * 2L;
         long total = cost + fee;
-        if (payCash) {
+        boolean payCash = payMode == 1;
+        if (payMode == 2) {
+            com.rpbusiness.bank.Bank bank = com.rpbusiness.bank.Bank.get(sl);
+            if (!bank.debit(sl, bank.businessAccount(sl, b), total, "Supplier: " + supplier)) {
+                p.displayClientMessage(Component.translatable("msg.rpbusiness.bank_insufficient").withStyle(ChatFormatting.RED), false);
+                return false;
+            }
+        } else if (payCash) {
             if (!Money.takeCash(p, total)) { p.displayClientMessage(Component.translatable("msg.rpbusiness.not_enough_cash", Money.fmt(total)).withStyle(ChatFormatting.RED), false); return false; }
         } else {
             if (b.cash < total) { p.displayClientMessage(Component.translatable("msg.rpbusiness.not_enough_business_cash", Money.fmt(total)).withStyle(ChatFormatting.RED), false); return false; }
@@ -932,7 +1089,7 @@ public final class BusinessManager {
             if (Math.abs(top.getY() - center.getY()) > 10) continue;
             BlockState below = sl.getBlockState(top.below());
             if (!below.getFluidState().isEmpty() || below.isAir()) continue;
-            if (data(sl).at(top) != null) continue;
+            if (data(sl).at(top) != null || data(sl).at(top.below()) != null || data(sl).at(top.below(2)) != null) continue; // not on roofs
             return top;
         }
         return null;
@@ -941,7 +1098,7 @@ public final class BusinessManager {
     /** A spawn point from which this NPC can really walk to the destination (no teleporting later). */
     public static BlockPos reachableSpawn(ServerLevel sl, NpcEntity npc, BlockPos dest, int minD, int maxD) {
         BlockPos fallback = null;
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 16; i++) {
             BlockPos at = spawnPointNear(sl, dest, minD, maxD);
             if (at == null) continue;
             if (fallback == null) fallback = at;
@@ -976,7 +1133,10 @@ public final class BusinessManager {
             refreshCandidates(sl, b, true);
             notifyOwner(sl, b, Component.translatable("msg.rpbusiness.new_day", b.name, Money.fmt(b.cash)).withStyle(ChatFormatting.AQUA), false);
         }
+        if (b.bankAccount == null && b.owner != null) com.rpbusiness.bank.Bank.get(sl).businessAccount(sl, b);
+        com.rpbusiness.delivery.Deliveries.tick(sl, b);
         if (!sl.isLoaded(b.center())) return;
+        if (b.entrance == null && sl.getGameTime() % 200 == 0) b.entrance = findEntrance(sl, b);
         cleanClaims(sl, b);
         matchCounters(sl, b);
         for (Order o : new ArrayList<>(b.orders)) {
@@ -1026,6 +1186,16 @@ public final class BusinessManager {
                 if (b == null) { p.displayClientMessage(Component.translatable("msg.rpbusiness.need_business").withStyle(ChatFormatting.RED), true); return; }
                 p.displayClientMessage(Component.translatable("msg.rpbusiness.terminal_info", b.name), true);
             }
+            case BANK, BANK_COMPUTER -> Net.openBank(p, null, kind == ShapedBlock.Kind.BANK_COMPUTER);
+            case ATM -> {
+                ItemStack card = findCard(p);
+                if (card == null) p.displayClientMessage(Component.translatable("msg.rpbusiness.need_card").withStyle(ChatFormatting.RED), true);
+                else Net.openAtm(p, card.get(ModComponents.CARD_ACCOUNT.get()));
+            }
+            case DELIVERY -> {
+                if (b == null || !isOwner(p, b)) p.displayClientMessage(Component.translatable("msg.rpbusiness.need_business").withStyle(ChatFormatting.RED), true);
+                else Net.openBusiness(p, b, b.type.delivery() ? "deliveries" : "overview");
+            }
             case MENU_BOARD -> {
                 if (b == null) { p.displayClientMessage(Component.translatable("msg.rpbusiness.need_business").withStyle(ChatFormatting.RED), true); return; }
                 p.displayClientMessage(Component.literal("══ " + b.name + " ══").withStyle(ChatFormatting.GOLD), false);
@@ -1038,6 +1208,13 @@ public final class BusinessManager {
             }
             default -> {}
         }
+    }
+
+    public static ItemStack findCard(ServerPlayer p) {
+        ItemStack main = p.getMainHandItem();
+        if (main.is(ModItems.BANK_CARD.get()) && main.has(ModComponents.CARD_ACCOUNT.get())) return main;
+        for (ItemStack s : p.getInventory().items) if (s.is(ModItems.BANK_CARD.get()) && s.has(ModComponents.CARD_ACCOUNT.get())) return s;
+        return null;
     }
 
     public static void log(String s) { RPBusiness.LOG.info(s); }

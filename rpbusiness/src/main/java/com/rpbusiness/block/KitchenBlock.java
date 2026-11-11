@@ -57,4 +57,8 @@ public abstract class KitchenBlock extends BaseEntityBlock {
         if (level.isClientSide) return null;
         return (l, p, s, be) -> { if (be instanceof KitchenBE k) k.serverTick(); };
     }
+
+    /** NPCs must walk around furniture and equipment, never through it. */
+    @Override
+    protected boolean isPathfindable(BlockState state, net.minecraft.world.level.pathfinder.PathComputationType type) { return false; }
 }

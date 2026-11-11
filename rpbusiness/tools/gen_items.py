@@ -412,7 +412,46 @@ def package_item():
     return c
 
 
+def bank_card():
+    c = Canvas()
+    c.rect(1, 4, 14, 12, C('2f6fc0'))
+    c.rect(1, 6, 14, 7, C('1e2b4a'))
+    c.rect(3, 9, 5, 10, C('ffd166'))
+    c.rect(8, 10, 12, 10, C('cfe8ff'))
+    return c
+
+
+def basket():
+    c = Canvas()
+    c.poly([(2, 7), (13, 7), (12, 14), (3, 14)], C('c62e2b'))
+    for x in range(4, 12, 2):
+        c.line(x, 8, x, 13, C('8a1f1c'))
+    c.line(4, 7, 6, 3, C('3b3b3b')); c.line(11, 7, 9, 3, C('3b3b3b')); c.line(6, 3, 9, 3, C('3b3b3b'))
+    return c
+
+
+def cart():
+    c = Canvas()
+    c.poly([(2, 4), (14, 5), (12, 11), (4, 11)], C('b8c3cb'))
+    for x in range(4, 13, 2):
+        c.line(x, 5, x, 10, C('7a858c'))
+    c.line(0, 2, 2, 4, C('3b3b3b'))
+    c.ellipse(5, 13, 1.5, 1.5, C('1e2124')); c.ellipse(11, 13, 1.5, 1.5, C('1e2124'))
+    return c
+
+
+def parcel():
+    c = Canvas()
+    c.rect(2, 5, 13, 14, C('c8955a'))
+    c.rect(2, 5, 13, 7, C('d9a96b'))
+    c.rect(7, 5, 8, 14, C('e8d6a8'))
+    c.rect(9, 10, 12, 12, C('ffffff'))
+    c.line(9, 11, 12, 11, C('2b2f36'))
+    return c
+
+
 ITEMS = {
+    'bank_card': bank_card, 'shopping_basket': basket, 'shopping_cart': cart, 'parcel': parcel,
     'kitchen_knife': knife, 'spatula': spatula, 'mop': mop,
     'business_planner': lambda: clipboard('3a8ee6'), 'staff_planner': staff_planner, 'layout_tool': layout_tool,
     'recipe_book': recipe_book,

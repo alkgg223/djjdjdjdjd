@@ -38,7 +38,7 @@ import java.util.UUID;
  * sits down, reads the menu, orders what they like and can afford, waits, eats, pays and leaves.
  */
 public class CustomerEntity extends NpcEntity {
-    public enum State { WANDER, GO_ENTRANCE, FIND_SEAT, GO_SEAT, BROWSE, WAIT_FOOD, EAT, GO_PAY, WAIT_PAY, LEAVE }
+    public enum State { WANDER, GO_ENTRANCE, FIND_SEAT, GO_SEAT, BROWSE, WAIT_FOOD, EAT, GO_PAY, WAIT_PAY, LEAVE, SHOP }
 
     // ---- identity & finances ----
     public int money;
@@ -57,6 +57,12 @@ public class CustomerEntity extends NpcEntity {
     public int stateTicks, waitTicks, wanderTime, satisfaction = -1;
     public int bill, qualitySum, servedCount;
     private int life, retries;
+    // ---- shopping ----
+    public final net.minecraft.world.SimpleContainer basket = new net.minecraft.world.SimpleContainer(18);
+    public final List<BlockPos> visited = new ArrayList<>();
+    private BlockPos shelf;
+    public int shelvesToVisit = 2;
+    public boolean paid;
     private String mood = "";
 
     public CustomerEntity(EntityType<? extends CustomerEntity> type, Level level) { super(type, level); }
@@ -73,6 +79,7 @@ public class CustomerEntity extends NpcEntity {
         drinkLover = r.nextFloat() < 0.55f;
         priceSensitivity = 0.5f + r.nextFloat();
         visitsLeft = 1 + (r.nextFloat() < 0.25f ? 1 : 0);
+        shelvesToVisit = 1 + r.nextInt(3);
         wanderTime = 60 + r.nextInt(240);
         home = blockPosition();
     }
@@ -96,7 +103,8 @@ public class CustomerEntity extends NpcEntity {
                 refreshName("");
                 setCustomNameVisible(false);
                 if (!b.isOpen(sl)) { leave(sl, b, "msg.rpbusiness.c_closed"); return; }
-                if (walkTo(b.entranceOrCenter(), 1.8, 1.0) || b.contains(position())) setState(State.FIND_SEAT);
+                if (walkTo(b.entranceOrCenter(), 1.8, 1.0) || b.contains(position()))
+                    setState(b.type.foodService ? State.FIND_SEAT : State.SHOP);
                 else if (isStuck()) {
                     // try a small detour before giving up
                     clearStuck();
@@ -156,6 +164,7 @@ public class CustomerEntity extends NpcEntity {
                 }
             }
             case WAIT_PAY -> waitPay(sl, b);
+            case SHOP -> shop(sl, b);
             case LEAVE -> leaving(sl, b);
         }
     }
@@ -179,6 +188,49 @@ public class CustomerEntity extends NpcEntity {
         }
     }
 
+    // ------------------------------------------------------------------ shopping
+    private void shop(ServerLevel sl, Business b) {
+        if (!b.isOpen(sl)) { BusinessManager.returnBasket(sl, b, this); leave(sl, b, "msg.rpbusiness.c_closed"); return; }
+        hold(new ItemStack(basket.getContainerSize() > 0 && countBasket() > 5 ? com.rpbusiness.core.ModItems.SHOPPING_CART.get() : com.rpbusiness.core.ModItems.SHOPPING_BASKET.get()));
+        refreshName("[shopping " + Money.fmt(bill) + "]");
+        if (shelf == null) {
+            if (visited.size() >= shelvesToVisit) { finishShopping(sl, b); return; }
+            shelf = BusinessManager.pickDisplay(sl, b, visited, this);
+            if (shelf == null) { finishShopping(sl, b); return; }
+            stateTicks = 0;
+        }
+        if (!walkTo(standSpotFor(shelf), 0.9, 0.9) && !near(shelf, 1.9)) {
+            if (isStuck() || stateTicks > 600) { clearStuck(); visited.add(shelf); shelf = null; }
+            return;
+        }
+        lookAtBlock(shelf);
+        setAction(ACT_REACH);
+        if (stateTicks < 50) return;
+        BusinessManager.shopAtDisplay(sl, b, this, shelf);
+        visited.add(shelf);
+        shelf = null;
+        setAction(ACT_NONE);
+        stateTicks = 0;
+    }
+
+    public int countBasket() {
+        int n = 0;
+        for (int i = 0; i < basket.getContainerSize(); i++) n += basket.getItem(i).getCount();
+        return n;
+    }
+
+    private void finishShopping(ServerLevel sl, Business b) {
+        if (countBasket() == 0) {
+            b.customersLost++;
+            BusinessManager.dayRecord(sl, b).lostCustomers++;
+            leave(sl, b, servedCount < 0 ? "msg.rpbusiness.c_too_expensive" : "msg.rpbusiness.c_nothing_shop");
+            return;
+        }
+        satisfaction = BusinessManager.shopSatisfaction(sl, b, this);
+        payPoint = null;
+        setState(State.GO_PAY);
+    }
+
     private void decideOrder(ServerLevel sl, Business b) {
         List<Dish> avail = BusinessManager.availableDishes(sl, b);
         int spend = Math.min(money, (int) (budget * 1.3));
@@ -186,7 +238,7 @@ public class CustomerEntity extends NpcEntity {
         double bestMain = 0, bestDrink = 0;
         boolean tooExpensive = false;
         for (Dish d : avail) {
-            int price = b.menu.get(d).price;
+            int price = b.effective(b.menu.get(d).price);
             if (price <= 0) continue;
             double ratio = price / (double) d.basePrice;
             if (price > spend || ratio > 2.6 / priceSensitivity) { tooExpensive = true; continue; }
@@ -198,8 +250,8 @@ public class CustomerEntity extends NpcEntity {
         }
         List<Dish> chosen = new ArrayList<>();
         if (main != null && bestMain > 0.25) chosen.add(main);
-        int left = spend - (main != null ? b.menu.get(main).price : 0);
-        if (drink != null && (drinkLover || main == null || random.nextFloat() < 0.35f) && b.menu.get(drink).price <= left) chosen.add(drink);
+        int left = spend - (main != null ? b.effective(b.menu.get(main).price) : 0);
+        if (drink != null && (drinkLover || main == null || random.nextFloat() < 0.35f) && b.effective(b.menu.get(drink).price) <= left) chosen.add(drink);
         if (chosen.isEmpty()) {
             stopRiding();
             BusinessManager.releaseSeat(b, getUUID());
@@ -325,6 +377,7 @@ public class CustomerEntity extends NpcEntity {
             BusinessManager.leaveQueue(b, getUUID());
             b.reputation = Math.max(0, b.reputation - 15);
             BusinessManager.notifyOwner(sl, b, Component.translatable("msg.rpbusiness.c_left_unpaid", npcName, Money.fmt(bill)).withStyle(ChatFormatting.RED), false);
+            BusinessManager.returnBasket(sl, b, this);
             BusinessManager.finishVisit(sl, b, this, false);
             leave(sl, b, "");
         }
@@ -333,6 +386,7 @@ public class CustomerEntity extends NpcEntity {
     /** Called by the payment logic after a successful payment. */
     public void paid(ServerLevel sl, Business b) {
         setAction(ACT_NONE);
+        paid = true;
         leave(sl, b, "");
     }
 
@@ -352,9 +406,15 @@ public class CustomerEntity extends NpcEntity {
     private void leaving(ServerLevel sl, Business b) {
         refreshName(mood);
         setCustomNameVisible(false);
-        BlockPos exit = b != null ? b.entranceOrCenter() : home;
+        Player seen = sl.getNearestPlayer(this, 32);
+        boolean watched = seen != null && seen.hasLineOfSight(this);
         if (b != null && b.contains(position())) {
-            walkTo(exit, 1.5, 1.0);
+            // walk out through the door (or toward the outside spot they came from), never to the middle of the shop
+            BlockPos exit = b.entrance != null ? b.entrance : home;
+            if (exit == null || walkTo(exit, 1.5, 1.0) || isStuck()) {
+                if (isStuck()) { clearStuck(); getNavigation().stop(); }
+            }
+            if ((stateTicks > 900 && !watched) || stateTicks > 2400) discard(); // could not find a way out
             return;
         }
         if (home != null && !walkTo(home, 2.0, 0.9) && stateTicks < 1200) {
@@ -373,6 +433,9 @@ public class CustomerEntity extends NpcEntity {
     private void resetVisit() {
         businessId = null; seat = null; payPoint = null; orderIds.clear();
         waitTicks = 0; bill = 0; qualitySum = 0; servedCount = 0; satisfaction = -1;
+        visited.clear(); shelf = null;
+        if (paid) basket.clearContent(); // bought items were taken home
+        paid = false;
     }
 
     @Override
@@ -433,6 +496,12 @@ public class CustomerEntity extends NpcEntity {
         t.putInt("StateTicks", stateTicks); t.putInt("WaitTicks", waitTicks); t.putInt("WanderTime", wanderTime);
         t.putInt("Satisfaction", satisfaction); t.putInt("Bill", bill); t.putInt("QSum", qualitySum); t.putInt("Served", servedCount);
         t.putInt("Life", life);
+        t.put("Basket", basket.createTag(registryAccess()));
+        t.putInt("Shelves", shelvesToVisit);
+        t.putBoolean("Paid", paid);
+        net.minecraft.nbt.ListTag vl = new net.minecraft.nbt.ListTag();
+        for (BlockPos v : visited) vl.add(NbtUtils.writeBlockPos(v));
+        t.put("Visited", vl);
     }
 
     @Override
@@ -452,6 +521,14 @@ public class CustomerEntity extends NpcEntity {
         stateTicks = t.getInt("StateTicks"); waitTicks = t.getInt("WaitTicks"); wanderTime = t.getInt("WanderTime");
         satisfaction = t.getInt("Satisfaction"); bill = t.getInt("Bill"); qualitySum = t.getInt("QSum"); servedCount = t.getInt("Served");
         life = t.getInt("Life");
+        basket.fromTag(t.getList("Basket", net.minecraft.nbt.Tag.TAG_COMPOUND), registryAccess());
+        shelvesToVisit = Math.max(1, t.getInt("Shelves"));
+        paid = t.getBoolean("Paid");
+        visited.clear();
+        for (net.minecraft.nbt.Tag x : t.getList("Visited", net.minecraft.nbt.Tag.TAG_INT_ARRAY)) {
+            int[] a = ((IntArrayTag) x).getAsIntArray();
+            if (a.length == 3) visited.add(new BlockPos(a[0], a[1], a[2]));
+        }
         // After a reload the seat entity may be gone: go back to finding a seat / continue gracefully.
         if (state == State.GO_SEAT || state == State.BROWSE) state = State.FIND_SEAT;
         if (state == State.WAIT_PAY) state = State.GO_PAY;

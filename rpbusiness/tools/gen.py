@@ -65,6 +65,15 @@ def recipes():
     shaped('spatula', ['  I', ' S ', 'S  '], {'I': i, 'S': s})
     shaped('mop', ['  S', ' S ', 'W  '], {'S': s, 'W': '#minecraft:wool'})
     shaped('paper_cup', ['P P', ' P '], {'P': 'paper'}, 4)
+    shaped('display_shelf', ['PPP', 'S S', 'PPP'], {'P': '#minecraft:wooden_slabs', 'S': s})
+    shaped('fridge_display', ['IGI', 'ISI', 'IRI'], {'I': i, 'G': 'glass_pane', 'S': 'snow_block', 'R': 'redstone'})
+    shaped('bank_counter', ['GGG', 'QQQ', 'PCP'], {'G': 'glass_pane', 'Q': 'smooth_quartz', 'P': p, 'C': 'chest'})
+    shaped('bank_computer', ['III', 'IGI', 'SES'], {'I': i, 'G': 'glass_pane', 'S': 'stone_slab', 'E': 'emerald'})
+    shaped('atm', ['IGI', 'IEI', 'IRI'], {'I': i, 'G': 'glass_pane', 'E': 'emerald', 'R': 'redstone'})
+    shaped('safe', ['III', 'IBI', 'III'], {'I': i, 'B': 'iron_block'})
+    shaped('delivery_terminal', ['III', 'IGI', 'SCS'], {'I': i, 'G': 'glass_pane', 'S': 'stone_slab', 'C': 'chest'})
+    shaped('shopping_basket', ['S S', 'RRR'], {'S': 'stick', 'R': 'red_dye'})
+    shaped('shopping_cart', ['I  ', 'BBB', 'N N'], {'I': i, 'B': 'iron_bars', 'N': 'iron_nugget'})
     shapeless('business_planner', ['paper', 'paper', 'ink_sac', 'stick'])
     shapeless('staff_planner', ['paper', 'paper', 'ink_sac', 'string'])
     shapeless('layout_tool', ['paper', 'ink_sac', 'iron_ingot', 'redstone'])
@@ -82,9 +91,9 @@ def recipes():
     shapeless('coffee_beans', ['cocoa_beans', 'cocoa_beans'])
 
 
-PICKAXE = ['kitchen_counter', 'grill', 'fryer', 'oven', 'cooking_pot', 'prep_station', 'drink_machine', 'fridge', 'freezer', 'serving_counter',
+PICKAXE = ['fridge_display', 'bank_counter', 'bank_computer', 'atm', 'safe', 'delivery_terminal', 'kitchen_counter', 'grill', 'fryer', 'oven', 'cooking_pot', 'prep_station', 'drink_machine', 'fridge', 'freezer', 'serving_counter',
            'bar_stool', 'pendant_lamp', 'checkered_floor', 'kitchen_tiles', 'cash_register', 'payment_terminal', 'business_computer', 'supplier_terminal']
-AXE = ['counter_cabinet', 'cutting_board', 'pantry_shelf', 'dining_table', 'dining_chair', 'sofa', 'menu_board', 'potted_plant', 'delivery_crate', 'package']
+AXE = ['display_shelf', 'counter_cabinet', 'cutting_board', 'pantry_shelf', 'dining_table', 'dining_chair', 'sofa', 'menu_board', 'potted_plant', 'delivery_crate', 'package']
 
 
 def data(blocks):

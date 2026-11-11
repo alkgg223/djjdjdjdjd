@@ -21,7 +21,7 @@ public class SupplierScreen extends BaseScreen {
     private final UUID biz;
     private int company;
     private final int[][] cart = new int[Suppliers.ALL.size()][8];
-    private boolean payCash;
+    private int payMode;
     private boolean showOrders;
 
     public SupplierScreen(CompoundTag data) {
@@ -82,7 +82,8 @@ public class SupplierScreen extends BaseScreen {
             }
         }
         int by = top + h - 26;
-        button(left + 134, by, 110, 20, Component.translatable(payCash ? "gui.rpbusiness.pay_cash" : "gui.rpbusiness.pay_business"), () -> { payCash = !payCash; rebuildWidgets(); });
+        String[] modes = {"gui.rpbusiness.pay_business", "gui.rpbusiness.pay_cash", "gui.rpbusiness.pay_bank"};
+        button(left + 134, by, 110, 20, Component.translatable(modes[payMode]), () -> { payMode = (payMode + 1) % 3; rebuildWidgets(); });
         Button order = button(left + 248, by, 90, 20, Component.translatable("gui.rpbusiness.place_order"), () -> {
             ListTag l = new ListTag();
             for (int c = 0; c < Suppliers.ALL.size(); c++)
@@ -95,7 +96,7 @@ public class SupplierScreen extends BaseScreen {
             CompoundTag t = new CompoundTag();
             t.putUUID("biz", biz);
             t.put("cart", l);
-            t.putBoolean("payCash", payCash);
+            t.putInt("payMode", payMode);
             Net.toServer("supply_order", t);
             for (int[] row : cart) java.util.Arrays.fill(row, 0);
             showOrders = true;

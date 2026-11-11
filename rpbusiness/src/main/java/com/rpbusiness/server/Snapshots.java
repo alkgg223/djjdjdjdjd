@@ -139,6 +139,68 @@ public final class Snapshots {
         for (Map.Entry<Equip, java.util.LinkedHashSet<net.minecraft.core.BlockPos>> e : b.equipment.entrySet()) eq.putInt(e.getKey().name(), e.getValue().size());
         t.put("equip", eq);
 
+        // banking & price control
+        com.rpbusiness.bank.Bank bank = com.rpbusiness.bank.Bank.get(sl);
+        com.rpbusiness.bank.Account acct = bank.businessAccount(sl, b);
+        t.putString("bankId", acct.id);
+        t.putLong("bankBalance", acct.balance);
+        t.putInt("mult", b.priceMultiplier);
+        t.putInt("discount", b.discount);
+        t.putInt("deliveryRate", b.deliveryRate);
+        t.putLong("debt", bank.outstanding(p.getUUID()));
+        if (b.type.retail && !b.type.foodService) {
+            java.util.LinkedHashMap<net.minecraft.world.item.Item, Integer> shelf = new java.util.LinkedHashMap<>();
+            for (var pos : BusinessManager.equip(sl, b, Equip.DISPLAY))
+                if (sl.getBlockEntity(pos) instanceof com.rpbusiness.block.DisplayBE d) {
+                    for (int i = 0; i < d.getContainerSize(); i++) if (!d.getItem(i).isEmpty()) shelf.merge(d.getItem(i).getItem(), d.getItem(i).getCount(), Integer::sum);
+                    for (String id : d.planogram) if (id != null) shelf.putIfAbsent(BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(id)), 0);
+                }
+            Map<net.minecraft.world.item.Item, Integer> store = BusinessManager.storageCounts(sl, b);
+            ListTag prods = new ListTag();
+            for (var e : shelf.entrySet()) {
+                CompoundTag m = new CompoundTag();
+                String id = BuiltInRegistries.ITEM.getKey(e.getKey()).toString();
+                m.putString("item", id);
+                m.putInt("shelf", e.getValue());
+                m.putInt("store", store.getOrDefault(e.getKey(), 0));
+                int base = com.rpbusiness.economy.Values.base(e.getKey());
+                m.putInt("base", base);
+                m.putInt("price", b.prices.getOrDefault(id, base));
+                m.putInt("final", BusinessManager.priceOf(b, e.getKey()));
+                prods.add(m);
+            }
+            t.put("products", prods);
+        }
+        if (b.type.delivery()) {
+            ListTag jobs = new ListTag();
+            for (var j : b.deliveries) {
+                CompoundTag e = j.save();
+                if (j.kind == com.rpbusiness.delivery.DeliveryJob.Kind.TRANSFER) {
+                    Business from = BusinessManager.data(sl).byId(j.fromBusiness);
+                    e.putString("fromName", from == null ? "?" : from.name);
+                }
+                jobs.add(e);
+            }
+            t.put("jobs", jobs);
+        }
+        ListTag owned = new ListTag();
+        for (Business o : BusinessManager.data(sl).businesses.values()) {
+            if (!BusinessManager.isOwner(p, o)) continue;
+            CompoundTag e = new CompoundTag();
+            e.putUUID("id", o.id);
+            e.putString("name", o.name);
+            ListTag stock = new ListTag();
+            BusinessManager.storageCounts(sl, o).entrySet().stream().sorted((x, y) -> y.getValue() - x.getValue()).limit(12).forEach(en -> {
+                CompoundTag st = new CompoundTag();
+                st.putString("item", BuiltInRegistries.ITEM.getKey(en.getKey()).toString());
+                st.putInt("n", en.getValue());
+                stock.add(st);
+            });
+            e.put("stock", stock);
+            owned.add(e);
+        }
+        t.put("owned", owned);
+
         // combined overview of all the player's businesses
         ListTag all = new ListTag();
         for (Business o : BusinessManager.data(sl).businesses.values()) {
@@ -152,6 +214,9 @@ public final class Snapshots {
             e.putLong("expenses", fd == null ? 0 : fd.expenses());
             e.putInt("staff", o.employees.size());
             e.putInt("rep", o.reputation);
+            e.putUUID("id", o.id);
+            e.putInt("mult", o.priceMultiplier);
+            e.putLong("bank", bank.businessAccount(sl, o).balance);
             all.add(e);
         }
         t.put("all", all);

@@ -42,23 +42,51 @@ public final class Steps {
     public static final class Fetch implements Step {
         final Predicate<ItemStack> test;
         final String what;
-        BlockPos target;
+        final int count;
+        public BlockPos target;
         long arrived = -1;
+        /** Only fetch from this business' storage (used for transfers between businesses). */
+        public Business from;
 
-        public Fetch(Item item) { this(s -> s.is(item), item.getDescriptionId()); }
-        public Fetch(Predicate<ItemStack> test, String what) { this.test = test; this.what = what; }
+        public Fetch(Item item) { this(s -> s.is(item), item.getDescriptionId(), 1); }
+        public Fetch(Item item, int count) { this(s -> s.is(item), item.getDescriptionId(), count); }
+        public Fetch(Predicate<ItemStack> test, String what) { this(test, what, 1); }
+        public Fetch(Predicate<ItemStack> test, String what, int count) { this.test = test; this.what = what; this.count = count; }
 
         @Override public String label() { return "fetch:" + what; }
 
         @Override
         public int tick(EmployeeEntity e, ServerLevel sl, Business b) {
+            Business src = from != null ? from : b;
             if (target == null || !(sl.getBlockEntity(target) instanceof Container)) {
-                target = BusinessManager.findStorageWith(sl, b, test, e.preferredStorage(), e.blockPosition());
-                if (target == null) return FAILED;
+                target = BusinessManager.findStorageWith(sl, src, test, from != null ? null : e.preferredStorage(), e.blockPosition());
+                if (target == null && from != null)
+                    target = BusinessManager.findEquip(sl, src, Equip.CRATE, e.blockPosition(), be -> be instanceof Container c && hasItem(c, test));
+                if (target == null) {
+                    if (com.rpbusiness.server.SelfTest.active()) com.rpbusiness.RPBusiness.LOG.info("[SELFTEST] fetch no storage with " + what + " in " + src.name);
+                    return FAILED;
+                }
+            }
+            if (from != null && e.blockPosition().distSqr(target) > 30 * 30) {
+                Travel.step(e, target);
+                return RUNNING;
             }
             BlockPos spot = e.standSpotFor(target);
             if (!e.walkTo(spot, 0.9, e.speed()) && !e.near(target, 1.9)) {
-                if (e.isStuck()) { e.clearStuck(); target = null; return FAILED; }
+                if (e.isStuck()) {
+                    if (com.rpbusiness.server.SelfTest.active()) {
+                        var path = e.getNavigation().createPath(spot, 0);
+                        StringBuilder nb = new StringBuilder();
+                        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+                            BlockPos q = e.blockPosition().offset(dx, 0, dz);
+                            nb.append(net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(sl.getBlockState(q).getBlock()).getPath()).append(',');
+                        }
+                        com.rpbusiness.RPBusiness.LOG.info("[SELFTEST] fetch stuck target=" + target + " spot=" + spot + " at " + e.position()
+                                + " path=" + (path == null ? "null" : path.canReach() + " len " + path.getNodeCount() + " end " + path.getEndNode())
+                                + " around=" + nb + " onGround=" + e.onGround() + " passenger=" + e.isPassenger());
+                    }
+                    e.clearStuck(); target = null; return FAILED;
+                }
                 return RUNNING;
             }
             e.lookAtBlock(target);
@@ -70,11 +98,40 @@ public final class Steps {
             if (now(sl) - arrived < 14) return RUNNING;
             if (!(sl.getBlockEntity(target) instanceof Container st)) return FAILED;
             List<ItemStack> out = new ArrayList<>();
-            if (ContainerUtil.extract(st, test, 1, out) == 0) { target = null; arrived = -1; return FAILED; }
+            if (ContainerUtil.extract(st, test, count, out) == 0) {
+                if (com.rpbusiness.server.SelfTest.active()) com.rpbusiness.RPBusiness.LOG.info("[SELFTEST] fetch empty target=" + target);
+                target = null; arrived = -1; return FAILED;
+            }
             for (ItemStack s : out) e.giveItem(s);
             e.setAction(NpcEntity.ACT_NONE);
             b.stockTick = -1000; // stock changed
             return DONE;
+        }
+    }
+
+    static boolean hasItem(Container c, Predicate<ItemStack> t) {
+        for (int i = 0; i < c.getContainerSize(); i++) if (!c.getItem(i).isEmpty() && t.test(c.getItem(i))) return true;
+        return false;
+    }
+
+    // ============================================================ TRAVEL (long distances, waypoint by waypoint)
+    public static final class Travel {
+        /** Walks toward a far target through intermediate surface waypoints (pathfinding has a limited range). */
+        public static boolean step(EmployeeEntity e, BlockPos target) {
+            double dx = target.getX() - e.getX(), dz = target.getZ() - e.getZ();
+            double d = Math.sqrt(dx * dx + dz * dz);
+            if (d <= 36) return e.walkTo(target, 1.5, e.speed());
+            int wx = (int) (e.getX() + dx / d * 28), wz = (int) (e.getZ() + dz / d * 28);
+            BlockPos wp = e.level().isLoaded(new BlockPos(wx, 64, wz))
+                    ? e.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(wx, 0, wz))
+                    : new BlockPos(wx, (int) e.getY(), wz);
+            if (e.isStuck()) {
+                e.clearStuck();
+                // sidestep around obstacles
+                wp = wp.offset(e.getRandom().nextInt(17) - 8, 0, e.getRandom().nextInt(17) - 8);
+            }
+            e.walkTo(wp, 2.5, e.speed());
+            return false;
         }
     }
 
@@ -83,17 +140,27 @@ public final class Steps {
         final Item item;
         BlockPos target;
         long arrived = -1;
+        Business into;
+        Runnable onDone;
 
         public Store(Item item) { this.item = item; }
+        public Store(Item item, Business into, Runnable onDone) { this.item = item; this.into = into; this.onDone = onDone; }
         @Override public String label() { return "store:" + item.getDescriptionId(); }
 
         @Override
         public int tick(EmployeeEntity e, ServerLevel sl, Business b) {
-            if (e.countItem(item) == 0) return DONE;
+            if (e.countItem(item) == 0) { if (onDone != null) onDone.run(); return DONE; }
+            Business dst = into != null ? into : b;
+            if (into != null) { e.hold(new ItemStack(item)); e.setAction(NpcEntity.ACT_CARRY); }
             if (target == null || !(sl.getBlockEntity(target) instanceof Container)) {
-                target = BusinessManager.findStorageWithSpace(sl, b, e.preferredStorage(), e.blockPosition());
-                if (target == null) return FAILED;
+                if (into != null) target = BusinessManager.findEquip(sl, dst, Equip.CRATE, e.blockPosition(), be -> be instanceof Container c && ContainerUtil.hasSpace(c));
+                if (target == null) target = BusinessManager.findStorageWithSpace(sl, dst, into != null ? null : e.preferredStorage(), e.blockPosition());
+                if (target == null) {
+                    if (into != null && e.blockPosition().distSqr(dst.entranceOrCenter()) > 30 * 30) { Travel.step(e, dst.entranceOrCenter()); return RUNNING; }
+                    return FAILED;
+                }
             }
+            if (into != null && e.blockPosition().distSqr(target) > 30 * 30) { Travel.step(e, target); return RUNNING; }
             if (!e.walkTo(e.standSpotFor(target), 0.9, e.speed()) && !e.near(target, 1.9)) {
                 if (e.isStuck()) { e.clearStuck(); target = null; return FAILED; }
                 return RUNNING;
@@ -109,8 +176,10 @@ public final class Steps {
             ItemStack s = e.removeItem(x -> x.is(item), 64);
             ItemStack rem = ContainerUtil.insert(st, s);
             if (!rem.isEmpty()) { e.giveItem(rem); target = null; arrived = -1; return RUNNING; }
+            if (e.countItem(item) > 0) { arrived = -1; return RUNNING; }
             e.setAction(NpcEntity.ACT_NONE);
-            b.stockTick = -1000;
+            dst.stockTick = -1000;
+            if (onDone != null) onDone.run();
             return DONE;
         }
     }
@@ -483,6 +552,77 @@ public final class Steps {
             }
             return DONE;
         }
+    }
+
+    // ============================================================ RESTOCK A SHOP DISPLAY
+    public static final class Restock implements Step {
+        final BlockPos display;
+        final Item item;
+        long arrived = -1;
+        public Restock(BlockPos display, Item item) { this.display = display; this.item = item; }
+        @Override public String label() { return "restock"; }
+
+        @Override
+        public int tick(EmployeeEntity e, ServerLevel sl, Business b) {
+            if (e.countItem(item) == 0) return DONE;
+            if (!(sl.getBlockEntity(display) instanceof DisplayBE d)) return FAILED;
+            e.hold(new ItemStack(item));
+            e.setAction(NpcEntity.ACT_CARRY);
+            if (!e.walkTo(e.standSpotFor(display), 0.9, e.speed()) && !e.near(display, 1.9)) {
+                if (e.isStuck()) { e.clearStuck(); return FAILED; }
+                return RUNNING;
+            }
+            e.lookAtBlock(display);
+            e.setAction(NpcEntity.ACT_REACH);
+            if (arrived < 0) arrived = now(sl);
+            if (now(sl) - arrived < 16) return RUNNING;
+            ItemStack s = e.removeItem(x -> x.is(item), 64);
+            ItemStack rem = d.insert(s);
+            e.giveItem(rem);
+            e.hold(ItemStack.EMPTY);
+            e.setAction(NpcEntity.ACT_NONE);
+            if (!rem.isEmpty()) e.pushFront(new Store(item));
+            e.gainXp(2);
+            return DONE;
+        }
+    }
+
+    // ============================================================ DELIVER A CUSTOMER PARCEL (delivery driver)
+    public static final class DeliverParcel implements Step {
+        final int jobId;
+        long arrived = -1;
+        public DeliverParcel(int jobId) { this.jobId = jobId; }
+        @Override public String label() { return "parcel"; }
+
+        @Override
+        public int tick(EmployeeEntity e, ServerLevel sl, Business b) {
+            var j = com.rpbusiness.delivery.Deliveries.job(b, jobId);
+            if (j == null || j.status == com.rpbusiness.delivery.DeliveryJob.Status.DELIVERED) return DONE;
+            ItemStack parcel = e.peek(s -> com.rpbusiness.delivery.Deliveries.isParcelFor(s, jobId));
+            if (parcel.isEmpty()) { j.status = com.rpbusiness.delivery.DeliveryJob.Status.AWAITING_PICKUP; j.driver = null; return FAILED; }
+            j.status = com.rpbusiness.delivery.DeliveryJob.Status.ON_THE_WAY;
+            e.hold(parcel);
+            e.setAction(NpcEntity.ACT_CARRY);
+            if (!Travel.step(e, j.dest)) return RUNNING;
+            e.setAction(NpcEntity.ACT_TALK);
+            if (arrived < 0) arrived = now(sl);
+            if (now(sl) - arrived < 30) return RUNNING;
+            e.removeItem(s -> com.rpbusiness.delivery.Deliveries.isParcelFor(s, jobId), 1);
+            e.hold(ItemStack.EMPTY);
+            e.setAction(NpcEntity.ACT_NONE);
+            com.rpbusiness.delivery.Deliveries.complete(sl, b, j);
+            e.gainXp(5);
+            return DONE;
+        }
+    }
+
+    /** Walks back to the office after a delivery. */
+    public static final class ReturnTo implements Step {
+        final BlockPos pos;
+        public ReturnTo(BlockPos pos) { this.pos = pos; }
+        @Override public String label() { return "returning"; }
+        @Override
+        public int tick(EmployeeEntity e, ServerLevel sl, Business b) { return Travel.step(e, pos) ? DONE : RUNNING; }
     }
 
     // ============================================================ CLEAN TABLE
