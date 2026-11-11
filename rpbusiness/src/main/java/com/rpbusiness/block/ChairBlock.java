@@ -26,7 +26,8 @@ public class ChairBlock extends HorizontalDirectionalBlock {
     private static final EnumMap<Direction, VoxelShape> CHAIR = Shapes.of(bx(2, 0, 2, 14, 9, 14), bx(2, 9, 12, 14, 20, 14));
     private static final EnumMap<Direction, VoxelShape> STOOL = Shapes.of(bx(3, 0, 3, 13, 12, 13));
     private static final EnumMap<Direction, VoxelShape> SOFA = Shapes.of(bx(0, 0, 1, 16, 8, 15), bx(0, 8, 11, 16, 16, 15), bx(0, 8, 1, 2, 12, 11), bx(14, 8, 1, 16, 12, 11));
-    public static final int CHAIR_KIND = 0, STOOL_KIND = 1, SOFA_KIND = 2;
+    public static final int CHAIR_KIND = 0, STOOL_KIND = 1, SOFA_KIND = 2, BED_KIND = 3;
+    private static final EnumMap<Direction, VoxelShape> BED = Shapes.of(bx(0, 0, 0, 16, 9, 16));
     public final boolean stool;
     public final int kind;
 
@@ -37,7 +38,7 @@ public class ChairBlock extends HorizontalDirectionalBlock {
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
-    public double seatHeight() { return kind == STOOL_KIND ? 0.75 : kind == SOFA_KIND ? 0.5 : 0.56; }
+    public double seatHeight() { return kind == STOOL_KIND ? 0.75 : kind == SOFA_KIND ? 0.5 : kind == BED_KIND ? 0.6 : 0.56; }
 
     @Override protected MapCodec<? extends HorizontalDirectionalBlock> codec() { return MapCodec.unit(this); }
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(FACING); }
@@ -49,7 +50,7 @@ public class ChairBlock extends HorizontalDirectionalBlock {
 
     @Override
     protected VoxelShape getShape(BlockState s, BlockGetter l, BlockPos p, CollisionContext c) {
-        return (kind == STOOL_KIND ? STOOL : kind == SOFA_KIND ? SOFA : CHAIR).get(s.getValue(FACING));
+        return (kind == STOOL_KIND ? STOOL : kind == SOFA_KIND ? SOFA : kind == BED_KIND ? BED : CHAIR).get(s.getValue(FACING));
     }
 
     @Override

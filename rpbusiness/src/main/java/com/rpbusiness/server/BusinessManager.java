@@ -121,6 +121,7 @@ public final class BusinessManager {
     public static Equip classify(BlockState s, BlockEntity be) {
         var blk = s.getBlock();
         if (blk instanceof DisplayBlock) return Equip.DISPLAY;
+        if (blk instanceof HotelBedBlock) return Equip.BED;
         if (blk instanceof SafeBlock) return null;
         if (blk instanceof ChairBlock) return Equip.CHAIR;
         if (blk instanceof TableBlock) return Equip.TABLE;
@@ -339,7 +340,7 @@ public final class BusinessManager {
         Business best = null;
         double bs = -1e9;
         for (Business b : data(sl).businesses.values()) {
-            if (!(b.type.foodService || b.type.retail) || !b.isOpen(sl)) continue;
+            if (!(b.type.foodService || b.type.retail || b.type == BusinessType.HOTEL) || !b.isOpen(sl)) continue;
             double dist = Math.sqrt(b.center().distSqr(c.blockPosition()));
             if (dist > 96) continue;
             double score = b.reputation / 200.0 + c.getRandom().nextDouble() * 1.5 - dist / 48.0
@@ -348,8 +349,11 @@ public final class BusinessManager {
                 List<Dish> avail = availableDishes(sl, b);
                 if (avail.isEmpty() || freeSeats(sl, b) == 0) continue;
                 for (Dish d : avail) if (d.category == c.favorite) { score += 1.5; break; }
+            } else if (b.type == BusinessType.HOTEL) {
+                if (freeBeds(sl, b) == 0) continue;
+                score += 0.5;
             } else {
-                if (!hasProducts(sl, b) || shoppers(sl, b) >= 6 + equip(sl, b, Equip.DISPLAY).size() / 2) continue;
+                if (!b.type.retail || !hasProducts(sl, b) || shoppers(sl, b) >= 6 + equip(sl, b, Equip.DISPLAY).size() / 2) continue;
             }
             if (score > bs) { bs = score; best = b; }
         }
@@ -461,6 +465,108 @@ public final class BusinessManager {
                     && (c.state == CustomerEntity.State.EAT || c.state == CustomerEntity.State.WAIT_FOOD)) return true;
         }
         return false;
+    }
+
+    // =================================================================== manager purchasing
+
+    private static void rawFor(Item it, Set<Item> out, int depth) {
+        if (depth > 6) return;
+        if (com.rpbusiness.economy.Suppliers.find(it) != null) { out.add(it); return; }
+        Foods.Chop c = Foods.chopProducing(it);
+        if (c != null) { rawFor(c.in().get(), out, depth + 1); return; }
+        Foods.CookLine l = Foods.cookLineProducing(it);
+        if (l != null) { rawFor(l.input().get(), out, depth + 1); return; }
+        Foods.Assembly a = Foods.assemblyProducing(it);
+        if (a != null) for (Foods.Group g : a.parts()) rawFor(g.primary(), out, depth + 1);
+    }
+
+    /**
+     * The manager checks stock and orders what is running low from the suppliers, paying from the business
+     * cash (or its bank account). Goods arrive by courier like any other order.
+     */
+    public static void autoPurchase(ServerLevel sl, Business b, EmployeeEntity manager) {
+        if (!b.autoBuy) return;
+        for (SupplyOrder o : b.supplyOrders) if (o.status == SupplyOrder.Status.ORDERED || o.status == SupplyOrder.Status.IN_TRANSIT) return;
+        Set<Item> wanted = new LinkedHashSet<>();
+        int target;
+        if (b.type.foodService) {
+            for (Dish d : b.enabledDishes()) for (var s : d.servedItems()) { rawFor(s.get(), wanted, 0); break; }
+            if (b.menu.get(Dish.COLA).enabled || b.menu.get(Dish.COFFEE).enabled) wanted.add(ModItems.PAPER_CUP.get());
+            for (BlockPos p : equip(sl, b, Equip.DRINK)) if (sl.getBlockEntity(p) instanceof DrinkMachineBE dm) {
+                if (b.menu.get(Dish.COLA).enabled && dm.charges(DrinkMachineBE.COLA) < 8) wanted.add(ModItems.COLA_SYRUP.get());
+                if (b.menu.get(Dish.COFFEE).enabled && dm.charges(DrinkMachineBE.COFFEE) < 8) wanted.add(ModItems.COFFEE_BEANS.get());
+            }
+            wanted.remove(ModItems.COLA.get());
+            wanted.remove(ModItems.COFFEE.get());
+            target = 24;
+        } else if (b.type.retail) {
+            for (BlockPos p : equip(sl, b, Equip.DISPLAY)) if (sl.getBlockEntity(p) instanceof DisplayBE d)
+                for (String id : d.planogram) if (id != null) {
+                    Item it = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(id));
+                    if (com.rpbusiness.economy.Suppliers.find(it) != null) wanted.add(it);
+                }
+            target = 32;
+        } else return;
+        if (wanted.isEmpty()) return;
+        Map<Item, Integer> have = new HashMap<>(storageCounts(sl, b));
+        for (BlockPos p : equip(sl, b, Equip.DISPLAY)) if (sl.getBlockEntity(p) instanceof DisplayBE d)
+            for (int i = 0; i < d.getContainerSize(); i++) if (!d.getItem(i).isEmpty()) have.merge(d.getItem(i).getItem(), d.getItem(i).getCount(), Integer::sum);
+        List<ItemStack> goods = new ArrayList<>();
+        long cost = 0;
+        StringBuilder what = new StringBuilder();
+        for (Item it : wanted) {
+            int h = have.getOrDefault(it, 0);
+            boolean refill = it == ModItems.COLA_SYRUP.get() || it == ModItems.COFFEE_BEANS.get();
+            if (!refill && h >= target / 3) continue;
+            int[] ref = com.rpbusiness.economy.Suppliers.find(it);
+            var pr = com.rpbusiness.economy.Suppliers.ALL.get(ref[0]).products().get(ref[1]);
+            int packs = Math.max(1, (int) Math.ceil((target - h) / (double) pr.pack()));
+            if (refill) packs = 1;
+            if (cost + (long) packs * pr.price() > b.autoBuyBudget) packs = (int) ((b.autoBuyBudget - cost) / pr.price());
+            if (packs <= 0) continue;
+            cost += (long) packs * pr.price();
+            int total = packs * pr.pack();
+            while (total > 0) { int c = Math.min(64, total); goods.add(new ItemStack(it, c)); total -= c; }
+            if (what.length() > 0) what.append(", ");
+            what.append(packs * pr.pack()).append("x ").append(new ItemStack(it).getHoverName().getString());
+        }
+        if (goods.isEmpty() || goods.size() > 27) return;
+        long fee = 8 + goods.size() * 2L;
+        long total = cost + fee;
+        com.rpbusiness.bank.Bank bank = com.rpbusiness.bank.Bank.get(sl);
+        String payer;
+        if (b.cash >= total) { b.cash -= total; payer = "cash"; }
+        else if (bank.debit(sl, bank.businessAccount(sl, b), total, "Auto purchase by " + manager.npcName())) payer = "bank";
+        else {
+            notifyOwner(sl, b, Component.translatable("msg.rpbusiness.auto_no_money", manager.npcName(), Money.fmt(total)).withStyle(ChatFormatting.RED), false);
+            return;
+        }
+        SupplyOrder o = createSupplyOrder(sl, b, goods, "Manager order", 0, 0, false);
+        long day = Business.day(sl);
+        b.finance.record(day, Business.hour(sl), Finance.Cat.AUTO_PURCHASE, -total, manager.npcName() + " (" + payer + ")");
+        o.cost = cost;
+        o.fee = fee;
+        notifyOwner(sl, b, Component.translatable("msg.rpbusiness.auto_ordered", manager.npcName(), what.toString(), Money.fmt(total)).withStyle(ChatFormatting.AQUA), false);
+    }
+
+    // =================================================================== hotel
+    public static int freeBeds(ServerLevel sl, Business b) {
+        cleanClaims(sl, b);
+        int n = 0;
+        for (BlockPos p : equip(sl, b, Equip.BED))
+            if (!b.seatClaims.containsKey(p) && !sl.getBlockState(p).getValue(HotelBedBlock.DIRTY) && !SeatEntity.occupied(sl, p)) n++;
+        return n;
+    }
+
+    public static BlockPos claimBed(ServerLevel sl, Business b, UUID who) {
+        cleanClaims(sl, b);
+        for (var e : b.seatClaims.entrySet()) if (e.getValue().equals(who)) return e.getKey();
+        for (BlockPos p : equip(sl, b, Equip.BED)) {
+            if (b.seatClaims.containsKey(p) || sl.getBlockState(p).getValue(HotelBedBlock.DIRTY) || SeatEntity.occupied(sl, p)) continue;
+            b.seatClaims.put(p.immutable(), who);
+            return p;
+        }
+        return null;
     }
 
     // =================================================================== shops
@@ -752,7 +858,8 @@ public final class BusinessManager {
             drink = amount - tip - food;
         }
         String who = c.npcName();
-        if (shop && amount > 0) b.finance.record(day, hour, Finance.Cat.PRODUCT_SALES, amount, who + " (" + method + ")");
+        if (shop && amount > 0) b.finance.record(day, hour, b.type == BusinessType.HOTEL ? Finance.Cat.ROOM_SALES : Finance.Cat.PRODUCT_SALES,
+                amount, who + " (" + method + ")");
         if (food > 0) b.finance.record(day, hour, Finance.Cat.FOOD_SALES, food, who + " (" + method + ")");
         if (drink > 0) b.finance.record(day, hour, Finance.Cat.DRINK_SALES, drink, who + " (" + method + ")");
         if (tip > 0) b.finance.record(day, hour, Finance.Cat.TIPS, tip, who);

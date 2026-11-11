@@ -216,6 +216,57 @@
     }
    }
   },
+  "sleep": {
+   "loop": true,
+   "animation_length": 4.0,
+   "bones": {
+    "root": {
+     "rotation": [
+      -90,
+      0,
+      0
+     ],
+     "position": [
+      0,
+      3,
+      -22
+     ]
+    },
+    "head": {
+     "rotation": {
+      "0": [
+       0,
+       0,
+       0
+      ],
+      "2.0": [
+       0,
+       8,
+       0
+      ],
+      "4.0": [
+       0,
+       0,
+       0
+      ]
+     }
+    },
+    "right_arm": {
+     "rotation": [
+      0,
+      0,
+      6
+     ]
+    },
+    "left_arm": {
+     "rotation": [
+      0,
+      0,
+      -6
+     ]
+    }
+   }
+  },
   "chop": {
    "loop": true,
    "animation_length": 0.5,

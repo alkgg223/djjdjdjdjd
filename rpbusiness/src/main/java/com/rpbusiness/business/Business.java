@@ -57,6 +57,11 @@ public class Business {
     public final LinkedHashMap<String, Integer> prices = new LinkedHashMap<>();
     /** Delivery company: fee per job (base) in percent of the standard rate. */
     public int deliveryRate = 100;
+    /** Hotel: price per stay. */
+    public int roomPrice = 40;
+    /** The manager orders low stock from suppliers automatically (budget per order). */
+    public boolean autoBuy = true;
+    public int autoBuyBudget = 300;
     public final List<com.rpbusiness.delivery.DeliveryJob> deliveries = new ArrayList<>();
     public long requestDay = -1;
 
@@ -200,6 +205,9 @@ public class Business {
         for (var e : prices.entrySet()) pr.putInt(e.getKey(), e.getValue());
         t.put("prices", pr);
         t.putInt("drate", deliveryRate);
+        t.putInt("room", roomPrice);
+        t.putBoolean("autoBuy", autoBuy);
+        t.putInt("autoBudget", autoBuyBudget);
         ListTag dj = new ListTag();
         for (var j : deliveries) dj.add(j.save());
         t.put("deliveries", dj);
@@ -275,6 +283,9 @@ public class Business {
         CompoundTag pr = t.getCompound("prices");
         for (String k : pr.getAllKeys()) b.prices.put(k, pr.getInt(k));
         b.deliveryRate = t.contains("drate") ? t.getInt("drate") : 100;
+        b.roomPrice = t.contains("room") ? t.getInt("room") : 40;
+        b.autoBuy = !t.contains("autoBuy") || t.getBoolean("autoBuy");
+        b.autoBuyBudget = t.contains("autoBudget") ? t.getInt("autoBudget") : 300;
         ListTag dj = t.getList("deliveries", Tag.TAG_COMPOUND);
         for (int i = 0; i < dj.size(); i++) b.deliveries.add(com.rpbusiness.delivery.DeliveryJob.load(dj.getCompound(i)));
         b.requestDay = t.contains("reqDay") ? t.getLong("reqDay") : -1;

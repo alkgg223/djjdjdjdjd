@@ -10,7 +10,10 @@ public enum Job {
     public static final Job[] SHOP_JOBS = {CASHIER, SALES_ASSISTANT, STOCK_MANAGER, CLEANER, MANAGER};
     public static final Job[] DELIVERY_JOBS = {DELIVERY_DRIVER, WAREHOUSE_WORKER, PACKAGE_HANDLER, DELIVERY_MANAGER};
 
+    public static final Job[] HOTEL_JOBS = {CASHIER, CLEANER, MANAGER};
+
     public static Job[] jobsFor(BusinessType t) {
+        if (t == BusinessType.HOTEL) return HOTEL_JOBS;
         if (t.delivery()) return DELIVERY_JOBS;
         if (t.retail && !t.foodService) return SHOP_JOBS;
         if (t == BusinessType.BAKERY) return values();

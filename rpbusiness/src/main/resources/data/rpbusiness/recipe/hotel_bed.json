@@ -1,0 +1,20 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "WWW",
+  "PPP"
+ ],
+ "key": {
+  "W": {
+   "item": "minecraft:white_wool"
+  },
+  "P": {
+   "tag": "minecraft:planks"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:hotel_bed",
+  "count": 1
+ }
+}

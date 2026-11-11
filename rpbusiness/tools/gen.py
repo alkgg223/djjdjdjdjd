@@ -72,6 +72,7 @@ def recipes():
     shaped('atm', ['IGI', 'IEI', 'IRI'], {'I': i, 'G': 'glass_pane', 'E': 'emerald', 'R': 'redstone'})
     shaped('safe', ['III', 'IBI', 'III'], {'I': i, 'B': 'iron_block'})
     shaped('delivery_terminal', ['III', 'IGI', 'SCS'], {'I': i, 'G': 'glass_pane', 'S': 'stone_slab', 'C': 'chest'})
+    shaped('hotel_bed', ['WWW', 'PPP'], {'W': 'white_wool', 'P': p})
     shaped('shopping_basket', ['S S', 'RRR'], {'S': 'stick', 'R': 'red_dye'})
     shaped('shopping_cart', ['I  ', 'BBB', 'N N'], {'I': i, 'B': 'iron_bars', 'N': 'iron_nugget'})
     shapeless('business_planner', ['paper', 'paper', 'ink_sac', 'stick'])
@@ -93,7 +94,7 @@ def recipes():
 
 PICKAXE = ['fridge_display', 'bank_counter', 'bank_computer', 'atm', 'safe', 'delivery_terminal', 'kitchen_counter', 'grill', 'fryer', 'oven', 'cooking_pot', 'prep_station', 'drink_machine', 'fridge', 'freezer', 'serving_counter',
            'bar_stool', 'pendant_lamp', 'checkered_floor', 'kitchen_tiles', 'cash_register', 'payment_terminal', 'business_computer', 'supplier_terminal']
-AXE = ['display_shelf', 'counter_cabinet', 'cutting_board', 'pantry_shelf', 'dining_table', 'dining_chair', 'sofa', 'menu_board', 'potted_plant', 'delivery_crate', 'package']
+AXE = ['hotel_bed', 'display_shelf', 'counter_cabinet', 'cutting_board', 'pantry_shelf', 'dining_table', 'dining_chair', 'sofa', 'menu_board', 'potted_plant', 'delivery_crate', 'package']
 
 
 def data(blocks):

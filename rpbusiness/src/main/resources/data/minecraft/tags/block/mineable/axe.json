@@ -1,6 +1,7 @@
 {
  "replace": false,
  "values": [
+  "rpbusiness:hotel_bed",
   "rpbusiness:display_shelf",
   "rpbusiness:counter_cabinet",
   "rpbusiness:cutting_board",

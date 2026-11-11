@@ -38,7 +38,7 @@ import java.util.UUID;
  * sits down, reads the menu, orders what they like and can afford, waits, eats, pays and leaves.
  */
 public class CustomerEntity extends NpcEntity {
-    public enum State { WANDER, GO_ENTRANCE, FIND_SEAT, GO_SEAT, BROWSE, WAIT_FOOD, EAT, GO_PAY, WAIT_PAY, LEAVE, SHOP }
+    public enum State { WANDER, GO_ENTRANCE, FIND_SEAT, GO_SEAT, BROWSE, WAIT_FOOD, EAT, GO_PAY, WAIT_PAY, LEAVE, SHOP, CHECK_IN, GO_ROOM, STAY }
 
     // ---- identity & finances ----
     public int money;
@@ -62,7 +62,8 @@ public class CustomerEntity extends NpcEntity {
     public final List<BlockPos> visited = new ArrayList<>();
     private BlockPos shelf;
     public int shelvesToVisit = 2;
-    public boolean paid;
+    public boolean paid, stayed;
+    public int stayTicks = 2400;
     private String mood = "";
 
     public CustomerEntity(EntityType<? extends CustomerEntity> type, Level level) { super(type, level); }
@@ -80,6 +81,7 @@ public class CustomerEntity extends NpcEntity {
         priceSensitivity = 0.5f + r.nextFloat();
         visitsLeft = 1 + (r.nextFloat() < 0.25f ? 1 : 0);
         shelvesToVisit = 1 + r.nextInt(3);
+        stayTicks = 1800 + r.nextInt(2400);
         wanderTime = 60 + r.nextInt(240);
         home = blockPosition();
     }
@@ -103,8 +105,9 @@ public class CustomerEntity extends NpcEntity {
                 refreshName("");
                 setCustomNameVisible(false);
                 if (!b.isOpen(sl)) { leave(sl, b, "msg.rpbusiness.c_closed"); return; }
+                if (stateTicks > 3000) { leave(sl, b, ""); return; }
                 if (walkTo(b.entranceOrCenter(), 1.8, 1.0) || b.contains(position()))
-                    setState(b.type.foodService ? State.FIND_SEAT : State.SHOP);
+                    setState(b.type.foodService ? State.FIND_SEAT : b.type == com.rpbusiness.business.BusinessType.HOTEL ? State.CHECK_IN : State.SHOP);
                 else if (isStuck()) {
                     // try a small detour before giving up
                     clearStuck();
@@ -165,6 +168,37 @@ public class CustomerEntity extends NpcEntity {
             }
             case WAIT_PAY -> waitPay(sl, b);
             case SHOP -> shop(sl, b);
+            case CHECK_IN -> {
+                seat = BusinessManager.claimBed(sl, b, getUUID());
+                if (seat == null) { leave(sl, b, "msg.rpbusiness.c_no_room"); return; }
+                int price = b.effective(b.roomPrice);
+                if (price > money) { BusinessManager.releaseSeat(b, getUUID()); leave(sl, b, "msg.rpbusiness.c_too_expensive"); return; }
+                bill = price;
+                satisfaction = (int) Math.max(30, Math.min(95, 85 - (price - 40) * 0.8 + BusinessManager.ambience(b) * 2));
+                payPoint = null;
+                setState(State.GO_PAY);
+            }
+            case GO_ROOM -> {
+                refreshName("[going to the room]");
+                if (seat == null) { leave(sl, b, ""); return; }
+                if (walkTo(seat, 1.4, 0.9)) {
+                    if (SeatEntity.sit(sl, seat, this)) { setAction(ACT_SLEEP); setState(State.STAY); }
+                    else if (stateTicks > 300) leave(sl, b, "");
+                } else if (isStuck() && stateTicks > 400) leave(sl, b, "");
+            }
+            case STAY -> {
+                refreshName("[resting]");
+                setAction(ACT_SLEEP);
+                if (stateTicks > stayTicks) {
+                    stayed = true;
+                    BlockPos bed = seat;
+                    stopRiding();
+                    if (bed != null) com.rpbusiness.block.HotelBedBlock.dirty(sl, bed);
+                    BusinessManager.releaseSeat(b, getUUID());
+                    sl.playSound(null, blockPosition(), ModSounds.HAPPY.get(), SoundSource.NEUTRAL, 0.7f, 1.0f);
+                    leave(sl, b, "");
+                }
+            }
             case LEAVE -> leaving(sl, b);
         }
     }
@@ -387,6 +421,7 @@ public class CustomerEntity extends NpcEntity {
     public void paid(ServerLevel sl, Business b) {
         setAction(ACT_NONE);
         paid = true;
+        if (b.type == com.rpbusiness.business.BusinessType.HOTEL && !stayed) { setState(State.GO_ROOM); return; }
         leave(sl, b, "");
     }
 
@@ -499,6 +534,8 @@ public class CustomerEntity extends NpcEntity {
         t.put("Basket", basket.createTag(registryAccess()));
         t.putInt("Shelves", shelvesToVisit);
         t.putBoolean("Paid", paid);
+        t.putBoolean("Stayed", stayed);
+        t.putInt("StayTicks", stayTicks);
         net.minecraft.nbt.ListTag vl = new net.minecraft.nbt.ListTag();
         for (BlockPos v : visited) vl.add(NbtUtils.writeBlockPos(v));
         t.put("Visited", vl);
@@ -524,6 +561,8 @@ public class CustomerEntity extends NpcEntity {
         basket.fromTag(t.getList("Basket", net.minecraft.nbt.Tag.TAG_COMPOUND), registryAccess());
         shelvesToVisit = Math.max(1, t.getInt("Shelves"));
         paid = t.getBoolean("Paid");
+        stayed = t.getBoolean("Stayed");
+        stayTicks = Math.max(600, t.getInt("StayTicks"));
         visited.clear();
         for (net.minecraft.nbt.Tag x : t.getList("Visited", net.minecraft.nbt.Tag.TAG_INT_ARRAY)) {
             int[] a = ((IntArrayTag) x).getAsIntArray();

@@ -3,6 +3,7 @@ package com.rpbusiness.server;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.rpbusiness.business.Business;
 import com.rpbusiness.business.BusinessData;
+import com.rpbusiness.business.BusinessType;
 import com.rpbusiness.core.Config;
 import com.rpbusiness.core.ModEntities;
 import com.rpbusiness.core.ModItems;
@@ -67,7 +68,7 @@ public final class ServerEvents {
         double rush = (hour >= 12 && hour < 14) || (hour >= 18 && hour < 21) ? 1.8 : (hour >= 22 || hour < 7) ? 0.35 : 1.0;
         for (Business b : data.businesses.values()) {
             if (!b.isOpen(ow)) continue;
-            if (b.type.foodService ? b.enabledDishes().isEmpty() : !b.type.retail) continue;
+            if (b.type.foodService ? b.enabledDishes().isEmpty() : !(b.type.retail || b.type == BusinessType.HOTEL)) continue;
             BlockPos c = b.entranceOrCenter();
             Player p = ow.getNearestPlayer(c.getX(), c.getY(), c.getZ(), range, false);
             if (p == null || !ow.isLoaded(c)) continue;
@@ -77,6 +78,8 @@ public final class ServerEvents {
             NEXT_SPAWN.put(b.id, t + (long) (interval * (0.7 + ow.getRandom().nextDouble() * 0.6)));
             if (b.type.foodService) {
                 if (BusinessManager.freeSeats(ow, b) == 0 || BusinessManager.availableDishes(ow, b).isEmpty()) continue;
+            } else if (b.type == BusinessType.HOTEL) {
+                if (BusinessManager.freeBeds(ow, b) == 0) continue;
             } else if (!BusinessManager.hasProducts(ow, b) || BusinessManager.shoppers(ow, b) >= 6) continue;
             BusinessManager.spawnCustomerFor(ow, b);
             if (++alive >= max) return;

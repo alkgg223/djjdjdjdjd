@@ -38,8 +38,19 @@ Employees use the real equipment and real ingredients from storage; when somethi
 ## Config
 `config/rpbusiness-common.toml`: customers on/off, max customers, spawn interval, patience, starting cash, max business size.
 
-## Coming in Stage 2
-Banks, ATMs, bank cards, accounts & transfers, loans, shops/supermarkets, delivery company, global price control, more reports.
+## Ready-made buildings (optional)
+Kits for every business type (restaurant, café, fast food, bakery, grocery, supermarket, clothing, electronics, furniture, butcher, gas station, hotel, bank, delivery company, warehouse).
+Right-click the ground where the entrance should be: the building appears facing you, furnished, stocked, registered in your name, with a walkway to the ground. Buy them from **BuildRight Construction** in the Supplier Terminal (or take them from the creative tab). Building by hand is still fully supported.
+
+## Banking
+Bank Counter: checking/savings accounts, cash deposit/withdrawal, transfers, history, loans (all terms shown before you confirm; installments are taken every morning), bank cards. ATM: use your card. Safe: only you can open it. Every business has its own bank account (card payments go there; salaries are paid from it if the cash drawer is empty).
+
+## Shops, hotel, delivery
+- Shops: put products on Display Shelves / Refrigerated Displays; set prices in the Products tab. Stock Manager refills shelves, Sales Assistant helps shoppers.
+- Hotel: Hotel Beds; guests check in at the Cash Register, pay, rest in a room; the Cleaner makes the beds. Room price in the Rooms tab.
+- Delivery company: accept customer requests (the sender brings the parcel to your office, the driver delivers it), or move goods between your own businesses.
+- **Manager**: checks stock every in-game hour and orders what is running low from the suppliers (Settings → Manager buys stock, with a budget per order).
+- Global price control: price % and discount per business, or all businesses at once (Empire tab).
 
 ---
 
@@ -62,3 +73,7 @@ Banks, ATMs, bank cards, accounts & transfers, loans, shops/supermarkets, delive
   - التقديم: انقر على الزبون وأنت تحمل الطبق.
 - **الموظفون:** لا يتم توظيف أحد إلا بنقرتك. بمخطط الموظفين تحدد لكل موظف مكانه ومحطة عمله ومساره.
 - **الموردون:** جهاز طلب الموردين، ويحضر عامل التوصيل البضاعة إلى صندوق التوصيل.
+- **المباني الجاهزة:** يوجد مبنى جاهز لكل نوع مشروع. انقر به على الأرض فيُبنى أمامك مجهزاً ومسجلاً باسمك ويعمل. تشتريه من شركة BuildRight عند الموردين.
+- **البنك:** حسابات، وإيداع وسحب، وتحويلات، وقروض، وبطاقة بنكية، وصراف آلي، وخزنة. لكل مشروع حساب بنكي منفصل.
+- **المدير:** يراجع المخزون كل ساعة ويطلب ما ينقص من الموردين تلقائياً.
+- **المتاجر والفندق وشركة التوصيل:** كلها تعمل مع موظفين وزبائن.

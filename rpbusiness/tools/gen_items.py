@@ -450,7 +450,28 @@ def parcel():
     return c
 
 
+KIT_COLORS = {'restaurant': 'd8473f', 'cafe': '8a5a2e', 'fast_food': 'e8a33d', 'bakery': 'c6833a', 'grocery': '5fbf3a', 'supermarket': '2f9a5a',
+              'clothing': 'b56ad8', 'electronics': '3a8ee6', 'furniture': '9a6a42', 'butcher': 'b0302c', 'gas_station': 'f25f5c', 'hotel': '2fb5a8',
+              'bank': 'ffc857', 'delivery': 'c8955a', 'warehouse': '6b6b6b'}
+
+
+def kit(col):
+    def f():
+        c = Canvas()
+        c.rect(1, 3, 14, 13, C('3a6fb0'))
+        c.rect(2, 4, 13, 12, C('4f86c6'))
+        for x in range(2, 14, 3):
+            c.line(x, 4, x, 12, C('6a9fd8'))
+        c.poly([(4, 9), (8, 5), (12, 9)], C(col))
+        c.rect(5, 9, 11, 12, C('f4f1e6'))
+        c.rect(7, 10, 8, 12, C(col))
+        c.rect(0, 2, 2, 14, C('d9c9a0'))
+        return c
+    return f
+
+
 ITEMS = {
+    **{'kit_' + k: kit(v) for k, v in KIT_COLORS.items()},
     'bank_card': bank_card, 'shopping_basket': basket, 'shopping_cart': cart, 'parcel': parcel,
     'kitchen_knife': knife, 'spatula': spatula, 'mop': mop,
     'business_planner': lambda: clipboard('3a8ee6'), 'staff_planner': staff_planner, 'layout_tool': layout_tool,

@@ -426,3 +426,46 @@ for k, (en, ar) in {'product_sales': ('Product sale', 'بيع منتج'), 'deliv
 for k, (en, ar) in {'display': ('Displays', 'رفوف عرض'), 'atm': ('ATMs', 'صرافات'), 'bank': ('Bank', 'بنك'), 'delivery_terminal': ('Delivery', 'توصيل')}.items():
     add(f'equip.rpbusiness.{k}', en, ar)
 add('state.rpbusiness.shop', 'shopping', 'يتسوق')
+
+# ======================================================================== Stage 3
+KITS = {'restaurant': ('Restaurant', 'مطعم'), 'cafe': ('Café', 'مقهى'), 'fast_food': ('Fast-Food Restaurant', 'مطعم وجبات سريعة'),
+        'bakery': ('Bakery', 'مخبز'), 'grocery': ('Grocery Store', 'بقالة'), 'supermarket': ('Supermarket', 'سوبرماركت'),
+        'clothing': ('Clothing Store', 'متجر ملابس'), 'electronics': ('Electronics Store', 'متجر إلكترونيات'), 'furniture': ('Furniture Store', 'متجر أثاث'),
+        'butcher': ('Butcher Shop', 'ملحمة'), 'gas_station': ('Gas Station', 'محطة وقود'), 'hotel': ('Hotel', 'فندق'), 'bank': ('Bank', 'بنك'),
+        'delivery': ('Delivery Company', 'شركة توصيل'), 'warehouse': ('Warehouse', 'مستودع')}
+for k, (en, ar) in KITS.items():
+    add(f'item.rpbusiness.kit_{k}', f'Ready-Made {en}', f'{ar} جاهز')
+add('block.rpbusiness.hotel_bed', 'Hotel Bed', 'سرير فندق')
+for k, en, ar in [
+    ('tooltip.rpbusiness.kit_1', 'Right-click the ground where the entrance should be', 'انقر على الأرض حيث تريد المدخل'),
+    ('tooltip.rpbusiness.kit_2', 'Builds a complete, furnished, working business facing you', 'يبني مشروعاً كاملاً مجهزاً يعمل ويواجهك'),
+    ('tooltip.rpbusiness.kit_3', 'Registered in your name with starter stock. Hire staff in its computer.', 'يُسجل باسمك مع بضاعة أولية. وظّف من حاسوبه.'),
+    ('msg.rpbusiness.kit_built', '"%s" is ready! Open the Business Computer inside to hire staff and set prices.', '"%s" جاهز! افتح حاسوب المشروع لتوظيف العاملين وتحديد الأسعار.'),
+    ('msg.rpbusiness.kit_blocked', 'Cannot build here: there is a chest or machine at %s, %s, %s', 'لا يمكن البناء هنا: يوجد صندوق أو آلة عند %s، %s، %s'),
+    ('msg.rpbusiness.kit_unloaded', 'Cannot build here: move closer (area not loaded)', 'لا يمكن البناء هنا: اقترب أكثر (المنطقة غير محملة)'),
+    ('msg.rpbusiness.room_cleaned', 'Room cleaned', 'تم تنظيف الغرفة'),
+    ('msg.rpbusiness.c_no_room', '%s left: no free clean room', 'غادر %s: لا توجد غرفة نظيفة فارغة'),
+    ('msg.rpbusiness.auto_ordered', 'Manager %s ordered: %s (%s)', 'المدير %s طلب: %s (%s)'),
+    ('msg.rpbusiness.auto_no_money', 'Manager %s could not buy supplies: not enough money (%s)', 'المدير %s لم يستطع شراء البضائع: المال غير كافٍ (%s)'),
+    ('gui.rpbusiness.autobuy_on', 'Manager buys stock: ON', 'المدير يشتري البضاعة: مفعل'),
+    ('gui.rpbusiness.autobuy_off', 'Manager buys stock: OFF', 'المدير يشتري البضاعة: معطل'),
+    ('gui.rpbusiness.autobuy_budget', 'max %s/order', 'حد %s للطلب'),
+    ('gui.rpbusiness.rooms_header', 'Hotel rooms', 'غرف الفندق'),
+    ('gui.rpbusiness.room_price', 'Price per stay: %s', 'سعر الإقامة: %s'),
+    ('gui.rpbusiness.rooms_info', 'Beds %s - free %s - need cleaning %s', 'الأسرّة %s - فارغة %s - تحتاج تنظيف %s'),
+    ('gui.rpbusiness.rooms_hint', 'Guests check in at the cash register, pay, then rest in a room. Cleaners make the beds.', 'يسجل الضيوف عند الكاشير ويدفعون ثم يرتاحون في الغرفة. عمال النظافة يرتبون الأسرّة.'),
+]:
+    add(k, en, ar)
+add('tab.rpbusiness.rooms', 'Rooms', 'الغرف')
+add('tab.rpbusiness.products', 'Products', 'المنتجات')
+add('tab.rpbusiness.deliveries', 'Deliveries', 'التوصيل')
+add('status.rpbusiness.purchasing', 'Checking stock', 'يراجع المخزون')
+add('status.rpbusiness.tidy', 'Tidying a station', 'يرتب محطة عمل')
+for k, (en, ar) in {'check_in': ('checking in', 'يسجل دخوله'), 'go_room': ('going to the room', 'يذهب للغرفة'), 'stay': ('resting in the room', 'يرتاح في الغرفة')}.items():
+    add(f'state.rpbusiness.{k}', en, ar)
+for k, (en, ar) in {'room_sales': ('Room', 'غرفة'), 'auto_purchase': ('Manager purchase', 'شراء المدير')}.items():
+    add(f'fincat.rpbusiness.{k}', en, ar)
+add('equip.rpbusiness.bed', 'Beds', 'أسرّة')
+for k, (en, ar) in {'wholesale': ('City Wholesale Market', 'سوق الجملة'), 'furniture': ('HomeStyle Furniture', 'هوم ستايل للأثاث'),
+                    'retail': ('RetailPro Systems', 'ريتيل برو'), 'construction': ('BuildRight Construction', 'بيلد رايت للبناء')}.items():
+    add(f'supplier.rpbusiness.{k}', en, ar)

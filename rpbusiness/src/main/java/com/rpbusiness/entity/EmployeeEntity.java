@@ -392,6 +392,15 @@ public class EmployeeEntity extends NpcEntity {
                 if (d < bd) { bd = d; best = t; }
             }
         }
+        if (best == null) {
+            for (BlockPos bed : BusinessManager.equip(sl, b, Equip.BED)) {
+                var st = sl.getBlockState(bed);
+                if (st.getValue(com.rpbusiness.block.HotelBedBlock.DIRTY) && !b.seatClaims.containsKey(bed)) {
+                    double d = bed.distSqr(blockPosition());
+                    if (d < bd) { bd = d; best = bed; }
+                }
+            }
+        }
         if (best == null) return false;
         steps.add(new Steps.CleanTable(best));
         return true;
@@ -414,8 +423,15 @@ public class EmployeeEntity extends NpcEntity {
         }
     }
 
+    private long lastPurchaseCheck;
+
     private void manager(ServerLevel sl, Business b, EmployeeRecord rec) {
         patrol(sl, b, rec);
+        if (sl.getGameTime() - lastPurchaseCheck > 1000) {
+            lastPurchaseCheck = sl.getGameTime();
+            setStatus("purchasing");
+            BusinessManager.autoPurchase(sl, b, this);
+        }
         if (sl.getGameTime() - lastReport > 6000) {
             lastReport = sl.getGameTime();
             Finance.Day d = b.finance.day(Business.day(sl));
@@ -462,15 +478,16 @@ public class EmployeeEntity extends NpcEntity {
             case STOCK_MANAGER, WAREHOUSE_WORKER, PACKAGE_HANDLER -> new Equip[]{Equip.STORAGE, Equip.CRATE};
             case SALES_ASSISTANT -> new Equip[]{Equip.DISPLAY};
             case DELIVERY_DRIVER, DELIVERY_MANAGER -> new Equip[]{Equip.DELIVERY_TERMINAL, Equip.CRATE};
-            default -> new Equip[]{Equip.DECOR, Equip.COMPUTER};
+            case CLEANER -> new Equip[]{Equip.TABLE, Equip.BED, Equip.DISPLAY, Equip.REGISTER};
+            default -> new Equip[]{Equip.REGISTER, Equip.COMPUTER, Equip.TABLE, Equip.DISPLAY};
         };
         int salt = Math.floorMod(getUUID().hashCode(), 97);
         BlockPos spot = null;
-        if (rec.workPos != null) spot = standSpotFor(rec.workPos);
+        if (rec.workPos != null) spot = goodSpot(b, standSpotFor(rec.workPos));
         for (Equip e : pref) {
             if (spot != null) break;
             List<BlockPos> l = BusinessManager.equip(sl, b, e);
-            if (!l.isEmpty()) spot = standSpotFor(l.get(salt % l.size()));
+            for (int k = 0; k < l.size() && spot == null; k++) spot = goodSpot(b, standSpotFor(l.get((salt + k) % l.size())));
         }
         if (spot == null) {
             // any free walkable spot inside, picked per employee so they do not all stand together
@@ -485,6 +502,11 @@ public class EmployeeEntity extends NpcEntity {
         }
         idleSpotCache = spot != null ? spot : b.entranceOrCenter();
         return idleSpotCache;
+    }
+
+    /** A floor-level spot inside the business that an NPC can stand on. */
+    private BlockPos goodSpot(Business b, BlockPos p) {
+        return p != null && b.contains(p) && walkable(p) && p.getY() <= b.min.getY() + 3 ? p : null;
     }
 
     private void quit(ServerLevel sl, Business b) {

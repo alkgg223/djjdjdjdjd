@@ -175,6 +175,7 @@ public class BankScreen extends BaseScreen {
             }
         }
         button(left + 6, top + h - 26, 80, 20, Component.translatable("gui.rpbusiness.close"), this::onClose);
+        if (tab.equals("history")) scrollButtons(left + 6, top + h - 48);
     }
 
     @Override

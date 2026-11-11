@@ -634,7 +634,8 @@ public final class Steps {
 
         @Override
         public int tick(EmployeeEntity e, ServerLevel sl, Business b) {
-            if (!BusinessManager.tableDirty(sl, b, table)) return DONE;
+            boolean bed = sl.getBlockState(table).getBlock() instanceof HotelBedBlock;
+            if (bed ? !sl.getBlockState(table).getValue(HotelBedBlock.DIRTY) : !BusinessManager.tableDirty(sl, b, table)) return DONE;
             e.hold(new ItemStack(ModItems.MOP.get()));
             if (!e.walkTo(e.standSpotFor(table), 0.9, e.speed()) && !e.near(table, 1.9)) {
                 if (e.isStuck()) { e.clearStuck(); return FAILED; }
@@ -644,7 +645,7 @@ public final class Steps {
             e.setAction(NpcEntity.ACT_CLEAN);
             if (started < 0) started = now(sl);
             if (now(sl) - started < (long) (60 / e.efficiency())) return RUNNING;
-            BusinessManager.cleanTable(sl, b, table);
+            if (bed) HotelBedBlock.clean(sl, table); else BusinessManager.cleanTable(sl, b, table);
             e.hold(ItemStack.EMPTY);
             e.setAction(NpcEntity.ACT_NONE);
             e.gainXp(1);

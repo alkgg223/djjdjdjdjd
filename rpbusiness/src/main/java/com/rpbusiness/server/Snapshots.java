@@ -110,7 +110,7 @@ public final class Snapshots {
         // finances: last 7 days
         ListTag days = new ListTag();
         long today = Business.day(sl);
-        for (long d = today; d > today - 7 && d >= 0; d--) {
+        for (long d = today; d > today - 30 && d >= 0; d--) {
             Finance.Day fd = b.finance.days.get(d);
             CompoundTag e = new CompoundTag();
             e.putLong("day", d);
@@ -147,6 +147,18 @@ public final class Snapshots {
         t.putInt("mult", b.priceMultiplier);
         t.putInt("discount", b.discount);
         t.putInt("deliveryRate", b.deliveryRate);
+        t.putBoolean("autoBuy", b.autoBuy);
+        t.putInt("autoBudget", b.autoBuyBudget);
+        t.putInt("roomPrice", b.roomPrice);
+        if (b.type == BusinessType.HOTEL) {
+            int free = 0, dirty = 0, total = 0;
+            for (var pos : BusinessManager.equip(sl, b, Equip.BED)) {
+                total++;
+                if (sl.getBlockState(pos).getValue(com.rpbusiness.block.HotelBedBlock.DIRTY)) dirty++;
+            }
+            free = BusinessManager.freeBeds(sl, b);
+            t.putInt("beds", total); t.putInt("bedsFree", free); t.putInt("bedsDirty", dirty);
+        }
         t.putLong("debt", bank.outstanding(p.getUUID()));
         if (b.type.retail && !b.type.foodService) {
             java.util.LinkedHashMap<net.minecraft.world.item.Item, Integer> shelf = new java.util.LinkedHashMap<>();

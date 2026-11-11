@@ -53,6 +53,12 @@ public abstract class BaseScreen extends Screen {
         return s + "..";
     }
 
+    /** Touch-friendly scroll buttons (phones have no mouse wheel). */
+    protected void scrollButtons(int x, int y) {
+        button(x, y, 38, 18, Component.literal("\u25B2"), () -> { if (scroll > 0) { scroll--; rebuildWidgets(); } });
+        button(x + 40, y, 38, 18, Component.literal("\u25BC"), () -> { scroll++; rebuildWidgets(); });
+    }
+
     @Override public boolean isPauseScreen() { return false; }
 
     @Override

@@ -20,7 +20,7 @@ public class SupplierScreen extends BaseScreen {
     private CompoundTag data;
     private final UUID biz;
     private int company;
-    private final int[][] cart = new int[Suppliers.ALL.size()][8];
+    private final int[][] cart = new int[Suppliers.ALL.size()][32];
     private int payMode;
     private boolean showOrders;
 
@@ -59,20 +59,22 @@ public class SupplierScreen extends BaseScreen {
 
     @Override
     protected void init() {
-        layout(440, 280);
+        layout(460, 300);
         int x = left + 8, y = top + 26;
         for (int c = 0; c < Suppliers.ALL.size(); c++) {
             int ci = c;
-            Button b = button(x, y, 118, 18, Component.translatable(Suppliers.ALL.get(c).key()), () -> { company = ci; showOrders = false; rebuildWidgets(); });
+            Button b = button(x, y, 118, 16, Component.translatable(Suppliers.ALL.get(c).key()), () -> { company = ci; showOrders = false; scroll = 0; rebuildWidgets(); });
             b.active = showOrders || company != c;
-            y += 20;
+            y += 17;
         }
-        Button ob = button(x, y + 6, 118, 18, Component.translatable("gui.rpbusiness.my_deliveries"), () -> { showOrders = true; rebuildWidgets(); });
+        Button ob = button(x, y + 3, 118, 16, Component.translatable("gui.rpbusiness.my_deliveries"), () -> { showOrders = true; rebuildWidgets(); });
         ob.active = !showOrders;
         if (!showOrders) {
             var comp = Suppliers.ALL.get(company);
             int ry = top + 40;
-            for (int p = 0; p < comp.products().size(); p++) {
+            int vis = Math.max(1, (h - 96) / 24);
+            scroll = Math.min(scroll, Math.max(0, comp.products().size() - vis));
+            for (int p = scroll; p < Math.min(comp.products().size(), scroll + vis); p++) {
                 int pi = p;
                 int bx = left + w - 98;
                 button(bx, ry, 20, 18, Component.literal("-"), () -> { cart[company][pi] = Math.max(0, cart[company][pi] - 1); rebuildWidgets(); });
@@ -82,6 +84,7 @@ public class SupplierScreen extends BaseScreen {
             }
         }
         int by = top + h - 26;
+        if (!showOrders) scrollButtons(left + w - 140, top + 24);
         String[] modes = {"gui.rpbusiness.pay_business", "gui.rpbusiness.pay_cash", "gui.rpbusiness.pay_bank"};
         button(left + 134, by, 110, 20, Component.translatable(modes[payMode]), () -> { payMode = (payMode + 1) % 3; rebuildWidgets(); });
         Button order = button(left + 248, by, 90, 20, Component.translatable("gui.rpbusiness.place_order"), () -> {
@@ -115,7 +118,9 @@ public class SupplierScreen extends BaseScreen {
             var comp = Suppliers.ALL.get(company);
             text(g, comp.name(), x, top + 28, ACCENT);
             int ry = top + 40;
-            for (int p = 0; p < comp.products().size(); p++) {
+            int vis = Math.max(1, (h - 96) / 24);
+            if (comp.products().size() > vis) text(g, (scroll + 1) + "-" + Math.min(comp.products().size(), scroll + vis) + "/" + comp.products().size() + " \u21C5", left + w - 70, top + 28, DIM);
+            for (int p = scroll; p < Math.min(comp.products().size(), scroll + vis); p++) {
                 var pr = comp.products().get(p);
                 ItemStack st = new ItemStack(pr.item().get());
                 g.renderItem(st, x, ry + 1);

@@ -1,0 +1,36 @@
+{
+ "variants": {
+  "dirty=false,facing=north": {
+   "model": "rpbusiness:block/hotel_bed",
+   "y": 0
+  },
+  "dirty=true,facing=north": {
+   "model": "rpbusiness:block/hotel_bed_dirty",
+   "y": 0
+  },
+  "dirty=false,facing=east": {
+   "model": "rpbusiness:block/hotel_bed",
+   "y": 90
+  },
+  "dirty=true,facing=east": {
+   "model": "rpbusiness:block/hotel_bed_dirty",
+   "y": 90
+  },
+  "dirty=false,facing=south": {
+   "model": "rpbusiness:block/hotel_bed",
+   "y": 180
+  },
+  "dirty=true,facing=south": {
+   "model": "rpbusiness:block/hotel_bed_dirty",
+   "y": 180
+  },
+  "dirty=false,facing=west": {
+   "model": "rpbusiness:block/hotel_bed",
+   "y": 270
+  },
+  "dirty=true,facing=west": {
+   "model": "rpbusiness:block/hotel_bed_dirty",
+   "y": 270
+  }
+ }
+}

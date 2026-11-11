@@ -72,7 +72,7 @@ public final class SelfTest {
         if (existing != null) { log("already built"); return; }
         BlockPos spawn = sl.getSharedSpawnPos();
         int ox = spawn.getX() + 30, oz = spawn.getZ() + 30;
-        for (int dx = -2; dx <= 3; dx++) for (int dz = -1; dz <= 2; dz++) sl.setChunkForced((ox >> 4) + dx, (oz >> 4) + dz, true);
+        for (int dx = -2; dx <= 3; dx++) for (int dz = -1; dz <= 4; dz++) sl.setChunkForced((ox >> 4) + dx, (oz >> 4) + dz, true);
         int y = sl.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(ox + 6, 0, oz + 6)).getY();
         origin = new BlockPos(ox, y, oz);
         build(sl, origin);
@@ -106,7 +106,7 @@ public final class SelfTest {
         log("built at " + origin);
     }
 
-    private static Business shop, office;
+    private static Business shop, office, kitRestaurant, kitHotel;
 
     private static void room(ServerLevel sl, BlockPos o, int size) {
         for (int x = 0; x <= size; x++) for (int z = 0; z <= size; z++) {
@@ -189,6 +189,38 @@ public final class SelfTest {
         log("transfer job " + (tr == null ? "FAILED" : tr.id + " fee " + tr.reward));
         com.rpbusiness.delivery.Deliveries.generateOffers(sl, office);
 
+        // ---- ready-made kits (placed like a player would: clicking the ground, looking north)
+        BlockPos kc = sl.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, origin.offset(6, 0, 44)).below();
+        kitRestaurant = Kits.place(sl, OWNER, "Tester", "restaurant", kc, Direction.NORTH, m -> log("kit: " + m.getString()));
+        BlockPos hc = sl.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, origin.offset(32, 0, 44)).below();
+        kitHotel = Kits.place(sl, OWNER, "Tester", "hotel", hc, Direction.NORTH, m -> log("kit: " + m.getString()));
+        if (kitRestaurant != null) {
+            kitRestaurant.openHour = 0; kitRestaurant.closeHour = 0; kitRestaurant.cash = 300;
+            BlockPos kin = kitRestaurant.entrance;
+            BusinessManager.spawnEmployee(sl, kitRestaurant, new Candidate("Kit Chef", 3, 60, Job.CHEF, 0), Job.CHEF, kin, 0);
+            BusinessManager.spawnEmployee(sl, kitRestaurant, new Candidate("Kit Waiter", 3, 35, Job.WAITER, 1), Job.WAITER, kin, 0);
+            BusinessManager.spawnEmployee(sl, kitRestaurant, new Candidate("Kit Cashier", 3, 35, Job.CASHIER, 2), Job.CASHIER, kin, 0);
+            BusinessManager.spawnEmployee(sl, kitRestaurant, new Candidate("Kit Manager", 3, 80, Job.MANAGER, 3), Job.MANAGER, kin, 0);
+            log("KIT restaurant " + kitRestaurant.min + " -> " + kitRestaurant.max + " entrance " + kitRestaurant.entrance + " equip " + kitRestaurant.equipment.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue().size()).toList());
+        }
+        if (kitHotel != null) {
+            kitHotel.openHour = 0; kitHotel.closeHour = 0;
+            BusinessManager.spawnEmployee(sl, kitHotel, new Candidate("Kit Reception", 3, 35, Job.CASHIER, 2), Job.CASHIER, kitHotel.entrance, 0);
+            BusinessManager.spawnEmployee(sl, kitHotel, new Candidate("Kit Maid", 3, 25, Job.CLEANER, 1), Job.CLEANER, kitHotel.entrance, 0);
+            log("KIT hotel beds=" + kitHotel.equipment.get(Equip.BED).size() + " entrance " + kitHotel.entrance);
+            BlockPos e = kitHotel.entrance;
+            StringBuilder sb = new StringBuilder("ENTRANCE column:");
+            for (int dz = -3; dz <= 8; dz++) {
+                BlockPos q = e.offset(0, 0, dz);
+                int hgt = sl.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, q).getY();
+                sb.append(" z").append(dz).append(":h").append(hgt).append('/')
+                        .append(net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(sl.getBlockState(q.below()).getBlock()).getPath()).append('|')
+                        .append(net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(sl.getBlockState(q).getBlock()).getPath());
+            }
+            log(sb.toString());
+        }
+        // the diner's manager buys supplies when stock gets low
+        BusinessManager.spawnEmployee(sl, diner, new Candidate("Diner Manager", 3, 80, Job.MANAGER, 1), Job.MANAGER, origin.offset(6, 0, 6), 0);
         // ---- bank
         var bank = com.rpbusiness.bank.Bank.get(sl);
         var acc = bank.open(sl, OWNER, "Tester", com.rpbusiness.bank.Account.Type.CHECKING, "Checking", null);
@@ -300,10 +332,21 @@ public final class SelfTest {
         for (Business x : BusinessData.get(sl).businesses.values()) if (x.name.equals("SelfTest Diner")) b = x;
         if (b == null) return;
         if (MODE.equals("build") && t % 160 == 0 && spawned < Integer.getInteger("rpbusiness.selftest.customers", 14) && t > 40) {
-            if (spawned % 2 == 1) {
-                BusinessManager.spawnCustomerFor(sl, b);
+            Business[] targets = {kitRestaurant, kitHotel, shop, kitHotel};
+            Business tgt = targets[spawned % targets.length];
+            if (spawned % 2 == 1 && tgt != null) {
+                CustomerEntity c = ModEntities.CUSTOMER.get().create(sl);
+                BlockPos at = c == null ? null : BusinessManager.reachableSpawn(sl, c, tgt.entranceOrCenter(), 6, 14);
+                if (at != null) {
+                    c.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
+                    c.randomize(sl.getRandom());
+                    c.money = 200; c.budget = 120; c.home = at;
+                    c.businessId = tgt.id;
+                    c.state = CustomerEntity.State.GO_ENTRANCE;
+                    sl.addFreshEntity(c);
+                    log("spawned customer for " + tgt.name);
+                }
                 spawned++;
-                log("spawned customer via normal spawning");
             } else {
             CustomerEntity c = ModEntities.CUSTOMER.get().create(sl);
             if (c != null) {
@@ -352,6 +395,10 @@ public final class SelfTest {
                 s2.append(" OFFICE jobs=[");
                 for (var j : office.deliveries) s2.append(j.id).append(':').append(j.kind).append('/').append(j.status).append(' ');
                 s2.append("] bank=").append(com.rpbusiness.bank.Bank.get(sl).businessAccount(sl, office).balance);
+                if (kitRestaurant != null) s2.append(" KITREST served=").append(kitRestaurant.customersServed).append(" lost=").append(kitRestaurant.customersLost)
+                        .append(" orders=").append(kitRestaurant.orders.size()).append(" supply=").append(kitRestaurant.supplyOrders.size());
+                if (kitHotel != null) s2.append(" HOTEL served=").append(kitHotel.customersServed).append(" free=").append(BusinessManager.freeBeds(sl, kitHotel));
+                s2.append(" DINER supply=").append(b.supplyOrders.stream().map(x -> x.supplier + ":" + x.status).toList());
                 for (EmployeeRecord r : office.employees.values()) {
                     EmployeeEntity e = BusinessManager.employee(sl, r.id);
                     s2.append(" driver=").append(r.status).append(e == null ? "(missing)" : "@" + e.blockPosition().toShortString());

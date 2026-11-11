@@ -35,7 +35,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  */
 public abstract class NpcEntity extends PathfinderMob implements GeoEntity {
     public static final int ACT_NONE = 0, ACT_CHOP = 1, ACT_COOK = 2, ACT_CARRY = 3, ACT_CLEAN = 4, ACT_CASHIER = 5,
-            ACT_EAT = 6, ACT_PAY = 7, ACT_REACH = 8, ACT_TALK = 9, ACT_READ = 10;
+            ACT_EAT = 6, ACT_PAY = 7, ACT_REACH = 8, ACT_TALK = 9, ACT_READ = 10, ACT_SLEEP = 11;
 
     private static final EntityDataAccessor<Integer> SKIN = SynchedEntityData.defineId(NpcEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> OUTFIT = SynchedEntityData.defineId(NpcEntity.class, EntityDataSerializers.INT);
@@ -44,6 +44,7 @@ public abstract class NpcEntity extends PathfinderMob implements GeoEntity {
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("walk");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("sit");
+    private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("sleep");
     private static final RawAnimation[] ACTIONS = {
             null, RawAnimation.begin().thenLoop("chop"), RawAnimation.begin().thenLoop("cook"), RawAnimation.begin().thenLoop("carry"),
             RawAnimation.begin().thenLoop("clean"), RawAnimation.begin().thenLoop("type"), RawAnimation.begin().thenLoop("eat"),
@@ -245,7 +246,7 @@ public abstract class NpcEntity extends PathfinderMob implements GeoEntity {
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "base", 4, state -> {
-            if (isPassenger()) return state.setAndContinue(SIT);
+            if (isPassenger()) return state.setAndContinue(action() == ACT_SLEEP ? SLEEP : SIT);
             if (state.isMoving()) return state.setAndContinue(WALK);
             return state.setAndContinue(IDLE);
         }));

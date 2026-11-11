@@ -12,7 +12,7 @@ import java.util.TreeMap;
 /** Separate financial records of one business: per-day ledger and a transaction log. */
 public class Finance {
     public enum Cat { FOOD_SALES, DRINK_SALES, TIPS, DEPOSIT, SALARIES, SUPPLIES, DELIVERY, HIRING, WITHDRAW, OTHER,
-        PRODUCT_SALES, DELIVERY_INCOME, BANK_TRANSFER }
+        PRODUCT_SALES, DELIVERY_INCOME, BANK_TRANSFER, ROOM_SALES, AUTO_PURCHASE }
 
     public static class Day {
         public final long[] amounts = new long[Cat.values().length];
@@ -21,10 +21,10 @@ public class Finance {
 
         public long income() {
             return amounts[Cat.FOOD_SALES.ordinal()] + amounts[Cat.DRINK_SALES.ordinal()] + amounts[Cat.TIPS.ordinal()]
-                    + amounts[Cat.PRODUCT_SALES.ordinal()] + amounts[Cat.DELIVERY_INCOME.ordinal()];
+                    + amounts[Cat.PRODUCT_SALES.ordinal()] + amounts[Cat.DELIVERY_INCOME.ordinal()] + amounts[Cat.ROOM_SALES.ordinal()];
         }
         public long expenses() {
-            return amounts[Cat.SALARIES.ordinal()] + amounts[Cat.SUPPLIES.ordinal()] + amounts[Cat.DELIVERY.ordinal()]
+            return amounts[Cat.SALARIES.ordinal()] + amounts[Cat.SUPPLIES.ordinal()] + amounts[Cat.DELIVERY.ordinal()] + amounts[Cat.AUTO_PURCHASE.ordinal()]
                     + amounts[Cat.HIRING.ordinal()] + amounts[Cat.OTHER.ordinal()];
         }
         public long profit() { return income() - expenses(); }

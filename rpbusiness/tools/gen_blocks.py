@@ -190,6 +190,10 @@ def textures():
     sp.rect(1, 1, 14, 14, C('3f5a8a'))
     sp.rect(3, 3, 12, 4, C('ffd166')); sp.rect(3, 7, 12, 7, C('cfe8ff')); sp.rect(3, 10, 9, 10, C('cfe8ff'))
     t['screen_bank'] = sp
+    bs = tex(16, 16, C('f4f6f7'), 43, 0.02)
+    for yy in range(0, 16, 4):
+        bs.rect(0, yy, 15, yy, C('dfe6ec'))
+    t['bed_sheet'] = bs
     sh = tex(16, 16, C('7a563b'), 34, 0.05)
     r = random.Random(34)
     for yy in (1, 6, 11):
@@ -353,6 +357,14 @@ def build_models():
         el((6, 0, 9), (10, 1, 12), 'k'), el((7.5, 1, 10), (8.5, 4, 11), 'k'),
         el((1, 4, 9.5), (15, 12, 10.5), {'north': 'sc', 'south': 'k', 'east': 'k', 'west': 'k', 'up': 'k', 'down': 'k'}),
         el((2, 0, 3), (7, 4, 7), 'w')])
+    M['hotel_bed'] = model({'particle': T('bed_sheet'), 's': T('bed_sheet'), 'p': T('white'), 'w': T('walnut'), 'b': T('blue_panel')}, [
+        el((0, 0, -16), (16, 3, 16), 'w'),
+        el((0.5, 3, -15.5), (15.5, 8, 15.5), sides('s', top='s')),
+        el((2, 8, 10), (14, 10, 15), 'p'),
+        el((0.5, 8, -15.5), (15.5, 8.5, 6), sides('b')),
+        el((0, 0, 15), (16, 16, 16), 'w')])
+    M['hotel_bed_dirty'] = model({'particle': T('bed_sheet'), 's': T('bed_sheet'), 'p': T('white'), 'w': T('walnut'), 'b': T('blue_panel'), 'x': T('table_dirty')},
+        M['hotel_bed']['elements'] + [el((1, 8.6, -12), (15, 8.7, 4), {'up': 'x'})], extra={'render_type': 'minecraft:cutout'})
     # GeckoLib-rendered blocks: blockstate model only provides the break particle
     M['fridge_particle'] = {'textures': {'particle': T('steel')}}
     M['freezer_particle'] = {'textures': {'particle': T('steel')}}
@@ -387,6 +399,8 @@ def blockstates():
     bs['dining_table'] = {'variants': {'dirty=false': {'model': f'{MOD}:block/dining_table'}, 'dirty=true': {'model': f'{MOD}:block/dining_table_dirty'}}}
     bs['checkered_floor'] = {'variants': {'': {'model': f'{MOD}:block/checkered_floor'}}}
     bs['kitchen_tiles'] = {'variants': {'': {'model': f'{MOD}:block/kitchen_tiles'}}}
+    bs['hotel_bed'] = {'variants': {f'dirty={d},facing={f}': {'model': f'{MOD}:block/hotel_bed' + ('_dirty' if d == 'true' else ''), 'y': y}
+                                    for f, y in FACING.items() for d in ('false', 'true')}}
     v = {}
     for f in FACING:
         for half in ('lower', 'upper'):

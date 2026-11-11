@@ -81,6 +81,11 @@ def npc_anims():
         'left_leg': {'rotation': [F * 90, -8, 0]},
         'right_arm': {'rotation': [F * 20, 0, 4]},
         'left_arm': {'rotation': [F * 20, 0, -4]}})
+    A['sleep'] = anim(4.0, {
+        'root': {'rotation': [F * 90, 0, 0], 'position': [0, 3, -22]},
+        'head': {'rotation': {0: [0, 0, 0], 2.0: [0, 8, 0], 4.0: [0, 0, 0]}},
+        'right_arm': {'rotation': [0, 0, 6]},
+        'left_arm': {'rotation': [0, 0, -6]}})
     A['chop'] = anim(0.5, {
         'right_arm': {'rotation': {0: [F * 75, 0, 0], 0.25: [F * 35, 0, 0], 0.5: [F * 75, 0, 0]}},
         'left_arm': {'rotation': [F * 40, -20, 0]},

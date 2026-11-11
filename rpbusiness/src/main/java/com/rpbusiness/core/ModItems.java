@@ -57,6 +57,26 @@ public final class ModItems {
     public static final DeferredItem<ToolItem> SHOPPING_CART = add("shopping_cart", REG.registerItem("shopping_cart", p -> new ToolItem("tooltip.rpbusiness.cart", p.stacksTo(1))));
     public static final DeferredItem<ParcelItem> PARCEL = add("parcel", REG.registerItem("parcel", p -> new ParcelItem(p.stacksTo(1))));
 
+    // ---------- ready-made business buildings (optional) ----------
+    private static DeferredItem<KitItem> kit(String name, com.rpbusiness.business.BusinessType t) {
+        return add(name, REG.registerItem(name, p -> new KitItem(name.substring(4), t, p.stacksTo(1).rarity(Rarity.UNCOMMON))));
+    }
+    public static final DeferredItem<KitItem> KIT_RESTAURANT = kit("kit_restaurant", com.rpbusiness.business.BusinessType.RESTAURANT);
+    public static final DeferredItem<KitItem> KIT_CAFE = kit("kit_cafe", com.rpbusiness.business.BusinessType.CAFE);
+    public static final DeferredItem<KitItem> KIT_FAST_FOOD = kit("kit_fast_food", com.rpbusiness.business.BusinessType.FAST_FOOD);
+    public static final DeferredItem<KitItem> KIT_BAKERY = kit("kit_bakery", com.rpbusiness.business.BusinessType.BAKERY);
+    public static final DeferredItem<KitItem> KIT_GROCERY = kit("kit_grocery", com.rpbusiness.business.BusinessType.GROCERY);
+    public static final DeferredItem<KitItem> KIT_SUPERMARKET = kit("kit_supermarket", com.rpbusiness.business.BusinessType.SUPERMARKET);
+    public static final DeferredItem<KitItem> KIT_CLOTHING = kit("kit_clothing", com.rpbusiness.business.BusinessType.CLOTHING);
+    public static final DeferredItem<KitItem> KIT_ELECTRONICS = kit("kit_electronics", com.rpbusiness.business.BusinessType.ELECTRONICS);
+    public static final DeferredItem<KitItem> KIT_FURNITURE = kit("kit_furniture", com.rpbusiness.business.BusinessType.FURNITURE);
+    public static final DeferredItem<KitItem> KIT_BUTCHER = kit("kit_butcher", com.rpbusiness.business.BusinessType.BUTCHER);
+    public static final DeferredItem<KitItem> KIT_GAS_STATION = kit("kit_gas_station", com.rpbusiness.business.BusinessType.GAS_STATION);
+    public static final DeferredItem<KitItem> KIT_HOTEL = kit("kit_hotel", com.rpbusiness.business.BusinessType.HOTEL);
+    public static final DeferredItem<KitItem> KIT_BANK = kit("kit_bank", com.rpbusiness.business.BusinessType.OTHER);
+    public static final DeferredItem<KitItem> KIT_DELIVERY = kit("kit_delivery", com.rpbusiness.business.BusinessType.DELIVERY);
+    public static final DeferredItem<KitItem> KIT_WAREHOUSE = kit("kit_warehouse", com.rpbusiness.business.BusinessType.WAREHOUSE);
+
     // ---------- raw ingredients ----------
     public static final DeferredItem<FoodItem> TOMATO = food("tomato", 2, 0.3f);
     public static final DeferredItem<FoodItem> ONION = food("onion", 1, 0.2f);

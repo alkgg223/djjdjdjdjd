@@ -70,6 +70,9 @@ public final class Actions {
                 for (Business o : data.businesses.values())
                     if (BusinessManager.isOwner(p, o)) o.priceMultiplier = Math.max(50, Math.min(300, o.priceMultiplier + d.getInt("delta")));
             }
+            case "auto_buy" -> b.autoBuy = !b.autoBuy;
+            case "auto_budget" -> b.autoBuyBudget = Math.max(50, Math.min(5000, b.autoBuyBudget + d.getInt("delta")));
+            case "room_price" -> b.roomPrice = Math.max(5, Math.min(2000, b.roomPrice + d.getInt("delta")));
             case "delivery_rate" -> b.deliveryRate = Math.max(30, Math.min(300, b.deliveryRate + d.getInt("delta")));
             case "accept_job" -> {
                 if (!com.rpbusiness.delivery.Deliveries.accept(p, b, d.getInt("job")))

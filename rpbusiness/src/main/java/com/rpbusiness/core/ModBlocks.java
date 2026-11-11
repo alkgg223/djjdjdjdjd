@@ -70,6 +70,10 @@ public final class ModBlocks {
     public static final DeferredBlock<StorageBlock> DELIVERY_CRATE = add("delivery_crate", p -> new StorageBlock(p, 27, StorageBlock.CRATE), wood());
     public static final DeferredBlock<StorageBlock> PACKAGE = add("package", p -> new StorageBlock(p, 9, StorageBlock.PACKAGE), wood().strength(0.5f));
 
+    // ---------- hotel ----------
+    public static final DeferredBlock<HotelBedBlock> HOTEL_BED = add("hotel_bed", HotelBedBlock::new,
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_BLUE).strength(0.8f).sound(SoundType.WOOL).noOcclusion());
+
     // ---------- shops ----------
     public static final DeferredBlock<DisplayBlock> DISPLAY_SHELF = add("display_shelf", p -> new DisplayBlock(p, false), wood());
     public static final DeferredBlock<DisplayBlock> FRIDGE_DISPLAY = add("fridge_display", p -> new DisplayBlock(p, true), metal().lightLevel(s -> 6));

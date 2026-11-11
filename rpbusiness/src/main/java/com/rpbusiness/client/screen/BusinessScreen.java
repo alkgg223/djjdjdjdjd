@@ -27,8 +27,12 @@ public class BusinessScreen extends BaseScreen {
     private static final String[] DELIVERY_TABS = {"overview", "deliveries", "staff", "hire", "finance", "settings", "empire"};
     private int trFrom, trTo = 1, trItem, trCount = 16;
 
+    private static final String[] HOTEL_TABS = {"overview", "rooms", "staff", "hire", "finance", "settings", "empire"};
+    private int dayPage;
+
     private String[] tabs() {
         BusinessType t = BusinessType.byName(data.getString("type"));
+        if (t == BusinessType.HOTEL) return HOTEL_TABS;
         if (t.delivery()) return DELIVERY_TABS;
         if (t.retail && !t.foodService) return SHOP_TABS;
         return FOOD_TABS;
@@ -106,6 +110,7 @@ public class BusinessScreen extends BaseScreen {
             b.active = !t.equals(tab);
             ty += 22;
         }
+        if (List.of("menu", "orders", "staff", "hire", "finance", "products").contains(tab)) scrollButtons(left + 6, top + h - 24);
         switch (tab) {
             case "overview" -> initOverview();
             case "menu" -> initMenu();
@@ -116,7 +121,14 @@ public class BusinessScreen extends BaseScreen {
             case "products" -> initProducts();
             case "deliveries" -> initDeliveries();
             case "empire" -> initEmpire();
-            case "finance" -> {}
+            case "finance" -> {
+                button(cx() + cw() - 92, top + 4, 44, 14, Component.literal("\u25C0"), () -> { dayPage = Math.min(4, dayPage + 1); rebuildWidgets(); });
+                button(cx() + cw() - 46, top + 4, 44, 14, Component.literal("\u25B6"), () -> { dayPage = Math.max(0, dayPage - 1); rebuildWidgets(); });
+            }
+            case "rooms" -> {
+                button(cx(), cy() + 40, 40, 18, Component.literal("-$5"), () -> act("room_price", tag("delta", -5)));
+                button(cx() + 42, cy() + 40, 40, 18, Component.literal("+$5"), () -> act("room_price", tag("delta", 5)));
+            }
         }
     }
 
@@ -321,6 +333,10 @@ public class BusinessScreen extends BaseScreen {
         button(x + 42, y, 40, 18, Component.literal("P+"), () -> act("mult", tag("delta", 10)));
         button(x + 100, y, 40, 18, Component.literal("D-"), () -> act("discount", tag("delta", -5)));
         button(x + 142, y, 40, 18, Component.literal("D+"), () -> act("discount", tag("delta", 5)));
+        y += 22;
+        button(x, y, 140, 18, Component.translatable(data.getBoolean("autoBuy") ? "gui.rpbusiness.autobuy_on" : "gui.rpbusiness.autobuy_off"), () -> act("auto_buy"));
+        button(x + 144, y, 40, 18, Component.literal("-50"), () -> act("auto_budget", tag("delta", -50)));
+        button(x + 186, y, 40, 18, Component.literal("+50"), () -> act("auto_budget", tag("delta", 50)));
         y += 26;
         int bw = (cw() - 8) / 2;
         button(x, y, bw, 20, Component.translatable("gui.rpbusiness.entrance_here"), () -> act("entrance_here"));
@@ -355,6 +371,12 @@ public class BusinessScreen extends BaseScreen {
             case "settings" -> renderSettings(g);
             case "empire" -> renderEmpire(g);
             case "products" -> renderProducts(g);
+            case "rooms" -> {
+                text(g, Component.translatable("gui.rpbusiness.rooms_header"), cx(), cy(), ACCENT);
+                text(g, Component.translatable("gui.rpbusiness.room_price", Money.fmt(data.getInt("roomPrice"))), cx(), cy() + 14, WARN);
+                text(g, Component.translatable("gui.rpbusiness.rooms_info", data.getInt("beds"), data.getInt("bedsFree"), data.getInt("bedsDirty")), cx(), cy() + 26, TEXT);
+                text(g, Component.translatable("gui.rpbusiness.rooms_hint"), cx(), cy() + 66, DIM);
+            }
             case "deliveries" -> renderDeliveries(g);
         }
         super.render(g, mx, my, pt);
@@ -389,8 +411,10 @@ public class BusinessScreen extends BaseScreen {
         long[] a = today.getLongArray("a");
         long inc = 0, exp = 0;
         if (a.length >= Finance.Cat.values().length) {
-            inc = a[Finance.Cat.FOOD_SALES.ordinal()] + a[Finance.Cat.DRINK_SALES.ordinal()] + a[Finance.Cat.TIPS.ordinal()];
-            exp = a[Finance.Cat.SALARIES.ordinal()] + a[Finance.Cat.SUPPLIES.ordinal()] + a[Finance.Cat.DELIVERY.ordinal()] + a[Finance.Cat.HIRING.ordinal()] + a[Finance.Cat.OTHER.ordinal()];
+            inc = a[Finance.Cat.FOOD_SALES.ordinal()] + a[Finance.Cat.DRINK_SALES.ordinal()] + a[Finance.Cat.TIPS.ordinal()]
+                    + a[Finance.Cat.PRODUCT_SALES.ordinal()] + a[Finance.Cat.DELIVERY_INCOME.ordinal()] + a[Finance.Cat.ROOM_SALES.ordinal()];
+            exp = a[Finance.Cat.SALARIES.ordinal()] + a[Finance.Cat.SUPPLIES.ordinal()] + a[Finance.Cat.DELIVERY.ordinal()] + a[Finance.Cat.HIRING.ordinal()]
+                    + a[Finance.Cat.OTHER.ordinal()] + a[Finance.Cat.AUTO_PURCHASE.ordinal()];
         }
         text(g, Component.translatable("gui.rpbusiness.today"), x, y, ACCENT);
         y += 12;
@@ -527,12 +551,14 @@ public class BusinessScreen extends BaseScreen {
         String[] head = {"gui.rpbusiness.day", "gui.rpbusiness.income", "gui.rpbusiness.salaries", "gui.rpbusiness.supplies", "gui.rpbusiness.profit", "gui.rpbusiness.customers"};
         for (int i = 0; i < head.length; i++) if (cols[i] < cw() - 20) text(g, clip(Component.translatable(head[i]).getString(), 54), x + cols[i], y, ACCENT);
         y += 12;
-        for (CompoundTag d : list("days")) {
+        List<CompoundTag> days = list("days");
+        for (CompoundTag d : days.subList(Math.min(days.size(), dayPage * 7), Math.min(days.size(), dayPage * 7 + 7))) {
             long[] a = d.getLongArray("a");
             if (a.length < Finance.Cat.values().length) continue;
-            long inc = a[Finance.Cat.FOOD_SALES.ordinal()] + a[Finance.Cat.DRINK_SALES.ordinal()] + a[Finance.Cat.TIPS.ordinal()];
+            long inc = a[Finance.Cat.FOOD_SALES.ordinal()] + a[Finance.Cat.DRINK_SALES.ordinal()] + a[Finance.Cat.TIPS.ordinal()]
+                    + a[Finance.Cat.PRODUCT_SALES.ordinal()] + a[Finance.Cat.DELIVERY_INCOME.ordinal()] + a[Finance.Cat.ROOM_SALES.ordinal()];
             long sal = a[Finance.Cat.SALARIES.ordinal()];
-            long sup = a[Finance.Cat.SUPPLIES.ordinal()] + a[Finance.Cat.DELIVERY.ordinal()];
+            long sup = a[Finance.Cat.SUPPLIES.ordinal()] + a[Finance.Cat.DELIVERY.ordinal()] + a[Finance.Cat.AUTO_PURCHASE.ordinal()];
             long exp = sal + sup + a[Finance.Cat.HIRING.ordinal()] + a[Finance.Cat.OTHER.ordinal()];
             String[] vals = {"#" + d.getLong("day"), Money.fmt(inc), Money.fmt(sal), Money.fmt(sup), Money.fmt(inc - exp), d.getInt("c") + "/" + (d.getInt("c") + d.getInt("l"))};
             for (int i = 0; i < vals.length; i++) if (cols[i] < cw() - 20) text(g, vals[i], x + cols[i], y, i == 4 ? (inc - exp >= 0 ? GOOD : BAD) : TEXT);
@@ -560,6 +586,7 @@ public class BusinessScreen extends BaseScreen {
         int x = cx(), y = cy() + 52;
         text(g, Component.translatable("gui.rpbusiness.hours_label", String.format("%02d:00", data.getInt("open")), String.format("%02d:00", data.getInt("close"))), x + 190, y + 5, TEXT);
         text(g, Component.translatable("gui.rpbusiness.price_label", data.getInt("mult"), data.getInt("discount")), x + 190, y + 27, TEXT);
+        text(g, Component.translatable("gui.rpbusiness.autobuy_budget", Money.fmt(data.getInt("autoBudget"))), x + 232, y + 49, DIM);
         int[] mn = data.getIntArray("min"), mx = data.getIntArray("max");
         if (mn.length == 3 && mx.length == 3)
             text(g, clip(Component.translatable("gui.rpbusiness.area", mn[0] + "," + mn[1] + "," + mn[2], mx[0] + "," + mx[1] + "," + mx[2]).getString(), cw()), x, top + h - 16, DIM);
