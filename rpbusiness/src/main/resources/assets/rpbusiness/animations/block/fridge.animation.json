@@ -1,0 +1,58 @@
+{
+ "format_version": "1.8.0",
+ "animations": {
+  "open": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.35,
+   "bones": {
+    "door": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.35": [
+       0,
+       -105,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "close": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.35,
+   "bones": {
+    "door": {
+     "rotation": {
+      "0.0": [
+       0,
+       -105,
+       0
+      ],
+      "0.35": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "idle": {
+   "loop": true,
+   "animation_length": 1.0,
+   "bones": {
+    "door": {
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  }
+ }
+}

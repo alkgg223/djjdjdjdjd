@@ -1,0 +1,20 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "rpbusiness:block/delivery_crate",
+   "y": 0
+  },
+  "facing=east": {
+   "model": "rpbusiness:block/delivery_crate",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "rpbusiness:block/delivery_crate",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "rpbusiness:block/delivery_crate",
+   "y": 270
+  }
+ }
+}

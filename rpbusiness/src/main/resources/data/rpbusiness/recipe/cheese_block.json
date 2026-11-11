@@ -1,0 +1,13 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "minecraft:milk_bucket"
+  }
+ ],
+ "result": {
+  "id": "rpbusiness:cheese_block",
+  "count": 2
+ }
+}

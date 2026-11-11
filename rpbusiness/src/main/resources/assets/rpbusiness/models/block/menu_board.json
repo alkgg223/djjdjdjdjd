@@ -1,0 +1,106 @@
+{
+ "parent": "minecraft:block/block",
+ "textures": {
+  "particle": "rpbusiness:block/chalkboard",
+  "c": "rpbusiness:block/chalkboard",
+  "w": "rpbusiness:block/walnut"
+ },
+ "elements": [
+  {
+   "from": [
+    1,
+    2,
+    7
+   ],
+   "to": [
+    15,
+    16,
+    9
+   ],
+   "faces": {
+    "north": {
+     "texture": "#c"
+    },
+    "south": {
+     "texture": "#c"
+    },
+    "east": {
+     "texture": "#w"
+    },
+    "west": {
+     "texture": "#w"
+    },
+    "up": {
+     "texture": "#w"
+    },
+    "down": {
+     "texture": "#w"
+    }
+   }
+  },
+  {
+   "from": [
+    1.5,
+    0,
+    7.5
+   ],
+   "to": [
+    2.5,
+    2,
+    8.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#w"
+    },
+    "south": {
+     "texture": "#w"
+    },
+    "east": {
+     "texture": "#w"
+    },
+    "west": {
+     "texture": "#w"
+    },
+    "up": {
+     "texture": "#w"
+    },
+    "down": {
+     "texture": "#w"
+    }
+   }
+  },
+  {
+   "from": [
+    13.5,
+    0,
+    7.5
+   ],
+   "to": [
+    14.5,
+    2,
+    8.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#w"
+    },
+    "south": {
+     "texture": "#w"
+    },
+    "east": {
+     "texture": "#w"
+    },
+    "west": {
+     "texture": "#w"
+    },
+    "up": {
+     "texture": "#w"
+    },
+    "down": {
+     "texture": "#w"
+    }
+   }
+  }
+ ]
+}

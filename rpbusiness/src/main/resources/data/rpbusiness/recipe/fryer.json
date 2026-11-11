@@ -1,0 +1,24 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "I I",
+  "ICI",
+  "IFI"
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "C": {
+   "item": "minecraft:cauldron"
+  },
+  "F": {
+   "item": "minecraft:furnace"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:fryer",
+  "count": 1
+ }
+}

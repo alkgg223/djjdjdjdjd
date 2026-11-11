@@ -1,0 +1,23 @@
+{
+ "replace": false,
+ "values": [
+  "rpbusiness:kitchen_counter",
+  "rpbusiness:grill",
+  "rpbusiness:fryer",
+  "rpbusiness:oven",
+  "rpbusiness:cooking_pot",
+  "rpbusiness:prep_station",
+  "rpbusiness:drink_machine",
+  "rpbusiness:fridge",
+  "rpbusiness:freezer",
+  "rpbusiness:serving_counter",
+  "rpbusiness:bar_stool",
+  "rpbusiness:pendant_lamp",
+  "rpbusiness:checkered_floor",
+  "rpbusiness:kitchen_tiles",
+  "rpbusiness:cash_register",
+  "rpbusiness:payment_terminal",
+  "rpbusiness:business_computer",
+  "rpbusiness:supplier_terminal"
+ ]
+}

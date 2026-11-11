@@ -1,0 +1,15 @@
+{
+ "replace": false,
+ "values": [
+  "rpbusiness:counter_cabinet",
+  "rpbusiness:cutting_board",
+  "rpbusiness:pantry_shelf",
+  "rpbusiness:dining_table",
+  "rpbusiness:dining_chair",
+  "rpbusiness:sofa",
+  "rpbusiness:menu_board",
+  "rpbusiness:potted_plant",
+  "rpbusiness:delivery_crate",
+  "rpbusiness:package"
+ ]
+}

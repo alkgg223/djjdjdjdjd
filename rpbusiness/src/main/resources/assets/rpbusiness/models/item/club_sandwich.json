@@ -1,0 +1,6 @@
+{
+ "parent": "minecraft:item/generated",
+ "textures": {
+  "layer0": "rpbusiness:item/club_sandwich"
+ }
+}

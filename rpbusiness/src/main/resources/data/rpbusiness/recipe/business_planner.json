@@ -1,0 +1,22 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "minecraft:paper"
+  },
+  {
+   "item": "minecraft:paper"
+  },
+  {
+   "item": "minecraft:ink_sac"
+  },
+  {
+   "item": "minecraft:stick"
+  }
+ ],
+ "result": {
+  "id": "rpbusiness:business_planner",
+  "count": 1
+ }
+}

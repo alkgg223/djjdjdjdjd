@@ -1,0 +1,21 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "WWW",
+  " I ",
+  " I "
+ ],
+ "key": {
+  "W": {
+   "tag": "minecraft:wool"
+  },
+  "I": {
+   "item": "minecraft:iron_ingot"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:bar_stool",
+  "count": 2
+ }
+}

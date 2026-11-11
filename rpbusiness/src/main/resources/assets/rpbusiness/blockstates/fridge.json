@@ -1,0 +1,28 @@
+{
+ "variants": {
+  "facing=north,half=lower": {
+   "model": "rpbusiness:block/fridge_particle"
+  },
+  "facing=north,half=upper": {
+   "model": "rpbusiness:block/fridge_particle"
+  },
+  "facing=east,half=lower": {
+   "model": "rpbusiness:block/fridge_particle"
+  },
+  "facing=east,half=upper": {
+   "model": "rpbusiness:block/fridge_particle"
+  },
+  "facing=south,half=lower": {
+   "model": "rpbusiness:block/fridge_particle"
+  },
+  "facing=south,half=upper": {
+   "model": "rpbusiness:block/fridge_particle"
+  },
+  "facing=west,half=lower": {
+   "model": "rpbusiness:block/fridge_particle"
+  },
+  "facing=west,half=upper": {
+   "model": "rpbusiness:block/fridge_particle"
+  }
+ }
+}

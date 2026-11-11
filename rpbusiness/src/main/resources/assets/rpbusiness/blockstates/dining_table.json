@@ -1,0 +1,10 @@
+{
+ "variants": {
+  "dirty=false": {
+   "model": "rpbusiness:block/dining_table"
+  },
+  "dirty=true": {
+   "model": "rpbusiness:block/dining_table_dirty"
+  }
+ }
+}

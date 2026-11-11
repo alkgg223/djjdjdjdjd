@@ -1,0 +1,24 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "III",
+  "IGI",
+  "IFI"
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "G": {
+   "item": "minecraft:glass_pane"
+  },
+  "F": {
+   "item": "minecraft:furnace"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:oven",
+  "count": 1
+ }
+}

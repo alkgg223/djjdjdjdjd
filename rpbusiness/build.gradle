@@ -1,0 +1,54 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+
+version = mod_version
+group = mod_group_id
+base { archivesName = mod_id }
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+repositories {
+    maven { url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' }
+}
+
+neoForge {
+    version = project.neo_version
+    runs {
+        client { client() }
+        server { server() }
+        testclient {
+            client()
+            gameDirectory = project.file('run')
+            programArguments.addAll('--quickPlaySingleplayer', 'selftest', '--width', '1280', '--height', '720')
+            systemProperty 'rpbusiness.camera', project.findProperty('camera') ?: '6,0.5,10.5,180,15'
+            if (project.hasProperty('guitour')) systemProperty 'rpbusiness.guitour', 'true'
+        }
+        selftest {
+            server()
+            gameDirectory = project.file('run-test')
+            systemProperty 'rpbusiness.selftest', project.findProperty('selftest') ?: 'build'
+            systemProperty 'rpbusiness.selftest.ticks', project.findProperty('selftestTicks') ?: '7200'
+        }
+    }
+    mods {
+        "${mod_id}" { sourceSet(sourceSets.main) }
+    }
+}
+
+dependencies {
+    implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
+    jarJar("software.bernie.geckolib:geckolib-neoforge-${minecraft_version}") {
+        version { strictly "[${geckolib_version},)"; prefer geckolib_version }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 21 }
+
+var replaceProperties = [minecraft_version: minecraft_version, neo_version: neo_version, mod_id: mod_id,
+                         mod_name: mod_name, mod_version: mod_version, geckolib_version: geckolib_version]
+processResources {
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/neoforge.mods.toml']) { expand replaceProperties }
+}

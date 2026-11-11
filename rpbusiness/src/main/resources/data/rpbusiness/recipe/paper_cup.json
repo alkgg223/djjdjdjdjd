@@ -1,0 +1,17 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "P P",
+  " P "
+ ],
+ "key": {
+  "P": {
+   "item": "minecraft:paper"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:paper_cup",
+  "count": 4
+ }
+}

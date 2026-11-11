@@ -1,0 +1,21 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "  S",
+  " S ",
+  "W  "
+ ],
+ "key": {
+  "S": {
+   "item": "minecraft:stick"
+  },
+  "W": {
+   "tag": "minecraft:wool"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:mop",
+  "count": 1
+ }
+}

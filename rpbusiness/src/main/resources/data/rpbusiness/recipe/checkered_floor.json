@@ -1,0 +1,20 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "WB",
+  "BW"
+ ],
+ "key": {
+  "W": {
+   "item": "minecraft:white_concrete"
+  },
+  "B": {
+   "item": "minecraft:black_concrete"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:checkered_floor",
+  "count": 4
+ }
+}

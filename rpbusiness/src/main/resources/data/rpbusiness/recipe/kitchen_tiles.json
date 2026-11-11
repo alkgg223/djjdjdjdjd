@@ -1,0 +1,20 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "WT",
+  "TW"
+ ],
+ "key": {
+  "W": {
+   "item": "minecraft:white_concrete"
+  },
+  "T": {
+   "item": "minecraft:white_terracotta"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:kitchen_tiles",
+  "count": 4
+ }
+}

@@ -1,0 +1,114 @@
+{
+ "chop": {
+  "sounds": [
+   {
+    "name": "rpbusiness:chop"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.chop"
+ },
+ "sizzle": {
+  "sounds": [
+   {
+    "name": "rpbusiness:sizzle"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.sizzle"
+ },
+ "bubble": {
+  "sounds": [
+   {
+    "name": "rpbusiness:bubble"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.bubble"
+ },
+ "pour": {
+  "sounds": [
+   {
+    "name": "rpbusiness:pour"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.pour"
+ },
+ "order_bell": {
+  "sounds": [
+   {
+    "name": "rpbusiness:order_bell"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.order_bell"
+ },
+ "cash_register": {
+  "sounds": [
+   {
+    "name": "rpbusiness:cash_register"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.cash_register"
+ },
+ "card_beep": {
+  "sounds": [
+   {
+    "name": "rpbusiness:card_beep"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.card_beep"
+ },
+ "clean": {
+  "sounds": [
+   {
+    "name": "rpbusiness:clean"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.clean"
+ },
+ "place_food": {
+  "sounds": [
+   {
+    "name": "rpbusiness:place_food"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.place_food"
+ },
+ "fridge_open": {
+  "sounds": [
+   {
+    "name": "rpbusiness:fridge_open"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.fridge_open"
+ },
+ "fridge_close": {
+  "sounds": [
+   {
+    "name": "rpbusiness:fridge_close"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.fridge_close"
+ },
+ "eat": {
+  "sounds": [
+   {
+    "name": "rpbusiness:eat"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.eat"
+ },
+ "happy": {
+  "sounds": [
+   {
+    "name": "rpbusiness:happy"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.happy"
+ },
+ "unhappy": {
+  "sounds": [
+   {
+    "name": "rpbusiness:unhappy"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.unhappy"
+ }
+}

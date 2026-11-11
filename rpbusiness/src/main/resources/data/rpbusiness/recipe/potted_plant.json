@@ -1,0 +1,21 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  " L ",
+  "LLL",
+  " F "
+ ],
+ "key": {
+  "L": {
+   "tag": "minecraft:leaves"
+  },
+  "F": {
+   "item": "minecraft:flower_pot"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:potted_plant",
+  "count": 1
+ }
+}

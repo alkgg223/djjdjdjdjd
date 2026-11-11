@@ -1,0 +1,90 @@
+{
+ "format_version": "1.12.0",
+ "minecraft:geometry": [
+  {
+   "description": {
+    "identifier": "geometry.rpbusiness.fridge",
+    "texture_width": 64,
+    "texture_height": 96,
+    "visible_bounds_width": 2,
+    "visible_bounds_height": 3,
+    "visible_bounds_offset": [
+     0,
+     1,
+     0
+    ]
+   },
+   "bones": [
+    {
+     "name": "body",
+     "pivot": [
+      0,
+      0,
+      0
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -7,
+        0,
+        -7
+       ],
+       "size": [
+        14,
+        32,
+        14
+       ],
+       "uv": [
+        0,
+        0
+       ]
+      }
+     ]
+    },
+    {
+     "name": "door",
+     "pivot": [
+      7,
+      0,
+      -7
+     ],
+     "parent": "body",
+     "cubes": [
+      {
+       "origin": [
+        -7,
+        1,
+        -8
+       ],
+       "size": [
+        14,
+        30,
+        1
+       ],
+       "uv": [
+        0,
+        46
+       ]
+      },
+      {
+       "origin": [
+        -6,
+        12,
+        -9
+       ],
+       "size": [
+        1,
+        10,
+        1
+       ],
+       "uv": [
+        32,
+        46
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

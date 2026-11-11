@@ -1,0 +1,27 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "IRI",
+  "IGI",
+  "IBI"
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "R": {
+   "item": "minecraft:red_dye"
+  },
+  "G": {
+   "item": "minecraft:glass"
+  },
+  "B": {
+   "item": "minecraft:bucket"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:drink_machine",
+  "count": 1
+ }
+}

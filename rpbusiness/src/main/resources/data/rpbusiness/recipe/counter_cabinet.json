@@ -1,0 +1,24 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "QQQ",
+  "PCP",
+  "PPP"
+ ],
+ "key": {
+  "Q": {
+   "item": "minecraft:smooth_quartz"
+  },
+  "P": {
+   "tag": "minecraft:planks"
+  },
+  "C": {
+   "item": "minecraft:chest"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:counter_cabinet",
+  "count": 1
+ }
+}

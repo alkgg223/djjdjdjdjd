@@ -1,0 +1,21 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "W  ",
+  "WWW",
+  "PPP"
+ ],
+ "key": {
+  "W": {
+   "tag": "minecraft:wool"
+  },
+  "P": {
+   "tag": "minecraft:planks"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:sofa",
+  "count": 2
+ }
+}

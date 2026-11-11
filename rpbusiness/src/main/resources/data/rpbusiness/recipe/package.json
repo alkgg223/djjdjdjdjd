@@ -1,0 +1,18 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "PPP",
+  "P P",
+  "PPP"
+ ],
+ "key": {
+  "P": {
+   "item": "minecraft:paper"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:package",
+  "count": 2
+ }
+}

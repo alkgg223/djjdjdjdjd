@@ -1,0 +1,125 @@
+{
+ "parent": "minecraft:block/block",
+ "textures": {
+  "particle": "rpbusiness:block/table_top",
+  "t": "rpbusiness:block/table_top",
+  "l": "rpbusiness:block/walnut",
+  "x": "rpbusiness:block/table_dirty"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    13,
+    0
+   ],
+   "to": [
+    16,
+    16,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#t"
+    },
+    "south": {
+     "texture": "#t"
+    },
+    "east": {
+     "texture": "#t"
+    },
+    "west": {
+     "texture": "#t"
+    },
+    "up": {
+     "texture": "#t"
+    },
+    "down": {
+     "texture": "#t"
+    }
+   }
+  },
+  {
+   "from": [
+    6,
+    0,
+    6
+   ],
+   "to": [
+    10,
+    13,
+    10
+   ],
+   "faces": {
+    "north": {
+     "texture": "#l"
+    },
+    "south": {
+     "texture": "#l"
+    },
+    "east": {
+     "texture": "#l"
+    },
+    "west": {
+     "texture": "#l"
+    },
+    "up": {
+     "texture": "#l"
+    },
+    "down": {
+     "texture": "#l"
+    }
+   }
+  },
+  {
+   "from": [
+    3,
+    0,
+    3
+   ],
+   "to": [
+    13,
+    1,
+    13
+   ],
+   "faces": {
+    "north": {
+     "texture": "#l"
+    },
+    "south": {
+     "texture": "#l"
+    },
+    "east": {
+     "texture": "#l"
+    },
+    "west": {
+     "texture": "#l"
+    },
+    "up": {
+     "texture": "#l"
+    },
+    "down": {
+     "texture": "#l"
+    }
+   }
+  },
+  {
+   "from": [
+    0,
+    16.01,
+    0
+   ],
+   "to": [
+    16,
+    16.02,
+    16
+   ],
+   "faces": {
+    "up": {
+     "texture": "#x"
+    }
+   }
+  }
+ ],
+ "render_type": "minecraft:cutout"
+}

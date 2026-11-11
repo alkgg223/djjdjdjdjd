@@ -1,0 +1,23 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  " C ",
+  "NGN"
+ ],
+ "key": {
+  "C": {
+   "item": "minecraft:chain"
+  },
+  "N": {
+   "item": "minecraft:iron_nugget"
+  },
+  "G": {
+   "item": "minecraft:glowstone"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:pendant_lamp",
+  "count": 2
+ }
+}

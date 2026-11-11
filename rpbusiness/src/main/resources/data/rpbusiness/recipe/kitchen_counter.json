@@ -1,0 +1,21 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "QQQ",
+  "P P",
+  "PPP"
+ ],
+ "key": {
+  "Q": {
+   "item": "minecraft:smooth_quartz"
+  },
+  "P": {
+   "tag": "minecraft:planks"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:kitchen_counter",
+  "count": 2
+ }
+}

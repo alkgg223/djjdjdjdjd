@@ -1,0 +1,16 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "WWW"
+ ],
+ "key": {
+  "W": {
+   "tag": "minecraft:wooden_slabs"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:cutting_board",
+  "count": 2
+ }
+}

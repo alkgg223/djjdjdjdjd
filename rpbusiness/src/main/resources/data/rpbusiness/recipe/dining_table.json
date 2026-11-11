@@ -1,0 +1,21 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "SSS",
+  " F ",
+  " F "
+ ],
+ "key": {
+  "S": {
+   "tag": "minecraft:wooden_slabs"
+  },
+  "F": {
+   "tag": "minecraft:wooden_fences"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:dining_table",
+  "count": 1
+ }
+}

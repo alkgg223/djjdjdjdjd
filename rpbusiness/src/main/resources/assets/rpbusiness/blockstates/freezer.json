@@ -1,0 +1,16 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "rpbusiness:block/freezer_particle"
+  },
+  "facing=east": {
+   "model": "rpbusiness:block/freezer_particle"
+  },
+  "facing=south": {
+   "model": "rpbusiness:block/freezer_particle"
+  },
+  "facing=west": {
+   "model": "rpbusiness:block/freezer_particle"
+  }
+ }
+}

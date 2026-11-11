@@ -1,0 +1,24 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "BBB",
+  "ICI",
+  "III"
+ ],
+ "key": {
+  "B": {
+   "item": "minecraft:iron_bars"
+  },
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "C": {
+   "item": "minecraft:campfire"
+  }
+ },
+ "result": {
+  "id": "rpbusiness:grill",
+  "count": 1
+ }
+}
