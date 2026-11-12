@@ -13,7 +13,7 @@ uniform vec2 Drift;
 uniform vec3 SunDir;
 uniform vec3 SunColor;
 uniform vec3 SkyColor;
-uniform vec3 FogColor;
+uniform vec3 HazeColor;
 uniform float Coverage;
 uniform float Darkness;
 uniform float CloudBase;
@@ -167,7 +167,7 @@ void main() {
     }
     float far = weight > 0.0 ? distSum / weight : t1;
     float haze = 1.0 - exp(-far / FarFade);
-    col = mix(col, FogColor * alpha, clamp(haze, 0.0, 1.0));
+    col = mix(col, HazeColor * alpha, clamp(haze, 0.0, 1.0));
     // Far out at the horizon the clouds melt into the sky.
     float horizon = 1.0 - smoothstep(4500.0, 7000.0, far);
     fragColor = vec4(col * horizon, alpha * horizon);

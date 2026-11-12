@@ -116,7 +116,7 @@ public final class VolumeClouds {
         float amb = 0.25F + 0.75F * Mth.clamp(SkyLight.r, 0F, 1F);
         march.safeGetUniform("SkyColor").set((float) (sky.x * 0.6 + fog[0] * 0.4) * amb, (float) (sky.y * 0.6 + fog[1] * 0.4) * amb,
                 (float) (sky.z * 0.6 + fog[2] * 0.4) * amb);
-        march.safeGetUniform("FogColor").set(fog[0], fog[1], fog[2]);
+        march.safeGetUniform("HazeColor").set(fog[0], fog[1], fog[2]);
         march.safeGetUniform("Coverage").set(coverage);
         march.safeGetUniform("Darkness").set(darkness * (0.6F + 0.4F * ClientWeather.thunder));
         march.safeGetUniform("CloudBase").set(base);

@@ -98,7 +98,9 @@ public final class HailManager {
             }
             return;
         }
-        if (at.isAir() && pellets.defaultBlockState().canSurvive(level, top)) {
+        // Hailstones settle in the grass too (they flatten it).
+        boolean plant = !at.isAir() && at.canBeReplaced() && at.getFluidState().isEmpty() && !(at.getBlock() instanceof CoverBlock) && !at.is(net.minecraft.world.level.block.Blocks.SNOW);
+        if ((at.isAir() || plant) && pellets.defaultBlockState().canSurvive(level, top)) {
             level.setBlockAndUpdate(top, pellets.defaultBlockState());
         }
     }

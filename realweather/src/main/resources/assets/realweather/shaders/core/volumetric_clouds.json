@@ -11,7 +11,7 @@
     { "name": "SunDir", "type": "float", "count": 3, "values": [ 0.0, 1.0, 0.0 ] },
     { "name": "SunColor", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0 ] },
     { "name": "SkyColor", "type": "float", "count": 3, "values": [ 0.5, 0.6, 0.8 ] },
-    { "name": "FogColor", "type": "float", "count": 3, "values": [ 0.7, 0.8, 0.9 ] },
+    { "name": "HazeColor", "type": "float", "count": 3, "values": [ 0.7, 0.8, 0.9 ] },
     { "name": "Coverage", "type": "float", "count": 1, "values": [ 0.5 ] },
     { "name": "Darkness", "type": "float", "count": 1, "values": [ 0.0 ] },
     { "name": "CloudBase", "type": "float", "count": 1, "values": [ 160.0 ] },

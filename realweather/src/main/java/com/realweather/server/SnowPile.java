@@ -89,8 +89,13 @@ public final class SnowPile {
                 level.setBlockAndUpdate(snowPos, Blocks.SNOW_BLOCK.defaultBlockState());
                 level.setBlockAndUpdate(snowPos.above(), Blocks.SNOW.defaultBlockState());
             }
-        } else if (level.getBlockState(top).isAir() && Blocks.SNOW.defaultBlockState().canSurvive(level, top)) {
-            level.setBlockAndUpdate(top, Blocks.SNOW.defaultBlockState());
+        } else {
+            // Snow settles on the ground and over the grass and flowers on it.
+            BlockState at = level.getBlockState(top);
+            boolean plant = !at.isAir() && at.canBeReplaced() && at.getFluidState().isEmpty() && layers(at) == 0 && !(at.getBlock() instanceof CoverBlock);
+            if ((at.isAir() || plant) && Blocks.SNOW.defaultBlockState().canSurvive(level, top)) {
+                level.setBlockAndUpdate(top, Blocks.SNOW.defaultBlockState());
+            }
         }
     }
 
