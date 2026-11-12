@@ -64,7 +64,9 @@ public final class TsunamiRenderer {
     private static void render(RenderLevelStageEvent event, Minecraft mc, ClientLevel level) {
         float pt = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         Vec3 cam = event.getCamera().getPosition();
+        // The flood is drawn over the loaded land; the wave itself stands out above the horizon even beyond it.
         float reach = Math.min(420F, mc.options.getEffectiveRenderDistance() * 16F + 64F);
+        float waveReach = Math.max(320F, Math.min(560F, reach * 1.3F));
         float[] fog = RenderSystem.getShaderFogColor();
         float sky = Mth.clamp(level.getSkyDarken(pt), 0.18F, 1F);
         Matrix4fStack mv = RenderSystem.getModelViewStack();
@@ -86,7 +88,7 @@ public final class TsunamiRenderer {
                 BufferBuilder buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
                 boolean any = false;
                 for (ClientTsunamis.W w : ClientTsunamis.all()) {
-                    any |= wave(buf, level, w.t, cam, pt, reach, fog, sky, pass == 1);
+                    any |= wave(buf, level, w.t, cam, pt, reach, waveReach, fog, sky, pass == 1);
                 }
                 MeshData mesh = buf.build();
                 if (mesh != null) {
@@ -108,22 +110,29 @@ public final class TsunamiRenderer {
     private static final it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap LAND = new it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap();
     private static long landClearedAt;
 
-    /** Whether a flood tile lies over land (looked up once and remembered; the world changes slowly). */
-    private static boolean land(ClientLevel level, Tsunami t, float s, float l, float tile) {
+    /**
+     * Whether the flood stands on land at a grid corner of the flood sheet (looked up once and remembered; the world changes
+     * slowly). Out at sea, and where the client has no terrain, the water behind the wave is back at sea level.
+     */
+    private static boolean land(ClientLevel level, Tsunami t, int si, int li, float tile) {
         long now = level.getGameTime();
         if (now - landClearedAt > 100 || LAND.size() > 20000) {
             LAND.clear();
             landClearedAt = now;
         }
-        long key = ((long) t.id << 48) | ((Mth.floor(s / tile) & 0xFFFFFFL) << 24) | (Mth.floor(l / tile) & 0xFFFFFFL);
+        long key = ((long) t.id << 48) | ((si & 0xFFFFFFL) << 24) | (li & 0xFFFFFFL);
         byte v = LAND.getOrDefault(key, (byte) -1);
         if (v < 0) {
             v = 0;
-            float[][] pts = {{0F, 0F}, {-0.4F, -0.4F}, {0.4F, -0.4F}, {0.4F, 0.4F}, {-0.4F, 0.4F}};
+            float s = si * tile, l = li * tile;
+            float[][] pts = {{0F, 0F}, {-0.3F, 0F}, {0.3F, 0F}, {0F, -0.3F}, {0F, 0.3F}};
             for (float[] p : pts) {
                 float ss = s + p[0] * tile, ll = l + p[1] * tile;
                 int x = Mth.floor(t.ox + t.dirX * ss - t.dirZ * ll);
                 int z = Mth.floor(t.oz + t.dirZ * ss + t.dirX * ll);
+                if (!level.hasChunk(x >> 4, z >> 4)) {
+                    continue;
+                }
                 int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z);
                 net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(x, top - 1, z);
                 if (top - 1 > t.baseY + 0.5F || level.getFluidState(below).isEmpty()) {
@@ -136,8 +145,8 @@ public final class TsunamiRenderer {
         return v == 1;
     }
 
-    private static boolean wave(BufferBuilder buf, ClientLevel level, Tsunami t, Vec3 cam, float pt, float reach, float[] fog, float sky,
-                                boolean foam) {
+    private static boolean wave(BufferBuilder buf, ClientLevel level, Tsunami t, Vec3 cam, float pt, float floodReach, float reach, float[] fog,
+                                float sky, boolean foam) {
         float time = t.age + pt;
         float front = t.front + (t.stage == Tsunami.RUNNING ? t.speed() * pt : 0F);
         double sc = t.along(cam.x, cam.z);
@@ -154,31 +163,43 @@ public final class TsunamiRenderer {
         boolean any = false;
         // The flood behind the wave.
         float backEnd = front + (BODY[0][0] - TOE_DS) * h + 1F + 2F;
-        float s0 = (float) Math.max(0.0, sc - reach);
-        float s1 = Math.min(backEnd, (float) (sc + reach));
-        if (t.drained < 0.999F && s1 > s0) {
-            float tile = 24F;
+        float s0 = (float) Math.max(0.0, sc - floodReach);
+        float s1 = Math.min(backEnd, (float) (sc + floodReach));
+        float fl0 = (float) Math.max(-width, lc - floodReach), fl1 = (float) Math.min(width, lc + floodReach);
+        if (t.drained < 0.999F && s1 > s0 && fl1 > fl0) {
+            float tile = 16F;
             float flow = t.stage == Tsunami.RUNNING ? time * t.speed() * 0.45F : -time * 0.05F;
             float alpha = (foam ? 0.3F : 0.86F) * Math.min(1F, (1F - t.drained) * 3F);
             float bright = foam ? 0.9F : 0.62F;
-            // Tiles on a fixed grid along the wave, so the land lookup below stays put as the camera moves.
-            for (float sg = Mth.floor(s0 / tile) * tile; sg < s1; sg += tile) {
-                float s = Math.max(s0, sg), sb = Math.min(s1, sg + tile);
-                for (float lg2 = Mth.floor(l0 / tile) * tile; lg2 < l1; lg2 += tile) {
-                    float l = Math.max(l0, lg2), lb2 = Math.min(l1, lg2 + tile);
-                    // Only over land the wave has run over: out at sea the water behind it is back at sea level.
-                    if (!land(level, t, sg + tile * 0.5F, lg2 + tile * 0.5F, tile)) {
+            float sea = t.baseY - 0.35F;
+            // A sheet on a fixed grid along the wave: level over the flooded land, sloping down into the sea at the shore.
+            int si0 = Mth.floor(s0 / tile), si1 = Mth.ceil(s1 / tile);
+            int li0 = Mth.floor(fl0 / tile), li1 = Mth.ceil(fl1 / tile);
+            float[] cs = new float[4], cl = new float[4];
+            boolean[] cland = new boolean[4];
+            for (int si = si0; si < si1; si++) {
+                for (int li = li0; li < li1; li++) {
+                    cland[0] = land(level, t, si, li, tile);
+                    cland[1] = land(level, t, si + 1, li, tile);
+                    cland[2] = land(level, t, si + 1, li + 1, tile);
+                    cland[3] = land(level, t, si, li + 1, tile);
+                    if (!cland[0] && !cland[1] && !cland[2] && !cland[3]) {
                         continue;
                     }
-                    float[][] c = {{s, l}, {sb, l}, {sb, lb2}, {s, lb2}};
-                    for (float[] p : c) {
-                        double x = t.ox + t.dirX * p[0] - t.dirZ * p[1] - cam.x;
-                        double z = t.oz + t.dirZ * p[0] + t.dirX * p[1] - cam.z;
-                        float y = (float) (flood - cam.y);
+                    float sa = Math.max(s0, si * tile), sb = Math.min(s1, (si + 1) * tile);
+                    float la = Math.max(fl0, li * tile), lb2 = Math.min(fl1, (li + 1) * tile);
+                    cs[0] = sa; cl[0] = la;
+                    cs[1] = sb; cl[1] = la;
+                    cs[2] = sb; cl[2] = lb2;
+                    cs[3] = sa; cl[3] = lb2;
+                    for (int c = 0; c < 4; c++) {
+                        double x = t.ox + t.dirX * cs[c] - t.dirZ * cl[c] - cam.x;
+                        double z = t.oz + t.dirZ * cs[c] + t.dirX * cl[c] - cam.z;
+                        float y = (float) ((cland[c] ? flood : sea) - cam.y);
                         float d = (float) Math.sqrt(x * x + z * z);
                         float haze = 1F - (float) Math.exp(-d / 420F);
-                        vertex(buf, (float) x, y, (float) z, p[1] / 32F, (p[0] - flow) / 32F, bright * lr, bright * lg, bright * lb, alpha, fog, haze,
-                                d, reach);
+                        vertex(buf, (float) x, y, (float) z, cl[c] / 32F, (cs[c] - flow) / 32F, bright * lr, bright * lg, bright * lb,
+                                cland[c] ? alpha : alpha * 0.5F, fog, haze, d, floodReach);
                     }
                     any = true;
                 }

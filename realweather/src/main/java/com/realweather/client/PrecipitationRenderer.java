@@ -284,10 +284,12 @@ public final class PrecipitationRenderer {
                 float hw = 0.5F;
                 int lc = light[i];
                 BufferBuilder b = buffer;
+                // Blowing dust thins out upwards, so the tops of the sheets don't show as a ceiling overhead.
+                float aTop = kind == SAND_COL ? 0F : kind == SNOW_COL ? a * 0.6F : a;
                 b.addVertex(bx - px * hw, yb, bz - pz * hw).setUv(u0, vB).setColor(red, green, blue, a).setLight(lc);
                 b.addVertex(bx + px * hw, yb, bz + pz * hw).setUv(u1, vB).setColor(red, green, blue, a).setLight(lc);
-                b.addVertex(bx + shx + px * hw, yt, bz + shz + pz * hw).setUv(u1, vT).setColor(red, green, blue, a).setLight(lc);
-                b.addVertex(bx + shx - px * hw, yt, bz + shz - pz * hw).setUv(u0, vT).setColor(red, green, blue, a).setLight(lc);
+                b.addVertex(bx + shx + px * hw, yt, bz + shz + pz * hw).setUv(u1, vT).setColor(red, green, blue, aTop).setLight(lc);
+                b.addVertex(bx + shx - px * hw, yt, bz + shz - pz * hw).setUv(u0, vT).setColor(red, green, blue, aTop).setLight(lc);
             }
         }
     }
