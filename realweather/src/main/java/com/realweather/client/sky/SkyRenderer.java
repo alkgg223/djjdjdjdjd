@@ -76,6 +76,8 @@ public final class SkyRenderer {
                     pending = false;
                     draw(event, false);
                 }
+                // An eclipse behind thick cloud: the sun's glow through the clouds.
+                EclipseRenderer.afterClouds(event);
             }
         } catch (RuntimeException | LinkageError e) {
             failed = true;
@@ -139,7 +141,8 @@ public final class SkyRenderer {
             }
         }
         if (storms) {
-            StormClouds.collect(level, cam, pt, q);
+            // In the 3D cloud levels the rain storms are part of the volumetric clouds; tornado storms stay as they are.
+            StormClouds.collect(level, cam, pt, q, clouds && ClientConfig.clouds3d() && VolumeClouds.available());
         }
         if (tornadoes) {
             TornadoRenderer.collect(level, cam, pt, ClientConfig.tornadoQuality(), SkyLight.r, SkyLight.g, SkyLight.b, SkyLight.sunSide);

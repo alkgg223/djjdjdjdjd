@@ -149,6 +149,24 @@ public final class VolumeClouds {
             march.safeGetUniform("Flash" + i).set(FLASH_POS[i * 4], FLASH_POS[i * 4 + 1], FLASH_POS[i * 4 + 2], Math.max(1F, FLASH_POS[i * 4 + 3]));
         }
         march.safeGetUniform("FlashPower").set(FLASH_POWER[0], FLASH_POWER[1], FLASH_POWER[2], FLASH_POWER[3]);
+        // Rain storms (not the ones with a tornado: those keep their own look), nearest first.
+        java.util.List<com.realweather.client.ClientStorms.Cell> cells = new java.util.ArrayList<>();
+        for (com.realweather.client.ClientStorms.Cell c : com.realweather.client.ClientStorms.cells()) {
+            if (c.cstrength() > 0.02F && !StormClouds.hostsTornado(c)) {
+                cells.add(c);
+            }
+        }
+        cells.sort(java.util.Comparator.comparingDouble(c -> (c.x - cam.x) * (c.x - cam.x) + (c.z - cam.z) * (c.z - cam.z)));
+        for (int i = 0; i < 8; i++) {
+            if (i < cells.size()) {
+                com.realweather.client.ClientStorms.Cell c = cells.get(i);
+                float s = Mth.clamp(c.cstrength() * (0.55F + 0.45F * c.cintensity()) * 1.2F, 0F, 1F);
+                march.safeGetUniform("Storm" + i).set((float) (c.x + c.vx * pt - cam.x), (float) (c.z + c.vz * pt - cam.z), Math.max(40F, c.radius), s);
+            } else {
+                march.safeGetUniform("Storm" + i).set(0F, 0F, 1F, 0F);
+            }
+        }
+        march.safeGetUniform("StormBase").set(level == null ? 150F : StormClouds.deckY(level) - 4F);
 
         // 1: the clouds, at half resolution, stopped by the scene's depth.
         target.setClearColor(0F, 0F, 0F, 0F);

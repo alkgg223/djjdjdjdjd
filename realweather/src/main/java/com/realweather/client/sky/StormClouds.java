@@ -39,6 +39,11 @@ public final class StormClouds {
                              int ctype, float cstrength) implements StormField.Cell {}
 
     static void collect(ClientLevel level, Vec3 cam, float pt, int q) {
+        collect(level, cam, pt, q, false);
+    }
+
+    /** With `skipPlain`, ordinary rain storms are left to the volumetric clouds; tornado storms are always drawn here. */
+    static void collect(ClientLevel level, Vec3 cam, float pt, int q, boolean skipPlain) {
         float time = level.getGameTime() + pt;
         float deck = deckY(level);
         for (ClientStorms.Cell c : ClientStorms.cells()) {
@@ -49,6 +54,9 @@ public final class StormClouds {
             double cx = c.x + c.vx * pt;
             double cz = c.z + c.vz * pt;
             boolean hasTornado = c.type == StormCell.SUPERCELL && tornadoUnder(c, cx, cz) != null;
+            if (skipPlain && !hasTornado) {
+                continue;
+            }
             cell(level, cam, q, time, deck, c, cx, cz, c.seed, hasTornado);
         }
         // Tornadoes summoned on their own still hang from a supercell.
@@ -83,6 +91,11 @@ public final class StormClouds {
         return null;
     }
 
+    /** Whether a storm cell has a tornado under it (those keep their own storm look). */
+    public static boolean hostsTornado(ClientStorms.Cell c) {
+        return c.type == StormCell.SUPERCELL && tornadoUnder(c, c.x, c.z) != null;
+    }
+
     private static ClientTornadoes.T tornadoUnder(ClientStorms.Cell c, double cx, double cz) {
         double[] u = StormField.updraft(c);
         for (ClientTornadoes.T t : ClientTornadoes.all()) {
@@ -115,7 +128,9 @@ public final class StormClouds {
         float rx = -fz;
         float rz = fx;
         float lr = SkyLight.r, lg = SkyLight.g, lb = SkyLight.b * 1.03F;
-        float dark = Mth.clamp(0.62F - 0.3F * inten - (supercell ? 0.08F : 0F), 0.2F, 0.7F);
+        // Rain storms are grey, darkest under the base; the tornado storms keep their own darker look.
+        float dark = hasTornado ? Mth.clamp(0.62F - 0.3F * inten - (supercell ? 0.08F : 0F), 0.2F, 0.7F)
+                : Mth.clamp(0.74F - 0.24F * inten - (supercell ? 0.05F : 0F), 0.42F, 0.8F);
         float grow = 0.35F + 0.65F * s;
 
         // Dark flat base over the whole storm.

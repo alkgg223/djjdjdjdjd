@@ -90,8 +90,8 @@ public final class HighClouds {
                             double dx = c[k][0] - cam.x, dz = c[k][1] - cam.z;
                             float d = (float) Math.sqrt(dx * dx + dz * dz + y * y);
                             float haze = (1F - (float) Math.exp(-d / Math.max(600F, visibility * 2F))) * 0.85F;
-                            float k = d > limit ? limit / d : 1F;
-                            b.addVertex((float) dx * k, y * k, (float) dz * k).setUv((float) ((c[k][0] + ox) / L[2]), (float) ((c[k][1] + oz) / L[2]))
+                            float pull = d > limit ? limit / d : 1F;
+                            b.addVertex((float) dx * pull, y * pull, (float) dz * pull).setUv((float) ((c[k][0] + ox) / L[2]), (float) ((c[k][1] + oz) / L[2]))
                                     .setColor(r + (fog[0] - r) * haze, g + (fog[1] - g) * haze, bl + (fog[2] - bl) * haze, a[k]);
                         }
                     }

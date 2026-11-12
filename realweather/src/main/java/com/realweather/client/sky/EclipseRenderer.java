@@ -188,6 +188,55 @@ public final class EclipseRenderer {
         }
     }
 
+    /**
+     * Under thick cloud the eclipsed sun is a bright glow in the clouds: it dims as the moon covers the sun and flares
+     * up strongly at the diamond ring (drawn after the clouds, over them).
+     */
+    static void afterClouds(RenderLevelStageEvent event) {
+        Minecraft mc = Minecraft.getInstance();
+        ClientLevel level = mc.level;
+        if (failed || level == null || ClientEclipse.current == null || ClientEclipse.coverage <= 0F || ClientEclipse.sunUp <= 0F) {
+            return;
+        }
+        float pt = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        float overcast = Math.max(level.getRainLevel(pt), Math.max(CloudTypes.stratus * 0.85F, Math.max(CloudTypes.altostratus * 0.7F,
+                Math.max(CloudTypes.nimbostratus, CloudTypes.stratocumulus * 0.5F))));
+        if (overcast < 0.15F) {
+            return;
+        }
+        float cov = ClientEclipse.coverage;
+        float glow = overcast * ClientEclipse.sunUp * (0.5F * (float) Math.pow(Math.max(0F, 1F - cov), 0.6) + 1.5F * ClientEclipse.diamond);
+        if (glow < 0.01F) {
+            return;
+        }
+        Matrix4fStack mv = RenderSystem.getModelViewStack();
+        mv.pushMatrix();
+        mv.set(new Matrix4f(event.getModelViewMatrix()).rotate(Axis.YP.rotationDegrees(-90F)).rotate(Axis.XP.rotationDegrees(level.getTimeOfDay(pt) * 360F)));
+        RenderSystem.applyModelViewMatrix();
+        RenderSystem.enableBlend();
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE,
+                GlStateManager.DestFactor.ZERO);
+        RenderSystem.disableDepthTest();
+        RenderSystem.depthMask(false);
+        RenderSystem.disableCull();
+        try {
+            RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+            RenderSystem.setShaderTexture(0, PATCH);
+            BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+            quadTex(b, 0F, 100F, 0F, 85F, 0.95F, 0.95F, 0.98F, Math.min(1F, glow * 0.35F));
+            quadTex(b, 0F, 100F, 0F, 38F, 1F, 0.98F, 0.94F, Math.min(1F, glow * 0.7F));
+            draw(b);
+        } finally {
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.disableBlend();
+            RenderSystem.depthMask(true);
+            RenderSystem.enableDepthTest();
+            RenderSystem.enableCull();
+            mv.popMatrix();
+            RenderSystem.applyModelViewMatrix();
+        }
+    }
+
     /** Screen position of the sun and the moon (for the glasses). */
     private static void project(RenderLevelStageEvent event, ClientLevel level, float pt) {
         float a = level.getTimeOfDay(pt) * Mth.TWO_PI;

@@ -35,6 +35,16 @@ uniform vec4 Flash1;
 uniform vec4 Flash2;
 uniform vec4 Flash3;
 uniform vec4 FlashPower;
+// Storm cells: x, z relative to the camera, radius, strength (0 = none).
+uniform vec4 Storm0;
+uniform vec4 Storm1;
+uniform vec4 Storm2;
+uniform vec4 Storm3;
+uniform vec4 Storm4;
+uniform vec4 Storm5;
+uniform vec4 Storm6;
+uniform vec4 Storm7;
+uniform float StormBase;
 
 in vec2 texCoord;
 
@@ -82,6 +92,48 @@ vec4 wHigh;
 float wVeil;
 float lowBottom;
 float lowTop;
+bool storms;
+vec4 stormCells[8];
+
+// Thunderstorms: a great tower with a flat dark base, its top spreading out into the anvil, and a curtain of rain
+// hanging under it. `shaft` returns the rain separately (it isn't eroded like the cloud).
+float stormDensity(vec3 wp, out float shaft) {
+    shaft = 0.0;
+    float d = 0.0;
+    vec3 rel = wp - CameraPos;
+    for (int i = 0; i < 8; i++) {
+        vec4 c = stormCells[i];
+        if (c.w <= 0.01) {
+            continue;
+        }
+        vec2 o = rel.xz - c.xy;
+        float r = length(o) / c.z;
+        if (r > 1.9) {
+            continue;
+        }
+        if (wp.y < StormBase) {
+            // Rain shafts under the core.
+            if (wp.y > 62.0) {
+                float curtain = (1.0 - smoothstep(0.25, 0.65, r)) * smoothstep(62.0, 80.0, wp.y);
+                shaft = max(shaft, curtain * 0.11 * c.w);
+            }
+            continue;
+        }
+        float hh = (wp.y - StormBase) / (660.0 - StormBase);
+        if (hh > 1.0) {
+            continue;
+        }
+        // The tower narrows a little going up and bulges in big turrets; the anvil fans out at the top.
+        float bulge = vnoise(vec3(o / (c.z * 0.35), hh * 4.0)) * 0.35;
+        float body = (1.0 - smoothstep(0.45 + bulge, 0.85 + bulge, r * (1.0 + hh * 0.25))) * smoothstep(0.0, 0.035, hh)
+                * (1.0 - smoothstep(0.78, 0.9, hh));
+        float anvil = (1.0 - smoothstep(1.1, 1.85, r)) * smoothstep(0.8, 0.88, hh) * (1.0 - smoothstep(0.94, 1.0, hh));
+        // A flat, low shelf all round the base.
+        float shelf = (1.0 - smoothstep(0.8, 1.3, r)) * smoothstep(0.0, 0.02, hh) * (1.0 - smoothstep(0.05, 0.1, hh)) * 0.7;
+        d = max(d, max(max(body, anvil * 0.75), shelf) * c.w);
+    }
+    return d;
+}
 
 float lowDensity(vec3 wp, bool full) {
     if (wp.y <= lowBottom || wp.y >= lowTop) {
@@ -120,8 +172,12 @@ float lowDensity(vec3 wp, bool full) {
         float anvil = smoothstep(0.6, 0.72, cell) * smoothstep(0.8, 0.88, hc) * (1.0 - smoothstep(0.95, 1.0, hc));
         d = max(d, (column * 0.95 + anvil * 0.7) * wLow.w);
     }
+    float shaft = 0.0;
+    if (storms) {
+        d = max(d, stormDensity(wp, shaft));
+    }
     if (d <= 0.002) {
-        return 0.0;
+        return shaft;
     }
     if (full) {
         float det = fbm2(p / 31.0 + vec3(0.0, -CloudTime * 0.004, CloudTime * 0.002));
@@ -131,7 +187,7 @@ float lowDensity(vec3 wp, bool full) {
             d -= (1.0 - fine) * 0.1;
         }
     }
-    return clamp(d * 1.4, 0.0, 1.0);
+    return clamp(d * 1.4, 0.0, 1.0) + shaft;
 }
 
 float hg(float c, float g) {
@@ -235,8 +291,13 @@ void main() {
     wHigh = clamp(TypesHigh * vec4(smoothstep(0.25, 0.55, r2) * 1.4, 0.6 + 0.6 * smoothstep(0.2, 0.5, r3), smoothstep(0.15, 0.5, r4) * 1.4,
             smoothstep(0.3, 0.6, r1) * 1.4), 0.0, 1.0);
     wVeil = clamp(TypesVeil.x * (0.6 + 0.6 * smoothstep(0.2, 0.5, r1)), 0.0, 1.0);
-    lowBottom = wLow.z > 0.01 ? 118.0 : CloudBase;
-    lowTop = wLow.w > 0.01 ? 700.0 : CloudTop;
+    stormCells = vec4[8](Storm0, Storm1, Storm2, Storm3, Storm4, Storm5, Storm6, Storm7);
+    storms = false;
+    for (int i = 0; i < 8; i++) {
+        storms = storms || stormCells[i].w > 0.01;
+    }
+    lowBottom = storms ? 62.0 : (wLow.z > 0.01 ? 118.0 : CloudBase);
+    lowTop = (wLow.w > 0.01 || storms) ? 700.0 : CloudTop;
 
     vec3 total = vec3(0.0);
     float T = 1.0;

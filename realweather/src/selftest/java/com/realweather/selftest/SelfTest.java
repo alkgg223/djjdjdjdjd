@@ -930,6 +930,19 @@ public final class SelfTest {
             lookAtSun(20F);
         });
         step(40, () -> shot("96_eclipse_3d_clouds"));
+        // Under a thick overcast: the sun's glow in the clouds, dimming, then the flash of the diamond ring.
+        step(5, () -> {
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+            cmd("rw rain 100 5");
+        });
+        step(240, () -> {
+            eclipseAt(0.2F, true);
+            lookAtSun(0F);
+        });
+        step(20, () -> shot("96b_eclipse_overcast_partial"));
+        step(5, () -> eclipseAt(0.418F, true));
+        step(18, () -> shot("96c_eclipse_overcast_diamond"));
+        step(5, () -> cmd("rw clear"));
         step(5, () -> {
             MinecraftServer server = server();
             server.execute(() -> com.realweather.server.EclipseManager.stop(server.overworld()));
@@ -986,6 +999,11 @@ public final class SelfTest {
             com.realweather.client.sky.CloudFlashes.add(c.x + 20, deck + 40, c.z + 180, 1.4F, true);
         });
         step(1, () -> shot("99b_lightning_in_3d_cloud"));
+        // Rain storms round about: volumetric in 3D, grey sprites otherwise.
+        step(5, () -> look(120F, -6F));
+        step(40, () -> shot("99c_storms_3d"));
+        step(5, () -> weatherQuality(com.realweather.ClientConfig.Quality.HIGH));
+        step(40, () -> shot("99d_storms_sprites"));
         step(5, () -> {
             cmd("rw clear");
             cmd("gamerule doDaylightCycle true");
