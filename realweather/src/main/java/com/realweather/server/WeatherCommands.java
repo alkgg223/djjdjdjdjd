@@ -43,6 +43,7 @@ public final class WeatherCommands {
         root.then(tornado());
         root.then(tsunami());
         root.then(earthquake());
+        root.then(eclipse());
         root.then(Commands.literal("hailstorm").then(Commands.argument("percent", IntegerArgumentType.integer(1, 100))
                 .executes(c -> storm(c.getSource(), StormCell.HAIL, IntegerArgumentType.getInteger(c, "percent"), 8))
                 .then(Commands.argument("minutes", IntegerArgumentType.integer(1, 120))
@@ -154,6 +155,32 @@ public final class WeatherCommands {
                 .then(Commands.literal("on").executes(c -> toggle(c, "earthquake.damage", true)))
                 .then(Commands.literal("off").executes(c -> toggle(c, "earthquake.damage", false))));
         return q;
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> eclipse() {
+        // /rw eclipse total, /rw eclipse partial, stop, natural on|off
+        var e = Commands.literal("eclipse");
+        for (boolean total : new boolean[]{true, false}) {
+            e.then(Commands.literal(total ? "total" : "partial").executes(c -> {
+                ServerLevel level = overworld(c.getSource());
+                if (!EclipseManager.sunUp(level)) {
+                    c.getSource().sendFailure(Component.translatable("realweather.cmd.eclipse.night"));
+                    return 0;
+                }
+                EclipseManager.start(level, level.getGameTime() + 20, total, level.random);
+                ok(c.getSource(), total ? "eclipse.total" : "eclipse.partial", EclipseManager.DURATION / 20 / 60);
+                return 1;
+            }));
+        }
+        e.then(Commands.literal("stop").executes(c -> {
+            EclipseManager.stop(overworld(c.getSource()));
+            ok(c.getSource(), "eclipse.stop");
+            return 1;
+        }));
+        e.then(Commands.literal("natural")
+                .then(Commands.literal("on").executes(c -> toggle(c, "eclipse.natural", true)))
+                .then(Commands.literal("off").executes(c -> toggle(c, "eclipse.natural", false))));
+        return e;
     }
 
     private static int earthquake(CommandSourceStack src, float magnitude, boolean here) {
@@ -381,6 +408,7 @@ public final class WeatherCommands {
             case "tsunami.water" -> d.tsunamiFlood = on;
             case "earthquake.natural" -> d.quakeNatural = on;
             case "earthquake.damage" -> d.quakeDamage = on;
+            case "eclipse.natural" -> d.eclipseNatural = on;
             default -> {
             }
         }

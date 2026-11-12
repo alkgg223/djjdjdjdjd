@@ -2,22 +2,259 @@
   "vertex": "realweather:volumetric_clouds",
   "fragment": "realweather:volumetric_clouds",
   "samplers": [
-    { "name": "Sampler0" }
+    {
+      "name": "Sampler0"
+    }
   ],
   "uniforms": [
-    { "name": "InvViewProj", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-    { "name": "CameraPos", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
-    { "name": "Drift", "type": "float", "count": 2, "values": [ 0.0, 0.0 ] },
-    { "name": "SunDir", "type": "float", "count": 3, "values": [ 0.0, 1.0, 0.0 ] },
-    { "name": "SunColor", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0 ] },
-    { "name": "SkyColor", "type": "float", "count": 3, "values": [ 0.5, 0.6, 0.8 ] },
-    { "name": "HazeColor", "type": "float", "count": 3, "values": [ 0.7, 0.8, 0.9 ] },
-    { "name": "Coverage", "type": "float", "count": 1, "values": [ 0.5 ] },
-    { "name": "Darkness", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "CloudBase", "type": "float", "count": 1, "values": [ 160.0 ] },
-    { "name": "CloudTop", "type": "float", "count": 1, "values": [ 300.0 ] },
-    { "name": "CloudTime", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "FarFade", "type": "float", "count": 1, "values": [ 3000.0 ] },
-    { "name": "Steps", "type": "float", "count": 1, "values": [ 40.0 ] }
+    {
+      "name": "InvViewProj",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "CameraPos",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Drift",
+      "type": "float",
+      "count": 2,
+      "values": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "SunDir",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.0,
+        1.0,
+        0.0
+      ]
+    },
+    {
+      "name": "SunColor",
+      "type": "float",
+      "count": 3,
+      "values": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "SkyColor",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.5,
+        0.6,
+        0.8
+      ]
+    },
+    {
+      "name": "HazeColor",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.7,
+        0.8,
+        0.9
+      ]
+    },
+    {
+      "name": "Coverage",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.5
+      ]
+    },
+    {
+      "name": "Darkness",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "CloudBase",
+      "type": "float",
+      "count": 1,
+      "values": [
+        160.0
+      ]
+    },
+    {
+      "name": "CloudTop",
+      "type": "float",
+      "count": 1,
+      "values": [
+        300.0
+      ]
+    },
+    {
+      "name": "CloudTime",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "FarFade",
+      "type": "float",
+      "count": 1,
+      "values": [
+        3000.0
+      ]
+    },
+    {
+      "name": "Steps",
+      "type": "float",
+      "count": 1,
+      "values": [
+        40.0
+      ]
+    },
+    {
+      "name": "TypesLow",
+      "type": "float",
+      "count": 4,
+      "values": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "TypesHigh",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "TypesVeil",
+      "type": "float",
+      "count": 2,
+      "values": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "DayOffset",
+      "type": "float",
+      "count": 2,
+      "values": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Flash0",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0.0,
+        -9999.0,
+        0.0,
+        50.0
+      ]
+    },
+    {
+      "name": "Flash1",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0.0,
+        -9999.0,
+        0.0,
+        50.0
+      ]
+    },
+    {
+      "name": "Flash2",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0.0,
+        -9999.0,
+        0.0,
+        50.0
+      ]
+    },
+    {
+      "name": "Flash3",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0.0,
+        -9999.0,
+        0.0,
+        50.0
+      ]
+    },
+    {
+      "name": "FlashPower",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "LightSteps",
+      "type": "float",
+      "count": 1,
+      "values": [
+        3.0
+      ]
+    },
+    {
+      "name": "Detail",
+      "type": "float",
+      "count": 1,
+      "values": [
+        1.0
+      ]
+    }
   ]
 }

@@ -48,6 +48,8 @@ final class CloudField {
         long dayIndex = Math.floorDiv(level.getDayTime(), 24000L);
         // Even fair days carry a good deal of cumulus that clumps into large masses with gaps of blue between.
         float clear = 0.45F + 0.17F * (hash(dayIndex, 11) * 0.5F + 0.5F);
+        // Fewer cumulus on a day of high cloud, more on a cumulus or stratocumulus day.
+        clear *= 0.35F + 0.65F * Mth.clamp(CloudTypes.cumulus + CloudTypes.stratocumulus + CloudTypes.stratus * 0.5F, 0F, 1F);
         float cover = Mth.lerp(Mth.clamp(rainLevel * 1.3F, 0F, 1F), clear, 0.98F);
         float threshold = 0.5F + (0.5F - cover) * 0.5F;
         float overcast = Mth.clamp((rainLevel - 0.15F) / 0.55F, 0F, 1F);

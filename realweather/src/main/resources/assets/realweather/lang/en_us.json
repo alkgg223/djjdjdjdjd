@@ -235,5 +235,14 @@
   "realweather.quake.felt": "Earthquake! Magnitude %s",
   "subtitles.realweather.quake.rumble": "Ground rumbles",
   "subtitles.realweather.quake.crack": "Ground cracks",
-  "subtitles.realweather.quake.collapse": "Building collapses"
+  "subtitles.realweather.quake.collapse": "Building collapses",
+  "realweather.cmd.eclipse.total": "A total solar eclipse is beginning: the moon will cover the sun completely (about %s minutes). Wear eclipse glasses to look at it!",
+  "realweather.cmd.eclipse.partial": "A partial solar eclipse is beginning (about %s minutes). Wear eclipse glasses to look at it!",
+  "realweather.cmd.eclipse.stop": "The eclipse is over",
+  "realweather.cmd.eclipse.night": "The sun is down: an eclipse needs the sun in the sky",
+  "realweather.cmd.eclipse.natural.on": "Natural eclipses: on",
+  "realweather.cmd.eclipse.natural.off": "Natural eclipses: off",
+  "realweather.eclipse.eyes": "Your eyes burn! Never look at the sun without eclipse glasses",
+  "item.realweather.eclipse_glasses": "Eclipse Glasses",
+  "item.realweather.eclipse_glasses.tip": "Wear them to look at the sun during an eclipse"
 }

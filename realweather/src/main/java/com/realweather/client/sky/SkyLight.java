@@ -25,11 +25,14 @@ public final class SkyLight {
         sunX = -Mth.sin(angle);
         sunY = Mth.cos(angle);
         sunZ = 0F;
-        day = Mth.clamp(sunY * 3F + 0.3F, 0F, 1F);
+        day = Mth.clamp(sunY * 3F + 0.3F, 0F, 1F) * (1F - 0.9F * ClientEclipse.dark);
         // Low sun: warm light; night: a cold blue.
         float warm = sunY > -0.12F ? Mth.clamp(1F - Math.abs(sunY) * 4F, 0F, 1F) : 0F;
         float night = 1F - sky;
-        float flash = LightningFx.flash * 0.75F;
+        // In an eclipse the sunlight on the clouds fades with the sun; the diamond ring flares on them for a moment.
+        float ecl = ClientEclipse.dark;
+        bright *= 1F - 0.9F * ecl;
+        float flash = LightningFx.flash * 0.35F + ClientEclipse.diamond * 0.9F;
         r = Math.min(1.25F, bright * (1F + 0.22F * warm - 0.12F * night) + flash * 0.85F);
         g = Math.min(1.25F, bright * (1F + 0.04F * warm - 0.05F * night) + flash * 0.9F);
         b = Math.min(1.25F, bright * (1F - 0.18F * warm + 0.1F * night) + flash);

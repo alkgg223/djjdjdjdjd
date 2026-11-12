@@ -47,6 +47,11 @@ Minecraft **1.21.1** · NeoForge **21.1.264** (any 21.1.x)
 - **أداء أفضل**: المطر والغيوم والأعاصير والسيارات تُرسم بتكلفة أقل بكثير (داخلية السيارة تُرسم فقط عندما تكون قريباً).
 - **تسونامي واقعي (1.5.0)**: موجة حقيقية بظهر طويل يرتفع إلى قمة تنكسر للأمام مع رغوة بيضاء ورذاذ، تزحف على اليابسة وتجرف ما أمامها (الكائنات، اللاعبين، السيارات، الأشجار والبيوت الضعيفة) ويبقى خلفها ماء الفيضان ثم ينسحب للبحر. القوة من 1 إلى 1000 (الارتفاع من متر ونصف إلى نحو 46 بلوك)، مع هدير عميق واندفاع الماء وارتطام الموجة، والشاشة تهتز عند اقترابها. ويحدث نادراً بشكل طبيعي قرب البحر.
 - **تسونامي 1.6.0**: الموجة تصعد مع الأرض وتنزل معها (تتسلق التلال وتنزل في الوديان بدل أن تمشي في الهواء)، وتترك خلفها ماء ماينكرافت حقيقياً على الأرض حول اللاعبين (تستطيع السباحة فيه) يختفي بعد خمس دقائق من بداية التسونامي. من يكون تحت الماء ينفد هواؤه ويختنق، والسيارات التي تضربها الموجة يتحطم زجاجها ويدخلها الماء ويختنق من بداخلها.
+- **كسوف الشمس (1.8.0)**: الشمس والقمر صارا دائريين. كسوف كلي وجزئي: القمر يمر أمام الشمس فتصير هلالاً، والنهار يظلم تدريجياً إلى شفق أزرق عميق وتظهر النجوم بوضوح ويتوهج الأفق بلون الغروب من كل الجهات. قبل الكسوف الكلي وبعده مباشرة تلمع آخر حبة من ضوء الشمس عند الحافة ("الخاتم الماسي")، وفي الكسوف الكلي يظهر قرص القمر الأسود داخل هالة الإكليل اللؤلؤية. الغيوم تظلم معه وتلمع لحظة الخاتم الماسي. يحدث نادراً وحده، أو بالأمر.
+- **نظارة الكسوف**: تُصنع من ورق وصبغة سوداء ولوح زجاج وتُلبس على الرأس. من خلالها يصير كل شيء أسود إلا الشمس (أو هلالها). في وضع البقاء النظر إلى الشمس أثناء الكسوف بدونها يعمي عينيك لحظات.
+- **برق داخل الغيوم**: الوميض يضيء الغيمة من داخلها في المكان الذي يحدث فيه (وليس كل السماء كأنه من الشمس)، وبعضه يزحف تحت قاعدة الغيوم كبرق متفرع، والعواصف والأعاصير تومض باستمرار.
+- **أنواع الغيوم**: ركامي (Cumulus)، ركامي طبقي (Stratocumulus)، طبقي (Stratus)، مزن طبقي (Nimbostratus)، ركام مزني (Cumulonimbus)، ركامي متوسط (Altocumulus)، طبقي متوسط (Altostratus)، سمحاق (Cirrus)، سمحاقي ركامي (Cirrocumulus)، سمحاقي طبقي (Cirrostratus) مع الهالة حول الشمس. كل يوم مزيج مختلف، وكل منطقة تختلف عن الأخرى.
+- **دقات 3D جديدة**: LOW_3D و MEDIUM_3D و HIGH_3D بالإضافة إلى ULTRA_3D.
 - **زلزال (1.7.0)**: بقوة من 1 إلى 10 ريختر. تنتشر شقوق واقعية متعرجة ومتفرعة من مركز الزلزال، ثم تتسع، وفي الزلازل القوية تنفتح الأرض فعلاً على طولها وتنهار حوافها داخل الشق. المباني تنهار حسب المادة المبنية منها وقوة الاهتزاز في مكانها: الزجاج والمصابيح أولاً، ثم الحجر المرصوف والطين، ثم الطوب، والخشب يصمد أكثر، والطوب الحجري والخرسانة أكثر، والحديد والأوبسيديان لا تسقط. الكتل تسقط فعلاً، والأسقف تسقط بعد الجدران، والمنحدرات تنزلق. الشاشة تهتز حسب القوة، ويسقط الغبار من السقف، وله أصوات هدير وتشقق وانهيار. بعده هزات ارتدادية، والزلزال الكبير (7.5 فأكثر) قرب البحر يُطلق تسونامي.
 - **غيوم ULTRA 3D**: دقة جديدة للغيوم، غيوم حجمية حقيقية ثلاثية الأبعاد: قاعدتها مسطحة وقممها منتفخة يضيئها الشمس، وأسفلها داكن، وتتحول لطبقة رمادية سميكة في المطر. الغيوم القديمة باقية في ULTRA وباقي الدقات. تحتاج كرت شاشة قوياً.
 - **برد وثلج حتى 3 بلوكات**: البرد يتراكم حبات صغيرة ثم يتكتل إلى ثلج برد، والثلج والبرد يصلان إلى ارتفاع 3 بلوكات. الثلج العميق يبطئ المشي وتغوص فيه قليلاً، والمشي يرصه ويترك آثار أقدام ومسارات، ويسقط عن الحواف والمنحدرات، ويذوب في الشمس بعد العاصفة.
@@ -82,7 +87,9 @@ Minecraft **1.21.1** · NeoForge **21.1.264** (any 21.1.x)
 | `/rw tsunami water on/off` | ماء حقيقي يبقى خلف التسونامي ثم يختفي بعد خمس دقائق |
 | `/rw earthquake 6.5` أو `/rw earthquake 9 here` | زلزال بقوة من 1 إلى 10 ريختر (قريب منك، أو تحتك تماماً مع here) |
 | `/rw earthquake stop` · `natural on/off` · `damage on/off` | إيقاف الاهتزاز / زلازل طبيعية نادرة / الشقوق وانهيار المباني |
-| `/rwgraphics weather ultra_3d` | غيوم حجمية ثلاثية الأبعاد |
+| `/rwgraphics weather low_3d` · `medium_3d` · `high_3d` · `ultra_3d` | غيوم حجمية ثلاثية الأبعاد بأربع دقات |
+| `/rw eclipse total` أو `/rw eclipse partial` | كسوف كلي أو جزئي للشمس (نحو 5 دقائق) |
+| `/rw eclipse stop` · `/rw eclipse natural on/off` | إنهاء الكسوف / كسوف طبيعي نادر |
 | `/rwgraphics tornado ultra` / `/rwgraphics weather low` | دقة الإعصار ودقة الطقس: low, medium, high, ultra (لا تحتاج صلاحية) |
 | `/rw tornado stop` | الأعاصير تضعف وتتلاشى |
 | `/rw tornado damage on/off` | تكسير البلوكات بالأعاصير |
@@ -175,6 +182,15 @@ weather detail `ULTRA_3D`: real volumetric, ray-marched clouds (the other levels
 up as pellets, packs into hail-snow, and hail-snow and snow build up to three blocks deep; deep snow slows you down,
 you sink into it, it packs into trails, slides off steps and melts in the sun after the storm.
 
-Build: `./gradlew build` → `build/libs/realweather-1.7.0.jar`.
+1.8.0: round sun and moon (with real moon phases); total and partial solar eclipses (`/rw eclipse total|partial|stop`,
+`natural on|off`) that darken the day to a deep twilight with the stars out and a sunset glow all round, the diamond ring
+just before and after totality and the corona in it, with the clouds darkening and flaring along; eclipse glasses
+(paper, black dye, a glass pane) that black out everything but the sun, which in survival you need to look at a partial
+eclipse; lightning that lights the clouds from inside where it flashes, with spider lightning along the cloud base;
+the LOW_3D, MEDIUM_3D and HIGH_3D cloud levels; and the cloud types of the chart (cumulus, stratocumulus, stratus,
+nimbostratus, cumulonimbus, altocumulus, altostratus, cirrus, cirrocumulus and cirrostratus with its halo), a
+different mix every day and from place to place.
+
+Build: `./gradlew build` → `build/libs/realweather-1.8.0.jar`.
 Sounds, textures and models are generated by `tools/gen_sounds.py`, `tools/gen_vehicle_sounds.py`,
 `tools/gen_textures.py`, `tools/gen_devices.py` and `tools/vehicles/vehicles.py`.

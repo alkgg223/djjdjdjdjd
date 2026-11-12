@@ -33,6 +33,7 @@ public final class VolumeClouds {
     /** Set by the sky pass when this frame should have volumetric clouds. */
     static boolean wanted;
     private static float coverage = 0.5F, darkness, base = 165F, top = 300F, farFade = 2600F;
+    private static final float[] FLASH_POS = new float[16], FLASH_POWER = new float[4];
 
     private VolumeClouds() {}
 
@@ -58,7 +59,9 @@ public final class VolumeClouds {
         long dayIndex = Math.floorDiv(level.getDayTime(), 24000L);
         float fair = 0.44F + 0.16F * (CloudField.hash(dayIndex, 11) * 0.5F + 0.5F);
         coverage = Mth.lerp(Mth.clamp(cover * 1.25F, 0F, 1F), fair, 0.97F);
-        darkness = Mth.clamp((cover - 0.2F) / 0.6F, 0F, 1F);
+        darkness = Math.max(Mth.clamp((cover - 0.2F) / 0.6F, 0F, 1F), CloudTypes.nimbostratus * 0.9F);
+        // The day's cumulus amount: a stratocumulus or stratus day has fewer separate cells.
+        coverage *= 0.55F + 0.45F * Mth.clamp(CloudTypes.cumulus + CloudTypes.stratocumulus * 0.6F, 0F, 1F);
         base = Mth.lerp(darkness, 168F, 148F);
         top = Mth.lerp(darkness, 330F, 265F);
         farFade = Math.max(400F, vis * 1.6F);
@@ -89,7 +92,10 @@ public final class VolumeClouds {
 
     private static void draw(RenderLevelStageEvent event, Minecraft mc) {
         var main = mc.getMainRenderTarget();
-        int w = Math.max(1, main.width / 2), h = Math.max(1, main.height / 2);
+        // LOW_3D and MEDIUM_3D march at a third of the resolution, HIGH_3D and ULTRA_3D at half.
+        int q = com.realweather.ClientConfig.quality();
+        int div = q <= 1 ? 3 : 2;
+        int w = Math.max(1, main.width / div), h = Math.max(1, main.height / div);
         if (target == null) {
             target = new TextureTarget(w, h, false, Minecraft.ON_OSX);
             target.setFilterMode(GL11.GL_LINEAR);
@@ -118,7 +124,7 @@ public final class VolumeClouds {
         float sr = Mth.lerp(warm, SkyLight.r * sunK * 1.05F, 1.45F), sg = Mth.lerp(warm, SkyLight.g * sunK, 0.78F),
                 sb = Mth.lerp(warm, SkyLight.b * sunK * 0.95F, 0.5F);
         march.safeGetUniform("SunColor").set(sr, sg, sb);
-        float amb = 0.25F + 0.75F * Mth.clamp(SkyLight.r, 0F, 1F);
+        float amb = (0.25F + 0.75F * Mth.clamp(SkyLight.r, 0F, 1F)) * (1F - 0.85F * ClientEclipse.dark);
         march.safeGetUniform("SkyColor").set((float) (sky.x * 0.45 + fog[0] * 0.55) * amb, (float) (sky.y * 0.45 + fog[1] * 0.55) * amb,
                 (float) (sky.z * 0.45 + fog[2] * 0.55) * amb);
         march.safeGetUniform("HazeColor").set(fog[0], fog[1], fog[2]);
@@ -128,7 +134,21 @@ public final class VolumeClouds {
         march.safeGetUniform("CloudTop").set(top);
         march.safeGetUniform("CloudTime").set((level == null ? 0 : level.getGameTime() % 240000L) + pt);
         march.safeGetUniform("FarFade").set(farFade);
-        march.safeGetUniform("Steps").set((float) Math.round(40 + 16 * darkness));
+        int[] steps = {20, 28, 34, 42};
+        march.safeGetUniform("Steps").set((float) Math.round(steps[q] + steps[q] * 0.35F * darkness));
+        march.safeGetUniform("LightSteps").set(q == 0 ? 1F : q == 3 ? 3F : 2F);
+        march.safeGetUniform("Detail").set(q == 0 ? 0F : 1F);
+        // Today's cloud types (varied again from place to place in the shader).
+        march.safeGetUniform("TypesLow").set(CloudTypes.cumulus, CloudTypes.stratocumulus, CloudTypes.stratus, CloudTypes.cumulonimbus);
+        march.safeGetUniform("TypesHigh").set(CloudTypes.altocumulus, CloudTypes.altostratus, CloudTypes.cirrus, CloudTypes.cirrocumulus);
+        march.safeGetUniform("TypesVeil").set(CloudTypes.cirrostratus, 0F);
+        march.safeGetUniform("DayOffset").set(CloudTypes.offsetX, CloudTypes.offsetZ);
+        // Lightning inside the clouds.
+        CloudFlashes.strongest(FLASH_POS, FLASH_POWER);
+        for (int i = 0; i < 4; i++) {
+            march.safeGetUniform("Flash" + i).set(FLASH_POS[i * 4], FLASH_POS[i * 4 + 1], FLASH_POS[i * 4 + 2], Math.max(1F, FLASH_POS[i * 4 + 3]));
+        }
+        march.safeGetUniform("FlashPower").set(FLASH_POWER[0], FLASH_POWER[1], FLASH_POWER[2], FLASH_POWER[3]);
 
         // 1: the clouds, at half resolution, stopped by the scene's depth.
         target.setClearColor(0F, 0F, 0F, 0F);

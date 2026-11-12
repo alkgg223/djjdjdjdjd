@@ -121,6 +121,13 @@ public final class SkyBillboards {
                 return;
             }
         }
+        // Lightning inside the cloud lights it from within.
+        float fl = CloudFlashes.lightRel(x, y, z);
+        if (fl > 0.003F) {
+            r += fl * 0.8F;
+            g += fl * 0.86F;
+            b += fl * 1.0F;
+        }
         // Aerial perspective: distant clouds take on the colour of the haze.
         float haze = (1F - (float) Math.exp(-d / visibility)) * 0.92F;
         r += (fogR - r) * haze;

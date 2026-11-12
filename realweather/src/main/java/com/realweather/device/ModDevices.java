@@ -38,6 +38,8 @@ public final class ModDevices {
 
     public static final DeferredItem<BlockItem> WEATHER_RADAR_ITEM = blockItem("weather_radar", WEATHER_RADAR);
     public static final DeferredItem<BlockItem> RADAR_MONITOR_ITEM = blockItem("radar_monitor", RADAR_MONITOR);
+    public static final DeferredItem<EclipseGlasses> ECLIPSE_GLASSES = tabItem(ITEMS.register("eclipse_glasses",
+            () -> new EclipseGlasses(new Item.Properties().stacksTo(1))));
 
     @SuppressWarnings("DataFlowIssue")
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RadarBlockEntity>> RADAR_BE = BLOCK_ENTITIES.register("weather_radar",

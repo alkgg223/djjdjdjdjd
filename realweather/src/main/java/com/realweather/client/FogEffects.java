@@ -85,6 +85,13 @@ public final class FogEffects {
         g = Mth.lerp(dust, g, 0.41F * bright + 0.02F);
         b = Mth.lerp(dust, b, 0.35F * bright + 0.02F);
 
+        // A solar eclipse: the daylight drains away to a deep blue twilight.
+        float ecl = com.realweather.client.sky.ClientEclipse.dark;
+        if (ecl > 0F) {
+            r = Mth.lerp(ecl * 0.9F, r, 0.03F);
+            g = Mth.lerp(ecl * 0.9F, g, 0.045F);
+            b = Mth.lerp(ecl * 0.9F, b, 0.09F);
+        }
         float f = LightningFx.flash * 0.35F;
         event.setRed(Math.min(1F, r + f));
         event.setGreen(Math.min(1F, g + f));

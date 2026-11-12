@@ -71,6 +71,9 @@ public final class SelfTest {
         if (suite.contains("quake")) {
             quakeSuite();
         }
+        if (suite.contains("eclipse")) {
+            eclipseSuite();
+        }
         if (suite.contains("all")) {
             weatherSuite();
         }
@@ -884,6 +887,145 @@ public final class SelfTest {
         step(1200, () -> snowState("hail 120 s"));
         step(5, () -> shot("85b_hail_deeper"));
         step(5, () -> cmd("rw clear"));
+    }
+
+    /** 1.8.0: a total eclipse (partial phase, diamond ring, totality), eclipse glasses, cloud types, lightning in the clouds. */
+    private static void eclipseSuite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 3000");
+            cmd("gamerule doDaylightCycle false");
+            goTo("minecraft:plains", 0, 0);
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+        });
+        step(60, SelfTest::platform);
+        step(100, () -> lookAtSun(0F));
+        step(5, () -> shot("90_sun_round"));
+        step(5, () -> eclipseAt(0.30F, true));
+        step(30, () -> {
+            lookAtSun(0F);
+            eclipseState("partial");
+        });
+        step(5, () -> shot("91_eclipse_partial"));
+        step(5, () -> eclipseAt(0.418F, true));
+        step(20, () -> eclipseState("diamond"));
+        step(3, () -> shot("92_eclipse_diamond_ring"));
+        step(5, () -> eclipseAt(0.5F, true));
+        step(30, () -> eclipseState("total"));
+        step(5, () -> shot("93_eclipse_total"));
+        step(5, () -> lookAtSun(35F));
+        step(10, () -> shot("94_eclipse_total_landscape"));
+        // Through eclipse glasses.
+        step(5, () -> {
+            eclipseAt(0.34F, true);
+            wearGlasses(true);
+            lookAtSun(0F);
+        });
+        step(30, () -> shot("95_glasses_partial"));
+        step(5, () -> wearGlasses(false));
+        // Behind 3D clouds, deep in the eclipse.
+        step(5, () -> {
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH_3D);
+            eclipseAt(0.47F, true);
+            lookAtSun(20F);
+        });
+        step(40, () -> shot("96_eclipse_3d_clouds"));
+        step(5, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> com.realweather.server.EclipseManager.stop(server.overworld()));
+        });
+        // A week of skies: every day another mix of cloud types (3D, then the sprite clouds with their high sheets).
+        for (int d = 0; d < 6; d++) {
+            final int day = d;
+            step(5, () -> {
+                cmd("time set " + (day * 24000L + 5000L));
+                com.realweather.client.sky.CloudTypes.snap();
+                weatherQuality(day % 2 == 0 ? com.realweather.ClientConfig.Quality.ULTRA_3D : com.realweather.ClientConfig.Quality.MEDIUM_3D);
+                look(60F + day * 50F, -22F);
+            });
+            step(60, () -> {
+                LOG.info("day {}: cumulus {} stratocumulus {} stratus {} cumulonimbus {} altocumulus {} altostratus {} cirrus {} cirrocumulus {} cirrostratus {}",
+                        day, com.realweather.client.sky.CloudTypes.cumulus, com.realweather.client.sky.CloudTypes.stratocumulus,
+                        com.realweather.client.sky.CloudTypes.stratus, com.realweather.client.sky.CloudTypes.cumulonimbus,
+                        com.realweather.client.sky.CloudTypes.altocumulus, com.realweather.client.sky.CloudTypes.altostratus,
+                        com.realweather.client.sky.CloudTypes.cirrus, com.realweather.client.sky.CloudTypes.cirrocumulus,
+                        com.realweather.client.sky.CloudTypes.cirrostratus);
+                shot("97_types_3d_day" + day);
+            });
+        }
+        for (int d = 2; d < 5; d++) {
+            final int day = d;
+            step(5, () -> {
+                cmd("time set " + (day * 24000L + 5000L));
+                com.realweather.client.sky.CloudTypes.snap();
+                weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+                look(60F + day * 50F, -22F);
+            });
+            step(60, () -> shot("98_types_sprites_day" + day));
+        }
+        // Lightning inside a storm cloud.
+        step(5, () -> {
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+            cmd("execute as @a at @s run rw supercell 10");
+            cmd("rw thunder 100 10");
+        });
+        step(300, () -> look(0F, -12F));
+        step(5, () -> {
+            Minecraft mc = Minecraft.getInstance();
+            net.minecraft.world.phys.Vec3 c = mc.gameRenderer.getMainCamera().getPosition();
+            float deck = com.realweather.client.sky.StormClouds.deckY(mc.level);
+            com.realweather.client.sky.CloudFlashes.add(c.x + 10, deck + 30, c.z + 160, 1.3F, true);
+            com.realweather.client.sky.CloudFlashes.add(c.x - 70, deck + 50, c.z + 230, 1.0F, false);
+        });
+        step(1, () -> shot("99_lightning_in_cloud"));
+        step(5, () -> weatherQuality(com.realweather.ClientConfig.Quality.HIGH_3D));
+        step(40, () -> {
+            Minecraft mc = Minecraft.getInstance();
+            net.minecraft.world.phys.Vec3 c = mc.gameRenderer.getMainCamera().getPosition();
+            float deck = com.realweather.client.sky.StormClouds.deckY(mc.level);
+            com.realweather.client.sky.CloudFlashes.add(c.x + 20, deck + 40, c.z + 180, 1.4F, true);
+        });
+        step(1, () -> shot("99b_lightning_in_3d_cloud"));
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("gamerule doDaylightCycle true");
+        });
+    }
+
+    /** Puts the eclipse at a given point of its course (0 first contact .. 1 last). */
+    private static void eclipseAt(float progress, boolean total) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerLevel level = server.overworld();
+            long now = level.getGameTime();
+            int dur = com.realweather.server.EclipseManager.DURATION;
+            com.realweather.server.EclipseManager.current = new com.realweather.server.Eclipse(now - Math.round(progress * dur), dur, total ? 0F : 0.8F, 0.6F);
+            com.realweather.server.EclipseManager.sync(level);
+        });
+    }
+
+    private static void eclipseState(String label) {
+        LOG.info("[{}] eclipse coverage {} dark {} diamond {} corona {}", label, com.realweather.client.sky.ClientEclipse.coverage,
+                com.realweather.client.sky.ClientEclipse.dark, com.realweather.client.sky.ClientEclipse.diamond, com.realweather.client.sky.ClientEclipse.corona);
+    }
+
+    private static void wearGlasses(boolean on) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD,
+                    on ? new net.minecraft.world.item.ItemStack(com.realweather.device.ModDevices.ECLIPSE_GLASSES.get()) : net.minecraft.world.item.ItemStack.EMPTY);
+        });
+    }
+
+    /** Turns to face the sun, `below` degrees under it (0: right at it). */
+    private static void lookAtSun(float below) {
+        Minecraft mc = Minecraft.getInstance();
+        float a = mc.level.getTimeOfDay(1F) * net.minecraft.util.Mth.TWO_PI;
+        double dx = -net.minecraft.util.Mth.sin(a), dy = net.minecraft.util.Mth.cos(a), dz = 0.0;
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        float pitch = (float) -Math.toDegrees(Math.asin(dy)) + below;
+        look(yaw, pitch);
     }
 
     private static int townX, townY, townZ;

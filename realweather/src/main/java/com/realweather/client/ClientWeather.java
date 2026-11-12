@@ -77,6 +77,8 @@ public final class ClientWeather {
         com.realweather.client.tornado.ClientTornadoes.clear();
         com.realweather.client.tsunami.ClientTsunamis.clear();
         com.realweather.client.quake.ClientQuakes.clear();
+        com.realweather.client.sky.ClientEclipse.clear();
+        com.realweather.client.sky.CloudFlashes.clear();
         com.realweather.client.hail.Footprints.clear();
     }
 
@@ -145,6 +147,7 @@ public final class ClientWeather {
         com.realweather.client.tornado.ClientTornadoes.tick(mc, level);
         com.realweather.client.tsunami.ClientTsunamis.tick(mc, level);
         com.realweather.client.quake.ClientQuakes.tick(mc, level);
+        com.realweather.client.sky.CloudFlashes.tick(mc, level);
         com.realweather.client.sky.SkyRenderer.tick();
         com.realweather.client.radar.RadarClient.tick(mc, level);
         com.realweather.client.hail.HailCoverage.tick(mc, level);

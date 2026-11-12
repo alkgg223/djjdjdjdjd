@@ -38,6 +38,8 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(FogEffects::onFogColor);
         NeoForge.EVENT_BUS.addListener(FogEffects::onCameraAngles);
         NeoForge.EVENT_BUS.addListener(WaterShader::onRenderStage);
+        // The eclipse first: the clouds pass in front of it.
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.EclipseRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.SkyRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.tsunami.TsunamiRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.quake.CrackRenderer::onRenderStage);
@@ -87,6 +89,7 @@ public final class ClientInit {
     private static void onGuiLayers(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.CAMERA_OVERLAYS, RealWeather.id("weather_overlay"), WeatherOverlay::render);
         event.registerBelow(VanillaGuiLayers.HOTBAR, RealWeather.id("tsunami_water"), com.realweather.client.tsunami.TsunamiOverlay::render);
+        event.registerBelow(VanillaGuiLayers.HOTBAR, RealWeather.id("eclipse_glasses"), com.realweather.client.sky.GlassesOverlay::render);
         event.registerAbove(VanillaGuiLayers.HOTBAR, RealWeather.id("vehicle_hud"), com.realweather.client.vehicle.VehicleHud::render);
     }
 

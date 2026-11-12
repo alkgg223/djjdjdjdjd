@@ -235,5 +235,14 @@
   "realweather.quake.felt": "زلزال! القوة %s ريختر",
   "subtitles.realweather.quake.rumble": "الكاع تهدر",
   "subtitles.realweather.quake.crack": "الكاع تتشگگ",
-  "subtitles.realweather.quake.collapse": "بيت يطيح"
+  "subtitles.realweather.quake.collapse": "بيت يطيح",
+  "realweather.cmd.eclipse.total": "بدا كسوف كلي للشمس: القمر راح يغطي الشمس كلها (تقريباً %s دقايق). البس نظارة الكسوف حتى تباوعله!",
+  "realweather.cmd.eclipse.partial": "بدا كسوف جزئي للشمس (تقريباً %s دقايق). البس نظارة الكسوف حتى تباوعله!",
+  "realweather.cmd.eclipse.stop": "خلص الكسوف",
+  "realweather.cmd.eclipse.night": "الشمس غايبة: الكسوف يحتاج الشمس بالسما",
+  "realweather.cmd.eclipse.natural.on": "الكسوف الطبيعي: شغال",
+  "realweather.cmd.eclipse.natural.off": "الكسوف الطبيعي: طافي",
+  "realweather.eclipse.eyes": "عيونك تحترگ! لا تباوع على الشمس بدون نظارة الكسوف",
+  "item.realweather.eclipse_glasses": "نظارة الكسوف",
+  "item.realweather.eclipse_glasses.tip": "البسها حتى تباوع على الشمس وقت الكسوف"
 }

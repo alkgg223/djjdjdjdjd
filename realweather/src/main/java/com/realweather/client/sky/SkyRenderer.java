@@ -29,6 +29,8 @@ public final class SkyRenderer {
     private static float splitDist;
     /** 0..1: how far a dust storm has cleared the rain deck out of the sky (eased so the sky doesn't jump). */
     private static float dustSky;
+    private static boolean highWanted;
+    private static float highVis;
     private static final float[] FOG = new float[3];
 
     private SkyRenderer() {}
@@ -53,11 +55,19 @@ public final class SkyRenderer {
             if (stage == RenderLevelStageEvent.Stage.AFTER_SKY) {
                 pending = false;
                 VolumeClouds.wanted = false;
-                if (gather(event)) {
+                highWanted = false;
+                boolean any = gather(event);
+                // The high and middle cloud sheets first: the cumulus drawn next sit in front of them.
+                if (highWanted) {
+                    HighClouds.render(event, highVis);
+                }
+                if (any) {
                     pending = true;
                     draw(event, true);
                 }
             } else {
+                // Spider lightning first: the clouds drawn next veil it where it runs inside them.
+                CloudFlashes.renderBolts(event);
                 // The volumetric clouds go in behind the storm clouds and tornadoes drawn next.
                 if (VolumeClouds.wanted) {
                     VolumeClouds.render(event);
@@ -109,6 +119,8 @@ public final class SkyRenderer {
         vis = Math.min(vis, Mth.lerp(ClientWeather.camSand * shelter, vis, 26F));
         vis = Math.min(vis, Mth.lerp(TornadoRenderer.dustAt(cam.x, cam.y, cam.z), vis, 20F));
         float fadeEnd = Math.max(CloudField.radius(q), 900F) * 1.05F;
+        CloudFlashes.frame(cam, pt);
+        CloudTypes.update(level);
         SkyBillboards.begin(camera, limit, FOG, vis, fadeEnd);
         if (clouds) {
             float rainLevel = level.getRainLevel(pt);
@@ -122,6 +134,8 @@ public final class SkyRenderer {
                 VolumeClouds.prepare(level, cover, vis);
             } else {
                 CloudField.collect(level, cam, pt, q, cover);
+                highWanted = true;
+                highVis = vis;
             }
         }
         if (storms) {

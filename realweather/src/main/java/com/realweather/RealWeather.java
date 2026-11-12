@@ -35,10 +35,12 @@ public class RealWeather {
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.server.ServerStartingEvent.class, e -> {
             com.realweather.server.TsunamiManager.reset();
             com.realweather.server.QuakeManager.reset();
+            com.realweather.server.EclipseManager.reset();
         });
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.server.ServerStoppedEvent.class, e -> {
             com.realweather.server.TsunamiManager.reset();
             com.realweather.server.QuakeManager.reset();
+            com.realweather.server.EclipseManager.reset();
         });
 
         if (dist.isClient()) {

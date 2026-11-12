@@ -85,9 +85,10 @@ public final class LightningFx {
         if (ClientWeather.active(level) && storm > 0.02F && RANDOM.nextFloat() < storm * storm * 0.008F) {
             Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
             double ang = RANDOM.nextDouble() * Math.PI * 2;
-            double d = 700 + RANDOM.nextDouble() * 3500;
+            double d = 250 + RANDOM.nextDouble() * 2500;
             level.setSkyFlashTime(2);
-            WeatherSounds.strike(cam.x + Math.cos(ang) * d, cam.y + 900, cam.z + Math.sin(ang) * d, false);
+            WeatherSounds.strike(cam.x + Math.cos(ang) * d, com.realweather.client.sky.StormClouds.deckY(level) + 30 + RANDOM.nextDouble() * 60,
+                    cam.z + Math.sin(ang) * d, false);
         }
         if (!ClientConfig.LIGHTNING_FLASH.get()) {
             flash = 0F;

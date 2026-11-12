@@ -139,7 +139,22 @@ public final class WeatherSounds {
 
     /** A lightning strike (or a flash inside the clouds when `bolt` is false) at the given point. */
     static void strike(double x, double y, double z, boolean bolt) {
+        strike(x, y, z, bolt, true);
+    }
+
+    /** Lightning inside a cloud: it lights the cloud there (maybe crawling along its base), then the thunder rolls in. */
+    public static void cloudFlash(double x, double y, double z, float strength, boolean spider) {
+        com.realweather.client.sky.CloudFlashes.add(x, y, z, strength, spider);
+        strike(x, y, z, false, false);
+    }
+
+    static void strike(double x, double y, double z, boolean bolt, boolean lightCloud) {
         Minecraft mc = Minecraft.getInstance();
+        if (lightCloud && mc.level != null) {
+            // The flash lights the cloud it comes from (above a strike, or where it is in the cloud).
+            double cy = bolt ? com.realweather.client.sky.StormClouds.deckY(mc.level) + 8 : y;
+            com.realweather.client.sky.CloudFlashes.add(x, cy, z, bolt ? 1.3F : 0.9F, !bolt && RANDOM.nextFloat() < 0.3F);
+        }
         Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
         double dist = Math.sqrt(cam.distanceToSqr(x, y, z));
         LightningFx.flash(dist, bolt);
