@@ -27,6 +27,8 @@ public final class SkyRenderer {
     private static boolean failed;
     private static boolean pending;
     private static float splitDist;
+    /** 0..1: how far a dust storm has cleared the rain deck out of the sky (eased so the sky doesn't jump). */
+    private static float dustSky;
     private static final float[] FOG = new float[3];
 
     private SkyRenderer() {}
@@ -105,7 +107,10 @@ public final class SkyRenderer {
             float rainLevel = level.getRainLevel(pt);
             float cover = ClientStorms.synced ? rainLevel * Mth.clamp(ClientStorms.stratiform + 0.3F, 0F, 1F) : rainLevel;
             // A dust storm is blown dust under a clear sky, not a rain deck.
-            cover *= 1F - 0.8F * Mth.clamp(ClientWeather.sand * 1.5F, 0F, 1F);
+            float dust = com.realweather.server.Precip.clientForce == com.realweather.server.Precip.SAND ? 1F
+                    : Mth.clamp(ClientWeather.sand * 1.5F, 0F, 1F);
+            dustSky += Mth.clamp(dust - dustSky, -0.01F, 0.01F);
+            cover *= 1F - 0.85F * dustSky;
             CloudField.collect(level, cam, pt, q, cover);
         }
         if (storms) {
