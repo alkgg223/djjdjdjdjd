@@ -730,6 +730,9 @@ public final class SelfTest {
         });
         step(60, SelfTest::platform);
         step(120, () -> LOG.info("waiting for the coast to load"));
+        // Onto dry land near the shore, so the wave has land to climb and flood.
+        step(5, SelfTest::moveToLand);
+        step(60, () -> LOG.info("waiting for the land to load"));
         step(5, () -> tsunamiAtPlayer(300));
         step(5, SelfTest::carInWavePath);
         step(155, () -> {
@@ -757,23 +760,33 @@ public final class SelfTest {
             server.execute(() -> {
                 ServerPlayer p = server.getPlayerList().getPlayers().get(0);
                 ServerLevel level = server.overworld();
-                int y = com.realweather.server.TsunamiGround.top(level, p.getBlockX() - 6, p.getBlockZ());
-                p.teleportTo(level, p.getBlockX() - 5.5, y, p.getZ(), p.getYRot(), 10F);
+                int y = com.realweather.server.TsunamiGround.top(level, p.getBlockX() - 3, p.getBlockZ());
+                landX = p.getX();
+                landY = p.getY();
+                landZ = p.getZ();
+                p.teleportTo(level, p.getBlockX() - 2.5, y, p.getZ(), p.getYRot(), 10F);
                 p.setAirSupply(p.getMaxAirSupply());
+                LOG.info("down into the flood at y {} (flood surface {}, block there {})", y,
+                        com.realweather.server.TsunamiManager.WAVES.isEmpty() ? Float.NaN
+                                : com.realweather.server.TsunamiManager.WAVES.get(0).floodSurface(level, p.getX(), p.getZ()),
+                        level.getBlockState(p.blockPosition().above()));
             });
         });
+        step(30, () -> tsunamiState("in the flood (1.5 s)"));
         step(60, () -> tsunamiState("in the flood"));
         step(5, () -> shot("77b_tsunami_in_flood"));
         step(5, () -> {
             cmd("gamemode creative @a");
             lookAtCar(40F);
         });
+        step(5, SelfTest::hover);
         step(5, () -> shot("77c_tsunami_car"));
         // Stop it and check that all of its water drains away again.
         step(5, () -> {
             MinecraftServer server = server();
             server.execute(() -> com.realweather.server.TsunamiManager.stop(server.overworld()));
         });
+        step(5, SelfTest::backToPlatform);
         step(300, () -> tsunamiState("draining"));
         step(5, () -> shot("77d_tsunami_draining"));
         step(340, () -> {
@@ -809,7 +822,60 @@ public final class SelfTest {
         server.execute(() -> com.realweather.server.TsunamiManager.clearNow(server.overworld()));
     }
 
-    /** A sedan on the ground between the player and the incoming wave. */
+    private static double landX, landY, landZ;
+
+    /** Finds dry land a little above the sea near the player and puts the viewing platform over it. */
+    private static void moveToLand() {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            ServerLevel level = server.overworld();
+            int sea = level.getSeaLevel();
+            int px = p.getBlockX(), pz = p.getBlockZ();
+            for (int r = 0; r <= 120; r += 3) {
+                for (int a = 0; a < Math.max(1, r * 2); a++) {
+                    double ang = a * Math.PI * 2 / Math.max(1, r * 2);
+                    int x = px + (int) Math.round(Math.cos(ang) * r), z = pz + (int) Math.round(Math.sin(ang) * r);
+                    int top = com.realweather.server.TsunamiGround.top(level, x, z);
+                    boolean dry = level.getFluidState(new BlockPos(x, top, z)).isEmpty() && level.getFluidState(new BlockPos(x, top - 1, z)).isEmpty();
+                    if (dry && top >= sea + 2 && top <= sea + 9) {
+                        int y = top + 16;
+                        for (int dx = -2; dx <= 2; dx++) {
+                            for (int dz = -2; dz <= 2; dz++) {
+                                level.setBlock(new BlockPos(x + dx, y - 1, z + dz), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
+                            }
+                        }
+                        p.teleportTo(level, x + 0.5, y, z + 0.5, p.getYRot(), p.getXRot());
+                        LOG.info("land for the tsunami at {} {} (ground {}), {} blocks from the shore spot", x, z, top, r);
+                        return;
+                    }
+                }
+            }
+            LOG.warn("no dry land near the coast");
+        });
+    }
+
+    /** Creative flight, so the camera stays where it is put. */
+    private static void hover() {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            p.getAbilities().flying = true;
+            p.onUpdateAbilities();
+        });
+    }
+
+    private static void backToPlatform() {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            if (landY != 0) {
+                p.teleportTo(server.overworld(), landX, landY, landZ, p.getYRot(), 20F);
+            }
+        });
+    }
+
+    /** A sedan on the ground beside the player (under the platform), in the wave's path. */
     private static void carInWavePath() {
         MinecraftServer server = server();
         server.execute(() -> {
@@ -819,7 +885,7 @@ public final class SelfTest {
                 return;
             }
             com.realweather.server.Tsunami w = com.realweather.server.TsunamiManager.WAVES.get(0);
-            double x = p.getX() - w.dirX * 10, z = p.getZ() - w.dirZ * 10;
+            double x = p.getX() + 3, z = p.getZ() + 3;
             int y = com.realweather.server.TsunamiGround.top(level, net.minecraft.util.Mth.floor(x), net.minecraft.util.Mth.floor(z));
             com.realweather.vehicle.StormVehicle v = com.realweather.vehicle.VehicleRegistry.type(com.realweather.vehicle.VehicleType.SEDAN).create(level);
             v.moveTo(x, y, z, 30F, 0F);
