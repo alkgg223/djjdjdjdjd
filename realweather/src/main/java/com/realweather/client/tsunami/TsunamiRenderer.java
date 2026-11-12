@@ -222,12 +222,16 @@ public final class TsunamiRenderer {
                 float hl = h * (1F + 0.07F * Mth.sin(l * 0.045F + (t.seed & 255)) + 0.04F * Mth.sin(l * 0.11F + time * 0.03F))
                         * Math.max(0.02F, end * end * (3F - 2F * end));
                 float wob = 0.15F * h * Mth.sin(l * 0.02F + (t.seed & 127) * 0.1F + time * 0.01F);
+                // Over flooded land the back of the wave runs down onto the water standing behind it, not down to the sea.
+                float sBack = front + (BODY[0][0] - TOE_DS) * hl;
+                float rest = part == 0 && land(level, t, Mth.floor(sBack / 16F), Mth.floor(l / 16F), 16F) ? Math.max(0F, flood - t.baseY) : 0F;
                 for (int k = 0; k < m; k++) {
                     float s = front + (prof[k][0] - TOE_DS) * hl + 1F + wob;
                     int idx = i * 12 + k;
                     PX[idx] = (float) (t.ox + t.dirX * s - t.dirZ * l - cam.x);
                     PZ[idx] = (float) (t.oz + t.dirZ * s + t.dirX * l - cam.z);
-                    PY[idx] = (float) (t.baseY + prof[k][1] * hl - cam.y);
+                    float back = rest > 0F && prof[k][0] < 0F ? Mth.clamp(-prof[k][0] / -BODY[0][0], 0F, 1F) : 0F;
+                    PY[idx] = (float) (t.baseY + prof[k][1] * hl + rest * back - cam.y);
                 }
             }
             float vScroll = time * 0.02F;
