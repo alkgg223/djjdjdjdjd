@@ -627,6 +627,7 @@ public final class SelfTest {
             weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
         });
         step(40, SelfTest::platform);
+        step(160, () -> LOG.info("waiting for the world around the platform to load"));
         String[][] list = {{"rope", "1", "75"}, {"cone", "2", "100"}, {"bowl", "3", "125"}, {"drill_bit", "2", "100"}, {"wedge", "5", "175"},
                 {"truncated_cone", "3", "125"}, {"bulb", "4", "150"}, {"hourglass", "3", "125"}, {"stovepipe", "4", "150"},
                 {"segmented", "1", "80"}, {"landspout", "0", "70"}, {"flared_base", "2", "100"}};

@@ -27,18 +27,18 @@ public class TornadoCloudParticle extends TextureSheetParticle {
         this.gravity = 0F;
         this.lifetime = 60 + random.nextInt(70);
         this.alpha = 0F;
-        this.maxAlpha = 0.35F + random.nextFloat() * 0.3F;
-        this.sink = 0.02F + random.nextFloat() * 0.06F;
+        this.maxAlpha = 0.16F + random.nextFloat() * 0.16F;
+        this.sink = 0.005F + random.nextFloat() * 0.02F;
         this.roll = random.nextFloat() * 6.283F;
         this.oRoll = roll;
         ClientTornadoes.T t = ClientTornadoes.get(tornado);
-        float shade = 0.42F + random.nextFloat() * 0.14F;
+        float shade = 0.32F + random.nextFloat() * 0.08F;
         if (t != null) {
             double dx = x - t.x;
             double dz = z - t.z;
             radius = (float) Math.sqrt(dx * dx + dz * dz);
             angle = (float) Math.atan2(dz, dx);
-            this.quadSize = (2.2F + random.nextFloat() * 3F) * (0.7F + t.rating * 0.22F);
+            this.quadSize = (1.4F + random.nextFloat() * 1.4F) * (0.8F + t.rating * 0.15F);
             shade += t.shape.tint() * 0.8F + (t.rating >= 4 ? -0.05F : 0F);
         } else {
             this.quadSize = 3F;
@@ -73,7 +73,7 @@ public class TornadoCloudParticle extends TextureSheetParticle {
         // Turns with the wind at the funnel wall (a little slower than the debris), hugging the wall.
         float v = t.windAt(Math.max(1F, edge)) * 0.9F + 0.05F;
         angle -= v / Math.max(1.5F, radius);
-        radius += (edge * 1.15F - radius) * 0.03F;
+        radius += (edge * 1.3F + 1.5F - radius) * 0.03F;
         double cx = t.x + t.offsetX(f, t.age);
         double cz = t.z + t.offsetZ(f, t.age);
         setPos(cx + Mth.cos(angle) * radius, y - sink, cz + Mth.sin(angle) * radius);

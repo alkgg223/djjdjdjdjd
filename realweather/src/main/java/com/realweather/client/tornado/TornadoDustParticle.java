@@ -76,7 +76,9 @@ public class TornadoDustParticle extends TextureSheetParticle {
         double cz = t.z + t.offsetZ(f, t.age);
         double nx = cx + Mth.cos(angle) * radius;
         double nz = cz + Mth.sin(angle) * radius;
-        double ny = y + climb * (0.3F + t.strength) * (radius < rc * 1.6F ? 1.6F : 0.4F);
+        // The debris cloud stays low round the base; it does not climb up and hide the funnel.
+        float top = 4F + t.rating * 3.5F;
+        double ny = y + climb * (0.3F + t.strength) * (radius < rc * 1.6F ? 1.6F : 0.4F) * (h > top ? 0.08F : 1F);
         setPos(nx, ny, nz);
         roll += 0.02F;
         quadSize *= 1.004F;

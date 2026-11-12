@@ -210,9 +210,9 @@ public final class ClientTornadoes {
         }
     }
 
-    private static final int[] DUST_N = {2, 4, 7, 12};
-    private static final int[] CHUNK_N = {1, 3, 7, 13};
-    private static final int[] CLOUD_N = {1, 2, 4, 7};
+    private static final int[] DUST_N = {1, 2, 4, 6};
+    private static final int[] CHUNK_N = {1, 3, 6, 10};
+    private static final int[] CLOUD_N = {0, 1, 1, 2};
 
     /**
      * Particles all the way up the vortex: dust whirling round the base, chunks of the ground carried up and round
@@ -226,11 +226,13 @@ public final class ClientTornadoes {
         float rc = Math.max(2F, t.coreRadius());
         float h = t.height();
         // Wisps of cloud round the top of the funnel (also while it is still coming down).
-        int clouds = Math.round(CLOUD_N[q] * (0.5F + 0.5F * amount) * lod * (t.shape.wallCloud() ? 1F : 0.5F));
+        // Only round the collar where the funnel meets the cloud, outside the funnel wall, so the funnel's own
+        // outline stays clear.
+        int clouds = t.shape.wallCloud() ? Math.round(CLOUD_N[q] * lod) : 0;
         for (int i = 0; i < clouds; i++) {
-            float f = 0.55F + RANDOM.nextFloat() * 0.45F;
+            float f = 0.84F + RANDOM.nextFloat() * 0.16F;
             double a = RANDOM.nextDouble() * Math.PI * 2;
-            double r = t.radiusAt(f) * (1.0 + RANDOM.nextDouble() * 0.7) + 1.5;
+            double r = t.radiusAt(f) * (1.25 + RANDOM.nextDouble() * 0.5) + 2.0;
             double x = t.x + t.offsetX(f, t.age) + Math.cos(a) * r;
             double z = t.z + t.offsetZ(f, t.age) + Math.sin(a) * r;
             mc.particleEngine.add(new TornadoCloudParticle(level, x, t.groundY + f * h, z, t.id, CLOUD_SPRITES()));
