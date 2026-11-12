@@ -36,12 +36,12 @@ public final class SnowPile {
         int count = Math.min(players.size(), 8);
         if (d.snowPile && snowing) {
             int maxDepth = Mth.clamp(1 + Math.round(WeatherServer.snow * 6F) + Math.round(WeatherServer.blizzard * 17F), 1, MAX_DEPTH);
-            int attempts = 1 + (int) (WeatherServer.snow * 6F) + (int) (WeatherServer.blizzard * 14F);
+            int attempts = 1 + (int) (WeatherServer.snow * 10F) + (int) (WeatherServer.blizzard * 30F);
             for (int p = 0; p < count; p++) {
                 ServerPlayer player = players.get(rng.nextInt(players.size()));
                 for (int i = 0; i < attempts; i++) {
-                    int x = Mth.floor(player.getX()) + rng.nextInt(97) - 48;
-                    int z = Mth.floor(player.getZ()) + rng.nextInt(97) - 48;
+                    int x = Mth.floor(player.getX()) + rng.nextInt(81) - 40;
+                    int z = Mth.floor(player.getZ()) + rng.nextInt(81) - 40;
                     pile(level, new BlockPos(x, 0, z), maxDepth);
                 }
             }

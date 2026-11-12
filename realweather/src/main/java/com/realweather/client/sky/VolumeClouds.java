@@ -113,7 +113,11 @@ public final class VolumeClouds {
         float sy = Math.max(SkyLight.sunY, -0.2F);
         float len = Mth.sqrt(SkyLight.sunX * SkyLight.sunX + sy * sy + SkyLight.sunZ * SkyLight.sunZ) + 1.0E-4F;
         march.safeGetUniform("SunDir").set(SkyLight.sunX / len, sy / len, SkyLight.sunZ / len);
-        march.safeGetUniform("SunColor").set(SkyLight.r * sunK * 1.05F, SkyLight.g * sunK, SkyLight.b * sunK * 0.95F);
+        // Near sunrise and sunset the low sun lights the clouds orange and pink from below.
+        float warm = SkyLight.sunY > -0.12F ? Mth.clamp(1F - Math.abs(SkyLight.sunY) * 3.5F, 0F, 1F) * 0.8F : 0F;
+        float sr = Mth.lerp(warm, SkyLight.r * sunK * 1.05F, 1.45F), sg = Mth.lerp(warm, SkyLight.g * sunK, 0.78F),
+                sb = Mth.lerp(warm, SkyLight.b * sunK * 0.95F, 0.5F);
+        march.safeGetUniform("SunColor").set(sr, sg, sb);
         float amb = 0.25F + 0.75F * Mth.clamp(SkyLight.r, 0F, 1F);
         march.safeGetUniform("SkyColor").set((float) (sky.x * 0.45 + fog[0] * 0.55) * amb, (float) (sky.y * 0.45 + fog[1] * 0.55) * amb,
                 (float) (sky.z * 0.45 + fog[2] * 0.55) * amb);

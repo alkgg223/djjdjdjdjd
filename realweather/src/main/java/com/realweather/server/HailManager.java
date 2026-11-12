@@ -42,10 +42,10 @@ public final class HailManager {
             }
             {
                 // Heavy hail piles up fast: pellets first, then packed hail-snow up to three blocks deep.
-                int attempts = 1 + (int) (h * 16F);
+                int attempts = 1 + (int) (h * 60F);
                 for (int i = 0; i < attempts; i++) {
-                    int x = Mth.floor(player.getX()) + rng.nextInt(81) - 40;
-                    int z = Mth.floor(player.getZ()) + rng.nextInt(81) - 40;
+                    int x = Mth.floor(player.getX()) + rng.nextInt(65) - 32;
+                    int z = Mth.floor(player.getZ()) + rng.nextInt(65) - 32;
                     float here = StormManager.hailAt(d, x, z);
                     if (rng.nextFloat() < here) {
                         accumulate(level, new BlockPos(x, 0, z), here, rng);
