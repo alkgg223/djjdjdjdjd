@@ -53,6 +53,8 @@ public final class HighClouds {
         int q = ClientConfig.quality();
         int n = new int[]{4, 6, 8, 9}[q];
         float tile = 420F;
+        // Beyond the far plane nothing is drawn: those vertices are pulled in along their line of sight.
+        float limit = net.minecraft.client.Minecraft.getInstance().gameRenderer.getDepthFar() * 0.85F;
         try {
             for (int li = 0; li < layers.length; li++) {
                 float[] L = layers[li];
@@ -88,7 +90,8 @@ public final class HighClouds {
                             double dx = c[k][0] - cam.x, dz = c[k][1] - cam.z;
                             float d = (float) Math.sqrt(dx * dx + dz * dz + y * y);
                             float haze = (1F - (float) Math.exp(-d / Math.max(600F, visibility * 2F))) * 0.85F;
-                            b.addVertex((float) dx, y, (float) dz).setUv((float) ((c[k][0] + ox) / L[2]), (float) ((c[k][1] + oz) / L[2]))
+                            float k = d > limit ? limit / d : 1F;
+                            b.addVertex((float) dx * k, y * k, (float) dz * k).setUv((float) ((c[k][0] + ox) / L[2]), (float) ((c[k][1] + oz) / L[2]))
                                     .setColor(r + (fog[0] - r) * haze, g + (fog[1] - g) * haze, bl + (fog[2] - bl) * haze, a[k]);
                         }
                     }

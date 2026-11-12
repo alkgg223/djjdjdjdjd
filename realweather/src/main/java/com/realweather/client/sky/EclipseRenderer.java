@@ -35,6 +35,7 @@ public final class EclipseRenderer {
     private static final ResourceLocation DISC = RealWeather.id("textures/environment/disc.png");
     private static final ResourceLocation CORONA = RealWeather.id("textures/environment/corona.png");
     private static final ResourceLocation FLARE = RealWeather.id("textures/environment/flare.png");
+    private static final ResourceLocation PATCH = RealWeather.id("textures/environment/patch.png");
     /** Sun disc radius as vanilla draws it (the middle half of a 60-wide quad at 100 blocks). */
     static final float SUN_R = 15F;
     private static float[] stars;
@@ -104,9 +105,9 @@ public final class EclipseRenderer {
             // 2: cover the vanilla sun (it can't be hidden behind the moon) with the colour of the darkened sky.
             float cr = (float) Mth.lerp(dark * 0.93F, sky.x, nr), cg = (float) Mth.lerp(dark * 0.93F, sky.y, ng), cb = (float) Mth.lerp(dark * 0.93F, sky.z, nb);
             RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-            RenderSystem.setShaderTexture(0, DISC);
+            RenderSystem.setShaderTexture(0, PATCH);
             b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-            quadTex(b, 0F, 100F, 0F, 33F, cr, cg, cb, 1F);
+            quadTex(b, 0F, 100F, 0F, 40F, cr, cg, cb, 1F);
             draw(b);
 
             // 3: the moon, as depth only: the sun, its glow, the corona and the stars behind it are hidden there.
@@ -140,11 +141,16 @@ public final class EclipseRenderer {
                 mv.set(sunFrame);
                 RenderSystem.applyModelViewMatrix();
             }
+            // The uncovered part of the sun at full brightness; its glare shrinks with what is left of it.
+            float sunA = clear * (cov > 0.9995F ? 0F : 1F);
             RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+            RenderSystem.setShaderTexture(0, DISC);
+            b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+            quadTex(b, 0F, 100F, 0F, SUN_R, 1F, 0.97F, 0.9F, sunA);
+            draw(b);
             RenderSystem.setShaderTexture(0, SUN);
             b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-            float sunA = clear * (cov > 0.9995F ? 0F : 1F);
-            quadTex(b, 0F, 100F, 0F, 30F, 1F, 0.98F, 0.93F, sunA);
+            quadTex(b, 0F, 100F, 0F, 30F, 1F, 0.98F, 0.93F, sunA * (float) Math.pow(1F - cov, 0.7));
             draw(b);
             if (ClientEclipse.corona > 0.01F) {
                 RenderSystem.setShaderTexture(0, CORONA);

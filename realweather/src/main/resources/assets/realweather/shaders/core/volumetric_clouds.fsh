@@ -150,7 +150,7 @@ vec3 flashLight(vec3 rel) {
             s += p * exp(-dot(d, d) / (f[i].w * f[i].w));
         }
     }
-    return s * vec3(0.85, 0.9, 1.0) * 2.6;
+    return s * vec3(0.85, 0.9, 1.0) * 4.0;
 }
 
 // One layer between heights y0 and y1, marched in `n` steps; returns premultiplied colour and transmittance.
@@ -207,7 +207,13 @@ float midDensity(vec3 wp) {
 }
 
 void main() {
+    // The nearest depth around this (low resolution) pixel: clouds don't bleed over the edges of hills and roofs.
+    vec2 px = 1.5 / vec2(textureSize(Sampler0, 0));
     float depth = texture(Sampler0, texCoord).r;
+    depth = min(depth, texture(Sampler0, texCoord + vec2(px.x, px.y)).r);
+    depth = min(depth, texture(Sampler0, texCoord + vec2(-px.x, px.y)).r);
+    depth = min(depth, texture(Sampler0, texCoord + vec2(px.x, -px.y)).r);
+    depth = min(depth, texture(Sampler0, texCoord + vec2(-px.x, -px.y)).r);
     vec4 ndc = vec4(texCoord * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
     vec4 wp = InvViewProj * ndc;
     vec3 rel = wp.xyz / wp.w;
@@ -221,10 +227,14 @@ void main() {
     float tProbe = abs(dir.y) > 1.0e-3 ? clamp((CloudBase - camY) / dir.y, 0.0, 6000.0) : 2000.0;
     vec2 at = (CameraPos.xz + dir.xz * tProbe + DayOffset) / 3200.0;
     float r1 = vnoise(vec3(at, 1.0)), r2 = vnoise(vec3(at * 1.3, 7.0)), r3 = vnoise(vec3(at * 0.8, 13.0)), r4 = vnoise(vec3(at * 1.1, 19.0));
-    wLow = TypesLow * vec4(smoothstep(0.2, 0.55, r1) * 1.3, smoothstep(0.3, 0.6, r2) * 1.4, smoothstep(0.35, 0.6, r3) * 1.5, smoothstep(0.4, 0.65, r4) * 1.6);
+    // Clumpy types (cumulus, towers, cloudlets, streaks) come and go from region to region; the sheets (stratocumulus,
+    // stratus, altostratus, cirrostratus) only thin out here and there.
+    wLow = TypesLow * vec4(smoothstep(0.2, 0.55, r1) * 1.3, 0.55 + 0.6 * smoothstep(0.3, 0.6, r2), 0.6 + 0.55 * smoothstep(0.3, 0.6, r3),
+            smoothstep(0.4, 0.65, r4) * 1.6);
     wLow = clamp(wLow, 0.0, 1.0);
-    wHigh = clamp(TypesHigh * vec4(smoothstep(0.25, 0.55, r2), smoothstep(0.2, 0.5, r3), smoothstep(0.15, 0.5, r4), smoothstep(0.3, 0.6, r1)) * 1.4, 0.0, 1.0);
-    wVeil = clamp(TypesVeil.x * smoothstep(0.2, 0.5, r1) * 1.4, 0.0, 1.0);
+    wHigh = clamp(TypesHigh * vec4(smoothstep(0.25, 0.55, r2) * 1.4, 0.6 + 0.6 * smoothstep(0.2, 0.5, r3), smoothstep(0.15, 0.5, r4) * 1.4,
+            smoothstep(0.3, 0.6, r1) * 1.4), 0.0, 1.0);
+    wVeil = clamp(TypesVeil.x * (0.6 + 0.6 * smoothstep(0.2, 0.5, r1)), 0.0, 1.0);
     lowBottom = wLow.z > 0.01 ? 118.0 : CloudBase;
     lowTop = wLow.w > 0.01 ? 700.0 : CloudTop;
 
@@ -286,10 +296,14 @@ void main() {
             // Cirrus: strands combed out along the wind, hooked at the ends.
             vec2 wind = normalize(Drift + vec2(0.001, 0.0));
             vec2 qa = vec2(dot(q, wind), dot(q, vec2(-wind.y, wind.x)));
-            float warp = vnoise(vec3(qa / 900.0, 3.0));
-            float strands = fbm2(vec3(qa.x / 1600.0, qa.y / 70.0 + warp * 6.0, 5.0));
+            float warp = vnoise(vec3(qa / 700.0, 3.0)) * 2.0 - 1.0;
+            float warp2 = vnoise(vec3(qa / 300.0, 8.0)) * 2.0 - 1.0;
+            vec2 qs = vec2(qa.x / 900.0 + warp2 * 0.6, qa.y / 120.0 + warp * 9.0);
+            float strands = fbm2(vec3(qs, 5.0));
+            // Each streak fades out along its length (the 'mares' tails').
+            float tails = vnoise(vec3(qa.x / 500.0, qa.y / 160.0 + warp * 4.0, 2.0));
             float pat = vnoise(vec3(qa / 2600.0, 9.0));
-            float ci = clamp((strands - 0.55) * 3.5, 0.0, 1.0) * smoothstep(0.35, 0.65, pat) * wHigh.z;
+            float ci = clamp((strands - 0.56) * 3.0, 0.0, 1.0) * smoothstep(0.3, 0.75, tails) * smoothstep(0.35, 0.65, pat) * wHigh.z * 0.8;
             // Cirrocumulus: a fine rippled grain of tiny cloudlets.
             float grain = vnoise(vec3(q / 11.0, 1.0)) * 0.6 + 0.4 * (0.5 + 0.5 * sin(qa.x / 9.0 + warp * 8.0));
             float cc = clamp((grain - 0.6) * 4.0, 0.0, 1.0) * smoothstep(0.45, 0.7, vnoise(vec3(q / 1400.0, 4.0))) * wHigh.w;

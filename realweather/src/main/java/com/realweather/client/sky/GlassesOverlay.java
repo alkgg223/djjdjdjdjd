@@ -57,7 +57,9 @@ public final class GlassesOverlay {
         g.fill(0, h - fw, w, h, 0xFFE8D7A0);
         g.fill(0, 0, fw, h, 0xFFE8D7A0);
         g.fill(w - fw, 0, w, h, 0xFFE8D7A0);
-        g.fill(w / 2 - fw / 2, 0, w / 2 + fw / 2, h, 0xFFE8D7A0);
+        // The narrow bridge between the two lenses, over the nose.
+        int bw = Math.max(2, fw / 3);
+        g.fill(w / 2 - bw / 2, h / 3, w / 2 + bw / 2, h, 0xFFE8D7A0);
     }
 
     private static void blit(GuiGraphics g, ResourceLocation tex, float cx, float cy, float r) {
