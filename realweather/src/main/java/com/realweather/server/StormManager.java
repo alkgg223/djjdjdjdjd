@@ -46,7 +46,8 @@ public final class StormManager {
             stratiform = d.rainOverride;
         } else {
             // Thunderstorms are scattered cells with mostly dry air between them; plain rain is a widespread drizzle.
-            stratiform = !raining ? 0F : thunder ? 0.03F + 0.1F * WeatherServer.rain : Math.max(0.12F, WeatherServer.rain * 0.4F);
+            // Rain falls everywhere while it rains (steady between the cells, heavy under them), never just in patches.
+            stratiform = !raining ? 0F : thunder ? 0.32F + 0.2F * WeatherServer.rain : Math.max(0.45F, WeatherServer.rain * 0.75F);
         }
         long t = level.getGameTime();
         if (t % 20 == 0 && !players.isEmpty()) {

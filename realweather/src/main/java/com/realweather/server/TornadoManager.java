@@ -195,7 +195,8 @@ public final class TornadoManager {
         List<Entity> list = level.getEntities((Entity) null, box, e -> e.isAlive() && !e.isSpectator() && !e.isPassenger()
                 && !(e instanceof Player p && (p.isCreative() || p.isSpectator())) && !(e instanceof LightningBolt)
                 && !(e instanceof com.realweather.vehicle.StormVehicle));
-        float lift = Tornado.LIFT[t.rating];
+        float size = t.size();
+        float lift = Tornado.LIFT[t.rating] * Math.min(2F, (float) Math.sqrt(size));
         boolean hurt = level.getGameTime() % 10 == 0;
         for (Entity e : list) {
             double dx = e.getX() - t.x;
@@ -236,7 +237,7 @@ public final class TornadoManager {
             e.setDeltaMovement(v.x + (ux - v.x) * k, vy, v.z + (uz - v.z) * k);
             e.hurtMarked = true;
             if (hurt && r < rc && exposed && Tornado.DAMAGE[t.rating] > 0 && e instanceof LivingEntity living) {
-                living.hurt(damage(level), Tornado.DAMAGE[t.rating] * 0.5F * t.strength);
+                living.hurt(damage(level), Tornado.DAMAGE[t.rating] * 0.5F * t.strength * Math.min(3F, size));
             }
         }
     }
@@ -246,9 +247,16 @@ public final class TornadoManager {
     }
 
     private static void damageGround(ServerLevel level, Tornado t, RandomSource rng) {
-        int samples = Math.round(Tornado.BREAKS[t.rating] * t.strength * t.contact);
-        float maxHard = Tornado.HARDNESS[t.rating];
+        // A funnel bigger than its rating's usual one wrecks the whole of its (much larger) path: the hits grow with
+        // its area, they dig deeper into buildings, and the biggest ones scour the soil off the land.
+        float size = t.size();
+        int samples = Math.round(Tornado.BREAKS[t.rating] * t.strength * t.contact * Math.min(16F, size * size * 1.4F));
+        int depth = 4 + Math.round(Math.min(10F, (size - 1F) * 6F));
+        boolean scour = t.rating >= 5 && size >= 1.6F;
+        float maxHard = Tornado.HARDNESS[t.rating] * (size >= 1.6F ? 1.7F : 1F);
         double rc = t.coreRadius() * 1.2;
+        // With so many blocks going, only some of them get the full break effect (particles and sound).
+        float effects = samples > 40 ? 40F / samples : 1F;
         for (int i = 0; i < samples; i++) {
             double a = rng.nextDouble() * Math.PI * 2;
             double r = Math.sqrt(rng.nextDouble()) * rc;
@@ -258,8 +266,9 @@ public final class TornadoManager {
                 continue;
             }
             int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+            int scoured = 0;
             // Work down from the top: plants, trees and buildings go first; the natural ground only gets scoured.
-            for (int k = 0; k < 4; k++) {
+            for (int k = 0; k < depth; k++) {
                 BlockPos pos = new BlockPos(x, top - k, z);
                 BlockState state = level.getBlockState(pos);
                 if (state.isAir()) {
@@ -267,6 +276,14 @@ public final class TornadoManager {
                 }
                 if (!state.getFluidState().isEmpty() || state.hasBlockEntity()) {
                     break;
+                }
+                if (isTerrain(state) && scour && scoured < 2 && r < rc * 0.85 && !state.is(Blocks.BEDROCK)
+                        && !state.is(BlockTags.BASE_STONE_OVERWORLD) && rng.nextFloat() < 0.35F) {
+                    // The giants grind the soil and sand away down to the rock in their path.
+                    level.removeBlock(pos, false);
+                    scoured++;
+                    blocksDestroyed++;
+                    continue;
                 }
                 if (isTerrain(state)) {
                     // Violent tornadoes strip the grass and soil cover, but do not dig into the land.
@@ -284,7 +301,11 @@ public final class TornadoManager {
                 if (rng.nextFloat() >= chance) {
                     break;
                 }
-                level.destroyBlock(pos, rng.nextFloat() < 0.03F);
+                if (rng.nextFloat() < effects) {
+                    level.destroyBlock(pos, rng.nextFloat() < 0.03F);
+                } else {
+                    level.removeBlock(pos, false);
+                }
                 blocksDestroyed++;
             }
         }

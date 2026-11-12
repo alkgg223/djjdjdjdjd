@@ -1,6 +1,7 @@
 package com.realweather.server;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 
@@ -19,19 +20,21 @@ public final class Precip {
         return level.isClientSide() ? clientForce : WeatherServer.force;
     }
 
-    public static int at(Level level, Biome biome, BlockPos pos) {
+    public static int at(Level level, Holder<Biome> biome, BlockPos pos) {
         return at(biome, pos, force(level));
     }
 
-    public static int at(Biome biome, BlockPos pos, int force) {
+    public static int at(Holder<Biome> holder, BlockPos pos, int force) {
         if (force == RAIN || force == SNOW || force == SAND) {
             return force;
         }
-        if (WeatherServer.isDryBiome(biome)) {
+        if (WeatherServer.isDryBiome(holder)) {
             return SAND;
         }
+        Biome biome = holder.value();
         if (!biome.hasPrecipitation()) {
-            return NONE;
+            // Savannas and the like get their rains too; only deserts and badlands blow sand instead.
+            return RAIN;
         }
         Biome.Precipitation p = biome.getPrecipitationAt(pos);
         return p == Biome.Precipitation.RAIN ? RAIN : p == Biome.Precipitation.SNOW ? SNOW : NONE;

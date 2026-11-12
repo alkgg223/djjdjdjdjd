@@ -84,6 +84,7 @@ public final class ClientInit {
 
     private static void onGuiLayers(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.CAMERA_OVERLAYS, RealWeather.id("weather_overlay"), WeatherOverlay::render);
+        event.registerBelow(VanillaGuiLayers.HOTBAR, RealWeather.id("tsunami_water"), com.realweather.client.tsunami.TsunamiOverlay::render);
         event.registerAbove(VanillaGuiLayers.HOTBAR, RealWeather.id("vehicle_hud"), com.realweather.client.vehicle.VehicleHud::render);
     }
 

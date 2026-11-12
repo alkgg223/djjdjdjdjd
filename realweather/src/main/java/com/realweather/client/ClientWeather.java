@@ -163,7 +163,7 @@ public final class ClientWeather {
                 float w = 1F / (1F + (i * i + j * j) * 0.5F);
                 int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
                 m.set(x, Math.max(top, cy), z);
-                int kind = com.realweather.server.Precip.at(level, level.getBiome(m).value(), m);
+                int kind = com.realweather.server.Precip.at(level, level.getBiome(m), m);
                 if (kind == com.realweather.server.Precip.SAND) {
                     wSand += w;
                 } else if (kind == com.realweather.server.Precip.RAIN) {

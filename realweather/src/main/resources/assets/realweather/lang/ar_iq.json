@@ -223,5 +223,7 @@
   "realweather.cmd.tsunami.natural.off": "التسونامي الطبيعي: معطّل",
   "subtitles.realweather.tsunami.roar": "هدير التسونامي",
   "subtitles.realweather.tsunami.rush": "اندفاع الماء",
-  "subtitles.realweather.tsunami.crash": "ارتطام الموجة"
+  "subtitles.realweather.tsunami.crash": "ارتطام الموجة",
+  "realweather.cmd.tsunami.water.on": "التسونامي يخلي مي حقيقي على الكاع (يختفي بعد خمس دقايق): شغال",
+  "realweather.cmd.tsunami.water.off": "التسونامي يخلي مي حقيقي على الكاع: طافي"
 }

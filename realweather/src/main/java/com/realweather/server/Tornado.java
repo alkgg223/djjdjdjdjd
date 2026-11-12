@@ -73,6 +73,11 @@ public class Tornado {
         return width < 8F ? 0 : width < 14F ? 1 : width < 20F ? 2 : width < 30F ? 3 : width < 44F ? 4 : 5;
     }
 
+    /** How much bigger than its rating's usual funnel this one is (custom and giant tornadoes), at least 1. */
+    public float size() {
+        return Math.max(1F, baseRadius() / RADIUS[rating]);
+    }
+
     public float wind() {
         return WIND[rating] * strength;
     }

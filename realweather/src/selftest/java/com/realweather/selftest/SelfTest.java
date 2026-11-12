@@ -731,7 +731,8 @@ public final class SelfTest {
         step(60, SelfTest::platform);
         step(120, () -> LOG.info("waiting for the coast to load"));
         step(5, () -> tsunamiAtPlayer(300));
-        step(160, () -> {
+        step(5, SelfTest::carInWavePath);
+        step(155, () -> {
             lookAtWave(-4);
             tsunamiState("approach");
         });
@@ -748,6 +749,38 @@ public final class SelfTest {
             tsunamiState("flooded");
         });
         step(5, () -> shot("77_tsunami_flood"));
+        step(5, () -> carState("after the wave"));
+        // Down into the flood, as a survival player: the air runs out under the water.
+        step(5, () -> {
+            cmd("gamemode survival @a");
+            MinecraftServer server = server();
+            server.execute(() -> {
+                ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                ServerLevel level = server.overworld();
+                int y = com.realweather.server.TsunamiGround.top(level, p.getBlockX() - 6, p.getBlockZ());
+                p.teleportTo(level, p.getBlockX() - 5.5, y, p.getZ(), p.getYRot(), 10F);
+                p.setAirSupply(p.getMaxAirSupply());
+            });
+        });
+        step(60, () -> tsunamiState("in the flood"));
+        step(5, () -> shot("77b_tsunami_in_flood"));
+        step(5, () -> {
+            cmd("gamemode creative @a");
+            lookAtCar(40F);
+        });
+        step(5, () -> shot("77c_tsunami_car"));
+        // Stop it and check that all of its water drains away again.
+        step(5, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> com.realweather.server.TsunamiManager.stop(server.overworld()));
+        });
+        step(300, () -> tsunamiState("draining"));
+        step(5, () -> shot("77d_tsunami_draining"));
+        step(340, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> LOG.info("tsunami water left after draining: waves={} lists={}", com.realweather.server.TsunamiManager.WAVES.size(),
+                    WeatherData.get(server.overworld()).tsunamiWater.values().stream().mapToInt(java.util.List::size).sum()));
+        });
         step(5, () -> {
             stopTsunamis();
             removeTornadoes();
@@ -773,9 +806,50 @@ public final class SelfTest {
 
     private static void stopTsunamis() {
         MinecraftServer server = server();
+        server.execute(() -> com.realweather.server.TsunamiManager.clearNow(server.overworld()));
+    }
+
+    /** A sedan on the ground between the player and the incoming wave. */
+    private static void carInWavePath() {
+        MinecraftServer server = server();
         server.execute(() -> {
-            com.realweather.server.TsunamiManager.WAVES.clear();
-            com.realweather.server.TsunamiManager.sync(server.overworld());
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            ServerLevel level = server.overworld();
+            if (com.realweather.server.TsunamiManager.WAVES.isEmpty()) {
+                return;
+            }
+            com.realweather.server.Tsunami w = com.realweather.server.TsunamiManager.WAVES.get(0);
+            double x = p.getX() - w.dirX * 10, z = p.getZ() - w.dirZ * 10;
+            int y = com.realweather.server.TsunamiGround.top(level, net.minecraft.util.Mth.floor(x), net.minecraft.util.Mth.floor(z));
+            com.realweather.vehicle.StormVehicle v = com.realweather.vehicle.VehicleRegistry.type(com.realweather.vehicle.VehicleType.SEDAN).create(level);
+            v.moveTo(x, y, z, 30F, 0F);
+            v.setColor(com.realweather.vehicle.VehicleType.SEDAN.colors[0]);
+            level.addFreshEntity(v);
+            VEHICLE_IDS[0] = v.getUUID();
+            LOG.info("car in the wave's path at {} {} {}", (int) x, y, (int) z);
+        });
+    }
+
+    private static void carState(String label) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            if (serverVehicle(server, 0) instanceof com.realweather.vehicle.StormVehicle v) {
+                LOG.info("[{}] car at {} glass broken={} cabin water={}", label, v.blockPosition(), v.flag(com.realweather.vehicle.StormVehicle.FLAG_GLASS_BROKEN),
+                        v.cabinWater());
+            } else {
+                LOG.warn("[{}] car gone", label);
+            }
+        });
+    }
+
+    private static void lookAtCar(float pitch) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            if (!(serverVehicle(server, 0) instanceof com.realweather.vehicle.StormVehicle v)) {
+                return;
+            }
+            p.teleportTo(server.overworld(), v.getX() + 4, v.getY() + 4, v.getZ() + 4, 135F, pitch);
         });
     }
 
@@ -800,8 +874,10 @@ public final class SelfTest {
         server.execute(() -> {
             ServerPlayer p = server.getPlayerList().getPlayers().get(0);
             for (com.realweather.server.Tsunami w : com.realweather.server.TsunamiManager.WAVES) {
-                LOG.info("[{}] tsunami #{} strength={} front={} player along={} height={} flood={} stage={} drained={}", label, w.id, w.strength,
-                        (int) w.front, (int) w.along(p.getX(), p.getZ()), w.height(), w.floodY(), w.stage, w.drained);
+                LOG.info("[{}] tsunami #{} strength={} front={} player along={} height={} ground={} flood={} stage={} drained={} air={} water={}", label,
+                        w.id, w.strength, (int) w.front, (int) w.along(p.getX(), p.getZ()), w.height(), w.ground(p.level(), p.getX(), p.getZ()),
+                        w.floodSurface(p.level(), p.getX(), p.getZ()), w.stage, w.drained, p.getAirSupply(),
+                        com.realweather.server.WeatherData.get(p.serverLevel()).tsunamiWater.getOrDefault(w.id, new it.unimi.dsi.fastutil.longs.LongArrayList()).size());
             }
         });
         Minecraft mc = Minecraft.getInstance();

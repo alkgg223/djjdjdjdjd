@@ -1,11 +1,14 @@
 package com.realweather.server;
 
 import com.realweather.net.TsunamiSyncPayload;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -14,6 +17,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -26,18 +30,38 @@ import java.util.List;
 /**
  * Raises tsunamis (by command, or now and then from the sea near a player), runs them inland and applies them:
  * whatever stands in front of the wave is swept along and lifted, the weaker parts of buildings, trees and plants
- * are torn down in its face, and the land behind it stays under water until it drains back to the sea.
+ * are torn down in its face, anyone caught under the water runs out of air, cars have their windows smashed in, and
+ * the land behind it is left under real water (filled in around the players) until it drains away at the end of
+ * the tsunami's five minutes.
  */
 public final class TsunamiManager {
     public static final List<Tsunami> WAVES = new ArrayList<>();
     private static int nextId = 1;
     private static boolean had;
+    /** Columns already filled with flood water, per tsunami. */
+    private static final it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<LongOpenHashSet> FILLED = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>();
+    /** Real water blocks placed per tick at most, and per tsunami in all. */
+    private static final int PLACE_BUDGET = 700, MAX_BLOCKS = 150000, FILL_RADIUS = 36;
 
     private TsunamiManager() {}
+
+    /** A new world (or the server stopping): tsunamis don't carry over; their water is drained by the saved list. */
+    public static void reset() {
+        WAVES.clear();
+        FILLED.clear();
+        had = false;
+    }
 
     static void tick(ServerLevel level, WeatherData d, List<ServerPlayer> players, RandomSource rng) {
         if (d.natural && d.tsunamiNatural && WAVES.isEmpty() && level.getGameTime() % 1200 == 0 && !players.isEmpty() && rng.nextInt(160) == 0) {
             natural(level, players.get(rng.nextInt(players.size())), rng);
+        }
+        if (level.getGameTime() % 40 == 0) {
+            // Water left over from tsunamis whose land wasn't loaded when they ended (or from before a restart).
+            LongArrayList orphans = d.tsunamiWater.get(0);
+            if (orphans != null && !orphans.isEmpty()) {
+                drain(level, d, orphans, Float.NaN, null);
+            }
         }
         if (WAVES.isEmpty()) {
             if (had) {
@@ -48,24 +72,41 @@ public final class TsunamiManager {
         }
         had = true;
         Iterator<Tsunami> it = WAVES.iterator();
+        int budget = PLACE_BUDGET;
         while (it.hasNext()) {
             Tsunami w = it.next();
             w.age++;
             if (w.stage == Tsunami.RUNNING) {
                 w.front += w.speed();
-                if (w.front >= w.run()) {
+                if (w.front >= w.run() || w.stopping) {
                     w.stage = Tsunami.DRAINING;
                 }
-            } else {
-                w.drained = Math.min(1F, w.drained + 1F / 900F);
-                if (w.drained >= 1F) {
-                    it.remove();
-                    continue;
+            }
+            if (w.draining()) {
+                w.drained = Math.min(1F, w.drained + 1F / Tsunami.DRAIN_TICKS);
+            }
+            LongArrayList water = waterOf(d, w.id);
+            if (w.drained >= 1F) {
+                // Whatever water is left in unloaded land goes on the list to drain when it loads again.
+                drain(level, d, water, Float.NaN, w);
+                if (!water.isEmpty()) {
+                    waterOf(d, 0).addAll(water);
                 }
+                d.tsunamiWater.remove(w.id);
+                FILLED.remove(w.id);
+                d.setDirty();
+                it.remove();
+                continue;
             }
             affectEntities(level, w, players);
             if (w.stage == Tsunami.RUNNING && d.tornadoDamage) {
                 breakBlocks(level, w, players, rng);
+            }
+            if (d.tsunamiFlood && !w.draining() && budget > 0) {
+                budget = fill(level, d, w, water, players, budget);
+            }
+            if (w.draining() && level.getGameTime() % 10 == 0) {
+                drain(level, d, water, w.drained, w);
             }
         }
         if (level.getGameTime() % 10 == 0) {
@@ -92,9 +133,46 @@ public final class TsunamiManager {
         return w;
     }
 
+    private static LongArrayList waterOf(WeatherData d, int id) {
+        LongArrayList l = d.tsunamiWater.get(id);
+        if (l == null) {
+            l = new LongArrayList();
+            d.tsunamiWater.put(id, l);
+        }
+        return l;
+    }
+
+    private static LongOpenHashSet filledOf(int id) {
+        LongOpenHashSet s = FILLED.get(id);
+        if (s == null) {
+            s = new LongOpenHashSet();
+            FILLED.put(id, s);
+        }
+        return s;
+    }
+
+    /** Ends every tsunami at once and takes all of their water away (what isn't loaded drains when it loads). */
+    public static void clearNow(ServerLevel level) {
+        WeatherData d = WeatherData.get(level);
+        for (Tsunami w : WAVES) {
+            LongArrayList water = d.tsunamiWater.remove(w.id);
+            if (water != null) {
+                drain(level, d, water, Float.NaN, null);
+                if (!water.isEmpty()) {
+                    waterOf(d, 0).addAll(water);
+                }
+            }
+        }
+        WAVES.clear();
+        FILLED.clear();
+        d.setDirty();
+        sync(level);
+    }
+
     public static void stop(ServerLevel level) {
         for (Tsunami w : WAVES) {
             w.stage = Tsunami.DRAINING;
+            w.stopping = true;
         }
         sync(level);
     }
@@ -145,9 +223,8 @@ public final class TsunamiManager {
     // ------------------------------------------------------------------------------------ effects
     private static void affectEntities(ServerLevel level, Tsunami w, List<ServerPlayer> players) {
         float h = w.height();
-        float crest = w.baseY + h;
-        float flood = w.floodY();
-        float speed = w.stage == Tsunami.RUNNING ? w.speed() : -0.12F * (1F - w.drained);
+        boolean running = w.stage == Tsunami.RUNNING;
+        float speed = running ? w.speed() : -0.05F * (1F - w.drained);
         float width = w.width();
         boolean hurt = level.getGameTime() % 10 == 0;
         for (ServerPlayer p : players) {
@@ -155,7 +232,8 @@ public final class TsunamiManager {
             if (s > w.front + 120 || Math.abs(w.across(p.getX(), p.getZ())) > width + 100) {
                 continue;
             }
-            AABB box = new AABB(p.getX() - 96, w.baseY - 6, p.getZ() - 96, p.getX() + 96, crest + 8, p.getZ() + 96);
+            float g0 = w.ground(level, p.getX(), p.getZ());
+            AABB box = new AABB(p.getX() - 96, g0 - 40, p.getZ() - 96, p.getX() + 96, g0 + h + 40, p.getZ() + 96);
             for (Entity e : level.getEntities((Entity) null, box, e -> e.isAlive() && !e.isSpectator()
                     && !(e instanceof Player pl && (pl.isCreative() || pl.isSpectator())))) {
                 if (e.isPassenger()) {
@@ -165,8 +243,11 @@ public final class TsunamiManager {
                 if (Math.abs(w.across(e.getX(), e.getZ())) > width || es > w.front + 2.5) {
                     continue;
                 }
-                boolean face = es > w.front - Math.max(4, h * 0.8) && e.getY() < crest + 1;
-                boolean under = es <= w.front && e.getY() < flood;
+                float g = w.ground(level, e.getX(), e.getZ());
+                float crest = g + h;
+                float flood = w.floodSurface(level, e.getX(), e.getZ());
+                boolean face = running && h > 0.3F && es > w.front - Math.max(4, h * 0.8) && e.getY() < crest + 1 && e.getY() > g - 6;
+                boolean under = !Float.isNaN(flood) && e.getY() < flood && e.getY() > flood - 30;
                 if (!face && !under) {
                     continue;
                 }
@@ -176,18 +257,45 @@ public final class TsunamiManager {
                 Vec3 v = e.getDeltaMovement();
                 double vy = v.y;
                 double surface = face ? crest - 1.0 : flood - 0.4;
-                if (e.getY() < surface) {
+                if (e.getY() < surface && !(e instanceof com.realweather.vehicle.StormVehicle && under && !face)) {
                     // Carried up to the surface of the water.
                     vy += (Math.min(0.5, (surface - e.getY()) * 0.08) - Math.max(0, v.y)) * (face ? 0.6 : 0.3);
                 }
                 e.setDeltaMovement(v.x + (w.dirX * push - v.x) * k, vy, v.z + (w.dirZ * push - v.z) * k);
                 e.hurtMarked = true;
                 e.clearFire();
+                if (e instanceof com.realweather.vehicle.StormVehicle car) {
+                    // The wall of water smashes the windows in and floods the cabin.
+                    if (face && h > 1.2F) {
+                        car.smashGlass();
+                    }
+                    car.soak((float) ((face ? crest : flood) - car.getY()));
+                    continue;
+                }
                 if (hurt && face && h > 5 && e instanceof LivingEntity living) {
                     living.hurt(level.damageSources().drown(), Math.min(8F, (h - 4F) * 0.25F));
                 }
+                // Under the water: the air runs out as it would in the sea.
+                double eye = e.getEyeY();
+                boolean submerged = (face && eye < crest - 0.3) || (under && eye < flood);
+                if (submerged && e instanceof LivingEntity living) {
+                    suffocate(level, living);
+                }
             }
         }
+    }
+
+    /** One tick without air for something under the tsunami's water (net of the air it would get back on land). */
+    public static void suffocate(ServerLevel level, LivingEntity e) {
+        if (e.canBreatheUnderwater() || e.isEyeInFluid(FluidTags.WATER) || (e instanceof Player p && p.getAbilities().invulnerable)) {
+            return;
+        }
+        int air = e.getAirSupply() - 5;
+        if (air <= -20) {
+            air = 0;
+            e.hurt(level.damageSources().drown(), 2F);
+        }
+        e.setAirSupply(air);
     }
 
     private static void breakBlocks(ServerLevel level, Tsunami w, List<ServerPlayer> players, RandomSource rng) {
@@ -197,7 +305,6 @@ public final class TsunamiManager {
         }
         float maxHard = Math.min(6F, 0.4F + w.strength * 0.0055F);
         int samples = 6 + w.strength / 25;
-        float crest = w.baseY + h;
         for (ServerPlayer p : players) {
             double ps = w.along(p.getX(), p.getZ());
             if (Math.abs(ps - w.front) > 200) {
@@ -212,8 +319,10 @@ public final class TsunamiManager {
                 if (!level.isLoaded(new BlockPos(x, 0, z))) {
                     continue;
                 }
+                float g = w.ground(level, x + 0.5, z + 0.5);
+                float crest = g + h;
                 int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                for (int y = Math.min(top, Mth.floor(crest)); y >= Mth.floor(w.baseY) && y > top - 12; y--) {
+                for (int y = Math.min(top, Mth.floor(crest)); y >= Mth.floor(g) - 1 && y > top - 12; y--) {
                     BlockPos pos = new BlockPos(x, y, z);
                     BlockState state = level.getBlockState(pos);
                     if (state.isAir() || !state.getFluidState().isEmpty() || state.hasBlockEntity() || natural(state)) {
@@ -226,6 +335,134 @@ public final class TsunamiManager {
                     level.destroyBlock(pos, rng.nextFloat() < 0.04F);
                 }
             }
+        }
+    }
+
+    // ------------------------------------------------------------------------------------ the flood
+    /**
+     * Fills the flooded land around each player with real water (up to the flood surface, nearest the player first),
+     * a limited number of blocks per tick. Returns what is left of the budget.
+     */
+    private static int fill(ServerLevel level, WeatherData d, Tsunami w, LongArrayList water, List<ServerPlayer> players, int budget) {
+        if (water.size() >= MAX_BLOCKS) {
+            return budget;
+        }
+        LongOpenHashSet done = filledOf(w.id);
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        BlockState waterState = Blocks.WATER.defaultBlockState();
+        int before = water.size();
+        for (ServerPlayer p : players) {
+            if (p.isSpectator()) {
+                continue;
+            }
+            double ps = w.along(p.getX(), p.getZ());
+            if (ps > w.front + FILL_RADIUS || Math.abs(w.across(p.getX(), p.getZ())) > w.width() + FILL_RADIUS) {
+                continue;
+            }
+            int px = p.getBlockX(), pz = p.getBlockZ();
+            // Square rings outward from the player, nearest first.
+            for (int r = 0; r <= FILL_RADIUS && budget > 0; r++) {
+                int cells = r == 0 ? 1 : 8 * r;
+                for (int c = 0; c < cells && budget > 0; c++) {
+                    {
+                        int dx, dz;
+                        if (r == 0) {
+                            dx = 0;
+                            dz = 0;
+                        } else {
+                            int side = c / (2 * r), t = c % (2 * r) - r;
+                            dx = side == 0 ? t : side == 1 ? r : side == 2 ? -t : -r;
+                            dz = side == 0 ? -r : side == 1 ? t : side == 2 ? r : -t;
+                        }
+                        if (dx * dx + dz * dz > FILL_RADIUS * FILL_RADIUS) {
+                            continue;
+                        }
+                        int x = px + dx, z = pz + dz;
+                        long col = ((long) x << 32) ^ (z & 0xFFFFFFFFL);
+                        if (done.contains(col)) {
+                            continue;
+                        }
+                        double s = w.along(x + 0.5, z + 0.5);
+                        if (s > w.front - 2) {
+                            // The wave hasn't got there yet.
+                            continue;
+                        }
+                        done.add(col);
+                        float surface = w.floodSurface(level, x + 0.5, z + 0.5);
+                        if (Float.isNaN(surface)) {
+                            continue;
+                        }
+                        int y0 = TsunamiGround.top(level, x, z);
+                        for (int y = y0; y + 0.5F < surface && y < y0 + 24; y++) {
+                            BlockState st = level.getBlockState(m.set(x, y, z));
+                            boolean flowing = st.getFluidState().is(Fluids.FLOWING_WATER);
+                            if (!(st.isAir() || flowing || (st.canBeReplaced() && st.getFluidState().isEmpty()))) {
+                                continue;
+                            }
+                            level.setBlock(m, waterState, 2);
+                            water.add(m.asLong());
+                            budget--;
+                        }
+                    }
+                }
+            }
+        }
+        if (water.size() != before) {
+            d.setDirty();
+        }
+        return budget;
+    }
+
+    /**
+     * Takes the flood water away: everything above the falling surface (by {@code drained}), or all of it (NaN).
+     * Water in land that isn't loaded stays on the list for later.
+     */
+    private static void drain(ServerLevel level, WeatherData d, LongArrayList water, float drained, Tsunami w) {
+        if (water.isEmpty()) {
+            return;
+        }
+        boolean all = Float.isNaN(drained);
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        BlockState air = Blocks.AIR.defaultBlockState();
+        int removed = 0;
+        int kept = 0;
+        for (int i = 0; i < water.size(); i++) {
+            long pos = water.getLong(i);
+            m.set(pos);
+            boolean remove;
+            if (!level.isLoaded(m)) {
+                remove = false;
+            } else if (all || w == null) {
+                remove = true;
+            } else {
+                float g = w.ground(level, m.getX() + 0.5, m.getZ() + 0.5);
+                float level0 = g + w.floodDepth(w.along(m.getX() + 0.5, m.getZ() + 0.5)) * (1F - drained);
+                remove = m.getY() + 0.5F >= level0;
+            }
+            if (remove && removed < 6000) {
+                if (level.getBlockState(m).is(Blocks.WATER)) {
+                    level.setBlock(m, air, 3);
+                }
+                removed++;
+                // Water that spread (or turned into new sources) beside the flood goes with it; never the sea.
+                int seaTop = level.getSeaLevel();
+                if ((all || w == null) && m.getY() >= seaTop) {
+                    for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+                        BlockPos n = m.relative(dir);
+                        if (level.isLoaded(n) && level.getBlockState(n).is(Blocks.WATER) && !level.getBiome(n).is(BiomeTags.IS_OCEAN)
+                                && !level.getBiome(n).is(BiomeTags.IS_RIVER)) {
+                            level.setBlock(n, air, 3);
+                            removed++;
+                        }
+                    }
+                }
+            } else {
+                water.set(kept++, pos);
+            }
+        }
+        water.size(kept);
+        if (removed > 0) {
+            d.setDirty();
         }
     }
 

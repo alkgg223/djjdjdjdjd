@@ -53,6 +53,8 @@ public class StormVehicle extends Mob {
     private static final EntityDataAccessor<Integer> DATA_HORN = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.INT);
     /** Which doors stand open (bit per door: front-left, front-right, rear-left, rear-right). */
     private static final EntityDataAccessor<Byte> DATA_DOORS = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.BYTE);
+    /** How far the cabin is filled with water, 0 dry .. 1 to the roof. */
+    private static final EntityDataAccessor<Float> DATA_CABIN_WATER = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.FLOAT);
     /** Who sits where: entity id per seat (-1 = empty). Seat 0 is the driver's. */
     private static final EntityDataAccessor<Integer> DATA_SEAT0 = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_SEAT1 = SynchedEntityData.defineId(StormVehicle.class, EntityDataSerializers.INT);
@@ -78,6 +80,9 @@ public class StormVehicle extends Mob {
     public float bog;
     public boolean airborne;
     private int floodTicks;
+    /** Server: water standing around the cabin from a tsunami (fraction of the cabin height), for a few more ticks. */
+    private float soakLevel;
+    private int soakTicks;
     private float lastYaw;
     private Vec3 lastPos = Vec3.ZERO;
 
@@ -137,6 +142,7 @@ public class StormVehicle extends Mob {
         b.define(DATA_WIPERS, (byte) 0);
         b.define(DATA_HORN, 0);
         b.define(DATA_DOORS, (byte) 0);
+        b.define(DATA_CABIN_WATER, 0F);
         for (EntityDataAccessor<Integer> seat : DATA_SEATS) {
             b.define(seat, -1);
         }
@@ -803,6 +809,7 @@ public class StormVehicle extends Mob {
                 entityData.set(DATA_HORN, hornTicks() - 1);
             }
             floodCheck();
+            cabinWaterTick();
             tickDoors();
         }
         // Passengers turn with the vehicle.
@@ -834,6 +841,76 @@ public class StormVehicle extends Mob {
         tilt();
         if (level().isClientSide) {
             clientTick.accept(this);
+        }
+    }
+
+    public float cabinWater() {
+        return entityData.get(DATA_CABIN_WATER);
+    }
+
+    /** Cabin floor and roof heights above the vehicle's base, metres. */
+    public float cabinFloor() {
+        float y = 10F;
+        for (float[] seat : kind.seatPoints) {
+            y = Math.min(y, seat[1]);
+        }
+        return y - 0.12F;
+    }
+
+    public float cabinRoof() {
+        return kind.geo.windshield()[2][1] - 0.08F;
+    }
+
+    /** A wall of water hits the car: the windows burst in. */
+    public void smashGlass() {
+        if (flag(FLAG_GLASS_BROKEN) || level().isClientSide) {
+            return;
+        }
+        setFlag(FLAG_GLASS_BROKEN, true);
+        level().playSound(null, getX(), getY() + 1, getZ(), SoundEvents.GLASS_BREAK, SoundSource.NEUTRAL, 1.4F, 0.85F);
+        level().playSound(null, getX(), getY() + 1, getZ(), SoundEvents.GLASS_BREAK, SoundSource.NEUTRAL, 1.2F, 1.05F);
+        if (level() instanceof net.minecraft.server.level.ServerLevel sl) {
+            sl.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.GLASS.defaultBlockState()), getX(), getY() + 1.2, getZ(),
+                    60, kind.size[0] / 2, 0.4, kind.size[2] / 3, 0.15);
+        }
+    }
+
+    /** Tsunami water stands {@code depth} blocks above the car's base around it (it keeps for a moment). */
+    public void soak(float depth) {
+        float f = Mth.clamp((depth - cabinFloor()) / Math.max(0.3F, cabinRoof() - cabinFloor()), 0F, 1F);
+        soakLevel = Math.max(soakTicks > 0 ? soakLevel : 0F, f);
+        soakTicks = 10;
+    }
+
+    /** Water pours in through broken windows (or open doors) up to the level outside, and drains out slowly. */
+    private void cabinWaterTick() {
+        float outside = 0F;
+        if (soakTicks > 0) {
+            soakTicks--;
+            outside = soakLevel;
+        }
+        BlockPos p = blockPosition();
+        if (!level().getFluidState(p).isEmpty()) {
+            float span = Math.max(0.3F, cabinRoof() - cabinFloor());
+            float top = p.getY() + 1F;
+            for (int i = 1; i <= 3 && !level().getFluidState(p.above(i)).isEmpty(); i++) {
+                top = p.getY() + i + 1F;
+            }
+            outside = Math.max(outside, Mth.clamp((float) (top - 0.1F - getY() - cabinFloor()) / span, 0F, 1F));
+        }
+        float cabin = cabinWater();
+        boolean open = flag(FLAG_GLASS_BROKEN) || flag(FLAG_DOORS_OPEN);
+        float next = open ? cabin + Mth.clamp(outside - cabin, -0.004F, 0.03F) : Math.max(0F, cabin - 0.003F);
+        if (Math.abs(next - cabin) > 1.0E-4F || (next == 0F && cabin != 0F)) {
+            entityData.set(DATA_CABIN_WATER, next);
+        }
+        // Water over the passengers' heads: they run out of air.
+        if (next > 0.6F && level() instanceof net.minecraft.server.level.ServerLevel sl) {
+            for (Entity e : getPassengers()) {
+                if (e instanceof LivingEntity living && !(e instanceof Player pl && (pl.isCreative() || pl.isSpectator()))) {
+                    com.realweather.server.TsunamiManager.suffocate(sl, living);
+                }
+            }
         }
     }
 
@@ -915,6 +992,7 @@ public class StormVehicle extends Mob {
         tag.putInt("Color", getColor());
         tag.putByte("Flags", entityData.get(DATA_FLAGS));
         tag.putFloat("Bog", bog);
+        tag.putFloat("CabinWater", cabinWater());
     }
 
     @Override
@@ -923,5 +1001,6 @@ public class StormVehicle extends Mob {
         setColor(tag.getInt("Color"));
         entityData.set(DATA_FLAGS, tag.getByte("Flags"));
         bog = tag.getFloat("Bog");
+        entityData.set(DATA_CABIN_WATER, tag.getFloat("CabinWater"));
     }
 }

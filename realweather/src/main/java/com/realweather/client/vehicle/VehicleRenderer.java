@@ -61,6 +61,10 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
         if (near) {
             VehicleModels.solid(base + "interior", pose, buf, light, overlay, r, g, b);
         }
+        float cabin = v.cabinWater();
+        if (cabin > 0.01F) {
+            cabinWater(v, k, pose, buf, light, overlay, cabin, v.tickCount + pt);
+        }
         boolean glass = !v.flag(StormVehicle.FLAG_GLASS_BROKEN);
         // Doors (their windows ride on them), swung open by the occupants or forced open by a flood.
         float flood = Mth.lerp(pt, v.prevDoorOpen, v.doorOpen);
@@ -360,5 +364,39 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
     @Override
     public boolean shouldRender(StormVehicle v, Frustum frustum, double x, double y, double z) {
         return v.shouldRender(x, y, z) && frustum.isVisible(v.getBoundingBox().inflate(3.0));
+    }
+
+    private static final ResourceLocation CABIN_WATER = RealWeather.id("textures/environment/tsunami_water.png");
+
+    /** Murky water standing in the cabin (it came in through the smashed windows), up to `level` of the way to the roof. */
+    private static void cabinWater(StormVehicle v, VehicleType k, PoseStack pose, MultiBufferSource buf, int light, int overlay, float level, float time) {
+        float y0 = v.cabinFloor(), y1 = v.cabinRoof();
+        float y = y0 + (y1 - y0) * Math.min(1F, level);
+        float hx = k.size[0] * 0.5F - 0.2F;
+        float z0 = k.geo.windshield()[0][2], z1 = z0;
+        for (float[] seat : k.seatPoints) {
+            z1 = Math.max(z1, seat[2] + 0.55F);
+        }
+        VertexConsumer c = buf.getBuffer(RenderType.entityTranslucent(CABIN_WATER));
+        PoseStack.Pose p = pose.last();
+        float r = 0.5F, g = 0.66F, b = 0.7F, a = 0.62F;
+        float s = time * 0.004F;
+        float wob = 0.02F * Mth.sin(time * 0.15F);
+        // Surface.
+        quad(c, p, -hx, y + wob, z0, hx, y - wob, z0, hx, y + wob, z1, -hx, y - wob, z1, 0F + s, 0F, hx / 1.5F + s, (z1 - z0) / 1.5F, r, g, b, a, light, overlay);
+        // Sides (seen through the open windows).
+        quad(c, p, -hx, y0, z0, hx, y0, z0, hx, y, z0, -hx, y, z0, 0F, 0F, hx, y - y0, r * 0.8F, g * 0.8F, b * 0.8F, a, light, overlay);
+        quad(c, p, hx, y0, z1, -hx, y0, z1, -hx, y, z1, hx, y, z1, 0F, 0F, hx, y - y0, r * 0.8F, g * 0.8F, b * 0.8F, a, light, overlay);
+        quad(c, p, -hx, y0, z1, -hx, y0, z0, -hx, y, z0, -hx, y, z1, 0F, 0F, (z1 - z0) / 2F, y - y0, r * 0.8F, g * 0.8F, b * 0.8F, a, light, overlay);
+        quad(c, p, hx, y0, z0, hx, y0, z1, hx, y, z1, hx, y, z0, 0F, 0F, (z1 - z0) / 2F, y - y0, r * 0.8F, g * 0.8F, b * 0.8F, a, light, overlay);
+    }
+
+    private static void quad(VertexConsumer c, PoseStack.Pose p, float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2,
+                             float x3, float y3, float z3, float u0, float v0, float u1, float v1, float r, float g, float b, float a, int light,
+                             int overlay) {
+        c.addVertex(p, x0, y0, z0).setColor(r, g, b, a).setUv(u0, v0).setOverlay(overlay).setLight(light).setNormal(p, 0F, 1F, 0F);
+        c.addVertex(p, x1, y1, z1).setColor(r, g, b, a).setUv(u1, v0).setOverlay(overlay).setLight(light).setNormal(p, 0F, 1F, 0F);
+        c.addVertex(p, x2, y2, z2).setColor(r, g, b, a).setUv(u1, v1).setOverlay(overlay).setLight(light).setNormal(p, 0F, 1F, 0F);
+        c.addVertex(p, x3, y3, z3).setColor(r, g, b, a).setUv(u0, v1).setOverlay(overlay).setLight(light).setNormal(p, 0F, 1F, 0F);
     }
 }

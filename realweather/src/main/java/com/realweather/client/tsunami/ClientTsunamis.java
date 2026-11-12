@@ -30,6 +30,8 @@ import java.util.Map;
 public final class ClientTsunamis {
     private static final Map<Integer, W> WAVES = new LinkedHashMap<>();
     private static final RandomSource RANDOM = RandomSource.create();
+    /** 0..1: how far the camera is under the tsunami's water (the wave, the flood, or the water in a car's cabin). */
+    public static float submerged;
 
     private ClientTsunamis() {}
 
@@ -92,26 +94,43 @@ public final class ClientTsunamis {
     }
 
     public static void tick(Minecraft mc, ClientLevel level) {
-        if (WAVES.isEmpty() || mc.player == null) {
+        if (mc.player == null) {
+            submerged = 0F;
             return;
         }
         Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
+        boolean under = false;
+        if (mc.player.getVehicle() instanceof com.realweather.vehicle.StormVehicle car && car.cabinWater() > 0.05F) {
+            float top = (float) car.getY() + car.cabinFloor() + (car.cabinRoof() - car.cabinFloor()) * car.cabinWater();
+            under = cam.y < top;
+        }
+        boolean inRealWater = !level.getFluidState(net.minecraft.core.BlockPos.containing(cam)).isEmpty();
+        if (WAVES.isEmpty()) {
+            submerged = Math.max(0F, (under ? 1F : 0F) + (submerged - (under ? 1F : 0F)) * 0.8F);
+            return;
+        }
         for (W w : WAVES.values()) {
             Tsunami t = w.t;
             t.age++;
             if (t.stage == Tsunami.RUNNING) {
                 t.front += t.speed();
                 t.front += (w.serverFront + t.speed() * 5 - t.front) * 0.05F;
-            } else {
-                t.drained = Math.min(1F, t.drained + 1F / 900F);
+            }
+            if (t.drained > 0F || t.age >= Tsunami.LIFE - Tsunami.DRAIN_TICKS) {
+                t.drained = Math.min(1F, t.drained + 1F / Tsunami.DRAIN_TICKS);
             }
             double sc = t.along(cam.x, cam.z);
             double lc = t.across(cam.x, cam.z);
             float h = t.height();
             boolean beside = Math.abs(lc) < t.width() + 40;
             double faceDist = beside ? Math.abs(sc - t.front) : 1.0E9;
-            float flood = t.floodY();
-            boolean inFlood = beside && sc < t.front && cam.y < flood + 3 && t.drained < 0.95F;
+            float ground = t.ground(level, cam.x, cam.z);
+            float flood = t.floodSurface(level, cam.x, cam.z);
+            boolean inFlood = !Float.isNaN(flood) && cam.y < flood + 3 && t.drained < 0.95F;
+            if (!inRealWater && ((!Float.isNaN(flood) && cam.y < flood)
+                    || (t.stage == Tsunami.RUNNING && beside && sc > t.front - h * 0.8F && sc < t.front + 1 && cam.y < ground + h * 0.9F))) {
+                under = true;
+            }
             // Ground shaking as the wall of water comes near.
             if (beside && faceDist < 160 && t.stage == Tsunami.RUNNING) {
                 float k = (float) (1.0 - faceDist / 160.0);
@@ -122,6 +141,7 @@ public final class ClientTsunamis {
                 spray(mc, level, t, lc, h, faceDist);
             }
         }
+        submerged = under ? Math.min(1F, submerged + 0.25F) : Math.max(0F, submerged - 0.1F);
     }
 
     // ------------------------------------------------------------------------------------ particles
@@ -133,7 +153,7 @@ public final class ClientTsunamis {
             double s = t.front + (TsunamiRenderer.LIP_DS - TsunamiRenderer.TOE_DS) * h + 1 + RANDOM.nextDouble() * h * 0.3;
             double x = t.ox + t.dirX * s - t.dirZ * l;
             double z = t.oz + t.dirZ * s + t.dirX * l;
-            double y = t.baseY + h * (0.8 + RANDOM.nextDouble() * 0.25);
+            double y = t.ground(level, x, z) + h * (0.8 + RANDOM.nextDouble() * 0.25);
             double sp = t.speed();
             level.addParticle(ModContent.TSUNAMI_SPRAY.get(), true, x, y, z, t.dirX * sp * 1.1, 0.05 + RANDOM.nextDouble() * 0.08 + h * 0.004,
                     t.dirZ * sp * 1.1);
@@ -145,7 +165,7 @@ public final class ClientTsunamis {
                 double s = t.front + RANDOM.nextDouble() * 1.5;
                 double x = t.ox + t.dirX * s - t.dirZ * l;
                 double z = t.oz + t.dirZ * s + t.dirX * l;
-                level.addParticle(ModContent.SPLASH_DROP.get(), x, t.baseY + 0.4 + RANDOM.nextDouble() * 1.2, z,
+                level.addParticle(ModContent.SPLASH_DROP.get(), x, t.ground(level, x, z) + 0.4 + RANDOM.nextDouble() * 1.2, z,
                         t.dirX * 0.3 + (RANDOM.nextDouble() - 0.5) * 0.2, 0.15 + RANDOM.nextDouble() * 0.2, t.dirZ * 0.3 + (RANDOM.nextDouble() - 0.5) * 0.2);
             }
         }
@@ -160,6 +180,7 @@ public final class ClientTsunamis {
         double l = Mth.clamp(lc, -t.width(), t.width());
         double fx = t.ox + t.dirX * t.front - t.dirZ * l;
         double fz = t.oz + t.dirZ * t.front + t.dirX * l;
+        float fy = t.ground(mc.level, fx, fz);
         float roarVol = t.stage == Tsunami.RUNNING ? (float) Mth.clamp(1.0 - faceDist / 700.0, 0.0, 1.0) * Mth.clamp(0.35F + h / 18F, 0F, 1.3F) : 0F;
         if (w.roar == null && roarVol > 0.02F) {
             w.roar = new Loop(ModContent.TSUNAMI_ROAR.get());
@@ -167,10 +188,11 @@ public final class ClientTsunamis {
         }
         if (w.roar != null) {
             w.roar.target = roarVol;
-            w.roar.place(fx, t.baseY + h * 0.5, fz);
+            w.roar.place(fx, fy + h * 0.5, fz);
             w.roar.setPitch(Mth.clamp(1.15F - h / 80F, 0.75F, 1.15F));
         }
-        float rushVol = inFlood ? 0.9F * (1F - t.drained) : (float) Mth.clamp(1.0 - faceDist / 60.0, 0.0, 1.0) * 0.7F;
+        // Rushing water while the wave runs; once it has spent itself the flood just laps and swirls.
+        float rushVol = inFlood ? (t.stage == Tsunami.RUNNING ? 0.9F : 0.3F) * (1F - t.drained) : (float) Mth.clamp(1.0 - faceDist / 60.0, 0.0, 1.0) * 0.7F;
         if (w.rush == null && rushVol > 0.02F) {
             w.rush = new Loop(ModContent.TSUNAMI_RUSH.get());
             mc.getSoundManager().play(w.rush);
@@ -183,7 +205,7 @@ public final class ClientTsunamis {
             w.crashTimer = 30 + RANDOM.nextInt(90);
             float vol = (float) Mth.clamp(1.2 - faceDist / 260.0, 0.1, 1.0) * Mth.clamp(0.4F + h / 15F, 0F, 1.2F);
             mc.getSoundManager().play(new SimpleSoundInstance(ModContent.TSUNAMI_CRASH.get().getLocation(), SoundSource.WEATHER, vol,
-                    0.85F + RANDOM.nextFloat() * 0.25F, RANDOM, false, 0, SoundInstance.Attenuation.NONE, fx, t.baseY + h * 0.6, fz, false));
+                    0.85F + RANDOM.nextFloat() * 0.25F, RANDOM, false, 0, SoundInstance.Attenuation.NONE, fx, fy + h * 0.6, fz, false));
         }
     }
 

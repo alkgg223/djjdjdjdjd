@@ -42,6 +42,10 @@ public class WeatherData extends SavedData {
     public boolean tornadoNatural = true;
     /** Tsunamis now and then from the sea near a player. */
     public boolean tsunamiNatural = true;
+    /** Tsunamis leave real water on the land behind them. */
+    public boolean tsunamiFlood = true;
+    /** Water blocks placed by each tsunami (key 0: left over from earlier ones), so it can all be taken away again. */
+    public final it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<LongArrayList> tsunamiWater = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>();
     public int nextTornadoId = 1;
     public final java.util.List<Tornado> tornadoes = new java.util.ArrayList<>();
     public int nextStormId = 1;
@@ -83,6 +87,12 @@ public class WeatherData extends SavedData {
         d.hail = !tag.contains("hail") || tag.getBoolean("hail");
         d.tornadoNatural = !tag.contains("tornadoNatural") || tag.getBoolean("tornadoNatural");
         d.tsunamiNatural = !tag.contains("tsunamiNatural") || tag.getBoolean("tsunamiNatural");
+        d.tsunamiFlood = !tag.contains("tsunamiFlood") || tag.getBoolean("tsunamiFlood");
+        // Tsunamis don't survive a restart: all of their water drains as its land loads.
+        long[] left = tag.getLongArray("tsunamiWater");
+        if (left.length > 0) {
+            d.tsunamiWater.put(0, new LongArrayList(left));
+        }
         d.nextTornadoId = Math.max(1, tag.getInt("nextTornadoId"));
         net.minecraft.nbt.ListTag list = tag.getList("tornadoes", net.minecraft.nbt.Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
@@ -128,6 +138,12 @@ public class WeatherData extends SavedData {
         tag.putBoolean("hail", hail);
         tag.putBoolean("tornadoNatural", tornadoNatural);
         tag.putBoolean("tsunamiNatural", tsunamiNatural);
+        tag.putBoolean("tsunamiFlood", tsunamiFlood);
+        LongArrayList all = new LongArrayList();
+        for (LongArrayList l : tsunamiWater.values()) {
+            all.addAll(l);
+        }
+        tag.putLongArray("tsunamiWater", all.toLongArray());
         tag.putInt("nextTornadoId", nextTornadoId);
         net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
         for (Tornado t : tornadoes) {

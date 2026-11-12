@@ -128,6 +128,9 @@ public final class WeatherCommands {
         t.then(Commands.literal("natural")
                 .then(Commands.literal("on").executes(c -> toggle(c, "tsunami.natural", true)))
                 .then(Commands.literal("off").executes(c -> toggle(c, "tsunami.natural", false))));
+        t.then(Commands.literal("water")
+                .then(Commands.literal("on").executes(c -> toggle(c, "tsunami.water", true)))
+                .then(Commands.literal("off").executes(c -> toggle(c, "tsunami.water", false))));
         return t;
     }
 
@@ -338,6 +341,7 @@ public final class WeatherCommands {
             case "hail" -> d.hail = on;
             case "tornado.natural" -> d.tornadoNatural = on;
             case "tsunami.natural" -> d.tsunamiNatural = on;
+            case "tsunami.water" -> d.tsunamiFlood = on;
             default -> {
             }
         }

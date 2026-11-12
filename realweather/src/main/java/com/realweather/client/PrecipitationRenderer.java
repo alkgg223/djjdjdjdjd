@@ -65,7 +65,7 @@ public final class PrecipitationRenderer {
                 int g = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
                 ground[i] = g;
                 m.set(x, Math.max(g, cy), z);
-                Biome biome = level.getBiome(m).value();
+                net.minecraft.core.Holder<Biome> biome = level.getBiome(m);
                 m.setY(Math.max(g, cy - r));
                 // Same numbering as Precip: 1 rain, 2 snow, 3 sand (a command can force one kind everywhere).
                 int t = com.realweather.server.Precip.at(level, biome, m);
@@ -395,8 +395,7 @@ public final class PrecipitationRenderer {
                 if (!level.getBlockState(m).isAir()) {
                     continue;
                 }
-                Biome biome = level.getBiome(m).value();
-                if (com.realweather.server.Precip.at(level, biome, m) != com.realweather.server.Precip.RAIN) {
+                if (com.realweather.server.Precip.at(level, level.getBiome(m), m) != com.realweather.server.Precip.RAIN) {
                     continue;
                 }
                 m.set(x, top - 1, z);

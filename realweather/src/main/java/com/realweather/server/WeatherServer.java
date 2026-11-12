@@ -213,7 +213,7 @@ public final class WeatherServer {
             return;
         }
         Holder<Biome> biome = level.getBiome(head);
-        if (Precip.at(biome.value(), head, force) != Precip.SNOW) {
+        if (Precip.at(biome, head, force) != Precip.SNOW) {
             return;
         }
         // Exposed to a blizzard without leather clothes: the cold slowly gets through (frost on screen, slower walking).
@@ -260,6 +260,12 @@ public final class WeatherServer {
 
     public static boolean isDryBiome(Biome biome) {
         return !biome.hasPrecipitation() && biome.getBaseTemperature() >= 1.0F;
+    }
+
+    /** Deserts and badlands: no rain there, the wind raises sand instead. */
+    public static boolean isDryBiome(Holder<Biome> biome) {
+        return isDryBiome(biome.value()) && (biome.is(net.neoforged.neoforge.common.Tags.Biomes.IS_DESERT)
+                || biome.is(net.minecraft.tags.BiomeTags.IS_BADLANDS));
     }
 
     static float approach(float cur, float target, float step) {

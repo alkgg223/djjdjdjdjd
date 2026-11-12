@@ -5,11 +5,14 @@ import net.minecraft.util.Mth;
 /**
  * One tsunami: a straight wave front, {@code width} blocks either side of its centre line, travelling along
  * (dirX, dirZ) from where it rose out at sea. Strength 1 to 1000 decides how high it stands, how fast it runs, how
- * far inland it gets and what it can tear down. Behind the front the land stays flooded until the wave has spent
- * itself, then the water drains back.
+ * far inland it gets and what it can tear down. The wave rides on the ground under it, climbing hills and dropping into
+ * valleys ({@link TsunamiGround}). Behind the front the land stays under water for the rest of the tsunami's five
+ * minutes, then the water drains back.
  */
 public class Tsunami {
     public static final int RUNNING = 0, DRAINING = 1;
+    /** A tsunami lasts five minutes from the moment it rises; its flood drains over the last half minute. */
+    public static final int LIFE = 6000, DRAIN_TICKS = 600;
 
     public final int id;
     public final double ox, oz;
@@ -24,6 +27,8 @@ public class Tsunami {
     /** 0 while the water stands behind the wave, rising to 1 as it drains away. */
     public float drained;
     public int age;
+    /** Stopped by command: drain now instead of at the end of its life. */
+    public boolean stopping;
 
     public Tsunami(int id, double ox, double oz, float dirX, float dirZ, float baseY, int strength, long seed) {
         this.id = id;
@@ -79,9 +84,41 @@ public class Tsunami {
         return heightFor(strength) * k * (0.4F + 0.6F * grow) * (stage == DRAINING ? 0F : 1F);
     }
 
-    /** Level of the water standing behind the front. */
-    public float floodY() {
-        return baseY + heightFor(strength) * 0.55F * (float) Math.pow(Math.max(0F, 1F - progress()), 0.4) * (1F - drained);
+    /** Depth of the water left standing on the land behind the wave at distance {@code s} along it (before draining). */
+    public float floodDepth(double s) {
+        float k = (float) Math.pow(Math.max(0.0, 1.0 - s / run()), 0.35);
+        return (1.5F + heightFor(strength) * 0.16F) * Math.max(0.25F, k);
+    }
+
+    /** Whether the drain has started (by command, or near the end of the five minutes). */
+    public boolean draining() {
+        return stopping || age >= LIFE - DRAIN_TICKS;
+    }
+
+    /** Floor under the wave at a point (land, or the sea surface). */
+    public float ground(net.minecraft.world.level.Level level, double x, double z) {
+        return TsunamiGround.at(level, x, z, baseY + 0.2F);
+    }
+
+    /** Whether the floor at a point is land (not the sea). */
+    public boolean overLand(float ground) {
+        return ground > baseY + 0.75F;
+    }
+
+    /**
+     * Surface of the flood standing on the land at a point behind the front, or NaN where there is none (ahead of the
+     * wave, beyond its ends, or out over the sea).
+     */
+    public float floodSurface(net.minecraft.world.level.Level level, double x, double z) {
+        double s = along(x, z);
+        if (s > front - 1 || Math.abs(across(x, z)) > width() || drained >= 1F) {
+            return Float.NaN;
+        }
+        float g = ground(level, x, z);
+        if (!overLand(g)) {
+            return Float.NaN;
+        }
+        return g + floodDepth(s) * (1F - drained);
     }
 
     /** Distance of a point along the travel direction (from the origin). */

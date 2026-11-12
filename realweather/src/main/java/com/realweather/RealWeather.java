@@ -31,6 +31,8 @@ public class RealWeather {
         NeoForge.EVENT_BUS.addListener(WeatherServer::onLogin);
         NeoForge.EVENT_BUS.addListener(WeatherServer::onChangeDimension);
         NeoForge.EVENT_BUS.addListener(WeatherServer::onRespawn);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.server.ServerStartingEvent.class, e -> com.realweather.server.TsunamiManager.reset());
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.server.ServerStoppedEvent.class, e -> com.realweather.server.TsunamiManager.reset());
 
         if (dist.isClient()) {
             com.realweather.client.ClientInit.init(modBus, container);
