@@ -1,0 +1,59 @@
+{
+ "parent": "minecraft:block/block",
+ "textures": {
+  "particle": "rpbusiness:block/mirror_glass",
+  "g": "rpbusiness:block/mirror_glass",
+  "w": "rpbusiness:block/walnut"
+ },
+ "elements": [
+  {
+   "from": [
+    2,
+    0,
+    15
+   ],
+   "to": [
+    14,
+    16,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#w"
+    },
+    "south": {
+     "texture": "#w"
+    },
+    "east": {
+     "texture": "#w"
+    },
+    "west": {
+     "texture": "#w"
+    },
+    "up": {
+     "texture": "#w"
+    },
+    "down": {
+     "texture": "#w"
+    }
+   }
+  },
+  {
+   "from": [
+    3,
+    1,
+    14.9
+   ],
+   "to": [
+    13,
+    15,
+    15
+   ],
+   "faces": {
+    "north": {
+     "texture": "#g"
+    }
+   }
+  }
+ ]
+}

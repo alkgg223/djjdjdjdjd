@@ -158,6 +158,26 @@ public final class Snapshots {
             }
             free = BusinessManager.freeBeds(sl, b);
             t.putInt("beds", total); t.putInt("bedsFree", free); t.putInt("bedsDirty", dirty);
+            BusinessManager.ensureRooms(sl, b);
+            ListTag rl = new ListTag();
+            int freeR = 0;
+            for (com.rpbusiness.business.HotelRoom r : b.rooms) {
+                CompoundTag m = new CompoundTag();
+                m.putString("name", r.name);
+                m.putInt("cap", BusinessManager.roomCapacity(sl, b, r));
+                boolean messy = sl.isLoaded(r.min) && BusinessManager.roomDirtyAt(sl, r) != null;
+                m.putBoolean("dirty", messy);
+                m.putBoolean("req", r.cleanRequested);
+                m.putBoolean("auto", r.auto);
+                if (r.guest != null) {
+                    var g = sl.getEntity(r.guest);
+                    m.putString("guest", g instanceof com.rpbusiness.entity.CustomerEntity ce ? ce.npcName() + (ce.groupSize() > 1 ? " +" + (ce.groupSize() - 1) : "") : "?");
+                    m.putInt("hoursLeft", (int) Math.max(0, (r.checkOutTick - sl.getDayTime()) / 1000));
+                } else if (!messy) freeR++;
+                rl.add(m);
+            }
+            t.put("roomList", rl);
+            t.putInt("roomsFree", freeR);
         }
         t.putLong("debt", bank.outstanding(p.getUUID()));
         if (b.type.retail && !b.type.foodService) {

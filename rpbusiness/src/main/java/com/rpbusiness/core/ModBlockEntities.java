@@ -22,7 +22,8 @@ public final class ModBlockEntities {
             () -> BlockEntityType.Builder.of(ServingCounterBE::new, ModBlocks.SERVING_COUNTER.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StorageBE>> STORAGE = REG.register("storage",
             () -> BlockEntityType.Builder.of(StorageBE::new, ModBlocks.COUNTER_CABINET.get(), ModBlocks.PANTRY_SHELF.get(),
-                    ModBlocks.DELIVERY_CRATE.get(), ModBlocks.PACKAGE.get()).build(null));
+                    ModBlocks.DELIVERY_CRATE.get(), ModBlocks.PACKAGE.get(), ModBlocks.WARDROBE.get(), ModBlocks.DRESSER.get(),
+                    ModBlocks.MINIBAR.get(), ModBlocks.BOOKSHELF_MODERN.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AnimatedStorageBE>> ANIMATED_STORAGE = REG.register("animated_storage",
             () -> BlockEntityType.Builder.of(AnimatedStorageBE::new, ModBlocks.FRIDGE.get(), ModBlocks.FREEZER.get()).build(null));
 
@@ -30,6 +31,9 @@ public final class ModBlockEntities {
             () -> BlockEntityType.Builder.of(DisplayBE::new, ModBlocks.DISPLAY_SHELF.get(), ModBlocks.FRIDGE_DISPLAY.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SafeBE>> SAFE = REG.register("safe",
             () -> BlockEntityType.Builder.of(SafeBE::new, ModBlocks.SAFE.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TvBlock.Be>> TV = REG.register("tv",
+            () -> BlockEntityType.Builder.of(TvBlock.Be::new, ModBlocks.TV.get()).build(null));
 
     private ModBlockEntities() {}
 }

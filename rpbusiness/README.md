@@ -47,7 +47,9 @@ Bank Counter: checking/savings accounts, cash deposit/withdrawal, transfers, his
 
 ## Shops, hotel, delivery
 - Shops: put products on Display Shelves / Refrigerated Displays; set prices in the Products tab. Stock Manager refills shelves, Sales Assistant helps shoppers.
-- Hotel: Hotel Beds; guests check in at the Cash Register, pay, rest in a room; the Cleaner makes the beds. Room price in the Rooms tab.
+- Hotel: draw each room with the **Hotel Room Tool** (two corners, then right-click the air). One group per room, never strangers. Guests book 1, 2-5 or 7 nights and stay full in-game days: they sleep at night, watch TV on the sofa, nap and walk around. After a day the room gets litter or a stained sofa; the guest walks to the reception, rings the bell and asks for a cleaner. Single beds hold 1, Double Beds hold 2. Room list in the Rooms tab.
+- 37 hotel furniture pieces from **Grand Hotel Interiors** (Supplier Terminal): TV with sound, sofas, armchair, double bed, wardrobe, dresser, minibar, nightstand, lamps, rugs, curtains, paintings, clock, desk, office chair, toilet, bathtub, shower, sink, mirror, towel rack, plants, vase, ceiling fan, air conditioner, radiator, luggage rack, trash bin, phone, room sign.
+- Customers come alone, as couples, friends or families with children. A group gets its own table (strangers never share a table); the leader pays for everyone.
 - Delivery company: accept customer requests (the sender brings the parcel to your office, the driver delivers it), or move goods between your own businesses.
 - **Manager**: checks stock every in-game hour and orders what is running low from the suppliers (Settings → Manager buys stock, with a budget per order).
 - Global price control: price % and discount per business, or all businesses at once (Empire tab).
@@ -77,3 +79,6 @@ Bank Counter: checking/savings accounts, cash deposit/withdrawal, transfers, his
 - **البنك:** حسابات، وإيداع وسحب، وتحويلات، وقروض، وبطاقة بنكية، وصراف آلي، وخزنة. لكل مشروع حساب بنكي منفصل.
 - **المدير:** يراجع المخزون كل ساعة ويطلب ما ينقص من الموردين تلقائياً.
 - **المتاجر والفندق وشركة التوصيل:** كلها تعمل مع موظفين وزبائن.
+- **الفندق:** حدد كل غرفة بـ**أداة غرف الفندق**. كل غرفة لمجموعة واحدة فقط ولا يجتمع غرباء. يحجز الضيف ليلة أو عدة ليالٍ أو أسبوعاً ويبقى أياماً كاملة. ينام ليلاً ويشاهد التلفاز على الكنبة. بعد يوم تتسخ الغرفة فيذهب للاستقبال ويطلب عامل النظافة.
+- **العائلات والمجموعات:** يأتي الزبائن فرادى أو أزواجاً أو أصدقاء أو عائلات مع أطفال. لكل مجموعة طاولتها ولا يجلس غرباء معاً، والقائد يدفع عن الجميع.
+- **37 قطعة أثاث للفندق** من متجر Grand Hotel Interiors، منها تلفاز بصوت.

@@ -1,5 +1,6 @@
 """Block textures, block models (multi-element JSON), blockstates and item models."""
 import os, json, random
+import gen_decor
 from pix import Canvas, hexc, mul, mix, tex
 
 C = hexc
@@ -203,6 +204,7 @@ def textures():
             hgt = r.randint(2, 3)
             sh.rect(xx, yy + 4 - hgt, xx + 1, yy + 3, col)
     t['shelf_front'] = sh
+    t.update(gen_decor.textures())
     return t
 
 
@@ -365,6 +367,11 @@ def build_models():
         el((0, 0, 15), (16, 16, 16), 'w')])
     M['hotel_bed_dirty'] = model({'particle': T('bed_sheet'), 's': T('bed_sheet'), 'p': T('white'), 'w': T('walnut'), 'b': T('blue_panel'), 'x': T('table_dirty')},
         M['hotel_bed']['elements'] + [el((1, 8.6, -12), (15, 8.7, 4), {'up': 'x'})], extra={'render_type': 'minecraft:cutout'})
+    # stained variants of the original seats
+    for n, (x0, y, z0, x1, z1) in {'dining_chair': (2.5, 9.5, 2.5, 13.5, 11.5), 'bar_stool': (3.5, 12, 3.5, 12.5, 12.5), 'sofa': (2, 8, 1.5, 14, 11)}.items():
+        tx = dict(M[n]['textures']); tx['stain_o'] = T('stain')
+        M[n + '_dirty'] = model(tx, M[n]['elements'] + [el((x0, y + 0.02, z0), (x1, y + 0.03, z1), {'up': 'stain_o'})], extra={'render_type': 'minecraft:cutout'})
+    gen_decor.build_models(M)
     # GeckoLib-rendered blocks: blockstate model only provides the break particle
     M['fridge_particle'] = {'textures': {'particle': T('steel')}}
     M['freezer_particle'] = {'textures': {'particle': T('steel')}}
@@ -407,6 +414,7 @@ def blockstates():
             v[f'facing={f},half={half}'] = {'model': f'{MOD}:block/fridge_particle'}
     bs['fridge'] = {'variants': v}
     bs['freezer'] = {'variants': {f'facing={f}': {'model': f'{MOD}:block/freezer_particle'} for f in FACING}}
+    gen_decor.blockstates(bs)
     return bs
 
 
@@ -415,6 +423,7 @@ def generate(assets):
     os.makedirs(tdir, exist_ok=True)
     for name, cv in textures().items():
         cv.save(os.path.join(tdir, name + '.png'))
+    gen_decor.extra_files(assets)
     mdir = os.path.join(assets, 'models', 'block')
     os.makedirs(mdir, exist_ok=True)
     for name, m in build_models().items():

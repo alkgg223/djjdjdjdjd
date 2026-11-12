@@ -79,10 +79,10 @@ public final class ServerEvents {
             if (b.type.foodService) {
                 if (BusinessManager.freeSeats(ow, b) == 0 || BusinessManager.availableDishes(ow, b).isEmpty()) continue;
             } else if (b.type == BusinessType.HOTEL) {
-                if (BusinessManager.freeBeds(ow, b) == 0) continue;
+                if (BusinessManager.freeRooms(ow, b) == 0) continue;
             } else if (!BusinessManager.hasProducts(ow, b) || BusinessManager.shoppers(ow, b) >= 6) continue;
-            BusinessManager.spawnCustomerFor(ow, b);
-            if (++alive >= max) return;
+            alive += BusinessManager.spawnCustomerFor(ow, b);
+            if (alive >= max) return;
         }
     }
 
@@ -92,8 +92,22 @@ public final class ServerEvents {
             ItemStack held = p.getMainHandItem();
             boolean layout = held.is(ModItems.LAYOUT_TOOL.get());
             boolean staff = held.is(ModItems.STAFF_PLANNER.get());
-            if (!layout && !staff) continue;
             Business b = data.at(p.blockPosition());
+            if (held.is(ModItems.ROOM_TOOL.get())) {
+                if (ow.getGameTime() % 10 != 0) continue;
+                BlockPos ca = held.get(com.rpbusiness.core.ModComponents.CORNER_A.get());
+                if (ca != null && !held.has(com.rpbusiness.core.ModComponents.CORNER_B.get())) marker(ow, p, ca, net.minecraft.core.particles.ParticleTypes.END_ROD, 1.1);
+                if (b == null) continue;
+                for (com.rpbusiness.business.HotelRoom r : b.rooms) {
+                    if (r.auto || r.min.distSqr(p.blockPosition()) > 40 * 40) continue;
+                    var pt = r.guest != null ? net.minecraft.core.particles.ParticleTypes.FLAME : net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER;
+                    int y = r.min.getY();
+                    for (int x = r.min.getX(); x <= r.max.getX(); x++) { marker(ow, p, new BlockPos(x, y, r.min.getZ()), pt, 0.1); marker(ow, p, new BlockPos(x, y, r.max.getZ()), pt, 0.1); }
+                    for (int z = r.min.getZ() + 1; z < r.max.getZ(); z++) { marker(ow, p, new BlockPos(r.min.getX(), y, z), pt, 0.1); marker(ow, p, new BlockPos(r.max.getX(), y, z), pt, 0.1); }
+                }
+                continue;
+            }
+            if (!layout && !staff) continue;
             if (staff) {
                 UUID id = held.get(com.rpbusiness.core.ModComponents.STAFF_TARGET.get());
                 Business eb = id == null ? null : data.employerOf(id);

@@ -1,0 +1,43 @@
+{
+ "parent": "minecraft:block/block",
+ "textures": {
+  "particle": "rpbusiness:block/clock_face",
+  "c": "rpbusiness:block/clock_face",
+  "w": "rpbusiness:block/wood_dark"
+ },
+ "elements": [
+  {
+   "from": [
+    4,
+    4,
+    15
+   ],
+   "to": [
+    12,
+    12,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#c"
+    },
+    "south": {
+     "texture": "#w"
+    },
+    "east": {
+     "texture": "#w"
+    },
+    "west": {
+     "texture": "#w"
+    },
+    "up": {
+     "texture": "#w"
+    },
+    "down": {
+     "texture": "#w"
+    }
+   }
+  }
+ ],
+ "render_type": "minecraft:cutout"
+}

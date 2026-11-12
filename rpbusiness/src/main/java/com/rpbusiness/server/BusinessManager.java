@@ -122,7 +122,8 @@ public final class BusinessManager {
         var blk = s.getBlock();
         if (blk instanceof DisplayBlock) return Equip.DISPLAY;
         if (blk instanceof HotelBedBlock) return Equip.BED;
-        if (blk instanceof SafeBlock) return null;
+        if (blk instanceof SafeBlock || blk instanceof RoomMessBlock) return null;
+        if (blk instanceof DecorBlock || blk instanceof TvBlock) return Equip.DECOR;
         if (blk instanceof ChairBlock) return Equip.CHAIR;
         if (blk instanceof TableBlock) return Equip.TABLE;
         if (blk instanceof CuttingBoardBlock) return Equip.CUTTING_BOARD;
@@ -350,7 +351,7 @@ public final class BusinessManager {
                 if (avail.isEmpty() || freeSeats(sl, b) == 0) continue;
                 for (Dish d : avail) if (d.category == c.favorite) { score += 1.5; break; }
             } else if (b.type == BusinessType.HOTEL) {
-                if (freeBeds(sl, b) == 0) continue;
+                if (freeRooms(sl, b) == 0) continue;
                 score += 0.5;
             } else {
                 if (!b.type.retail || !hasProducts(sl, b) || shoppers(sl, b) >= 6 + equip(sl, b, Equip.DISPLAY).size() / 2) continue;
@@ -435,6 +436,7 @@ public final class BusinessManager {
 
     public static int freeSeats(ServerLevel sl, Business b) {
         cleanClaims(sl, b);
+        if (b.type.foodService) return biggestFreeTable(sl, b);
         int n = 0;
         for (BlockPos p : equip(sl, b, Equip.CHAIR)) if (!b.seatClaims.containsKey(p) && seatUsable(sl, b, p)) n++;
         return n;
@@ -451,6 +453,79 @@ public final class BusinessManager {
             return p;
         }
         return null;
+    }
+
+    /**
+     * Gives a whole table (all chairs around connected table blocks) to one group. Strangers never share a table:
+     * a table with anyone else at it is skipped. Picks the smallest table that fits the group.
+     */
+    /** Number of chairs at the biggest clean table nobody is using. */
+    public static int biggestFreeTable(ServerLevel sl, Business b) {
+        int best = 0;
+        for (List<BlockPos> t : freeTables(sl, b)) best = Math.max(best, t.size());
+        return best;
+    }
+
+    /** Biggest hotel room (in beds) that is free and clean. */
+    public static int biggestFreeRoom(ServerLevel sl, Business b) {
+        ensureRooms(sl, b);
+        int best = 0;
+        for (HotelRoom r : b.rooms) if (r.guest == null && roomDirtyAt(sl, r) == null) best = Math.max(best, roomCapacity(sl, b, r));
+        return best;
+    }
+
+    /** Chairs of every table (connected table blocks) that is clean and has nobody at it or reserved. */
+    private static List<List<BlockPos>> freeTables(ServerLevel sl, Business b) {
+        Set<BlockPos> seen = new HashSet<>();
+        List<List<BlockPos>> out = new ArrayList<>();
+        for (BlockPos start : new ArrayList<>(equip(sl, b, Equip.TABLE))) {
+            if (seen.contains(start) || !sl.isLoaded(start)) continue;
+            Set<BlockPos> group = new HashSet<>();
+            Deque<BlockPos> q = new ArrayDeque<>();
+            q.add(start);
+            while (!q.isEmpty() && group.size() < 32) {
+                BlockPos t = q.poll();
+                if (!group.add(t)) continue;
+                seen.add(t);
+                for (Direction d : Direction.Plane.HORIZONTAL) {
+                    BlockPos n = t.relative(d);
+                    if (!group.contains(n) && isTable(sl, b, n)) q.add(n);
+                }
+            }
+            boolean dirty = false;
+            for (BlockPos t : group) if (tableDirty(sl, b, t)) dirty = true;
+            if (dirty) continue;
+            Set<BlockPos> chairs = new LinkedHashSet<>();
+            for (BlockPos t : group) for (Direction d : Direction.Plane.HORIZONTAL) {
+                BlockPos c = t.relative(d);
+                if (isSeat(sl, c) && !(sl.getBlockState(c).getBlock() instanceof HotelBedBlock)) chairs.add(c.immutable());
+            }
+            boolean taken = false;
+            for (BlockPos c : chairs) if (b.seatClaims.containsKey(c) || SeatEntity.occupied(sl, c)) taken = true;
+            if (!taken && !chairs.isEmpty()) out.add(new ArrayList<>(chairs));
+        }
+        return out;
+    }
+
+    public static List<BlockPos> claimTable(ServerLevel sl, Business b, List<UUID> ids) {
+        cleanClaims(sl, b);
+        // already claimed by this group?
+        List<BlockPos> mine = new ArrayList<>();
+        for (UUID id : ids) for (var e : b.seatClaims.entrySet()) if (e.getValue().equals(id)) mine.add(e.getKey());
+        if (mine.size() >= ids.size()) return mine;
+        for (UUID id : ids) releaseSeat(b, id);
+        List<BlockPos> best = null;
+        for (List<BlockPos> t : freeTables(sl, b))
+            if (t.size() >= ids.size() && (best == null || t.size() < best.size())) best = t;
+        if (best == null) return null;
+        List<BlockPos> out = new ArrayList<>();
+        for (int i = 0; i < ids.size(); i++) {
+            b.seatClaims.put(best.get(i), ids.get(i));
+            out.add(best.get(i));
+        }
+        // reserve the remaining chairs of the table too, so no stranger joins
+        for (int i = ids.size(); i < best.size(); i++) b.seatClaims.put(best.get(i), ids.get(0));
+        return out;
     }
 
     public static boolean seatValid(ServerLevel sl, Business b, BlockPos seat, UUID who) {
@@ -547,6 +622,141 @@ public final class BusinessManager {
         o.cost = cost;
         o.fee = fee;
         notifyOwner(sl, b, Component.translatable("msg.rpbusiness.auto_ordered", manager.npcName(), what.toString(), Money.fmt(total)).withStyle(ChatFormatting.AQUA), false);
+    }
+
+    // =================================================================== hotel rooms
+
+    public static HotelRoom createRoom(ServerLevel sl, Business b, BlockPos a, BlockPos c) {
+        BlockPos min = new BlockPos(Math.min(a.getX(), c.getX()), Math.min(a.getY(), c.getY()), Math.min(a.getZ(), c.getZ()));
+        BlockPos max = new BlockPos(Math.max(a.getX(), c.getX()), Math.max(a.getY(), c.getY()) + 2, Math.max(a.getZ(), c.getZ()));
+        b.rooms.removeIf(r -> r.auto && r.guest == null);
+        for (HotelRoom r : b.rooms)
+            if (min.getX() <= r.max.getX() && max.getX() >= r.min.getX() && min.getZ() <= r.max.getZ() && max.getZ() >= r.min.getZ()
+                    && min.getY() <= r.max.getY() && max.getY() >= r.min.getY()) return null;
+        HotelRoom r = new HotelRoom();
+        r.id = b.rooms.stream().mapToInt(x -> x.id).max().orElse(0) + 1;
+        r.name = "Room " + r.id;
+        r.min = min;
+        r.max = max;
+        b.rooms.add(r);
+        data(sl).setDirty();
+        return r;
+    }
+
+    /** Bed places in a room: each entry is {bed position, slot}. Double beds give two places. */
+    public static List<Object[]> bedSlots(ServerLevel sl, Business b, HotelRoom r) {
+        List<Object[]> out = new ArrayList<>();
+        for (BlockPos p : equip(sl, b, Equip.BED)) {
+            if (!r.contains(p) || !(sl.getBlockState(p).getBlock() instanceof HotelBedBlock hb)) continue;
+            for (int s = 0; s < hb.capacity(); s++) out.add(new Object[]{p, hb.capacity() > 1 ? s + 1 : 0});
+        }
+        return out;
+    }
+
+    public static int roomCapacity(ServerLevel sl, Business b, HotelRoom r) { return bedSlots(sl, b, r).size(); }
+
+    /** Anything in the room still dirty: beds, seats or litter on the floor. Returns one position to clean, or null. */
+    public static BlockPos roomDirtyAt(ServerLevel sl, HotelRoom r) {
+        for (BlockPos p : BlockPos.betweenClosed(r.min, r.max)) {
+            if (!sl.isLoaded(p)) continue;
+            BlockState s = sl.getBlockState(p);
+            if (s.getBlock() instanceof RoomMessBlock || ChairBlock.isDirty(s)) return p.immutable();
+        }
+        return null;
+    }
+
+    /** Hotels without drawn rooms: every bed counts as its own room. */
+    public static void ensureRooms(ServerLevel sl, Business b) {
+        if (b.type != BusinessType.HOTEL) return;
+        if (b.rooms.stream().anyMatch(r -> !r.auto)) return;
+        for (BlockPos p : equip(sl, b, Equip.BED)) {
+            boolean has = false;
+            for (HotelRoom r : b.rooms) if (r.contains(p)) has = true;
+            if (has) continue;
+            HotelRoom r = new HotelRoom();
+            r.id = b.rooms.stream().mapToInt(x -> x.id).max().orElse(0) + 1;
+            r.name = "Bed " + r.id;
+            r.min = p;
+            r.max = p;
+            r.auto = true;
+            b.rooms.add(r);
+        }
+        b.rooms.removeIf(r -> r.auto && r.guest == null && !(sl.getBlockState(r.min).getBlock() instanceof HotelBedBlock) && sl.isLoaded(r.min));
+    }
+
+    /** A free, clean room big enough for the whole group (never shared with strangers); the smallest that fits. */
+    public static HotelRoom claimRoom(ServerLevel sl, Business b, UUID leader, int size) {
+        ensureRooms(sl, b);
+        for (HotelRoom r : b.rooms) if (leader.equals(r.guest)) return r;
+        HotelRoom best = null;
+        int bestCap = Integer.MAX_VALUE;
+        for (HotelRoom r : b.rooms) {
+            if (r.guest != null || roomDirtyAt(sl, r) != null) continue;
+            int cap = roomCapacity(sl, b, r);
+            if (cap < size || cap >= bestCap) continue;
+            boolean busy = false;
+            for (Object[] slot : bedSlots(sl, b, r)) if (SeatEntity.occupied(sl, (BlockPos) slot[0])) busy = true;
+            if (busy) continue;
+            best = r;
+            bestCap = cap;
+        }
+        if (best != null) { best.guest = leader; data(sl).setDirty(); }
+        return best;
+    }
+
+    public static int freeRooms(ServerLevel sl, Business b) {
+        ensureRooms(sl, b);
+        int n = 0;
+        for (HotelRoom r : b.rooms) if (r.guest == null && roomDirtyAt(sl, r) == null && roomCapacity(sl, b, r) > 0) n++;
+        return n;
+    }
+
+    /** Once a day an occupied room gets a little messy; rooms whose guests vanished are freed. */
+    private static void tickHotel(ServerLevel sl, Business b) {
+        ensureRooms(sl, b);
+        long day = Business.day(sl);
+        for (HotelRoom r : b.rooms) {
+            if (r.guest == null) continue;
+            if (customer(sl, r.guest) == null && sl.getDayTime() > r.checkOutTick + 2400 && sl.isLoaded(r.min)) {
+                r.guest = null; r.cleanRequested = false;
+                continue;
+            }
+            if (r.lastMessDay == Long.MIN_VALUE) { r.lastMessDay = day; continue; }
+            if (day <= r.lastMessDay) continue;
+            r.lastMessDay = day;
+            RandomSource rnd = sl.getRandom();
+            if (rnd.nextFloat() < 0.8f) {
+                List<BlockPos> floor = new ArrayList<>();
+                for (BlockPos p : BlockPos.betweenClosed(r.min, r.max)) {
+                    BlockState s = sl.getBlockState(p);
+                    if (p.getY() == r.min.getY() && s.isAir() && !sl.getBlockState(p.below()).getCollisionShape(sl, p.below()).isEmpty()
+                            && sl.getBlockState(p.below()).isFaceSturdy(sl, p.below(), Direction.UP)) floor.add(p.immutable());
+                }
+                if (!floor.isEmpty()) sl.setBlock(floor.get(rnd.nextInt(floor.size())), ModBlocks.ROOM_MESS.get().defaultBlockState(), 3);
+            }
+            if (rnd.nextFloat() < 0.5f) {
+                List<BlockPos> seats = new ArrayList<>();
+                for (BlockPos p : BlockPos.betweenClosed(r.min, r.max))
+                    if (sl.getBlockState(p).getBlock() instanceof ChairBlock cb && !(cb instanceof HotelBedBlock)) seats.add(p.immutable());
+                if (!seats.isEmpty()) ChairBlock.setDirty(sl, seats.get(rnd.nextInt(seats.size())), true);
+            }
+        }
+        for (HotelRoom r : b.rooms) if (r.cleanRequested && roomDirtyAt(sl, r) == null) {
+            r.cleanRequested = false;
+            notifyOwner(sl, b, Component.translatable("msg.rpbusiness.room_clean_done", r.name).withStyle(ChatFormatting.GREEN), true);
+        }
+    }
+
+    /** Next thing a hotel cleaner should clean: requested rooms first, then rooms nobody is staying in. */
+    public static BlockPos hotelCleaningTarget(ServerLevel sl, Business b) {
+        BlockPos fallback = null;
+        for (HotelRoom r : b.rooms) {
+            BlockPos d = roomDirtyAt(sl, r);
+            if (d == null) continue;
+            if (r.cleanRequested) return d;
+            if (r.guest == null && fallback == null) fallback = d;
+        }
+        return fallback;
     }
 
     // =================================================================== hotel
@@ -847,8 +1057,9 @@ public final class BusinessManager {
         long day = Business.day(sl);
         int hour = Business.hour(sl);
         int food = 0, drink = 0;
+        List<UUID> ids = c.groupIds();
         for (Order o : b.orders) {
-            if (!o.customer.equals(c.getUUID()) || o.status != Order.Status.SERVED) continue;
+            if (!ids.contains(o.customer) || o.status != Order.Status.SERVED) continue;
             if (o.dish.isDrink()) drink += o.price; else food += o.price;
             b.menu.get(o.dish).sold++;
         }
@@ -882,8 +1093,9 @@ public final class BusinessManager {
     public static void pay(ServerLevel sl, Business b, CustomerEntity c, String method) { processPayment(sl, b, c, method); }
 
     public static void finishVisit(ServerLevel sl, Business b, CustomerEntity c, boolean paid) {
+        List<UUID> ids = c.groupIds();
         for (Order o : new ArrayList<>(b.orders)) {
-            if (!o.customer.equals(c.getUUID())) continue;
+            if (!ids.contains(o.customer)) continue;
             if (o.status != Order.Status.SERVED) o.status = Order.Status.CANCELLED;
             b.archive(o, sl.getGameTime());
         }
@@ -1218,15 +1430,61 @@ public final class BusinessManager {
         return null;
     }
 
-    public static void spawnCustomerFor(ServerLevel sl, Business b) {
+    public static int spawnCustomerFor(ServerLevel sl, Business b) {
+        CustomerEntity c = spawnGroupFor(sl, b, 0);
+        return c == null ? 0 : c.groupSize();
+    }
+
+    /**
+     * Customers arrive alone, as couples, friends or families with children. The leader carries the group's
+     * money and decides; the others follow. Returns how many NPCs were spawned.
+     */
+    public static CustomerEntity spawnGroupFor(ServerLevel sl, Business b, int forcedSize) {
+        RandomSource r = sl.getRandom();
         CustomerEntity c = ModEntities.CUSTOMER.get().create(sl);
-        if (c == null) return;
+        if (c == null) return null;
         BlockPos at = reachableSpawn(sl, c, b.entranceOrCenter(), Math.max(6, Config.SPAWN_DISTANCE.get() - 8), Config.SPAWN_DISTANCE.get() + 6);
-        if (at == null) return;
-        c.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, sl.getRandom().nextFloat() * 360, 0);
-        c.randomize(sl.getRandom());
+        if (at == null) return null;
+        c.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, r.nextFloat() * 360, 0);
+        c.randomize(r);
         c.home = at;
+        int roll = r.nextInt(100);
+        int size = forcedSize > 0 ? forcedSize : roll < 35 ? 1 : roll < 65 ? 2 : roll < 80 ? 3 : 2 + 1 + r.nextInt(2);
+        boolean family = forcedSize == 0 ? roll >= 80 : size >= 3;
+        int alive = sl.getEntities(ModEntities.CUSTOMER.get(), x -> true).size();
+        size = Math.max(1, Math.min(size, Config.MAX_CUSTOMERS.get() - alive));
+        if (b.type.foodService) size = Math.max(1, Math.min(size, biggestFreeTable(sl, b)));
+        else if (b.type == BusinessType.HOTEL) size = Math.max(1, Math.min(size, biggestFreeRoom(sl, b)));
+        if (size < 3) family = false;
+        int perHead = c.money;
+        String family0 = c.npcName().contains(" ") ? c.npcName().substring(c.npcName().indexOf(' ') + 1) : "";
+        // hotel stays: 1 night (often), 2-3 nights, or a whole week
+        int nr = r.nextInt(100);
+        c.nights = nr < 50 ? 1 : nr < 75 ? 2 : nr < 88 ? 3 + r.nextInt(3) : 7;
+        if (b.type == BusinessType.HOTEL) c.money += b.effective(b.roomPrice) * c.nights;
         sl.addFreshEntity(c);
+        for (int i = 1; i < size; i++) {
+            CustomerEntity m = ModEntities.CUSTOMER.get().create(sl);
+            if (m == null) break;
+            m.moveTo(at.getX() + 0.5 + r.nextGaussian() * 0.6, at.getY(), at.getZ() + 0.5 + r.nextGaussian() * 0.6, r.nextFloat() * 360, 0);
+            m.randomize(r);
+            boolean kid = family && i >= 2;
+            if (kid) {
+                m.setKid(true);
+                m.favorite = r.nextBoolean() ? Dish.Category.SIDE : Dish.Category.BURGER;
+                m.drinkLover = true;
+            }
+            if (family && !family0.isEmpty()) m.setNpcName(m.npcName().substring(0, m.npcName().indexOf(' ')) + " " + family0);
+            m.leaderId = c.getUUID();
+            m.home = at;
+            m.money = kid ? 15 + r.nextInt(10) : Math.min(perHead, m.money);
+            m.budget = Math.max(5, m.money);
+            m.patience = c.patience;
+            c.members.add(m.getUUID());
+            c.money += m.money; // the leader carries the group's wallet
+            sl.addFreshEntity(m);
+        }
+        return c;
     }
 
     // =================================================================== periodic business upkeep
@@ -1244,6 +1502,7 @@ public final class BusinessManager {
         com.rpbusiness.delivery.Deliveries.tick(sl, b);
         if (!sl.isLoaded(b.center())) return;
         if (b.entrance == null && sl.getGameTime() % 200 == 0) b.entrance = findEntrance(sl, b);
+        if (b.type == BusinessType.HOTEL) tickHotel(sl, b);
         cleanClaims(sl, b);
         matchCounters(sl, b);
         for (Order o : new ArrayList<>(b.orders)) {

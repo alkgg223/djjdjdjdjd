@@ -374,8 +374,22 @@ public class BusinessScreen extends BaseScreen {
             case "rooms" -> {
                 text(g, Component.translatable("gui.rpbusiness.rooms_header"), cx(), cy(), ACCENT);
                 text(g, Component.translatable("gui.rpbusiness.room_price", Money.fmt(data.getInt("roomPrice"))), cx(), cy() + 14, WARN);
-                text(g, Component.translatable("gui.rpbusiness.rooms_info", data.getInt("beds"), data.getInt("bedsFree"), data.getInt("bedsDirty")), cx(), cy() + 26, TEXT);
-                text(g, Component.translatable("gui.rpbusiness.rooms_hint"), cx(), cy() + 66, DIM);
+                var rl = data.getList("roomList", 10);
+                text(g, Component.translatable("gui.rpbusiness.rooms_info2", rl.size(), data.getInt("roomsFree"), data.getInt("beds"), data.getInt("bedsDirty")), cx(), cy() + 26, TEXT);
+                int ry = cy() + 64, maxRows = Math.max(1, (chh() - 80) / 11);
+                for (int i = 0; i < Math.min(rl.size(), maxRows); i++) {
+                    var m = rl.getCompound(i);
+                    text(g, m.getString("name"), cx(), ry, ACCENT);
+                    text(g, Component.translatable("gui.rpbusiness.room_cap", m.getInt("cap")), cx() + 70, ry, DIM);
+                    Component st = m.contains("guest")
+                            ? Component.translatable("gui.rpbusiness.room_guest", m.getString("guest"), m.getInt("hoursLeft"))
+                            : Component.translatable(m.getBoolean("dirty") ? "gui.rpbusiness.room_dirty" : "gui.rpbusiness.room_free");
+                    text(g, st, cx() + 120, ry, m.contains("guest") ? WARN : m.getBoolean("dirty") ? BAD : GOOD);
+                    if (m.getBoolean("req")) text(g, Component.translatable("gui.rpbusiness.room_req"), cx() + cw() - 70, ry, BAD);
+                    ry += 11;
+                }
+                if (rl.size() > maxRows) text(g, "+" + (rl.size() - maxRows), cx(), ry, DIM);
+                text(g, Component.translatable("gui.rpbusiness.rooms_hint"), cx(), cy() + chh() - 12, DIM);
             }
             case "deliveries" -> renderDeliveries(g);
         }

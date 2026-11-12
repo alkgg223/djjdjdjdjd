@@ -39,6 +39,7 @@ public final class ModItems {
     public static final DeferredItem<ToolItem> MOP = add("mop", REG.registerItem("mop", p -> new ToolItem("tooltip.rpbusiness.mop", p.stacksTo(1))));
     public static final DeferredItem<BusinessPlannerItem> BUSINESS_PLANNER = add("business_planner", REG.registerItem("business_planner", p -> new BusinessPlannerItem(p.stacksTo(1))));
     public static final DeferredItem<LayoutToolItem> LAYOUT_TOOL = add("layout_tool", REG.registerItem("layout_tool", p -> new LayoutToolItem(p.stacksTo(1))));
+    public static final DeferredItem<RoomToolItem> ROOM_TOOL = add("room_tool", REG.registerItem("room_tool", p -> new RoomToolItem(p.stacksTo(1))));
     public static final DeferredItem<StaffPlannerItem> STAFF_PLANNER = add("staff_planner", REG.registerItem("staff_planner", p -> new StaffPlannerItem(p.stacksTo(1))));
     public static final DeferredItem<RecipeBookItem> RECIPE_BOOK = add("recipe_book", REG.registerItem("recipe_book", p -> new RecipeBookItem(p.stacksTo(1))));
 

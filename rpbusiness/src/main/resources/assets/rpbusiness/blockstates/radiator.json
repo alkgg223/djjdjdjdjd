@@ -1,0 +1,20 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "rpbusiness:block/radiator",
+   "y": 0
+  },
+  "facing=east": {
+   "model": "rpbusiness:block/radiator",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "rpbusiness:block/radiator",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "rpbusiness:block/radiator",
+   "y": 270
+  }
+ }
+}

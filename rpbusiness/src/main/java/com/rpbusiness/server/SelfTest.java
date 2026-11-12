@@ -332,19 +332,22 @@ public final class SelfTest {
         for (Business x : BusinessData.get(sl).businesses.values()) if (x.name.equals("SelfTest Diner")) b = x;
         if (b == null) return;
         if (MODE.equals("build") && t % 160 == 0 && spawned < Integer.getInteger("rpbusiness.selftest.customers", 14) && t > 40) {
-            Business[] targets = {kitRestaurant, kitHotel, shop, kitHotel};
+            Business[] targets = {kitRestaurant, kitHotel, shop, kitRestaurant};
             Business tgt = targets[spawned % targets.length];
             if (spawned % 2 == 1 && tgt != null) {
-                CustomerEntity c = ModEntities.CUSTOMER.get().create(sl);
-                BlockPos at = c == null ? null : BusinessManager.reachableSpawn(sl, c, tgt.entranceOrCenter(), 6, 14);
-                if (at != null) {
-                    c.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
-                    c.randomize(sl.getRandom());
-                    c.money = 200; c.budget = 120; c.home = at;
+                // groups: a family of four at the restaurant, a couple / family in the hotel, friends in the shop
+                int size = tgt == kitRestaurant ? 4 : tgt == kitHotel ? (spawned % 4 == 1 ? 4 : 2) : 2;
+                CustomerEntity c = BusinessManager.spawnGroupFor(sl, tgt, size);
+                if (c != null) {
+                    for (CustomerEntity m : c.group(sl)) {
+                        m.money = Math.max(m.money, 60); m.patience = 20 * 60 * 6;
+                    }
+                    c.money += 300; c.budget = 160;
                     c.businessId = tgt.id;
                     c.state = CustomerEntity.State.GO_ENTRANCE;
-                    sl.addFreshEntity(c);
-                    log("spawned customer for " + tgt.name);
+                    StringBuilder g = new StringBuilder();
+                    for (CustomerEntity m : c.group(sl)) g.append(m.npcName()).append(m.isKid() ? "(kid)" : "").append(' ');
+                    log("spawned GROUP of " + c.groupSize() + " for " + tgt.name + ": " + g + "nights=" + c.nights);
                 }
                 spawned++;
             } else {
@@ -397,7 +400,31 @@ public final class SelfTest {
                 s2.append("] bank=").append(com.rpbusiness.bank.Bank.get(sl).businessAccount(sl, office).balance);
                 if (kitRestaurant != null) s2.append(" KITREST served=").append(kitRestaurant.customersServed).append(" lost=").append(kitRestaurant.customersLost)
                         .append(" orders=").append(kitRestaurant.orders.size()).append(" supply=").append(kitRestaurant.supplyOrders.size());
-                if (kitHotel != null) s2.append(" HOTEL served=").append(kitHotel.customersServed).append(" free=").append(BusinessManager.freeBeds(sl, kitHotel));
+                if (kitHotel != null) {
+                    s2.append(" HOTEL served=").append(kitHotel.customersServed).append(" freeRooms=").append(BusinessManager.freeRooms(sl, kitHotel)).append(" rooms=[");
+                    for (com.rpbusiness.business.HotelRoom r : kitHotel.rooms) {
+                        CustomerEntity g = r.guest == null ? null : BusinessManager.customer(sl, r.guest);
+                        s2.append(r.name).append(':').append(r.guest == null ? "free" : (g == null ? "?" : g.npcName() + "x" + g.groupSize() + "/" + g.state))
+                                .append(BusinessManager.roomDirtyAt(sl, r) != null ? "/DIRTY" : "").append(r.cleanRequested ? "/REQ" : "").append(' ');
+                    }
+                    int tvOn = 0, sitting = 0, sleeping = 0;
+                    for (BlockPos p : kitHotel.equipment.get(Equip.DECOR))
+                        if (sl.getBlockState(p).getBlock() instanceof com.rpbusiness.block.TvBlock && sl.getBlockState(p).getValue(com.rpbusiness.block.TvBlock.ON)) tvOn++;
+                    for (CustomerEntity c : sl.getEntities(ModEntities.CUSTOMER.get(), c -> kitHotel.id.equals(c.businessId))) {
+                        if (c.isPassenger() && c.action() == com.rpbusiness.entity.NpcEntity.ACT_SLEEP) sleeping++;
+                        else if (c.isPassenger()) sitting++;
+                    }
+                    s2.append("] tvOn=").append(tvOn).append(" onSofa=").append(sitting).append(" inBed=").append(sleeping);
+                }
+                if (kitRestaurant != null) {
+                    // strangers never share a table: every claimed chair of one table belongs to one group
+                    s2.append(" TABLES=[");
+                    for (var e : kitRestaurant.seatClaims.entrySet()) {
+                        CustomerEntity cc = BusinessManager.customer(sl, e.getValue());
+                        s2.append(e.getKey().toShortString()).append('>').append(cc == null ? "?" : (cc.isFollower() ? cc.leader(sl) == null ? "?" : cc.leader(sl).npcName() : cc.npcName())).append(' ');
+                    }
+                    s2.append(']');
+                }
                 s2.append(" DINER supply=").append(b.supplyOrders.stream().map(x -> x.supplier + ":" + x.status).toList());
                 for (EmployeeRecord r : office.employees.values()) {
                     EmployeeEntity e = BusinessManager.employee(sl, r.id);
@@ -413,6 +440,12 @@ public final class SelfTest {
                 log("accepted request " + j.id + " -> " + ok + " reward " + j.reward);
                 break;
             }
+        }
+        if (MODE.equals("build") && t == 2000 && kitHotel != null) {
+            // a day has passed for the guests: their rooms get messy
+            for (com.rpbusiness.business.HotelRoom r : kitHotel.rooms) if (r.guest != null) r.lastMessDay = Business.day(sl) - 1;
+            BusinessManager.tickBusiness(sl, kitHotel);
+            log("HOTEL mess day: " + kitHotel.rooms.stream().map(r -> r.name + (BusinessManager.roomDirtyAt(sl, r) != null ? "=dirty@" + BusinessManager.roomDirtyAt(sl, r).toShortString() : "=clean")).toList());
         }
         if (MODE.equals("build") && t == 3000) {
             // advance one in-game day: salaries and the loan installment must be processed

@@ -24,6 +24,23 @@
   "rpbusiness:cash_register",
   "rpbusiness:payment_terminal",
   "rpbusiness:business_computer",
-  "rpbusiness:supplier_terminal"
+  "rpbusiness:supplier_terminal",
+  "rpbusiness:tv",
+  "rpbusiness:office_chair",
+  "rpbusiness:toilet",
+  "rpbusiness:bathtub",
+  "rpbusiness:floor_lamp",
+  "rpbusiness:minibar",
+  "rpbusiness:mirror",
+  "rpbusiness:shower",
+  "rpbusiness:bathroom_sink",
+  "rpbusiness:towel_rack",
+  "rpbusiness:flower_vase",
+  "rpbusiness:ceiling_fan",
+  "rpbusiness:air_conditioner",
+  "rpbusiness:radiator",
+  "rpbusiness:trash_bin",
+  "rpbusiness:room_phone",
+  "rpbusiness:room_sign"
  ]
 }

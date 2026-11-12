@@ -12,6 +12,27 @@
   "rpbusiness:menu_board",
   "rpbusiness:potted_plant",
   "rpbusiness:delivery_crate",
-  "rpbusiness:package"
+  "rpbusiness:package",
+  "rpbusiness:double_bed",
+  "rpbusiness:armchair",
+  "rpbusiness:sofa_gray",
+  "rpbusiness:sofa_blue",
+  "rpbusiness:coffee_table",
+  "rpbusiness:nightstand",
+  "rpbusiness:table_lamp",
+  "rpbusiness:wardrobe",
+  "rpbusiness:dresser",
+  "rpbusiness:rug_red",
+  "rpbusiness:rug_beige",
+  "rpbusiness:rug_blue",
+  "rpbusiness:curtains",
+  "rpbusiness:painting_sea",
+  "rpbusiness:painting_city",
+  "rpbusiness:wall_clock",
+  "rpbusiness:desk",
+  "rpbusiness:bookshelf_modern",
+  "rpbusiness:tall_plant",
+  "rpbusiness:luggage_rack",
+  "rpbusiness:room_mess"
  ]
 }

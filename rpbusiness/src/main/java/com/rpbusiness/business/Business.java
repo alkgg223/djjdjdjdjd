@@ -61,6 +61,9 @@ public class Business {
     public int roomPrice = 40;
     /** The manager orders low stock from suppliers automatically (budget per order). */
     public boolean autoBuy = true;
+    public final List<HotelRoom> rooms = new ArrayList<>();
+    public HotelRoom room(int id) { for (HotelRoom r : rooms) if (r.id == id) return r; return null; }
+    public HotelRoom roomAt(BlockPos p) { for (HotelRoom r : rooms) if (r.contains(p)) return r; return null; }
     public int autoBuyBudget = 300;
     public final List<com.rpbusiness.delivery.DeliveryJob> deliveries = new ArrayList<>();
     public long requestDay = -1;
@@ -207,6 +210,9 @@ public class Business {
         t.putInt("drate", deliveryRate);
         t.putInt("room", roomPrice);
         t.putBoolean("autoBuy", autoBuy);
+        ListTag rl = new ListTag();
+        for (HotelRoom r : rooms) rl.add(r.save());
+        t.put("rooms", rl);
         t.putInt("autoBudget", autoBuyBudget);
         ListTag dj = new ListTag();
         for (var j : deliveries) dj.add(j.save());
@@ -285,6 +291,8 @@ public class Business {
         b.deliveryRate = t.contains("drate") ? t.getInt("drate") : 100;
         b.roomPrice = t.contains("room") ? t.getInt("room") : 40;
         b.autoBuy = !t.contains("autoBuy") || t.getBoolean("autoBuy");
+        ListTag rl = t.getList("rooms", Tag.TAG_COMPOUND);
+        for (int i = 0; i < rl.size(); i++) b.rooms.add(HotelRoom.load(rl.getCompound(i)));
         b.autoBuyBudget = t.contains("autoBudget") ? t.getInt("autoBudget") : 300;
         ListTag dj = t.getList("deliveries", Tag.TAG_COMPOUND);
         for (int i = 0; i < dj.size(); i++) b.deliveries.add(com.rpbusiness.delivery.DeliveryJob.load(dj.getCompound(i)));

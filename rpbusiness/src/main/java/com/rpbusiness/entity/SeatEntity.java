@@ -18,6 +18,7 @@ import net.minecraft.world.phys.Vec3;
 /** Invisible entity that a chair's sitter rides. Removed automatically when nobody sits on it. */
 public class SeatEntity extends Entity {
     private BlockPos chair = BlockPos.ZERO;
+    private int slot;
 
     public SeatEntity(EntityType<? extends SeatEntity> type, Level level) {
         super(type, level);
@@ -34,10 +35,34 @@ public class SeatEntity extends Entity {
         return false;
     }
 
+    public static boolean occupied(Level level, BlockPos chair, int slot) {
+        for (SeatEntity s : level.getEntitiesOfClass(SeatEntity.class, new AABB(chair).inflate(0.5)))
+            if (s.chair.equals(chair) && s.slot == slot && s.isVehicle()) return true;
+        return false;
+    }
+
+    /** Double beds: two people lie side by side. */
+    public static boolean sit(Level level, BlockPos pos, Entity rider, int slot) {
+        BlockState st = level.getBlockState(pos);
+        if (slot <= 0 || !(st.getBlock() instanceof ChairBlock cb) || cb.capacity() < 2) return sit(level, pos, rider);
+        if (occupied(level, pos, slot)) return false;
+        SeatEntity seat = new SeatEntity(ModEntities.SEAT.get(), level);
+        seat.chair = pos.immutable();
+        seat.slot = slot;
+        net.minecraft.core.Direction f = st.getValue(ChairBlock.FACING);
+        net.minecraft.core.Direction side = f.getClockWise();
+        double off = slot == 1 ? 0.27 : -0.27;
+        seat.setPos(pos.getX() + 0.5 + side.getStepX() * off, pos.getY() + cb.seatHeight(), pos.getZ() + 0.5 + side.getStepZ() * off);
+        seat.setYRot(f.toYRot());
+        level.addFreshEntity(seat);
+        if (!rider.startRiding(seat, true)) { seat.discard(); return false; }
+        return true;
+    }
+
     /** Seats an entity on the chair at pos. Returns false if the chair is taken or invalid. */
     public static boolean sit(Level level, BlockPos pos, Entity rider) {
         BlockState st = level.getBlockState(pos);
-        if (!com.rpbusiness.server.BusinessManager.isSeat(level, pos) || occupied(level, pos)) return false;
+        if (!com.rpbusiness.server.BusinessManager.isSeat(level, pos) || occupied(level, pos, 0)) return false;
         SeatEntity seat = new SeatEntity(ModEntities.SEAT.get(), level);
         seat.chair = pos.immutable();
         seat.setPos(pos.getX() + 0.5, pos.getY() + seatHeight(level, pos, st), pos.getZ() + 0.5);
@@ -107,8 +132,8 @@ public class SeatEntity extends Entity {
     @Override public boolean isPushable() { return false; }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag t) { chair = NbtUtils.readBlockPos(t, "chair").orElse(blockPosition()); }
+    protected void readAdditionalSaveData(CompoundTag t) { chair = NbtUtils.readBlockPos(t, "chair").orElse(blockPosition()); slot = t.getInt("slot"); }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag t) { t.put("chair", NbtUtils.writeBlockPos(chair)); }
+    protected void addAdditionalSaveData(CompoundTag t) { t.put("chair", NbtUtils.writeBlockPos(chair)); t.putInt("slot", slot); }
 }

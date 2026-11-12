@@ -453,7 +453,7 @@ for k, en, ar in [
     ('gui.rpbusiness.rooms_header', 'Hotel rooms', 'غرف الفندق'),
     ('gui.rpbusiness.room_price', 'Price per stay: %s', 'سعر الإقامة: %s'),
     ('gui.rpbusiness.rooms_info', 'Beds %s - free %s - need cleaning %s', 'الأسرّة %s - فارغة %s - تحتاج تنظيف %s'),
-    ('gui.rpbusiness.rooms_hint', 'Guests check in at the cash register, pay, then rest in a room. Cleaners make the beds.', 'يسجل الضيوف عند الكاشير ويدفعون ثم يرتاحون في الغرفة. عمال النظافة يرتبون الأسرّة.'),
+    ('gui.rpbusiness.rooms_hint', 'Draw rooms with the Hotel Room Tool. Guests check in at the register and stay 1-7 nights.', 'حدد الغرف بأداة غرف الفندق. يسجل الضيوف عند الكاشير ويقيمون من ليلة إلى 7 ليالٍ.'),
 ]:
     add(k, en, ar)
 add('tab.rpbusiness.rooms', 'Rooms', 'الغرف')
@@ -469,3 +469,49 @@ add('equip.rpbusiness.bed', 'Beds', 'أسرّة')
 for k, (en, ar) in {'wholesale': ('City Wholesale Market', 'سوق الجملة'), 'furniture': ('HomeStyle Furniture', 'هوم ستايل للأثاث'),
                     'retail': ('RetailPro Systems', 'ريتيل برو'), 'construction': ('BuildRight Construction', 'بيلد رايت للبناء')}.items():
     add(f'supplier.rpbusiness.{k}', en, ar)
+
+# ---------------- stage 4: hotel rooms, families, decor
+for k, (en, ar) in {
+    'double_bed': ('Double Bed', 'سرير مزدوج'), 'tv': ('Television', 'تلفاز'), 'armchair': ('Armchair', 'كرسي بذراعين'),
+    'sofa_gray': ('Gray Sofa', 'كنبة رمادية'), 'sofa_blue': ('Blue Sofa', 'كنبة زرقاء'), 'office_chair': ('Office Chair', 'كرسي مكتب'),
+    'toilet': ('Toilet', 'مرحاض'), 'bathtub': ('Bathtub', 'حوض استحمام'), 'coffee_table': ('Coffee Table', 'طاولة قهوة'),
+    'nightstand': ('Nightstand', 'كومودينو'), 'table_lamp': ('Table Lamp', 'مصباح طاولة'), 'floor_lamp': ('Floor Lamp', 'مصباح أرضي'),
+    'wardrobe': ('Wardrobe', 'خزانة ملابس'), 'dresser': ('Dresser', 'تسريحة أدراج'), 'minibar': ('Minibar', 'ثلاجة صغيرة'),
+    'mirror': ('Mirror', 'مرآة'), 'rug_red': ('Red Rug', 'سجادة حمراء'), 'rug_beige': ('Beige Rug', 'سجادة بيج'), 'rug_blue': ('Blue Rug', 'سجادة زرقاء'),
+    'curtains': ('Curtains', 'ستائر'), 'painting_sea': ('Sea Painting', 'لوحة البحر'), 'painting_city': ('City Painting', 'لوحة المدينة'),
+    'wall_clock': ('Wall Clock', 'ساعة حائط'), 'desk': ('Desk', 'مكتب'), 'shower': ('Shower', 'دش'), 'bathroom_sink': ('Bathroom Sink', 'مغسلة'),
+    'towel_rack': ('Towel Rack', 'علاقة مناشف'), 'bookshelf_modern': ('Modern Bookshelf', 'رف كتب حديث'), 'tall_plant': ('Tall Plant', 'نبتة طويلة'),
+    'flower_vase': ('Flower Vase', 'مزهرية'), 'ceiling_fan': ('Ceiling Fan', 'مروحة سقف'), 'air_conditioner': ('Air Conditioner', 'مكيف هواء'),
+    'radiator': ('Radiator', 'مدفأة'), 'luggage_rack': ('Luggage Rack', 'حامل أمتعة'), 'trash_bin': ('Trash Bin', 'سلة مهملات'),
+    'room_phone': ('Room Phone', 'هاتف الغرفة'), 'room_sign': ('Room Number Sign', 'لافتة رقم الغرفة'), 'room_mess': ('Litter', 'أوساخ'),
+}.items():
+    add(f'block.rpbusiness.{k}', en, ar)
+add('item.rpbusiness.room_tool', 'Hotel Room Tool', 'أداة غرف الفندق')
+for k, en, ar in [
+    ('tooltip.rpbusiness.roomtool_1', 'Right-click two opposite corners of a room (inside your hotel)', 'انقر على زاويتين متقابلتين للغرفة (داخل فندقك)'),
+    ('tooltip.rpbusiness.roomtool_2', 'Then right-click the air to create the room. One group per room, never strangers', 'ثم انقر في الهواء لإنشاء الغرفة. مجموعة واحدة لكل غرفة، لا يجتمع غرباء'),
+    ('tooltip.rpbusiness.roomtool_3', 'Sneak + right-click inside a room to remove it', 'انقر مع الانحناء داخل غرفة لحذفها'),
+    ('msg.rpbusiness.room_need_hotel', 'Rooms can only be drawn inside a hotel you own', 'لا يمكن تحديد الغرف إلا داخل فندق تملكه'),
+    ('msg.rpbusiness.room_occupied', '%s has guests right now', 'يوجد ضيوف في %s الآن'),
+    ('msg.rpbusiness.room_removed', '%s removed', 'تم حذف %s'),
+    ('msg.rpbusiness.room_corner_b', 'Second corner set. Right-click the air to create the room', 'تم تحديد الزاوية الثانية. انقر في الهواء لإنشاء الغرفة'),
+    ('msg.rpbusiness.room_overlap', 'This room overlaps another room', 'هذه الغرفة تتداخل مع غرفة أخرى'),
+    ('msg.rpbusiness.room_created', '%s created (%s beds)', 'تم إنشاء %s (%s أسرّة)'),
+    ('msg.rpbusiness.checked_in', '%s checked in (%s people) to %s for %s night(s)', 'سجل %s دخوله (%s أشخاص) في %s لمدة %s ليلة'),
+    ('msg.rpbusiness.checked_out', '%s checked out of %s', 'غادر %s الغرفة %s'),
+    ('msg.rpbusiness.clean_request', '%s (%s) asked at the reception for a cleaner', 'طلب %s (%s) من الاستقبال عامل نظافة'),
+    ('msg.rpbusiness.room_clean_done', '%s is clean again', 'أصبحت %s نظيفة'),
+    ('gui.rpbusiness.room_n', 'Room %s', 'غرفة %s'),
+    ('gui.rpbusiness.room_cap', '%s beds', '%s أسرّة'),
+    ('gui.rpbusiness.room_free', 'free', 'فارغة'),
+    ('gui.rpbusiness.room_dirty', 'needs cleaning', 'تحتاج تنظيف'),
+    ('gui.rpbusiness.room_guest', '%s - %sh left', '%s - باقي %s ساعة'),
+    ('gui.rpbusiness.room_req', 'CLEANING!', 'طلب تنظيف!'),
+    ('gui.rpbusiness.rooms_info2', 'Rooms %s - free %s - beds %s - dirty beds %s', 'الغرف %s - فارغة %s - الأسرّة %s - أسرّة متسخة %s'),
+    ('subtitles.rpbusiness.tv', 'TV plays', 'صوت التلفاز'),
+    ('subtitles.rpbusiness.reception_bell', 'Reception bell rings', 'جرس الاستقبال'),
+    ('state.rpbusiness.wait_group', 'waiting for the group', 'ينتظر مجموعته'),
+    ('state.rpbusiness.call_cleaner', 'asking for a cleaner', 'يطلب عامل نظافة'),
+]:
+    add(k, en, ar)
+add('supplier.rpbusiness.hotel', 'Grand Hotel Interiors', 'جراند لأثاث الفنادق')

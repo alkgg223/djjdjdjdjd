@@ -634,8 +634,11 @@ public final class Steps {
 
         @Override
         public int tick(EmployeeEntity e, ServerLevel sl, Business b) {
-            boolean bed = sl.getBlockState(table).getBlock() instanceof HotelBedBlock;
-            if (bed ? !sl.getBlockState(table).getValue(HotelBedBlock.DIRTY) : !BusinessManager.tableDirty(sl, b, table)) return DONE;
+            var bs = sl.getBlockState(table);
+            boolean mess = bs.getBlock() instanceof com.rpbusiness.block.RoomMessBlock;
+            boolean bed = bs.getBlock() instanceof com.rpbusiness.block.ChairBlock;
+            if (mess ? false : bed ? !com.rpbusiness.block.ChairBlock.isDirty(bs) : !BusinessManager.tableDirty(sl, b, table)) return DONE;
+            if (!mess && bs.isAir()) return DONE;
             e.hold(new ItemStack(ModItems.MOP.get()));
             if (!e.walkTo(e.standSpotFor(table), 0.9, e.speed()) && !e.near(table, 1.9)) {
                 if (e.isStuck()) { e.clearStuck(); return FAILED; }
@@ -645,7 +648,9 @@ public final class Steps {
             e.setAction(NpcEntity.ACT_CLEAN);
             if (started < 0) started = now(sl);
             if (now(sl) - started < (long) (60 / e.efficiency())) return RUNNING;
-            if (bed) HotelBedBlock.clean(sl, table); else BusinessManager.cleanTable(sl, b, table);
+            if (mess) com.rpbusiness.block.RoomMessBlock.clean(sl, table);
+            else if (bed) { com.rpbusiness.block.ChairBlock.setDirty(sl, table, false); sl.playSound(null, table, com.rpbusiness.core.ModSounds.CLEAN.get(), net.minecraft.sounds.SoundSource.BLOCKS, 0.8f, 1f); }
+            else BusinessManager.cleanTable(sl, b, table);
             e.hold(ItemStack.EMPTY);
             e.setAction(NpcEntity.ACT_NONE);
             e.gainXp(1);

@@ -1,0 +1,143 @@
+{
+ "parent": "minecraft:block/block",
+ "textures": {
+  "particle": "rpbusiness:block/terracotta",
+  "p": "rpbusiness:block/ceramic_blue",
+  "d": "rpbusiness:block/walnut",
+  "l": "rpbusiness:block/leaf_cross",
+  "g": "rpbusiness:block/plant_leaves"
+ },
+ "elements": [
+  {
+   "from": [
+    4,
+    0,
+    4
+   ],
+   "to": [
+    12,
+    6,
+    12
+   ],
+   "faces": {
+    "north": {
+     "texture": "#p"
+    },
+    "south": {
+     "texture": "#p"
+    },
+    "east": {
+     "texture": "#p"
+    },
+    "west": {
+     "texture": "#p"
+    },
+    "up": {
+     "texture": "#d"
+    },
+    "down": {
+     "texture": "#p"
+    }
+   }
+  },
+  {
+   "from": [
+    1,
+    5,
+    8
+   ],
+   "to": [
+    15,
+    16,
+    8
+   ],
+   "faces": {
+    "north": {
+     "texture": "#l"
+    },
+    "south": {
+     "texture": "#l"
+    }
+   },
+   "rotation": {
+    "origin": [
+     8,
+     8,
+     8
+    ],
+    "axis": "y",
+    "angle": 45
+   }
+  },
+  {
+   "from": [
+    8,
+    5,
+    1
+   ],
+   "to": [
+    8,
+    16,
+    15
+   ],
+   "faces": {
+    "east": {
+     "texture": "#l"
+    },
+    "west": {
+     "texture": "#l"
+    }
+   },
+   "rotation": {
+    "origin": [
+     8,
+     8,
+     8
+    ],
+    "axis": "y",
+    "angle": 45
+   }
+  },
+  {
+   "from": [
+    1,
+    5,
+    8
+   ],
+   "to": [
+    15,
+    16,
+    8
+   ],
+   "faces": {
+    "north": {
+     "texture": "#l"
+    },
+    "south": {
+     "texture": "#l"
+    }
+   }
+  },
+  {
+   "from": [
+    8,
+    5,
+    1
+   ],
+   "to": [
+    8,
+    16,
+    15
+   ],
+   "faces": {
+    "east": {
+     "texture": "#l"
+    },
+    "west": {
+     "texture": "#l"
+    }
+   }
+  }
+ ],
+ "render_type": "minecraft:cutout"
+}

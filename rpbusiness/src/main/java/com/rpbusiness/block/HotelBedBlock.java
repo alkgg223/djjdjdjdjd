@@ -17,15 +17,17 @@ import net.minecraft.world.phys.BlockHitResult;
 
 /** Hotel room bed: guests stay here after checking in; it must be cleaned (Mop) before the next guest. */
 public class HotelBedBlock extends ChairBlock {
-    public static final BooleanProperty DIRTY = BooleanProperty.create("dirty");
+    public static final BooleanProperty DIRTY = ChairBlock.DIRTY;
+    private final int beds;
 
-    public HotelBedBlock(Properties p) {
+    public HotelBedBlock(Properties p) { this(p, 1); }
+
+    public HotelBedBlock(Properties p, int beds) {
         super(p, BED_KIND);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(DIRTY, false));
+        this.beds = beds;
     }
 
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(FACING, DIRTY); }
+    @Override public int capacity() { return beds; }
 
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {

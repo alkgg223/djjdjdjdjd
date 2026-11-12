@@ -1,0 +1,42 @@
+{
+ "parent": "minecraft:block/block",
+ "textures": {
+  "particle": "rpbusiness:block/room_sign",
+  "s": "rpbusiness:block/room_sign",
+  "b": "rpbusiness:block/steel_dark"
+ },
+ "elements": [
+  {
+   "from": [
+    4,
+    5,
+    15
+   ],
+   "to": [
+    12,
+    11,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#s"
+    },
+    "south": {
+     "texture": "#b"
+    },
+    "east": {
+     "texture": "#b"
+    },
+    "west": {
+     "texture": "#b"
+    },
+    "up": {
+     "texture": "#b"
+    },
+    "down": {
+     "texture": "#b"
+    }
+   }
+  }
+ ]
+}

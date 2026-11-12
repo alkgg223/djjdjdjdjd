@@ -1,0 +1,20 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "rpbusiness:block/tall_plant",
+   "y": 0
+  },
+  "facing=east": {
+   "model": "rpbusiness:block/tall_plant",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "rpbusiness:block/tall_plant",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "rpbusiness:block/tall_plant",
+   "y": 270
+  }
+ }
+}

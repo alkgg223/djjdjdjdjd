@@ -401,6 +401,7 @@ public class EmployeeEntity extends NpcEntity {
                 }
             }
         }
+        if (best == null && b.type == com.rpbusiness.business.BusinessType.HOTEL) best = BusinessManager.hotelCleaningTarget(sl, b);
         if (best == null) return false;
         steps.add(new Steps.CleanTable(best));
         return true;

@@ -23,6 +23,8 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> EAT = reg("eat");
     public static final DeferredHolder<SoundEvent, SoundEvent> HAPPY = reg("happy");
     public static final DeferredHolder<SoundEvent, SoundEvent> UNHAPPY = reg("unhappy");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TV = reg("tv");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RECEPTION_BELL = reg("reception_bell");
 
     private static DeferredHolder<SoundEvent, SoundEvent> reg(String name) {
         return REG.register(name, () -> SoundEvent.createVariableRangeEvent(RPBusiness.id(name)));

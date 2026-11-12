@@ -1,19 +1,35 @@
 {
  "variants": {
-  "facing=north": {
+  "dirty=false,facing=north": {
    "model": "rpbusiness:block/dining_chair",
    "y": 0
   },
-  "facing=east": {
+  "dirty=true,facing=north": {
+   "model": "rpbusiness:block/dining_chair_dirty",
+   "y": 0
+  },
+  "dirty=false,facing=east": {
    "model": "rpbusiness:block/dining_chair",
    "y": 90
   },
-  "facing=south": {
+  "dirty=true,facing=east": {
+   "model": "rpbusiness:block/dining_chair_dirty",
+   "y": 90
+  },
+  "dirty=false,facing=south": {
    "model": "rpbusiness:block/dining_chair",
    "y": 180
   },
-  "facing=west": {
+  "dirty=true,facing=south": {
+   "model": "rpbusiness:block/dining_chair_dirty",
+   "y": 180
+  },
+  "dirty=false,facing=west": {
    "model": "rpbusiness:block/dining_chair",
+   "y": 270
+  },
+  "dirty=true,facing=west": {
+   "model": "rpbusiness:block/dining_chair_dirty",
    "y": 270
   }
  }

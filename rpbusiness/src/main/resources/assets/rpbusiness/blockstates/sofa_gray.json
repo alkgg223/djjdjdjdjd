@@ -1,0 +1,36 @@
+{
+ "variants": {
+  "dirty=false,facing=north": {
+   "model": "rpbusiness:block/sofa_gray",
+   "y": 0
+  },
+  "dirty=true,facing=north": {
+   "model": "rpbusiness:block/sofa_gray_dirty",
+   "y": 0
+  },
+  "dirty=false,facing=east": {
+   "model": "rpbusiness:block/sofa_gray",
+   "y": 90
+  },
+  "dirty=true,facing=east": {
+   "model": "rpbusiness:block/sofa_gray_dirty",
+   "y": 90
+  },
+  "dirty=false,facing=south": {
+   "model": "rpbusiness:block/sofa_gray",
+   "y": 180
+  },
+  "dirty=true,facing=south": {
+   "model": "rpbusiness:block/sofa_gray_dirty",
+   "y": 180
+  },
+  "dirty=false,facing=west": {
+   "model": "rpbusiness:block/sofa_gray",
+   "y": 270
+  },
+  "dirty=true,facing=west": {
+   "model": "rpbusiness:block/sofa_gray_dirty",
+   "y": 270
+  }
+ }
+}

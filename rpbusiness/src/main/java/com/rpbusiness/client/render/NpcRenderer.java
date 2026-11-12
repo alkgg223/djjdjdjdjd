@@ -61,6 +61,16 @@ public class NpcRenderer extends GeoEntityRenderer<NpcEntity> {
     }
 
     @Override
+    public void render(NpcEntity e, float yaw, float pt, PoseStack ps, MultiBufferSource buf, int light) {
+        if (e.isKid()) {
+            ps.pushPose();
+            ps.scale(0.62f, 0.62f, 0.62f);
+            super.render(e, yaw, pt, ps, buf, light);
+            ps.popPose();
+        } else super.render(e, yaw, pt, ps, buf, light);
+    }
+
+    @Override
     public void preRender(PoseStack poseStack, NpcEntity e, BakedGeoModel model, MultiBufferSource bufferSource, VertexConsumer buffer,
                           boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
         int o = e.outfit();

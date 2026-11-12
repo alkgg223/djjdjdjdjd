@@ -365,6 +365,16 @@ def layout_tool():
     return c
 
 
+def room_tool():
+    # a brass room key with a red tag
+    c = Canvas()
+    c.ellipse(5, 5, 3.2, 3.2, C('c9a24a')); c.ellipse(5, 5, 1.4, 1.4, (0, 0, 0, 0))
+    c.line(7, 7, 13, 13, C('c9a24a')); c.line(7, 8, 12, 13, C('8a6a24'))
+    c.rect(11, 12, 12, 13, C('c9a24a')); c.rect(13, 10, 13, 11, C('c9a24a'))
+    c.rect(1, 10, 6, 14, C('c62e2b')); c.rect(2, 11, 5, 13, C('e0504a')); c.px(3, 12, C('ffffff')); c.px(4, 12, C('ffffff'))
+    return c
+
+
 def staff_planner():
     c = clipboard('e8a33d')
     c.ellipse(9, 8, 1.6, 1.6, C('e0b088'))
@@ -474,7 +484,7 @@ ITEMS = {
     **{'kit_' + k: kit(v) for k, v in KIT_COLORS.items()},
     'bank_card': bank_card, 'shopping_basket': basket, 'shopping_cart': cart, 'parcel': parcel,
     'kitchen_knife': knife, 'spatula': spatula, 'mop': mop,
-    'business_planner': lambda: clipboard('3a8ee6'), 'staff_planner': staff_planner, 'layout_tool': layout_tool,
+    'business_planner': lambda: clipboard('3a8ee6'), 'staff_planner': staff_planner, 'layout_tool': layout_tool, 'room_tool': room_tool,
     'recipe_book': recipe_book,
     'cash_1': lambda: bill('8fb98a', '1'), 'cash_5': lambda: bill('7fb0c9', '5'), 'cash_10': lambda: bill('c9a36a', '1'),
     'cash_20': lambda: bill('5f9a5a', '2'), 'cash_50': lambda: bill('c97a6a', '5'), 'cash_100': lambda: bill('3f8a5a', '1'),

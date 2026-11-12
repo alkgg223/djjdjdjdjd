@@ -1,4 +1,20 @@
 {
+ "tv": {
+  "sounds": [
+   {
+    "name": "rpbusiness:tv"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.tv"
+ },
+ "reception_bell": {
+  "sounds": [
+   {
+    "name": "rpbusiness:reception_bell"
+   }
+  ],
+  "subtitle": "subtitles.rpbusiness.reception_bell"
+ },
  "chop": {
   "sounds": [
    {

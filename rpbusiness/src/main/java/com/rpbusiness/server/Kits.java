@@ -37,6 +37,8 @@ public final class Kits {
         final Map<BlockPos, List<ItemStack>> contents = new HashMap<>();
         final Map<BlockPos, int[]> drinks = new HashMap<>();
         final List<Dish> menu = new ArrayList<>();
+        /** Hotel rooms in local coordinates {x0, z0, x1, z1}. */
+        final List<int[]> rooms = new ArrayList<>();
         BusinessType type;
         String name;
 
@@ -80,7 +82,17 @@ public final class Kits {
             set(x, 1, z, ModBlocks.FRIDGE.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, f).setValue(FridgeBlock.HALF, DoubleBlockHalf.UPPER));
         }
 
+        /** A two-block table with four chairs (fits a family). */
         void table4(int x, int z) {
+            for (int dz = 0; dz <= 1; dz++) {
+                set(x, 0, z + dz, ModBlocks.DINING_TABLE.get());
+                face(x - 1, 0, z + dz, ModBlocks.DINING_CHAIR.get(), Direction.EAST);
+                face(x + 1, 0, z + dz, ModBlocks.DINING_CHAIR.get(), Direction.WEST);
+            }
+        }
+
+        /** A table for two. */
+        void table2(int x, int z) {
             set(x, 0, z, ModBlocks.DINING_TABLE.get());
             face(x - 1, 0, z, ModBlocks.DINING_CHAIR.get(), Direction.EAST);
             face(x + 1, 0, z, ModBlocks.DINING_CHAIR.get(), Direction.WEST);
@@ -124,14 +136,14 @@ public final class Kits {
                 b.office(11, 4, 1, 4);
                 b.face(11, 0, 7, ModBlocks.PAYMENT_TERMINAL.get(), W);
                 if (fast) {
-                    for (int x = 2; x <= 9; x += 3) b.table4(x, 8);
+                    for (int x = 2; x <= 9; x += 3) b.table2(x, 8);
                     for (int x = 2; x <= 8; x += 2) b.face(x, 0, 10, ModBlocks.BAR_STOOL.get(), Direction.NORTH);
                     for (int x = 2; x <= 8; x += 2) b.set(x, 0, 11, ModBlocks.DINING_TABLE.get());
                 } else if (cafe) {
                     b.set(3, 0, 8, ModBlocks.DINING_TABLE.get()); b.face(3, 0, 9, ModBlocks.SOFA.get(), Direction.NORTH); b.face(3, 0, 7, ModBlocks.DINING_CHAIR.get(), S);
                     b.set(8, 0, 8, ModBlocks.DINING_TABLE.get()); b.face(8, 0, 9, ModBlocks.SOFA.get(), Direction.NORTH); b.face(8, 0, 7, ModBlocks.DINING_CHAIR.get(), S);
                     b.table4(5, 10);
-                } else for (int x = 2; x <= 9; x += 3) b.table4(x, 8);
+                } else { b.table4(2, 8); b.table2(5, 8); b.table4(8, 8); }
                 if (bakery) {
                     b.display(1, 7, E, false, Items.BREAD, Items.COOKIE, Items.PUMPKIN_PIE);
                     b.display(1, 9, E, false, ModItems.BREAD_LOAF.get(), Items.BREAD, Items.COOKIE);
@@ -228,22 +240,89 @@ public final class Kits {
                 b.fill(1, 0, 1, Items.PAPER, 32);
             }
             case "hotel" -> {
-                b = new BP(14, 12, 5);
+                // four private rooms along the back (each with its own door), a lobby with the reception in front
+                b = new BP(20, 14, 5);
                 b.type = BusinessType.HOTEL;
-                b.shell(Blocks.RED_WOOL, Blocks.BRICKS, Blocks.DARK_OAK_PLANKS);
-                // rooms along the back wall, separated by low walls
-                for (int i = 0; i < 6; i++) {
-                    int x = 1 + i * 2;
-                    b.face(x, 0, 1, ModBlocks.HOTEL_BED.get(), S);
-                    if (i < 5) for (int z = 1; z <= 3; z++) for (int y = 0; y < 3; y++) b.set(x + 1, y, z, Blocks.BRICKS);
+                b.shell(ModBlocks.CHECKERED_FLOOR.get(), Blocks.BRICKS, Blocks.DARK_OAK_PLANKS);
+                Direction N = Direction.NORTH;
+                for (int i = 0; i < 4; i++) {
+                    int x0 = 1 + i * 5;
+                    // floor carpet and walls between rooms, front wall with a door
+                    for (int x = x0; x <= x0 + 3; x++) for (int z = 1; z <= 6; z++) b.set(x, -1, z, Blocks.RED_WOOL);
+                    if (i < 3) for (int z = 1; z <= 7; z++) for (int y = 0; y < b.h; y++) b.set(x0 + 4, y, z, Blocks.BRICKS);
+                    for (int x = x0; x <= x0 + 3; x++) for (int y = 0; y < b.h; y++) b.set(x, y, 7, Blocks.BRICKS);
+                    b.set(x0 + 3, 0, 7, Blocks.SPRUCE_DOOR.defaultBlockState().setValue(DoorBlock.FACING, S).setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER));
+                    b.set(x0 + 3, 1, 7, Blocks.SPRUCE_DOOR.defaultBlockState().setValue(DoorBlock.FACING, S).setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER));
+                    b.face(x0 + 2, 1, 8, ModBlocks.ROOM_SIGN.get(), S);
+                    b.set(x0 + 1, b.h - 1, 3, ModBlocks.CEILING_FAN.get());
+                    b.face(x0 + 2, 2, 6, ModBlocks.AIR_CONDITIONER.get(), N);
+                    // the TV corner: dresser + TV, sofa facing it, coffee table between
+                    b.face(x0, 0, 4, ModBlocks.DRESSER.get(), E);
+                    b.face(x0, 1, 4, ModBlocks.TV.get(), E);
+                    b.face(x0 + 1, 0, 4, ModBlocks.COFFEE_TABLE.get(), E);
+                    b.face(x0 + 2, 0, 4, i % 2 == 0 ? ModBlocks.SOFA_GRAY.get() : ModBlocks.SOFA_BLUE.get(), W);
+                    b.face(x0 + 1, 0, 3, i == 1 ? ModBlocks.RUG_BEIGE.get() : i == 2 ? ModBlocks.RUG_BLUE.get() : ModBlocks.RUG_RED.get(), S);
+                    b.face(x0, 0, 6, ModBlocks.TALL_PLANT.get(), S);
+                    b.face(x0 + 1, 0, 6, ModBlocks.TRASH_BIN.get(), S);
+                    switch (i) {
+                        case 0 -> { // double room
+                            b.face(x0 + 1, 0, 1, ModBlocks.DOUBLE_BED.get(), S);
+                            b.face(x0, 0, 1, ModBlocks.NIGHTSTAND.get(), S); b.face(x0, 1, 1, ModBlocks.TABLE_LAMP.get(), S);
+                            b.face(x0 + 2, 0, 1, ModBlocks.NIGHTSTAND.get(), S); b.face(x0 + 2, 1, 1, ModBlocks.ROOM_PHONE.get(), S);
+                            b.face(x0 + 3, 0, 1, ModBlocks.WARDROBE.get(), S);
+                            b.face(x0 + 1, 2, 1, ModBlocks.PAINTING_SEA.get(), S);
+                            b.face(x0 + 3, 0, 2, ModBlocks.MINIBAR.get(), W);
+                        }
+                        case 1 -> { // twin room
+                            b.face(x0, 0, 1, ModBlocks.HOTEL_BED.get(), S);
+                            b.face(x0 + 1, 0, 1, ModBlocks.NIGHTSTAND.get(), S); b.face(x0 + 1, 1, 1, ModBlocks.TABLE_LAMP.get(), S);
+                            b.face(x0 + 2, 0, 1, ModBlocks.HOTEL_BED.get(), S);
+                            b.face(x0 + 3, 0, 1, ModBlocks.WARDROBE.get(), S);
+                            b.face(x0 + 1, 2, 1, ModBlocks.PAINTING_CITY.get(), S);
+                            b.face(x0 + 3, 0, 2, ModBlocks.DESK.get(), W);
+                            b.face(x0 + 3, 1, 2, ModBlocks.ROOM_PHONE.get(), W);
+                        }
+                        case 2 -> { // family room: a double bed and two single beds for the children
+                            b.face(x0, 0, 1, ModBlocks.DOUBLE_BED.get(), S);
+                            b.face(x0 + 1, 0, 1, ModBlocks.NIGHTSTAND.get(), S); b.face(x0 + 1, 1, 1, ModBlocks.TABLE_LAMP.get(), S);
+                            b.face(x0 + 2, 0, 1, ModBlocks.HOTEL_BED.get(), S);
+                            b.face(x0 + 3, 0, 1, ModBlocks.HOTEL_BED.get(), S);
+                            b.face(x0 + 3, 0, 2, ModBlocks.BOOKSHELF_MODERN.get(), W);
+                            b.face(x0 + 1, 2, 1, ModBlocks.WALL_CLOCK.get(), S);
+                        }
+                        default -> { // single room with a small bathroom corner
+                            b.face(x0, 0, 1, ModBlocks.HOTEL_BED.get(), S);
+                            b.face(x0 + 1, 0, 1, ModBlocks.NIGHTSTAND.get(), S); b.face(x0 + 1, 1, 1, ModBlocks.TABLE_LAMP.get(), S);
+                            b.face(x0 + 3, 0, 1, ModBlocks.SHOWER.get(), S);
+                            b.face(x0 + 3, 0, 2, ModBlocks.TOILET.get(), W);
+                            b.face(x0 + 2, 0, 1, ModBlocks.BATHROOM_SINK.get(), S);
+                            b.face(x0 + 2, 1, 1, ModBlocks.MIRROR.get(), S);
+                            b.face(x0 + 3, 1, 2, ModBlocks.TOWEL_RACK.get(), W);
+                        }
+                    }
+                    b.rooms.add(new int[]{x0, 1, x0 + 3, 6});
                 }
-                b.counterWith(10, 8, ModBlocks.CASH_REGISTER.get(), S);
-                b.counterWith(12, 8, ModBlocks.BUSINESS_COMPUTER.get(), S);
-                b.face(1, 0, 9, ModBlocks.SOFA.get(), E);
-                b.face(1, 0, 10, ModBlocks.SOFA.get(), E);
-                b.face(13, 0, 11, ModBlocks.PAYMENT_TERMINAL.get(), W);
-                b.face(13, 0, 6, ModBlocks.PANTRY_SHELF.get(), W);
-                b.fill(13, 0, 6, ModItems.MOP, 1);
+                // lobby
+                b.counterWith(15, 11, ModBlocks.CASH_REGISTER.get(), S);
+                b.counterWith(17, 11, ModBlocks.BUSINESS_COMPUTER.get(), S);
+                b.face(16, 0, 11, ModBlocks.KITCHEN_COUNTER.get(), S);
+                b.face(16, 0, 10, ModBlocks.OFFICE_CHAIR.get(), S);
+                b.face(1, 0, 11, ModBlocks.SOFA.get(), E);
+                b.face(1, 0, 12, ModBlocks.SOFA.get(), E);
+                b.face(2, 0, 11, ModBlocks.COFFEE_TABLE.get(), E);
+                b.face(1, 0, 13, ModBlocks.FLOOR_LAMP.get(), S);
+                b.face(1, 0, 9, ModBlocks.ARMCHAIR.get(), S);
+                for (int x = 6; x <= 8; x++) b.face(x, 0, 11, ModBlocks.RUG_RED.get(), S);
+                b.face(19, 0, 13, ModBlocks.TALL_PLANT.get(), S);
+                b.face(12, 0, 13, ModBlocks.FLOWER_VASE.get(), S);
+                b.face(13, 0, 13, ModBlocks.LUGGAGE_RACK.get(), N);
+                b.face(19, 0, 12, ModBlocks.RADIATOR.get(), W);
+                b.face(7, 2, 8, ModBlocks.PAINTING_CITY.get(), S);
+                b.face(12, 2, 8, ModBlocks.WALL_CLOCK.get(), S);
+                b.face(5, 0, 13, ModBlocks.TRASH_BIN.get(), N);
+                b.face(19, 0, 10, ModBlocks.PAYMENT_TERMINAL.get(), W);
+                b.face(19, 0, 9, ModBlocks.PANTRY_SHELF.get(), W);
+                b.fill(19, 0, 9, ModItems.MOP, 1);
             }
             default -> { return null; }
         }
@@ -374,6 +453,10 @@ public final class Kits {
         for (Dish d : bp.menu) b.menu.get(d).enabled = true;
         data.businesses.put(b.id, b);
         BusinessManager.scan(sl, b);
+        for (int[] r : bp.rooms) {
+            HotelRoom hr = BusinessManager.createRoom(sl, b, base.offset(new BlockPos(r[0], 0, r[1]).rotate(rot)), base.offset(new BlockPos(r[2], 0, r[3]).rotate(rot)));
+            if (hr != null) hr.name = Component.translatable("gui.rpbusiness.room_n", hr.id).getString();
+        }
         BusinessManager.refreshCandidates(sl, b, true);
         b.lastSalaryDay = Business.day(sl);
         Bank.get(sl).businessAccount(sl, b);

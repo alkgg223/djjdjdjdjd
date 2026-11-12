@@ -146,7 +146,39 @@ def unhappy():
     return voice(300, 170, n) * 0.6
 
 
-SOUNDS = {'chop': chop, 'sizzle': sizzle, 'bubble': bubble, 'pour': pour, 'order_bell': bell, 'cash_register': cash_register,
+def tv():
+    # muffled programme heard through a TV speaker: a talk show voice over a soft music bed (3.5 s, loops every 70 ticks)
+    n = int(SR * 3.5)
+    t = np.arange(n) / SR
+    rng = np.random.default_rng(42)
+    music = np.zeros(n)
+    chords = [(220, 277, 330), (196, 247, 294), (175, 220, 262), (196, 247, 294)]
+    seg = n // len(chords)
+    for i, ch in enumerate(chords):
+        m = np.zeros(n)
+        for f in ch:
+            m[i * seg:(i + 1) * seg] += sine(f, n)[i * seg:(i + 1) * seg]
+        music += m * 0.12
+    talk = np.zeros(n)
+    pos = int(SR * 0.1)
+    while pos < n - int(SR * 0.3):
+        ln = int(SR * rng.uniform(0.12, 0.28))
+        f0 = rng.uniform(150, 260)
+        talk[pos:pos + ln] += voice(f0, f0 * rng.uniform(0.8, 1.2), ln) * rng.uniform(0.5, 1.0)
+        pos += ln + int(SR * rng.uniform(0.02, 0.15))
+    x = music + talk * 0.7 + noise(n, 7) * 0.02
+    x = lowpass(highpass(x, 0.05), 0.35)
+    fade = np.minimum(1, np.minimum(t / 0.05, (3.5 - t) / 0.05))
+    return x * fade
+
+
+def reception_bell():
+    n = int(SR * 1.2)
+    x = sine(2093, n) * 0.6 + sine(2637, n) * 0.25 + sine(4186, n) * 0.15
+    return x * env(n, 0.001, 0.6, 3)
+
+
+SOUNDS = {'tv': tv, 'reception_bell': reception_bell, 'chop': chop, 'sizzle': sizzle, 'bubble': bubble, 'pour': pour, 'order_bell': bell, 'cash_register': cash_register,
           'card_beep': card_beep, 'clean': clean, 'place_food': place_food, 'fridge_open': fridge_open, 'fridge_close': fridge_close,
           'eat': eat, 'happy': happy, 'unhappy': unhappy}
 

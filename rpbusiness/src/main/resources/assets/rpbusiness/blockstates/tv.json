@@ -1,0 +1,36 @@
+{
+ "variants": {
+  "facing=north,on=false": {
+   "model": "rpbusiness:block/tv",
+   "y": 0
+  },
+  "facing=north,on=true": {
+   "model": "rpbusiness:block/tv_on",
+   "y": 0
+  },
+  "facing=east,on=false": {
+   "model": "rpbusiness:block/tv",
+   "y": 90
+  },
+  "facing=east,on=true": {
+   "model": "rpbusiness:block/tv_on",
+   "y": 90
+  },
+  "facing=south,on=false": {
+   "model": "rpbusiness:block/tv",
+   "y": 180
+  },
+  "facing=south,on=true": {
+   "model": "rpbusiness:block/tv_on",
+   "y": 180
+  },
+  "facing=west,on=false": {
+   "model": "rpbusiness:block/tv",
+   "y": 270
+  },
+  "facing=west,on=true": {
+   "model": "rpbusiness:block/tv_on",
+   "y": 270
+  }
+ }
+}

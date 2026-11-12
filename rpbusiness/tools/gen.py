@@ -98,7 +98,12 @@ AXE = ['hotel_bed', 'display_shelf', 'counter_cabinet', 'cutting_board', 'pantry
 
 
 def data(blocks):
+    import gen_decor
+    PICKAXE.extend(gen_decor.PICKAXE); AXE.extend(gen_decor.AXE)
     for b in blocks:
+        if b == 'room_mess':
+            wj(os.path.join(DATA, 'loot_table', 'blocks', b + '.json'), {'type': 'minecraft:block', 'pools': []})
+            continue
         wj(os.path.join(DATA, 'loot_table', 'blocks', b + '.json'), {
             'type': 'minecraft:block', 'pools': [{'rolls': 1, 'entries': [{'type': 'minecraft:item', 'name': 'rpbusiness:' + b}],
                                                   'conditions': [{'condition': 'minecraft:survives_explosion'}]}]})

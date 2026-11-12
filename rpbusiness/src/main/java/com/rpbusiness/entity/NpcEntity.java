@@ -40,6 +40,7 @@ public abstract class NpcEntity extends PathfinderMob implements GeoEntity {
     private static final EntityDataAccessor<Integer> SKIN = SynchedEntityData.defineId(NpcEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> OUTFIT = SynchedEntityData.defineId(NpcEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> ACTION = SynchedEntityData.defineId(NpcEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> CHILD = SynchedEntityData.defineId(NpcEntity.class, EntityDataSerializers.BOOLEAN);
 
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("walk");
@@ -90,6 +91,24 @@ public abstract class NpcEntity extends PathfinderMob implements GeoEntity {
         b.define(SKIN, 0);
         b.define(OUTFIT, 0);
         b.define(ACTION, 0);
+        b.define(CHILD, false);
+    }
+
+    public boolean isKid() {
+        try { return entityData != null && entityData.get(CHILD); } catch (Exception e) { return false; }
+    }
+    public void setKid(boolean k) { entityData.set(CHILD, k); refreshDimensions(); }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (CHILD.equals(key)) refreshDimensions();
+    }
+
+    @Override
+    public net.minecraft.world.entity.EntityDimensions getDefaultDimensions(net.minecraft.world.entity.Pose pose) {
+        var d = super.getDefaultDimensions(pose);
+        return isKid() ? d.scale(0.62f) : d;
     }
 
     public int skin() { return entityData.get(SKIN); }
@@ -231,6 +250,7 @@ public abstract class NpcEntity extends PathfinderMob implements GeoEntity {
         t.putString("NpcName", npcName);
         t.putInt("Skin", skin());
         t.putInt("Outfit", outfit());
+        t.putBoolean("Kid", isKid());
     }
 
     @Override
@@ -239,6 +259,7 @@ public abstract class NpcEntity extends PathfinderMob implements GeoEntity {
         npcName = t.getString("NpcName");
         setSkin(t.getInt("Skin"));
         setOutfit(t.getInt("Outfit"));
+        setKid(t.getBoolean("Kid"));
     }
 
     // ------------------------------------------------------------------ GeckoLib
