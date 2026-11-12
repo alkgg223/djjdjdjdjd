@@ -214,5 +214,14 @@
   "realweather.shape.segmented": "متقطع",
   "realweather.shape.landspout": "أرضي (لاندسبوت)",
   "realweather.shape.flared_base": "قاعدة متسعة",
-  "realweather.cmd.graphics": "دقة الإعصار: %s، دقة الطقس: %s (غيّرها بالأمر /rwgraphics tornado|weather low|medium|high|ultra)"
+  "realweather.cmd.graphics": "دقة الإعصار: %s، دقة الطقس: %s (غيّرها بالأمر /rwgraphics tornado|weather low|medium|high|ultra)",
+  "realweather.cmd.tornado.custom": "إعصار مخصص %s بعرض %s (%s) يلامس الأرض على بعد %s بلوك",
+  "realweather.cmd.tsunami": "تسونامي بقوة %s قادم: موجة بارتفاع %s بلوك تقريباً، على بعد %s بلوك",
+  "realweather.cmd.tsunami.stop": "التسونامي ينتهي والماء ينسحب إلى البحر",
+  "realweather.cmd.tsunami.too_many": "يوجد ثلاث موجات تسونامي بالفعل",
+  "realweather.cmd.tsunami.natural.on": "التسونامي الطبيعي: مفعّل",
+  "realweather.cmd.tsunami.natural.off": "التسونامي الطبيعي: معطّل",
+  "subtitles.realweather.tsunami.roar": "هدير التسونامي",
+  "subtitles.realweather.tsunami.rush": "اندفاع الماء",
+  "subtitles.realweather.tsunami.crash": "ارتطام الموجة"
 }

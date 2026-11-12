@@ -170,7 +170,7 @@ public final class WeatherTicker {
         }
         BlockPos pos = new BlockPos(x, top, z);
         Biome biome = level.getBiome(pos).value();
-        if (!biome.hasPrecipitation() || WeatherServer.isDryBiome(biome) || biome.getPrecipitationAt(pos) != Biome.Precipitation.RAIN) {
+        if (com.realweather.server.Precip.at(level, biome, pos) != com.realweather.server.Precip.RAIN) {
             return;
         }
         BlockPos below = pos.below();
@@ -227,7 +227,7 @@ public final class WeatherTicker {
             return;
         }
         Biome biome = level.getBiome(block).value();
-        if (!biome.hasPrecipitation() || WeatherServer.isDryBiome(biome) || biome.getPrecipitationAt(block) != Biome.Precipitation.RAIN) {
+        if (com.realweather.server.Precip.at(level, biome, block) != com.realweather.server.Precip.RAIN) {
             return;
         }
         double bottom = state.getShape(level, block).isEmpty() ? 0 : state.getShape(level, block).min(Direction.Axis.Y);
@@ -243,15 +243,12 @@ public final class WeatherTicker {
             return Biome.Precipitation.NONE;
         }
         BlockPos pos = BlockPos.containing(x, y, z);
-        Biome biome = level.getBiome(pos).value();
-        if (!biome.hasPrecipitation() || WeatherServer.isDryBiome(biome)) {
-            return Biome.Precipitation.NONE;
-        }
-        return biome.getPrecipitationAt(pos);
+        return com.realweather.server.Precip.vanilla(com.realweather.server.Precip.at(level, level.getBiome(pos).value(), pos));
     }
 
     static boolean dryAt(ClientLevel level, double x, double y, double z) {
         BlockPos pos = BlockPos.containing(x, y, z);
-        return level.getHeight(Heightmap.Types.MOTION_BLOCKING, pos.getX(), pos.getZ()) <= y && WeatherServer.isDryBiome(level.getBiome(pos).value());
+        return level.getHeight(Heightmap.Types.MOTION_BLOCKING, pos.getX(), pos.getZ()) <= y
+                && com.realweather.server.Precip.at(level, level.getBiome(pos).value(), pos) == com.realweather.server.Precip.SAND;
     }
 }

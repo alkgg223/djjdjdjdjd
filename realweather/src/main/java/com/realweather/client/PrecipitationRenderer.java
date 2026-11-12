@@ -44,7 +44,7 @@ public final class PrecipitationRenderer {
     private static final ResourceLocation PUDDLE_3 = RealWeather.id("textures/environment/puddle_3.png");
 
     private static final int NONE = 0, RAIN_COL = 1, SNOW_COL = 2, SAND_COL = 3;
-    private static final int MAX_R = 16;
+    private static final int MAX_R = 18;
     private static final int SIZE = MAX_R * 2 + 1;
     private static final int[] type = new int[SIZE * SIZE];
     private static final int[] ground = new int[SIZE * SIZE];
@@ -66,14 +66,9 @@ public final class PrecipitationRenderer {
                 ground[i] = g;
                 m.set(x, Math.max(g, cy), z);
                 Biome biome = level.getBiome(m).value();
-                int t = NONE;
-                if (WeatherServer.isDryBiome(biome)) {
-                    t = SAND_COL;
-                } else if (biome.hasPrecipitation()) {
-                    m.setY(Math.max(g, cy - r));
-                    Biome.Precipitation p = biome.getPrecipitationAt(m);
-                    t = p == Biome.Precipitation.RAIN ? RAIN_COL : p == Biome.Precipitation.SNOW ? SNOW_COL : NONE;
-                }
+                m.setY(Math.max(g, cy - r));
+                // Same numbering as Precip: 1 rain, 2 snow, 3 sand (a command can force one kind everywhere).
+                int t = com.realweather.server.Precip.at(level, biome, m);
                 type[i] = t;
                 if (t != NONE) {
                     m.set(x, Math.max(g, cy), z);
@@ -399,7 +394,7 @@ public final class PrecipitationRenderer {
                     continue;
                 }
                 Biome biome = level.getBiome(m).value();
-                if (!biome.hasPrecipitation() || biome.getPrecipitationAt(m) != Biome.Precipitation.RAIN) {
+                if (com.realweather.server.Precip.at(level, biome, m) != com.realweather.server.Precip.RAIN) {
                     continue;
                 }
                 m.set(x, top - 1, z);

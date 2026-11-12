@@ -34,9 +34,14 @@ public class WeatherData extends SavedData {
     public boolean freezing = true;
     public boolean villagers = true;
     public boolean natural = true;
+    /** Weather forced everywhere by a command (see Precip), and how many ticks it has left. */
+    public int force;
+    public int forceTicks;
     public boolean tornadoDamage = true;
     public boolean hail = true;
     public boolean tornadoNatural = true;
+    /** Tsunamis now and then from the sea near a player. */
+    public boolean tsunamiNatural = true;
     public int nextTornadoId = 1;
     public final java.util.List<Tornado> tornadoes = new java.util.ArrayList<>();
     public int nextStormId = 1;
@@ -72,9 +77,12 @@ public class WeatherData extends SavedData {
         d.freezing = tag.getBoolean("freezing");
         d.villagers = tag.getBoolean("villagers");
         d.natural = tag.getBoolean("natural");
+        d.force = tag.getInt("force");
+        d.forceTicks = tag.getInt("forceTicks");
         d.tornadoDamage = !tag.contains("tornadoDamage") || tag.getBoolean("tornadoDamage");
         d.hail = !tag.contains("hail") || tag.getBoolean("hail");
         d.tornadoNatural = !tag.contains("tornadoNatural") || tag.getBoolean("tornadoNatural");
+        d.tsunamiNatural = !tag.contains("tsunamiNatural") || tag.getBoolean("tsunamiNatural");
         d.nextTornadoId = Math.max(1, tag.getInt("nextTornadoId"));
         net.minecraft.nbt.ListTag list = tag.getList("tornadoes", net.minecraft.nbt.Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
@@ -114,9 +122,12 @@ public class WeatherData extends SavedData {
         tag.putBoolean("freezing", freezing);
         tag.putBoolean("villagers", villagers);
         tag.putBoolean("natural", natural);
+        tag.putInt("force", force);
+        tag.putInt("forceTicks", forceTicks);
         tag.putBoolean("tornadoDamage", tornadoDamage);
         tag.putBoolean("hail", hail);
         tag.putBoolean("tornadoNatural", tornadoNatural);
+        tag.putBoolean("tsunamiNatural", tsunamiNatural);
         tag.putInt("nextTornadoId", nextTornadoId);
         net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
         for (Tornado t : tornadoes) {

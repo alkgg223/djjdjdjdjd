@@ -14,6 +14,8 @@ public final class Network {
                         (payload, context) -> context.enqueueWork(() -> com.realweather.client.ClientStorms.onSync(payload)))
                 .playToClient(TornadoSyncPayload.TYPE, TornadoSyncPayload.CODEC,
                         (payload, context) -> context.enqueueWork(() -> com.realweather.client.tornado.ClientTornadoes.onSync(payload)))
+                .playToClient(TsunamiSyncPayload.TYPE, TsunamiSyncPayload.CODEC,
+                        (payload, context) -> context.enqueueWork(() -> com.realweather.client.tsunami.ClientTsunamis.onSync(payload)))
                 .playToServer(VehicleInputPayload.TYPE, VehicleInputPayload.CODEC, VehicleInputPayload::handle);
     }
 }

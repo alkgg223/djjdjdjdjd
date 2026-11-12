@@ -42,7 +42,7 @@ public final class SnowPile {
         }
         BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, column);
         Biome biome = level.getBiome(top).value();
-        if (biome.getPrecipitationAt(top) != Biome.Precipitation.SNOW || level.getBrightness(LightLayer.BLOCK, top) >= 10) {
+        if (Precip.at(biome, top, WeatherServer.force) != Precip.SNOW || level.getBrightness(LightLayer.BLOCK, top) >= 10) {
             return;
         }
         BlockPos snowPos = null;

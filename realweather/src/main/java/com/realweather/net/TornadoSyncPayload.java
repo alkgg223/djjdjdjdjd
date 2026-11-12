@@ -14,7 +14,7 @@ public record TornadoSyncPayload(List<Entry> tornadoes) implements CustomPacketP
     public static final StreamCodec<FriendlyByteBuf, TornadoSyncPayload> CODEC = StreamCodec.of(TornadoSyncPayload::write, TornadoSyncPayload::read);
 
     public record Entry(int id, double x, double z, float groundY, float heading, float speed, int rating, int stage,
-                        float contact, float strength, long seed, int shape) {}
+                        float contact, float strength, long seed, int shape, float radius) {}
 
     private static void write(FriendlyByteBuf buf, TornadoSyncPayload p) {
         buf.writeVarInt(p.tornadoes.size());
@@ -31,6 +31,7 @@ public record TornadoSyncPayload(List<Entry> tornadoes) implements CustomPacketP
             buf.writeFloat(e.strength);
             buf.writeLong(e.seed);
             buf.writeByte(e.shape);
+            buf.writeFloat(e.radius);
         }
     }
 
@@ -39,7 +40,7 @@ public record TornadoSyncPayload(List<Entry> tornadoes) implements CustomPacketP
         List<Entry> list = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             list.add(new Entry(buf.readVarInt(), buf.readDouble(), buf.readDouble(), buf.readFloat(), buf.readFloat(), buf.readFloat(),
-                    buf.readByte(), buf.readByte(), buf.readFloat(), buf.readFloat(), buf.readLong(), buf.readByte()));
+                    buf.readByte(), buf.readByte(), buf.readFloat(), buf.readFloat(), buf.readLong(), buf.readByte(), buf.readFloat()));
         }
         return new TornadoSyncPayload(list);
     }

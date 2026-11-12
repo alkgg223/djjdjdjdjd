@@ -214,5 +214,14 @@
   "realweather.shape.segmented": "segmented",
   "realweather.shape.landspout": "landspout",
   "realweather.shape.flared_base": "flared base",
-  "realweather.cmd.graphics": "Tornado graphics: %s, weather detail: %s (change with /rwgraphics tornado|weather low|medium|high|ultra)"
+  "realweather.cmd.graphics": "Tornado graphics: %s, weather detail: %s (change with /rwgraphics tornado|weather low|medium|high|ultra)",
+  "realweather.cmd.tornado.custom": "A custom %s tornado, %s blocks wide (%s), is touching down %s blocks away",
+  "realweather.cmd.tsunami": "A tsunami of strength %s is coming in: a wave about %s blocks high, %s blocks away",
+  "realweather.cmd.tsunami.stop": "The tsunami runs out and the water drains back to the sea",
+  "realweather.cmd.tsunami.too_many": "There are already three tsunamis",
+  "realweather.cmd.tsunami.natural.on": "Natural tsunamis: on",
+  "realweather.cmd.tsunami.natural.off": "Natural tsunamis: off",
+  "subtitles.realweather.tsunami.roar": "Tsunami roars",
+  "subtitles.realweather.tsunami.rush": "Water rushes",
+  "subtitles.realweather.tsunami.crash": "Wave crashes"
 }

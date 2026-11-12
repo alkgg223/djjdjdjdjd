@@ -24,6 +24,8 @@ import java.util.List;
 public final class WeatherServer {
     // Effective values of the current tick, read by the other server systems.
     public static float rain, snow, thunder, wind, windAngle, sand, blizzard;
+    /** Weather forced everywhere (Precip), 0 when the biomes decide. */
+    public static int force;
     private static boolean wasRaining;
     private static WeatherSyncPayload lastSent;
     private static int forceSync;
@@ -67,6 +69,11 @@ public final class WeatherServer {
         if (d.sandTicks > 0) {
             d.sandTicks--;
         }
+        if (d.forceTicks > 0 && --d.forceTicks == 0) {
+            d.force = 0;
+            d.setDirty();
+        }
+        force = d.force;
         if (d.blizzardTicks > 0) {
             d.blizzardTicks--;
         }
@@ -126,6 +133,7 @@ public final class WeatherServer {
         lightning(level, players, rng);
         StormManager.tick(level, d, players, rng);
         TornadoManager.tick(level, d, players, rng);
+        TsunamiManager.tick(level, d, players, rng);
         HailManager.tick(level, d, players, rng);
         FloodManager.tick(level, d, players, rng);
         SnowPile.tick(level, d, players, rng);
@@ -147,7 +155,7 @@ public final class WeatherServer {
     }
 
     public static WeatherSyncPayload payload() {
-        return new WeatherSyncPayload(rain, snow, thunder, windAngle, wind, sand, blizzard);
+        return new WeatherSyncPayload(rain, snow, thunder, windAngle, wind, sand, blizzard, force);
     }
 
     private static void lightning(ServerLevel level, List<ServerPlayer> players, RandomSource rng) {
@@ -205,7 +213,7 @@ public final class WeatherServer {
             return;
         }
         Holder<Biome> biome = level.getBiome(head);
-        if (biome.value().getPrecipitationAt(head) != Biome.Precipitation.SNOW) {
+        if (Precip.at(biome.value(), head, force) != Precip.SNOW) {
             return;
         }
         // Exposed to a blizzard without leather clothes: the cold slowly gets through (frost on screen, slower walking).
@@ -226,6 +234,7 @@ public final class WeatherServer {
             PacketDistributor.sendToPlayer(player, payload());
             PacketDistributor.sendToPlayer(player, TornadoManager.payload(WeatherData.get(player.server.overworld())));
             PacketDistributor.sendToPlayer(player, StormManager.payload(WeatherData.get(player.server.overworld())));
+            PacketDistributor.sendToPlayer(player, TsunamiManager.payload());
         }
     }
 
@@ -234,6 +243,7 @@ public final class WeatherServer {
             PacketDistributor.sendToPlayer(player, payload());
             PacketDistributor.sendToPlayer(player, TornadoManager.payload(WeatherData.get(player.server.overworld())));
             PacketDistributor.sendToPlayer(player, StormManager.payload(WeatherData.get(player.server.overworld())));
+            PacketDistributor.sendToPlayer(player, TsunamiManager.payload());
         }
     }
 

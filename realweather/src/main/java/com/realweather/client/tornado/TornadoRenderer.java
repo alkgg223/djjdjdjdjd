@@ -266,30 +266,31 @@ public final class TornadoRenderer {
         float base = t.groundY + height;
         float wallR = rc * 2.4F + 22F + t.rating * 4F;
         float fade = 0.35F + 0.65F * t.strength;
+        // Puffs only outside the funnel top, never below the cloud base it hangs from; any puff between you and
+        // the funnel, or right in front of the camera, fades away so it never hides the funnel.
+        float topR = t.radiusAt(1F);
+        float inner = Math.max(topR * 1.3F + 4F, wallR * 0.3F);
+        float fx = cx - (float) cam.x, fy = base - (float) cam.y, fz = cz - (float) cam.z;
+        float fd = Mth.sqrt(fx * fx + fy * fy + fz * fz) + 1.0E-3F;
         for (int i = 0; i < n; i++) {
             float a = rnd.nextFloat() * Mth.TWO_PI - spin * (0.8F + rnd.nextFloat() * 0.4F);
-            float r = (0.25F + 0.75F * Mth.sqrt(rnd.nextFloat())) * wallR;
+            float r = Mth.lerp(Mth.sqrt(rnd.nextFloat()), inner, wallR + inner * 0.3F);
             float px = cx + Mth.cos(a) * r - (float) cam.x;
             float pz = cz + Mth.sin(a) * r - (float) cam.z;
-            // Lowest in the middle, stepping up toward the storm base at the edges.
-            float k = r / wallR;
-            float py = Mth.lerp(k * k, base - 2F, deck - 1F) + rnd.nextFloat() * 3F - (float) cam.y;
-            float w = wallR * (0.32F + rnd.nextFloat() * 0.22F);
+            float k = Mth.clamp(r / wallR, 0F, 1F);
+            float py = Mth.lerp(k * k, base + 1F, deck - 1F) + rnd.nextFloat() * 3F - (float) cam.y;
+            float w = wallR * (0.26F + rnd.nextFloat() * 0.18F);
             float shade = 0.34F + 0.08F * k + rnd.nextFloat() * 0.05F;
-            SkyBillboards.cell(SkyBillboards.SPHERE, SkyBillboards.WALL + (i & 1), px, py, pz, w, w * 0.5F, a,
-                    lr * shade, lg * shade, lb * shade * 1.04F, 0.92F * fade, 0.72F, sunSide * 0.4F);
-        }
-        // The collar where the funnel meets the cloud.
-        int collar = Math.max(3, n / 4);
-        for (int i = 0; i < collar; i++) {
-            float a = (float) i / collar * Mth.TWO_PI - spin * 1.6F;
-            float r = t.radiusAt(1F) * 0.9F + 3F;
-            float px = cx + Mth.cos(a) * r - (float) cam.x;
-            float pz = cz + Mth.sin(a) * r - (float) cam.z;
-            float w = t.radiusAt(1F) * 0.9F + 6F;
-            float shade = 0.4F;
-            SkyBillboards.cell(SkyBillboards.SPHERE, SkyBillboards.SCUD + (i & 1), px, base - 2F - (float) cam.y, pz, w, w * 0.45F, a,
-                    lr * shade, lg * shade, lb * shade * 1.04F, 0.85F * fade, 0.75F, sunSide * 0.5F);
+            float alpha = 0.9F * fade;
+            float pd = Mth.sqrt(px * px + py * py + pz * pz) + 1.0E-3F;
+            float cos = (px * fx + py * fy + pz * fz) / (pd * fd);
+            float sep = Mth.sqrt(Math.max(0F, 1F - cos * cos)) * pd;
+            if (pd < fd + topR && cos > 0F && sep < w + topR) {
+                alpha *= Mth.clamp((sep - topR * 0.6F) / (w + topR * 0.4F), 0.08F, 1F);
+            }
+            alpha *= Mth.clamp((pd - w * 0.8F) / (w * 1.2F), 0F, 1F);
+            SkyBillboards.cell(SkyBillboards.SPHERE, SkyBillboards.WALL + (i & 1), px, py, pz, w, w * 0.42F, a,
+                    lr * shade, lg * shade, lb * shade * 1.04F, alpha, 0.72F, sunSide * 0.4F);
         }
         // Inflow scud streaming into the wall cloud (the parent supercell, if any, supplies its own).
         ClientStorms.Cell parent = StormClouds.parentOf(t);

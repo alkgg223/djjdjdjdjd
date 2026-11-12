@@ -39,6 +39,8 @@ public class Tornado {
     public final long seed;
     /** What the funnel looks like (see TornadoShape). */
     public final TornadoShape shape;
+    /** Core radius chosen by the custom command (or a rare giant), 0 = the rating's own size. */
+    public float customRadius;
 
     public Tornado(int id, double x, double z, float groundY, float heading, float speed, int rating, int life, long seed, TornadoShape shape) {
         this.id = id;
@@ -54,7 +56,21 @@ public class Tornado {
     }
 
     public float coreRadius() {
-        return RADIUS[rating] * (0.35F + 0.65F * strength);
+        return baseRadius() * (0.35F + 0.65F * strength);
+    }
+
+    public float baseRadius() {
+        return customRadius > 0F ? customRadius : RADIUS[rating];
+    }
+
+    /** Core radius that gives a funnel of the given width (blocks) near the ground for this shape. */
+    public static float radiusForWidth(TornadoShape shape, float width) {
+        return Math.max(0.5F, width * 0.5F / Math.max(0.3F, shape.profile(0.1F)));
+    }
+
+    /** The Fujita rating that goes with a funnel this wide: wind, lift and damage grow with the size. */
+    public static int ratingForWidth(float width) {
+        return width < 8F ? 0 : width < 14F ? 1 : width < 20F ? 2 : width < 30F ? 3 : width < 44F ? 4 : 5;
     }
 
     public float wind() {
@@ -110,6 +126,7 @@ public class Tornado {
         t.putFloat("strength", strength);
         t.putLong("seed", seed);
         t.putInt("shape", shape.ordinal());
+        t.putFloat("customRadius", customRadius);
         return t;
     }
 
@@ -118,6 +135,7 @@ public class Tornado {
                 t.getFloat("speed"), t.getInt("rating"), t.getInt("life"), t.getLong("seed"),
                 t.contains("shape") ? TornadoShape.byId(t.getInt("shape")) : TornadoShape.CONE);
         o.age = t.getInt("age");
+        o.customRadius = t.getFloat("customRadius");
         o.stage = t.getInt("stage");
         o.contact = t.getFloat("contact");
         o.strength = t.getFloat("strength");

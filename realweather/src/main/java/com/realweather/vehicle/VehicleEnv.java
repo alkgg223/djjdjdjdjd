@@ -86,9 +86,10 @@ public final class VehicleEnv {
     private static void server(ServerLevel level, StormVehicle v, VehicleEnv e) {
         BlockPos pos = v.blockPosition();
         Biome biome = level.getBiome(pos).value();
-        boolean dry = WeatherServer.isDryBiome(biome);
+        int kind = com.realweather.server.Precip.at(biome, pos, WeatherServer.force);
+        boolean dry = kind == com.realweather.server.Precip.SAND;
         boolean raining = level.isRaining();
-        boolean cold = biome.coldEnoughToSnow(pos);
+        boolean cold = kind == com.realweather.server.Precip.SNOW;
         e.sandstorm = dry ? WeatherServer.sand : 0F;
         e.blizzard = cold && raining ? WeatherServer.blizzard : 0F;
         e.snowfall = cold && raining ? WeatherServer.snow : 0F;

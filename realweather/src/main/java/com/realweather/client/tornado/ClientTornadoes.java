@@ -33,6 +33,8 @@ public final class ClientTornadoes {
         public final int rating;
         public final long seed;
         public final com.realweather.server.TornadoShape shape;
+        /** Core radius of a custom-sized tornado, 0 = the rating's size. */
+        public float customRadius;
         public double x, z, px, pz;
         private double sx, sz;
         private int sinceSync;
@@ -60,6 +62,7 @@ public final class ClientTornadoes {
             sz = e.z();
             sinceSync = 0;
             groundY = e.groundY();
+            customRadius = e.radius();
             heading = e.heading();
             speed = e.speed();
             stage = e.stage();
@@ -80,7 +83,7 @@ public final class ClientTornadoes {
         }
 
         public float coreRadius() {
-            return Tornado.RADIUS[rating] * (0.35F + 0.65F * strength);
+            return (customRadius > 0F ? customRadius : Tornado.RADIUS[rating]) * (0.35F + 0.65F * strength);
         }
 
         /** Height of the funnel, ground to cloud base: violent wedges hang from a much lower cloud base. */
@@ -205,8 +208,14 @@ public final class ClientTornadoes {
                 spawnDebris(mc, level, t, dist);
             }
             // The ground shakes near a big one.
-            float shake = t.contact * t.strength * (t.rating + 1) / 6F * (float) Mth.clamp(1.0 - dist / (rc * 5 + 25), 0.0, 1.0);
-            com.realweather.client.LightningFx.rumble(shake * 0.5F);
+            // The ground starts to tremble within 100 blocks and shakes hard right next to the funnel.
+            float edge = rc * 1.5F + 12F;
+            float near = (float) Mth.clamp(1.0 - (dist - edge) / (100.0 - edge), 0.0, 1.0);
+            float close = (float) Mth.clamp(1.0 - (dist - rc) / (edge - rc + 1.0), 0.0, 1.0);
+            float power = t.contact * (0.3F + 0.7F * t.strength) * (0.55F + t.rating * 0.09F);
+            if (dist < 100.0) {
+                com.realweather.client.LightningFx.rumble(power * (0.12F + 0.38F * near * near + 0.5F * close));
+            }
         }
     }
 

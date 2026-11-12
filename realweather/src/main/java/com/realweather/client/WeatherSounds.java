@@ -143,6 +143,10 @@ public final class WeatherSounds {
         Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
         double dist = Math.sqrt(cam.distanceToSqr(x, y, z));
         LightningFx.flash(dist, bolt);
+        if (bolt && dist < 70) {
+            // A strike right beside you: the ground jolts at once, before the thunder.
+            LightningFx.rumble((float) (1.0 - dist / 70.0));
+        }
         if (!ClientConfig.SOUNDS.get()) {
             return;
         }

@@ -8,7 +8,7 @@ import org.joml.Vector3f;
 
 /** Light on the clouds this frame: their sunlit colour, where the sun is, and which side of a sprite faces it. */
 public final class SkyLight {
-    static float r, g, b;
+    public static float r, g, b;
     public static float sunX, sunY, sunZ;
     /** 1 by day, 0 at night. */
     public static float day;

@@ -95,7 +95,24 @@ public final class TornadoManager {
 
     static int naturalRating(RandomSource rng) {
         float r = rng.nextFloat();
-        return r < 0.35F ? 0 : r < 0.65F ? 1 : r < 0.83F ? 2 : r < 0.93F ? 3 : r < 0.98F ? 4 : 5;
+        return r < 0.3F ? 0 : r < 0.57F ? 1 : r < 0.76F ? 2 : r < 0.88F ? 3 : r < 0.96F ? 4 : 5;
+    }
+
+    /** Now and then a supercell drops a giant: a funnel 36 to 70 blocks across at the ground. */
+    static void maybeGiant(Tornado t, RandomSource rng) {
+        if (t.rating >= 3 && rng.nextFloat() < 0.25F) {
+            t.customRadius = Tornado.radiusForWidth(t.shape, 36F + rng.nextFloat() * 34F);
+        }
+    }
+
+    /** /rw tornado custom: a tornado of the chosen shape and width (1 to 100 blocks). */
+    public static Tornado spawnCustom(ServerLevel level, WeatherData d, Vec3 target, TornadoShape shape, int width, boolean here, RandomSource rng) {
+        int rating = Tornado.ratingForWidth(width);
+        Tornado t = here ? spawnAt(level, d, target, rating, shape, rng)
+                : spawnApproaching(level, d, target, rating, shape, 70 + width * 0.8 + rng.nextInt(30), rng);
+        t.customRadius = Tornado.radiusForWidth(shape, width);
+        sync(level, d);
+        return t;
     }
 
     /** Open land where tornadoes form: not over the sea or in the mountains, and where it rains (not snows). */
@@ -308,7 +325,7 @@ public final class TornadoManager {
         List<TornadoSyncPayload.Entry> list = new ArrayList<>();
         for (Tornado t : d.tornadoes) {
             list.add(new TornadoSyncPayload.Entry(t.id, t.x, t.z, t.groundY, t.heading, t.speed, t.rating, t.stage, t.contact, t.strength, t.seed,
-                    t.shape.ordinal()));
+                    t.shape.ordinal(), t.customRadius));
         }
         return new TornadoSyncPayload(list);
     }

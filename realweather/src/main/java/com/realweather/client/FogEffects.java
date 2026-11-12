@@ -97,10 +97,15 @@ public final class FogEffects {
             return;
         }
         double t = (Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0) + event.getPartialTick();
-        float amp = s * 0.9F;
-        event.setPitch(event.getPitch() + (float) Math.sin(t * 2.7) * amp);
-        event.setYaw(event.getYaw() + (float) Math.sin(t * 3.3 + 1.0) * amp * 0.6F);
-        event.setRoll(event.getRoll() + (float) Math.sin(t * 4.1 + 2.0) * amp * 0.5F);
+        // Gentle trembling when it is weak, a violent judder when it is strong (several frequencies, so it never
+        // looks like a smooth sway).
+        float amp = (float) Math.pow(s, 1.3) * 5F;
+        double jx = Math.sin(t * 2.7) * 0.5 + Math.sin(t * 7.3 + 0.4) * 0.3 + Math.sin(t * 13.1 + 1.9) * 0.2;
+        double jy = Math.sin(t * 3.3 + 1.0) * 0.5 + Math.sin(t * 8.9 + 2.2) * 0.3 + Math.sin(t * 15.7) * 0.2;
+        double jr = Math.sin(t * 4.1 + 2.0) * 0.6 + Math.sin(t * 11.3 + 0.7) * 0.4;
+        event.setPitch(event.getPitch() + (float) jx * amp);
+        event.setYaw(event.getYaw() + (float) jy * amp * 0.7F);
+        event.setRoll(event.getRoll() + (float) jr * amp * 0.6F);
     }
 
     private static float tornadoDust(Camera camera) {

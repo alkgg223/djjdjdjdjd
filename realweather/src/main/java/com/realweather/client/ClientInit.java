@@ -38,6 +38,7 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(FogEffects::onCameraAngles);
         NeoForge.EVENT_BUS.addListener(WaterShader::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.SkyRenderer::onRenderStage);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.tsunami.TsunamiRenderer::onRenderStage);
         modBus.addListener(ClientInit::onEntityRenderers);
         modBus.addListener(com.realweather.client.vehicle.VehicleModels::register);
         modBus.addListener(com.realweather.client.vehicle.VehicleClient::onKeys);

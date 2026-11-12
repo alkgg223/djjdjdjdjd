@@ -371,5 +371,40 @@
       }
     ],
     "subtitle": "subtitles.realweather.vehicle.backfire"
+  },
+  "tsunami.roar": {
+    "sounds": [
+      {
+        "name": "realweather:tsunami_roar",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.tsunami.roar"
+  },
+  "tsunami.rush": {
+    "sounds": [
+      {
+        "name": "realweather:tsunami_rush",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.tsunami.rush"
+  },
+  "tsunami.crash": {
+    "sounds": [
+      {
+        "name": "realweather:tsunami_crash1",
+        "stream": false
+      },
+      {
+        "name": "realweather:tsunami_crash2",
+        "stream": false
+      },
+      {
+        "name": "realweather:tsunami_crash3",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.tsunami.crash"
   }
 }

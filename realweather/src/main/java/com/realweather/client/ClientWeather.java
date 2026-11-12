@@ -52,6 +52,7 @@ public final class ClientWeather {
         tWindAngle = p.windAngle();
         tSand = p.sand();
         tBlizzard = p.blizzard();
+        com.realweather.server.Precip.clientForce = p.force();
         if (!synced) {
             rain = tRain;
             snow = tSnow;
@@ -67,12 +68,14 @@ public final class ClientWeather {
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         synced = false;
         tRain = tSnow = tThunder = tWind = tSand = tBlizzard = 0F;
+        com.realweather.server.Precip.clientForce = 0;
         rain = snow = thunder = wind = sand = blizzard = 0F;
         camRain = camSnow = camSand = camBlizzard = camHail = 0F;
         ClientStorms.clear();
         wetness = 0F;
         WeatherSounds.stopAll();
         com.realweather.client.tornado.ClientTornadoes.clear();
+        com.realweather.client.tsunami.ClientTsunamis.clear();
         com.realweather.client.hail.Footprints.clear();
     }
 
@@ -139,6 +142,7 @@ public final class ClientWeather {
         WeatherSounds.tick(mc, level);
         LightningFx.tick(mc, level);
         com.realweather.client.tornado.ClientTornadoes.tick(mc, level);
+        com.realweather.client.tsunami.ClientTsunamis.tick(mc, level);
         com.realweather.client.sky.SkyRenderer.tick();
         com.realweather.client.radar.RadarClient.tick(mc, level);
         com.realweather.client.hail.HailCoverage.tick(mc, level);
@@ -159,16 +163,13 @@ public final class ClientWeather {
                 float w = 1F / (1F + (i * i + j * j) * 0.5F);
                 int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
                 m.set(x, Math.max(top, cy), z);
-                Biome biome = level.getBiome(m).value();
-                if (WeatherServer.isDryBiome(biome)) {
+                int kind = com.realweather.server.Precip.at(level, level.getBiome(m).value(), m);
+                if (kind == com.realweather.server.Precip.SAND) {
                     wSand += w;
-                } else if (biome.hasPrecipitation()) {
-                    Biome.Precipitation p = biome.getPrecipitationAt(m);
-                    if (p == Biome.Precipitation.RAIN) {
-                        wRain += w;
-                    } else if (p == Biome.Precipitation.SNOW) {
-                        wSnow += w;
-                    }
+                } else if (kind == com.realweather.server.Precip.RAIN) {
+                    wRain += w;
+                } else if (kind == com.realweather.server.Precip.SNOW) {
+                    wSnow += w;
                 }
                 if (top <= cy + 1) {
                     wOpen += w;

@@ -154,6 +154,9 @@ public final class StormManager {
             int rating = supercell ? TornadoManager.naturalRating(rng) : rng.nextInt(2);
             TornadoShape shape = supercell ? null : rng.nextBoolean() ? TornadoShape.LANDSPOUT : TornadoShape.ROPE;
             Tornado t = TornadoManager.spawnAt(level, d, new Vec3(u[0], 0, u[1]), rating, shape, rng);
+            if (supercell) {
+                TornadoManager.maybeGiant(t, rng);
+            }
             t.heading = (float) Math.atan2(c.vx, -c.vz);
             t.speed = (float) Math.hypot(c.vx, c.vz);
             c.tornadoId = t.id;

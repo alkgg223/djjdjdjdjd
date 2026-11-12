@@ -65,6 +65,9 @@ public final class SelfTest {
         if (suite.contains("types")) {
             typesSuite();
         }
+        if (suite.contains("new")) {
+            newSuite();
+        }
         if (suite.contains("all")) {
             weatherSuite();
         }
@@ -665,6 +668,145 @@ public final class SelfTest {
             shot("62_downpour_ground");
             skyState("downpour");
         });
+    }
+
+    /** 1.5.0: ULTRA rain, snow and a sandstorm on the plains, a custom tornado, and tsunamis at the coast. */
+    private static void newSuite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 6000");
+            goTo("minecraft:plains", 0, 2);
+            weatherQuality(com.realweather.ClientConfig.Quality.ULTRA);
+        });
+        step(80, () -> cmd("rw rain 100 5"));
+        step(220, () -> {
+            shot("70_rain_ultra");
+            skyState("rain ultra");
+        });
+        step(5, () -> cmd("rw snow 100 5"));
+        step(320, () -> {
+            shot("71_snow_plains");
+            skyState("snow plains");
+        });
+        step(5, () -> cmd("rw sandstorm 100 3"));
+        step(300, () -> {
+            shot("72_sandstorm_plains");
+            skyState("sand plains");
+        });
+        step(5, () -> {
+            cmd("rw clear");
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+        });
+        step(40, SelfTest::platform);
+        step(120, () -> LOG.info("waiting for the world to load"));
+        step(10, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> {
+                ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                ServerLevel level = server.overworld();
+                WeatherData d = WeatherData.get(level);
+                com.realweather.server.Tornado t = com.realweather.server.TornadoManager.spawnCustom(level, d,
+                        new net.minecraft.world.phys.Vec3(p.getX() + 190, p.getY(), p.getZ() + 25), com.realweather.server.TornadoShape.WEDGE, 60, true,
+                        level.random);
+                t.heading = 0F;
+                t.speed = 0.02F;
+                t.stage = com.realweather.server.Tornado.MATURE;
+                t.contact = 1F;
+                t.strength = 1F;
+                t.life = 100000;
+                com.realweather.server.TornadoManager.sync(level, d);
+                LOG.info("custom wedge: rating F{} core {}", t.rating, t.coreRadius());
+            });
+        });
+        step(100, () -> lookAtTornado(-7));
+        step(5, () -> {
+            shot("73_custom_wedge_60");
+            tornadoState("custom wedge 60");
+        });
+        step(5, () -> {
+            removeTornadoes();
+            cmd("rw clear");
+            goTo("minecraft:beach", 0, 0);
+        });
+        step(60, SelfTest::platform);
+        step(120, () -> LOG.info("waiting for the coast to load"));
+        step(5, () -> tsunamiAtPlayer(300));
+        step(160, () -> {
+            lookAtWave(-4);
+            tsunamiState("approach");
+        });
+        step(5, () -> shot("74_tsunami_300_far"));
+        step(170, () -> {
+            lookAtWave(-6);
+            tsunamiState("near");
+        });
+        step(5, () -> shot("75_tsunami_300_near"));
+        step(130, () -> tsunamiState("passing"));
+        step(5, () -> shot("76_tsunami_300_passing"));
+        step(160, () -> {
+            Minecraft.getInstance().player.setXRot(30F);
+            tsunamiState("flooded");
+        });
+        step(5, () -> shot("77_tsunami_flood"));
+        step(5, () -> {
+            stopTsunamis();
+            removeTornadoes();
+        });
+        step(40, () -> tsunamiAtPlayer(1000));
+        step(200, () -> {
+            lookAtWave(-12);
+            tsunamiState("1000");
+        });
+        step(5, () -> shot("78_tsunami_1000"));
+        step(5, SelfTest::stopTsunamis);
+    }
+
+    private static void tsunamiAtPlayer(int strength) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            ServerLevel level = server.overworld();
+            com.realweather.server.Tsunami w = com.realweather.server.TsunamiManager.spawn(level, p.position(), strength, Float.NaN, level.random);
+            LOG.info("tsunami {} from {} {} heading {} {} base {}", strength, (int) w.ox, (int) w.oz, w.dirX, w.dirZ, w.baseY);
+        });
+    }
+
+    private static void stopTsunamis() {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            com.realweather.server.TsunamiManager.WAVES.clear();
+            com.realweather.server.TsunamiManager.sync(server.overworld());
+        });
+    }
+
+    /** Faces the incoming wave. */
+    private static void lookAtWave(float pitch) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            if (com.realweather.server.TsunamiManager.WAVES.isEmpty()) {
+                LOG.warn("no tsunami to look at");
+                return;
+            }
+            com.realweather.server.Tsunami w = com.realweather.server.TsunamiManager.WAVES.get(0);
+            // Towards where it comes from (against its direction of travel).
+            float yaw = (float) Math.toDegrees(Math.atan2(w.dirX, -w.dirZ));
+            p.teleportTo(server.overworld(), p.getX(), p.getY(), p.getZ(), yaw, pitch);
+        });
+    }
+
+    private static void tsunamiState(String label) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            for (com.realweather.server.Tsunami w : com.realweather.server.TsunamiManager.WAVES) {
+                LOG.info("[{}] tsunami #{} strength={} front={} player along={} height={} flood={} stage={} drained={}", label, w.id, w.strength,
+                        (int) w.front, (int) w.along(p.getX(), p.getZ()), w.height(), w.floodY(), w.stage, w.drained);
+            }
+        });
+        Minecraft mc = Minecraft.getInstance();
+        LOG.info("[{}] client tsunamis={} particles={} fps={}", label, com.realweather.client.tsunami.ClientTsunamis.all().size(),
+                mc.particleEngine.countParticles(), mc.getFps());
     }
 
     private static void removeTornadoes() {

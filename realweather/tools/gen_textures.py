@@ -478,6 +478,68 @@ def _cloud_cell(rng, s, lobes, spread, rmin, rmax, flat=0.24, elong=1.0, rough=0
     return alpha, np.clip(lum, 0, 1)
 
 
+def _fbm5(rng, s, base=4, octaves=5, gain=0.55, aniso=(1.0, 1.0)):
+    """fractal noise with many octaves (fine detail without the blobby look of a few smooth bumps)"""
+    out = np.zeros((s, s))
+    amp, tot = 1.0, 0.0
+    for o in range(octaves):
+        out += amp * periodic_noise(rng, (s, s), base * 2 ** o, aniso=aniso)
+        tot += amp
+        amp *= gain
+    return out / tot
+
+
+def _cloud_cell2(rng, s, body=0.2, lumps=7, flat=0.22, elong=1.0, rough=0.35, light=1.5, lo=0.45, contrast=1.0, alpha_max=0.97,
+                 wisp=0.0):
+    """A cumulus sprite built from billows: a rounded body with smaller billows along its top, blended smoothly
+    (soft union, no creases). Each billow is lit like a sphere by the sun above and to the side, the cloud shadows
+    itself so the base is grey, fine fractal noise eats the edges only, and a bright rim shows where it thins."""
+    yy, xx = (np.mgrid[0:s, 0:s] + 0.5) / s - 0.5
+    xx = xx / elong
+    blobs = [(0.0, 0.0, body, 0.97, 1.35)]
+    for _ in range(lumps):
+        a = rng.uniform(-2.7, -0.45)
+        d = body * rng.uniform(0.5, 0.9)
+        blobs.append((np.cos(a) * d * 1.3, np.sin(a) * d * 0.9, body * rng.uniform(0.38, 0.62), rng.uniform(0.75, 0.95), 1.0))
+    for _ in range(lumps * 2):
+        a = rng.uniform(-3.0, -0.15)
+        d = body * rng.uniform(0.8, 1.2)
+        blobs.append((np.cos(a) * d * 1.3, np.sin(a) * d * 0.95, body * rng.uniform(0.16, 0.28), rng.uniform(0.5, 0.75), 1.0))
+    keep = np.ones((s, s))
+    lit = np.zeros((s, s))
+    wsum = np.full((s, s), 1e-6)
+    L = np.array([-0.35, -0.75, 0.55])
+    L /= np.linalg.norm(L)
+    for cx, cy, r, amp, ex in blobs:
+        g = amp * np.exp(-(((xx - cx) / ex) ** 2 + (yy - cy) ** 2) / (2 * r * r))
+        keep *= 1 - g
+        nx = (xx - cx) / (r * 1.6 * ex)
+        ny = (yy - cy) / (r * 1.6)
+        nz = np.sqrt(np.clip(1 - nx * nx - ny * ny, 0, 1))
+        sph = np.clip(nx * L[0] + ny * L[1] + nz * L[2], 0, 1)
+        w = g ** 2 * (1 + 2 / (1 + np.exp((yy - cy) / (r * 0.25))))
+        lit += sph * w
+        wsum += w
+    dens = 1 - keep
+    sphere = lit / wsum
+    n = _fbm5(rng, s, base=6, octaves=5)
+    warp = _fbm5(rng, s, base=3, octaves=3)
+    edge = np.exp(-((dens - 0.45) / 0.28) ** 2)
+    d2 = dens + rough * 0.2 * n * edge + 0.05 * warp
+    if flat is not None:
+        d2 *= _smooth(flat + 0.08, flat - 0.03, yy + 0.012 * n)
+    if wisp > 0:
+        d2 = d2 + wisp * np.clip(_fbm5(rng, s, base=3, octaves=4, aniso=(1.0, 3.0)), 0, None) * np.exp(-(yy / 0.25) ** 2) * 0.3
+    d2 *= _smooth(0.5, 0.36, np.sqrt((xx * elong) ** 2 + yy ** 2))
+    alpha = _smooth(0.16, 0.52, d2) * alpha_max
+    # Self-shadowing: the more cloud above a point, the greyer it is (the flat base ends up darkest).
+    depth = np.cumsum(np.clip(d2, 0, None), axis=0) / s
+    shadow = np.exp(-depth * light * 2.6)
+    lum = lo + (1 - lo) * (0.35 + 0.65 * sphere * contrast) * (0.45 + 0.55 * shadow)
+    rim = _smooth(0.55, 0.2, d2) * _smooth(0.1, 0.24, d2)
+    lum = lum + 0.12 * rim + 0.03 * n
+    return alpha, np.clip(lum, 0, 1)
+
 def sky(rng):
     """Atlas of cloud sprites (4 x 4 cells of 256) and the tileable streak texture of tornado funnels."""
     s = 256
@@ -492,13 +554,12 @@ def sky(rng):
 
     # 0-5: cumulus puffs.
     for i in range(6):
-        a, l = _cloud_cell(rng, s, lobes=6 + i, spread=0.1, rmin=0.06, rmax=0.13, flat=0.2 + 0.03 * (i % 3), rough=0.3,
-                           light=1.3, lo=0.42)
+        a, l = _cloud_cell2(rng, s, body=0.15 + 0.01 * i, lumps=5 + i, flat=0.17 + 0.02 * (i % 3), elong=1.0 + 0.08 * (i % 3),
+                            rough=0.9, light=1.4, lo=0.44)
         put(i, a, l)
     # 6-7: ragged scud.
     for i in range(2):
-        a, l = _cloud_cell(rng, s, lobes=9, spread=0.13, rmin=0.04, rmax=0.09, flat=None, elong=1.6, rough=0.9,
-                           thresh=(0.3, 0.95), light=0.8, lo=0.6, alpha_max=0.85)
+        a, l = _cloud_cell2(rng, s, body=0.12, lumps=6, flat=None, elong=1.7, rough=1.8, light=0.8, lo=0.6, alpha_max=0.85, wisp=1.0)
         put(6 + i, a, l)
     # 8-9: dark storm base (seen from below and from the side): mottled, nearly uniform.
     yy, xx = (np.mgrid[0:s, 0:s] + 0.5) / s - 0.5
@@ -515,8 +576,7 @@ def sky(rng):
     l = np.clip(0.88 + 0.1 * n - 0.15 * _smooth(-0.05, 0.25, yy), 0.5, 1)
     put(10, a, l)
     # 11: dust puff (billowy, softer).
-    a, l = _cloud_cell(rng, s, lobes=10, spread=0.12, rmin=0.06, rmax=0.13, flat=0.3, rough=0.6, thresh=(0.2, 0.9),
-                       light=0.9, lo=0.6, alpha_max=0.9)
+    a, l = _cloud_cell2(rng, s, body=0.19, lumps=9, flat=0.26, rough=1.4, light=0.9, lo=0.6, alpha_max=0.9)
     put(11, a, l)
     # 12: rain shaft: vertical streaks, soft sides, ragged bottom.
     streaks = periodic_noise(rng, (s, s), 10, aniso=(8.0, 1.0))
@@ -538,26 +598,58 @@ def sky(rng):
     put(13, a, l)
     # 14-15: wall cloud blocks: lumpy, darker, more contrast.
     for i in range(2):
-        a, l = _cloud_cell(rng, s, lobes=11, spread=0.11, rmin=0.06, rmax=0.12, flat=0.22, rough=0.5, light=1.6, lo=0.5,
-                           contrast=1.6)
+        a, l = _cloud_cell2(rng, s, body=0.19, lumps=9, flat=0.2, elong=1.25, rough=1.2, light=1.6, lo=0.5, contrast=1.5)
         put(14 + i, a, l)
     save(os.path.join(ENV, 'sky_atlas.png'), atlas, blur=True)
 
-    # Funnel streaks: smooth condensation with fine striations spiralling up round the vortex (tileable both ways).
-    n1 = periodic_noise(rng, (s, s), 14, aniso=(5.0, 1.0))
-    n2 = periodic_noise(rng, (s, s), 30, aniso=(3.0, 1.0))
-    n3 = periodic_noise(rng, (s, s), 6)
-    band = 0.5 * n1 + 0.3 * n2 + 0.2 * n3
-    # Lean the striations by a whole tile over the height, so they wrap seamlessly into a helix.
+    # Funnel surface: fine helical striations of every width spiralling up round the vortex, soft horizontal
+    # condensation bands, mottled darker patches of dust and rain (tileable both ways).
+    n1 = periodic_noise(rng, (s, s), 40, aniso=(6.0, 1.0))
+    n2 = periodic_noise(rng, (s, s), 18, aniso=(5.0, 1.0))
+    n3 = periodic_noise(rng, (s, s), 80, aniso=(9.0, 1.0))
+    band = 0.45 * n1 + 0.35 * n2 + 0.2 * n3
     band = np.stack([np.roll(band[y], y) for y in range(s)])
-    lum = np.clip(0.9 + 0.07 * band, 0.72, 1.0)
-    alpha = np.clip(0.94 + 0.06 * band, 0.8, 1.0)
+    rings = periodic_noise(rng, (s, s), 10, aniso=(1.0, 6.0))
+    mottle = _fbm5(rng, s, base=3, octaves=4)
+    lum = 0.86 + 0.09 * band + 0.035 * rings - 0.07 * np.clip(mottle, 0, None)
+    lum = np.clip(lum, 0.6, 1.0)
+    alpha = np.clip(0.95 + 0.05 * band - 0.08 * np.clip(-mottle - 0.6, 0, None), 0.78, 1.0)
     img = np.zeros((s, s, 4))
     img[..., 0] = lum * 255
     img[..., 1] = lum * 255
     img[..., 2] = lum * 255
     img[..., 3] = alpha * 255
     save(os.path.join(ENV, 'tornado_streaks.png'), img, blur=True)
+
+
+def tsunami(rng):
+    """Water of the tsunami wave (tileable): deep green-blue with streaks running up the face and glints, and lacy
+    white foam for the breaking crest, the toe of the wave and the flood behind it."""
+    s = 256
+    streak = periodic_noise(rng, (s, s), 26, aniso=(6.0, 1.0))
+    fine = periodic_noise(rng, (s, s), 70, aniso=(4.0, 1.0))
+    big = _fbm5(rng, s, base=3, octaves=4)
+    k = np.clip(0.5 + 0.22 * streak + 0.1 * fine + 0.18 * big, 0, 1)
+    deep = np.array([18, 62, 74])
+    light = np.array([70, 140, 150])
+    img = np.zeros((s, s, 4))
+    for c in range(3):
+        img[..., c] = deep[c] + (light[c] - deep[c]) * k
+    glint = np.clip(fine * 1.5 - 1.9, 0, 1)
+    img[..., :3] += glint[..., None] * 70
+    img[..., 3] = 255 * np.clip(0.82 + 0.12 * k, 0, 1)
+    save(os.path.join(ENV, 'tsunami_water.png'), img, blur=True)
+    n1 = _fbm5(rng, s, base=5, octaves=5)
+    n2 = periodic_noise(rng, (s, s), 40)
+    lace = np.abs(periodic_noise(rng, (s, s), 18))
+    a = np.clip((n1 + 0.35 * n2) * 1.6 + 0.35 - lace * 0.9, 0, 1)
+    img = np.zeros((s, s, 4))
+    shade = 0.88 + 0.12 * np.clip(n2, -1, 1)
+    img[..., 0] = 245 * shade
+    img[..., 1] = 249 * shade
+    img[..., 2] = 252 * shade
+    img[..., 3] = 255 * a
+    save(os.path.join(ENV, 'tsunami_foam.png'), img, blur=True)
 
 
 def main():
@@ -569,6 +661,10 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == 'sky':
         sky(np.random.default_rng(1234))
         print('sky textures done')
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == 'tsunami':
+        tsunami(np.random.default_rng(555))
+        print('tsunami textures done')
         return
     if len(sys.argv) > 1 and sys.argv[1] == 'tornado':
         tornado(np.random.default_rng(77))

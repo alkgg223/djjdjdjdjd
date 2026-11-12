@@ -6,7 +6,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 /** Server to client: the current weather intensities (all 0..1 except the wind angle in radians). */
-public record WeatherSyncPayload(float rain, float snow, float thunder, float windAngle, float wind, float sand, float blizzard)
+public record WeatherSyncPayload(float rain, float snow, float thunder, float windAngle, float wind, float sand, float blizzard, int force)
         implements CustomPacketPayload {
     public static final Type<WeatherSyncPayload> TYPE = new Type<>(RealWeather.id("sync"));
     public static final StreamCodec<FriendlyByteBuf, WeatherSyncPayload> CODEC = StreamCodec.of(WeatherSyncPayload::write, WeatherSyncPayload::read);
@@ -19,10 +19,12 @@ public record WeatherSyncPayload(float rain, float snow, float thunder, float wi
         buf.writeFloat(p.wind);
         buf.writeFloat(p.sand);
         buf.writeFloat(p.blizzard);
+        buf.writeByte(p.force);
     }
 
     private static WeatherSyncPayload read(FriendlyByteBuf buf) {
-        return new WeatherSyncPayload(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat());
+        return new WeatherSyncPayload(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(),
+                buf.readByte());
     }
 
     @Override

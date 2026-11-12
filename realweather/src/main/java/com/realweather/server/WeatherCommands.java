@@ -41,6 +41,7 @@ public final class WeatherCommands {
                 .then(Commands.literal("depth").then(Commands.argument("blocks", IntegerArgumentType.integer(1, 4))
                         .executes(c -> floodDepth(c.getSource(), IntegerArgumentType.getInteger(c, "blocks"))))));
         root.then(tornado());
+        root.then(tsunami());
         root.then(Commands.literal("hailstorm").then(Commands.argument("percent", IntegerArgumentType.integer(1, 100))
                 .executes(c -> storm(c.getSource(), StormCell.HAIL, IntegerArgumentType.getInteger(c, "percent"), 8))
                 .then(Commands.argument("minutes", IntegerArgumentType.integer(1, 120))
@@ -74,6 +75,14 @@ public final class WeatherCommands {
                     .then(Commands.literal("here").executes(c -> spawnTornado(c.getSource(), IntegerArgumentType.getInteger(c, "rating"), shape, true))));
         }
         t.then(num);
+        // /rw tornado custom <shape> <width>: any shape, 1 to 100 blocks wide.
+        var custom = Commands.literal("custom");
+        for (TornadoShape shape : TornadoShape.values()) {
+            custom.then(Commands.literal(shape.id()).then(Commands.argument("width", IntegerArgumentType.integer(1, 100))
+                    .executes(c -> customTornado(c.getSource(), shape, IntegerArgumentType.getInteger(c, "width"), false))
+                    .then(Commands.literal("here").executes(c -> customTornado(c.getSource(), shape, IntegerArgumentType.getInteger(c, "width"), true)))));
+        }
+        t.then(custom);
         for (int i = 0; i <= 5; i++) {
             int rating = i;
             var lit = Commands.literal("f" + i).executes(c -> spawnTornado(c.getSource(), rating, null, false))
@@ -100,12 +109,61 @@ public final class WeatherCommands {
         return t;
     }
 
+    private static LiteralArgumentBuilder<CommandSourceStack> tsunami() {
+        // /rw tsunami 300, /rw tsunami 800 west (the side it comes from), /rw tsunami stop, natural on|off
+        var t = Commands.literal("tsunami");
+        var strength = Commands.argument("strength", IntegerArgumentType.integer(1, 1000))
+                .executes(c -> tsunami(c.getSource(), IntegerArgumentType.getInteger(c, "strength"), Float.NaN));
+        String[] names = {"north", "east", "south", "west"};
+        for (int i = 0; i < 4; i++) {
+            float bearing = i * 90F;
+            strength.then(Commands.literal(names[i]).executes(c -> tsunami(c.getSource(), IntegerArgumentType.getInteger(c, "strength"), bearing)));
+        }
+        t.then(strength);
+        t.then(Commands.literal("stop").executes(c -> {
+            TsunamiManager.stop(overworld(c.getSource()));
+            ok(c.getSource(), "tsunami.stop");
+            return 1;
+        }));
+        t.then(Commands.literal("natural")
+                .then(Commands.literal("on").executes(c -> toggle(c, "tsunami.natural", true)))
+                .then(Commands.literal("off").executes(c -> toggle(c, "tsunami.natural", false))));
+        return t;
+    }
+
+    private static int tsunami(CommandSourceStack src, int strength, float bearing) {
+        ServerLevel level = overworld(src);
+        if (TsunamiManager.WAVES.size() >= 3) {
+            src.sendFailure(Component.translatable("realweather.cmd.tsunami.too_many"));
+            return 0;
+        }
+        net.minecraft.world.phys.Vec3 pos = src.getLevel() == level ? src.getPosition() : level.getSharedSpawnPos().getCenter();
+        Tsunami w = TsunamiManager.spawn(level, pos, strength, bearing, level.random);
+        int dist = (int) Math.round(w.along(pos.x, pos.z));
+        ok(src, "tsunami", strength, Math.round(Tsunami.heightFor(strength)), dist);
+        return 1;
+    }
+
     private static int storm(CommandSourceStack src, int type, int percent, int minutes) {
         ServerLevel level = overworld(src);
         WeatherData d = WeatherData.get(level);
         net.minecraft.world.phys.Vec3 pos = src.getLevel() == level ? src.getPosition() : level.getSharedSpawnPos().getCenter();
         StormManager.spawnFor(level, d, pos, type, percent / 100F, minutes, level.random);
         ok(src, "storm." + type, percent, minutes);
+        return 1;
+    }
+
+    private static int customTornado(CommandSourceStack src, TornadoShape shape, int width, boolean here) {
+        ServerLevel level = overworld(src);
+        WeatherData d = WeatherData.get(level);
+        if (d.tornadoes.size() >= 4) {
+            src.sendFailure(Component.translatable("realweather.cmd.tornado.too_many"));
+            return 0;
+        }
+        net.minecraft.world.phys.Vec3 pos = src.getLevel() == level ? src.getPosition() : level.getSharedSpawnPos().getCenter();
+        Tornado t = TornadoManager.spawnCustom(level, d, pos, shape, width, here, level.random);
+        int dist = (int) Math.sqrt((t.x - pos.x) * (t.x - pos.x) + (t.z - pos.z) * (t.z - pos.z));
+        ok(src, "tornado.custom", Component.translatable("realweather.shape." + shape.id()), width + "x" + width, "F" + t.rating, dist);
         return 1;
     }
 
@@ -159,9 +217,14 @@ public final class WeatherCommands {
             d.thunderOverride = -1F;
             d.blizzardTicks = 0;
             level.setWeatherParameters(12000, 0, false, false);
+            d.force = 0;
+            d.forceTicks = 0;
             ok(src, "rain.stop");
         } else {
             d.rainOverride = percent / 100F;
+            // Rain wherever you are, even in a desert or on snowy ground.
+            d.force = Precip.RAIN;
+            d.forceTicks = minutes * 1200;
             level.setWeatherParameters(0, minutes * 1200, true, level.isThundering());
             ok(src, "rain", percent, minutes);
         }
@@ -176,9 +239,14 @@ public final class WeatherCommands {
             d.snowOverride = -1F;
             d.blizzardTicks = 0;
             level.setWeatherParameters(12000, 0, false, false);
+            d.force = 0;
+            d.forceTicks = 0;
             ok(src, "snow.stop");
         } else {
             d.snowOverride = percent / 100F;
+            // Snow everywhere, not only in the cold biomes.
+            d.force = Precip.SNOW;
+            d.forceTicks = minutes * 1200;
             level.setWeatherParameters(0, minutes * 1200, true, level.isThundering());
             ok(src, "snow", percent, minutes);
         }
@@ -206,10 +274,15 @@ public final class WeatherCommands {
         WeatherData d = WeatherData.get(overworld(src));
         if (percent == 0) {
             d.sandTicks = 0;
+            d.force = 0;
+            d.forceTicks = 0;
             ok(src, "sandstorm.stop");
         } else {
             d.sandTarget = percent / 100F;
             d.sandTicks = minutes * 1200;
+            // A sandstorm wherever you are.
+            d.force = Precip.SAND;
+            d.forceTicks = minutes * 1200;
             ok(src, "sandstorm", percent, minutes);
         }
         d.setDirty();
@@ -221,10 +294,14 @@ public final class WeatherCommands {
         WeatherData d = WeatherData.get(level);
         if (percent == 0) {
             d.blizzardTicks = 0;
+            d.force = 0;
+            d.forceTicks = 0;
             ok(src, "blizzard.stop");
         } else {
             d.blizzardTarget = percent / 100F;
             d.blizzardTicks = minutes * 1200;
+            d.force = Precip.SNOW;
+            d.forceTicks = minutes * 1200;
             level.setWeatherParameters(0, minutes * 1200 + 600, true, level.isThundering());
             ok(src, "blizzard", percent, minutes);
         }
@@ -260,6 +337,7 @@ public final class WeatherCommands {
             case "tornado.damage" -> d.tornadoDamage = on;
             case "hail" -> d.hail = on;
             case "tornado.natural" -> d.tornadoNatural = on;
+            case "tsunami.natural" -> d.tsunamiNatural = on;
             default -> {
             }
         }
@@ -290,6 +368,8 @@ public final class WeatherCommands {
         d.snowOverride = -1F;
         d.thunderOverride = -1F;
         d.windOverride = -1F;
+        d.force = 0;
+        d.forceTicks = 0;
         d.setDirty();
         ok(src, "auto");
         return 1;
@@ -304,6 +384,8 @@ public final class WeatherCommands {
         d.windOverride = -1F;
         d.sandTicks = 0;
         d.blizzardTicks = 0;
+        d.force = 0;
+        d.forceTicks = 0;
         d.tornadoes.forEach(Tornado::dissipate);
         d.storms.clear();
         StormManager.sync(level, d);

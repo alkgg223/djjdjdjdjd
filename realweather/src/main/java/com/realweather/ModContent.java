@@ -91,6 +91,9 @@ public final class ModContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_START_SPORT = sound("vehicle.start_sport");
     public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_START_DIESEL = sound("vehicle.start_diesel");
     public static final DeferredHolder<SoundEvent, SoundEvent> VEHICLE_BACKFIRE = sound("vehicle.backfire");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TSUNAMI_ROAR = sound("tsunami.roar");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TSUNAMI_RUSH = sound("tsunami.rush");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TSUNAMI_CRASH = sound("tsunami.crash");
 
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SPLASH = particle("splash");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RIPPLE = particle("ripple");
@@ -103,6 +106,7 @@ public final class ModContent {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> TORNADO_CLOUD = particle("tornado_cloud", true);
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SPLASH_DROP = particle("splash_drop");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RAIN_MIST = particle("rain_mist");
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> TSUNAMI_SPRAY = particle("tsunami_spray", true);
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HAILSTONE = particle("hailstone");
 
     private ModContent() {}
