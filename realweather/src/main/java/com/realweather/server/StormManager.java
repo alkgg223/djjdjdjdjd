@@ -131,21 +131,29 @@ public final class StormManager {
         return c;
     }
 
-    /** A mature supercell over open land may put down a tornado under its updraft. */
+    /**
+     * A mature supercell over open land may put down a tornado under its updraft; now and then a strong ordinary
+     * thunderstorm spins up a weak landspout or rope under its growing tower.
+     */
     private static void supercellTornadoes(ServerLevel level, WeatherData d, RandomSource rng) {
         if (!d.tornadoNatural || !level.isThundering() || d.tornadoes.size() >= 2) {
             return;
         }
         for (StormCell c : d.storms) {
-            if (c.type != StormCell.SUPERCELL || c.tornadoId != 0 || c.strength() < 0.9F || rng.nextInt(120) != 0) {
+            if (c.tornadoId != 0 || c.strength() < 0.9F) {
                 continue;
             }
-            double[] u = StormField.updraft(c);
-            if (!level.isLoaded(BlockPos.containing(u[0], 0, u[1]))) {
+            boolean supercell = c.type == StormCell.SUPERCELL;
+            if (supercell ? rng.nextInt(120) != 0 : c.type != StormCell.STORM || rng.nextInt(1500) != 0) {
                 continue;
             }
-            int rating = TornadoManager.naturalRating(rng);
-            Tornado t = TornadoManager.spawnAt(level, d, new Vec3(u[0], 0, u[1]), rating, rng);
+            double[] u = supercell ? StormField.updraft(c) : new double[]{c.x, c.z};
+            if (!level.isLoaded(BlockPos.containing(u[0], 0, u[1])) || !TornadoManager.suitable(level, u[0], u[1])) {
+                continue;
+            }
+            int rating = supercell ? TornadoManager.naturalRating(rng) : rng.nextInt(2);
+            TornadoShape shape = supercell ? null : rng.nextBoolean() ? TornadoShape.LANDSPOUT : TornadoShape.ROPE;
+            Tornado t = TornadoManager.spawnAt(level, d, new Vec3(u[0], 0, u[1]), rating, shape, rng);
             t.heading = (float) Math.atan2(c.vx, -c.vz);
             t.speed = (float) Math.hypot(c.vx, c.vz);
             c.tornadoId = t.id;

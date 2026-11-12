@@ -51,6 +51,29 @@ public final class WeatherTicker {
                 splash(level, cam, 13F, rain);
             }
         }
+        if (rain > 0.5F && ClientConfig.SPLASHES.get() && q > 0.3F) {
+            // A downpour throws a fine spray up off the ground.
+            int n = Math.round((rain - 0.5F) * q * 7F);
+            for (int i = 0; i < n; i++) {
+                double a = RANDOM.nextDouble() * Math.PI * 2;
+                double d = 2.5 + Math.sqrt(RANDOM.nextDouble()) * 13;
+                int x = Mth.floor(cam.x + Math.cos(a) * d);
+                int z = Mth.floor(cam.z + Math.sin(a) * d);
+                int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+                if (Math.abs(top - cam.y) < 10 && precipitationAt(level, x + 0.5, top + 0.5, z + 0.5) == Biome.Precipitation.RAIN) {
+                    level.addParticle(ModContent.RAIN_MIST.get(), x + RANDOM.nextDouble(), top + 0.15 + RANDOM.nextDouble() * 0.4, z + RANDOM.nextDouble(),
+                            wx * 0.05, rain, wz * 0.05);
+                }
+            }
+        }
+        if ((rain > 0.05F || ClientWeather.wetness > 0.35F) && ClientConfig.SPLASHES.get()) {
+            // Water dripping off leaves and the edges of overhangs, during the rain and for a while after it.
+            float wet = Math.max(rain, (ClientWeather.wetness - 0.35F) * 0.8F);
+            int n = Math.round(wet * q * 6F);
+            for (int i = 0; i < n; i++) {
+                drip(level, cam);
+            }
+        }
         if (rain > 0.01F && ClientConfig.RAIN_DROPS_3D.get()) {
             int n = Math.round(rain * q * 16F);
             for (int i = 0; i < n; i++) {
@@ -174,6 +197,42 @@ public final class WeatherTicker {
             level.addParticle(ModContent.RIPPLE.get(), sx, y + 0.003, sz, 0, 0, 0);
         }
         level.addParticle(ModContent.SPLASH.get(), sx, y, sz, 0, rain, 0);
+        // In heavier rain each impact throws up a few tiny droplets.
+        if (rain > 0.3F && RANDOM.nextFloat() < rain) {
+            int drops = 1 + RANDOM.nextInt(rain > 0.7F ? 3 : 2);
+            for (int k = 0; k < drops; k++) {
+                double ang = RANDOM.nextDouble() * Math.PI * 2;
+                double sp = 0.03 + RANDOM.nextDouble() * 0.05;
+                level.addParticle(ModContent.SPLASH_DROP.get(), sx, y + 0.03, sz, Math.cos(ang) * sp, 0.07 + RANDOM.nextDouble() * 0.07, Math.sin(ang) * sp);
+            }
+        }
+    }
+
+    private static void drip(ClientLevel level, Vec3 cam) {
+        double a = RANDOM.nextDouble() * Math.PI * 2;
+        double d = 1 + Math.sqrt(RANDOM.nextDouble()) * 9;
+        int x = Mth.floor(cam.x + Math.cos(a) * d);
+        int z = Mth.floor(cam.z + Math.sin(a) * d);
+        int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+        if (top > cam.y + 12 || top < cam.y - 6) {
+            return;
+        }
+        BlockPos block = new BlockPos(x, top - 1, z);
+        BlockPos below = block.below();
+        if (!level.getBlockState(below).isAir()) {
+            return;
+        }
+        BlockState state = level.getBlockState(block);
+        if (state.isAir() || !state.getFluidState().isEmpty()) {
+            return;
+        }
+        Biome biome = level.getBiome(block).value();
+        if (!biome.hasPrecipitation() || WeatherServer.isDryBiome(biome) || biome.getPrecipitationAt(block) != Biome.Precipitation.RAIN) {
+            return;
+        }
+        double bottom = state.getShape(level, block).isEmpty() ? 0 : state.getShape(level, block).min(Direction.Axis.Y);
+        level.addParticle(ParticleTypes.DRIPPING_WATER, x + 0.1 + RANDOM.nextDouble() * 0.8, block.getY() + bottom - 0.05,
+                z + 0.1 + RANDOM.nextDouble() * 0.8, 0, 0, 0);
     }
 
     static Biome.Precipitation precipitationAt(ClientLevel level, double x, double y, double z) {

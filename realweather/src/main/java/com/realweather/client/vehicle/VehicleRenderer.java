@@ -55,6 +55,12 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
             pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin((v.hurtTime - pt) * 2F) * 1.2F));
         }
         VehicleModels.solid(base + "body", pose, buf, light, overlay, r, g, b);
+        // The cabin (dash, seats, console, headliner) is most of the polygons: only drawn when you are close enough
+        // to see into it.
+        boolean near = this.entityRenderDispatcher.distanceToSqr(v) < 40 * 40 || v.hasPassenger(e -> e == net.minecraft.client.Minecraft.getInstance().player);
+        if (near) {
+            VehicleModels.solid(base + "interior", pose, buf, light, overlay, r, g, b);
+        }
         boolean glass = !v.flag(StormVehicle.FLAG_GLASS_BROKEN);
         // Doors (their windows ride on them), swung open by the occupants or forced open by a flood.
         float flood = Mth.lerp(pt, v.prevDoorOpen, v.doorOpen);
@@ -96,7 +102,9 @@ public class VehicleRenderer extends EntityRenderer<StormVehicle> {
             VehicleModels.solid(base + "wheel", pose, buf, light, overlay, 1F, 1F, 1F);
             pose.popPose();
         }
-        controls(v, k, pose, buf, light, overlay, pt, steer);
+        if (near) {
+            controls(v, k, pose, buf, light, overlay, pt, steer);
+        }
         equipment(v, k, base, pose, buf, light, overlay, pt);
         Backfire.render(v, k, pose, buf, pt);
 

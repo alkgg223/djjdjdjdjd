@@ -98,8 +98,9 @@ public final class TornadoManager {
         return r < 0.35F ? 0 : r < 0.65F ? 1 : r < 0.83F ? 2 : r < 0.93F ? 3 : r < 0.98F ? 4 : 5;
     }
 
-    private static boolean suitable(ServerLevel level, Tornado t) {
-        BlockPos pos = BlockPos.containing(t.x, t.groundY, t.z);
+    /** Open land where tornadoes form: not over the sea or in the mountains, and where it rains (not snows). */
+    static boolean suitable(ServerLevel level, double x, double z) {
+        BlockPos pos = new BlockPos(Mth.floor(x), StormManager.ground(level, x, z), Mth.floor(z));
         if (!level.isLoaded(pos)) {
             return true;
         }
@@ -110,23 +111,36 @@ public final class TornadoManager {
 
     /** Spawns a tornado `distance` blocks from `target`, heading roughly towards it. */
     public static Tornado spawnApproaching(ServerLevel level, WeatherData d, Vec3 target, int rating, double distance, RandomSource rng) {
+        return spawnApproaching(level, d, target, rating, null, distance, rng);
+    }
+
+    public static Tornado spawnApproaching(ServerLevel level, WeatherData d, Vec3 target, int rating, TornadoShape shape, double distance,
+                                           RandomSource rng) {
         double ang = rng.nextDouble() * Math.PI * 2;
         double x = target.x + Math.sin(ang) * distance;
         double z = target.z - Math.cos(ang) * distance;
         // Bearing from the tornado to the target, with some spread so it does not always score a direct hit.
         float heading = (float) Math.atan2(target.x - x, -(target.z - z)) + (rng.nextFloat() - 0.5F) * 0.6F;
-        return add(level, d, x, z, heading, rating, rng);
+        return add(level, d, x, z, heading, rating, shape, rng);
     }
 
     public static Tornado spawnAt(ServerLevel level, WeatherData d, Vec3 pos, int rating, RandomSource rng) {
-        return add(level, d, pos.x, pos.z, rng.nextFloat() * (float) Math.PI * 2, rating, rng);
+        return spawnAt(level, d, pos, rating, null, rng);
     }
 
-    private static Tornado add(ServerLevel level, WeatherData d, double x, double z, float heading, int rating, RandomSource rng) {
+    public static Tornado spawnAt(ServerLevel level, WeatherData d, Vec3 pos, int rating, TornadoShape shape, RandomSource rng) {
+        return add(level, d, pos.x, pos.z, rng.nextFloat() * (float) Math.PI * 2, rating, shape, rng);
+    }
+
+    private static Tornado add(ServerLevel level, WeatherData d, double x, double z, float heading, int rating, TornadoShape shape,
+                               RandomSource rng) {
         float ground = groundAt(level, x, z, 64F);
         float speed = 0.12F + rng.nextFloat() * 0.1F + rating * 0.015F;
         int life = (60 + rating * 30 + rng.nextInt(60)) * 20;
-        Tornado t = new Tornado(d.nextTornadoId++, x, z, ground, heading, speed, rating, life, rng.nextLong());
+        if (shape == null) {
+            shape = TornadoShape.pick(rating, rng);
+        }
+        Tornado t = new Tornado(d.nextTornadoId++, x, z, ground, heading, speed, rating, life, rng.nextLong(), shape);
         d.tornadoes.add(t);
         d.setDirty();
         if (!level.isThundering()) {
@@ -293,7 +307,8 @@ public final class TornadoManager {
     public static TornadoSyncPayload payload(WeatherData d) {
         List<TornadoSyncPayload.Entry> list = new ArrayList<>();
         for (Tornado t : d.tornadoes) {
-            list.add(new TornadoSyncPayload.Entry(t.id, t.x, t.z, t.groundY, t.heading, t.speed, t.rating, t.stage, t.contact, t.strength, t.seed));
+            list.add(new TornadoSyncPayload.Entry(t.id, t.x, t.z, t.groundY, t.heading, t.speed, t.rating, t.stage, t.contact, t.strength, t.seed,
+                    t.shape.ordinal()));
         }
         return new TornadoSyncPayload(list);
     }

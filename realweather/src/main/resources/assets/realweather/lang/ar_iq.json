@@ -201,5 +201,18 @@
   "subtitles.realweather.vehicle.start_muscle": "تشغيل السيارة الرياضية",
   "subtitles.realweather.vehicle.start_sport": "تشغيل المحرك الرياضي",
   "subtitles.realweather.vehicle.start_diesel": "تشغيل محرك الديزل",
-  "subtitles.realweather.vehicle.backfire": "فرقعة العادم"
+  "subtitles.realweather.vehicle.backfire": "فرقعة العادم",
+  "realweather.shape.rope": "حبلي",
+  "realweather.shape.cone": "مخروطي",
+  "realweather.shape.bowl": "وعائي",
+  "realweather.shape.drill_bit": "مثقابي",
+  "realweather.shape.wedge": "إسفيني",
+  "realweather.shape.truncated_cone": "مخروطي مبتور",
+  "realweather.shape.bulb": "بصلي",
+  "realweather.shape.hourglass": "ساعة رملية",
+  "realweather.shape.stovepipe": "مدخني",
+  "realweather.shape.segmented": "متقطع",
+  "realweather.shape.landspout": "أرضي (لاندسبوت)",
+  "realweather.shape.flared_base": "قاعدة متسعة",
+  "realweather.cmd.graphics": "دقة الإعصار: %s، دقة الطقس: %s (غيّرها بالأمر /rwgraphics tornado|weather low|medium|high|ultra)"
 }

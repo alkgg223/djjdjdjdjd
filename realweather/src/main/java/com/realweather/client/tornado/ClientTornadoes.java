@@ -32,6 +32,7 @@ public final class ClientTornadoes {
         public final int id;
         public final int rating;
         public final long seed;
+        public final com.realweather.server.TornadoShape shape;
         public double x, z, px, pz;
         private double sx, sz;
         private int sinceSync;
@@ -48,6 +49,7 @@ public final class ClientTornadoes {
             this.id = e.id();
             this.rating = e.rating();
             this.seed = e.seed();
+            this.shape = com.realweather.server.TornadoShape.byId(e.shape());
             this.x = this.px = this.sx = e.x();
             this.z = this.pz = this.sz = e.z();
             apply(e);
@@ -92,29 +94,15 @@ public final class ClientTornadoes {
             return groundY + height();
         }
 
-        /** Funnel radius at a height fraction f (0 = ground, 1 = cloud base): ropes, cones and wedges. */
+        /** Funnel radius at a height fraction f (0 = ground, 1 = cloud base), from the funnel's shape. */
         public float radiusAt(float f) {
-            float bottom;
-            float top;
-            float expo;
-            if (rating <= 1) {
-                bottom = 0.45F;
-                top = 2.8F;
-                expo = 2.4F;
-            } else if (rating <= 3) {
-                bottom = 0.75F;
-                top = 2.4F;
-                expo = 1.9F;
-            } else {
-                bottom = 1.05F;
-                top = 1.75F;
-                expo = 2.8F;
-            }
+            float r = coreRadius() * shape.profile(f);
             if (stage == Tornado.DISSIPATING) {
                 // Roping out: the column thins and twists before it lifts.
-                bottom *= 0.3F + 0.7F * strength;
+                float k = 0.25F + 0.75F * strength;
+                r *= Mth.lerp(f * f, k, 1F);
             }
-            return coreRadius() * (bottom + (top - bottom) * (float) Math.pow(f, expo));
+            return r;
         }
 
         /** Sideways offset of the funnel centre at height fraction f; ropes snake, wedges barely lean. */
@@ -127,7 +115,7 @@ public final class ClientTornadoes {
         }
 
         private float offset(float f, float time, float phase) {
-            float rope = rating <= 1 ? 1F : rating <= 3 ? 0.5F : 0.2F;
+            float rope = shape.snake();
             if (stage == Tornado.DISSIPATING) {
                 rope += (1F - strength) * 1.5F;
             }
@@ -213,7 +201,7 @@ public final class ClientTornadoes {
             double dz = cam.z - t.z;
             double dist = Math.sqrt(dx * dx + dz * dz);
             t.sounds.tick(mc, t, dist, cam.y);
-            if (dist < 420) {
+            if (dist < 520 && cloudSprites != null) {
                 spawnDebris(mc, level, t, dist);
             }
             // The ground shakes near a big one.
@@ -222,22 +210,44 @@ public final class ClientTornadoes {
         }
     }
 
+    private static final int[] DUST_N = {2, 4, 7, 12};
+    private static final int[] CHUNK_N = {1, 3, 7, 13};
+    private static final int[] CLOUD_N = {1, 2, 4, 7};
+
+    /**
+     * Particles all the way up the vortex: dust whirling round the base, chunks of the ground carried up and round
+     * the funnel (the strong ones reach the cloud), and grey condensation wisps spiralling round the upper funnel
+     * and the collar where it joins the wall cloud. Fewer with distance and on lower graphics settings.
+     */
     private static void spawnDebris(Minecraft mc, ClientLevel level, T t, double dist) {
         int q = ClientConfig.tornadoQuality();
-        float amount = (0.5F + t.rating * 0.18F) * t.contact * (0.3F + 0.7F * t.strength);
-        if (dist > 220) {
-            amount *= 0.5F;
-        }
-        int dust = Math.round(new int[]{1, 3, 6, 10}[q] * amount);
-        int chunks = Math.round(new int[]{0, 3, 7, 14}[q] * amount);
+        float amount = (0.5F + t.rating * 0.18F) * (0.3F + 0.7F * t.strength);
+        float lod = dist > 320 ? 0.3F : dist > 160 ? 0.6F : 1F;
         float rc = Math.max(2F, t.coreRadius());
+        float h = t.height();
+        // Wisps of cloud round the top of the funnel (also while it is still coming down).
+        int clouds = Math.round(CLOUD_N[q] * (0.5F + 0.5F * amount) * lod * (t.shape.wallCloud() ? 1F : 0.5F));
+        for (int i = 0; i < clouds; i++) {
+            float f = 0.55F + RANDOM.nextFloat() * 0.45F;
+            double a = RANDOM.nextDouble() * Math.PI * 2;
+            double r = t.radiusAt(f) * (1.0 + RANDOM.nextDouble() * 0.7) + 1.5;
+            double x = t.x + t.offsetX(f, t.age) + Math.cos(a) * r;
+            double z = t.z + t.offsetZ(f, t.age) + Math.sin(a) * r;
+            mc.particleEngine.add(new TornadoCloudParticle(level, x, t.groundY + f * h, z, t.id, CLOUD_SPRITES()));
+        }
+        if (t.contact < 0.05F) {
+            return;
+        }
+        float contact = t.contact;
+        int dust = Math.round(DUST_N[q] * amount * contact * lod * t.shape.debrisSkirt());
+        int chunks = Math.round(CHUNK_N[q] * amount * contact * lod);
         for (int i = 0; i < dust; i++) {
             double a = RANDOM.nextDouble() * Math.PI * 2;
-            double r = rc * (0.6 + RANDOM.nextDouble() * 1.4);
+            double r = rc * (0.6 + RANDOM.nextDouble() * 1.4 * t.shape.debrisSkirt());
             double x = t.x + Math.cos(a) * r;
             double z = t.z + Math.sin(a) * r;
             double y = t.groundY + RANDOM.nextDouble() * (2 + t.rating * 1.5);
-            level.addParticle(ModContent.TORNADO_DUST.get(), x, y, z, t.id, 0, 0);
+            level.addParticle(ModContent.TORNADO_DUST.get(), true, x, y, z, t.id, 0, 0);
         }
         for (int i = 0; i < chunks; i++) {
             double a = RANDOM.nextDouble() * Math.PI * 2;
@@ -249,7 +259,23 @@ public final class ClientTornadoes {
             if (state.isAir() || !state.getFluidState().isEmpty()) {
                 state = Blocks.DIRT.defaultBlockState();
             }
-            mc.particleEngine.add(new TornadoDebrisParticle(level, bx + 0.5, top + 0.2, bz + 0.5, t.id, state));
+            // Some of it is already high in the vortex, so the whole column carries debris.
+            double y = top + 0.2;
+            if (t.rating >= 1 && RANDOM.nextFloat() < 0.35F) {
+                y = t.groundY + RANDOM.nextFloat() * Math.min(h * 0.85F, 12F + t.rating * 12F);
+            }
+            mc.particleEngine.add(new TornadoDebrisParticle(level, bx + 0.5, y, bz + 0.5, t.id, state));
         }
+    }
+
+    private static net.minecraft.client.particle.SpriteSet cloudSprites;
+
+    /** The soft puff sprites (shared with the dust). */
+    static net.minecraft.client.particle.SpriteSet CLOUD_SPRITES() {
+        return cloudSprites;
+    }
+
+    public static void setCloudSprites(net.minecraft.client.particle.SpriteSet s) {
+        cloudSprites = s;
     }
 }

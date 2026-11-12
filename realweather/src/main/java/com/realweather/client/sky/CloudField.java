@@ -20,6 +20,8 @@ final class CloudField {
     private record Puff(float dx, float dz, float size, int cell, float rot, float lift) {}
 
     private static final Long2ObjectOpenHashMap<Puff[]> LAYOUT = new Long2ObjectOpenHashMap<>();
+    /** Cloudiness of each grid cell (it never changes, so it is worked out once). */
+    private static final it.unimi.dsi.fastutil.longs.Long2FloatOpenHashMap FIELD = new it.unimi.dsi.fastutil.longs.Long2FloatOpenHashMap();
     static double driftX, driftZ;
 
     private CloudField() {}
@@ -34,6 +36,9 @@ final class CloudField {
         driftZ += ClientWeather.windZ * 0.25 + 0.01;
         if (LAYOUT.size() > 8000) {
             LAYOUT.clear();
+        }
+        if (FIELD.size() > 30000) {
+            FIELD.clear();
         }
     }
 
@@ -122,6 +127,16 @@ final class CloudField {
 
     /** Smooth cloudiness 0..1 over the grid. */
     private static float field(int gx, int gz) {
+        long key = (long) gx << 32 ^ (gz & 0xFFFFFFFFL);
+        float v = FIELD.getOrDefault(key, -1F);
+        if (v < 0F) {
+            v = computeField(gx, gz);
+            FIELD.put(key, v);
+        }
+        return v;
+    }
+
+    private static float computeField(int gx, int gz) {
         return Mth.clamp(0.55F * noise(gx / 6.0, gz / 6.0, 1) + 0.3F * noise(gx / 2.6, gz / 2.6, 2) + 0.15F * noise(gx / 1.2, gz / 1.2, 3), 0F, 1F);
     }
 

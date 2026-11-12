@@ -420,6 +420,53 @@ def strike(seed, length):
     return peak_norm(out, -0.8)
 
 
+def _rolls(rng, n, length, count):
+    """Envelope of a rolling peal: thunder swells again and again as sound from farther parts of the channel arrives."""
+    t = np.arange(n) / SR
+    env = np.full(n, 0.5)
+    for _ in range(count):
+        t0 = rng.uniform(0.35, length * 0.55)
+        w = rng.uniform(0.2, 0.8)
+        env += rng.uniform(0.35, 1.0) * np.exp(-0.5 * ((t - t0) / w) ** 2)
+    return env / env.max()
+
+
+def _rip(rng, dur):
+    """The tearing crackle of a strike nearby: a burst of sharp clicks that come thicker and faster."""
+    n = int(dur * SR)
+    x = np.zeros(n)
+    for t0 in np.sort(rng.uniform(0, 1, rng.integers(60, 130)) ** 0.55) * dur:
+        i = int(t0 * SR)
+        m = min(int(0.003 * SR), n - i)
+        if m > 0:
+            x[i:i + m] += rng.uniform(0.25, 1.0) * rng.choice([-1, 1]) * np.exp(-np.arange(m) / (0.0006 * SR))
+    x = filt(x, 'highpass', 1500, 2) + 0.4 * filt(x, 'bandpass', (300, 1500), 2)
+    return x * np.linspace(0.3, 1, n) ** 2
+
+
+def thunder_real(seed, dist, length):
+    """Thunder heard at `dist` metres: the channel model, rolled into separate swells, with a felt low boom; close
+    ones start with the crackling rip."""
+    rng = np.random.default_rng(seed + 7777)
+    body = thunder(seed, dist, length)
+    n = len(body)
+    t = np.arange(n) / SR
+    close = dist < 500
+    env = _rolls(rng, n, length, rng.integers(3, 7))
+    mix = np.clip((t - (0.35 if close else 0.1)) / 0.9, 0, 1)
+    out = body * ((1 - mix) + mix * (0.35 + 0.95 * env))
+    # Low boom, felt as much as heard; far thunder is almost all of it.
+    sub = filt(white(rng, n), 'lowpass', 60 if close else 45, 3) * np.exp(-t / rng.uniform(1.6, 3.2)) * (0.5 + 0.5 * env)
+    out = out + peak_norm(sub, -5 if close else -3) * (0.8 if close else 1.0)
+    if close:
+        pre = int(rng.uniform(0.12, 0.3) * SR)
+        r = peak_norm(_rip(rng, pre / SR), -4)
+        out = np.concatenate([r * 0.8, out])[:n + pre]
+    out = filt(out, 'highpass', 18, 2)
+    out = compress(out, 0.2, 2.5)
+    return peak_norm(fade(out, 0.0, min(2.5, length * 0.3)), -1.0)
+
+
 # ---------------------------------------------------------------- tornado
 
 def tornado_roar(seed):
@@ -567,19 +614,21 @@ def main():
     write('blizzard', blizzard(22))
     write('sandstorm', sandstorm(23))
     thunders()
+    import gen_thunder_recorded
+    gen_thunder_recorded.main()
     tornadoes()
     write('hail', hail_ground(51))
     write('hail_roof', hail_roof(52))
 
 
 def thunders():
-    for i, (d, ln) in enumerate([(180, 9), (260, 10), (120, 8), (220, 10)]):
-        write('thunder_close%d' % (i + 1), thunder(100 + i, d, ln))
-    for i, (d, ln) in enumerate([(1300, 11), (2000, 12), (1600, 11), (900, 11)]):
-        write('thunder_mid%d' % (i + 1), thunder(200 + i, d, ln))
-    for i, (d, ln) in enumerate([(5500, 12), (8000, 13), (6500, 12), (4200, 12)]):
-        write('thunder_far%d' % (i + 1), thunder(300 + i, d, ln))
-    for i in range(3):
+    for i, (d, ln) in enumerate([(180, 10), (260, 11), (120, 9), (220, 11), (150, 10), (300, 12)]):
+        write('thunder_close%d' % (i + 1), thunder_real(100 + i, d, ln))
+    for i, (d, ln) in enumerate([(1300, 12), (2000, 13), (1600, 12), (900, 12), (1100, 12), (2400, 14)]):
+        write('thunder_mid%d' % (i + 1), thunder_real(200 + i, d, ln))
+    for i, (d, ln) in enumerate([(5500, 13), (8000, 14), (6500, 13), (4200, 13), (7200, 15), (9500, 15)]):
+        write('thunder_far%d' % (i + 1), thunder_real(300 + i, d, ln))
+    for i in range(4):
         write('thunder_strike%d' % (i + 1), strike(400 + i, 8 + i))
 
 

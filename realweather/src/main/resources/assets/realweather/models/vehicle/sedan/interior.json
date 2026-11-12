@@ -1,0 +1,30 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/sedan/interior.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "black": "realweather:item/vehicle/black",
+  "carpet": "realweather:item/vehicle/carpet",
+  "chrome": "realweather:item/vehicle/chrome",
+  "climate": "realweather:item/vehicle/climate",
+  "cluster": "realweather:item/vehicle/cluster",
+  "dark": "realweather:item/vehicle/dark",
+  "dash": "realweather:item/vehicle/dash",
+  "dome_light": "realweather:item/vehicle/dome_light",
+  "floor_mat": "realweather:item/vehicle/floor_mat",
+  "gauge": "realweather:item/vehicle/gauge",
+  "gauge_rpm": "realweather:item/vehicle/gauge_rpm",
+  "gear_panel": "realweather:item/vehicle/gear_panel",
+  "headliner": "realweather:item/vehicle/headliner",
+  "infotainment": "realweather:item/vehicle/infotainment",
+  "piano": "realweather:item/vehicle/piano",
+  "quilt_dark": "realweather:item/vehicle/quilt_dark",
+  "seat": "realweather:item/vehicle/seat",
+  "steel": "realweather:item/vehicle/steel",
+  "vent": "realweather:item/vehicle/vent",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}

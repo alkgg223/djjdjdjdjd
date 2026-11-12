@@ -56,6 +56,14 @@ public final class WeatherServer {
             d.setDirty();
         }
 
+        // Natural thunderstorm days: storms build up on their own (most often in the afternoon, on average about
+        // once every two in-game days), bringing storm cells, supercells and with them, sometimes, tornadoes.
+        long dayTime = level.getDayTime() % 24000L;
+        if (d.natural && !thundering && d.rainOverride < 0 && dayTime > 4000 && dayTime < 14000 && rng.nextInt(24000) == 0) {
+            level.setWeatherParameters(0, (8 + rng.nextInt(12)) * 1200, true, true);
+            d.setDirty();
+        }
+
         if (d.sandTicks > 0) {
             d.sandTicks--;
         }

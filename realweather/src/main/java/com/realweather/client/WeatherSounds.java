@@ -163,9 +163,9 @@ public final class WeatherSounds {
             volume = (float) (0.95 - (dist - 150) / 500 * 0.3);
         } else {
             event = ModContent.THUNDER_FAR.get();
-            volume = (float) Math.max(0.22, 0.7 - (dist - 650) / 5000);
+            volume = (float) Math.max(0.35, 0.85 - (dist - 650) / 5000);
         }
-        float pitch = 0.88F + RANDOM.nextFloat() * 0.2F;
+        float pitch = 0.94F + RANDOM.nextFloat() * 0.12F;
         SimpleSoundInstance inst = new SimpleSoundInstance(event.getLocation(), SoundSource.WEATHER, volume, pitch, RANDOM,
                 false, 0, SoundInstance.Attenuation.NONE, x, y, z, false);
         if (delay <= 0) {

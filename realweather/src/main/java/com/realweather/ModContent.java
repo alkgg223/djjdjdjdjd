@@ -99,7 +99,10 @@ public final class ModContent {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> BLIZZARD_FLAKE = particle("blizzard_flake");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> DUST = particle("dust");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SAND_GRAIN = particle("sand_grain");
-    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> TORNADO_DUST = particle("tornado_dust");
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> TORNADO_DUST = particle("tornado_dust", true);
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> TORNADO_CLOUD = particle("tornado_cloud", true);
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SPLASH_DROP = particle("splash_drop");
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RAIN_MIST = particle("rain_mist");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HAILSTONE = particle("hailstone");
 
     private ModContent() {}
@@ -114,7 +117,12 @@ public final class ModContent {
     }
 
     private static DeferredHolder<ParticleType<?>, SimpleParticleType> particle(String name) {
-        return PARTICLES.register(name, () -> new SimpleParticleType(false));
+        return particle(name, false);
+    }
+
+    /** {@code always}: shown however far from the camera it is spawned (tornado particles are seen from afar). */
+    private static DeferredHolder<ParticleType<?>, SimpleParticleType> particle(String name, boolean always) {
+        return PARTICLES.register(name, () -> new SimpleParticleType(always));
     }
 
     public static void register(IEventBus bus) {

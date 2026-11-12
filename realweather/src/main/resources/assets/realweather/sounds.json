@@ -55,36 +55,87 @@
   },
   "weather.thunder_close": {
     "sounds": [
-      "realweather:thunder_close1",
-      "realweather:thunder_close2",
-      "realweather:thunder_close3",
-      "realweather:thunder_close4"
+      {
+        "name": "realweather:thunder_close1"
+      },
+      {
+        "name": "realweather:thunder_close2"
+      },
+      {
+        "name": "realweather:thunder_close3"
+      },
+      {
+        "name": "realweather:thunder_close4"
+      },
+      {
+        "name": "realweather:thunder_close5"
+      },
+      {
+        "name": "realweather:thunder_close6"
+      }
     ],
     "subtitle": "subtitles.realweather.thunder_close"
   },
   "weather.thunder_mid": {
     "sounds": [
-      "realweather:thunder_mid1",
-      "realweather:thunder_mid2",
-      "realweather:thunder_mid3",
-      "realweather:thunder_mid4"
+      {
+        "name": "realweather:thunder_mid1"
+      },
+      {
+        "name": "realweather:thunder_mid2"
+      },
+      {
+        "name": "realweather:thunder_mid3"
+      },
+      {
+        "name": "realweather:thunder_mid4"
+      },
+      {
+        "name": "realweather:thunder_mid5"
+      },
+      {
+        "name": "realweather:thunder_mid6"
+      }
     ],
     "subtitle": "subtitles.realweather.thunder"
   },
   "weather.thunder_far": {
     "sounds": [
-      "realweather:thunder_far1",
-      "realweather:thunder_far2",
-      "realweather:thunder_far3",
-      "realweather:thunder_far4"
+      {
+        "name": "realweather:thunder_far1"
+      },
+      {
+        "name": "realweather:thunder_far2"
+      },
+      {
+        "name": "realweather:thunder_far3"
+      },
+      {
+        "name": "realweather:thunder_far4"
+      },
+      {
+        "name": "realweather:thunder_far5"
+      },
+      {
+        "name": "realweather:thunder_far6"
+      }
     ],
     "subtitle": "subtitles.realweather.thunder_far"
   },
   "weather.thunder_strike": {
     "sounds": [
-      "realweather:thunder_strike1",
-      "realweather:thunder_strike2",
-      "realweather:thunder_strike3"
+      {
+        "name": "realweather:thunder_strike1"
+      },
+      {
+        "name": "realweather:thunder_strike2"
+      },
+      {
+        "name": "realweather:thunder_strike3"
+      },
+      {
+        "name": "realweather:thunder_strike4"
+      }
     ],
     "subtitle": "subtitles.realweather.thunder_strike"
   },

@@ -19,6 +19,8 @@ public class TornadoDebrisParticle extends TextureSheetParticle {
     private float radius;
     private float angle;
     private boolean flung;
+    /** How high this piece is carried before it is thrown out. */
+    private float ceiling = -1F;
 
     public TornadoDebrisParticle(ClientLevel level, double x, double y, double z, int tornado, BlockState state) {
         super(level, x, y, z);
@@ -70,16 +72,23 @@ public class TornadoDebrisParticle extends TextureSheetParticle {
         float step = v / Math.max(0.6F, radius);
         angle -= step;
         float h = (float) (y - t.groundY);
-        float lift = Math.max(6F, Tornado.LIFT[t.rating] * 1.4F);
-        radius += (rc * 0.9F - radius) * 0.03F + h * 0.0015F;
+        if (ceiling < 0F) {
+            // Most pieces are thrown out low down; in strong tornadoes some ride the vortex up to the cloud.
+            float base = Math.max(6F, Tornado.LIFT[t.rating] * 1.4F);
+            ceiling = t.rating >= 2 && random.nextFloat() < 0.3F + t.rating * 0.06F ? t.height() * (0.55F + random.nextFloat() * 0.35F) : base;
+            ceiling = Math.max(ceiling, h + 6F + random.nextFloat() * 10F);
+        }
+        float lift = ceiling;
         float f = Mth.clamp(h / t.height(), 0F, 1F);
+        float wall = Math.max(rc * 0.9F, t.radiusAt(f) * 0.95F);
+        radius += (wall - radius) * 0.03F + h * 0.0006F;
         double cx = t.x + t.offsetX(f, t.age);
         double cz = t.z + t.offsetZ(f, t.age);
         double nx = cx + Mth.cos(angle) * radius;
         double nz = cz + Mth.sin(angle) * radius;
         double ny = y + (0.15 + t.strength * 0.35) * (t.rating + 1) / 6.0 + 0.03;
         roll += step * 3F;
-        if (h > lift || radius > rc * 3F) {
+        if (h > lift || radius > Math.max(rc * 3F, wall * 1.8F)) {
             // Thrown out of the vortex, tangentially, and left to fall.
             flung = true;
             xd = nx - x;

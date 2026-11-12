@@ -62,6 +62,9 @@ public final class SelfTest {
         if (suite.contains("vehicles")) {
             vehicleSuite();
         }
+        if (suite.contains("types")) {
+            typesSuite();
+        }
         if (suite.contains("all")) {
             weatherSuite();
         }
@@ -611,6 +614,86 @@ public final class SelfTest {
             }
             p.teleportTo(level, x + 0.5, y, z + 0.5, p.getYRot(), p.getXRot());
             LOG.info("platform at {} {} {}", x, y, z);
+        });
+    }
+
+    /** Every tornado type, one after the other, fully developed, seen from the platform; then a downpour close up. */
+    private static void typesSuite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 6000");
+            goTo("minecraft:plains", 0, 5);
+            quality(com.realweather.ClientConfig.TornadoQuality.ULTRA);
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+        });
+        step(40, SelfTest::platform);
+        String[][] list = {{"rope", "1", "75"}, {"cone", "2", "100"}, {"bowl", "3", "125"}, {"drill_bit", "2", "100"}, {"wedge", "5", "175"},
+                {"truncated_cone", "3", "125"}, {"bulb", "4", "150"}, {"hourglass", "3", "125"}, {"stovepipe", "4", "150"},
+                {"segmented", "1", "80"}, {"landspout", "0", "70"}, {"flared_base", "2", "100"}};
+        int k = 0;
+        for (String[] e : list) {
+            String name = e[0];
+            int rating = Integer.parseInt(e[1]);
+            double dist = Double.parseDouble(e[2]);
+            String label = String.format("60_%02d_%s_f%d", k++, name, rating);
+            step(5, SelfTest::removeTornadoes);
+            step(10, () -> typeTornado(name, rating, dist));
+            step(100, () -> lookAtTornado(-7));
+            step(5, () -> {
+                shot(label);
+                tornadoState(name);
+            });
+        }
+        // The same tornado at each graphics setting (and how fast it runs).
+        for (com.realweather.ClientConfig.TornadoQuality q : com.realweather.ClientConfig.TornadoQuality.values()) {
+            step(5, () -> quality(q));
+            step(60, () -> {
+                shot("61_flared_base_" + q.name().toLowerCase(java.util.Locale.ROOT));
+                tornadoState("quality " + q);
+            });
+        }
+        step(5, () -> {
+            removeTornadoes();
+            quality(com.realweather.ClientConfig.TornadoQuality.ULTRA);
+            cmd("rw clear");
+            goTo("minecraft:forest", 0, 2);
+        });
+        step(60, () -> cmd("rw rain 100 5"));
+        step(200, () -> {
+            Minecraft.getInstance().player.setXRot(35F);
+            shot("62_downpour_ground");
+            skyState("downpour");
+        });
+    }
+
+    private static void removeTornadoes() {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerLevel level = server.overworld();
+            WeatherData d = WeatherData.get(level);
+            d.tornadoes.clear();
+            com.realweather.server.TornadoManager.sync(level, d);
+        });
+    }
+
+    /** A fully developed tornado of the given type east of the player. */
+    private static void typeTornado(String shape, int rating, double dist) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            ServerLevel level = server.overworld();
+            WeatherData d = WeatherData.get(level);
+            com.realweather.server.Tornado t = com.realweather.server.TornadoManager.spawnAt(level, d,
+                    new net.minecraft.world.phys.Vec3(p.getX() + dist, p.getY(), p.getZ() + 25), rating,
+                    com.realweather.server.TornadoShape.byName(shape), level.random);
+            t.heading = 0F;
+            t.speed = 0.02F;
+            t.stage = com.realweather.server.Tornado.MATURE;
+            t.contact = 1F;
+            t.strength = 1F;
+            t.life = 100000;
+            com.realweather.server.TornadoManager.sync(level, d);
+            LOG.info("spawned {} F{} tornado at {} {}", shape, rating, (int) t.x, (int) t.z);
         });
     }
 

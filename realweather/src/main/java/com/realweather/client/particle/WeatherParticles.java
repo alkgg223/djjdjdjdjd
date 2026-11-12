@@ -16,5 +16,8 @@ public final class WeatherParticles {
         event.registerSpriteSet(ModContent.DUST.get(), DustParticle.Provider::new);
         event.registerSpriteSet(ModContent.TORNADO_DUST.get(), com.realweather.client.tornado.TornadoDustParticle.Provider::new);
         event.registerSpriteSet(ModContent.HAILSTONE.get(), com.realweather.client.hail.HailParticle.Provider::new);
+        event.registerSpriteSet(ModContent.TORNADO_CLOUD.get(), com.realweather.client.tornado.TornadoCloudParticle.Provider::new);
+        event.registerSpriteSet(ModContent.SPLASH_DROP.get(), DropletParticle.Provider::new);
+        event.registerSpriteSet(ModContent.RAIN_MIST.get(), RainMistParticle.Provider::new);
     }
 }

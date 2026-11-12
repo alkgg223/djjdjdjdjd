@@ -201,5 +201,18 @@
   "subtitles.realweather.vehicle.start_muscle": "Muscle car fires up",
   "subtitles.realweather.vehicle.start_sport": "Sports engine fires up",
   "subtitles.realweather.vehicle.start_diesel": "Diesel starts",
-  "subtitles.realweather.vehicle.backfire": "Exhaust pops"
+  "subtitles.realweather.vehicle.backfire": "Exhaust pops",
+  "realweather.shape.rope": "rope",
+  "realweather.shape.cone": "cone",
+  "realweather.shape.bowl": "bowl",
+  "realweather.shape.drill_bit": "drill bit",
+  "realweather.shape.wedge": "wedge",
+  "realweather.shape.truncated_cone": "truncated cone",
+  "realweather.shape.bulb": "bulb",
+  "realweather.shape.hourglass": "hourglass",
+  "realweather.shape.stovepipe": "stovepipe",
+  "realweather.shape.segmented": "segmented",
+  "realweather.shape.landspout": "landspout",
+  "realweather.shape.flared_base": "flared base",
+  "realweather.cmd.graphics": "Tornado graphics: %s, weather detail: %s (change with /rwgraphics tornado|weather low|medium|high|ultra)"
 }

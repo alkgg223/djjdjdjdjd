@@ -249,8 +249,15 @@ public final class SkyBillboards {
             float rb = r * BOTTOM[i], gb = g * BOTTOM[i], bb = b * BOTTOM[i];
             if (TYPE[i] == QUAD) {
                 int q = QI[i] * 4;
-                float[] us = {U0[i], U1[i], U1[i], U0[i]};
-                float[] vs = {V0[i], V0[i], V1[i], V1[i]};
+                US[0] = U0[i];
+                US[1] = U1[i];
+                US[2] = U1[i];
+                US[3] = U0[i];
+                VS[0] = V0[i];
+                VS[1] = V0[i];
+                VS[2] = V1[i];
+                VS[3] = V1[i];
+                float[] us = US, vs = VS;
                 for (int c = 0; c < 4; c++) {
                     float l = QL[q + c];
                     buf.addVertex(QX[q + c], QY[q + c], QZ[q + c]).setUv(us[c], vs[c])
@@ -311,6 +318,7 @@ public final class SkyBillboards {
         }
     }
 
+    private static final float[] US = new float[4], VS = new float[4];
     private static final float[] COL_ALPHA = {0F, 0.55F, 0.92F, 1F, 1F, 0.92F, 0.55F, 0F};
     private static final float[] COL_POS = {-1F, -0.82F, -0.55F, -0.2F, 0.2F, 0.55F, 0.82F, 1F};
 

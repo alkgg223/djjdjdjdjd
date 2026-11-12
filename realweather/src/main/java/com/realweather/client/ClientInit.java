@@ -29,6 +29,7 @@ public final class ClientInit {
         modBus.addListener(WeatherParticles::register);
 
         NeoForge.EVENT_BUS.addListener(ClientWeather::onClientTick);
+        NeoForge.EVENT_BUS.addListener(ClientCommands::register);
         NeoForge.EVENT_BUS.addListener(ClientWeather::onLogout);
         NeoForge.EVENT_BUS.addListener(WeatherSounds::onPlaySound);
         NeoForge.EVENT_BUS.addListener(WeatherSounds::onEntityJoin);

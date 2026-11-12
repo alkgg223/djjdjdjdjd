@@ -64,14 +64,25 @@ public final class WeatherCommands {
 
     private static LiteralArgumentBuilder<CommandSourceStack> tornado() {
         LiteralArgumentBuilder<CommandSourceStack> t = Commands.literal("tornado");
-        // /rw tornado 3, /rw tornado f3, and "here" to spawn it right where you stand.
-        t.then(Commands.argument("rating", IntegerArgumentType.integer(0, 5))
-                .executes(c -> spawnTornado(c.getSource(), IntegerArgumentType.getInteger(c, "rating"), false))
-                .then(Commands.literal("here").executes(c -> spawnTornado(c.getSource(), IntegerArgumentType.getInteger(c, "rating"), true))));
+        // /rw tornado 3, /rw tornado f3 wedge, and "here" to spawn it right where you stand.
+        var num = Commands.argument("rating", IntegerArgumentType.integer(0, 5))
+                .executes(c -> spawnTornado(c.getSource(), IntegerArgumentType.getInteger(c, "rating"), null, false))
+                .then(Commands.literal("here").executes(c -> spawnTornado(c.getSource(), IntegerArgumentType.getInteger(c, "rating"), null, true)));
+        for (TornadoShape shape : TornadoShape.values()) {
+            num.then(Commands.literal(shape.id())
+                    .executes(c -> spawnTornado(c.getSource(), IntegerArgumentType.getInteger(c, "rating"), shape, false))
+                    .then(Commands.literal("here").executes(c -> spawnTornado(c.getSource(), IntegerArgumentType.getInteger(c, "rating"), shape, true))));
+        }
+        t.then(num);
         for (int i = 0; i <= 5; i++) {
             int rating = i;
-            t.then(Commands.literal("f" + i).executes(c -> spawnTornado(c.getSource(), rating, false))
-                    .then(Commands.literal("here").executes(c -> spawnTornado(c.getSource(), rating, true))));
+            var lit = Commands.literal("f" + i).executes(c -> spawnTornado(c.getSource(), rating, null, false))
+                    .then(Commands.literal("here").executes(c -> spawnTornado(c.getSource(), rating, null, true)));
+            for (TornadoShape shape : TornadoShape.values()) {
+                lit.then(Commands.literal(shape.id()).executes(c -> spawnTornado(c.getSource(), rating, shape, false))
+                        .then(Commands.literal("here").executes(c -> spawnTornado(c.getSource(), rating, shape, true))));
+            }
+            t.then(lit);
         }
         t.then(Commands.literal("stop").executes(c -> {
             WeatherData d = WeatherData.get(overworld(c.getSource()));
@@ -98,7 +109,7 @@ public final class WeatherCommands {
         return 1;
     }
 
-    private static int spawnTornado(CommandSourceStack src, int rating, boolean here) {
+    private static int spawnTornado(CommandSourceStack src, int rating, TornadoShape shape, boolean here) {
         ServerLevel level = overworld(src);
         WeatherData d = WeatherData.get(level);
         if (d.tornadoes.size() >= 4) {
@@ -106,10 +117,10 @@ public final class WeatherCommands {
             return 0;
         }
         net.minecraft.world.phys.Vec3 pos = src.getLevel() == level ? src.getPosition() : level.getSharedSpawnPos().getCenter();
-        Tornado t = here ? TornadoManager.spawnAt(level, d, pos, rating, level.random)
-                : TornadoManager.spawnApproaching(level, d, pos, rating, 70 + level.random.nextInt(30), level.random);
+        Tornado t = here ? TornadoManager.spawnAt(level, d, pos, rating, shape, level.random)
+                : TornadoManager.spawnApproaching(level, d, pos, rating, shape, 70 + level.random.nextInt(30), level.random);
         int dist = (int) Math.sqrt((t.x - pos.x) * (t.x - pos.x) + (t.z - pos.z) * (t.z - pos.z));
-        ok(src, "tornado", "F" + rating, dist);
+        ok(src, "tornado", Component.literal("F" + rating + " ").append(Component.translatable("realweather.shape." + t.shape.id())), dist);
         return 1;
     }
 

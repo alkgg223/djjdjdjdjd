@@ -52,6 +52,36 @@ public final class PrecipitationRenderer {
 
     private static BufferBuilder buffer;
     private static ResourceLocation bound;
+    private static int scanX = Integer.MIN_VALUE, scanY, scanZ, scanR, scanTick;
+    private static ClientLevel scanLevel;
+
+    private static void scan(ClientLevel level, int cx, int cy, int cz, int r) {
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int dz = -r; dz <= r; dz++) {
+            for (int dx = -r; dx <= r; dx++) {
+                int i = (dz + MAX_R) * SIZE + dx + MAX_R;
+                int x = cx + dx;
+                int z = cz + dz;
+                int g = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+                ground[i] = g;
+                m.set(x, Math.max(g, cy), z);
+                Biome biome = level.getBiome(m).value();
+                int t = NONE;
+                if (WeatherServer.isDryBiome(biome)) {
+                    t = SAND_COL;
+                } else if (biome.hasPrecipitation()) {
+                    m.setY(Math.max(g, cy - r));
+                    Biome.Precipitation p = biome.getPrecipitationAt(m);
+                    t = p == Biome.Precipitation.RAIN ? RAIN_COL : p == Biome.Precipitation.SNOW ? SNOW_COL : NONE;
+                }
+                type[i] = t;
+                if (t != NONE) {
+                    m.set(x, Math.max(g, cy), z);
+                    light[i] = LevelRenderer.getLightColor(level, m);
+                }
+            }
+        }
+    }
 
     // Puddle cache.
     private static final int PUDDLE_R = 18;
@@ -95,30 +125,16 @@ public final class PrecipitationRenderer {
         int cx = Mth.floor(camX);
         int cy = Mth.floor(camY);
         int cz = Mth.floor(camZ);
-        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
-        for (int dz = -r; dz <= r; dz++) {
-            for (int dx = -r; dx <= r; dx++) {
-                int i = (dz + MAX_R) * SIZE + dx + MAX_R;
-                int x = cx + dx;
-                int z = cz + dz;
-                int g = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
-                ground[i] = g;
-                m.set(x, Math.max(g, cy), z);
-                Biome biome = level.getBiome(m).value();
-                int t = NONE;
-                if (WeatherServer.isDryBiome(biome)) {
-                    t = SAND_COL;
-                } else if (biome.hasPrecipitation()) {
-                    m.setY(Math.max(g, cy - r));
-                    Biome.Precipitation p = biome.getPrecipitationAt(m);
-                    t = p == Biome.Precipitation.RAIN ? RAIN_COL : p == Biome.Precipitation.SNOW ? SNOW_COL : NONE;
-                }
-                type[i] = t;
-                if (t != NONE) {
-                    m.set(x, Math.max(g, cy), z);
-                    light[i] = LevelRenderer.getLightColor(level, m);
-                }
-            }
+        // Which columns get rain, snow or sand, where their ground is and how they are lit: looked up again only
+        // when the camera moves to another block or every half second, not every frame.
+        if (cx != scanX || cy != scanY || cz != scanZ || r != scanR || ticks - scanTick > 10 || ticks < scanTick || level != scanLevel) {
+            scan(level, cx, cy, cz, r);
+            scanX = cx;
+            scanY = cy;
+            scanZ = cz;
+            scanR = r;
+            scanTick = ticks;
+            scanLevel = level;
         }
 
         float wx = ClientWeather.windX;

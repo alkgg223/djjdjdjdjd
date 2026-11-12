@@ -136,10 +136,13 @@ public class StreakParticle extends TextureSheetParticle {
 
         @Override
         public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z, double xd, double yd, double zd) {
-            StreakParticle p = new StreakParticle(level, x, y, z, xd, yd, zd, sprites, 0.022F, 0.55F + (float) Math.random() * 0.25F, true);
+            // Thin, slightly blurred streaks: small drops shorter and fainter than the big ones.
+            float size = (float) Math.random();
+            StreakParticle p = new StreakParticle(level, x, y, z, xd, yd, zd, sprites, 0.012F + size * 0.01F, 0.45F + size * 0.4F, true);
             p.lifetime = 30;
-            p.setColor(0.86F, 0.9F, 0.97F);
-            p.alpha = 0.45F + (float) Math.random() * 0.2F;
+            float c = 0.84F + (float) Math.random() * 0.1F;
+            p.setColor(c, c + 0.04F, c + 0.1F);
+            p.alpha = 0.3F + size * 0.3F;
             return p;
         }
     }

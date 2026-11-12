@@ -36,6 +36,10 @@ public final class HailCoverage {
         if (!any && COVER.isEmpty()) {
             return;
         }
+        // Every fourth tick is plenty for something this slow (the rates below are per update).
+        if (level.getGameTime() % 4 != 0) {
+            return;
+        }
         Int2FloatOpenHashMap next = new Int2FloatOpenHashMap();
         for (Entity e : level.entitiesForRendering()) {
             if (!(e instanceof LivingEntity) || e.distanceToSqr(cam) > 48 * 48) {
@@ -49,9 +53,9 @@ public final class HailCoverage {
             }
             boolean exposed = level.canSeeSky(BlockPos.containing(e.getX(), e.getY() + e.getBbHeight() + 0.2, e.getZ()));
             if (exposed && hail > 0.1F) {
-                c = Math.min(1F, c + 0.0028F * hail);
+                c = Math.min(1F, c + 0.0112F * hail);
             } else {
-                c = Math.max(0F, c - (e.isInWaterOrRain() && !exposed ? 0.002F : 0.0009F));
+                c = Math.max(0F, c - (e.isInWaterOrRain() && !exposed ? 0.008F : 0.0036F));
             }
             if (c > 0F) {
                 next.put(e.getId(), c);

@@ -37,8 +37,10 @@ public class Tornado {
     /** 0..1 how developed the vortex is (grows while forming, shrinks while roping out). */
     public float strength;
     public final long seed;
+    /** What the funnel looks like (see TornadoShape). */
+    public final TornadoShape shape;
 
-    public Tornado(int id, double x, double z, float groundY, float heading, float speed, int rating, int life, long seed) {
+    public Tornado(int id, double x, double z, float groundY, float heading, float speed, int rating, int life, long seed, TornadoShape shape) {
         this.id = id;
         this.x = x;
         this.z = z;
@@ -48,6 +50,7 @@ public class Tornado {
         this.rating = Mth.clamp(rating, 0, 5);
         this.life = life;
         this.seed = seed;
+        this.shape = shape;
     }
 
     public float coreRadius() {
@@ -106,12 +109,14 @@ public class Tornado {
         t.putFloat("contact", contact);
         t.putFloat("strength", strength);
         t.putLong("seed", seed);
+        t.putInt("shape", shape.ordinal());
         return t;
     }
 
     static Tornado load(CompoundTag t) {
         Tornado o = new Tornado(t.getInt("id"), t.getDouble("x"), t.getDouble("z"), t.getFloat("groundY"), t.getFloat("heading"),
-                t.getFloat("speed"), t.getInt("rating"), t.getInt("life"), t.getLong("seed"));
+                t.getFloat("speed"), t.getInt("rating"), t.getInt("life"), t.getLong("seed"),
+                t.contains("shape") ? TornadoShape.byId(t.getInt("shape")) : TornadoShape.CONE);
         o.age = t.getInt("age");
         o.stage = t.getInt("stage");
         o.contact = t.getFloat("contact");
