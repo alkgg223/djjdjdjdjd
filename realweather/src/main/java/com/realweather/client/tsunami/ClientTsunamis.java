@@ -168,7 +168,7 @@ public final class ClientTsunamis {
         if (w.roar != null) {
             w.roar.target = roarVol;
             w.roar.place(fx, t.baseY + h * 0.5, fz);
-            w.roar.pitch = Mth.clamp(1.15F - h / 80F, 0.75F, 1.15F);
+            w.roar.setPitch(Mth.clamp(1.15F - h / 80F, 0.75F, 1.15F));
         }
         float rushVol = inFlood ? 0.9F * (1F - t.drained) : (float) Mth.clamp(1.0 - faceDist / 60.0, 0.0, 1.0) * 0.7F;
         if (w.rush == null && rushVol > 0.02F) {
@@ -197,6 +197,10 @@ public final class ClientTsunamis {
             this.delay = 0;
             this.attenuation = SoundInstance.Attenuation.NONE;
             this.volume = 0.01F;
+        }
+
+        void setPitch(float p) {
+            this.pitch = p;
         }
 
         void place(double x, double y, double z) {
