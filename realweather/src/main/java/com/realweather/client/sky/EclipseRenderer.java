@@ -36,6 +36,7 @@ public final class EclipseRenderer {
     private static final ResourceLocation CORONA = RealWeather.id("textures/environment/corona.png");
     private static final ResourceLocation FLARE = RealWeather.id("textures/environment/flare.png");
     private static final ResourceLocation PATCH = RealWeather.id("textures/environment/patch.png");
+    private static final ResourceLocation CLOUD_GLOW = RealWeather.id("textures/environment/cloud_glow.png");
     /** Sun disc radius as vanilla draws it (the middle half of a 60-wide quad at 100 blocks). */
     static final float SUN_R = 15F;
     private static float[] stars;
@@ -73,8 +74,9 @@ public final class EclipseRenderer {
     private static void render(RenderLevelStageEvent event, Minecraft mc, ClientLevel level, float pt) {
         float dark = ClientEclipse.dark, cov = ClientEclipse.coverage, up = ClientEclipse.sunUp;
         float rain = level.getRainLevel(pt);
-        // Thick cloud hides the sun itself; the darkening comes through all the same.
-        float clear = 1F - rain * 0.9F;
+        // Thick cloud hides the sun itself (only its glow comes through, drawn over the clouds); the darkening comes
+        // through all the same.
+        float clear = Mth.clamp(1F - rain * 1.3F, 0F, 1F);
         Matrix4fStack mv = RenderSystem.getModelViewStack();
         mv.pushMatrix();
         mv.set(event.getModelViewMatrix());
@@ -104,8 +106,7 @@ public final class EclipseRenderer {
             RenderSystem.applyModelViewMatrix();
             // 2: cover the vanilla sun (it can't be hidden behind the moon) with the colour of the darkened sky.
             float cr = (float) Mth.lerp(dark * 0.93F, sky.x, nr), cg = (float) Mth.lerp(dark * 0.93F, sky.y, ng), cb = (float) Mth.lerp(dark * 0.93F, sky.z, nb);
-            RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-            RenderSystem.setShaderTexture(0, PATCH);
+            VolumeClouds.useGlow(PATCH);
             b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
             quadTex(b, 0F, 100F, 0F, 40F, cr, cg, cb, 1F);
             draw(b);
@@ -143,17 +144,16 @@ public final class EclipseRenderer {
             }
             // The uncovered part of the sun at full brightness; its glare shrinks with what is left of it.
             float sunA = clear * (cov > 0.9995F ? 0F : 1F);
-            RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-            RenderSystem.setShaderTexture(0, DISC);
+            VolumeClouds.useGlow(DISC);
             b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
             quadTex(b, 0F, 100F, 0F, SUN_R, 1F, 0.97F, 0.9F, sunA);
             draw(b);
-            RenderSystem.setShaderTexture(0, SUN);
+            VolumeClouds.useGlow(SUN);
             b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
             quadTex(b, 0F, 100F, 0F, 30F, 1F, 0.98F, 0.93F, sunA * (float) Math.pow(1F - cov, 0.7));
             draw(b);
             if (ClientEclipse.corona > 0.01F) {
-                RenderSystem.setShaderTexture(0, CORONA);
+                VolumeClouds.useGlow(CORONA);
                 b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
                 float cs = SUN_R * com.realweather.server.Eclipse.MOON / 0.2F;
                 quadTex(b, ClientEclipse.moonX * SUN_R * 0.3F, 100F, ClientEclipse.moonZ * SUN_R * 0.3F, cs, 0.95F, 0.97F, 1F,
@@ -166,7 +166,7 @@ public final class EclipseRenderer {
                 float mx = ClientEclipse.moonX, mz = ClientEclipse.moonZ;
                 float len = Mth.sqrt(mx * mx + mz * mz);
                 float dx = len > 1.0E-3F ? -mx / len : 1F, dz = len > 1.0E-3F ? -mz / len : 0F;
-                RenderSystem.setShaderTexture(0, FLARE);
+                VolumeClouds.useGlow(FLARE);
                 b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
                 float fa = ClientEclipse.diamond * clear;
                 quadTex(b, dx * SUN_R, 100F, dz * SUN_R, 58F, 1F, 1F, 0.97F, fa);
@@ -205,7 +205,9 @@ public final class EclipseRenderer {
             return;
         }
         float cov = ClientEclipse.coverage;
-        float glow = overcast * ClientEclipse.sunUp * (0.5F * (float) Math.pow(Math.max(0F, 1F - cov), 0.6) + 1.5F * ClientEclipse.diamond);
+        // The sun's light soaking through the cloud: strong while much of it is left, and a blinding flare through the
+        // clouds at the diamond ring.
+        float glow = overcast * ClientEclipse.sunUp * (1.1F * (float) Math.pow(Math.max(0F, 1F - cov), 0.6) + 5F * ClientEclipse.diamond);
         if (glow < 0.01F) {
             return;
         }
@@ -220,11 +222,16 @@ public final class EclipseRenderer {
         RenderSystem.depthMask(false);
         RenderSystem.disableCull();
         try {
-            RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-            RenderSystem.setShaderTexture(0, PATCH);
+            VolumeClouds.useGlow(CLOUD_GLOW);
             BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-            quadTex(b, 0F, 100F, 0F, 85F, 0.95F, 0.95F, 0.98F, Math.min(1F, glow * 0.35F));
-            quadTex(b, 0F, 100F, 0F, 38F, 1F, 0.98F, 0.94F, Math.min(1F, glow * 0.7F));
+            quadTex(b, 0F, 100F, 0F, 150F, 0.92F, 0.93F, 0.97F, Math.min(1F, glow * 0.45F));
+            quadTex(b, 0F, 100F, 0F, 90F, 0.96F, 0.96F, 0.98F, Math.min(1F, glow * 0.7F));
+            quadTex(b, 0F, 100F, 0F, 48F, 1F, 0.99F, 0.96F, Math.min(1F, glow));
+            if (glow > 1F) {
+                // Brighter than the cloud can hold: the whole sky round the sun washes out.
+                quadTex(b, 0F, 100F, 0F, 230F, 0.95F, 0.95F, 0.98F, Math.min(1F, (glow - 1F) * 0.35F));
+                quadTex(b, 0F, 100F, 0F, 70F, 1F, 1F, 1F, Math.min(1F, (glow - 1F) * 0.6F));
+            }
             draw(b);
         } finally {
             RenderSystem.defaultBlendFunc();

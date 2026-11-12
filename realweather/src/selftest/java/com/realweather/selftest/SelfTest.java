@@ -999,8 +999,17 @@ public final class SelfTest {
             com.realweather.client.sky.CloudFlashes.add(c.x + 20, deck + 40, c.z + 180, 1.4F, true);
         });
         step(1, () -> shot("99b_lightning_in_3d_cloud"));
-        // Rain storms round about: volumetric in 3D, grey sprites otherwise.
-        step(5, () -> look(120F, -6F));
+        // A rain storm seen from outside it: volumetric in 3D, grey sprites otherwise.
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 5000");
+        });
+        step(40, () -> {
+            cmd("rw rain 12 6");
+            cmd("execute as @a at @s run rw supercell 10");
+        });
+        step(240, SelfTest::lookAtStorm);
+        step(5, () -> weatherQuality(com.realweather.ClientConfig.Quality.HIGH_3D));
         step(40, () -> shot("99c_storms_3d"));
         step(5, () -> weatherQuality(com.realweather.ClientConfig.Quality.HIGH));
         step(40, () -> shot("99d_storms_sprites"));
@@ -1008,6 +1017,30 @@ public final class SelfTest {
             cmd("rw clear");
             cmd("gamerule doDaylightCycle true");
         });
+    }
+
+    /** Faces the nearest storm cell, a little above its base. */
+    private static void lookAtStorm() {
+        Minecraft mc = Minecraft.getInstance();
+        net.minecraft.world.phys.Vec3 c = mc.gameRenderer.getMainCamera().getPosition();
+        com.realweather.client.ClientStorms.Cell best = null;
+        double bd = Double.MAX_VALUE;
+        for (com.realweather.client.ClientStorms.Cell cell : com.realweather.client.ClientStorms.cells()) {
+            double d = (cell.x - c.x) * (cell.x - c.x) + (cell.z - c.z) * (cell.z - c.z);
+            if (d < bd) {
+                bd = d;
+                best = cell;
+            }
+        }
+        if (best == null) {
+            LOG.warn("no storm cell to look at");
+            look(0F, -10F);
+            return;
+        }
+        double dx = best.x - c.x, dz = best.z - c.z;
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        LOG.info("storm cell {} blocks away, radius {}", (int) Math.sqrt(bd), best.radius);
+        look(yaw, -8F);
     }
 
     /** Puts the eclipse at a given point of its course (0 first contact .. 1 last). */

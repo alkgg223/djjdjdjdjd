@@ -27,7 +27,7 @@ import org.lwjgl.opengl.GL11;
  * on this machine the ordinary ULTRA clouds are used instead.
  */
 public final class VolumeClouds {
-    private static ShaderInstance march, composite;
+    private static ShaderInstance march, composite, glow;
     private static TextureTarget target;
     private static boolean broken;
     /** Set by the sky pass when this frame should have volumetric clouds. */
@@ -43,11 +43,24 @@ public final class VolumeClouds {
                     s -> march = s);
             event.registerShader(new ShaderInstance(event.getResourceProvider(), RealWeather.id("cloud_composite"), DefaultVertexFormat.POSITION),
                     s -> composite = s);
+            event.registerShader(new ShaderInstance(event.getResourceProvider(), RealWeather.id("sky_glow"), DefaultVertexFormat.POSITION_TEX_COLOR),
+                    s -> glow = s);
         } catch (Exception | LinkageError e) {
             march = null;
             composite = null;
             RealWeather.LOG.warn("ULTRA 3D clouds unavailable (shaders did not load); using the ULTRA clouds instead", e);
         }
+    }
+
+    /** Sets the shader for soft sky glows and thin sheets (no alpha cut-off), and smooth filtering on the texture. */
+    static void useGlow(net.minecraft.resources.ResourceLocation texture) {
+        if (glow != null) {
+            RenderSystem.setShader(() -> glow);
+        } else {
+            RenderSystem.setShader(net.minecraft.client.renderer.GameRenderer::getPositionTexColorShader);
+        }
+        Minecraft.getInstance().getTextureManager().getTexture(texture).setFilter(true, false);
+        RenderSystem.setShaderTexture(0, texture);
     }
 
     public static boolean available() {

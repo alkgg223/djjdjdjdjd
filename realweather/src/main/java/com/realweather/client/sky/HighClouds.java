@@ -48,7 +48,6 @@ public final class HighClouds {
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
         RenderSystem.disableCull();
-        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         float[] fog = RenderSystem.getShaderFogColor();
         int q = ClientConfig.quality();
         int n = new int[]{4, 6, 8, 9}[q];
@@ -61,7 +60,7 @@ public final class HighClouds {
                 if (L[1] < 0.02F || cam.y > L[0] - 5) {
                     continue;
                 }
-                RenderSystem.setShaderTexture(0, tex[li]);
+                VolumeClouds.useGlow(tex[li]);
                 BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
                 double ox = -CloudField.driftX * L[3], oz = -CloudField.driftZ * L[3];
                 int cx = Mth.floor(cam.x / tile), cz = Mth.floor(cam.z / tile);
