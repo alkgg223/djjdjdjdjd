@@ -292,7 +292,8 @@ public final class TsunamiRenderer {
                         float d = Mth.sqrt(x * x + z * z);
                         float haze = 1F - (float) Math.exp(-d / 420F);
                         float b = (lit[kk] + 0.25F * sun) * (foam ? 1.05F : 1F);
-                        float a = foam ? fo[kk] : (part == 1 ? 0.82F : 0.93F);
+                        // A wall of churned water: you can't see through it to what lies behind.
+                        float a = foam ? fo[kk] : (part == 1 ? 0.95F : 0.97F);
                         float u = (l0 + (l1 - l0) * ii / segs) / 24F;
                         float v = (part * 0.5F + kk * 0.09F) * Math.max(1F, h / 10F) - vScroll * (part == 0 ? 1F : -0.6F);
                         vertex(buf, x, y, z, u, v, b * lr, b * lg, b * lb, a, fog, haze, d, reach);

@@ -256,10 +256,16 @@ public final class TsunamiManager {
                 double push = face ? speed * (1.0 + Math.min(1.5, h / 12.0)) : speed * 0.55;
                 Vec3 v = e.getDeltaMovement();
                 double vy = v.y;
-                double surface = face ? crest - 1.0 : flood - 0.4;
-                if (e.getY() < surface && !(e instanceof com.realweather.vehicle.StormVehicle && under && !face)) {
-                    // Carried up to the surface of the water.
+                // Living things are churned along inside the wave; debris and cars bob up to its top. In the flood
+                // behind it, real water does its own floating and sinking; elsewhere the water lifts things to the top.
+                double surface = face ? (e instanceof LivingEntity && !(e instanceof com.realweather.vehicle.StormVehicle) ? crest - Math.max(1.5, h * 0.45)
+                        : crest - 1.0) : flood - 0.4;
+                boolean lift = face || (!e.isInWater() && !(e instanceof com.realweather.vehicle.StormVehicle));
+                if (lift && e.getY() < surface) {
                     vy += (Math.min(0.5, (surface - e.getY()) * 0.08) - Math.max(0, v.y)) * (face ? 0.6 : 0.3);
+                } else if (face && e.getY() > surface + 1 && e instanceof LivingEntity) {
+                    // Dragged back under.
+                    vy += (-0.25 - Math.min(0, v.y)) * 0.4;
                 }
                 e.setDeltaMovement(v.x + (w.dirX * push - v.x) * k, vy, v.z + (w.dirZ * push - v.z) * k);
                 e.hurtMarked = true;
@@ -277,9 +283,13 @@ public final class TsunamiManager {
                 }
                 // Under the water: the air runs out as it would in the sea.
                 double eye = e.getEyeY();
-                boolean submerged = (face && eye < crest - 0.3) || (under && eye < flood);
-                if (submerged && e instanceof LivingEntity living) {
-                    suffocate(level, living);
+                if (e instanceof LivingEntity living) {
+                    if (face && eye < crest - 0.3) {
+                        // Tumbling in the wave: the air goes fast.
+                        suffocate(level, living, 4);
+                    } else if (under && eye < flood) {
+                        suffocate(level, living, 1);
+                    }
                 }
             }
         }
@@ -287,10 +297,23 @@ public final class TsunamiManager {
 
     /** One tick without air for something under the tsunami's water (net of the air it would get back on land). */
     public static void suffocate(ServerLevel level, LivingEntity e) {
-        if (e.canBreatheUnderwater() || e.isEyeInFluid(FluidTags.WATER) || (e instanceof Player p && p.getAbilities().invulnerable)) {
+        suffocate(level, e, 1);
+    }
+
+    /** As {@link #suffocate(ServerLevel, LivingEntity)}, losing {@code rate} air a tick (1 is the rate in the sea). */
+    public static void suffocate(ServerLevel level, LivingEntity e, int rate) {
+        if (e.canBreatheUnderwater() || (e instanceof Player p && p.getAbilities().invulnerable)) {
             return;
         }
-        int air = e.getAirSupply() - 5;
+        if (e.isEyeInFluid(FluidTags.WATER)) {
+            // Real water already takes one a tick and gives none back.
+            rate -= 1;
+            if (rate <= 0) {
+                return;
+            }
+            e.setAirSupply(e.getAirSupply() + 4);
+        }
+        int air = e.getAirSupply() - 4 - rate;
         if (air <= -20) {
             air = 0;
             e.hurt(level.damageSources().drown(), 2F);
