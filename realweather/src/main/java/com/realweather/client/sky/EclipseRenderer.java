@@ -108,7 +108,8 @@ public final class EclipseRenderer {
             float cr = (float) Mth.lerp(dark * 0.93F, sky.x, nr), cg = (float) Mth.lerp(dark * 0.93F, sky.y, ng), cb = (float) Mth.lerp(dark * 0.93F, sky.z, nb);
             VolumeClouds.useGlow(PATCH);
             b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-            quadTex(b, 0F, 100F, 0F, 40F, cr, cg, cb, 1F);
+            // Vanilla fades its sun out in the rain; so does this cover.
+            quadTex(b, 0F, 100F, 0F, 40F, cr, cg, cb, Mth.clamp(1F - rain, 0F, 1F));
             draw(b);
 
             // 3: the moon, as depth only: the sun, its glow, the corona and the stars behind it are hidden there.

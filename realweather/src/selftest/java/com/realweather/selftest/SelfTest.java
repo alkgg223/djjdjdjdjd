@@ -1009,7 +1009,7 @@ public final class SelfTest {
             cmd("execute as @a at @s run rw supercell 10");
         });
         step(240, SelfTest::lookAtStorm);
-        step(5, () -> weatherQuality(com.realweather.ClientConfig.Quality.HIGH_3D));
+        step(120, () -> weatherQuality(com.realweather.ClientConfig.Quality.HIGH_3D));
         step(40, () -> shot("99c_storms_3d"));
         step(5, () -> weatherQuality(com.realweather.ClientConfig.Quality.HIGH));
         step(40, () -> shot("99d_storms_sprites"));
@@ -1038,9 +1038,19 @@ public final class SelfTest {
             return;
         }
         double dx = best.x - c.x, dz = best.z - c.z;
-        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-        LOG.info("storm cell {} blocks away, radius {}", (int) Math.sqrt(bd), best.radius);
-        look(yaw, -8F);
+        double len = Math.max(1.0, Math.sqrt(bd));
+        // Stand well away from it (about a thousand blocks), to see the whole storm.
+        double away = 1000.0 - len;
+        final double tx = c.x - dx / len * away, tz = c.z - dz / len * away;
+        final float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        LOG.info("storm cell {} blocks away, radius {}; moving out to see it", (int) len, best.radius);
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            p.teleportTo(server.overworld(), tx, p.getY() + 30, tz, yaw, -6F);
+            p.getAbilities().flying = true;
+            p.onUpdateAbilities();
+        });
     }
 
     /** Puts the eclipse at a given point of its course (0 first contact .. 1 last). */
