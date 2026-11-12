@@ -86,11 +86,6 @@ public class TornadoCloudParticle extends TextureSheetParticle {
         return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
-    @Override
-    public boolean shouldCull() {
-        return true;
-    }
-
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprites;
 
