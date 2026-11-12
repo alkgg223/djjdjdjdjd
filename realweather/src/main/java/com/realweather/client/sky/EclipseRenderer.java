@@ -176,6 +176,8 @@ public final class EclipseRenderer {
             }
             light.turnOffLightLayer();
         } finally {
+            // Depth writes have to be on for the clear to take (the moon's depth must not hide what comes later).
+            RenderSystem.depthMask(true);
             RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
             RenderSystem.depthFunc(GL11.GL_LEQUAL);
             RenderSystem.colorMask(true, true, true, true);
@@ -225,13 +227,12 @@ public final class EclipseRenderer {
         try {
             VolumeClouds.useGlow(CLOUD_GLOW);
             BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-            quadTex(b, 0F, 100F, 0F, 150F, 0.92F, 0.93F, 0.97F, Math.min(1F, glow * 0.45F));
-            quadTex(b, 0F, 100F, 0F, 90F, 0.96F, 0.96F, 0.98F, Math.min(1F, glow * 0.7F));
-            quadTex(b, 0F, 100F, 0F, 48F, 1F, 0.99F, 0.96F, Math.min(1F, glow));
-            if (glow > 1F) {
-                // Brighter than the cloud can hold: the whole sky round the sun washes out.
-                quadTex(b, 0F, 100F, 0F, 230F, 0.95F, 0.95F, 0.98F, Math.min(1F, (glow - 1F) * 0.35F));
-                quadTex(b, 0F, 100F, 0F, 70F, 1F, 1F, 1F, Math.min(1F, (glow - 1F) * 0.6F));
+            // Wide, overlapping soft layers: the light soaks through a great patch of cloud and fades out gently.
+            quadTex(b, 0F, 100F, 0F, 260F, 0.92F, 0.93F, 0.97F, Math.min(1F, glow * 0.2F));
+            quadTex(b, 0F, 100F, 0F, 170F, 0.95F, 0.95F, 0.98F, Math.min(1F, glow * 0.3F));
+            quadTex(b, 0F, 100F, 0F, 105F, 1F, 0.99F, 0.96F, Math.min(1F, glow * 0.42F));
+            if (glow > 2F) {
+                quadTex(b, 0F, 100F, 0F, 340F, 0.95F, 0.95F, 0.98F, Math.min(1F, (glow - 2F) * 0.12F));
             }
             draw(b);
         } finally {

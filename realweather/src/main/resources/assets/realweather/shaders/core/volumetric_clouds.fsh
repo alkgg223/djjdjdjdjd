@@ -128,8 +128,10 @@ float stormDensity(vec3 wp, out float shaft) {
         float body = (1.0 - smoothstep(0.45 + bulge, 0.85 + bulge, r * (1.0 + hh * 0.25))) * smoothstep(0.0, 0.035, hh)
                 * (1.0 - smoothstep(0.78, 0.9, hh));
         float anvil = (1.0 - smoothstep(1.1, 1.85, r)) * smoothstep(0.8, 0.88, hh) * (1.0 - smoothstep(0.94, 1.0, hh));
-        // A flat, low shelf all round the base.
-        float shelf = (1.0 - smoothstep(0.8, 1.3, r)) * smoothstep(0.0, 0.02, hh) * (1.0 - smoothstep(0.05, 0.1, hh)) * 0.7;
+        // A ragged, broken shelf of cloud round the base.
+        float rag = vnoise(vec3(o / (c.z * 0.18), 3.0));
+        float shelf = (1.0 - smoothstep(0.6 + rag * 0.5, 1.2 + rag * 0.4, r)) * smoothstep(0.0, 0.03, hh) * (1.0 - smoothstep(0.03, 0.09, hh))
+                * clamp((rag - 0.35) * 2.5, 0.0, 1.0) * 0.6;
         d = max(d, max(max(body, anvil * 0.75), shelf) * c.w);
     }
     return d;
