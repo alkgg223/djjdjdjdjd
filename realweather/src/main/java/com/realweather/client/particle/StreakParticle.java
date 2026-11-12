@@ -141,7 +141,7 @@ public class StreakParticle extends TextureSheetParticle {
             StreakParticle p = new StreakParticle(level, x, y, z, xd, yd, zd, sprites, 0.012F + size * 0.01F, 0.45F + size * 0.4F, true);
             p.lifetime = 30;
             float c = 0.84F + (float) Math.random() * 0.1F;
-            p.setColor(c, c + 0.04F, c + 0.1F);
+            p.setColor(c, c + 0.04F, Math.min(1F, c + 0.1F));
             p.alpha = 0.3F + size * 0.3F;
             return p;
         }

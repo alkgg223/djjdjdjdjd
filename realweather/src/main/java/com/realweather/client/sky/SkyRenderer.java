@@ -104,6 +104,8 @@ public final class SkyRenderer {
         if (clouds) {
             float rainLevel = level.getRainLevel(pt);
             float cover = ClientStorms.synced ? rainLevel * Mth.clamp(ClientStorms.stratiform + 0.3F, 0F, 1F) : rainLevel;
+            // A dust storm is blown dust under a clear sky, not a rain deck.
+            cover *= 1F - 0.8F * Mth.clamp(ClientWeather.sand * 1.5F, 0F, 1F);
             CloudField.collect(level, cam, pt, q, cover);
         }
         if (storms) {

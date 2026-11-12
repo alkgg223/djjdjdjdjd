@@ -86,7 +86,7 @@ public final class TsunamiRenderer {
                 BufferBuilder buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
                 boolean any = false;
                 for (ClientTsunamis.W w : ClientTsunamis.all()) {
-                    any |= wave(buf, w.t, cam, pt, reach, fog, sky, pass == 1);
+                    any |= wave(buf, level, w.t, cam, pt, reach, fog, sky, pass == 1);
                 }
                 MeshData mesh = buf.build();
                 if (mesh != null) {
@@ -105,7 +105,39 @@ public final class TsunamiRenderer {
 
     private static final float[] PX = new float[400 * 12], PY = new float[400 * 12], PZ = new float[400 * 12];
 
-    private static boolean wave(BufferBuilder buf, Tsunami t, Vec3 cam, float pt, float reach, float[] fog, float sky, boolean foam) {
+    private static final it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap LAND = new it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap();
+    private static long landClearedAt;
+
+    /** Whether a flood tile lies over land (looked up once and remembered; the world changes slowly). */
+    private static boolean land(ClientLevel level, Tsunami t, float s, float l, float tile) {
+        long now = level.getGameTime();
+        if (now - landClearedAt > 100 || LAND.size() > 20000) {
+            LAND.clear();
+            landClearedAt = now;
+        }
+        long key = ((long) t.id << 48) | ((Mth.floor(s / tile) & 0xFFFFFFL) << 24) | (Mth.floor(l / tile) & 0xFFFFFFL);
+        byte v = LAND.getOrDefault(key, (byte) -1);
+        if (v < 0) {
+            v = 0;
+            float[][] pts = {{0F, 0F}, {-0.4F, -0.4F}, {0.4F, -0.4F}, {0.4F, 0.4F}, {-0.4F, 0.4F}};
+            for (float[] p : pts) {
+                float ss = s + p[0] * tile, ll = l + p[1] * tile;
+                int x = Mth.floor(t.ox + t.dirX * ss - t.dirZ * ll);
+                int z = Mth.floor(t.oz + t.dirZ * ss + t.dirX * ll);
+                int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(x, top - 1, z);
+                if (top - 1 > t.baseY + 0.5F || level.getFluidState(below).isEmpty()) {
+                    v = 1;
+                    break;
+                }
+            }
+            LAND.put(key, v);
+        }
+        return v == 1;
+    }
+
+    private static boolean wave(BufferBuilder buf, ClientLevel level, Tsunami t, Vec3 cam, float pt, float reach, float[] fog, float sky,
+                                boolean foam) {
         float time = t.age + pt;
         float front = t.front + (t.stage == Tsunami.RUNNING ? t.speed() * pt : 0F);
         double sc = t.along(cam.x, cam.z);
@@ -129,10 +161,15 @@ public final class TsunamiRenderer {
             float flow = t.stage == Tsunami.RUNNING ? time * t.speed() * 0.45F : -time * 0.05F;
             float alpha = (foam ? 0.3F : 0.86F) * Math.min(1F, (1F - t.drained) * 3F);
             float bright = foam ? 0.9F : 0.62F;
-            for (float s = s0; s < s1; s += tile) {
-                float sb = Math.min(s1, s + tile);
-                for (float l = l0; l < l1; l += tile) {
-                    float lb2 = Math.min(l1, l + tile);
+            // Tiles on a fixed grid along the wave, so the land lookup below stays put as the camera moves.
+            for (float sg = Mth.floor(s0 / tile) * tile; sg < s1; sg += tile) {
+                float s = Math.max(s0, sg), sb = Math.min(s1, sg + tile);
+                for (float lg2 = Mth.floor(l0 / tile) * tile; lg2 < l1; lg2 += tile) {
+                    float l = Math.max(l0, lg2), lb2 = Math.min(l1, lg2 + tile);
+                    // Only over land the wave has run over: out at sea the water behind it is back at sea level.
+                    if (!land(level, t, sg + tile * 0.5F, lg2 + tile * 0.5F, tile)) {
+                        continue;
+                    }
                     float[][] c = {{s, l}, {sb, l}, {sb, lb2}, {s, lb2}};
                     for (float[] p : c) {
                         double x = t.ox + t.dirX * p[0] - t.dirZ * p[1] - cam.x;
@@ -160,7 +197,9 @@ public final class TsunamiRenderer {
             int m = prof.length;
             for (int i = 0; i <= segs; i++) {
                 float l = l0 + (l1 - l0) * i / segs;
-                float hl = h * (1F + 0.07F * Mth.sin(l * 0.045F + (t.seed & 255)) + 0.04F * Mth.sin(l * 0.11F + time * 0.03F));
+                float end = Mth.clamp((width - Math.abs(l)) / (width * 0.18F), 0F, 1F);
+                float hl = h * (1F + 0.07F * Mth.sin(l * 0.045F + (t.seed & 255)) + 0.04F * Mth.sin(l * 0.11F + time * 0.03F))
+                        * Math.max(0.02F, end * end * (3F - 2F * end));
                 float wob = 0.15F * h * Mth.sin(l * 0.02F + (t.seed & 127) * 0.1F + time * 0.01F);
                 for (int k = 0; k < m; k++) {
                     float s = front + (prof[k][0] - TOE_DS) * hl + 1F + wob;

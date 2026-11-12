@@ -21,7 +21,7 @@ public class DropletParticle extends TextureSheetParticle {
         this.lifetime = 6 + random.nextInt(6);
         this.quadSize = 0.012F + random.nextFloat() * 0.014F;
         float c = 0.82F + random.nextFloat() * 0.12F;
-        this.setColor(c, c + 0.03F, c + 0.07F);
+        this.setColor(c, c + 0.03F, Math.min(1F, c + 0.07F));
         this.alpha = 0.55F + random.nextFloat() * 0.3F;
         this.pickSprite(sprites);
     }

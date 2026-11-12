@@ -43,7 +43,8 @@ public class TornadoCloudParticle extends TextureSheetParticle {
         } else {
             this.quadSize = 3F;
         }
-        this.setColor(shade, shade * 1.01F, shade * 1.04F);
+        shade = Math.min(shade, 0.96F);
+        this.setColor(shade, shade * 1.01F, Math.min(1F, shade * 1.04F));
         if (sprites != null) {
             this.pickSprite(sprites);
         }

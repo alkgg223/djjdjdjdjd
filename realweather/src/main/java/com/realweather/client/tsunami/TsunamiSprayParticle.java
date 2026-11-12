@@ -25,7 +25,7 @@ public class TsunamiSprayParticle extends TextureSheetParticle {
         this.maxAlpha = 0.35F + random.nextFloat() * 0.3F;
         this.alpha = 0F;
         float c = 0.9F + random.nextFloat() * 0.08F;
-        this.setColor(c, c + 0.02F, c + 0.04F);
+        this.setColor(c, c + 0.02F, Math.min(1F, c + 0.04F));
         this.roll = random.nextFloat() * 6.283F;
         this.oRoll = roll;
         this.pickSprite(sprites);

@@ -29,7 +29,7 @@ public class TornadoDustParticle extends TextureSheetParticle {
         this.climb = 0.04F + random.nextFloat() * 0.12F;
         float c = 0.36F + random.nextFloat() * 0.16F;
         // Dust picked up from the ground: grey-brown.
-        this.setColor(c * 1.08F, c, c * 0.84F);
+        this.setColor(Math.min(1F, c * 1.08F), c, c * 0.84F);
         this.roll = random.nextFloat() * 6.283F;
         this.oRoll = roll;
         ClientTornadoes.T t = ClientTornadoes.get(tornado);
