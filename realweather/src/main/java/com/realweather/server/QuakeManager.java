@@ -322,7 +322,7 @@ public final class QuakeManager {
                     continue;
                 }
                 int topY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                int ground = Math.min(topY, TsunamiGround.top(level, x, z));
+                int ground = groundBelow(level, x, z, topY);
                 int y = ground + rng.nextInt(Math.max(1, topY - ground + 2)) - 1;
                 BlockState st = level.getBlockState(m.set(x, y, z));
                 if (st.isAir() || !st.getFluidState().isEmpty() || st.hasBlockEntity()) {
@@ -403,9 +403,49 @@ public final class QuakeManager {
                 || st.is(BlockTags.LEAVES) || !st.getFluidState().isEmpty()) {
             level.destroyBlock(pos, true);
         } else {
-            fall(level, pos, st, rng);
+            BlockState below = level.getBlockState(pos.below());
+            if (below.isAir() || below.canBeReplaced()) {
+                fall(level, pos, st, rng);
+            } else {
+                // Still standing on something: the block is shaken loose out of the wall and tumbles down outside it,
+                // or crumbles where it is.
+                net.minecraft.core.Direction out = null;
+                int start = rng.nextInt(4);
+                for (int i = 0; i < 4; i++) {
+                    net.minecraft.core.Direction dir = net.minecraft.core.Direction.from2DDataValue((start + i) % 4);
+                    if (level.getBlockState(pos.relative(dir)).isAir()) {
+                        out = dir;
+                        break;
+                    }
+                }
+                if (out == null || rng.nextInt(4) == 0) {
+                    level.destroyBlock(pos, rng.nextInt(5) == 0);
+                } else {
+                    if (st.hasProperty(BlockStateProperties.WATERLOGGED)) {
+                        st = st.setValue(BlockStateProperties.WATERLOGGED, false);
+                    }
+                    FallingBlockEntity f = FallingBlockEntity.fall(level, pos, st);
+                    f.setPos(pos.getX() + 0.5 + out.getStepX() * 0.55, pos.getY() + 0.05, pos.getZ() + 0.5 + out.getStepZ() * 0.55);
+                    f.setDeltaMovement(out.getStepX() * (0.18 + rng.nextDouble() * 0.15), 0.12 + rng.nextDouble() * 0.1,
+                            out.getStepZ() * (0.18 + rng.nextDouble() * 0.15));
+                    f.dropItem = rng.nextInt(3) == 0;
+                    f.setHurtsEntities(1.5F, 20);
+                }
+            }
         }
         UNSUPPORTED.enqueue(pos.above().asLong());
+    }
+
+    /** First block of the land itself under a column (below houses, walls and towers). */
+    private static int groundBelow(ServerLevel level, int x, int z, int topY) {
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int y = topY; y > topY - 48 && y > level.getMinBuildHeight(); y--) {
+            BlockState s = level.getBlockState(m.set(x, y, z));
+            if (!s.isAir() && isTerrain(s) && !s.canBeReplaced() && !s.is(BlockTags.LEAVES) && !s.is(BlockTags.LOGS)) {
+                return y + 1;
+            }
+        }
+        return topY;
     }
 
     private static void fall(ServerLevel level, BlockPos pos, BlockState st, RandomSource rng) {

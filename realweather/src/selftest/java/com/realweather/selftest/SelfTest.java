@@ -875,7 +875,7 @@ public final class SelfTest {
         });
         step(200, () -> quakeState("small"));
         // Deep hail.
-        step(5, () -> cmd("rw hailstorm 100 6"));
+        step(5, () -> cmd("execute as @a at @s run rw hailstorm 100 6"));
         step(1200, () -> {
             snowState("hail 60 s");
             look(0F, 40F);

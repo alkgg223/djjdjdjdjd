@@ -104,7 +104,8 @@ public final class VolumeClouds {
         Vec3 sky = level == null ? new Vec3(0.5, 0.6, 0.8) : level.getSkyColor(cam, pt);
         float[] fog = RenderSystem.getShaderFogColor();
         float day = SkyLight.day;
-        float sunK = 0.15F + 0.85F * day;
+        // The low sun still lights the clouds, in its warm colour (orange and pink undersides at sunset).
+        float sunK = 0.3F + 0.7F * day;
 
         march.safeGetUniform("InvViewProj").set(inv);
         march.safeGetUniform("CameraPos").set((float) cam.x, (float) cam.y, (float) cam.z);
@@ -114,8 +115,8 @@ public final class VolumeClouds {
         march.safeGetUniform("SunDir").set(SkyLight.sunX / len, sy / len, SkyLight.sunZ / len);
         march.safeGetUniform("SunColor").set(SkyLight.r * sunK * 1.05F, SkyLight.g * sunK, SkyLight.b * sunK * 0.95F);
         float amb = 0.25F + 0.75F * Mth.clamp(SkyLight.r, 0F, 1F);
-        march.safeGetUniform("SkyColor").set((float) (sky.x * 0.6 + fog[0] * 0.4) * amb, (float) (sky.y * 0.6 + fog[1] * 0.4) * amb,
-                (float) (sky.z * 0.6 + fog[2] * 0.4) * amb);
+        march.safeGetUniform("SkyColor").set((float) (sky.x * 0.45 + fog[0] * 0.55) * amb, (float) (sky.y * 0.45 + fog[1] * 0.55) * amb,
+                (float) (sky.z * 0.45 + fog[2] * 0.55) * amb);
         march.safeGetUniform("HazeColor").set(fog[0], fog[1], fog[2]);
         march.safeGetUniform("Coverage").set(coverage);
         march.safeGetUniform("Darkness").set(darkness * (0.6F + 0.4F * ClientWeather.thunder));
