@@ -68,6 +68,9 @@ public final class SelfTest {
         if (suite.contains("new")) {
             newSuite();
         }
+        if (suite.contains("quake")) {
+            quakeSuite();
+        }
         if (suite.contains("all")) {
             weatherSuite();
         }
@@ -805,6 +808,189 @@ public final class SelfTest {
         });
         step(5, () -> shot("78_tsunami_1000"));
         step(5, SelfTest::stopTsunamis);
+    }
+
+    /** 1.7.0: ULTRA 3D clouds, an earthquake next to buildings of different materials, deep hail. */
+    private static void quakeSuite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 5000");
+            goTo("minecraft:plains", 0, -12);
+            weatherQuality(com.realweather.ClientConfig.Quality.ULTRA_3D);
+        });
+        step(60, SelfTest::platform);
+        step(120, () -> {
+            look(30F, -14F);
+            LOG.info("3d clouds available={}", com.realweather.client.sky.VolumeClouds.available());
+        });
+        step(5, () -> shot("80_clouds_3d_fair"));
+        step(5, () -> look(150F, -25F));
+        step(5, () -> shot("80b_clouds_3d_fair_up"));
+        step(5, () -> cmd("time set 12500"));
+        step(40, () -> shot("80c_clouds_3d_sunset"));
+        step(5, () -> {
+            cmd("time set 6000");
+            cmd("rw rain 80 5");
+        });
+        step(260, () -> shot("81_clouds_3d_rain"));
+        step(5, () -> {
+            cmd("rw clear");
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+        });
+        // Buildings of different materials around a spot on the ground, then a magnitude 8 earthquake under them.
+        step(20, SelfTest::buildTown);
+        step(40, () -> {
+            townState("before");
+            look(0F, 38F);
+        });
+        step(5, () -> shot("82_town_before"));
+        step(5, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> {
+                com.realweather.server.Earthquake q = com.realweather.server.QuakeManager.spawn(server.overworld(), townX + 4, townZ + 14, 8F,
+                        server.overworld().random, false);
+                LOG.info("quake M{} duration {} cracks {} felt radius {}", q.magnitude, q.duration, q.cracks().size(), q.feltRadius());
+            });
+        });
+        step(120, () -> {
+            quakeState("shaking");
+            shot("83_quake_shaking");
+        });
+        step(260, () -> {
+            quakeState("strong");
+            shot("83b_quake_strong");
+        });
+        step(400, () -> {
+            quakeState("after");
+            townState("after");
+            look(0F, 55F);
+        });
+        step(10, () -> shot("84_quake_after"));
+        step(5, () -> look(90F, 45F));
+        step(10, () -> shot("84b_quake_cracks"));
+        // A small one: fine cracks only.
+        step(5, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> com.realweather.server.QuakeManager.spawn(server.overworld(), townX - 30, townZ, 4.5F, server.overworld().random, false));
+        });
+        step(200, () -> quakeState("small"));
+        // Deep hail.
+        step(5, () -> cmd("rw hailstorm 100 6"));
+        step(1200, () -> {
+            snowState("hail 60 s");
+            look(0F, 40F);
+        });
+        step(5, () -> shot("85_hail_deep"));
+        step(1200, () -> snowState("hail 120 s"));
+        step(5, () -> shot("85b_hail_deeper"));
+        step(5, () -> cmd("rw clear"));
+    }
+
+    private static int townX, townY, townZ;
+
+    /** A cobblestone hut with glass windows, a timber house and a stone-brick tower next to each other. */
+    private static void buildTown() {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            ServerLevel level = server.overworld();
+            townX = p.getBlockX() + 6;
+            townZ = p.getBlockZ() + 10;
+            townY = com.realweather.server.TsunamiGround.top(level, townX, townZ);
+            net.minecraft.world.level.block.state.BlockState[] walls = {net.minecraft.world.level.block.Blocks.COBBLESTONE.defaultBlockState(),
+                    net.minecraft.world.level.block.Blocks.OAK_PLANKS.defaultBlockState(),
+                    net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState()};
+            int[] heights = {5, 6, 11};
+            for (int b = 0; b < 3; b++) {
+                int x0 = townX - 12 + b * 9, z0 = townZ;
+                for (int dx = 0; dx < 7; dx++) {
+                    for (int dz = 0; dz < 7; dz++) {
+                        int ground = com.realweather.server.TsunamiGround.top(level, x0 + dx, z0 + dz);
+                        level.setBlock(new BlockPos(x0 + dx, ground - 1, z0 + dz), net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState(), 3);
+                        for (int y = ground; y < townY + heights[b]; y++) {
+                            boolean edge = dx == 0 || dz == 0 || dx == 6 || dz == 6;
+                            boolean roof = y == townY + heights[b] - 1;
+                            boolean window = edge && (dx == 3 || dz == 3) && (y - townY) % 4 == 2;
+                            net.minecraft.world.level.block.state.BlockState st = roof || edge ? (window
+                                    ? net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState() : walls[b])
+                                    : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+                            level.setBlock(new BlockPos(x0 + dx, y, z0 + dz), st, 3);
+                        }
+                    }
+                }
+            }
+            // The camera on a platform looking down at the town.
+            int py = townY + 16;
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    level.setBlock(new BlockPos(townX + dx, py - 1, townZ - 12 + dz), net.minecraft.world.level.block.Blocks.BARRIER.defaultBlockState(), 3);
+                }
+            }
+            p.teleportTo(level, townX + 0.5, py, townZ - 11.5, 0F, 38F);
+            LOG.info("town built at {} {} {}", townX, townY, townZ);
+        });
+    }
+
+    private static void townState(String label) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerLevel level = server.overworld();
+            String[] names = {"cobblestone", "planks", "stone bricks"};
+            StringBuilder sb = new StringBuilder();
+            for (int b = 0; b < 3; b++) {
+                int x0 = townX - 12 + b * 9;
+                int solid = 0, glass = 0;
+                for (int dx = 0; dx < 7; dx++) {
+                    for (int dz = 0; dz < 7; dz++) {
+                        for (int y = townY; y < townY + 12; y++) {
+                            net.minecraft.world.level.block.state.BlockState st = level.getBlockState(new BlockPos(x0 + dx, y, townZ + dz));
+                            if (st.is(net.minecraft.world.level.block.Blocks.GLASS)) {
+                                glass++;
+                            } else if (!st.isAir()) {
+                                solid++;
+                            }
+                        }
+                    }
+                }
+                sb.append(names[b]).append(": ").append(solid).append(" blocks, ").append(glass).append(" glass; ");
+            }
+            LOG.info("[{}] town {}", label, sb);
+        });
+    }
+
+    private static void quakeState(String label) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            for (com.realweather.server.Earthquake q : com.realweather.server.QuakeManager.QUAKES) {
+                LOG.info("[{}] quake #{} M{} age {}/{} intensity here {} cracks {}", label, q.id, q.magnitude, q.age, q.duration,
+                        q.intensityAt(p.getX(), p.getZ()), q.cracks().size());
+            }
+        });
+        Minecraft mc = Minecraft.getInstance();
+        LOG.info("[{}] client quakes={} particles={} fps={}", label, com.realweather.client.quake.ClientQuakes.all().size(),
+                mc.particleEngine.countParticles(), mc.getFps());
+    }
+
+    private static void snowState(String label) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            ServerLevel level = server.overworld();
+            int max = 0, sum = 0, n = 0;
+            for (int dx = -10; dx <= 10; dx += 2) {
+                for (int dz = 0; dz <= 20; dz += 2) {
+                    BlockPos top = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
+                            new BlockPos(p.getBlockX() + dx, 0, p.getBlockZ() + dz));
+                    BlockPos pos = com.realweather.server.SnowPile.layers(level.getBlockState(top)) > 0 ? top : top.below();
+                    int d = com.realweather.server.SnowPile.layers(level.getBlockState(pos)) > 0 ? com.realweather.server.SnowPile.depth(level, pos) : 0;
+                    max = Math.max(max, d);
+                    sum += d;
+                    n++;
+                }
+            }
+            LOG.info("[{}] hail/snow depth: max {} layers, mean {}", label, max, sum / (float) n);
+        });
     }
 
     private static void tsunamiAtPlayer(int strength) {

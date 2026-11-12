@@ -134,6 +134,7 @@ public final class WeatherServer {
         StormManager.tick(level, d, players, rng);
         TornadoManager.tick(level, d, players, rng);
         TsunamiManager.tick(level, d, players, rng);
+        QuakeManager.tick(level, d, players, rng);
         HailManager.tick(level, d, players, rng);
         FloodManager.tick(level, d, players, rng);
         SnowPile.tick(level, d, players, rng);
@@ -235,6 +236,7 @@ public final class WeatherServer {
             PacketDistributor.sendToPlayer(player, TornadoManager.payload(WeatherData.get(player.server.overworld())));
             PacketDistributor.sendToPlayer(player, StormManager.payload(WeatherData.get(player.server.overworld())));
             PacketDistributor.sendToPlayer(player, TsunamiManager.payload());
+            PacketDistributor.sendToPlayer(player, QuakeManager.payload());
         }
     }
 

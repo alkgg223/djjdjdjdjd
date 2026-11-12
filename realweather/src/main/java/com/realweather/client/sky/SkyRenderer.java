@@ -52,13 +52,20 @@ public final class SkyRenderer {
         try {
             if (stage == RenderLevelStageEvent.Stage.AFTER_SKY) {
                 pending = false;
+                VolumeClouds.wanted = false;
                 if (gather(event)) {
                     pending = true;
                     draw(event, true);
                 }
-            } else if (pending) {
-                pending = false;
-                draw(event, false);
+            } else {
+                // The volumetric clouds go in behind the storm clouds and tornadoes drawn next.
+                if (VolumeClouds.wanted) {
+                    VolumeClouds.render(event);
+                }
+                if (pending) {
+                    pending = false;
+                    draw(event, false);
+                }
             }
         } catch (RuntimeException | LinkageError e) {
             failed = true;
@@ -111,7 +118,11 @@ public final class SkyRenderer {
                     : Mth.clamp(ClientWeather.sand * 1.5F, 0F, 1F);
             dustSky += Mth.clamp(dust - dustSky, -0.01F, 0.01F);
             cover *= 1F - 0.85F * dustSky;
-            CloudField.collect(level, cam, pt, q, cover);
+            if (ClientConfig.clouds3d() && VolumeClouds.available()) {
+                VolumeClouds.prepare(level, cover, vis);
+            } else {
+                CloudField.collect(level, cam, pt, q, cover);
+            }
         }
         if (storms) {
             StormClouds.collect(level, cam, pt, q);

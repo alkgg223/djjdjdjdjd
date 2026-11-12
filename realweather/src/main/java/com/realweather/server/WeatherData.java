@@ -44,6 +44,9 @@ public class WeatherData extends SavedData {
     public boolean tsunamiNatural = true;
     /** Tsunamis leave real water on the land behind them. */
     public boolean tsunamiFlood = true;
+    /** Earthquakes now and then on their own, and whether they break blocks. */
+    public boolean quakeNatural = true;
+    public boolean quakeDamage = true;
     /** Water blocks placed by each tsunami (key 0: left over from earlier ones), so it can all be taken away again. */
     public final it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<LongArrayList> tsunamiWater = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>();
     public int nextTornadoId = 1;
@@ -88,6 +91,8 @@ public class WeatherData extends SavedData {
         d.tornadoNatural = !tag.contains("tornadoNatural") || tag.getBoolean("tornadoNatural");
         d.tsunamiNatural = !tag.contains("tsunamiNatural") || tag.getBoolean("tsunamiNatural");
         d.tsunamiFlood = !tag.contains("tsunamiFlood") || tag.getBoolean("tsunamiFlood");
+        d.quakeNatural = !tag.contains("quakeNatural") || tag.getBoolean("quakeNatural");
+        d.quakeDamage = !tag.contains("quakeDamage") || tag.getBoolean("quakeDamage");
         // Tsunamis don't survive a restart: all of their water drains as its land loads.
         long[] left = tag.getLongArray("tsunamiWater");
         if (left.length > 0) {
@@ -139,6 +144,8 @@ public class WeatherData extends SavedData {
         tag.putBoolean("tornadoNatural", tornadoNatural);
         tag.putBoolean("tsunamiNatural", tsunamiNatural);
         tag.putBoolean("tsunamiFlood", tsunamiFlood);
+        tag.putBoolean("quakeNatural", quakeNatural);
+        tag.putBoolean("quakeDamage", quakeDamage);
         LongArrayList all = new LongArrayList();
         for (LongArrayList l : tsunamiWater.values()) {
             all.addAll(l);

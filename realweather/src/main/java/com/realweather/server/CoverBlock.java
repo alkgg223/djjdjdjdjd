@@ -64,7 +64,8 @@ public class CoverBlock extends Block {
         if (pellets) {
             return Shapes.empty();
         }
-        return SNOW_SHAPES[state.getValue(LAYERS) - 1];
+        // Fresh hail-snow gives under your feet: you sink a little into it.
+        return SNOW_SHAPES[Math.max(0, state.getValue(LAYERS) - 2)];
     }
 
     @Override

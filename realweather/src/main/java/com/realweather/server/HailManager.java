@@ -40,8 +40,9 @@ public final class HailManager {
             if (h < 0.05F) {
                 continue;
             }
-            if (t % 2 == 0) {
-                int attempts = 1 + (int) (h * 7F);
+            {
+                // Heavy hail piles up fast: pellets first, then packed hail-snow up to three blocks deep.
+                int attempts = 1 + (int) (h * 16F);
                 for (int i = 0; i < attempts; i++) {
                     int x = Mth.floor(player.getX()) + rng.nextInt(81) - 40;
                     int z = Mth.floor(player.getZ()) + rng.nextInt(81) - 40;
@@ -84,9 +85,16 @@ public final class HailManager {
         if (snowPos != null) {
             BlockState s = level.getBlockState(snowPos);
             int l = s.getValue(CoverBlock.LAYERS);
-            int max = Mth.clamp(1 + Math.round(hail * 5F), 1, 6);
-            if (l < max && l <= minNeighbour(level, snowPos, snow) + 1) {
+            int max = Mth.clamp(2 + Math.round(hail * 22F), 2, 24);
+            int depth = SnowPile.depth(level, snowPos);
+            if (depth >= max || depth > SnowPile.lowestNeighbourDepth(level, snowPos) + 1) {
+                return;
+            }
+            if (l < 8) {
                 level.setBlockAndUpdate(snowPos, s.setValue(CoverBlock.LAYERS, l + 1));
+            } else if (level.getBlockState(snowPos.above()).isAir()) {
+                // A full block of hail-snow: the next layer starts on top of it.
+                level.setBlockAndUpdate(snowPos.above(), snow.defaultBlockState());
             }
             return;
         }

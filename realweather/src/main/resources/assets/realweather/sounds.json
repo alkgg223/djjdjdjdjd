@@ -406,5 +406,39 @@
       }
     ],
     "subtitle": "subtitles.realweather.tsunami.crash"
+  },
+  "quake.rumble": {
+    "sounds": [
+      {
+        "name": "realweather:quake_rumble",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.realweather.quake.rumble"
+  },
+  "quake.crack": {
+    "sounds": [
+      {
+        "name": "realweather:quake_crack1"
+      },
+      {
+        "name": "realweather:quake_crack2"
+      },
+      {
+        "name": "realweather:quake_crack3"
+      }
+    ],
+    "subtitle": "subtitles.realweather.quake.crack"
+  },
+  "quake.collapse": {
+    "sounds": [
+      {
+        "name": "realweather:quake_collapse1"
+      },
+      {
+        "name": "realweather:quake_collapse2"
+      }
+    ],
+    "subtitle": "subtitles.realweather.quake.collapse"
   }
 }

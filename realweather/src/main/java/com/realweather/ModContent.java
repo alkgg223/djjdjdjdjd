@@ -94,6 +94,9 @@ public final class ModContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> TSUNAMI_ROAR = sound("tsunami.roar");
     public static final DeferredHolder<SoundEvent, SoundEvent> TSUNAMI_RUSH = sound("tsunami.rush");
     public static final DeferredHolder<SoundEvent, SoundEvent> TSUNAMI_CRASH = sound("tsunami.crash");
+    public static final DeferredHolder<SoundEvent, SoundEvent> QUAKE_RUMBLE = sound("quake.rumble");
+    public static final DeferredHolder<SoundEvent, SoundEvent> QUAKE_CRACK = sound("quake.crack");
+    public static final DeferredHolder<SoundEvent, SoundEvent> QUAKE_COLLAPSE = sound("quake.collapse");
 
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SPLASH = particle("splash");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RIPPLE = particle("ripple");

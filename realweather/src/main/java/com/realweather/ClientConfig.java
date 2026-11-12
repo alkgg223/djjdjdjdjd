@@ -4,7 +4,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 /** Visual and audio settings, editable from the Mods screen (Config button). */
 public final class ClientConfig {
-    public enum Quality { LOW, MEDIUM, HIGH, ULTRA }
+    /** ULTRA_3D is ULTRA with real volumetric (ray-marched) clouds instead of the cloud sprites. */
+    public enum Quality { LOW, MEDIUM, HIGH, ULTRA, ULTRA_3D }
 
     /** Tornado graphics have their own setting, independent of the rest of the weather. */
     public enum TornadoQuality { LOW, MEDIUM, HIGH, ULTRA }
@@ -26,7 +27,7 @@ public final class ClientConfig {
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
-        QUALITY = b.comment("Weather detail: LOW, MEDIUM, HIGH or ULTRA. Lower settings use fewer particles and clouds; LOW is best for phones and weak PCs.")
+        QUALITY = b.comment("Weather detail: LOW, MEDIUM, HIGH, ULTRA or ULTRA_3D. Lower settings use fewer particles and clouds; LOW is best for phones and weak PCs. ULTRA_3D draws real volumetric 3D clouds and needs a strong graphics card.")
                 .translation("realweather.config.quality").defineEnum("quality", Quality.MEDIUM);
         CLOUDS = b.comment("Realistic 3D clouds: fair-weather cumulus, overcast decks and storm clouds (replaces the vanilla clouds).")
                 .translation("realweather.config.clouds").define("realisticClouds", true);
@@ -64,13 +65,18 @@ public final class ClientConfig {
             case LOW -> 0.35F;
             case MEDIUM -> 0.6F;
             case HIGH -> 0.85F;
-            case ULTRA -> 1.0F;
+            case ULTRA, ULTRA_3D -> 1.0F;
         };
     }
 
-    /** Weather quality, 0 = LOW .. 3 = ULTRA. */
+    /** Weather quality, 0 = LOW .. 3 = ULTRA (ULTRA_3D counts as ULTRA). */
     public static int quality() {
-        return QUALITY.get().ordinal();
+        return Math.min(3, QUALITY.get().ordinal());
+    }
+
+    /** Volumetric 3D clouds (ULTRA_3D). */
+    public static boolean clouds3d() {
+        return QUALITY.get() == Quality.ULTRA_3D;
     }
 
     /** 0 = LOW .. 3 = ULTRA. */

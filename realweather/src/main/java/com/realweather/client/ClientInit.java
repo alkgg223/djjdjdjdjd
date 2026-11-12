@@ -27,6 +27,7 @@ public final class ClientInit {
         modBus.addListener(ClientInit::onGuiLayers);
         modBus.addListener(ClientInit::onClientExtensions);
         modBus.addListener(WeatherParticles::register);
+        modBus.addListener(com.realweather.client.sky.VolumeClouds::registerShaders);
 
         NeoForge.EVENT_BUS.addListener(ClientWeather::onClientTick);
         NeoForge.EVENT_BUS.addListener(ClientCommands::register);
@@ -39,6 +40,7 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(WaterShader::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.SkyRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.tsunami.TsunamiRenderer::onRenderStage);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.quake.CrackRenderer::onRenderStage);
         modBus.addListener(ClientInit::onEntityRenderers);
         modBus.addListener(com.realweather.client.vehicle.VehicleModels::register);
         modBus.addListener(com.realweather.client.vehicle.VehicleClient::onKeys);

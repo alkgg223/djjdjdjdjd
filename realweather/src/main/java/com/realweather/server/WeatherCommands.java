@@ -42,6 +42,7 @@ public final class WeatherCommands {
                         .executes(c -> floodDepth(c.getSource(), IntegerArgumentType.getInteger(c, "blocks"))))));
         root.then(tornado());
         root.then(tsunami());
+        root.then(earthquake());
         root.then(Commands.literal("hailstorm").then(Commands.argument("percent", IntegerArgumentType.integer(1, 100))
                 .executes(c -> storm(c.getSource(), StormCell.HAIL, IntegerArgumentType.getInteger(c, "percent"), 8))
                 .then(Commands.argument("minutes", IntegerArgumentType.integer(1, 120))
@@ -132,6 +133,42 @@ public final class WeatherCommands {
                 .then(Commands.literal("on").executes(c -> toggle(c, "tsunami.water", true)))
                 .then(Commands.literal("off").executes(c -> toggle(c, "tsunami.water", false))));
         return t;
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> earthquake() {
+        // /rw earthquake 6.5 (epicentre nearby), /rw earthquake 8 here, stop, natural on|off, damage on|off
+        var q = Commands.literal("earthquake");
+        var mag = Commands.argument("magnitude", com.mojang.brigadier.arguments.FloatArgumentType.floatArg(1F, 10F))
+                .executes(c -> earthquake(c.getSource(), com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "magnitude"), false));
+        mag.then(Commands.literal("here").executes(c -> earthquake(c.getSource(), com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "magnitude"), true)));
+        q.then(mag);
+        q.then(Commands.literal("stop").executes(c -> {
+            QuakeManager.stop(overworld(c.getSource()));
+            ok(c.getSource(), "earthquake.stop");
+            return 1;
+        }));
+        q.then(Commands.literal("natural")
+                .then(Commands.literal("on").executes(c -> toggle(c, "earthquake.natural", true)))
+                .then(Commands.literal("off").executes(c -> toggle(c, "earthquake.natural", false))));
+        q.then(Commands.literal("damage")
+                .then(Commands.literal("on").executes(c -> toggle(c, "earthquake.damage", true)))
+                .then(Commands.literal("off").executes(c -> toggle(c, "earthquake.damage", false))));
+        return q;
+    }
+
+    private static int earthquake(CommandSourceStack src, float magnitude, boolean here) {
+        ServerLevel level = overworld(src);
+        net.minecraft.world.phys.Vec3 pos = src.getLevel() == level ? src.getPosition() : level.getSharedSpawnPos().getCenter();
+        double x = pos.x, z = pos.z;
+        if (!here) {
+            double a = level.random.nextDouble() * Math.PI * 2, d = 18 + level.random.nextDouble() * 22;
+            x += Math.cos(a) * d;
+            z += Math.sin(a) * d;
+        }
+        Earthquake q = QuakeManager.spawn(level, x, z, magnitude, level.random, true);
+        int dist = (int) Math.round(Math.sqrt((x - pos.x) * (x - pos.x) + (z - pos.z) * (z - pos.z)));
+        ok(src, "earthquake", String.format("%.1f", q.magnitude), dist, q.duration / 20);
+        return 1;
     }
 
     private static int tsunami(CommandSourceStack src, int strength, float bearing) {
@@ -342,6 +379,8 @@ public final class WeatherCommands {
             case "tornado.natural" -> d.tornadoNatural = on;
             case "tsunami.natural" -> d.tsunamiNatural = on;
             case "tsunami.water" -> d.tsunamiFlood = on;
+            case "earthquake.natural" -> d.quakeNatural = on;
+            case "earthquake.damage" -> d.quakeDamage = on;
             default -> {
             }
         }
