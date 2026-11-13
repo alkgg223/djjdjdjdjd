@@ -22,6 +22,7 @@ public class RealWeather {
         ModContent.register(modBus);
         com.realweather.device.ModDevices.register(modBus);
         com.realweather.vehicle.VehicleRegistry.register(modBus);
+        com.realweather.space.SpaceRegistry.register(modBus);
         modBus.addListener(Network::register);
         container.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
 

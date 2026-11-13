@@ -207,6 +207,7 @@ public final class WeatherServer {
             return;
         }
         ServerLevel level = player.serverLevel();
+        com.realweather.space.PlanetTravel.tick(player);
         if (level.dimension() != Level.OVERWORLD || blizzard < 0.25F || player.isCreative() || player.isSpectator() || !player.canFreeze()) {
             return;
         }

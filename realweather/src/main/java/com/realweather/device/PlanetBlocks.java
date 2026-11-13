@@ -1,10 +1,13 @@
 package com.realweather.device;
 
 import com.realweather.ModContent;
+import com.realweather.space.Tiles;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -13,43 +16,81 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The blocks other worlds are made of: what the telescope and the planet map show their ground built from, and real
- * blocks to build with too (in the Real Weather tab).
+ * The blocks other worlds are made of (one for each tile of {@link Tiles}): what the telescope and the planet map show
+ * their ground built from, what their worlds are made of when you travel there, and real blocks to build with too
+ * (in the Real Weather tab).
  */
 public final class PlanetBlocks {
     public static final List<DeferredBlock<Block>> ALL = new ArrayList<>();
+    @SuppressWarnings("unchecked")
+    private static final DeferredBlock<Block>[] BY_TILE = new DeferredBlock[Tiles.ALL.length];
 
-    public static final DeferredBlock<Block> REGOLITH = block("planet_regolith", MapColor.COLOR_LIGHT_GRAY, 0.8F, SoundType.SAND, 0);
-    public static final DeferredBlock<Block> BASALT = block("planet_basalt", MapColor.COLOR_BLACK, 2.0F, SoundType.BASALT, 0);
-    public static final DeferredBlock<Block> SAND = block("planet_sand", MapColor.SAND, 0.6F, SoundType.SAND, 0);
-    public static final DeferredBlock<Block> ICE = ModContent.BLOCKS.register("planet_ice",
-            () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.ICE).strength(0.6F).friction(0.98F).sound(SoundType.GLASS)));
-    public static final DeferredBlock<Block> FROST = block("planet_frost", MapColor.SNOW, 0.3F, SoundType.SNOW, 0);
-    public static final DeferredBlock<Block> MAGMA = block("planet_magma", MapColor.COLOR_ORANGE, 1.5F, SoundType.STONE, 13);
-    public static final DeferredBlock<Block> CLOUD = block("planet_cloud", MapColor.WOOL, 0.3F, SoundType.WOOL, 0);
-    public static final DeferredBlock<Block> MOSS = block("planet_moss", MapColor.COLOR_GREEN, 0.6F, SoundType.MOSS, 0);
-    public static final DeferredBlock<Block> CRYSTAL = block("planet_crystal", MapColor.DIAMOND, 1.5F, SoundType.AMETHYST, 7);
-    public static final DeferredBlock<Block> SULFUR = block("planet_sulfur", MapColor.COLOR_YELLOW, 1.0F, SoundType.TUFF, 0);
-    public static final DeferredBlock<Block> IRONSTONE = block("planet_ironstone", MapColor.COLOR_RED, 1.8F, SoundType.STONE, 0);
-    public static final DeferredBlock<Block> STORM = block("planet_storm_cloud", MapColor.COLOR_BROWN, 0.3F, SoundType.WOOL, 0);
-    public static final DeferredBlock<Block> OBSIDIAN = block("planet_obsidian", MapColor.COLOR_PURPLE, 6.0F, SoundType.STONE, 0);
-    public static final DeferredBlock<Block> HOTROCK = block("planet_hot_rock", MapColor.COLOR_ORANGE, 1.8F, SoundType.STONE, 9);
-    public static final DeferredBlock<Block> ASH = block("planet_ash", MapColor.COLOR_GRAY, 0.5F, SoundType.SAND, 0);
+    static {
+        for (int i = 0; i < Tiles.ALL.length; i++) {
+            Tiles.Tile t = Tiles.ALL[i];
+            if (t == null) {
+                continue;
+            }
+            BlockBehaviour.Properties p = BlockBehaviour.Properties.of().mapColor(color(t)).strength(t.hardness(), t.hardness() * 2F)
+                    .sound(sound(t.material())).lightLevel(s -> t.light());
+            if (t.material() == Tiles.M_ICE) {
+                p = p.friction(0.98F);
+            }
+            BlockBehaviour.Properties props = p;
+            DeferredBlock<Block> b = ModContent.BLOCKS.register(t.name(), () -> new Block(props));
+            BY_TILE[i] = b;
+            ALL.add(b);
+        }
+    }
 
     private PlanetBlocks() {}
 
-    private static DeferredBlock<Block> block(String name, MapColor color, float hardness, SoundType sound, int light) {
-        DeferredBlock<Block> b = ModContent.BLOCKS.register(name,
-                () -> new Block(BlockBehaviour.Properties.of().mapColor(color).strength(hardness, hardness * 2F).sound(sound).lightLevel(s -> light)));
-        ALL.add(b);
-        return b;
+    private static SoundType sound(int material) {
+        return switch (material) {
+            case Tiles.M_DUST -> SoundType.SAND;
+            case Tiles.M_ICE, Tiles.M_GLASS -> SoundType.GLASS;
+            case Tiles.M_SNOW -> SoundType.SNOW;
+            case Tiles.M_CLOUD -> SoundType.WOOL;
+            case Tiles.M_PLANT -> SoundType.MOSS;
+            case Tiles.M_CRYSTAL -> SoundType.AMETHYST;
+            case Tiles.M_METAL -> SoundType.METAL;
+            case Tiles.M_MUD -> SoundType.MUD;
+            default -> SoundType.STONE;
+        };
     }
 
-    /** Their items (in the creative tab). Called once the list above is complete. */
+    private static MapColor color(Tiles.Tile t) {
+        String n = t.name();
+        if (n.contains("mars") || n.contains("ironstone") || n.contains("hematite")) {
+            return MapColor.TERRACOTTA_RED;
+        }
+        if (n.contains("ice") || n.contains("frost") || n.contains("snow") || n.contains("salt")) {
+            return MapColor.ICE;
+        }
+        if (n.contains("cloud")) {
+            return MapColor.WOOL;
+        }
+        if (n.contains("magma") || n.contains("lava") || n.contains("hot")) {
+            return MapColor.NETHER;
+        }
+        if (n.contains("grass") || n.contains("moss")) {
+            return MapColor.PLANT;
+        }
+        if (n.contains("sand") || n.contains("sulfur")) {
+            return MapColor.SAND;
+        }
+        return MapColor.STONE;
+    }
+
+    /** The block of a tile (stone for the sea's tile, which is no block). */
+    public static BlockState state(int tile) {
+        DeferredBlock<Block> b = tile >= 0 && tile < BY_TILE.length ? BY_TILE[tile] : null;
+        return b == null ? Blocks.STONE.defaultBlockState() : b.get().defaultBlockState();
+    }
+
+    /** Their items (in the creative tab). */
     static void items() {
-        List<DeferredBlock<Block>> list = new ArrayList<>(ALL);
-        list.add(3, ICE);
-        for (DeferredBlock<Block> b : list) {
+        for (DeferredBlock<Block> b : ALL) {
             DeferredItem<BlockItem> item = ModDevices.ITEMS.registerSimpleBlockItem(b.getId().getPath(), b);
             ModDevices.tabItem(item);
         }

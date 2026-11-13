@@ -33,6 +33,7 @@ uniform float AirHeight;
 uniform float PixelSize;
 uniform float PixelGrow;
 uniform float Hills;
+uniform float Snow;
 
 in vec2 ab;
 
@@ -91,10 +92,10 @@ float tileFor(vec3 c, float h, bool water) {
     }
     float l = lum(c);
     if (Gas > 0.5) {
-        return l > 0.6 ? 12.0 : 6.0;
+        return l > 0.62 ? Tiles.z : (l > 0.42 ? Tiles.y : Tiles.x);
     }
     if (l > 0.8) {
-        return 4.0;
+        return Snow;
     }
     if (Glow > 0.2 && c.r > 0.7 && c.g < 0.62 && c.r > c.b * 1.6) {
         return 5.0;
@@ -103,9 +104,16 @@ float tileFor(vec3 c, float h, bool water) {
     return rel < 0.34 ? Tiles.x : (rel < 0.7 ? Tiles.y : Tiles.z);
 }
 
+// The atlas holds 8 x 8 block faces.
 vec3 face(float tile, vec2 uv) {
-    vec2 cell = vec2(mod(tile, 4.0), floor(tile / 4.0));
-    return textureLod(Sampler1, (cell + clamp(uv, 0.004, 0.996)) / 4.0, 0.0).rgb;
+    vec2 cell = vec2(mod(tile, 8.0), floor(tile / 8.0));
+    return textureLod(Sampler1, (cell + clamp(uv, 0.002, 0.998)) / 8.0, 0.0).rgb;
+}
+
+// A block face's average colour (what it looks like from far off), from a few samples.
+vec3 faceAverage(float tile) {
+    return (face(tile, vec2(0.25, 0.25)) + face(tile, vec2(0.75, 0.3)) + face(tile, vec2(0.3, 0.75)) + face(tile, vec2(0.7, 0.7))
+            + face(tile, vec2(0.5, 0.5))) * 0.2;
 }
 
 // The sky seen from inside the air: deeper overhead, paler towards the horizon, red at sunset, dark at night.
@@ -239,18 +247,22 @@ void main() {
     // The block's own texture shows once a block is big enough on the screen (smaller, it would only shimmer).
     float foot = PixelSize + PixelGrow * tEnter;
     float dk = smoothstep(0.2, 0.085, foot);
-    float detail = mix(1.0, lum(tex) / 0.62, dk);
+    tex = mix(faceAverage(tile), tex, dk);
     float jitter = 0.9 + 0.2 * hash13(cell + vec3(7.0, 3.0, 5.0));
-    vec3 base = mix(col * detail, tex * (0.35 + lum(col) * 1.1), 0.25 * dk) * jitter;
+    // The block's own look, tinted a little and lit by the planet's map (its brighter and darker lands).
+    float ml = max(lum(col), 0.04);
+    vec3 tint = mix(vec3(1.0), col / ml, 0.3);
+    vec3 base = tex * tint * (0.55 + 0.9 * ml) * jitter;
     if (water) {
-        base = mix(col, vec3(0.1, 0.3, 0.6), 0.4) * (0.75 + 0.35 * detail);
+        base = mix(col, vec3(0.1, 0.3, 0.6), 0.4) * (0.75 + 0.35 * lum(tex) / 0.4);
     }
     float ndl = max(dot(n, LightDir), 0.0);
     float day = smoothstep(-0.12, 0.22, dot(radial, LightDir));
     float faceShade = 0.6 + 0.4 * abs(dot(n, radial));
     vec3 lit = base * (Ambient + (1.0 - Ambient) * day * (0.4 + 0.6 * ndl)) * faceShade * LightColor;
-    if (tile == 5.0) {
-        lit += col * (0.8 + 0.6 * detail) * (1.0 - 0.5 * day);
+    if (tile == 5.0 || tile == 14.0 || tile == 31.0) {
+        // Molten rock glows by itself, brightest in its cracks.
+        lit += tex * smoothstep(0.25, 0.7, tex.r - tex.b) * (1.2 + 0.6 * lum(tex)) * (1.0 - 0.5 * day);
     } else if (Glow > 0.0) {
         lit += col * Glow * 0.45 * (1.0 - 0.5 * day);
     }

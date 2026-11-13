@@ -63,9 +63,28 @@ public final class WeatherCommands {
         root.then(Commands.literal("auto").executes(c -> auto(c.getSource())));
         root.then(Commands.literal("clear").executes(c -> clear(c.getSource())));
         root.then(Commands.literal("info").executes(c -> info(c.getSource())));
+        // Travel to another world (its surface, or orbit), and back home.
+        root.then(Commands.literal("travel").then(Commands.argument("world", com.mojang.brigadier.arguments.StringArgumentType.word())
+                .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                        com.realweather.space.Worlds.ALL.stream().map(com.realweather.space.Worlds.World::id), b))
+                .executes(c -> travel(c.getSource(), com.mojang.brigadier.arguments.StringArgumentType.getString(c, "world"), false))
+                .then(Commands.literal("orbit").executes(c -> travel(c.getSource(),
+                        com.mojang.brigadier.arguments.StringArgumentType.getString(c, "world"), true)))));
+        root.then(Commands.literal("home").executes(c -> {
+            com.realweather.space.PlanetTravel.home(c.getSource().getPlayerOrException());
+            return 1;
+        }));
 
         var node = dispatcher.register(root);
         dispatcher.register(Commands.literal("rw").requires(s -> s.hasPermission(2)).redirect(node));
+    }
+
+    private static int travel(CommandSourceStack src, String world, boolean orbit) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        if (!com.realweather.space.PlanetTravel.travel(src.getPlayerOrException(), world, orbit, Double.NaN, 0)) {
+            src.sendFailure(net.minecraft.network.chat.Component.literal("Unknown world: " + world));
+            return 0;
+        }
+        return 1;
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> tornado() {

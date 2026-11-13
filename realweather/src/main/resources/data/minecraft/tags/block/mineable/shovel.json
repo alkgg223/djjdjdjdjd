@@ -4,7 +4,16 @@
     "realweather:planet_regolith",
     "realweather:planet_sand",
     "realweather:planet_frost",
+    "realweather:planet_moss",
     "realweather:planet_ash",
-    "realweather:planet_moss"
+    "realweather:mars_dust",
+    "realweather:methane_snow",
+    "realweather:tholin_crust",
+    "realweather:purple_alien_grass",
+    "realweather:red_alien_grass",
+    "realweather:seabed_sand",
+    "realweather:permafrost",
+    "realweather:cryo_slush",
+    "realweather:alien_dirt"
   ]
 }

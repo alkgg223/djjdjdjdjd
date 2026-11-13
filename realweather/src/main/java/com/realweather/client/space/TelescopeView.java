@@ -21,6 +21,7 @@ public final class TelescopeView {
     private static final double D = 1000;
     private static final ResourceLocation STAR_MAP = RealWeather.id("textures/environment/space3d/star_surface.png");
     private static final ResourceLocation LINE = RealWeather.id("textures/environment/space3d/line.png");
+    static final ResourceLocation LINE_PUBLIC = LINE;
     private static final ResourceLocation RINGS = RealWeather.id("textures/environment/space3d/rings.png");
     private static final ResourceLocation MOON_MAP = RealWeather.id("textures/environment/space3d/moon.png");
     /** The brighter stars (sky frame), each with its brightness and colour. */
@@ -133,7 +134,7 @@ public final class TelescopeView {
             double ang = Math.atan2(Math.sqrt(c[0] * c[0] + c[1] * c[1]), -c[2]);
             double extent = 0;
             for (Catalog.Body b : s.bodies) {
-                extent = Math.max(extent, b.orbit + b.radius * (b.kind == Catalog.BLACKHOLE ? 2500 : 3));
+                extent = Math.max(extent, b.orbit + b.radius * (b.kind == Catalog.BLACKHOLE ? 2500 : b.kind == Catalog.NEBULA ? 1.2 : 3));
             }
             if (s.cluster || s.hasDisk() || s.nebula > 0) {
                 extent = Math.max(extent, 1.6e-4);
@@ -363,12 +364,97 @@ public final class TelescopeView {
         double[] rot = Space3D.orient(0.1, 1, 0.15, time * 0.00005);
         Space3D.sphere(STAR_MAP, c[0], c[1], c[2], r, rot, 0, 0, 1, 0F, 1F, 0.72F, 0.38F, 0F, up, true, (float) (time * 0.00003 % 1.0), 40);
         Space3D.starFire(c[0], c[1], c[2], r, 4242, 220, 0.3F, (float) time, up);
+        flares(c[0], c[1], c[2], r, 4242, up);
+        corona(c[0], c[1], c[2], r, 4242, 0.55F * up);
+    }
+
+    /**
+     * The corona: the Sun's outer air of million-degree gas, a pearly glow round the disc drawn out into long
+     * streamers along its magnetic field, slowly changing.
+     */
+    static void corona(double cx, double cy, double cz, double r, long seed, float alpha) {
+        if (alpha <= 0.01F) {
+            return;
+        }
+        Space3D.billboard(Space3D.GLOW, ADD, cx, cy, cz, r * 3.2, 0F, 1F, 0.95F, 0.88F, 0.45F * alpha);
+        Space3D.billboard(Space3D.GLOW, ADD, cx, cy, cz, r * 6.5, 0F, 0.95F, 0.92F, 0.9F, 0.18F * alpha);
+        double dl = Math.sqrt(cx * cx + cy * cy + cz * cz);
+        double vx = cx / dl, vy = cy / dl, vz = cz / dl;
+        double ax = Math.abs(vy) < 0.9 ? -vz : 1, ay = Math.abs(vy) < 0.9 ? 0 : 0, az = Math.abs(vy) < 0.9 ? vx : 0;
+        double al = Math.sqrt(ax * ax + ay * ay + az * az);
+        ax /= al;
+        ay /= al;
+        az /= al;
+        double bx = vy * az - vz * ay, by = vz * ax - vx * az, bz = vx * ay - vy * ax;
+        for (int i = 0; i < 26; i++) {
+            double a = Math.PI * 2 * (i + Space3D.h(seed, i * 3L) * 0.6) / 26 + time * 0.000004;
+            double len = r * (1.6 + 3.2 * Math.pow(Space3D.h(seed, i * 3L + 1), 2) * (0.75 + 0.25 * Math.sin(time * 0.0003 + i)));
+            // Streamers bend a little, like helmet streamers over the active belts.
+            double bend = (Space3D.h(seed, i * 3L + 2) - 0.5) * 0.25;
+            double c0 = Math.cos(a), s0 = Math.sin(a), c1 = Math.cos(a + bend), s1 = Math.sin(a + bend);
+            double x0 = cx + (ax * c0 + bx * s0) * r * 0.95, y0 = cy + (ay * c0 + by * s0) * r * 0.95, z0 = cz + (az * c0 + bz * s0) * r * 0.95;
+            double x1 = cx + (ax * c1 + bx * s1) * (r + len), y1 = cy + (ay * c1 + by * s1) * (r + len), z1 = cz + (az * c1 + bz * s1) * (r + len);
+            Space3D.ribbon(Space3D.GLOW, ADD, x0, y0, z0, x1, y1, z1, r * 0.32, r * 0.05, 1F, 0.96F, 0.9F, 0.22F * alpha, 0F);
+        }
+    }
+
+    /**
+     * Solar flares: now and then a sudden blinding brightening over an active region, with an arcade of glowing
+     * loops rising over it as it fades.
+     */
+    private static void flares(double cx, double cy, double cz, double r, long seed, float vis) {
+        long slot = (long) (time / 900.0);
+        for (long k = slot - 1; k <= slot; k++) {
+            if (Space3D.h(seed, k * 11) > 0.6F) {
+                continue;
+            }
+            double age = (time - k * 900.0 - Space3D.h(seed, k * 11 + 1) * 300) / 600.0;
+            if (age < 0 || age > 1) {
+                continue;
+            }
+            float f = (float) (age < 0.05 ? age / 0.05 : Math.exp(-(age - 0.05) * 4));
+            // Where on the disc (the side facing us).
+            double th = Space3D.h(seed, k * 11 + 2) * Math.PI * 2, rr = Math.sqrt(Space3D.h(seed, k * 11 + 3)) * 0.85;
+            double dl = Math.sqrt(cx * cx + cy * cy + cz * cz);
+            double vx = cx / dl, vy = cy / dl, vz = cz / dl;
+            double ux = Math.abs(vy) < 0.9 ? -vz : 1, uz = Math.abs(vy) < 0.9 ? vx : 0;
+            double ul = Math.sqrt(ux * ux + uz * uz);
+            ux /= ul;
+            uz /= ul;
+            double wx = vy * uz, wy = vz * ux - vx * uz, wz = -vy * ux;
+            double ox = (ux * Math.cos(th) + wx * Math.sin(th)) * rr, oy = wy * Math.sin(th) * rr, oz = (uz * Math.cos(th) + wz * Math.sin(th)) * rr;
+            double depth = -Math.sqrt(Math.max(0, 1 - rr * rr));
+            double px = cx + (ox + vx * depth) * r, py = cy + (oy + vy * depth) * r, pz = cz + (oz + vz * depth) * r;
+            Space3D.billboard(Space3D.GLOW, ADD, px, py, pz, r * (0.08 + 0.12 * f), 0F, 1F, 1F, 0.92F, f * vis);
+            Space3D.billboard(Space3D.STAR, ADD, px, py, pz, r * 0.35 * f, 0F, 1F, 0.95F, 0.8F, 0.6F * f * vis);
+            // The loop arcade.
+            for (int i = 0; i < 7; i++) {
+                double sp = (i - 3) * 0.018 * r;
+                double hgt = r * (0.03 + 0.09 * Math.min(1, age * 2));
+                for (int j = 0; j < 8; j++) {
+                    double a0 = Math.PI * j / 8, a1 = Math.PI * (j + 1) / 8;
+                    double qx0 = px + ux * sp + wx * Math.cos(a0) * r * 0.04 - vx * Math.sin(a0) * hgt;
+                    double qy0 = py + wy * Math.cos(a0) * r * 0.04 - vy * Math.sin(a0) * hgt;
+                    double qz0 = pz + uz * sp + wz * Math.cos(a0) * r * 0.04 - vz * Math.sin(a0) * hgt;
+                    double qx1 = px + ux * sp + wx * Math.cos(a1) * r * 0.04 - vx * Math.sin(a1) * hgt;
+                    double qy1 = py + wy * Math.cos(a1) * r * 0.04 - vy * Math.sin(a1) * hgt;
+                    double qz1 = pz + uz * sp + wz * Math.cos(a1) * r * 0.04 - vz * Math.sin(a1) * hgt;
+                    Space3D.ribbon(Space3D.FLAME, ADD, qx0, qy0, qz0, qx1, qy1, qz1, r * 0.006, r * 0.006, 1F, 0.7F, 0.35F,
+                            0.5F * vis * (float) Math.min(1, age * 4), 0.5F * vis * (float) Math.min(1, age * 4));
+                }
+            }
+        }
     }
 
     /** A star, planet or system: its bodies lit as they should be, orbits, and what is special about it. */
     private static void system(Catalog.Sys s, double[] dir, double[] c, double pix, ClientLevel level) {
         Space3D.clearDepth();
         double extent = 2e-4;
+        for (Catalog.Body b : s.bodies) {
+            if (b.kind == Catalog.NEBULA) {
+                extent = Math.max(extent, b.radius * 1.3);
+            }
+        }
         Space3D.range((float) (D * (1 - extent * 4) - 1), (float) (D * (1 + extent * 4) + 1));
         float vis = Math.max(Space3D.night, s.dir == null ? 0.5F : 0.15F) * Space3D.clear;
         double px = pix * D;
@@ -410,20 +496,93 @@ public final class TelescopeView {
                 case Catalog.STAR, Catalog.DWARF -> star(b, bx, by, bz, r, rPix, px, seed, vis);
                 case Catalog.BLACKHOLE -> blackHole(b, dir, bx, by, bz, r, px, vis);
                 case Catalog.PULSAR -> {
-                    // A neutron star: a tiny blinding point whose two beams sweep round like a lighthouse's.
-                    double spin = time * 0.42;
-                    double[] axis = new double[3];
-                    Space3D.apply(Space3D.SKYVIEW, Math.cos(spin) * 0.9, 0.3, Math.sin(spin) * 0.9, axis);
-                    double len = D * 5e-5;
-                    Space3D.cone(bx, by, bz, axis[0], axis[1], axis[2], len, len * 0.12, 0.55F, 0.7F, 1F, 0.55F * vis);
-                    Space3D.cone(bx, by, bz, -axis[0], -axis[1], -axis[2], len, len * 0.12, 0.55F, 0.7F, 1F, 0.55F * vis);
-                    float pulse = 0.6F + 0.4F * (float) Math.abs(Math.cos(spin));
-                    Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(r * 10, px * 6), 0F, 0.7F, 0.82F, 1F, 0.7F * vis * pulse);
-                    Space3D.billboard(Space3D.STAR, ADD, bx, by, bz, Math.max(r * 14, px * 10), 0F, 0.8F, 0.9F, 1F, 0.8F * vis * pulse);
+                    double[] ax = pulsarAxis(b);
+                    Pulsars.draw(bx, by, bz, r, ax, b.tiltDeg, b.spinHz, b.pr, b.pg, b.pb, vis, px, seed + b.id.hashCode(), time / 20.0, rPix > 2);
                 }
+                case Catalog.NEBULA -> nebula(b, dir, bx, by, bz, r, px, vis);
                 default -> body(s, b, bx, by, bz, r, rPix, px, lightPos, light, vis);
             }
         }
+    }
+
+    /** A pulsar's spin axis (fixed among the stars) in view space. */
+    static double[] pulsarAxis(Catalog.Body b) {
+        long h = b.id.hashCode();
+        double x = Space3D.h(h, 1) - 0.5, y = Space3D.h(h, 2) - 0.5 + 0.8, z = Space3D.h(h, 3) - 0.5;
+        double[] a = new double[3];
+        Space3D.apply(Space3D.SKYVIEW, x, y, z, a);
+        double l = Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+        a[0] /= l;
+        a[1] /= l;
+        a[2] /= l;
+        return a;
+    }
+
+    /**
+     * A nebula: from far off a faint smudge in its colour; bigger on the screen, ray marched through its gas in 3D
+     * (more steps and finer turbulence the more it fills the view), with the stars that light it.
+     */
+    private static void nebula(Catalog.Body b, double[] dirSky, double bx, double by, double bz, double rv, double px, float vis) {
+        Nebulae.Recipe rc = Nebulae.get(b.recipe);
+        if (rc == null) {
+            return;
+        }
+        double quadPx = rv / px;
+        float far = 1F - Space3D.smooth(8F, 40F, (float) quadPx);
+        Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(rv * 1.3, px * 4), 0F, rc.r, rc.g, rc.b, 0.3F * vis * Math.max(far, 0.05F));
+        double[] e1 = new double[3], e2 = new double[3];
+        across(dirSky, e1, e2);
+        double[] e1v = new double[3], e2v = new double[3], zv = new double[3];
+        Space3D.apply(Space3D.SKYVIEW, e1[0], e1[1], e1[2], e1v);
+        Space3D.apply(Space3D.SKYVIEW, e2[0], e2[1], e2[2], e2v);
+        Space3D.apply(Space3D.SKYVIEW, -dirSky[0], -dirSky[1], -dirSky[2], zv);
+        float alpha = Space3D.smooth(6F, 30F, (float) quadPx) * vis;
+        if (alpha > 0.01F && SpaceShaders.nebulaReady()) {
+            double q = rv * 1.12;
+            double ncx = Space3D.projX() * bx / -bz, ncy = Space3D.projY() * by / -bz;
+            double hx = Space3D.projX() * q / -bz, hy = Space3D.projY() * q / -bz;
+            double x0 = Math.max(ncx - hx, -1.02), x1 = Math.min(ncx + hx, 1.02), y0 = Math.max(ncy - hy, -1.02), y1 = Math.min(ncy + hy, 1.02);
+            if (x0 < x1 && y0 < y1) {
+                double am = ((x0 + x1) / 2 - ncx) / hx, ha = (x1 - x0) / 2 / hx, bm = ((y0 + y1) / 2 - ncy) / hy, hb = (y1 - y0) / 2 / hy;
+                double dist = Math.sqrt(bx * bx + by * by + bz * bz);
+                double[] dv = {bx / dist, by / dist, bz / dist};
+                // Screen right and up across the line of sight (view space), then into the nebula's frame.
+                double[] sr = {1 - dv[0] * dv[0], -dv[0] * dv[1], -dv[0] * dv[2]};
+                double sl = Math.sqrt(sr[0] * sr[0] + sr[1] * sr[1] + sr[2] * sr[2]);
+                sr[0] /= sl;
+                sr[1] /= sl;
+                sr[2] /= sl;
+                double[] su = {sr[1] * dv[2] - sr[2] * dv[1], sr[2] * dv[0] - sr[0] * dv[2], sr[0] * dv[1] - sr[1] * dv[0]};
+                double[] lr = toFrame(sr, e1v, e2v, zv), lu = toFrame(su, e1v, e2v, zv), ld = toFrame(dv, e1v, e2v, zv);
+                double k = q / rv;
+                double[] o = new double[3], ox = new double[3], oy = new double[3];
+                for (int i = 0; i < 3; i++) {
+                    o[i] = k * (lr[i] * am + lu[i] * bm) - ld[i] * 2.5;
+                    ox[i] = k * lr[i] * ha;
+                    oy[i] = k * lu[i] * hb;
+                }
+                float steps = (float) Mth.clamp(36 + quadPx / 40, 36, 76);
+                float oct = (float) Mth.clamp(3 + Math.log(Math.max(1, quadPx / 120)) / Math.log(2), 3, 6);
+                SpaceShaders.nebula(rc, (float) x0, (float) y0, (float) x1, (float) y1, o, ox, oy, ld, new double[3], new double[3], steps, oct, alpha);
+            }
+        }
+        // The stars inside it.
+        for (Nebulae.Stars st : rc.stars) {
+            long seed = (b.id + st.hashCode()).hashCode();
+            for (int i = 0; i < st.count(); i++) {
+                double sx = st.x() + (Space3D.h(seed, i * 3L) - 0.5) * 2 * st.spread(), sy = st.y() + (Space3D.h(seed, i * 3L + 1) - 0.5) * 2 * st.spread(),
+                        sz = st.z() + (Space3D.h(seed, i * 3L + 2) - 0.5) * st.spread();
+                double qx = bx + (e1v[0] * sx + e2v[0] * sy + zv[0] * sz) * rv, qy = by + (e1v[1] * sx + e2v[1] * sy + zv[1] * sz) * rv,
+                        qz = bz + (e1v[2] * sx + e2v[2] * sy + zv[2] * sz) * rv;
+                float br = st.bright() * (0.4F + 0.6F * Space3D.h(seed, i * 3L + 7));
+                Space3D.billboard(Space3D.GLOW, ADD, qx, qy, qz, Math.max(px * 2.5, rv * 0.006 * br), 0F, st.r(), st.g(), st.b(), Math.min(1F, br) * vis);
+                Space3D.billboard(Space3D.STAR, ADD, qx, qy, qz, Math.max(px * 4, rv * 0.012 * br), 0F, st.r(), st.g(), st.b(), 0.6F * br * vis);
+            }
+        }
+    }
+
+    private static double[] toFrame(double[] v, double[] e1, double[] e2, double[] z) {
+        return new double[]{v[0] * e1[0] + v[1] * e1[1] + v[2] * e1[2], v[0] * e2[0] + v[1] * e2[1] + v[2] * e2[2], v[0] * z[0] + v[1] * z[1] + v[2] * z[2]};
     }
 
     /** How strongly a flare star is flaring right now (0..1, sudden rises and slow fades). */
@@ -668,8 +827,9 @@ public final class TelescopeView {
             return;
         }
         double am = ((x0 + x1) / 2 - ncx) / hx, ha = (x1 - x0) / 2 / hx, bm = ((y0 + y1) / 2 - ncy) / hy, hb = (y1 - y0) / 2 / hy;
-        SpaceShaders.blackHole((float) x0, (float) y0, (float) x1, (float) y1, new double[]{am * edge, bm * edge}, new double[]{ha * edge, 0},
-                new double[]{0, hb * edge}, nb, (float) (time % 200000.0) * 0.05F, alpha, (float) edge, 1.15F, 320F);
+        SpaceShaders.blackHole((float) x0, (float) y0, (float) x1, (float) y1, new double[]{am * edge, bm * edge, 60}, new double[]{ha * edge, 0, 0},
+                new double[]{0, hb * edge, 0}, new double[]{0, 0, -1}, new double[3], new double[3], nb, (float) (time % 200000.0) * 0.05F, alpha,
+                (float) edge, 1.15F, 320F);
     }
 
     /** The old globular cluster the pulsar lives in: thousands of stars crowding to its centre. */

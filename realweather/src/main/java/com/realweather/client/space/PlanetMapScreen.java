@@ -12,16 +12,22 @@ import java.util.List;
 /** The planet map's list: every planet, dwarf planet and moon it can take you to, page by page. */
 public class PlanetMapScreen extends Screen {
     private static int tab;
-    private static final int[] PAGE = new int[2];
+    private static final int[] PAGE = new int[4];
     private int pages = 1;
 
     public PlanetMapScreen() {
         super(Component.translatable("realweather.planet_map.title"));
     }
 
-    /** The worlds in a tab: our solar system's, or other stars' planets. */
+    /** What a tab lists: our solar system's worlds, other stars' planets, stars (pulsars, the black hole) or nebulae. */
     static List<Catalog.Target> worlds(int tab) {
         List<Catalog.Target> out = new ArrayList<>();
+        if (tab >= 2) {
+            for (Catalog.Target t : Catalog.group(tab == 2 ? Catalog.STARS : Catalog.NEBULAE)) {
+                out.add(t);
+            }
+            return out;
+        }
         for (Catalog.Target t : Catalog.group(tab == 0 ? Catalog.PLANETS : Catalog.EXOPLANETS)) {
             if (t.body.isPlanet() && t.body.map != null) {
                 out.add(t);
@@ -32,10 +38,10 @@ public class PlanetMapScreen extends Screen {
 
     @Override
     protected void init() {
-        String[] tabs = {"planets", "exoplanets"};
-        int tw = Math.min(130, (width - 40) / 2);
-        int tx = width / 2 - (tw * 2 + 4) / 2;
-        for (int i = 0; i < 2; i++) {
+        String[] tabs = {"planets", "exoplanets", "stars", "nebulae"};
+        int tw = Math.min(100, (width - 40) / 4);
+        int tx = width / 2 - (tw * 4 + 12) / 2;
+        for (int i = 0; i < 4; i++) {
             int idx = i;
             Button b = Button.builder(Component.translatable("realweather.telescope.tab." + tabs[i]), btn -> {
                 tab = idx;
@@ -62,6 +68,13 @@ public class PlanetMapScreen extends Screen {
                     .bounds(x0 + (k % cols) * (bw + 4), top + (k / cols) * (bh + gap), bw, bh)
                     .tooltip(Tooltip.create(Component.translatable("realweather.target." + t.id + ".info"))).build();
             addRenderableWidget(b);
+        }
+        // Away on another world: the way home.
+        if (minecraft.level != null && minecraft.level.dimension() == com.realweather.space.Worlds.DIMENSION) {
+            addRenderableWidget(Button.builder(Component.translatable("realweather.planet_map.go_home"), btn -> {
+                net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.realweather.net.TravelPayload("", 2, 0, 0));
+                onClose();
+            }).bounds(width - 116, height - 24, 110, 20).build());
         }
         if (pages > 1) {
             Button prev = Button.builder(Component.literal("<"), btn -> {

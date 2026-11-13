@@ -1,0 +1,10 @@
+{
+  "type": "realweather:planets",
+  "generator": {
+    "type": "realweather:planet",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "realweather:alien_world"
+    }
+  }
+}

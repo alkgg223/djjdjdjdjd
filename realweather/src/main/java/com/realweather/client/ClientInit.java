@@ -29,6 +29,7 @@ public final class ClientInit {
         modBus.addListener(WeatherParticles::register);
         modBus.addListener(com.realweather.client.sky.VolumeClouds::registerShaders);
         modBus.addListener(com.realweather.client.space.SpaceShaders::register);
+        modBus.addListener(com.realweather.client.sky.GodRays::register);
 
         NeoForge.EVENT_BUS.addListener(ClientWeather::onClientTick);
         // The telescope: its zoom, slower turning when zoomed in, no walking or digging at the eyepiece.
@@ -52,6 +53,9 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.EclipseRenderer::onRenderStage);
         // Sky events (planets, comets, satellites, the aurora...) behind the clouds too.
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.SpaceRenderer::onRenderStage);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.space.PlanetSky::onRenderStage);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.GodRays::onRenderStage);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW, com.realweather.client.space.PlanetSky::onFogColor);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.SkyRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.tsunami.TsunamiRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.quake.CrackRenderer::onRenderStage);
@@ -96,6 +100,8 @@ public final class ClientInit {
 
     private static void onDimensionEffects(RegisterDimensionSpecialEffectsEvent event) {
         event.register(BuiltinDimensionTypes.OVERWORLD_EFFECTS, new RealOverworldEffects());
+        // The skies of other worlds are drawn by PlanetSky.
+        event.register(RealWeather.id("planets"), new com.realweather.client.space.PlanetSky.Effects());
     }
 
     private static void onGuiLayers(RegisterGuiLayersEvent event) {

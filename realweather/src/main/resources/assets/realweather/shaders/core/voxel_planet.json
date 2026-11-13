@@ -28,6 +28,7 @@
     { "name": "AirHeight", "type": "float", "count": 1, "values": [ 80.0 ] },
     { "name": "PixelSize", "type": "float", "count": 1, "values": [ 0.0 ] },
     { "name": "PixelGrow", "type": "float", "count": 1, "values": [ 0.0 ] },
-    { "name": "Hills", "type": "float", "count": 1, "values": [ 2.0 ] }
+    { "name": "Hills", "type": "float", "count": 1, "values": [ 2.0 ] },
+    { "name": "Snow", "type": "float", "count": 1, "values": [ 4.0 ] }
   ]
 }

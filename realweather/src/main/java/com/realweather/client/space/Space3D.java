@@ -32,6 +32,7 @@ public final class Space3D {
     public static final ResourceLocation FLAME = RealWeather.id("textures/environment/space3d/flame.png");
     public static final ResourceLocation GLOW = RealWeather.id("textures/environment/space/glow.png");
     public static final ResourceLocation STAR = RealWeather.id("textures/environment/space/star.png");
+    public static final ResourceLocation STAR_MAP_PUBLIC = RealWeather.id("textures/environment/space3d/star_surface.png");
 
     /** World (camera-relative) to view, sky frame to world, sky frame to view: 3 x 3, column-major. */
     public static final double[] VIEW = new double[9], SKY = new double[9], SKYVIEW = new double[9];

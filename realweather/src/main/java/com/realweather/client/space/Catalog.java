@@ -13,9 +13,9 @@ import java.util.List;
  * the telescope, so it has to be pointed at the place and zoomed right in.
  */
 public final class Catalog {
-    public static final int PLANETS = 0, STARS = 1, EXOPLANETS = 2;
+    public static final int PLANETS = 0, STARS = 1, EXOPLANETS = 2, NEBULAE = 3;
     /** Kinds of body. */
-    static final int ROCKY = 0, GAS = 1, STAR = 2, PULSAR = 3, DWARF = 4, BLACKHOLE = 5;
+    static final int ROCKY = 0, GAS = 1, STAR = 2, PULSAR = 3, DWARF = 4, BLACKHOLE = 5, NEBULA = 6;
     /** The planet blocks, by their place in the block atlas. */
     static final int REGOLITH = 0, BASALT = 1, SAND = 2, ICE = 3, FROST = 4, MAGMA = 5, CLOUD = 6, WATER = 7, MOSS = 8, CRYSTAL = 9, SULFUR = 10,
             IRONSTONE = 11, STORM = 12, OBSIDIAN = 13, HOTROCK = 14, ASH = 15;
@@ -42,6 +42,11 @@ public final class Catalog {
         /** Its ground as blocks: low, middle and high ground, and whether its blue parts are seas. */
         int lowT = BASALT, midT = REGOLITH, highT = REGOLITH;
         boolean ocean;
+        /** A pulsar's real spin rate (per second), the tilt of its magnetic axis (degrees) and the colour of its beams. */
+        double spinHz = 1;
+        float tiltDeg = 45, pr = 0.72F, pg = 0.84F, pb = 1F;
+        /** A nebula's recipe. */
+        String recipe;
 
         Body(String id, int kind, String map, double radius, double orbit, double period, double incl, double node, double phase, float r, float g,
              float b) {
@@ -122,6 +127,20 @@ public final class Catalog {
             return this;
         }
 
+        Body pulsar(double hz, float tilt, float r, float g, float b) {
+            spinHz = hz;
+            tiltDeg = tilt;
+            pr = r;
+            pg = g;
+            pb = b;
+            return this;
+        }
+
+        Body nebula(String recipe) {
+            this.recipe = recipe;
+            return this;
+        }
+
         /** This body as a planet of blocks with a radius of `blocks` (for the ray-traced view). */
         public SpaceShaders.Planet voxel(int blocks) {
             SpaceShaders.Planet p = new SpaceShaders.Planet();
@@ -132,6 +151,15 @@ public final class Catalog {
             p.relief = gas ? (float) Math.max(1, Math.min(3, Math.round(blocks * 0.04))) : (float) Math.max(2, Math.min(8, Math.round(blocks * 0.08)));
             p.sea = ocean ? Math.max(1F, Math.round(p.relief * 0.35F)) : -1F;
             p.tiles = gas ? new float[]{CLOUD, CLOUD, STORM, WATER} : new float[]{lowT, midT, highT, WATER};
+            // The ground of each world, as it is when you travel there.
+            com.realweather.space.Worlds.World w = com.realweather.space.Worlds.byId(id);
+            if (w != null) {
+                p.tiles = new float[]{w.low(), w.mid(), w.high(), WATER};
+                p.snow = w.snow();
+                if (w.ocean()) {
+                    p.sea = Math.max(1F, Math.round(p.relief * 0.35F));
+                }
+            }
             p.glow = glow;
             p.ambient = 0.012F;
             p.hills = gas ? 1F : Math.max(1F, Math.min(4F, p.relief * 0.35F));
@@ -499,12 +527,92 @@ public final class Catalog {
             target(p, EXOPLANETS, hr8799, p);
         }
         Sys psr = new Sys("psr1620", at("psr1620"), "12 400 ly (M4)");
-        psr.add(new Body("psr1620", PULSAR, "star_surface", 0.7e-6, 0.4e-5, 1600, 50, 0, 0.0, 0.75F, 0.85F, 1F).glow(1F),
+        psr.add(new Body("psr1620", PULSAR, "star_surface", 0.7e-6, 0.4e-5, 1600, 50, 0, 0.0, 0.75F, 0.85F, 1F).glow(1F).pulsar(90.3, 45, 0.7F, 0.82F, 1F),
                 new Body("psr1620_wd", DWARF, "star_surface", 1.2e-6, 0.9e-5, 1600, 50, 0, 0.5, 0.95F, 0.95F, 1F),
                 planet("psr_b1620_26b", GAS, "psr_b", 2.4e-6, 6.2e-5, 12000, 55, 40, 0.25).air(0.8F, 0.85F, 0.95F));
         psr.cluster = true;
         SYSTEMS.add(psr);
         target("psr_b1620_26b", EXOPLANETS, psr, "psr_b1620_26b");
+        nebulaeAndPulsars();
+    }
+
+    /** A place on the sky a little way from another (radians along the sky frame's x and z). */
+    private static double[] near(double[] base, double dx, double dz) {
+        return d(base[0] + dx, base[1], base[2] + dz);
+    }
+
+    private static Sys nebula(String id, double[] dir, String distance, double radius, Body... more) {
+        Sys s = new Sys(id, dir, distance);
+        s.add(new Body(id, NEBULA, null, radius, 0, 0, 0, 0, 0, 1F, 1F, 1F).nebula(id));
+        s.add(more);
+        SYSTEMS.add(s);
+        TARGETS.add(new Target(id, NEBULAE, s, s.bodies.get(0)));
+        return s;
+    }
+
+    private static Body pulsarBody(String id, double hz, float tilt, float r, float g, float b) {
+        return new Body(id, PULSAR, "star_surface", 0.6e-6, 0, 0, 0, 0, 0, 0.78F, 0.86F, 1F).glow(1F).pulsar(hz, tilt, r, g, b);
+    }
+
+    private static void nebulaeAndPulsars() {
+        double[] orion = at("orion_nebula");
+        nebula("orion_nebula", orion, "1344 ly", 0.0087);
+        double[] horse = near(orion, -0.03, 0.055);
+        nebula("horsehead_nebula", horse, "1375 ly", 0.0018);
+        nebula("flame_nebula", near(horse, 0.008, 0.006), "1350 ly", 0.0044);
+        nebula("running_man_nebula", near(orion, 0.0, -0.011), "1500 ly", 0.003);
+        // The Crab Nebula with its pulsar at the centre.
+        Sys crab = nebula("crab_nebula", at("crab_nebula"), "6500 ly", 0.001, pulsarBody("crab_pulsar", 29.9, 55, 0.7F, 0.82F, 1F));
+        TARGETS.add(new Target("crab_pulsar", STARS, crab, crab.bodies.get(1)));
+        nebula("eagle_nebula", at("eagle_nebula"), "7000 ly", 0.0035);
+        nebula("lagoon_nebula", at("lagoon_nebula"), "4100 ly", 0.013);
+        nebula("trifid_nebula", at("trifid_nebula"), "5200 ly", 0.004);
+        // Carina round Eta Carinae.
+        Sys eta = null;
+        for (Sys s : SYSTEMS) {
+            if (s.id.equals("eta_carinae")) {
+                eta = s;
+            }
+        }
+        nebula("carina_nebula", eta != null ? near(eta.dir, 0.002, 0.003) : at("carina_nebula"), "8500 ly", 0.0175);
+        nebula("ring_nebula", at("ring_nebula"), "2300 ly", 0.0003);
+        nebula("helix_nebula", at("helix_nebula"), "650 ly", 0.0036);
+        nebula("dumbbell_nebula", at("dumbbell_nebula"), "1360 ly", 0.0012);
+        nebula("cats_eye_nebula", at("cats_eye_nebula"), "3300 ly", 0.0007);
+        nebula("eskimo_nebula", at("eskimo_nebula"), "2900 ly", 0.0002);
+        nebula("rosette_nebula", at("rosette_nebula"), "5200 ly", 0.011);
+        nebula("north_america_nebula", at("north_america_nebula"), "2590 ly", 0.0175);
+        nebula("veil_nebula", at("veil_nebula"), "2400 ly", 0.026);
+        nebula("tarantula_nebula", at("tarantula_nebula"), "160 000 ly (LMC)", 0.0058);
+        nebula("omega_nebula", at("omega_nebula"), "5500 ly", 0.0016);
+        nebula("cone_nebula", at("cone_nebula"), "2700 ly", 0.003);
+        nebula("bubble_nebula", at("bubble_nebula"), "7100 ly", 0.0022);
+        nebula("california_nebula", at("california_nebula"), "1000 ly", 0.022);
+        double[] heart = at("heart_nebula");
+        nebula("heart_nebula", heart, "7500 ly", 0.022);
+        nebula("soul_nebula", near(heart, 0.044, 0.004), "6500 ly", 0.022);
+        nebula("witch_head_nebula", at("witch_head_nebula"), "900 ly", 0.026);
+        // Pulsars.
+        Sys vela = new Sys("vela", at("vela_pulsar"), "960 ly");
+        vela.add(pulsarBody("vela_pulsar", 11.2, 70, 0.66F, 0.76F, 1F), new Body("vela_wind", NEBULA, null, 2.5e-5, 0, 0, 0, 0, 0, 1F, 1F, 1F)
+                .nebula("vela_wind"));
+        SYSTEMS.add(vela);
+        TARGETS.add(new Target("vela_pulsar", STARS, vela, vela.bodies.get(0)));
+        Sys b1919 = new Sys("psr_b1919", at("psr_b1919_21"), "2300 ly");
+        b1919.add(pulsarBody("psr_b1919_21", 0.748, 40, 0.8F, 0.86F, 1F));
+        SYSTEMS.add(b1919);
+        TARGETS.add(new Target("psr_b1919_21", STARS, b1919, b1919.bodies.get(0)));
+        Sys terzan = new Sys("terzan5", at("psr_j1748_2446ad"), "18 000 ly (Terzan 5)");
+        terzan.add(pulsarBody("psr_j1748_2446ad", 716, 30, 0.75F, 0.78F, 1F));
+        terzan.cluster = true;
+        SYSTEMS.add(terzan);
+        TARGETS.add(new Target("psr_j1748_2446ad", STARS, terzan, terzan.bodies.get(0)));
+        Sys j0437 = new Sys("psr_j0437", at("psr_j0437_4715"), "510 ly");
+        j0437.add(new Body("psr_j0437_4715", PULSAR, "star_surface", 0.6e-6, 0.3e-5, 3000, 40, 10, 0, 0.78F, 0.86F, 1F).glow(1F)
+                        .pulsar(173.7, 35, 0.6F, 0.9F, 1F),
+                new Body("j0437_dwarf", DWARF, "star_surface", 1.1e-6, 1.1e-5, 3000, 40, 10, 0.5, WD[0], WD[1], WD[2]));
+        SYSTEMS.add(j0437);
+        TARGETS.add(new Target("psr_j0437_4715", STARS, j0437, j0437.bodies.get(0)));
     }
 
     private static void exo(String planet, String host, String distance, Body star, Body p) {
@@ -512,6 +620,33 @@ public final class Catalog {
         s.add(star, p);
         SYSTEMS.add(s);
         target(planet, EXOPLANETS, s, planet);
+    }
+
+    /** Distance from the Sun (AU) of our own worlds, for the size of the Sun in their skies. */
+    private static final String[] SOLAR = {"mercury", "venus", "earth", "moon", "mars", "ceres", "jupiter", "io", "europa", "ganymede", "callisto",
+            "saturn", "titan", "uranus", "neptune", "pluto", "charon", "haumea", "hiiaka", "namaka", "makemake", "eris", "dysnomia"};
+    private static final double[] AU = {0.39, 0.72, 1, 1, 1.52, 2.77, 5.2, 5.2, 5.2, 5.2, 5.2, 9.5, 9.5, 19.2, 30, 39, 39, 43, 43, 43, 45, 68, 68};
+
+    /** The star in a world's sky: its colour and angular radius (radians), as seen from that world. */
+    public static float[] hostStar(Target t) {
+        Body star = null;
+        for (Body b : t.sys.bodies) {
+            if (b.kind == STAR) {
+                star = b;
+                break;
+            }
+        }
+        if (t.sys.dir == null || star == null) {
+            double au = 1;
+            for (int i = 0; i < SOLAR.length; i++) {
+                if (SOLAR[i].equals(t.id)) {
+                    au = AU[i];
+                }
+            }
+            return new float[]{1F, 0.95F, 0.86F, (float) Math.max(0.0035, Math.min(0.06, 0.0093 * 2.2 / au))};
+        }
+        double orbit = t.body.orbit > 0 ? t.body.orbit : 1.0E-5;
+        return new float[]{star.r, star.g, star.b, (float) Math.max(0.004, Math.min(0.16, star.radius / orbit * 0.6))};
     }
 
     /** The Moon itself (for its blocks). */

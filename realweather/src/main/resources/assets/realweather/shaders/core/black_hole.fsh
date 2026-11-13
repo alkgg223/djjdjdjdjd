@@ -10,9 +10,12 @@
 // orbits, brightened and blued where it comes towards us (Doppler beaming) and reddened deep in the hole's gravity.
 // The galaxy straight behind is lensed into an Einstein ring; the stars behind are lensed too.
 
-uniform vec2 Pc;
-uniform vec2 Px;
-uniform vec2 Py;
+uniform vec3 RayO;
+uniform vec3 RayOx;
+uniform vec3 RayOy;
+uniform vec3 RayD;
+uniform vec3 RayDx;
+uniform vec3 RayDy;
 uniform vec3 DiskN;
 uniform float Time;
 uniform float Alpha;
@@ -113,14 +116,15 @@ vec3 beyond(vec3 p, vec3 v) {
 }
 
 void main() {
-    vec2 imp = Pc + Px * ab.x + Py * ab.y;
-    float b = length(imp);
-    float fadeOut = 1.0 - smoothstep(Edge * 0.72, Edge, b);
+    vec3 p = RayO + RayOx * ab.x + RayOy * ab.y;
+    vec3 v = normalize(RayD + RayDx * ab.x + RayDy * ab.y);
+    // Seen from afar (rays all parallel), the quad fades out at its edge; close by, it fills the view.
+    float b = length(cross(p, v));
+    float fadeOut = Edge > 0.0 ? 1.0 - smoothstep(Edge * 0.72, Edge, b) : 1.0;
     if (fadeOut <= 0.0) {
         discard;
     }
-    vec3 p = vec3(imp, 60.0);
-    vec3 v = vec3(0.0, 0.0, -1.0);
+    float escape = max(90.0, length(p) * 1.05);
     vec3 hv = cross(p, v);
     float h2 = dot(hv, hv);
     vec3 col = vec3(0.0);
@@ -160,7 +164,7 @@ void main() {
             trans = 0.0;
             break;
         }
-        if (rn > 90.0 && dot(p, v) > 0.0) {
+        if (rn > escape && dot(p, v) > 0.0) {
             escaped = true;
             break;
         }
@@ -169,7 +173,7 @@ void main() {
     // and glow already drawn behind show through.
     float cover = 1.0 - trans;
     if (escaped) {
-        float w = 1.0 - smoothstep(8.0, 32.0, b);
+        float w = Edge > 0.0 ? 1.0 - smoothstep(8.0, 32.0, b) : 1.0;
         col += trans * w * beyond(p, normalize(v));
         cover += trans * w;
     } else if (trans > 0.0) {

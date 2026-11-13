@@ -83,6 +83,9 @@ public final class SelfTest {
         if (suite.contains("telescope")) {
             telescopeSuite();
         }
+        if (suite.contains("travel")) {
+            travelSuite();
+        }
         if (suite.contains("planets") || suite.contains("orbit") || suite.contains("ascent") || suite.contains("zoom")) {
             boolean all = suite.contains("planets");
             planetsSuite(all || suite.contains("ascent"), all || suite.contains("orbit"), all || suite.contains("zoom"));
@@ -1347,6 +1350,40 @@ public final class SelfTest {
         }
         step(5, () -> com.realweather.client.space.Telescope.stop());
         step(5, () -> com.realweather.client.space.Telescope.stop());
+    }
+
+    /** 1.13: travelling to other worlds (their ground, sky and blocks), orbit, and home again. */
+    private static void travelSuite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 5000");
+        });
+        String[] worlds = {"mars", "moon", "io", "kepler186f", "titan", "jupiter", "cnc55e", "europa"};
+        for (String w : worlds) {
+            step(5, () -> cmd("execute as @a run rw travel " + w));
+            step(60, () -> {
+                turnClient(30F, 8F);
+                shot("w_" + w);
+                Minecraft mc = Minecraft.getInstance();
+                LOG.info("[travel {}] dim={} pos={}", w, mc.level.dimension().location(), mc.player.blockPosition());
+            });
+        }
+        step(5, () -> cmd("time set 18000"));
+        step(40, () -> shot("w_europa_night"));
+        step(5, () -> {
+            cmd("time set 5000");
+            cmd("execute as @a run rw travel mars orbit");
+        });
+        step(40, () -> {
+            turnClient(0F, 70F);
+            shot("w_mars_orbit");
+        });
+        step(5, () -> cmd("execute as @a run rw home"));
+        step(40, () -> {
+            Minecraft mc = Minecraft.getInstance();
+            LOG.info("[travel home] dim={} pos={}", mc.level.dimension().location(), mc.player.blockPosition());
+            shot("w_home");
+        });
     }
 
     private static BlockPos telescopeAt = BlockPos.ZERO;

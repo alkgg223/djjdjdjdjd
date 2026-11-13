@@ -12,7 +12,7 @@ import java.util.List;
 /** The telescope's list: the solar system, stars and exoplanets it can be pointed at, page by page. */
 public class TelescopeScreen extends Screen {
     private static int tab;
-    private static final int[] PAGE = new int[3];
+    private static final int[] PAGE = new int[4];
     private final BlockPos pos;
     private int pages = 1;
 
@@ -23,10 +23,10 @@ public class TelescopeScreen extends Screen {
 
     @Override
     protected void init() {
-        String[] tabs = {"planets", "stars", "exoplanets"};
-        int tw = Math.min(110, (width - 40) / 3);
-        int tx = width / 2 - (tw * 3 + 8) / 2;
-        for (int i = 0; i < 3; i++) {
+        String[] tabs = {"planets", "stars", "exoplanets", "nebulae"};
+        int tw = Math.min(100, (width - 40) / 4);
+        int tx = width / 2 - (tw * 4 + 12) / 2;
+        for (int i = 0; i < 4; i++) {
             int idx = i;
             Button b = Button.builder(Component.translatable("realweather.telescope.tab." + tabs[i]), btn -> {
                 tab = idx;
