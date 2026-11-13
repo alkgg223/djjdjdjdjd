@@ -124,7 +124,8 @@ public final class TelescopeView {
             double[] dir = s.direction(day);
             double[] c = new double[3];
             Space3D.apply(Space3D.SKYVIEW, dir[0] * D, dir[1] * D, dir[2] * D, c);
-            double ang = Math.acos(Mth.clamp(-c[2] / D, -1, 1));
+            // (atan2, not acos: near the centre acos loses all precision.)
+            double ang = Math.atan2(Math.sqrt(c[0] * c[0] + c[1] * c[1]), -c[2]);
             double extent = 0;
             for (Catalog.Body b : s.bodies) {
                 extent = Math.max(extent, b.orbit + b.radius * 3);
