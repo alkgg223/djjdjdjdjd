@@ -112,6 +112,8 @@ public final class PrecipitationRenderer {
         RenderSystem.depthMask(Minecraft.useShaderTransparency());
         RenderSystem.setShader(GameRenderer::getParticleShader);
         RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+        // Max optimize: sheets and puddles wholly off the screen are skipped (the weather is drawn with these matrices).
+        ViewCull.fromRenderSystem();
 
         if (puddles) {
             renderPuddles(level, camX, camY, camZ, ticks);
@@ -180,6 +182,7 @@ public final class PrecipitationRenderer {
                     0.55F * sand, 0F, wx, wz, 1F, 1F, 1F, 97, false);
         }
         flush();
+        ViewCull.off();
 
         RenderSystem.enableCull();
         RenderSystem.disableBlend();
@@ -240,6 +243,17 @@ public final class PrecipitationRenderer {
                 if (yBottom >= yTop) {
                     continue;
                 }
+                float yb = (float) (yBottom - camY);
+                float yt = (float) (yTop - camY);
+                float bx = (float) ox;
+                float bz = (float) oz;
+                // Rain coming from upwind: the top of the sheet sits against the wind.
+                float shx = -wx * lean * (yTop - yBottom);
+                float shz = -wz * lean * (yTop - yBottom);
+                if (!ViewCull.box(bx + Math.min(0F, shx) - 0.5F, yb, bz + Math.min(0F, shz) - 0.5F,
+                        bx + Math.max(0F, shx) + 0.5F, yt, bz + Math.max(0F, shz) + 0.5F)) {
+                    continue;
+                }
                 if (!started) {
                     begin(tex);
                     started = true;
@@ -254,9 +268,6 @@ public final class PrecipitationRenderer {
                     pz = (float) (ox / dist);
                 }
                 float h = yTop - yBottom;
-                // Rain coming from upwind: the top of the sheet sits against the wind.
-                float shx = -wx * lean * h;
-                float shz = -wz * lean * h;
                 float lateral = wx * px + wz * pz;
                 int hash = (x * 3129871) ^ (z * 116129781) ^ salt * 0x5bd1e995;
                 hash = hash * hash * 42317861 + hash * 11;
@@ -277,10 +288,6 @@ public final class PrecipitationRenderer {
                 float u0 = (float) uOff;
                 float u1 = u0 + su;
 
-                float bx = (float) ox;
-                float bz = (float) oz;
-                float yb = (float) (yBottom - camY);
-                float yt = (float) (yTop - camY);
                 float hw = 0.5F;
                 int lc = light[i];
                 BufferBuilder b = buffer;
@@ -361,6 +368,9 @@ public final class PrecipitationRenderer {
                     continue;
                 }
                 float y = (float) (puddleY[i] - camY) + 0.002F;
+                if (!ViewCull.box(x0, y, z0, x0 + 1F, y, z0 + 1F)) {
+                    continue;
+                }
                 float u0 = Math.floorMod(puddleX[i], 8) / 8F;
                 float v0 = Math.floorMod(puddleZ[i], 8) / 8F;
                 float u1 = u0 + 0.125F;

@@ -242,8 +242,9 @@ public final class StormClouds {
             return;
         }
         float spin = time * 0.0012F;
-        // Striations: stacked, broadening bands around the updraft (the "mothership").
-        int nStri = STRIATION_N[q];
+        // Striations: stacked, broadening bands around the updraft (the "mothership"); not over a tornado, where
+        // from below they showed as flat ellipses round the funnel.
+        int nStri = hasTornado ? 0 : STRIATION_N[q];
         for (int i = 0; i < nStri; i++) {
             float layer = (float) (i % 4) / 3F;
             float a = rnd.nextFloat() * Mth.TWO_PI + spin * (0.6F + layer * 0.3F);

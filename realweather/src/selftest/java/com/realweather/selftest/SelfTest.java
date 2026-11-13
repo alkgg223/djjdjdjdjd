@@ -74,6 +74,9 @@ public final class SelfTest {
         if (suite.contains("eclipse")) {
             eclipseSuite();
         }
+        if (suite.contains("opt")) {
+            optSuite();
+        }
         if (suite.contains("all")) {
             weatherSuite();
         }
@@ -890,6 +893,105 @@ public final class SelfTest {
     }
 
     /** 1.8.0: a total eclipse (partial phase, diamond ring, totality), eclipse glasses, cloud types, lightning in the clouds. */
+    /**
+     * 1.9.0: every funnel down on the ground (the bowl hanging over its debris), the top of the funnel seen from close
+     * below, and max optimize off and on side by side for the same views (they must look the same).
+     */
+    private static void optSuite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 6000");
+            goTo("minecraft:plains", 0, 5);
+            quality(com.realweather.ClientConfig.TornadoQuality.ULTRA);
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+        });
+        step(40, SelfTest::platform);
+        step(160, () -> LOG.info("waiting for the world around the platform to load"));
+        String[][] list = {{"cone", "0", "70"}, {"rope", "1", "75"}, {"cone", "2", "100"}, {"drill_bit", "2", "100"}, {"truncated_cone", "3", "125"},
+                {"bulb", "4", "150"}, {"wedge", "5", "175"}, {"bowl", "3", "125"}};
+        int k = 0;
+        for (String[] e : list) {
+            String name = e[0];
+            int rating = Integer.parseInt(e[1]);
+            double dist = Double.parseDouble(e[2]);
+            String label = String.format("90_%02d_%s_f%d", k++, name, rating);
+            step(5, SelfTest::removeTornadoes);
+            step(10, () -> typeTornado(name, rating, dist));
+            step(100, () -> lookAtTornado(-7));
+            step(5, () -> {
+                shot(label);
+                tornadoState(name);
+            });
+        }
+        // Close under the top of a funnel: no ring of flat ellipses round it.
+        step(5, SelfTest::removeTornadoes);
+        step(10, () -> typeTornado("cone", 3, 60));
+        step(100, () -> lookAtTornado(-35));
+        step(5, () -> shot("91_cone_top_close"));
+        // Max optimize off and on: the tornado in the middle, then at the edge of the screen.
+        for (int edge = 0; edge < 2; edge++) {
+            int ed = edge;
+            for (int on = 0; on < 2; on++) {
+                boolean opt = on == 1;
+                step(5, () -> {
+                    com.realweather.ClientConfig.MAX_OPTIMIZE.set(opt);
+                    lookAtTornado(-7);
+                });
+                if (ed == 1) {
+                    step(3, () -> Minecraft.getInstance().player.setYRot(Minecraft.getInstance().player.getYRot() + 42F));
+                }
+                step(20, () -> {
+                    shot("92_tornado_" + (ed == 1 ? "edge" : "middle") + (opt ? "_opt_on" : "_opt_off"));
+                    skyState("tornado " + (ed == 1 ? "edge" : "middle") + " maxOptimize=" + opt);
+                });
+            }
+        }
+        // A supercell with a tornado and rain, looking at it and looking away along the edge of the storm.
+        step(5, () -> {
+            removeTornadoes();
+            supercellBeside(300);
+        });
+        step(60, () -> tornadoAtUpdraft(3));
+        step(120, () -> lookAtStorm(-6));
+        for (int on = 0; on < 2; on++) {
+            boolean opt = on == 1;
+            step(5, () -> com.realweather.ClientConfig.MAX_OPTIMIZE.set(opt));
+            step(20, () -> {
+                shot("93_supercell" + (opt ? "_opt_on" : "_opt_off"));
+                skyState("supercell maxOptimize=" + opt);
+            });
+        }
+        // Fair-weather clouds and rain right here, at the sprite and the 3D levels.
+        step(5, () -> {
+            removeTornadoes();
+            cmd("rw clear");
+            cmd("execute as @a at @s run rw rain 60 5");
+        });
+        step(200, () -> look(30, -12));
+        for (com.realweather.ClientConfig.Quality q : new com.realweather.ClientConfig.Quality[]{com.realweather.ClientConfig.Quality.ULTRA,
+                com.realweather.ClientConfig.Quality.MEDIUM_3D}) {
+            for (int on = 0; on < 2; on++) {
+                boolean opt = on == 1;
+                step(5, () -> {
+                    weatherQuality(q);
+                    com.realweather.ClientConfig.MAX_OPTIMIZE.set(opt);
+                });
+                step(40, () -> {
+                    shot("94_rain_" + q.name().toLowerCase(java.util.Locale.ROOT) + (opt ? "_opt_on" : "_opt_off"));
+                    skyState("rain " + q + " maxOptimize=" + opt);
+                });
+            }
+        }
+        step(5, () -> {
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+            com.realweather.ClientConfig.MAX_OPTIMIZE.set(true);
+            Minecraft.getInstance().player.setXRot(40F);
+        });
+        step(20, () -> shot("95_rain_ground_opt_on"));
+        step(5, () -> com.realweather.ClientConfig.MAX_OPTIMIZE.set(false));
+        step(20, () -> shot("95_rain_ground_opt_off"));
+    }
+
     private static void eclipseSuite() {
         step(5, () -> {
             cmd("rw clear");

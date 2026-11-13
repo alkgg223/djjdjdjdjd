@@ -77,9 +77,8 @@ public final class TornadoRenderer {
         TornadoShape shape = t.shape;
         int n = SEGMENTS[q];
         int m = RINGS[q];
-        float gap = t.rating == 0 && shape != TornadoShape.LANDSPOUT ? 0.12F : 0F;
-        // While the funnel is still coming down, only the part below the cloud is condensed.
-        float bottom = Math.max((1F - t.contact) * 0.85F, gap * t.contact);
+        // While the funnel is still coming down, only the part below the cloud is condensed; once down it touches the ground.
+        float bottom = (1F - t.contact) * 0.85F;
         float spinTurns = t.spin(pt);
         float rise = time * 0.012F * (1F + t.rating * 0.15F);
         float strength = 0.3F + 0.7F * t.strength;
@@ -266,32 +265,7 @@ public final class TornadoRenderer {
         float base = t.groundY + height;
         float wallR = rc * 2.4F + 22F + t.rating * 4F;
         float fade = 0.35F + 0.65F * t.strength;
-        // Puffs only outside the funnel top, never below the cloud base it hangs from; any puff between you and
-        // the funnel, or right in front of the camera, fades away so it never hides the funnel.
-        float topR = t.radiusAt(1F);
-        float inner = Math.max(topR * 1.3F + 4F, wallR * 0.3F);
-        float fx = cx - (float) cam.x, fy = base - (float) cam.y, fz = cz - (float) cam.z;
-        float fd = Mth.sqrt(fx * fx + fy * fy + fz * fz) + 1.0E-3F;
-        for (int i = 0; i < n; i++) {
-            float a = rnd.nextFloat() * Mth.TWO_PI - spin * (0.8F + rnd.nextFloat() * 0.4F);
-            float r = Mth.lerp(Mth.sqrt(rnd.nextFloat()), inner, wallR + inner * 0.3F);
-            float px = cx + Mth.cos(a) * r - (float) cam.x;
-            float pz = cz + Mth.sin(a) * r - (float) cam.z;
-            float k = Mth.clamp(r / wallR, 0F, 1F);
-            float py = Mth.lerp(k * k, base + 1F, deck - 1F) + rnd.nextFloat() * 3F - (float) cam.y;
-            float w = wallR * (0.26F + rnd.nextFloat() * 0.18F);
-            float shade = 0.34F + 0.08F * k + rnd.nextFloat() * 0.05F;
-            float alpha = 0.9F * fade;
-            float pd = Mth.sqrt(px * px + py * py + pz * pz) + 1.0E-3F;
-            float cos = (px * fx + py * fy + pz * fz) / (pd * fd);
-            float sep = Mth.sqrt(Math.max(0F, 1F - cos * cos)) * pd;
-            if (pd < fd + topR && cos > 0F && sep < w + topR) {
-                alpha *= Mth.clamp((sep - topR * 0.6F) / (w + topR * 0.4F), 0.08F, 1F);
-            }
-            alpha *= Mth.clamp((pd - w * 0.8F) / (w * 1.2F), 0F, 1F);
-            SkyBillboards.cell(SkyBillboards.SPHERE, SkyBillboards.WALL + (i & 1), px, py, pz, w, w * 0.42F, a,
-                    lr * shade, lg * shade, lb * shade * 1.04F, alpha, 0.72F, sunSide * 0.4F);
-        }
+        // (No puffs round the top of the funnel: from below they showed as a ring of flat ellipses.)
         // Inflow scud streaming into the wall cloud (the parent supercell, if any, supplies its own).
         ClientStorms.Cell parent = StormClouds.parentOf(t);
         if (parent == null && q >= 1) {
@@ -331,6 +305,9 @@ public final class TornadoRenderer {
                 lr * 0.5F, lg * 0.44F, lb * 0.36F, 0.5F * amount, 1F, 0F);
     }
 
+    private static final float[] SV_X = new float[6], SV_Y = new float[6], SV_Z = new float[6], SV_R = new float[6], SV_A = new float[6];
+    private static final float[][] SV_COL = new float[6][3];
+
     /** Suction vortices orbiting inside violent tornadoes: short, dusty 3D tubes. */
     private static void subVortices(ClientTornadoes.T t, double tx, double tz, Vec3 cam, float time, float pt, int q,
                                     float lr, float lg, float lb, float sunSide) {
@@ -339,8 +316,8 @@ public final class TornadoRenderer {
         float spin = t.spin(pt);
         float h = 14F + t.rating * 3F;
         int m = 5;
-        float[] cx = new float[m + 1], cy = new float[m + 1], cz = new float[m + 1], rad = new float[m + 1], alpha = new float[m + 1];
-        float[][] col = new float[m + 1][3];
+        float[] cx = SV_X, cy = SV_Y, cz = SV_Z, rad = SV_R, alpha = SV_A;
+        float[][] col = SV_COL;
         for (int k = 0; k < count; k++) {
             float orbit = (float) (-spin * Math.PI * 2 * 1.3F + k * Math.PI * 2 / count);
             float ox = (float) (tx + Mth.cos(orbit) * rc * 0.8F - cam.x);

@@ -81,6 +81,8 @@
   "realweather.cmd.storm.1": "A thunderstorm is building overhead",
   "realweather.cmd.storm.2": "A hailstorm (%s%%) is coming for %s minutes",
   "realweather.cmd.storm.3": "A supercell is approaching (%s%%, %s minutes) - watch the wall cloud",
+  "realweather.config.max_optimize": "Max optimize",
+  "realweather.config.max_optimize.tooltip": "Clouds, storms, tornado parts, rain, snow and puddles that are entirely off the screen are not built or drawn. What you see and hear stays exactly the same; only the work for what you can't see is saved.",
   "realweather.config.clouds": "Realistic clouds",
   "realweather.config.clouds.tooltip": "3D cumulus on fair days, grey overcast in rain, and towering storm clouds with rain shafts and wall clouds. Replaces the vanilla clouds.",
   "block.realweather.weather_radar": "Weather Radar",

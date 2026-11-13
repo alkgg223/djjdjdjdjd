@@ -62,6 +62,10 @@ final class CloudField {
         int gz1 = Mth.floor((oz + radius) / CELL);
         float grey = 1F - 0.4F * overcast;
         float puffAlpha = 1F - 0.5F * overcast;
+        // Max optimize: a sphere round everything a cell can draw (its base and its biggest, highest puffs).
+        float sizeMax = CELL * 0.98F * (q == 0 ? 1.25F : q == 1 ? 1.05F : 1F) * 1.35F * (1F + 0.3F * overcast);
+        float spanY = 0.42F * sizeMax + 48F;
+        float cellR = CELL * 0.45F * 1.4143F + spanY * 0.5F + sizeMax * 1.5F + 4F;
         for (int gx = gx0; gx <= gx1; gx++) {
             for (int gz = gz0; gz <= gz1; gz++) {
                 double cx = (gx + 0.5) * CELL + driftX;
@@ -70,6 +74,9 @@ final class CloudField {
                 double dz = cz - cam.z;
                 float dist = (float) Math.sqrt(dx * dx + dz * dz);
                 if (dist > radius) {
+                    continue;
+                }
+                if (!com.realweather.client.ViewCull.sphere((float) dx, base + spanY * 0.5F - (float) cam.y, (float) dz, cellR)) {
                     continue;
                 }
                 float n = field(gx, gz);

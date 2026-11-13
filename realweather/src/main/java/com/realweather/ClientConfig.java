@@ -24,11 +24,14 @@ public final class ClientConfig {
     public static final ModConfigSpec.BooleanValue REALISTIC_LIGHTNING;
     public static final ModConfigSpec.EnumValue<TornadoQuality> TORNADO_QUALITY;
     public static final ModConfigSpec.BooleanValue CLOUDS;
+    public static final ModConfigSpec.BooleanValue MAX_OPTIMIZE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         QUALITY = b.comment("Weather detail: LOW, MEDIUM, HIGH, ULTRA, or LOW_3D, MEDIUM_3D, HIGH_3D, ULTRA_3D for real volumetric 3D clouds. Lower settings use fewer particles and clouds; LOW is best for phones and weak PCs. The 3D levels need a good graphics card (LOW_3D is the lightest).")
                 .translation("realweather.config.quality").defineEnum("quality", Quality.MEDIUM);
+        MAX_OPTIMIZE = b.comment("Max optimize: clouds, storms, tornado parts, rain sheets and puddles that are entirely off the screen are not built or drawn. Everything you can see (clouds, tornadoes, rain, lighting, sounds) stays exactly the same; only the work for what you can't see is saved.")
+                .translation("realweather.config.max_optimize").define("maxOptimize", true);
         CLOUDS = b.comment("Realistic 3D clouds: fair-weather cumulus, overcast decks and storm clouds (replaces the vanilla clouds).")
                 .translation("realweather.config.clouds").define("realisticClouds", true);
         CUSTOM_PRECIPITATION = b.comment("Draw the realistic rain, snow and sandstorm instead of the vanilla weather.")
@@ -85,6 +88,11 @@ public final class ClientConfig {
     /** Volumetric 3D clouds (ULTRA_3D). */
     public static boolean clouds3d() {
         return QUALITY.get().name().endsWith("_3D");
+    }
+
+    /** Skip building and drawing what is wholly off the screen (the picture stays exactly the same). */
+    public static boolean maxOptimize() {
+        return MAX_OPTIMIZE.get();
     }
 
     /** 0 = LOW .. 3 = ULTRA. */

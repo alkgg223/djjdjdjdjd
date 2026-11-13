@@ -114,6 +114,10 @@ public final class SkyBillboards {
         if (x * lookX + y * lookY + z * lookZ < -size * 1.5F && d > size) {
             return;
         }
+        // Max optimize: wholly off the screen (1.5 x the larger half-size covers every corner, however it is turned).
+        if (!com.realweather.client.ViewCull.sphere(x, y, z, size * 1.5F)) {
+            return;
+        }
         if (d > fadeEnd * 0.75F) {
             float t = Math.min(1F, (d - fadeEnd * 0.75F) / (fadeEnd * 0.25F));
             a *= 1F - t * t * (3F - 2F * t);
@@ -183,6 +187,15 @@ public final class SkyBillboards {
         if (amax <= 0.004F) {
             return;
         }
+        // Max optimize: wholly off the screen.
+        float rq = 0F;
+        for (int c = 0; c < 4; c++) {
+            float ex = cx[c] - mx, ey = cy[c] - my, ez = cz[c] - mz;
+            rq = Math.max(rq, ex * ex + ey * ey + ez * ez);
+        }
+        if (!com.realweather.client.ViewCull.sphere(mx, my, mz, (float) Math.sqrt(rq))) {
+            return;
+        }
         float fade = 1F;
         if (d > fadeEnd * 0.75F) {
             float t = Math.min(1F, (d - fadeEnd * 0.75F) / (fadeEnd * 0.25F));
@@ -235,9 +248,8 @@ public final class SkyBillboards {
         if (from >= to) {
             return;
         }
-        Vector3f left = new Vector3f(camera.getLeftVector());
-        Vector3f up = new Vector3f(camera.getUpVector());
-        Vector3f right = new Vector3f(left).negate();
+        Vector3f up = UP.set(camera.getUpVector());
+        Vector3f right = RIGHT.set(camera.getLeftVector()).negate();
         int bound = -1;
         BufferBuilder buf = null;
         int light = LightTexture.FULL_BRIGHT;
@@ -326,6 +338,7 @@ public final class SkyBillboards {
     }
 
     private static final float[] US = new float[4], VS = new float[4];
+    private static final Vector3f UP = new Vector3f(), RIGHT = new Vector3f();
     private static final float[] COL_ALPHA = {0F, 0.55F, 0.92F, 1F, 1F, 0.92F, 0.55F, 0F};
     private static final float[] COL_POS = {-1F, -0.82F, -0.55F, -0.2F, 0.2F, 0.55F, 0.82F, 1F};
 

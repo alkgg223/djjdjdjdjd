@@ -105,6 +105,8 @@ public final class SkyRenderer {
         Vec3 cam = camera.getPosition();
         int q = ClientConfig.quality();
         SkyLight.update(level, pt, camera);
+        // Max optimize: anything wholly off the screen is left out (sprites are drawn with these same matrices).
+        com.realweather.client.ViewCull.set(event.getProjectionMatrix(), event.getModelViewMatrix());
 
         float terrain = mc.options.getEffectiveRenderDistance() * 16F;
         float limit = mc.gameRenderer.getDepthFar() * 0.85F;
@@ -149,6 +151,7 @@ public final class SkyRenderer {
         } else {
             TornadoRenderer.lastDrawn = 0;
         }
+        com.realweather.client.ViewCull.off();
         return SkyBillboards.count() > 0;
     }
 

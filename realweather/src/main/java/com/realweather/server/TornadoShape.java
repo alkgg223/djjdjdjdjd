@@ -85,13 +85,8 @@ public enum TornadoShape {
      * (truncated cone, bowl, bulb); 0 when the funnel itself reaches the ground.
      */
     public float condensationBottom() {
-        return switch (this) {
-            case BOWL -> 0.48F;
-            case TRUNCATED_CONE -> 0.26F;
-            case BULB -> 0.16F;
-            case DRILL_BIT -> 0.03F;
-            default -> 0F;
-        };
+        // Every funnel reaches right down to the ground except the bowl, which hangs over its debris cloud.
+        return this == BOWL ? 0.48F : 0F;
     }
 
     /** How visible the condensation is at height fraction f (segmented funnels come in pieces that slide down). */

@@ -16,7 +16,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 
 /**
  * A fast particle drawn as a thin streak along its motion (motion blur): falling raindrops,
@@ -92,30 +91,50 @@ public class StreakParticle extends TextureSheetParticle {
         float px = (float) (Mth.lerp(partialTicks, xo, x) - cam.x);
         float py = (float) (Mth.lerp(partialTicks, yo, y) - cam.y);
         float pz = (float) (Mth.lerp(partialTicks, zo, z) - cam.z);
-        Vector3f dir = new Vector3f((float) xd, (float) yd, (float) zd);
-        if (dir.lengthSquared() < 1.0E-8F) {
-            dir.set(0F, -1F, 0F);
+        // Plain float maths (no objects made per drop per frame: thousands of drops would keep the garbage collector busy).
+        float dx = (float) xd, dy = (float) yd, dz = (float) zd;
+        float dl = dx * dx + dy * dy + dz * dz;
+        if (dl < 1.0E-8F) {
+            dx = 0F;
+            dy = -1F;
+            dz = 0F;
         } else {
-            dir.normalize();
+            float inv = 1F / (float) Math.sqrt(dl);
+            dx *= inv;
+            dy *= inv;
+            dz *= inv;
         }
-        Vector3f toCam = new Vector3f(-px, -py, -pz);
-        if (toCam.lengthSquared() < 1.0E-6F) {
+        float tx = -px, ty = -py, tz = -pz;
+        float tl = tx * tx + ty * ty + tz * tz;
+        if (tl < 1.0E-6F) {
             return;
         }
-        toCam.normalize();
-        Vector3f side = dir.cross(toCam, new Vector3f());
-        if (side.lengthSquared() < 1.0E-8F) {
-            side.set(1F, 0F, 0F);
+        float tinv = 1F / (float) Math.sqrt(tl);
+        tx *= tinv;
+        ty *= tinv;
+        tz *= tinv;
+        // side = dir x toCam
+        float sx = dy * tz - dz * ty, sy = dz * tx - dx * tz, sz = dx * ty - dy * tx;
+        float sl = sx * sx + sy * sy + sz * sz;
+        if (sl < 1.0E-8F) {
+            sx = 1F;
+            sy = 0F;
+            sz = 0F;
+            sl = 1F;
         }
-        side.normalize().mul(width * 0.5F);
-        Vector3f half = new Vector3f(dir).mul(length * 0.5F);
+        float sk = width * 0.5F / (float) Math.sqrt(sl);
+        sx *= sk;
+        sy *= sk;
+        sz *= sk;
+        float hk = length * 0.5F;
+        float hx = dx * hk, hy = dy * hk, hz = dz * hk;
         float u0 = getU0(), u1 = getU1(), v0 = getV0(), v1 = getV1();
         int light = getLightColor(partialTicks);
         // v0 is the head of the streak (leading end), v1 the tail.
-        vertex(consumer, px + half.x - side.x, py + half.y - side.y, pz + half.z - side.z, u0, v0, light);
-        vertex(consumer, px + half.x + side.x, py + half.y + side.y, pz + half.z + side.z, u1, v0, light);
-        vertex(consumer, px - half.x + side.x, py - half.y + side.y, pz - half.z + side.z, u1, v1, light);
-        vertex(consumer, px - half.x - side.x, py - half.y - side.y, pz - half.z - side.z, u0, v1, light);
+        vertex(consumer, px + hx - sx, py + hy - sy, pz + hz - sz, u0, v0, light);
+        vertex(consumer, px + hx + sx, py + hy + sy, pz + hz + sz, u1, v0, light);
+        vertex(consumer, px - hx + sx, py - hy + sy, pz - hz + sz, u1, v1, light);
+        vertex(consumer, px - hx - sx, py - hy - sy, pz - hz - sz, u0, v1, light);
     }
 
     private void vertex(VertexConsumer c, float x, float y, float z, float u, float v, int light) {
