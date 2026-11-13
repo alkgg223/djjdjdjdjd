@@ -18,6 +18,10 @@ public final class SelfTestServer {
     public static void init() {
         NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> {
             MinecraftServer server = e.getServer();
+            // The planets dimension makes the world "experimental": confirm it here so the client opens it straight away.
+            if (server.getWorldData() instanceof net.minecraft.world.level.storage.PrimaryLevelData pld) {
+                pld.withConfirmedWarning(true);
+            }
             for (String c : new String[]{"rw rain 100 5", "rw thunder 100 5", "rw sandstorm 60 3", "rw blizzard 60 3", "rw wind 50 90",
                     "rw flood depth 3", "rw info", "rw auto", "rw clear", "rw info"}) {
                 server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), c);
