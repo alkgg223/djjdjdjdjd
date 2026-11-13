@@ -21,10 +21,8 @@ import net.neoforged.neoforge.client.event.RegisterShadersEvent;
  */
 public final class SpaceShaders {
     public static final ResourceLocation BLOCKS = RealWeather.id("textures/environment/space3d/planet_blocks.png");
-    private static ShaderInstance voxel, hole, composite;
+    private static ShaderInstance voxel, hole;
     private static boolean broken;
-    /** A lower-resolution layer the ray tracing is done in on slower settings, then laid over the screen. */
-    private static com.mojang.blaze3d.pipeline.TextureTarget layer;
 
     private SpaceShaders() {}
 
@@ -34,8 +32,6 @@ public final class SpaceShaders {
                     s -> voxel = s);
             event.registerShader(new ShaderInstance(event.getResourceProvider(), RealWeather.id("black_hole"), DefaultVertexFormat.POSITION_TEX),
                     s -> hole = s);
-            event.registerShader(new ShaderInstance(event.getResourceProvider(), RealWeather.id("space_composite"), DefaultVertexFormat.POSITION_TEX),
-                    s -> composite = s);
         } catch (Exception | LinkageError e) {
             voxel = null;
             hole = null;
@@ -151,48 +147,15 @@ public final class SpaceShaders {
         s.safeGetUniform(name).set((float) v[0], (float) v[1], (float) v[2]);
     }
 
-    /** How much smaller than the screen the ray tracing is done (1 = full resolution). */
-    private static int division() {
-        int q = com.realweather.ClientConfig.quality();
-        return q <= 1 || com.realweather.ClientConfig.maxOptimize() ? 2 : 1;
-    }
-
     private static void draw(float x0, float y0, float x1, float y1) {
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
         RenderSystem.colorMask(true, true, true, true);
-        int div = composite == null ? 1 : division();
-        var main = Minecraft.getInstance().getMainRenderTarget();
-        if (div > 1) {
-            int w = Math.max(1, main.width / div), h = Math.max(1, main.height / div);
-            if (layer == null) {
-                layer = new com.mojang.blaze3d.pipeline.TextureTarget(w, h, false, Minecraft.ON_OSX);
-                layer.setFilterMode(org.lwjgl.opengl.GL11.GL_LINEAR);
-            } else if (layer.width != w || layer.height != h) {
-                layer.resize(w, h, Minecraft.ON_OSX);
-                layer.setFilterMode(org.lwjgl.opengl.GL11.GL_LINEAR);
-            }
-            var shader = RenderSystem.getShader();
-            layer.setClearColor(0F, 0F, 0F, 0F);
-            layer.clear(Minecraft.ON_OSX);
-            layer.bindWrite(true);
-            RenderSystem.disableBlend();
-            RenderSystem.setShader(() -> shader);
-            quad(x0, y0, x1, y1, -1F, -1F, 1F, 1F);
-            main.bindWrite(true);
-            RenderSystem.enableBlend();
-            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                    GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-            RenderSystem.setShader(() -> composite);
-            RenderSystem.setShaderTexture(0, layer.getColorTextureId());
-            quad(x0, y0, x1, y1, (x0 + 1) / 2, (y0 + 1) / 2, (x1 + 1) / 2, (y1 + 1) / 2);
-        } else {
-            // Colour comes premultiplied by its coverage.
-            RenderSystem.enableBlend();
-            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                    GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-            quad(x0, y0, x1, y1, -1F, -1F, 1F, 1F);
-        }
+        // Full resolution; the colour comes premultiplied by its coverage.
+        RenderSystem.enableBlend();
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+        quad(x0, y0, x1, y1, -1F, -1F, 1F, 1F);
         RenderSystem.enableDepthTest();
         Space3D.invalidate();
     }

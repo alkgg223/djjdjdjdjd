@@ -93,14 +93,14 @@ public final class EarthView {
         Space3D.clearDepth();
         Space3D.range((float) Math.max(2, seen * 0.4), (float) (seen + R * 2.2));
         double[] sun = Space3D.SUN;
-        Space3D.sphere(EARTH, c[0], c[1], c[2], R, rot, sun[0], sun[1], sun[2], 0.01F, 1F, 1F, 1F, 0F, g, false, 0F, 72);
+        Space3D.sphere(EARTH, c[0], c[1], c[2], R, rot, sun[0], sun[1], sun[2], 0.01F, 1F, 1F, 1F, 0F, g, false, 0F, 120);
         Space3D.sphereMode(ADD);
         Space3D.nightSide(true);
-        Space3D.sphere(LIGHTS, c[0], c[1], c[2], R + 1, rot, sun[0], sun[1], sun[2], 0F, 1F, 0.82F, 0.55F, 0F, 0.85F * g, false, 0F, 72);
+        Space3D.sphere(LIGHTS, c[0], c[1], c[2], R + 1, rot, sun[0], sun[1], sun[2], 0F, 1F, 0.82F, 0.55F, 0F, 0.85F * g, false, 0F, 120);
         Space3D.nightSide(false);
         Space3D.sphereMode(Space3D.NORMAL);
         float drift = (float) (Space3D.time * 0.000004 % 1.0);
-        Space3D.sphere(CLOUDS, c[0], c[1], c[2], R + 14, rot, sun[0], sun[1], sun[2], 0.008F, 1F, 1F, 1F, 0F, 0.92F * g, false, drift, 72);
+        Space3D.sphere(CLOUDS, c[0], c[1], c[2], R + 14, rot, sun[0], sun[1], sun[2], 0.008F, 1F, 1F, 1F, 0F, 0.92F * g, false, drift, 120);
         // The thin blue line of the air round its edge.
         Space3D.limb(c[0], c[1], c[2], R, 320, sun[0], sun[1], sun[2], 0.4F, 0.62F, 1F, 0.75F * g);
         // Passing through the ozone layer: a faint glow you go through.

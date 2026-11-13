@@ -301,7 +301,7 @@ public final class TelescopeView {
         }
         SpaceShaders.Planet pl = b.voxel(blocksR);
         pl.alpha = a;
-        pl.steps = 110F;
+        pl.steps = 180F;
         // Seen from outside: no sky of its own (its air is the glow round its edge).
         pl.air = 0F;
         pl.pixelSize = (float) (1 / blockPx);
@@ -669,7 +669,7 @@ public final class TelescopeView {
         }
         double am = ((x0 + x1) / 2 - ncx) / hx, ha = (x1 - x0) / 2 / hx, bm = ((y0 + y1) / 2 - ncy) / hy, hb = (y1 - y0) / 2 / hy;
         SpaceShaders.blackHole((float) x0, (float) y0, (float) x1, (float) y1, new double[]{am * edge, bm * edge}, new double[]{ha * edge, 0},
-                new double[]{0, hb * edge}, nb, (float) (time % 200000.0) * 0.05F, alpha, (float) edge, 1.15F, 220F);
+                new double[]{0, hb * edge}, nb, (float) (time % 200000.0) * 0.05F, alpha, (float) edge, 1.15F, 320F);
     }
 
     /** The old globular cluster the pulsar lives in: thousands of stars crowding to its centre. */

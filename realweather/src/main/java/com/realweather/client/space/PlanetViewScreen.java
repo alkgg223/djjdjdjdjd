@@ -73,7 +73,7 @@ public class PlanetViewScreen extends Screen {
             planet.hills = 4;
         }
         planet.airHeight = Math.max(60F, radius * 0.15F);
-        planet.steps = 200F;
+        planet.steps = 360F;
         planet.ambient = 0.025F;
         // The star in this world's sky: its colour and size.
         Catalog.Body star = null;
