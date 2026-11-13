@@ -97,7 +97,9 @@ public final class SkyRenderer {
         if (camera.getFluidInCamera() != FogType.NONE) {
             return false;
         }
-        boolean clouds = ClientConfig.CLOUDS.get() && mc.options.getCloudsType() != CloudStatus.OFF;
+        // Out of the air (above the ozone layer) the clouds are the ones on the globe below.
+        boolean clouds = ClientConfig.CLOUDS.get() && mc.options.getCloudsType() != CloudStatus.OFF
+                && camera.getPosition().y < com.realweather.client.space.EarthView.OZONE + 20;
         boolean storms = ClientConfig.CLOUDS.get() && !ClientStorms.cells().isEmpty();
         boolean tornadoes = !com.realweather.client.tornado.ClientTornadoes.isEmpty();
         if (!clouds && !storms && !tornadoes) {

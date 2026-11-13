@@ -433,9 +433,10 @@ def earth(W=2048, H=1024):
     # City lights on the night side: clustered where people live, densest on coasts and in the busy middle latitudes.
     people = smooth(0.3, 0.9, land) * (1 - ice_land) * (1 - 0.85 * desert) * (1 - tundra) * (0.25 + 0.75 * smooth(60, 30, a))
     coast = np.clip(near * (1 - near) * 4, 0, 1)
-    dots = rng.random((H, W)) ** 18
-    city = fbm(x, y, z, 40.0, 3, 509)
-    light = np.clip(people * (0.4 + coast) * (smooth(0.55, 0.75, city) * 0.9 + dots * 3), 0, 1)
+    dots = rng.random((H, W)) ** 40
+    city = fbm(x, y, z, 60.0, 3, 509)
+    big = fbm(x, y, z, 7.0, 3, 511)
+    light = np.clip(people * (0.25 + coast) * (smooth(0.62, 0.78, city) * smooth(0.4, 0.62, big) * 2.0 + dots * 4.0), 0, 1)
     lights = np.zeros((H, W, 3))
     lights[..., 0] = light
     lights[..., 1] = light * 0.82

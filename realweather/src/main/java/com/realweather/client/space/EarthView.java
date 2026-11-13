@@ -40,7 +40,7 @@ public final class EarthView {
         Minecraft mc = Minecraft.getInstance();
         double far = mc.options.getEffectiveRenderDistance() * 16 * 4;
         double linear = Math.max(900, far + 100);
-        return h <= linear ? h : linear * Math.exp((h - linear) / 500.0);
+        return h <= linear ? h : linear * Math.exp((h - linear) / 800.0);
     }
 
     /** Drawn after the sky, before everything else in space. */
@@ -96,7 +96,7 @@ public final class EarthView {
         Space3D.sphere(EARTH, c[0], c[1], c[2], R, rot, sun[0], sun[1], sun[2], 0.01F, 1F, 1F, 1F, 0F, g, false, 0F, 120);
         Space3D.sphereMode(ADD);
         Space3D.nightSide(true);
-        Space3D.sphere(LIGHTS, c[0], c[1], c[2], R + 1, rot, sun[0], sun[1], sun[2], 0F, 1F, 0.82F, 0.55F, 0F, 0.85F * g, false, 0F, 120);
+        Space3D.sphere(LIGHTS, c[0], c[1], c[2], R + 1, rot, sun[0], sun[1], sun[2], 0F, 1F, 0.82F, 0.55F, 0F, 0.6F * g, false, 0F, 120);
         Space3D.nightSide(false);
         Space3D.sphereMode(Space3D.NORMAL);
         float drift = (float) (Space3D.time * 0.000004 % 1.0);

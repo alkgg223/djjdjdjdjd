@@ -83,8 +83,9 @@ public final class SelfTest {
         if (suite.contains("telescope")) {
             telescopeSuite();
         }
-        if (suite.contains("planets")) {
-            planetsSuite();
+        if (suite.contains("planets") || suite.contains("orbit") || suite.contains("ascent") || suite.contains("zoom")) {
+            boolean all = suite.contains("planets");
+            planetsSuite(all || suite.contains("ascent"), all || suite.contains("orbit"), all || suite.contains("zoom"));
         }
         if (suite.contains("all")) {
             weatherSuite();
@@ -1242,7 +1243,7 @@ public final class SelfTest {
      * 1.12: the telescope at its highest powers (planets made of blocks, TON 618), the planet map (round a planet, down
      * to its block ground, landed), and flying up out of the air until the whole Earth is below.
      */
-    private static void planetsSuite() {
+    private static void planetsSuite(boolean ascent, boolean orbit, boolean zoom) {
         step(5, () -> {
             cmd("rw clear");
             cmd("time set 18000");
@@ -1274,7 +1275,7 @@ public final class SelfTest {
         });
         // Up and up: out of the air, through the ozone layer, until the Earth is a ball below.
         double[][] heights = {{450, 20}, {760, 35}, {760, 70}, {1300, 75}, {2600, 85}, {4200, 89}};
-        for (String time : new String[]{"6000", "18000"}) {
+        for (String time : ascent ? new String[]{"6000", "18000"} : new String[0]) {
             step(5, () -> cmd("time set " + time));
             for (double[] hp : heights) {
                 String label = String.format("s_%s_%d_%d", time, (int) hp[0], (int) hp[1]);
@@ -1305,7 +1306,7 @@ public final class SelfTest {
             });
         });
         // The planet map.
-        String[] worlds = {"earth", "mars", "jupiter", "toi700d"};
+        String[] worlds = orbit ? new String[]{"earth", "mars", "jupiter", "toi700d"} : new String[0];
         double[][] views = {{-1, 0, -90}, {300, 0, -90}, {60, 0, -60}, {14, 20, -15}, {1.62, 40, -8}, {1.62, 120, 12}};
         for (String w : worlds) {
             step(5, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetViewScreen(
@@ -1322,8 +1323,8 @@ public final class SelfTest {
             }
         }
         step(5, () -> Minecraft.getInstance().setScreen(null));
-        String[][] targets = {{"mars", "0.0007"}, {"moon", "0.004"}, {"toi700d", "0.0007"}, {"jupiter", "0.0007"}, {"ton618", "0.004"},
-                {"ton618", "0.0007"}};
+        String[][] targets = zoom ? new String[][]{{"mars", "0.0007"}, {"moon", "0.004"}, {"toi700d", "0.0007"}, {"jupiter", "0.0007"},
+                {"ton618", "0.004"}, {"ton618", "0.0007"}} : new String[0][];
         for (int i = 0; i < targets.length; i++) {
             String id = targets[i][0];
             double fov = Double.parseDouble(targets[i][1]);
