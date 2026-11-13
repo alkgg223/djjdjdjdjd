@@ -235,9 +235,10 @@ public final class Telescope {
         double up = d[1];
         String mag = power >= 100 ? String.format("x%.0f", power) : String.format("x%.1f", power);
         g.drawString(mc.font, Component.translatable("realweather.telescope.info", name, mag, target.sys.distance), 8, h - 30, 0xFFE8E8E8, true);
-        Component hint = up < -0.02 ? Component.translatable("realweather.telescope.below")
-                : Component.translatable("realweather.telescope.hint");
-        g.drawString(mc.font, hint, 8, h - 18, up < -0.02 ? 0xFFFF9070 : 0xFFB0B0B0, true);
+        boolean earth = target.sys == Catalog.earth;
+        Component hint = earth ? Component.translatable("realweather.telescope.earth")
+                : up < -0.02 ? Component.translatable("realweather.telescope.below") : Component.translatable("realweather.telescope.hint");
+        g.drawString(mc.font, hint, 8, h - 18, earth ? 0xFF80E0FF : up < -0.02 ? 0xFFFF9070 : 0xFFB0B0B0, true);
     }
 
     private static void bracket(GuiGraphics g, int x, int y, int r, int c) {

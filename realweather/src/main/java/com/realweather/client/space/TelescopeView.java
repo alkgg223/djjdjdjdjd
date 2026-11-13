@@ -15,8 +15,8 @@ import static com.realweather.client.space.Space3D.ADD;
 
 /**
  * What you see through the telescope: the dark field of view, with more and more faint stars the further you zoom in,
- * and the planets, moons and stars of the catalogue as real lit 3D bodies at their tiny true-to-the-sky sizes, the
- * planets of other stars going round them on their orbits.
+ * and the Sun, Moon, planets and stars of the catalogue as real lit 3D bodies at their tiny true-to-the-sky sizes, the
+ * planets of other stars going round them on their orbits, with their discs of dust, nebulae, tails and flares.
  */
 public final class TelescopeView {
     private static final double D = 1000;
@@ -29,6 +29,8 @@ public final class TelescopeView {
     /** The matrices of the last frame (for the marker on the screen). */
     static Matrix4f lastProj = new Matrix4f(), lastView = new Matrix4f();
     private static double time;
+    /** For the tests: how the target's system was handled in the last frame. */
+    public static String debug = "";
 
     static {
         Random r = new Random(1977);
@@ -46,6 +48,10 @@ public final class TelescopeView {
 
     /** The current direction (world, camera-relative) of a target, for the marker and for pointing at it. */
     public static double[] direction(Catalog.Target t, ClientLevel level, float pt) {
+        if (t.sys == Catalog.earth) {
+            // Under your feet.
+            return new double[]{0, -1, 0};
+        }
         double tm = level.getGameTime() + pt;
         double day = level.getDayTime() / 24000.0;
         double[] dir = t.sys.direction(day);
@@ -109,25 +115,40 @@ public final class TelescopeView {
             Space3D.fullScreen((float) sky.x * day * 0.8F + 0.004F, (float) sky.y * day * 0.8F + 0.006F, (float) sky.z * day * 0.8F + 0.012F, cover);
             field(fovRad, pix, cover * night * Space3D.clear);
         }
+        Catalog.Target target = Telescope.target();
         double day = level.getDayTime() / 24000.0;
-        double[] c = new double[3];
         for (Catalog.Sys s : Catalog.SYSTEMS) {
+            if (s == Catalog.earth) {
+                continue;
+            }
             double[] dir = s.direction(day);
+            double[] c = new double[3];
             Space3D.apply(Space3D.SKYVIEW, dir[0] * D, dir[1] * D, dir[2] * D, c);
             double ang = Math.acos(Mth.clamp(-c[2] / D, -1, 1));
             double extent = 0;
             for (Catalog.Body b : s.bodies) {
                 extent = Math.max(extent, b.orbit + b.radius * 3);
             }
-            if (s.cluster || s.disk) {
-                extent = Math.max(extent, 1.2e-4);
+            if (s.cluster || s.hasDisk() || s.nebula > 0) {
+                extent = Math.max(extent, 1.6e-4);
             }
-            if (ang > fovRad * 0.9 + extent) {
+            boolean mine = target != null && target.sys == s;
+            if (mine) {
+                debug = String.format("%s ang=%.3g limit=%.3g c=(%.4g, %.4g, %.4g)", s.id, ang, fovRad * 0.9 + extent, c[0], c[1], c[2]);
+            }
+            // The system being looked for is always drawn; the others only when in the field.
+            if (!mine && ang > fovRad * 0.9 + extent || c[2] > 0) {
                 continue;
             }
             if (s == Catalog.moon) {
                 if (cover > 0.3F) {
                     moon(level, c, cover);
+                }
+                continue;
+            }
+            if (s == Catalog.sun) {
+                if (cover > 0.3F) {
+                    sun(c, cover);
                 }
                 continue;
             }
@@ -158,7 +179,7 @@ public final class TelescopeView {
         double cell = fovRad / 14;
         int level = (int) Mth.clamp(Math.round(Math.log(0.02 / cell) / Math.log(2)), 0, 16);
         double c = 0.02 / (1 << level);
-        int face = 0;
+        int face;
         double ax = Math.abs(fx), ay = Math.abs(fy), az = Math.abs(fz);
         if (ay >= ax && ay >= az) {
             face = fy > 0 ? 2 : 3;
@@ -209,7 +230,7 @@ public final class TelescopeView {
     private static void moon(ClientLevel level, double[] c, float cover) {
         Space3D.clearDepth();
         Space3D.range((float) (D * 0.8), (float) (D * 1.2));
-        double r = D * Math.tan(Math.atan(0.1));
+        double r = D * 0.1;
         int phase = level.getMoonPhase();
         double alpha = Math.PI * (phase <= 4 ? phase : 8 - phase) / 4.0;
         double side = phase <= 4 ? 1 : -1;
@@ -225,6 +246,20 @@ public final class TelescopeView {
         Space3D.sphere(MOON_MAP, c[0], c[1], c[2], r, rot, lx, ly, lz, 0.02F, 1F, 1F, 1F, 0F, cover * Space3D.clear, false, 0F, 40);
     }
 
+    /** The Sun through a solar filter: its granulated surface, sunspots, and prominences of fire round the limb. */
+    private static void sun(double[] c, float cover) {
+        float up = Space3D.smooth(-0.05F, 0.1F, (float) Space3D.SKY[4]) * Space3D.clear * cover;
+        if (up <= 0.01F) {
+            return;
+        }
+        Space3D.clearDepth();
+        Space3D.range((float) (D * 0.7), (float) (D * 1.3));
+        double r = D * Math.tan(Math.atan(0.15));
+        double[] rot = Space3D.orient(0.1, 1, 0.15, time * 0.00005);
+        Space3D.sphere(STAR_MAP, c[0], c[1], c[2], r, rot, 0, 0, 1, 0F, 1F, 0.72F, 0.38F, 0F, up, true, (float) (time * 0.00003 % 1.0), 40);
+        Space3D.starFire(c[0], c[1], c[2], r, 4242, 220, 0.3F, (float) time, up);
+    }
+
     /** A star, planet or system: its bodies lit as they should be, orbits, and what is special about it. */
     private static void system(Catalog.Sys s, double[] dir, double[] c, double pix, ClientLevel level) {
         Space3D.clearDepth();
@@ -233,7 +268,7 @@ public final class TelescopeView {
         float vis = Math.max(Space3D.night, s.dir == null ? 0.5F : 0.15F) * Space3D.clear;
         double px = pix * D;
         double[] off = new double[3], p = new double[3];
-        // The light: the system's star (or the Sun for our own planets).
+        // The light: the system's (first) star, or the Sun for our own planets.
         Catalog.Body light = null;
         for (Catalog.Body b : s.bodies) {
             if (b.kind == Catalog.STAR || b.kind == Catalog.PULSAR) {
@@ -250,8 +285,11 @@ public final class TelescopeView {
         if (s.cluster) {
             cluster(s, c, px, vis);
         }
-        if (s.disk) {
+        if (s.hasDisk()) {
             disk(s, dir, c, px, vis);
+        }
+        if (s.nebula > 0) {
+            nebula(s, dir, c, px, vis);
         }
         long seed = s.id.hashCode();
         for (Catalog.Body b : s.bodies) {
@@ -260,23 +298,11 @@ public final class TelescopeView {
             double bx = c[0] + p[0], by = c[1] + p[1], bz = c[2] + p[2];
             double r = b.radius * D;
             double rPix = r / px;
-            if (b.orbit > 0 && s.dir != null && b.kind != Catalog.DWARF && !(b.kind == Catalog.STAR && b.orbit < 1e-5)) {
+            if (b.orbit > 0 && s.dir != null && b.kind != Catalog.DWARF && b.kind != Catalog.STAR && b.kind != Catalog.PULSAR) {
                 orbit(s, b, dir, c, px, vis);
             }
             switch (b.kind) {
-                case Catalog.STAR, Catalog.DWARF -> {
-                    double[] rot = Space3D.orient(0.1, 1, 0.2, time * 0.0003);
-                    if (rPix > 0.7) {
-                        Space3D.sphere(STAR_MAP, bx, by, bz, r, rot, 0, 0, 1, 0F, b.r * 1.15F, b.g * 1.15F, b.b * 1.15F, 0F, vis, true,
-                                (float) (time * 0.00015 % 1.0), (int) Mth.clamp(rPix / 3, 10, 26));
-                        if (b.kind == Catalog.STAR) {
-                            Space3D.starFire(bx, by, bz, r, seed + b.id.hashCode(), (int) (90 + 70 * b.glow), b.b, (float) time, vis);
-                        }
-                    }
-                    // Its glare (and, unresolved, the point of light you first see).
-                    Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(r * 4.5, px * 6), 0F, b.r, b.g, b.b, 0.55F * vis);
-                    Space3D.billboard(Space3D.STAR, ADD, bx, by, bz, Math.max(r * 7, px * 10), 0F, b.r, b.g, b.b, 0.5F * vis);
-                }
+                case Catalog.STAR, Catalog.DWARF -> star(b, bx, by, bz, r, rPix, px, seed, vis);
                 case Catalog.PULSAR -> {
                     // A neutron star: a tiny blinding point whose two beams sweep round like a lighthouse's.
                     double spin = time * 0.42;
@@ -294,7 +320,44 @@ public final class TelescopeView {
         }
     }
 
-    /** A planet or moon: a lit sphere, its air, its rings, and a comet-like tail for an evaporating world. */
+    /** How strongly a flare star is flaring right now (0..1, sudden rises and slow fades). */
+    private static float flare(Catalog.Body b) {
+        long seed = b.id.hashCode();
+        long slot = (long) (time / 240.0);
+        float best = 0F;
+        for (long k = slot - 1; k <= slot; k++) {
+            if (Space3D.h(seed, k) > 0.5F) {
+                continue;
+            }
+            float f = (float) ((time - k * 240.0 - Space3D.h(seed, k + 7) * 80.0) / 200.0);
+            if (f >= 0F && f <= 1F) {
+                best = Math.max(best, f < 0.06F ? f / 0.06F : (float) Math.exp(-(f - 0.06F) * 5F));
+            }
+        }
+        return best;
+    }
+
+    /** A star: a glowing sphere (flattened if it spins fast), its granulated surface, fire round it and its glare. */
+    private static void star(Catalog.Body b, double bx, double by, double bz, double r, double rPix, double px, long seed, float vis) {
+        float fl = b.flare ? flare(b) : 0F;
+        float bright = 1.15F + 0.9F * fl;
+        if (rPix > 0.7) {
+            double[] rot = Space3D.orient(0.1, 1, 0.2, time * 0.0003);
+            Space3D.scale(1, b.oblate, 1);
+            Space3D.sphere(STAR_MAP, bx, by, bz, r, rot, 0, 0, 1, 0F, b.r * bright, b.g * bright, b.b * bright, 0F, vis, true,
+                    (float) (time * 0.00015 % 1.0), (int) Mth.clamp(rPix / 3, 10, 26));
+            Space3D.scale(1, 1, 1);
+            if (b.kind == Catalog.STAR) {
+                Space3D.starFire(bx, by, bz, r, seed + b.id.hashCode(), (int) (90 + 70 * b.glow), b.b, (float) time, vis * (1F + 1.5F * fl));
+            }
+        }
+        // Its glare (and, unresolved, the point of light you first see); a flare floods it with light.
+        Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(r * (4.5 + 6 * fl), px * 6), 0F, b.r, b.g + 0.3F * fl, b.b + 0.4F * fl,
+                (0.55F + 0.4F * fl) * vis);
+        Space3D.billboard(Space3D.STAR, ADD, bx, by, bz, Math.max(r * (7 + 8 * fl), px * 10), 0F, b.r, b.g, b.b, (0.5F + 0.4F * fl) * vis);
+    }
+
+    /** A planet or moon: a lit sphere, its air, its rings, glow, and tails or streams for the strangest worlds. */
     private static void body(Catalog.Sys s, Catalog.Body b, double bx, double by, double bz, double r, double rPix, double px, double[] lightPos,
                              float vis) {
         double lx, ly, lz;
@@ -316,20 +379,33 @@ public final class TelescopeView {
             Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, px * 2.5, 0F, b.r, b.g, b.b, 0.35F * vis);
             return;
         }
-        double[] axis = new double[3];
-        Space3D.apply(Space3D.SKYVIEW, 0.25, 1, 0.15, axis);
-        double[] rot = Space3D.orient(axis[0], axis[1], axis[2], 0);
-        float spin = (float) (time / (b.kind == Catalog.GAS ? 3000.0 : 6000.0) % 1.0);
+        double[] rot;
+        if (b.egg) {
+            // Stretched into an egg by its star's pull, the point towards the star.
+            rot = Space3D.orient(lx, ly, lz, 0);
+            Space3D.scale(1, 1.4, 1);
+        } else {
+            double[] axis = new double[3];
+            Space3D.apply(Space3D.SKYVIEW, 0.25, 1, 0.15, axis);
+            rot = Space3D.orient(axis[0], axis[1], axis[2], 0);
+            Space3D.scale(1, b.oblate, 1);
+        }
+        float spin = (float) (time / (b.kind == Catalog.GAS ? 3000.0 : b.oblate < 0.8F ? 300.0 : 6000.0) % 1.0);
         Space3D.sphere(b.map, bx, by, bz, r, rot, lx, ly, lz, 0.012F, b.r, b.g, b.b, b.glow, vis, false, spin, (int) Mth.clamp(rPix / 3, 10, 30));
+        Space3D.scale(1, 1, 1);
         if (b.air) {
             Space3D.atmosphere(bx, by, bz, r, lx, ly, lz, b.ar, b.ag, b.ab, (b.kind == Catalog.GAS ? 0.4F : 0.55F) * vis);
         }
-        if (b.rings) {
-            Space3D.ring(RINGS, bx, by, bz, r * 1.25, r * 2.3, rot, lx, ly, lz, 0.9F * vis);
+        if (b.halo > 0) {
+            Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, r * 2.6, 0F, b.hr, b.hg, b.hb, b.halo * vis);
         }
+        if (b.rings) {
+            Space3D.ring(RINGS, bx, by, bz, r * (b.oblate < 0.8F ? 2.0 : 1.25), r * (b.oblate < 0.8F ? 2.3 : 2.3), rot, lx, ly, lz,
+                    (b.oblate < 0.8F ? 0.35F : 0.9F) * vis);
+        }
+        long seed = b.id.hashCode();
         if (b.tail) {
             // Hydrogen boiling off a hot world, blown back away from its star into a long glowing tail.
-            long seed = b.id.hashCode();
             for (int i = 0; i < 140; i++) {
                 float sp = 0.002F + 0.003F * Space3D.h(seed, i * 3L);
                 float f = (float) ((Space3D.h(seed, i * 3L + 1) + time * sp) % 1.0);
@@ -338,16 +414,26 @@ public final class TelescopeView {
                 Space3D.billboard(Space3D.GLOW, ADD, tx, ty, tz, r * (0.5 + 2.5 * f), 0F, 0.55F, 0.75F, 1F, 0.12F * (1F - f) * vis);
             }
         }
+        if (b.stream) {
+            // Gas torn off the planet, spiralling down on to its star.
+            double sx = lightPos[0] - bx, sy = lightPos[1] - by, sz = lightPos[2] - bz;
+            for (int i = 0; i < 120; i++) {
+                float f = (float) ((Space3D.h(seed, i * 5L) + time * 0.004) % 1.0);
+                double swirl = Math.sin(f * Math.PI) * r * 2.5;
+                double a = f * 5 + i;
+                double qx = bx + sx * f + Math.cos(a) * swirl * 0.4, qy = by + sy * f + Math.sin(a) * swirl, qz = bz + sz * f;
+                Space3D.billboard(Space3D.GLOW, ADD, qx, qy, qz, r * (0.8 - 0.4 * f), 0F, 1F, 0.55F, 0.3F, 0.16F * vis);
+            }
+        }
     }
 
     /** A faint trace of a body's orbit. */
     private static void orbit(Catalog.Sys s, Catalog.Body b, double[] dir, double[] c, double px, float vis) {
         double[] off = new double[3], p0 = new double[3], p1 = new double[3];
-        double saved = time;
         int n = 72;
         for (int i = 0; i <= n; i++) {
-            time = b.period * ((double) i / n - b.phase);
-            offset(s, b, dir, time, off);
+            double tm = b.period * ((double) i / n - b.phase);
+            offset(s, b, dir, tm, off);
             Space3D.apply(Space3D.SKYVIEW, off[0] * D, off[1] * D, off[2] * D, p1);
             if (i > 0) {
                 Space3D.ribbon(LINE, ADD, c[0] + p0[0], c[1] + p0[1], c[2] + p0[2], c[0] + p1[0], c[1] + p1[1], c[2] + p1[2], px * 0.9, px * 0.9, 0.6F,
@@ -357,25 +443,64 @@ public final class TelescopeView {
             p0[1] = p1[1];
             p0[2] = p1[2];
         }
-        time = saved;
     }
 
-    /** The dusty disc round a young star (Beta Pictoris), seen almost edge-on as a line through it. */
+    /** A disc or ring of dust round a star (edge-on as a line through it, or tilted and off-centre like Fomalhaut's). */
     private static void disk(Catalog.Sys s, double[] dir, double[] c, double px, float vis) {
-        Catalog.Body ref = s.bodies.get(s.bodies.size() - 1);
         double[] e1 = new double[3], e2 = new double[3], q = new double[3];
         across(dir, e1, e2);
         long seed = s.id.hashCode();
-        for (int i = 0; i < 520; i++) {
-            double rad = (1.2e-5 + 8e-5 * Math.sqrt(Space3D.h(seed, i * 3L))) * D;
+        for (int i = 0; i < 560; i++) {
+            double rad = (s.diskIn + (s.diskOut - s.diskIn) * Math.sqrt(Space3D.h(seed, i * 3L))) * D;
             double ph = Space3D.h(seed, i * 3L + 1) * Math.PI * 2 + time * 0.00002;
-            double x = rad * Math.cos(ph), y = rad * Math.sin(ph) * Math.cos(ref.incl), z = rad * Math.sin(ph) * Math.sin(ref.incl);
+            double x = rad * Math.cos(ph) + s.diskShift * D, y = rad * Math.sin(ph) * Math.cos(s.diskIncl), z = rad * Math.sin(ph) * Math.sin(s.diskIncl);
             y += (Space3D.h(seed, i * 3L + 2) - 0.5) * rad * 0.06;
-            double xr = x * Math.cos(ref.node) - y * Math.sin(ref.node), yr = x * Math.sin(ref.node) + y * Math.cos(ref.node);
+            double xr = x * Math.cos(s.diskNode) - y * Math.sin(s.diskNode), yr = x * Math.sin(s.diskNode) + y * Math.cos(s.diskNode);
             Space3D.apply(Space3D.SKYVIEW, e1[0] * xr + e2[0] * yr - dir[0] * z, e1[1] * xr + e2[1] * yr - dir[1] * z,
                     e1[2] * xr + e2[2] * yr - dir[2] * z, q);
-            Space3D.billboard(Space3D.GLOW, ADD, c[0] + q[0], c[1] + q[1], c[2] + q[2], Math.max(px * 2, D * 2.5e-6), 0F, 1F, 0.88F, 0.75F,
+            Space3D.billboard(Space3D.GLOW, ADD, c[0] + q[0], c[1] + q[1], c[2] + q[2], Math.max(px * 2, D * 2.5e-6), 0F, s.diskR, s.diskG, s.diskB,
                     0.09F * vis);
+        }
+    }
+
+    /** Gas and dust thrown off a dying giant: a lumpy shell (VY Canis Majoris) or two great lobes (Eta Carinae). */
+    private static void nebula(Catalog.Sys s, double[] dir, double[] c, double px, float vis) {
+        long seed = s.id.hashCode();
+        double[] q = new double[3];
+        for (int i = 0; i < 520; i++) {
+            double th = Math.acos(1 - 2 * Space3D.h(seed, i * 4L)), ph = Space3D.h(seed, i * 4L + 1) * Math.PI * 2;
+            double ux = Math.sin(th) * Math.cos(ph), uy = Math.cos(th), uz = Math.sin(th) * Math.sin(ph);
+            double cx, cy, cz, rad;
+            float r, g, b, a;
+            if (s.nebula == 2) {
+                // The Homunculus: two lobes either side of the star along its axis, and a thin skirt round its middle.
+                int lobe = i % 2 == 0 ? 1 : -1;
+                rad = 5.5e-5 * (0.92 + 0.12 * Space3D.h(seed, i * 4L + 2));
+                cx = ux * rad;
+                cy = uy * rad + lobe * 6e-5;
+                cz = uz * rad;
+                if (i % 7 == 0) {
+                    cx = ux * 1.2e-4;
+                    cy = (Space3D.h(seed, i * 4L + 3) - 0.5) * 6e-6;
+                    cz = uz * 1.2e-4;
+                }
+                r = 1F;
+                g = 0.62F;
+                b = 0.38F;
+                a = 0.1F;
+            } else {
+                rad = (5e-5 + 6e-5 * Space3D.h(seed, i * 4L + 2));
+                cx = ux * rad;
+                cy = uy * rad;
+                cz = uz * rad;
+                r = 1F;
+                g = 0.45F;
+                b = 0.28F;
+                a = 0.07F;
+            }
+            Space3D.apply(Space3D.SKYVIEW, cx * D, cy * D, cz * D, q);
+            Space3D.billboard(Space3D.FLAME, ADD, c[0] + q[0], c[1] + q[1], c[2] + q[2], D * 1.4e-5 * (0.6 + Space3D.h(seed, i * 4L + 3)), i,
+                    r, g, b, a * vis);
         }
     }
 

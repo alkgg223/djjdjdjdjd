@@ -258,6 +258,59 @@ def block_textures():
     tex((0.06, 0.06, 0.07), 0.04, 'telescope_lens.png')
 
 
+def lava(name, seed, w=512, h=256, crust=(0.12, 0.1, 0.09), hot=(1.0, 0.55, 0.15)):
+    """A lava world: a dark crust split by glowing rivers and lakes of molten rock."""
+    x, y, z, lat = sphere_grid(w, h)
+    f = fbm(x, y, z, 3.0, 6, seed)
+    cracks = 1 - smooth(0.0, 0.05, np.abs(f - 0.5))
+    lakes = smooth(0.66, 0.74, fbm(x, y, z, 1.5, 4, seed + 3))
+    g = np.clip(cracks + lakes, 0, 1)
+    base = 0.6 + 0.4 * fbm(x, y, z, 8.0, 3, seed + 5)
+    rgb = np.stack([crust[k] * base * (1 - g) + hot[k] * g for k in range(3)], -1)
+    save(rgba(np.clip(rgb, 0, 1)), name + '.png')
+
+
+def eyeball(name, seed, w=512, h=256):
+    """A tidally locked world: frozen all over but for an ocean round the point under its star."""
+    x, y, z, lat = sphere_grid(w, h)
+    d = np.arccos(np.clip(x, -1, 1))
+    edge = 0.75 + 0.15 * (fbm(x, y, z, 3.0, 4, seed) - 0.5)
+    ocean = smooth(edge + 0.08, edge - 0.08, d)
+    land = smooth(0.62, 0.66, fbm(x, y, z, 2.5, 5, seed + 2)) * ocean
+    ice = np.stack([0.85 + 0.1 * fbm(x, y, z, 6, 3, seed + 4)] * 3, -1) * np.array([0.95, 0.97, 1.0])
+    sea = np.array([0.08, 0.22, 0.38])
+    ground = np.array([0.45, 0.35, 0.25])
+    rgb = ice * (1 - ocean[..., None]) + sea * ocean[..., None]
+    rgb = rgb * (1 - land[..., None]) + ground * land[..., None]
+    save(rgba(np.clip(rgb, 0, 1)), name + '.png')
+
+
+def pluto():
+    x, y, z, lat = sphere_grid(512, 256)
+    lon = np.arctan2(z, x)
+    base = 0.55 + 0.3 * (fbm(x, y, z, 3, 5, 701) - 0.5)
+    rgb = np.stack([base * 0.85, base * 0.7, base * 0.55], -1)
+    # The bright heart (Tombaugh Regio), two lobes, and the dark equatorial belt (Cthulhu).
+    h1 = np.exp(-(((lon - 0.3) / 0.35) ** 2 + ((lat - 0.2) / 0.3) ** 2))
+    h2 = np.exp(-(((lon - 0.75) / 0.3) ** 2 + ((lat - 0.05) / 0.3) ** 2))
+    heart = np.clip(h1 + h2, 0, 1)
+    dark = np.exp(-(((lon + 1.2) / 0.9) ** 2 + ((lat + 0.1) / 0.2) ** 2)) * 0.8
+    rgb = rgb * (1 - heart[..., None]) + np.array([0.95, 0.9, 0.85]) * heart[..., None]
+    rgb = rgb * (1 - dark[..., None]) + np.array([0.25, 0.12, 0.08]) * dark[..., None]
+    save(rgba(np.clip(rgb, 0, 1)), 'pluto.png')
+
+
+def ceres():
+    x, y, z, lat = sphere_grid(512, 256)
+    g = 0.42 + 0.15 * (fbm(x, y, z, 3, 5, 711) - 0.5)
+    cr = fbm(x, y, z, 10.0, 3, 712)
+    g = g - 0.1 * smooth(0.66, 0.74, cr) * (1 - smooth(0.74, 0.8, cr))
+    lon = np.arctan2(z, x)
+    spot = np.exp(-(((lon - 1.0) / 0.03) ** 2 + ((lat - 0.35) / 0.03) ** 2)) + 0.6 * np.exp(-(((lon - 1.05) / 0.02) ** 2 + ((lat - 0.36) / 0.02) ** 2))
+    g = np.clip(g + spot * 0.6, 0, 1)
+    save(rgba(np.dstack([g, g * 0.98, g * 0.95])), 'ceres.png')
+
+
 if __name__ == '__main__':
     gas_giant('jupiter', [(0, (0.5, 0.34, 0.24)), (0.35, (0.78, 0.62, 0.45)), (0.6, (0.93, 0.87, 0.76)), (1, (0.98, 0.95, 0.9))], 11,
               storms=[(1.0, -0.38, 0.28, 0.12, (0.75, 0.38, 0.26))])
@@ -288,6 +341,52 @@ if __name__ == '__main__':
     rocky('lhs1140b', 36, ocean=[(0, (0.25, 0.5, 0.7)), (1, (0.08, 0.2, 0.4))], sea_level=0.55,
           land=[(0, (0.6, 0.65, 0.7)), (1, (0.92, 0.95, 0.98))], ice_lat=0.95, clouds=0.35, cloud_col=(0.95, 0.97, 1.0))
     moon_map()
+
+    # Dwarf planets and moons.
+    ceres()
+    pluto()
+    rocky('charon', 41, w=512, h=256, land=[(0, (0.45, 0.43, 0.42)), (1, (0.7, 0.68, 0.66))], sea_level=0.0, craters=0.7, ice_lat=1.35)
+    rocky('haumea', 42, w=512, h=256, land=[(0, (0.85, 0.86, 0.9)), (1, (0.97, 0.97, 1.0))], sea_level=0.0, craters=0.3, ice_lat=9)
+    rocky('makemake', 43, w=512, h=256, land=[(0, (0.55, 0.32, 0.2)), (1, (0.85, 0.65, 0.5))], sea_level=0.0, ice_lat=9)
+    rocky('eris', 44, w=512, h=256, land=[(0, (0.85, 0.85, 0.85)), (1, (0.98, 0.98, 0.97))], sea_level=0.0, ice_lat=9)
+    # Hot Jupiters and other giants.
+    gas_giant('peg51b', [(0, (0.4, 0.33, 0.3)), (0.5, (0.62, 0.52, 0.45)), (1, (0.8, 0.72, 0.62))], 51, w=512, h=256, warp=0.6, glow=0.3)
+    gas_giant('hd189733b', [(0, (0.05, 0.12, 0.45)), (0.5, (0.12, 0.28, 0.72)), (1, (0.4, 0.6, 0.95))], 52, w=512, h=256, warp=0.7)
+    gas_giant('hd209458b', [(0, (0.3, 0.38, 0.5)), (0.5, (0.5, 0.58, 0.7)), (1, (0.75, 0.8, 0.88))], 53, w=512, h=256, warp=0.6)
+    gas_giant('wasp12b', [(0, (0.08, 0.04, 0.04)), (0.5, (0.25, 0.08, 0.05)), (1, (0.55, 0.2, 0.08))], 54, w=512, h=256, warp=0.9, glow=1.0)
+    gas_giant('wasp76b', [(0, (0.45, 0.15, 0.05)), (0.5, (0.85, 0.45, 0.15)), (1, (1.0, 0.8, 0.45))], 55, w=512, h=256, warp=0.8, glow=0.8)
+    gas_giant('wasp17b', [(0, (0.6, 0.55, 0.5)), (0.5, (0.78, 0.72, 0.65)), (1, (0.92, 0.88, 0.82))], 56, w=512, h=256, bands=6, warp=0.5)
+    gas_giant('kelt9b', [(0, (0.85, 0.45, 0.25)), (0.5, (1.0, 0.8, 0.6)), (1, (1.0, 0.97, 0.92))], 57, w=512, h=256, warp=0.7, glow=1.0)
+    gas_giant('kepler16b', [(0, (0.5, 0.45, 0.38)), (0.5, (0.7, 0.65, 0.55)), (1, (0.86, 0.82, 0.74))], 58, w=512, h=256, bands=12, warp=0.4)
+    gas_giant('gj1214b', [(0, (0.62, 0.66, 0.68)), (1, (0.8, 0.83, 0.84))], 59, w=512, h=256, bands=4, warp=0.2)
+    # Rocky, ocean and lava worlds.
+    eyeball('proxima_b', 61)
+    lava('cnc55e', 62)
+    lava('kepler10b', 63, hot=(1.0, 0.45, 0.12))
+    lava('kepler78b', 64, hot=(1.0, 0.62, 0.2))
+    lava('trappist1b', 65, crust=(0.3, 0.12, 0.08), hot=(1.0, 0.5, 0.2))
+    rocky('kepler22b', 66, w=512, h=256, ocean=[(0, (0.1, 0.4, 0.45)), (1, (0.03, 0.15, 0.22))], sea_level=0.85,
+          land=[(0, (0.4, 0.5, 0.35)), (1, (0.6, 0.6, 0.5))], ice_lat=1.4, clouds=0.55)
+    rocky('kepler186f', 67, w=512, h=256, ocean=[(0, (0.15, 0.25, 0.35)), (1, (0.05, 0.1, 0.18))], sea_level=0.4,
+          land=[(0, (0.55, 0.35, 0.2)), (0.5, (0.7, 0.5, 0.3)), (1, (0.85, 0.7, 0.5))], ice_lat=1.3, clouds=0.2)
+    rocky('kepler452b', 68, w=512, h=256, ocean=[(0, (0.12, 0.3, 0.5)), (1, (0.04, 0.1, 0.25))], sea_level=0.5,
+          land=[(0, (0.45, 0.42, 0.3)), (0.5, (0.65, 0.55, 0.42)), (1, (0.85, 0.82, 0.78))], ice_lat=1.25, clouds=0.6)
+    rocky('kepler1649c', 69, w=512, h=256, ocean=[(0, (0.15, 0.28, 0.4)), (1, (0.05, 0.12, 0.2))], sea_level=0.42,
+          land=[(0, (0.5, 0.38, 0.28)), (1, (0.75, 0.62, 0.48))], ice_lat=1.2, clouds=0.3)
+    rocky('kepler442b', 70, w=512, h=256, ocean=[(0, (0.1, 0.32, 0.5)), (1, (0.03, 0.1, 0.25))], sea_level=0.55,
+          land=[(0, (0.3, 0.42, 0.22)), (0.5, (0.5, 0.48, 0.3)), (1, (0.8, 0.78, 0.72))], ice_lat=1.15, clouds=0.45)
+    rocky('kepler62f', 71, w=512, h=256, ocean=[(0, (0.2, 0.45, 0.6)), (1, (0.06, 0.18, 0.35))], sea_level=0.7,
+          land=[(0, (0.7, 0.72, 0.75)), (1, (0.95, 0.96, 0.98))], ice_lat=0.9, clouds=0.4)
+    rocky('trappist1c', 72, w=512, h=256, land=[(0, (0.65, 0.5, 0.3)), (1, (0.9, 0.8, 0.6))], sea_level=0.0, clouds=0.7, cloud_col=(0.9, 0.82, 0.62), ice_lat=9)
+    rocky('trappist1d', 73, w=512, h=256, ocean=[(0, (0.15, 0.3, 0.42)), (1, (0.05, 0.12, 0.22))], sea_level=0.6,
+          land=[(0, (0.5, 0.4, 0.32)), (1, (0.72, 0.62, 0.52))], ice_lat=1.2, clouds=0.25)
+    rocky('trappist1e', 74, w=512, h=256, ocean=[(0, (0.1, 0.3, 0.5)), (1, (0.03, 0.1, 0.25))], sea_level=0.5,
+          land=[(0, (0.35, 0.4, 0.25)), (0.5, (0.55, 0.48, 0.35)), (1, (0.85, 0.85, 0.85))], ice_lat=1.15, clouds=0.45)
+    rocky('trappist1f', 75, w=512, h=256, ocean=[(0, (0.2, 0.42, 0.55)), (1, (0.08, 0.2, 0.32))], sea_level=0.62,
+          land=[(0, (0.75, 0.78, 0.82)), (1, (0.95, 0.96, 0.98))], ice_lat=0.85, clouds=0.35)
+    rocky('trappist1g', 76, w=512, h=256, ocean=[(0, (0.25, 0.45, 0.58)), (1, (0.1, 0.22, 0.35))], sea_level=0.5,
+          land=[(0, (0.8, 0.82, 0.86)), (1, (0.96, 0.97, 0.99))], ice_lat=0.6, clouds=0.3)
+    rocky('trappist1h', 77, w=512, h=256, land=[(0, (0.72, 0.74, 0.78)), (1, (0.93, 0.94, 0.96))], sea_level=0.0, craters=0.4, ice_lat=0.3)
     star_surface()
     rings()
     flame()

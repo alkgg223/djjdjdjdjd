@@ -1161,9 +1161,11 @@ public final class SelfTest {
             turnClient(0F, 20F);
             shot("t0_telescope_block");
         });
-        String[][] targets = {{"jupiter", "0.6"}, {"jupiter", "4"}, {"saturn", "0.3"}, {"mars", "0.12"}, {"moon", "6"}, {"moon", "1.2"},
-                {"betelgeuse", "0.012"}, {"sirius", "0.01"}, {"hr8799c", "0.016"}, {"betapic_b", "0.016"}, {"psr_b1620_26b", "0.02"},
-                {"gj436b", "0.006"}, {"k2_18b", "0.009"}, {"toi700d", "0.01"}, {"lhs1140b", "0.009"}, {"neptune", "0.02"}};
+        String[][] targets = {{"jupiter", "0.6"}, {"saturn", "0.3"}, {"pluto", "0.009"}, {"haumea", "0.009"}, {"betelgeuse", "0.012"},
+                {"uy_scuti", "0.014"}, {"eta_carinae", "0.03"}, {"vy_canis_majoris", "0.03"}, {"fomalhaut", "0.016"}, {"spica", "0.005"},
+                {"capella", "0.006"}, {"altair", "0.005"}, {"proxima_centauri", "0.006"}, {"alpha_centauri_a", "0.006"}, {"hr8799c", "0.016"},
+                {"betapic_b", "0.02"}, {"psr_b1620_26b", "0.02"}, {"gj436b", "0.006"}, {"trappist1e", "0.01"}, {"kepler16b", "0.01"},
+                {"wasp12b", "0.005"}, {"cnc55e", "0.005"}, {"kelt9b", "0.005"}, {"hd189733b", "0.005"}, {"toi700d", "0.01"}, {"earth", "70"}};
         for (int i = 0; i < targets.length; i++) {
             String id = targets[i][0];
             double fov = Double.parseDouble(targets[i][1]);
@@ -1181,8 +1183,32 @@ public final class SelfTest {
                 lookAtTarget(id);
             });
             step(14, () -> lookAtTarget(id));
-            step(2, () -> shot(label));
+            step(2, () -> {
+                shot(label);
+                LOG.info("[telescope {}] {}", id, com.realweather.client.space.TelescopeView.debug);
+            });
         }
+        // The Sun in the daytime, through the solar filter.
+        step(5, () -> {
+            cmd("time set 3000");
+            com.realweather.client.space.Telescope.start(telescopeAt, com.realweather.client.space.Catalog.byId("sun"));
+            lookAtTarget("sun");
+        });
+        step(5, () -> {
+            com.realweather.client.space.Telescope.setFov(12);
+            lookAtTarget("sun");
+        });
+        step(12, () -> lookAtTarget("sun"));
+        step(2, () -> shot("t80_sun_12"));
+        step(5, () -> {
+            com.realweather.client.space.Telescope.setFov(3);
+            lookAtTarget("sun");
+        });
+        step(10, () -> shot("t81_sun_3"));
+        step(5, () -> {
+            com.realweather.client.space.Telescope.stop();
+            cmd("time set 18000");
+        });
         step(5, () -> com.realweather.client.space.Telescope.stop());
         // The 3D sky events from close by, through the telescope too.
         step(5, () -> skyAt(com.realweather.server.SkyEvent.ISS, 0.5F));

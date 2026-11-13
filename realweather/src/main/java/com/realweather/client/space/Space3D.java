@@ -310,12 +310,37 @@ public final class Space3D {
         }
     }
 
+    private static double scaleX = 1, scaleY = 1, scaleZ = 1;
+
+    /** Squashes or stretches the next spheres along their own axes (a fast-spinning or tidally stretched body). */
+    public static void scale(double x, double y, double z) {
+        scaleX = x;
+        scaleY = y;
+        scaleZ = z;
+    }
+
     private static void corner(ResourceLocation tex, double cx, double cy, double cz, double r, double[] rot, double lx, double ly, double lz,
                                float ambient, float cr, float cg, float cb, float glow, float alpha, boolean star, float uShift, int lat, int lon,
                                int i, int j, double vx, double vy, double vz) {
         double th = Math.PI * i / lat, ph = Math.PI * 2 * j / lon;
         double sx = Math.sin(th) * Math.cos(ph), sy = Math.cos(th), sz = Math.sin(th) * Math.sin(ph);
-        apply(rot, sx, sy, sz, N);
+        double px, py, pz;
+        if (scaleX != 1 || scaleY != 1 || scaleZ != 1) {
+            apply(rot, sx * scaleX, sy * scaleY, sz * scaleZ, N);
+            px = cx + N[0] * r;
+            py = cy + N[1] * r;
+            pz = cz + N[2] * r;
+            apply(rot, sx / scaleX, sy / scaleY, sz / scaleZ, N);
+            double nl = Math.sqrt(N[0] * N[0] + N[1] * N[1] + N[2] * N[2]);
+            N[0] /= nl;
+            N[1] /= nl;
+            N[2] /= nl;
+        } else {
+            apply(rot, sx, sy, sz, N);
+            px = cx + N[0] * r;
+            py = cy + N[1] * r;
+            pz = cz + N[2] * r;
+        }
         float shade;
         if (star) {
             float mu = (float) Math.max(0, N[0] * vx + N[1] * vy + N[2] * vz);
@@ -326,7 +351,7 @@ public final class Space3D {
             float lit = smooth(-0.08F, 0.35F, ndl) * (0.35F + 0.65F * Math.max(0F, ndl));
             shade = ambient + (1F - ambient) * lit + glow;
         }
-        vtx(cx + N[0] * r, cy + N[1] * r, cz + N[2] * r, (float) j / lon + uShift, (float) i / lat, cr * shade, cg * shade, cb * shade, alpha);
+        vtx(px, py, pz, (float) j / lon + uShift, (float) i / lat, cr * shade, cg * shade, cb * shade, alpha);
     }
 
     /** A thin glowing shell round a planet's limb: its atmosphere, brighter on the lit side. */

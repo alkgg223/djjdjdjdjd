@@ -216,7 +216,10 @@ day and night sides and phases (Saturn with its rings), comets with tails of str
 real paths through the air, the space station and satellites as lit models glinting in the sun, aurora curtains hanging
 high over the land, stars as glowing spheres wrapped in fire. And a telescope (spyglass, copper, glass pane, sticks):
 use it to choose the Moon, a planet, a bright star or an exoplanet (GJ 436 b, LHS 1140 b, K2-18 b, TOI-700 d and e,
-Beta Pictoris b, HR 8799 b, c, d and e, PSR B1620-26 b); a marker shows where it is; zoom in (mouse wheel, or hold
+Beta Pictoris b, HR 8799 b, c, d and e, PSR B1620-26 b, and many more: the Sun through a solar filter, the dwarf
+planets Ceres, Pluto, Haumea, Makemake and Eris, stars from Proxima Centauri and Barnard's Star to the hypergiants UY Scuti,
+VY Canis Majoris and Stephenson 2-18 and Eta Carinae in its nebula, and exoplanets such as 51 Pegasi b, 55 Cancri e,
+WASP-12 b, KELT-9 b, Kepler-16 b and the seven planets of TRAPPIST-1); a marker shows where it is; zoom in (mouse wheel, or hold
 attack / use) up to about 14 000 times to see it, its planets going round it on their orbits. The telescope follows
 the turning sky. Sneak to step back.
 
