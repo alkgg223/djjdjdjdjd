@@ -125,12 +125,11 @@ public final class SkyBillboards {
                 return;
             }
         }
-        // Lightning inside the cloud lights it from within.
-        float fl = CloudFlashes.lightRel(x, y, z);
-        if (fl > 0.003F) {
-            r += fl * 1.5F;
-            g += fl * 1.6F;
-            b += fl * 1.85F;
+        // Lightning inside the cloud lights it from within, in the colour of its kind.
+        if (CloudFlashes.lightRel(x, y, z, FLASH_RGB)) {
+            r += FLASH_RGB[0] * 1.85F;
+            g += FLASH_RGB[1] * 1.85F;
+            b += FLASH_RGB[2] * 1.85F;
         }
         // Aerial perspective: distant clouds take on the colour of the haze.
         float haze = (1F - (float) Math.exp(-d / visibility)) * 0.92F;
@@ -338,6 +337,7 @@ public final class SkyBillboards {
     }
 
     private static final float[] US = new float[4], VS = new float[4];
+    private static final float[] FLASH_RGB = new float[3];
     private static final Vector3f UP = new Vector3f(), RIGHT = new Vector3f();
     private static final float[] COL_ALPHA = {0F, 0.55F, 0.92F, 1F, 1F, 0.92F, 0.55F, 0F};
     private static final float[] COL_POS = {-1F, -0.82F, -0.55F, -0.2F, 0.2F, 0.55F, 0.82F, 1F};

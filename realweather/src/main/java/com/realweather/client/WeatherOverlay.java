@@ -32,7 +32,8 @@ public final class WeatherOverlay {
         if (f > 0.01F) {
             // The world itself lights up (lightmap); the screen only gets a short glare on top.
             int a = (int) (Math.min(1F, f) * 0.3F * 255F);
-            g.fill(0, 0, w, h, (a << 24) | 0xE6ECFF);
+            int rgb = ((int) (LightningFx.flashR * 255F) << 16) | ((int) (LightningFx.flashG * 255F) << 8) | (int) (LightningFx.flashB * 255F);
+            g.fill(0, 0, w, h, (a << 24) | rgb);
         }
     }
 }

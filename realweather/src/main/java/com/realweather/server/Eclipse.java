@@ -12,22 +12,48 @@ public final class Eclipse {
     /** Moon radius in sun radii: just bigger, so it can cover the sun completely. */
     public static final float MOON = 1.12F;
 
+    /** Normal (total or partial, by how far off centre the moon passes), annular, or hybrid. */
+    public static final int NORMAL = 0, ANNULAR = 1, HYBRID = 2;
+
     public final long start;
     public final int duration;
+    /** {@link #NORMAL}, {@link #ANNULAR} or {@link #HYBRID}. */
+    public final int kind;
     /** How far the moon's path passes from the sun's centre (0 = right over it), sun radii. */
     public final float miss;
     /** Direction of the path across the sun's disc, radians. */
     public final float angle;
 
     public Eclipse(long start, int duration, float miss, float angle) {
+        this(start, duration, miss, angle, NORMAL);
+    }
+
+    public Eclipse(long start, int duration, float miss, float angle, int kind) {
         this.start = start;
         this.duration = duration;
         this.miss = miss;
         this.angle = angle;
+        this.kind = kind;
     }
 
     public boolean total() {
-        return miss + 1F <= MOON;
+        return kind != ANNULAR && miss + 1F <= MOON;
+    }
+
+    /**
+     * The moon's radius in sun radii right now. Near the far point of its orbit the moon looks smaller than the sun and
+     * leaves a ring of fire round it (annular); in a hybrid eclipse it is just too small at the start and end of the
+     * central part and just big enough in the middle, so the ring closes into totality and opens again.
+     */
+    public float moonRadius(double gameTime) {
+        if (kind == ANNULAR) {
+            return 0.9F;
+        }
+        if (kind == HYBRID) {
+            float p = progress(gameTime) - 0.5F;
+            return 0.955F + 0.075F * (float) Math.exp(-(p / 0.06F) * (p / 0.06F));
+        }
+        return MOON;
     }
 
     /** 0..1 over the whole eclipse (first contact near 0, last near 1). */
@@ -51,7 +77,7 @@ public final class Eclipse {
     public float coverage(double gameTime) {
         float[] o = moonOffset(gameTime);
         float d = Mth.sqrt(o[0] * o[0] + o[1] * o[1]);
-        return overlap(d, 1F, MOON) / Mth.PI;
+        return overlap(d, 1F, moonRadius(gameTime)) / Mth.PI;
     }
 
     /** Area where two discs (radii r1, r2, centres d apart) overlap. */

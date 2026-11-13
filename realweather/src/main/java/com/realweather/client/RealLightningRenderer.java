@@ -53,8 +53,13 @@ public class RealLightningRenderer extends EntityRenderer<LightningBolt> {
         for (int i = 0; i + 1 < main.size(); i++) {
             segments.add(new Segment(main.get(i), main.get(i + 1), 1F, 1F));
         }
+        // Orange, green, white or purple (weakest to strongest): its colour, how thick and how branched it is.
+        int kind = com.realweather.LightningKind.of(bolt.getUUID());
+        float[] gc = com.realweather.LightningKind.GLOW[kind], cc = com.realweather.LightningKind.CORE[kind];
+        float wk = com.realweather.LightningKind.WIDTH[kind];
+        float pk = Math.min(1.25F, com.realweather.LightningKind.POWER[kind]);
         // Branches fork off the upper part of the channel and reach down and outwards, fading as they go.
-        int branches = 4 + rnd.nextInt(7);
+        int branches = 3 + kind * 2 + rnd.nextInt(6);
         for (int b = 0; b < branches; b++) {
             int start = main.size() / 4 + rnd.nextInt(Math.max(1, main.size() * 3 / 4 - 1));
             Vector3f from = main.get(Math.min(start, main.size() - 1));
@@ -81,13 +86,17 @@ public class RealLightningRenderer extends EntityRenderer<LightningBolt> {
         Matrix4f m = pose.last().pose();
         VertexConsumer vc = buffers.getBuffer(RenderType.lightning());
 
-        glow(vc, m, top.x, top.y, top.z, 70F, 0.55F, 0.62F, 1F, 0.55F * flicker);
-        glow(vc, m, 0F, 0.3F, 0F, 12F, 0.75F, 0.8F, 1F, 0.5F * flicker);
+        // The outer glow in the bolt's colour, a brighter tinted sheath, and the white-hot core.
+        float or = gc[0] * 0.85F, og = gc[1] * 0.85F, ob = gc[2];
+        float mr = (gc[0] + cc[0]) * 0.5F, mg = (gc[1] + cc[1]) * 0.5F, mb = (gc[2] + cc[2]) * 0.5F;
+        glow(vc, m, top.x, top.y, top.z, 70F * (0.8F + 0.2F * wk), gc[0] * 0.75F, gc[1] * 0.75F, gc[2], 0.55F * flicker * pk);
+        glow(vc, m, 0F, 0.3F, 0F, 12F * wk, mr, mg, mb, 0.5F * flicker * pk);
         for (Segment s : segments) {
-            ribbon(vc, m, camLocal, s.a, s.b, 4.0F * s.width, 0.35F, 0.42F, 1F, 0.1F * s.alpha * flicker);
-            ribbon(vc, m, camLocal, s.a, s.b, 1.3F * s.width, 0.6F, 0.66F, 1F, 0.45F * s.alpha * flicker);
-            ribbon(vc, m, camLocal, s.a, s.b, 0.24F * s.width + 0.06F, 1F, 1F, 1F, 1F * s.alpha * flicker);
-            ribbon(vc, m, camLocal, s.a, s.b, 0.24F * s.width + 0.06F, 1F, 1F, 1F, 0.6F * s.alpha * flicker);
+            float w = s.width * wk;
+            ribbon(vc, m, camLocal, s.a, s.b, 4.0F * w, or * 0.6F, og * 0.6F, ob, 0.1F * s.alpha * flicker * pk);
+            ribbon(vc, m, camLocal, s.a, s.b, 1.3F * w, mr, mg, mb, 0.45F * s.alpha * flicker);
+            ribbon(vc, m, camLocal, s.a, s.b, 0.24F * w + 0.06F, cc[0], cc[1], cc[2], 1F * s.alpha * flicker);
+            ribbon(vc, m, camLocal, s.a, s.b, 0.24F * w + 0.06F, cc[0], cc[1], cc[2], 0.6F * s.alpha * flicker);
         }
     }
 

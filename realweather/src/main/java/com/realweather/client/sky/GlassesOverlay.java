@@ -37,7 +37,7 @@ public final class GlassesOverlay {
             float y = EclipseRenderer.screenSunY, r = Math.max(2F, EclipseRenderer.screenR);
             RenderSystem.enableBlend();
             if (ClientEclipse.corona > 0.05F) {
-                float cs = r * com.realweather.server.Eclipse.MOON / 0.2F;
+                float cs = r * ClientEclipse.moonR / 0.2F;
                 RenderSystem.setShaderColor(0.25F, 0.26F, 0.28F, ClientEclipse.corona * 0.6F);
                 blit(g, CORONA, x, y, cs);
             }
@@ -47,7 +47,7 @@ public final class GlassesOverlay {
             }
             if (ClientEclipse.coverage > 0F) {
                 RenderSystem.setShaderColor(0.008F, 0.008F, 0.012F, 1F);
-                blit(g, DISC, EclipseRenderer.screenMoonX, EclipseRenderer.screenMoonY, r * com.realweather.server.Eclipse.MOON);
+                blit(g, DISC, EclipseRenderer.screenMoonX, EclipseRenderer.screenMoonY, r * ClientEclipse.moonR);
             }
             RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
         }

@@ -77,6 +77,9 @@ public final class SelfTest {
         if (suite.contains("opt")) {
             optSuite();
         }
+        if (suite.contains("space")) {
+            spaceSuite();
+        }
         if (suite.contains("all")) {
             weatherSuite();
         }
@@ -990,6 +993,195 @@ public final class SelfTest {
         step(20, () -> shot("95_rain_ground_opt_on"));
         step(5, () -> com.realweather.ClientConfig.MAX_OPTIMIZE.set(false));
         step(20, () -> shot("95_rain_ground_opt_off"));
+    }
+
+    /** 1.10.0: the four kinds of lightning, the rainbow, annular and hybrid eclipses, and every sky event. */
+    private static void spaceSuite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 15000");
+            cmd("rw sky natural off");
+            goTo("minecraft:plains", 0, 0);
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+        });
+        step(60, SelfTest::platform);
+        step(140, () -> LOG.info("waiting for the world around the platform to load"));
+        // The four kinds of lightning at night under a storm, each with the cloud lit in its colour.
+        step(5, () -> cmd("execute as @a at @s run rw thunderstorm"));
+        step(200, () -> turnClient(180F, -8F));
+        String[] kinds = com.realweather.LightningKind.NAMES;
+        for (int k = 0; k < kinds.length; k++) {
+            int kind = k;
+            step(30, () -> boltAhead(kind, 70));
+            step(2, () -> shot("a0_lightning_" + kinds[kind]));
+            step(4, () -> cloudFlashAhead(kind));
+            step(2, () -> shot("a1_cloud_flash_" + kinds[kind]));
+        }
+        step(5, () -> cmd("rw clear"));
+        // Sky events at night, each looked at directly.
+        int[] night = {com.realweather.server.SkyEvent.LUNAR_ECLIPSE, com.realweather.server.SkyEvent.SUPERMOON,
+                com.realweather.server.SkyEvent.METEOR_SHOWER, com.realweather.server.SkyEvent.COMET, com.realweather.server.SkyEvent.FIREBALLS,
+                com.realweather.server.SkyEvent.CONJUNCTION, com.realweather.server.SkyEvent.ALIGNMENT, com.realweather.server.SkyEvent.OCCULTATION,
+                com.realweather.server.SkyEvent.AURORA, com.realweather.server.SkyEvent.ISS, com.realweather.server.SkyEvent.STARLINK,
+                com.realweather.server.SkyEvent.SUPERNOVA, com.realweather.server.SkyEvent.RECURRENT_NOVA,
+                com.realweather.server.SkyEvent.DEBRIS_REENTRY, com.realweather.server.SkyEvent.SATELLITE_FLARE,
+                com.realweather.server.SkyEvent.AURORA_STORM, com.realweather.server.SkyEvent.SPORADIC_METEORS,
+                com.realweather.server.SkyEvent.STAR_OCCULTATION, com.realweather.server.SkyEvent.TRIPLE_CONJUNCTION,
+                com.realweather.server.SkyEvent.WANDERING_COMET, com.realweather.server.SkyEvent.FAINT_COMET,
+                com.realweather.server.SkyEvent.DUST_GLOW, com.realweather.server.SkyEvent.STAR_FLARES};
+        float[] at = {0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.47F, 0.5F, 0.5F, 0.42F, 0.05F, 0.0F, 0.33F, 0.5F, 0.5F, 0.5F, 0.42F, 0.5F,
+                0.5F, 0.5F, 0.5F, 0.5F};
+        for (int i = 0; i < night.length; i++) {
+            int type = night[i];
+            float progress = at[i];
+            String name = com.realweather.server.SkyEvent.NAMES[type];
+            boolean faint = type == com.realweather.server.SkyEvent.FAINT_COMET;
+            step(5, () -> {
+                cmd(faint ? "time set 13300" : "time set 15000");
+                skyAt(type, progress);
+            });
+            step(30, () -> lookAtEvent(type));
+            if (type == com.realweather.server.SkyEvent.FIREBALLS) {
+                // The first fireball comes a few seconds in.
+                step(5, () -> skyAt(type, 0.0125F));
+                step(8, () -> lookAtEvent(type));
+            }
+            if (type == com.realweather.server.SkyEvent.RECURRENT_NOVA) {
+                step(5, () -> skyAt(type, 0.0005F));
+                step(12, () -> lookAtEvent(type));
+            }
+            step(4, () -> shot(String.format("b%02d_%s", 0, name)));
+            if (type == com.realweather.server.SkyEvent.METEOR_SHOWER || type == com.realweather.server.SkyEvent.SPORADIC_METEORS) {
+                step(9, () -> shot(String.format("b%02d_%s", 1, name)));
+                step(13, () -> shot(String.format("b%02d_%s", 2, name)));
+            }
+            step(1, () -> skyState(name));
+        }
+        // Lightning high over a storm: sprites, jets and elves.
+        step(5, () -> {
+            cmd("time set 15000");
+            skyAt(com.realweather.server.SkyEvent.UPPER_LIGHTNING, 0.3F);
+            cmd("execute as @a at @s run rw thunderstorm");
+        });
+        for (int i = 0; i < 4; i++) {
+            int n = i;
+            step(40, () -> com.realweather.client.sky.ClientSkyEvents.upperFlash(Minecraft.getInstance().level,
+                    Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()));
+            step(1, () -> lookAtEvent(com.realweather.server.SkyEvent.UPPER_LIGHTNING));
+            step(2, () -> shot("c0_upper_lightning_" + n));
+        }
+        step(5, () -> cmd("rw clear"));
+        // In the daytime, at the sun.
+        int[] day = {com.realweather.server.SkyEvent.TRANSIT, com.realweather.server.SkyEvent.SATELLITE_TRANSIT,
+                com.realweather.server.SkyEvent.CORONAL_MASS_EJECTION};
+        float[] dayAt = {0.5F, 0.0025F, 0.02F};
+        for (int i = 0; i < day.length; i++) {
+            int type = day[i];
+            float progress = dayAt[i];
+            String name = com.realweather.server.SkyEvent.NAMES[type];
+            step(5, () -> {
+                cmd("time set 1500");
+                skyAt(type, progress);
+            });
+            step(25, () -> lookAtEvent(type));
+            step(4, () -> shot("d0_" + name));
+        }
+        // The rainbow with the sun low behind, in a light shower; then on its own.
+        step(5, () -> {
+            cmd("time set 500");
+            skyAt(com.realweather.server.SkyEvent.RAINBOW, 0.3F);
+        });
+        step(200, () -> lookAtEvent(com.realweather.server.SkyEvent.RAINBOW));
+        step(5, () -> shot("e0_rainbow"));
+        step(5, () -> Minecraft.getInstance().player.setXRot(-25F));
+        step(5, () -> shot("e1_rainbow_up"));
+        step(5, () -> cmd("execute as @a at @s run rw thunderstorm"));
+        step(200, () -> lookAtEvent(com.realweather.server.SkyEvent.RAINBOW));
+        step(5, () -> shot("e2_rainbow_storm"));
+        step(5, () -> {
+            cmd("rw clear");
+            stopSky();
+        });
+        // Annular and hybrid solar eclipses.
+        step(5, () -> cmd("time set 3000"));
+        float[] annular = {0.3F, 0.5F};
+        for (float pr : annular) {
+            step(5, () -> eclipseKindAt(pr, com.realweather.server.Eclipse.ANNULAR));
+            step(30, () -> lookAtSun(0F));
+            step(4, () -> shot(String.format("f0_annular_%02d", (int) (pr * 100))));
+        }
+        float[] hybrid = {0.42F, 0.5F};
+        for (float pr : hybrid) {
+            step(5, () -> eclipseKindAt(pr, com.realweather.server.Eclipse.HYBRID));
+            step(30, () -> lookAtSun(0F));
+            step(4, () -> shot(String.format("f1_hybrid_%02d", (int) (pr * 100))));
+        }
+        step(5, () -> eclipseState("hybrid"));
+        // A command to check it is all wired up.
+        step(5, () -> {
+            cmd("rw sky meteor_shower");
+            cmd("rw lightning purple 40");
+            cmd("rw sky stop");
+        });
+    }
+
+    /** One sky event, already this far through. */
+    private static void skyAt(int type, float progress) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerLevel level = server.overworld();
+            long now = level.getGameTime();
+            int dur = com.realweather.server.SkyEvent.DURATION[type];
+            com.realweather.server.SkyEventManager.EVENTS.clear();
+            com.realweather.server.SkyEventManager.EVENTS.add(new com.realweather.server.SkyEvent(type, now - Math.round(progress * dur), dur,
+                    0x5EED1234L + type * 7919L));
+            com.realweather.server.SkyEventManager.sync(level);
+        });
+    }
+
+    private static void stopSky() {
+        MinecraftServer server = server();
+        server.execute(() -> com.realweather.server.SkyEventManager.stop(server.overworld(), -1));
+    }
+
+    private static void lookAtEvent(int type) {
+        Minecraft mc = Minecraft.getInstance();
+        float[] d = com.realweather.client.sky.SpaceRenderer.focus(type, mc.level, 1F);
+        if (d == null) {
+            LOG.warn("no {} to look at", com.realweather.server.SkyEvent.NAMES[type]);
+            return;
+        }
+        float yaw = (float) Math.toDegrees(Math.atan2(-d[0], d[2]));
+        float pitch = (float) -Math.toDegrees(Math.asin(Math.max(-1F, Math.min(1F, d[1]))));
+        turnClient(yaw, pitch);
+    }
+
+    private static void boltAhead(int kind, double dist) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+            // North of the player (the camera looks north).
+            com.realweather.server.LightningStrikes.strike(server.overworld(), p.getX() + 6, p.getZ() - dist, kind);
+        });
+    }
+
+    private static void cloudFlashAhead(int kind) {
+        Minecraft mc = Minecraft.getInstance();
+        net.minecraft.world.phys.Vec3 c = mc.gameRenderer.getMainCamera().getPosition();
+        float deck = com.realweather.client.sky.StormClouds.deckY(mc.level);
+        com.realweather.client.sky.CloudFlashes.add(c.x - 30, deck + 25, c.z - 180, 1.4F, true, kind);
+        com.realweather.client.sky.CloudFlashes.add(c.x + 60, deck + 40, c.z - 260, 1.1F, false, kind);
+    }
+
+    private static void eclipseKindAt(float progress, int kind) {
+        MinecraftServer server = server();
+        server.execute(() -> {
+            ServerLevel level = server.overworld();
+            long now = level.getGameTime();
+            int dur = com.realweather.server.EclipseManager.DURATION;
+            com.realweather.server.EclipseManager.current = new com.realweather.server.Eclipse(now - Math.round(progress * dur), dur, 0.01F, 0.6F, kind);
+            com.realweather.server.EclipseManager.sync(level);
+        });
     }
 
     private static void eclipseSuite() {

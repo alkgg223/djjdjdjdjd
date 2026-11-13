@@ -12,13 +12,15 @@ public final class ClientEclipse {
     public static float coverage, dark, diamond, corona;
     /** Moon centre relative to the sun's, sun radii. */
     static float moonX, moonZ;
+    /** The moon's radius in sun radii (smaller than the sun in an annular eclipse). */
+    public static float moonR = Eclipse.MOON;
     /** 0..1: how high the sun stands (the eclipse only darkens the day while the sun is up). */
     static float sunUp;
 
     private ClientEclipse() {}
 
     public static void onSync(EclipseSyncPayload p) {
-        current = p.active() ? new Eclipse(p.start(), p.duration(), p.miss(), p.angle()) : null;
+        current = p.active() ? new Eclipse(p.start(), p.duration(), p.miss(), p.angle(), p.kind()) : null;
     }
 
     public static void clear() {
@@ -47,6 +49,7 @@ public final class ClientEclipse {
         float[] o = e.moonOffset(t);
         moonX = o[0];
         moonZ = o[1];
+        moonR = e.moonRadius(t);
         coverage = e.coverage(t);
         dark = Eclipse.darkness(coverage) * sunUp;
         diamond = Eclipse.diamond(coverage) * sunUp;

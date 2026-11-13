@@ -43,6 +43,7 @@ public final class WeatherServer {
         WeatherData d = WeatherData.get(level);
         RandomSource rng = level.random;
         long t = level.getGameTime();
+        LightningStrikes.tick();
         boolean raining = level.isRaining();
         boolean thundering = level.isThundering();
 
@@ -136,6 +137,7 @@ public final class WeatherServer {
         TsunamiManager.tick(level, d, players, rng);
         QuakeManager.tick(level, d, players, rng);
         EclipseManager.tick(level, d, players, rng);
+        SkyEventManager.tick(level, d, players, rng);
         HailManager.tick(level, d, players, rng);
         FloodManager.tick(level, d, players, rng);
         SnowPile.tick(level, d, players, rng);
@@ -195,6 +197,8 @@ public final class WeatherServer {
         bolt.moveTo(Vec3.atBottomCenterOf(best));
         boolean real = rng.nextFloat() < (dist < 64 ? 0.3F : 0.12F);
         bolt.setVisualOnly(!real);
+        // The stronger the storm, the more of its lightning is of the strong kinds.
+        LightningStrikes.setKind(bolt, com.realweather.LightningKind.roll(rng, thunder), rng);
         level.addFreshEntity(bolt);
     }
 
@@ -239,6 +243,7 @@ public final class WeatherServer {
             PacketDistributor.sendToPlayer(player, TsunamiManager.payload());
             PacketDistributor.sendToPlayer(player, QuakeManager.payload());
             PacketDistributor.sendToPlayer(player, EclipseManager.payload());
+            PacketDistributor.sendToPlayer(player, SkyEventManager.payload());
         }
     }
 
@@ -247,6 +252,7 @@ public final class WeatherServer {
             PacketDistributor.sendToPlayer(player, payload());
             PacketDistributor.sendToPlayer(player, TornadoManager.payload(WeatherData.get(player.server.overworld())));
             PacketDistributor.sendToPlayer(player, StormManager.payload(WeatherData.get(player.server.overworld())));
+            PacketDistributor.sendToPlayer(player, SkyEventManager.payload());
             PacketDistributor.sendToPlayer(player, TsunamiManager.payload());
         }
     }

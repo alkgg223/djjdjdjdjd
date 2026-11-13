@@ -351,6 +351,46 @@
       "values": [
         153.0
       ]
+    },
+    {
+      "name": "FlashColor0",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.81,
+        0.865,
+        1.0
+      ]
+    },
+    {
+      "name": "FlashColor1",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.81,
+        0.865,
+        1.0
+      ]
+    },
+    {
+      "name": "FlashColor2",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.81,
+        0.865,
+        1.0
+      ]
+    },
+    {
+      "name": "FlashColor3",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.81,
+        0.865,
+        1.0
+      ]
     }
   ]
 }

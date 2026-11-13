@@ -44,6 +44,9 @@ public final class WeatherCommands {
         root.then(tsunami());
         root.then(earthquake());
         root.then(eclipse());
+        root.then(sky());
+        root.then(lightning());
+        root.then(Commands.literal("rainbow").executes(c -> skyEvent(c.getSource(), SkyEvent.RAINBOW)));
         root.then(Commands.literal("hailstorm").then(Commands.argument("percent", IntegerArgumentType.integer(1, 100))
                 .executes(c -> storm(c.getSource(), StormCell.HAIL, IntegerArgumentType.getInteger(c, "percent"), 8))
                 .then(Commands.argument("minutes", IntegerArgumentType.integer(1, 120))
@@ -172,6 +175,18 @@ public final class WeatherCommands {
                 return 1;
             }));
         }
+        for (int kind : new int[]{Eclipse.ANNULAR, Eclipse.HYBRID}) {
+            e.then(Commands.literal(kind == Eclipse.ANNULAR ? "annular" : "hybrid").executes(c -> {
+                ServerLevel level = overworld(c.getSource());
+                if (!EclipseManager.sunUp(level)) {
+                    c.getSource().sendFailure(Component.translatable("realweather.cmd.eclipse.night"));
+                    return 0;
+                }
+                EclipseManager.start(level, level.getGameTime() + 20, kind, level.random);
+                ok(c.getSource(), kind == Eclipse.ANNULAR ? "eclipse.annular" : "eclipse.hybrid", EclipseManager.DURATION / 20 / 60);
+                return 1;
+            }));
+        }
         e.then(Commands.literal("stop").executes(c -> {
             EclipseManager.stop(overworld(c.getSource()));
             ok(c.getSource(), "eclipse.stop");
@@ -181,6 +196,88 @@ public final class WeatherCommands {
                 .then(Commands.literal("on").executes(c -> toggle(c, "eclipse.natural", true)))
                 .then(Commands.literal("off").executes(c -> toggle(c, "eclipse.natural", false))));
         return e;
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> sky() {
+        // /rw sky <event>, /rw sky stop [event], /rw sky natural on|off
+        var s = Commands.literal("sky");
+        var stop = Commands.literal("stop").executes(c -> {
+            SkyEventManager.stop(overworld(c.getSource()), -1);
+            ok(c.getSource(), "sky.stop");
+            return 1;
+        });
+        for (int i = 0; i < SkyEvent.NAMES.length; i++) {
+            int type = i;
+            s.then(Commands.literal(SkyEvent.NAMES[i]).executes(c -> skyEvent(c.getSource(), type)));
+            stop.then(Commands.literal(SkyEvent.NAMES[i]).executes(c -> {
+                SkyEventManager.stop(overworld(c.getSource()), type);
+                ok(c.getSource(), "sky.stop_one", Component.translatable("realweather.sky." + SkyEvent.NAMES[type]));
+                return 1;
+            }));
+        }
+        // The solar eclipse kinds, here too.
+        for (String name : new String[]{"annular_eclipse", "hybrid_eclipse", "total_eclipse", "partial_eclipse"}) {
+            s.then(Commands.literal(name).executes(c -> {
+                ServerLevel level = overworld(c.getSource());
+                if (!EclipseManager.sunUp(level)) {
+                    c.getSource().sendFailure(Component.translatable("realweather.cmd.eclipse.night"));
+                    return 0;
+                }
+                switch (name) {
+                    case "annular_eclipse" -> EclipseManager.start(level, level.getGameTime() + 20, Eclipse.ANNULAR, level.random);
+                    case "hybrid_eclipse" -> EclipseManager.start(level, level.getGameTime() + 20, Eclipse.HYBRID, level.random);
+                    default -> EclipseManager.start(level, level.getGameTime() + 20, name.startsWith("total"), level.random);
+                }
+                ok(c.getSource(), "eclipse." + name.substring(0, name.indexOf('_')), EclipseManager.DURATION / 20 / 60);
+                return 1;
+            }));
+        }
+        s.then(stop);
+        s.then(Commands.literal("natural")
+                .then(Commands.literal("on").executes(c -> toggle(c, "sky.natural", true)))
+                .then(Commands.literal("off").executes(c -> toggle(c, "sky.natural", false))));
+        return s;
+    }
+
+    private static int skyEvent(CommandSourceStack src, int type) {
+        ServerLevel level = overworld(src);
+        long delay = SkyEventManager.start(level, type, level.random);
+        Component name = Component.translatable("realweather.sky." + SkyEvent.NAMES[type]);
+        int minutes = Math.max(1, SkyEvent.DURATION[type] / 1200);
+        if (type == SkyEvent.RAINBOW && EclipseManager.sunDir(level).y > 0.6) {
+            ok(src, "sky.rainbow_high");
+        } else if (delay > 100) {
+            ok(src, "sky.tonight", name, minutes);
+        } else if (SkyEvent.WHEN[type] == 1 && !EclipseManager.sunUp(level)) {
+            ok(src, "sky.daytime", name, minutes);
+        } else {
+            ok(src, "sky.start", name, minutes);
+        }
+        return 1;
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> lightning() {
+        // /rw lightning orange|green|white|purple [distance]
+        var l = Commands.literal("lightning");
+        for (int k = 0; k < com.realweather.LightningKind.NAMES.length; k++) {
+            int kind = k;
+            l.then(Commands.literal(com.realweather.LightningKind.NAMES[k]).executes(c -> bolt(c.getSource(), kind, -1))
+                    .then(Commands.argument("distance", IntegerArgumentType.integer(0, 300))
+                            .executes(c -> bolt(c.getSource(), kind, IntegerArgumentType.getInteger(c, "distance")))));
+        }
+        return l;
+    }
+
+    private static int bolt(CommandSourceStack src, int kind, int distance) {
+        ServerLevel level = overworld(src);
+        net.minecraft.world.phys.Vec3 pos = src.getLevel() == level ? src.getPosition() : level.getSharedSpawnPos().getCenter();
+        double d = distance < 0 ? 30 + level.random.nextDouble() * 30 : distance;
+        double a = level.random.nextDouble() * Math.PI * 2;
+        if (!LightningStrikes.strike(level, pos.x + Math.cos(a) * d, pos.z + Math.sin(a) * d, kind)) {
+            return 0;
+        }
+        ok(src, "lightning", Component.translatable("realweather.lightning." + com.realweather.LightningKind.NAMES[kind]), (int) Math.round(d));
+        return 1;
     }
 
     private static int earthquake(CommandSourceStack src, float magnitude, boolean here) {
@@ -409,6 +506,7 @@ public final class WeatherCommands {
             case "earthquake.natural" -> d.quakeNatural = on;
             case "earthquake.damage" -> d.quakeDamage = on;
             case "eclipse.natural" -> d.eclipseNatural = on;
+            case "sky.natural" -> d.skyNatural = on;
             default -> {
             }
         }

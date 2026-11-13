@@ -35,6 +35,10 @@ uniform vec4 Flash1;
 uniform vec4 Flash2;
 uniform vec4 Flash3;
 uniform vec4 FlashPower;
+uniform vec3 FlashColor0;
+uniform vec3 FlashColor1;
+uniform vec3 FlashColor2;
+uniform vec3 FlashColor3;
 // Storm cells: x, z relative to the camera, radius, strength (0 = none).
 uniform vec4 Storm0;
 uniform vec4 Storm1;
@@ -197,18 +201,20 @@ float hg(float c, float g) {
     return (1.0 - g2) / pow(1.0 + g2 - 2.0 * g * c, 1.5);
 }
 
+// Each flash lights the cloud round it in the colour of its kind of lightning (orange, green, white or purple).
 vec3 flashLight(vec3 rel) {
     vec3 s = vec3(0.0);
     vec4 f[4] = vec4[4](Flash0, Flash1, Flash2, Flash3);
+    vec3 fc[4] = vec3[4](FlashColor0, FlashColor1, FlashColor2, FlashColor3);
     for (int i = 0; i < 4; i++) {
         float p = FlashPower[i];
         if (p > 0.01) {
             vec3 d = rel - f[i].xyz;
             d.y *= 1.4;
-            s += p * exp(-dot(d, d) / (f[i].w * f[i].w));
+            s += p * exp(-dot(d, d) / (f[i].w * f[i].w)) * fc[i];
         }
     }
-    return s * vec3(0.85, 0.9, 1.0) * 4.0;
+    return s * 4.1;
 }
 
 // One layer between heights y0 and y1, marched in `n` steps; returns premultiplied colour and transmittance.

@@ -123,7 +123,7 @@ public final class EclipseRenderer {
             light.turnOnLightLayer();
             b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
             float k = 0.9F;
-            quadParticle(b, ClientEclipse.moonX * SUN_R * k, 100F * k, ClientEclipse.moonZ * SUN_R * k, SUN_R * com.realweather.server.Eclipse.MOON * k,
+            quadParticle(b, ClientEclipse.moonX * SUN_R * k, 100F * k, ClientEclipse.moonZ * SUN_R * k, SUN_R * ClientEclipse.moonR * k,
                     1F, 1F, 1F, 1F);
             draw(b);
             RenderSystem.colorMask(true, true, true, true);
@@ -156,7 +156,7 @@ public final class EclipseRenderer {
             if (ClientEclipse.corona > 0.01F) {
                 VolumeClouds.useGlow(CORONA);
                 b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-                float cs = SUN_R * com.realweather.server.Eclipse.MOON / 0.2F;
+                float cs = SUN_R * ClientEclipse.moonR / 0.2F;
                 quadTex(b, ClientEclipse.moonX * SUN_R * 0.3F, 100F, ClientEclipse.moonZ * SUN_R * 0.3F, cs, 0.95F, 0.97F, 1F,
                         ClientEclipse.corona * clear);
                 draw(b);

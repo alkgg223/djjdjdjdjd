@@ -78,6 +78,8 @@ public final class SkyRenderer {
                 }
                 // An eclipse behind thick cloud: the sun's glow through the clouds.
                 EclipseRenderer.afterClouds(event);
+                // The rainbow forms in the rain in front of the clouds.
+                Rainbow.render(event);
             }
         } catch (RuntimeException | LinkageError e) {
             failed = true;

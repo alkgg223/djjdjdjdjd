@@ -38,8 +38,15 @@ public final class EclipseManager {
         // Natural eclipses: on about one day in forty, some time while the sun is high.
         if (current == null && d.natural && d.eclipseNatural && day == 1000 && rng.nextInt(40) == 0) {
             int delay = 2000 + rng.nextInt(4000);
-            boolean total = rng.nextFloat() < 0.4F;
-            start(level, t + delay, total, rng);
+            float u = rng.nextFloat();
+            // Total, partial, annular (a ring of fire) or, rarely, hybrid.
+            if (u < 0.22F) {
+                start(level, t + delay, Eclipse.ANNULAR, rng);
+            } else if (u < 0.3F) {
+                start(level, t + delay, Eclipse.HYBRID, rng);
+            } else {
+                start(level, t + delay, u < 0.65F, rng);
+            }
         }
         if (current == null) {
             return;
@@ -101,6 +108,13 @@ public final class EclipseManager {
         sync(level);
     }
 
+    /** An annular or hybrid eclipse: the moon passes nearly right over the sun's centre. */
+    public static void start(ServerLevel level, long at, int kind, RandomSource rng) {
+        current = new Eclipse(at, DURATION, rng.nextFloat() * 0.03F, rng.nextFloat() * Mth.TWO_PI, kind);
+        STARE.clear();
+        sync(level);
+    }
+
     public static void stop(ServerLevel level) {
         current = null;
         STARE.clear();
@@ -113,6 +127,7 @@ public final class EclipseManager {
 
     public static EclipseSyncPayload payload() {
         Eclipse e = current;
-        return e == null ? new EclipseSyncPayload(false, 0L, 0, 0F, 0F) : new EclipseSyncPayload(true, e.start, e.duration, e.miss, e.angle);
+        return e == null ? new EclipseSyncPayload(false, 0L, 0, 0F, 0F, 0)
+                : new EclipseSyncPayload(true, e.start, e.duration, e.miss, e.angle, e.kind);
     }
 }

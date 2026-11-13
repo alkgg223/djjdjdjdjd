@@ -20,6 +20,8 @@ public final class Network {
                         (payload, context) -> context.enqueueWork(() -> com.realweather.client.quake.ClientQuakes.onSync(payload)))
                 .playToClient(EclipseSyncPayload.TYPE, EclipseSyncPayload.CODEC,
                         (payload, context) -> context.enqueueWork(() -> com.realweather.client.sky.ClientEclipse.onSync(payload)))
+                .playToClient(SkyEventsPayload.TYPE, SkyEventsPayload.CODEC,
+                        (payload, context) -> context.enqueueWork(() -> com.realweather.client.sky.ClientSkyEvents.onSync(payload)))
                 .playToServer(VehicleInputPayload.TYPE, VehicleInputPayload.CODEC, VehicleInputPayload::handle);
     }
 }

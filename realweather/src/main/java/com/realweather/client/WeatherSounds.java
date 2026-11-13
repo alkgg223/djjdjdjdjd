@@ -133,31 +133,32 @@ public final class WeatherSounds {
     /** A lightning bolt appeared: flash now, thunder when the sound gets here. */
     public static void onEntityJoin(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide() && event.getEntity() instanceof net.minecraft.world.entity.LightningBolt bolt) {
-            strike(bolt.getX(), bolt.getY(), bolt.getZ(), true);
+            strike(bolt.getX(), bolt.getY(), bolt.getZ(), true, true, com.realweather.LightningKind.of(bolt.getUUID()));
         }
     }
 
     /** A lightning strike (or a flash inside the clouds when `bolt` is false) at the given point. */
-    static void strike(double x, double y, double z, boolean bolt) {
-        strike(x, y, z, bolt, true);
+    static void strike(double x, double y, double z, boolean bolt, int kind) {
+        strike(x, y, z, bolt, true, kind);
     }
 
     /** Lightning inside a cloud: it lights the cloud there (maybe crawling along its base), then the thunder rolls in. */
-    public static void cloudFlash(double x, double y, double z, float strength, boolean spider) {
-        com.realweather.client.sky.CloudFlashes.add(x, y, z, strength, spider);
-        strike(x, y, z, false, false);
+    public static void cloudFlash(double x, double y, double z, float strength, boolean spider, int kind) {
+        com.realweather.client.sky.CloudFlashes.add(x, y, z, strength * Math.min(1.3F, com.realweather.LightningKind.POWER[kind]), spider, kind);
+        strike(x, y, z, false, false, kind);
     }
 
-    static void strike(double x, double y, double z, boolean bolt, boolean lightCloud) {
+    static void strike(double x, double y, double z, boolean bolt, boolean lightCloud, int kind) {
         Minecraft mc = Minecraft.getInstance();
+        float power = com.realweather.LightningKind.POWER[kind];
         if (lightCloud && mc.level != null) {
-            // The flash lights the cloud it comes from (above a strike, or where it is in the cloud).
+            // The flash lights the cloud it comes from (above a strike, or where it is in the cloud) in its own colour.
             double cy = bolt ? com.realweather.client.sky.StormClouds.deckY(mc.level) + 8 : y;
-            com.realweather.client.sky.CloudFlashes.add(x, cy, z, bolt ? 1.3F : 0.9F, !bolt && RANDOM.nextFloat() < 0.3F);
+            com.realweather.client.sky.CloudFlashes.add(x, cy, z, (bolt ? 1.3F : 0.9F) * Math.min(1.3F, power), !bolt && RANDOM.nextFloat() < 0.3F, kind);
         }
         Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
         double dist = Math.sqrt(cam.distanceToSqr(x, y, z));
-        LightningFx.flash(dist, bolt);
+        LightningFx.flash(dist, bolt, kind);
         if (bolt && dist < 70) {
             // A strike right beside you: the ground jolts at once, before the thunder.
             LightningFx.rumble((float) (1.0 - dist / 70.0));
@@ -168,7 +169,8 @@ public final class WeatherSounds {
         int delay = (int) Math.round(dist / 17.15);
         SoundEvent event;
         float volume;
-        if (dist < 60 && bolt) {
+        // Stronger lightning thunders louder and deeper, and its crack carries further.
+        if (dist < 40 + 20 * power && bolt) {
             // A strike right next to you: an explosive crack with no gap before the boom.
             event = ModContent.THUNDER_STRIKE.get();
             volume = 1F;
@@ -184,7 +186,8 @@ public final class WeatherSounds {
             event = ModContent.THUNDER_FAR.get();
             volume = (float) Math.max(0.35, 0.85 - (dist - 650) / 5000);
         }
-        float pitch = 0.94F + RANDOM.nextFloat() * 0.12F;
+        volume = Math.min(1F, volume * (0.72F + 0.28F * power));
+        float pitch = (0.94F + RANDOM.nextFloat() * 0.12F) * (1.1F - 0.12F * power);
         SimpleSoundInstance inst = new SimpleSoundInstance(event.getLocation(), SoundSource.WEATHER, volume, pitch, RANDOM,
                 false, 0, SoundInstance.Attenuation.NONE, x, y, z, false);
         if (delay <= 0) {

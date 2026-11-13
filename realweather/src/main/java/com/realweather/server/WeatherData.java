@@ -49,6 +49,8 @@ public class WeatherData extends SavedData {
     public boolean quakeDamage = true;
     /** Solar eclipses now and then on their own. */
     public boolean eclipseNatural = true;
+    /** Sky events (meteor showers, comets, the aurora, satellite passes...) on their own. */
+    public boolean skyNatural = true;
     /** Water blocks placed by each tsunami (key 0: left over from earlier ones), so it can all be taken away again. */
     public final it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<LongArrayList> tsunamiWater = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>();
     public int nextTornadoId = 1;
@@ -96,6 +98,7 @@ public class WeatherData extends SavedData {
         d.quakeNatural = !tag.contains("quakeNatural") || tag.getBoolean("quakeNatural");
         d.quakeDamage = !tag.contains("quakeDamage") || tag.getBoolean("quakeDamage");
         d.eclipseNatural = !tag.contains("eclipseNatural") || tag.getBoolean("eclipseNatural");
+        d.skyNatural = !tag.contains("skyNatural") || tag.getBoolean("skyNatural");
         // Tsunamis don't survive a restart: all of their water drains as its land loads.
         long[] left = tag.getLongArray("tsunamiWater");
         if (left.length > 0) {
@@ -150,6 +153,7 @@ public class WeatherData extends SavedData {
         tag.putBoolean("quakeNatural", quakeNatural);
         tag.putBoolean("quakeDamage", quakeDamage);
         tag.putBoolean("eclipseNatural", eclipseNatural);
+        tag.putBoolean("skyNatural", skyNatural);
         LongArrayList all = new LongArrayList();
         for (LongArrayList l : tsunamiWater.values()) {
             all.addAll(l);

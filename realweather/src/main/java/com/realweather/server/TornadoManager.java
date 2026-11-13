@@ -334,6 +334,7 @@ public final class TornadoManager {
         if (bolt != null) {
             bolt.moveTo(Vec3.atBottomCenterOf(level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, col)));
             bolt.setVisualOnly(rng.nextFloat() > 0.15F);
+            LightningStrikes.setKind(bolt, com.realweather.LightningKind.roll(rng, 0.55F + t.rating * 0.09F), rng);
             level.addFreshEntity(bolt);
         }
     }

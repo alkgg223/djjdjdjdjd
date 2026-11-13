@@ -93,9 +93,9 @@ public final class FogEffects {
             b = Mth.lerp(ecl * 0.9F, b, 0.09F);
         }
         float f = LightningFx.flash * 0.35F;
-        event.setRed(Math.min(1F, r + f));
-        event.setGreen(Math.min(1F, g + f));
-        event.setBlue(Math.min(1F, b + f * 1.1F));
+        event.setRed(Math.min(1F, r + f * LightningFx.flashR * 1.05F));
+        event.setGreen(Math.min(1F, g + f * LightningFx.flashG * 1.05F));
+        event.setBlue(Math.min(1F, b + f * LightningFx.flashB * 1.1F));
     }
 
     public static void onCameraAngles(ViewportEvent.ComputeCameraAngles event) {

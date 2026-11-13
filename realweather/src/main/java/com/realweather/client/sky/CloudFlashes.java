@@ -39,6 +39,8 @@ public final class CloudFlashes {
     static final class Flash {
         final double x, y, z;
         final float radius, strength;
+        /** The colour of this kind of lightning. */
+        final float cr, cg, cb;
         final int born;
         final int[] pulses;
         final float[] pulseStrength;
@@ -46,12 +48,16 @@ public final class CloudFlashes {
         float[] bolt;
         float light;
 
-        Flash(double x, double y, double z, float radius, float strength) {
+        Flash(double x, double y, double z, float radius, float strength, int kind) {
             this.x = x;
             this.y = y;
             this.z = z;
             this.radius = radius;
             this.strength = strength;
+            float[] c = com.realweather.LightningKind.GLOW[kind];
+            this.cr = c[0];
+            this.cg = c[1];
+            this.cb = c[2];
             this.born = now;
             int n = 1 + RANDOM.nextInt(4);
             pulses = new int[n];
@@ -81,15 +87,20 @@ public final class CloudFlashes {
     }
 
     /** A flash at a point in the cloud (a strike's cloud, or one that stays in the cloud). */
-    public static void add(double x, double y, double z, float strength, boolean spider) {
+    public static void add(double x, double y, double z, float strength, boolean spider, int kind) {
         if (FLASHES.size() >= 24) {
             FLASHES.remove(0);
         }
-        Flash f = new Flash(x, y, z, 55F + RANDOM.nextFloat() * 70F, strength);
+        Flash f = new Flash(x, y, z, (55F + RANDOM.nextFloat() * 70F) * (0.85F + 0.12F * kind), strength, kind);
         if (spider) {
             f.bolt = spider(x, y - 6, z);
         }
         FLASHES.add(f);
+    }
+
+    /** A flash of white lightning (for callers that don't pick a kind). */
+    public static void add(double x, double y, double z, float strength, boolean spider) {
+        add(x, y, z, strength, spider, com.realweather.LightningKind.WHITE);
     }
 
     public static void clear() {
@@ -126,7 +137,8 @@ public final class CloudFlashes {
     }
 
     private static void spawn(ClientLevel level, double x, double y, double z, float strength) {
-        com.realweather.client.WeatherSounds.cloudFlash(x, y, z, strength, RANDOM.nextFloat() < 0.4F);
+        int kind = com.realweather.LightningKind.roll(RANDOM, Mth.clamp((strength - 0.7F) / 0.5F, 0F, 1F));
+        com.realweather.client.WeatherSounds.cloudFlash(x, y, z, strength, RANDOM.nextFloat() < 0.4F, kind);
     }
 
     /** Called each frame before the clouds are gathered: the light every flash gives right now. */
@@ -137,9 +149,12 @@ public final class CloudFlashes {
         }
     }
 
-    /** Extra light (0..~1.4) a flash puts on cloud at a point given relative to the camera. */
-    public static float lightRel(float rx, float ry, float rz) {
-        float s = 0F;
+    /**
+     * Extra light the flashes put on cloud at a point given relative to the camera, in each flash's colour, into
+     * `out` (red, green, blue). Returns false when there is none.
+     */
+    public static boolean lightRel(float rx, float ry, float rz, float[] out) {
+        float r = 0F, g = 0F, b = 0F;
         for (Flash f : FLASHES) {
             if (f.light < 0.01F) {
                 continue;
@@ -148,14 +163,20 @@ public final class CloudFlashes {
             float d2 = dx * dx + dy * dy * 2F + dz * dz;
             float r2 = f.radius * f.radius;
             if (d2 < r2 * 9F) {
-                s += f.light * (float) Math.exp(-d2 / r2);
+                float s = f.light * (float) Math.exp(-d2 / r2);
+                r += s * f.cr;
+                g += s * f.cg;
+                b += s * f.cb;
             }
         }
-        return s;
+        out[0] = r;
+        out[1] = g;
+        out[2] = b;
+        return r + g + b > 0.008F;
     }
 
-    /** The four brightest flashes right now for the volumetric clouds: x, y, z relative to the camera, radius; and power. */
-    static void strongest(float[] pos, float[] power) {
+    /** The four brightest flashes right now for the volumetric clouds: x, y, z relative to the camera, radius; power; colour. */
+    static void strongest(float[] pos, float[] power, float[] color) {
         java.util.Arrays.fill(power, 0F);
         for (Flash f : FLASHES) {
             int slot = -1;
@@ -172,6 +193,9 @@ public final class CloudFlashes {
                 pos[slot * 4 + 1] = (float) (f.y - cam.y);
                 pos[slot * 4 + 2] = (float) (f.z - cam.z);
                 pos[slot * 4 + 3] = f.radius;
+                color[slot * 3] = f.cr;
+                color[slot * 3 + 1] = f.cg;
+                color[slot * 3 + 2] = f.cb;
             }
         }
     }
@@ -237,11 +261,14 @@ public final class CloudFlashes {
                     continue;
                 }
                 float a = Math.min(1F, f.light);
+                // The channel in the colour of its kind: a coloured glow and a nearly white core.
+                float gr = f.cr * 0.7F, gg = f.cg * 0.72F, gb = f.cb;
+                float kr = 0.55F + 0.45F * f.cr, kg = 0.55F + 0.45F * f.cg, kb = 0.55F + 0.45F * f.cb;
                 for (int i = 0; i < f.bolt.length; i += 6) {
                     float x0 = (float) (f.bolt[i] - c.x), y0 = (float) (f.bolt[i + 1] - c.y), z0 = (float) (f.bolt[i + 2] - c.z);
                     float x1 = (float) (f.bolt[i + 3] - c.x), y1 = (float) (f.bolt[i + 4] - c.y), z1 = (float) (f.bolt[i + 5] - c.z);
-                    ribbon(b, x0, y0, z0, x1, y1, z1, 2.2F, 0.55F, 0.62F, 1F, a * 0.25F);
-                    ribbon(b, x0, y0, z0, x1, y1, z1, 0.45F, 0.92F, 0.95F, 1F, a);
+                    ribbon(b, x0, y0, z0, x1, y1, z1, 2.2F, gr, gg, gb, a * 0.25F);
+                    ribbon(b, x0, y0, z0, x1, y1, z1, 0.45F, kr, kg, kb, a);
                 }
             }
             MeshData mesh = b.build();

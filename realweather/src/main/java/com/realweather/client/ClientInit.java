@@ -40,6 +40,8 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(WaterShader::onRenderStage);
         // The eclipse first: the clouds pass in front of it.
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.EclipseRenderer::onRenderStage);
+        // Sky events (planets, comets, satellites, the aurora...) behind the clouds too.
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.SpaceRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.SkyRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.tsunami.TsunamiRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.quake.CrackRenderer::onRenderStage);

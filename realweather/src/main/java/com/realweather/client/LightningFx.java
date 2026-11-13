@@ -21,14 +21,24 @@ public final class LightningFx {
     public static float shake;
     /** How strongly the flash lights up the world right now (lightmap), 0..1. */
     public static float worldLight;
+    /** The colour of the latest flash (the kind of lightning), for the glare on the screen and the sky. */
+    public static float flashR = 0.9F, flashG = 0.925F, flashB = 1F;
     private static int now;
 
     private LightningFx() {}
 
-    static void flash(double dist, boolean bolt) {
-        float strength = (float) Math.max(0.08, Math.min(1.0, 1.25 - dist / 420.0));
+    static void flash(double dist, boolean bolt, int kind) {
+        float power = com.realweather.LightningKind.POWER[kind];
+        float strength = (float) Math.max(0.08, Math.min(1.0, (1.25 - dist / 420.0) * (0.75 + 0.25 * power)));
         if (!bolt) {
             strength *= 0.35F;
+        }
+        if (strength >= flash * 0.8F) {
+            float[] c = com.realweather.LightningKind.GLOW[kind];
+            // The glare is mostly white light with the bolt's colour in it.
+            flashR = 0.45F + 0.55F * c[0];
+            flashG = 0.45F + 0.55F * c[1];
+            flashB = 0.45F + 0.55F * c[2];
         }
         strength *= 0.35F + 0.65F * ClientWeather.exposure;
         flash = Math.max(flash, strength);
@@ -40,6 +50,11 @@ public final class LightningFx {
             t += 2 + RANDOM.nextInt(4);
             addPulse(t, strength * (0.5F + RANDOM.nextFloat() * 0.5F));
         }
+    }
+
+    /** Light from something bright in the sky (a fireball): it lights the land like a slow flash, without the glare. */
+    public static void skyGlow(float amount) {
+        worldLight = Math.max(worldLight, Math.min(0.9F, amount));
     }
 
     private static void addPulse(int tick, float strength) {
@@ -88,7 +103,7 @@ public final class LightningFx {
             double d = 250 + RANDOM.nextDouble() * 2500;
             level.setSkyFlashTime(2);
             WeatherSounds.strike(cam.x + Math.cos(ang) * d, com.realweather.client.sky.StormClouds.deckY(level) + 30 + RANDOM.nextDouble() * 60,
-                    cam.z + Math.sin(ang) * d, false);
+                    cam.z + Math.sin(ang) * d, false, com.realweather.LightningKind.roll(RANDOM, storm));
         }
         if (!ClientConfig.LIGHTNING_FLASH.get()) {
             flash = 0F;

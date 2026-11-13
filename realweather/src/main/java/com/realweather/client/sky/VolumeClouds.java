@@ -33,7 +33,7 @@ public final class VolumeClouds {
     /** Set by the sky pass when this frame should have volumetric clouds. */
     static boolean wanted;
     private static float coverage = 0.5F, darkness, base = 165F, top = 300F, farFade = 2600F;
-    private static final float[] FLASH_POS = new float[16], FLASH_POWER = new float[4];
+    private static final float[] FLASH_POS = new float[16], FLASH_POWER = new float[4], FLASH_COLOR = new float[12];
 
     private VolumeClouds() {}
 
@@ -60,6 +60,16 @@ public final class VolumeClouds {
             RenderSystem.setShader(net.minecraft.client.renderer.GameRenderer::getPositionTexColorShader);
         }
         Minecraft.getInstance().getTextureManager().getTexture(texture).setFilter(true, false);
+        RenderSystem.setShaderTexture(0, texture);
+    }
+
+    /** The soft glow shader on a texture, leaving the texture's own filtering as it is (for vanilla's moon). */
+    static void useGlowKeepFilter(net.minecraft.resources.ResourceLocation texture) {
+        if (glow != null) {
+            RenderSystem.setShader(() -> glow);
+        } else {
+            RenderSystem.setShader(net.minecraft.client.renderer.GameRenderer::getPositionTexColorShader);
+        }
         RenderSystem.setShaderTexture(0, texture);
     }
 
@@ -157,9 +167,11 @@ public final class VolumeClouds {
         march.safeGetUniform("TypesVeil").set(CloudTypes.cirrostratus, 0F);
         march.safeGetUniform("DayOffset").set(CloudTypes.offsetX, CloudTypes.offsetZ);
         // Lightning inside the clouds.
-        CloudFlashes.strongest(FLASH_POS, FLASH_POWER);
+        CloudFlashes.strongest(FLASH_POS, FLASH_POWER, FLASH_COLOR);
         for (int i = 0; i < 4; i++) {
             march.safeGetUniform("Flash" + i).set(FLASH_POS[i * 4], FLASH_POS[i * 4 + 1], FLASH_POS[i * 4 + 2], Math.max(1F, FLASH_POS[i * 4 + 3]));
+            // Each flash lights the cloud in the colour of its kind of lightning.
+            march.safeGetUniform("FlashColor" + i).set(FLASH_COLOR[i * 3], FLASH_COLOR[i * 3 + 1], FLASH_COLOR[i * 3 + 2]);
         }
         march.safeGetUniform("FlashPower").set(FLASH_POWER[0], FLASH_POWER[1], FLASH_POWER[2], FLASH_POWER[3]);
         // Rain storms (not the ones with a tornado: those keep their own look), nearest first.
