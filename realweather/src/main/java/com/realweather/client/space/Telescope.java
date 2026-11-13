@@ -5,18 +5,17 @@ import com.realweather.RealWeather;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.Input;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.event.CalculatePlayerTurnEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
-import org.joml.Vector4f;
 
 /**
  * Looking through the telescope. You choose something from its list; a marker then shows where it is in the sky (an
@@ -25,13 +24,20 @@ import org.joml.Vector4f;
  */
 public final class Telescope {
     private static final ResourceLocation EYEPIECE = RealWeather.id("textures/environment/space3d/eyepiece.png");
-    /** Narrowest field of view (degrees): about 14 000 times. */
-    private static final double MIN_FOV = 0.005;
+    /** Highest power: 100 000 times. */
+    public static final double MAX_POWER = 100000;
     private static boolean active;
     private static BlockPos pos;
     private static Vec3 start;
     private static Catalog.Target target;
     private static double fov = 70, wantFov = 70, baseFov = 70;
+    /** Where the telescope points, fixed among the stars (sky frame), so the clock drive keeps it on its target. */
+    private static final double[] AIM = {0, 1, 0};
+    /** Its yaw and pitch this frame (degrees, world), in double precision. */
+    private static double viewYaw, viewPitch;
+    /** The player's own angles are parked here while at the eyepiece; turning moves them, and is read back. */
+    private static float parkYaw;
+    private static boolean parked;
 
     private Telescope() {}
 
@@ -43,17 +49,26 @@ public final class Telescope {
         return fov;
     }
 
+    public static double minFov() {
+        return baseFov / MAX_POWER;
+    }
+
     public static Catalog.Target target() {
         return target;
     }
 
     public static void start(BlockPos at, Catalog.Target t) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) {
+        if (mc.player == null || mc.level == null) {
             return;
         }
+        if (!active) {
+            // Pointing where the player looks.
+            point(dirOf(mc.player.getYRot(), mc.player.getXRot()), mc.level, 1F);
+            parkYaw = mc.player.getYRot();
+            parked = false;
+        }
         active = true;
-        lastSky = Double.NaN;
         pos = at;
         start = mc.player.position();
         target = t;
@@ -65,69 +80,134 @@ public final class Telescope {
 
     /** For tests: zoom straight to a field of view. */
     public static void setFov(double f) {
-        fov = wantFov = Mth.clamp(f, MIN_FOV, baseFov);
+        fov = wantFov = Mth.clamp(f, minFov(), baseFov);
+    }
+
+    /** Points the telescope along a world direction (camera-relative) as it is at this moment. */
+    public static void point(double[] w, ClientLevel level, float pt) {
+        double th = Space3D.timeOfDay(level, pt) * Math.PI * 2;
+        toSky(w, th, AIM);
+        double[] ypr = yawPitch(w);
+        viewYaw = ypr[0];
+        viewPitch = ypr[1];
     }
 
     public static void stop() {
+        Minecraft mc = Minecraft.getInstance();
+        if (active && parked && mc.player != null) {
+            // Back to the ordinary view, looking the same way.
+            float y = (float) viewYaw, p = (float) Mth.clamp(viewPitch, -90, 90);
+            mc.player.setYRot(y);
+            mc.player.yRotO = y;
+            mc.player.setYHeadRot(y);
+            mc.player.setXRot(p);
+            mc.player.xRotO = p;
+        }
         active = false;
+        parked = false;
         target = null;
     }
 
     private static void zoom(double factor) {
-        wantFov = Mth.clamp(wantFov * factor, MIN_FOV, baseFov);
+        wantFov = Mth.clamp(wantFov * factor, minFov(), baseFov);
+    }
+
+    // ------------------------------------------------------------------------------------------- pointing
+
+    static double[] dirOf(double yaw, double pitch) {
+        double y = Math.toRadians(yaw), p = Math.toRadians(pitch);
+        return new double[]{-Math.sin(y) * Math.cos(p), -Math.sin(p), Math.cos(y) * Math.cos(p)};
+    }
+
+    static double[] yawPitch(double[] w) {
+        double l = Math.sqrt(w[0] * w[0] + w[1] * w[1] + w[2] * w[2]);
+        return new double[]{Math.toDegrees(Math.atan2(-w[0], w[2])), -Math.toDegrees(Math.asin(Mth.clamp(w[1] / l, -1, 1)))};
+    }
+
+    /** Sky frame to world (the same turn as the sun, moon and stars), and back. */
+    static void toWorld(double[] v, double th, double[] out) {
+        double c = Math.cos(th), s = Math.sin(th);
+        double x = -s * v[1] - c * v[2], y = c * v[1] - s * v[2], z = v[0];
+        out[0] = x;
+        out[1] = y;
+        out[2] = z;
+    }
+
+    static void toSky(double[] w, double th, double[] out) {
+        double c = Math.cos(th), s = Math.sin(th);
+        double x = w[2], y = -s * w[0] + c * w[1], z = -c * w[0] - s * w[1];
+        double l = Math.sqrt(x * x + y * y + z * z) + 1.0E-300;
+        out[0] = x / l;
+        out[1] = y / l;
+        out[2] = z / l;
+    }
+
+    /** The telescope's view (world to view, 3 x 3, column-major) for this frame, in double precision. */
+    static void view(double[] m) {
+        double[] f = dirOf(viewYaw, viewPitch);
+        double y = Math.toRadians(viewYaw);
+        double rx = -Math.cos(y), ry = 0, rz = -Math.sin(y);
+        double ux = ry * f[2] - rz * f[1], uy = rz * f[0] - rx * f[2], uz = rx * f[1] - ry * f[0];
+        m[0] = rx;
+        m[3] = ry;
+        m[6] = rz;
+        m[1] = ux;
+        m[4] = uy;
+        m[7] = uz;
+        m[2] = -f[0];
+        m[5] = -f[1];
+        m[8] = -f[2];
     }
 
     // ------------------------------------------------------------------------------------------- events
 
     public static void onFov(ViewportEvent.ComputeFov event) {
         if (active) {
-            track((float) event.getPartialTick());
-            // Glide to the new zoom (by ratio, so it feels even at every power).
-            fov = Math.exp(Mth.lerp(0.25, Math.log(fov), Math.log(wantFov)));
+            if (event.usedConfiguredFov()) {
+                // Glide to the new zoom (by ratio, so it feels even at every power).
+                fov = Math.exp(Mth.lerp(0.25, Math.log(fov), Math.log(wantFov)));
+            }
             event.setFOV(fov);
         }
     }
 
-    private static double lastSky = Double.NaN;
-
     /**
-     * The clock drive: the sky turns (once a day, about the north-south axis), and the telescope turns with it, so
-     * whatever it is pointed at stays in the field even at the highest power.
+     * Every frame: the turn the player made (read back from their parked angles) moves the telescope, by less the
+     * more it is zoomed in; the clock drive turns it with the sky; and the camera is pointed along it.
      */
-    private static void track(float pt) {
+    public static void onCameraAngles(ViewportEvent.ComputeCameraAngles event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null) {
+        if (!active || mc.player == null || mc.level == null) {
             return;
         }
-        double sky = mc.level.getTimeOfDay(pt) * Math.PI * 2;
-        double d = Double.isNaN(lastSky) ? 0 : sky - lastSky;
-        lastSky = sky;
-        if (d == 0 || Math.abs(d) > 0.02) {
-            return;
+        float pt = (float) event.getPartialTick();
+        double th = Space3D.timeOfDay(mc.level, pt) * Math.PI * 2;
+        double[] w = new double[3];
+        toWorld(AIM, th, w);
+        double[] ypr = yawPitch(w);
+        double yaw = ypr[0], pitch = ypr[1];
+        net.minecraft.client.player.LocalPlayer p = mc.player;
+        if (parked) {
+            double k = fov / baseFov;
+            double dy = Mth.wrapDegrees(p.getYRot() - parkYaw), dp = p.getXRot();
+            yaw += dy * k;
+            pitch = Mth.clamp(pitch + dp * k, -89.9999, 89.9999);
+            if (dy != 0 || dp != 0) {
+                toSky(dirOf(yaw, pitch), th, AIM);
+            }
+        } else {
+            parkYaw = p.getYRot();
+            parked = true;
         }
-        double yaw = Math.toRadians(mc.player.getYRot()), pitch = Math.toRadians(mc.player.getXRot());
-        double x = -Math.sin(yaw) * Math.cos(pitch), y = -Math.sin(pitch), z = Math.cos(yaw) * Math.cos(pitch);
-        double c = Math.cos(d), sn = Math.sin(d);
-        double nx = x * c - y * sn, ny = x * sn + y * c;
-        float newYaw = (float) Math.toDegrees(Math.atan2(-nx, z));
-        float newPitch = (float) -Math.toDegrees(Math.asin(Mth.clamp(ny, -1, 1)));
-        // Keep the yaw continuous (no jump of 360 degrees).
-        float oldYaw = mc.player.getYRot();
-        newYaw = oldYaw + Mth.wrapDegrees(newYaw - oldYaw);
-        mc.player.setYRot(newYaw);
-        mc.player.yRotO += newYaw - oldYaw;
-        mc.player.setXRot(newPitch);
-    }
-
-    /** The more you zoom in, the slower the view turns, so you can steer at any power. */
-    public static void onTurn(CalculatePlayerTurnEvent event) {
-        if (!active) {
-            return;
-        }
-        double scale = Math.max(1.0E-5, fov / baseFov);
-        double d = event.getMouseSensitivity() * 0.6 + 0.2;
-        double want = d * Math.cbrt(scale);
-        event.setMouseSensitivity((want - 0.2) / 0.6);
+        viewYaw = yaw;
+        viewPitch = pitch;
+        p.setYRot(parkYaw);
+        p.yRotO = parkYaw;
+        p.setXRot(0F);
+        p.xRotO = 0F;
+        event.setYaw((float) yaw);
+        event.setPitch((float) pitch);
+        event.setRoll(0F);
     }
 
     public static void onScroll(InputEvent.MouseScrollingEvent event) {
@@ -205,22 +285,21 @@ public final class Telescope {
         }
         // Where the target is.
         double[] d = TelescopeView.direction(target, mc.level, delta.getGameTimeDeltaPartialTick(false));
-        Vector4f v = new Vector4f((float) d[0] * 100F, (float) d[1] * 100F, (float) d[2] * 100F, 1F);
-        TelescopeView.lastView.transform(v);
-        Vector4f clip = new Vector4f(v);
-        TelescopeView.lastProj.transform(clip);
+        double[] m = TelescopeView.lastView;
+        double vx = m[0] * d[0] + m[3] * d[1] + m[6] * d[2], vy = m[1] * d[0] + m[4] * d[1] + m[7] * d[2],
+                vz = m[2] * d[0] + m[5] * d[1] + m[8] * d[2];
         Component name = Component.translatable("realweather.target." + target.id);
         int color = 0xFFFFC040;
-        boolean ahead = clip.w > 0;
-        float sx = ahead ? (clip.x / clip.w * 0.5F + 0.5F) * w : -1, sy = ahead ? (1F - (clip.y / clip.w * 0.5F + 0.5F)) * h : -1;
+        boolean ahead = vz < 0;
+        double sx = ahead ? (TelescopeView.lastPx * vx / -vz * 0.5 + 0.5) * w : -1, sy = ahead ? (1 - (TelescopeView.lastPy * vy / -vz * 0.5 + 0.5)) * h : -1;
         boolean onScreen = ahead && sx >= 8 && sx <= w - 8 && sy >= 8 && sy <= h - 8;
         if (onScreen) {
-            int x = Math.round(sx), y = Math.round(sy), r = 7;
+            int x = (int) Math.round(sx), y = (int) Math.round(sy), r = 7;
             bracket(g, x, y, r, color);
             g.drawString(mc.font, name, x + r + 4, y - 4, color, true);
         } else {
             // An arrow at the edge, pointing the way to turn.
-            double ax = v.x, ay = v.y;
+            double ax = vx, ay = vy;
             double len = Math.sqrt(ax * ax + ay * ay) + 1.0E-9;
             ax /= len;
             ay /= len;

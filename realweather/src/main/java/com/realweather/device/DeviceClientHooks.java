@@ -10,6 +10,10 @@ final class DeviceClientHooks {
         net.minecraft.client.Minecraft.getInstance().setScreen(new com.realweather.client.space.TelescopeScreen(pos));
     }
 
+    static void openPlanetMap() {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetMapScreen());
+    }
+
     static void openRadar(BlockPos pos) {
         com.realweather.client.radar.RadarClient.openRadar(pos);
     }

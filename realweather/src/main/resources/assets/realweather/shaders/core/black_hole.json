@@ -1,0 +1,16 @@
+{
+  "vertex": "realweather:space_quad",
+  "fragment": "realweather:black_hole",
+  "samplers": [],
+  "uniforms": [
+    { "name": "Pc", "type": "float", "count": 2, "values": [ 0.0, 0.0 ] },
+    { "name": "Px", "type": "float", "count": 2, "values": [ 40.0, 0.0 ] },
+    { "name": "Py", "type": "float", "count": 2, "values": [ 0.0, 40.0 ] },
+    { "name": "DiskN", "type": "float", "count": 3, "values": [ 0.0, 0.98, 0.2 ] },
+    { "name": "Time", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "Alpha", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "Edge", "type": "float", "count": 1, "values": [ 40.0 ] },
+    { "name": "Exposure", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "MaxSteps", "type": "float", "count": 1, "values": [ 220.0 ] }
+  ]
+}

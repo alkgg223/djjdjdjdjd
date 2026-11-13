@@ -54,7 +54,12 @@ public final class Space3D {
     public static void begin(RenderLevelStageEvent event, ClientLevel level, float pt) {
         Matrix4f mv = event.getModelViewMatrix();
         set(VIEW, mv.m00(), mv.m01(), mv.m02(), mv.m10(), mv.m11(), mv.m12(), mv.m20(), mv.m21(), mv.m22());
-        double th = level.getTimeOfDay(pt) * Math.PI * 2.0;
+        // At the telescope the view is the telescope's own, worked out in double precision (the camera's angles are
+        // only floats: far too coarse at its highest power).
+        if (Telescope.active()) {
+            Telescope.view(VIEW);
+        }
+        double th = timeOfDay(level, pt) * Math.PI * 2.0;
         double c = Math.cos(th), s = Math.sin(th);
         // Turned -90 degrees about Y after turning by the time of day about X, as the sun, moon and stars are.
         set(SKY, 0, 0, 1, -s, c, 0, -c, -s, 0);
@@ -75,6 +80,68 @@ public final class Space3D {
         RenderSystem.disableCull();
         open = true;
         range(5F, 80000F);
+    }
+
+    /**
+     * Starts drawing for a screen of its own (the planet map): a given projection and view (3 x 3, column-major, world
+     * to view), with the sky frame the same as the world.
+     */
+    public static void beginScreen(Matrix4f proj, double[] view, double now) {
+        System.arraycopy(view, 0, VIEW, 0, 9);
+        set(SKY, 1, 0, 0, 0, 1, 0, 0, 0, 1);
+        System.arraycopy(view, 0, SKYVIEW, 0, 9);
+        SUN[0] = 0;
+        SUN[1] = 0;
+        SUN[2] = -1;
+        time = now;
+        night = 1F;
+        clear = 1F;
+        baseProj = new Matrix4f(proj);
+        savedProj = new Matrix4f(RenderSystem.getProjectionMatrix());
+        savedSort = RenderSystem.getVertexSorting();
+        Matrix4fStack stack = RenderSystem.getModelViewStack();
+        stack.pushMatrix();
+        stack.identity();
+        RenderSystem.applyModelViewMatrix();
+        RenderSystem.enableBlend();
+        RenderSystem.disableCull();
+        RenderSystem.depthMask(true);
+        RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
+        open = true;
+        range(0.05F, 1000F);
+    }
+
+    /**
+     * The time of day (0..1) moving smoothly from frame to frame. Vanilla's steps once a tick, which at a telescope's
+     * highest power is a jump of several fields of view.
+     */
+    public static double timeOfDay(ClientLevel level, float pt) {
+        if (level.dimensionType().hasFixedTime()) {
+            return level.getTimeOfDay(pt);
+        }
+        double t = level.getDayTime();
+        if (level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DAYLIGHT)) {
+            t += pt;
+        }
+        double d = Mth.frac(t / 24000.0 - 0.25);
+        double e = 0.5 - Math.cos(d * Math.PI) / 2.0;
+        return (d * 2.0 + e) / 3.0;
+    }
+
+    /** The projection's horizontal and vertical scale (1 / tan of half the field of view). */
+    public static double projX() {
+        return baseProj.m00();
+    }
+
+    public static double projY() {
+        return baseProj.m11();
+    }
+
+    /** Forgets the batch state (after drawing with another shader). */
+    public static void invalidate() {
+        buf = null;
+        bound = null;
+        boundMode = -1;
     }
 
     /** The depth range for what comes next (as tight round it as possible, for precise hiding). */
@@ -266,7 +333,7 @@ public final class Space3D {
     public static void sphere(ResourceLocation tex, double cx, double cy, double cz, double r, double[] rot, double lx, double ly, double lz,
                               float ambient, float cr, float cg, float cb, float glow, float alpha, boolean star, float uShift, int detail) {
         int lat = Math.max(8, detail), lon = lat * 2;
-        use(tex, NORMAL, true, true);
+        use(tex, sphereMode, true, sphereMode == NORMAL);
         double dl = Math.sqrt(cx * cx + cy * cy + cz * cz);
         double vx = -cx / dl, vy = -cy / dl, vz = -cz / dl;
         for (int i = 0; i < lat; i++) {
@@ -311,6 +378,18 @@ public final class Space3D {
     }
 
     private static double scaleX = 1, scaleY = 1, scaleZ = 1;
+    private static boolean nightSide;
+    private static int sphereMode = NORMAL;
+
+    /** How the next spheres are blended (ADD for lights laid over another sphere). */
+    public static void sphereMode(int mode) {
+        sphereMode = mode;
+    }
+
+    /** The next spheres show their texture only on their dark side (lights of cities at night). */
+    public static void nightSide(boolean on) {
+        nightSide = on;
+    }
 
     /** Squashes or stretches the next spheres along their own axes (a fast-spinning or tidally stretched body). */
     public static void scale(double x, double y, double z) {
@@ -342,7 +421,11 @@ public final class Space3D {
             pz = cz + N[2] * r;
         }
         float shade;
-        if (star) {
+        if (nightSide) {
+            // City lights: only on the dark side.
+            float ndl = (float) (N[0] * lx + N[1] * ly + N[2] * lz);
+            shade = 1F - smooth(-0.18F, 0.06F, ndl);
+        } else if (star) {
             float mu = (float) Math.max(0, N[0] * vx + N[1] * vy + N[2] * vz);
             shade = 0.45F + 0.55F * (float) Math.pow(mu, 0.5);
         } else {
@@ -386,6 +469,59 @@ public final class Space3D {
             vtx(cx + d1x * ri, cy + d1y * ri, cz + d1z * ri, 0.5F, 0.5F, ar, ag, ab, strength * l1);
             vtx(cx + d1x * ro, cy + d1y * ro, cz + d1z * ro, 0.5F, 0.98F, ar, ag, ab, 0F);
             vtx(cx + d0x * ro, cy + d0y * ro, cz + d0z * ro, 0.5F, 0.98F, ar, ag, ab, 0F);
+        }
+    }
+
+    /**
+     * The air round a planet's edge as seen from close by: a glowing band from the true horizon (where the line of
+     * sight grazes the ground) up to where it grazes the top of the air, brighter on the lit side, and a haze
+     * reaching in over the disc. `height` is the thickness of the air.
+     */
+    public static void limb(double cx, double cy, double cz, double r, double height, double lx, double ly, double lz, float ar, float ag,
+                            float ab, float strength) {
+        double dist = Math.sqrt(cx * cx + cy * cy + cz * cz);
+        if (dist <= r * 1.0005) {
+            return;
+        }
+        use(GLOW, ADD, true, false);
+        double vx = cx / dist, vy = cy / dist, vz = cz / dist;
+        double ux = Math.abs(vy) < 0.9 ? 0 : 1, uy = Math.abs(vy) < 0.9 ? 1 : 0;
+        double ax = uy * vz, ay = -ux * vz, az = ux * vy - uy * vx;
+        double al = Math.sqrt(ax * ax + ay * ay + az * az);
+        ax /= al;
+        ay /= al;
+        az /= al;
+        double bx = vy * az - vz * ay, by = vz * ax - vx * az, bz = vx * ay - vy * ax;
+        // Where the line of sight grazes a sphere of radius s: a circle round the axis, nearer to us than the centre.
+        double s0 = r, s1 = r + height;
+        double k0 = s0 * s0 / dist, k1 = Math.min(s1 * s1 / dist, dist * 0.999);
+        double rho0 = Math.sqrt(Math.max(0, s0 * s0 - k0 * k0)), rho1 = Math.sqrt(Math.max(0, s1 * s1 - k1 * k1));
+        if (dist < s1) {
+            // Inside the air: its top is above us all round; just the band low over the horizon.
+            k1 = k0 * 0.97;
+            rho1 = rho0 * 1.04 + height * 0.5;
+        }
+        double inner = rho0 * 0.93;
+        int n = 64;
+        for (int i = 0; i < n; i++) {
+            double a0 = Math.PI * 2 * i / n, a1 = Math.PI * 2 * (i + 1) / n;
+            double c0 = Math.cos(a0), q0 = Math.sin(a0), c1 = Math.cos(a1), q1 = Math.sin(a1);
+            double d0x = c0 * ax + q0 * bx, d0y = c0 * ay + q0 * by, d0z = c0 * az + q0 * bz;
+            double d1x = c1 * ax + q1 * bx, d1y = c1 * ay + q1 * by, d1z = c1 * az + q1 * bz;
+            float l0 = 0.08F + 0.92F * smooth(-0.25F, 0.55F, (float) (d0x * lx + d0y * ly + d0z * lz));
+            float l1 = 0.08F + 0.92F * smooth(-0.25F, 0.55F, (float) (d1x * lx + d1y * ly + d1z * lz));
+            // From the horizon up to the top of the air.
+            double h0x = cx - vx * k0, h0y = cy - vy * k0, h0z = cz - vz * k0;
+            double h1x = cx - vx * k1, h1y = cy - vy * k1, h1z = cz - vz * k1;
+            vtx(h0x + d0x * rho0, h0y + d0y * rho0, h0z + d0z * rho0, 0.5F, 0.5F, ar, ag, ab, strength * l0);
+            vtx(h0x + d1x * rho0, h0y + d1y * rho0, h0z + d1z * rho0, 0.5F, 0.5F, ar, ag, ab, strength * l1);
+            vtx(h1x + d1x * rho1, h1y + d1y * rho1, h1z + d1z * rho1, 0.5F, 0.98F, ar, ag, ab, 0F);
+            vtx(h1x + d0x * rho1, h1y + d0y * rho1, h1z + d0z * rho1, 0.5F, 0.98F, ar, ag, ab, 0F);
+            // A haze reaching in over the edge of the disc.
+            vtx(h0x + d0x * inner, h0y + d0y * inner, h0z + d0z * inner, 0.5F, 0.98F, ar, ag, ab, 0F);
+            vtx(h0x + d1x * inner, h0y + d1y * inner, h0z + d1z * inner, 0.5F, 0.98F, ar, ag, ab, 0F);
+            vtx(h0x + d1x * rho0, h0y + d1y * rho0, h0z + d1z * rho0, 0.5F, 0.5F, ar, ag, ab, strength * l1 * 0.6F);
+            vtx(h0x + d0x * rho0, h0y + d0y * rho0, h0z + d0z * rho0, 0.5F, 0.5F, ar, ag, ab, strength * l0 * 0.6F);
         }
     }
 

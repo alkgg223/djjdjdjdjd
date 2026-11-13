@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "realweather:block/planet_map",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "realweather:block/planet_map",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "realweather:block/planet_map",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "realweather:block/planet_map",
+      "y": 270
+    }
+  }
+}

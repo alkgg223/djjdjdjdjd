@@ -28,11 +28,12 @@ public final class ClientInit {
         modBus.addListener(ClientInit::onClientExtensions);
         modBus.addListener(WeatherParticles::register);
         modBus.addListener(com.realweather.client.sky.VolumeClouds::registerShaders);
+        modBus.addListener(com.realweather.client.space.SpaceShaders::register);
 
         NeoForge.EVENT_BUS.addListener(ClientWeather::onClientTick);
         // The telescope: its zoom, slower turning when zoomed in, no walking or digging at the eyepiece.
         NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onFov);
-        NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onTurn);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW, com.realweather.client.space.Telescope::onCameraAngles);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onScroll);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onInteract);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onMovement);
@@ -43,6 +44,7 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(WeatherSounds::onEntityJoin);
         NeoForge.EVENT_BUS.addListener(FogEffects::onRenderFog);
         NeoForge.EVENT_BUS.addListener(FogEffects::onFogColor);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW, com.realweather.client.space.EarthView::onFogColor);
         NeoForge.EVENT_BUS.addListener(FogEffects::onCameraAngles);
         NeoForge.EVENT_BUS.addListener(WaterShader::onRenderStage);
         // The eclipse first: the clouds pass in front of it.

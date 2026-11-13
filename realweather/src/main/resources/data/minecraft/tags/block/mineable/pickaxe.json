@@ -2,6 +2,15 @@
   "replace": false,
   "values": [
     "realweather:weather_radar",
-    "realweather:radar_monitor"
+    "realweather:radar_monitor",
+    "realweather:planet_basalt",
+    "realweather:planet_magma",
+    "realweather:planet_crystal",
+    "realweather:planet_sulfur",
+    "realweather:planet_ironstone",
+    "realweather:planet_obsidian",
+    "realweather:planet_hot_rock",
+    "realweather:planet_ice",
+    "realweather:planet_map"
   ]
 }

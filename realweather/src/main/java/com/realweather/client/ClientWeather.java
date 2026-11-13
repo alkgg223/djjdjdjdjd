@@ -151,6 +151,7 @@ public final class ClientWeather {
         com.realweather.client.sky.CloudFlashes.tick(mc, level);
         com.realweather.client.sky.ClientSkyEvents.tick(mc, level);
         com.realweather.client.space.Telescope.tick(mc);
+        com.realweather.client.space.EarthView.tick(mc);
         com.realweather.client.sky.SkyRenderer.tick();
         com.realweather.client.radar.RadarClient.tick(mc, level);
         com.realweather.client.hail.HailCoverage.tick(mc, level);

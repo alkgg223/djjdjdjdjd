@@ -15,7 +15,10 @@ import java.util.List;
 public final class Catalog {
     public static final int PLANETS = 0, STARS = 1, EXOPLANETS = 2;
     /** Kinds of body. */
-    static final int ROCKY = 0, GAS = 1, STAR = 2, PULSAR = 3, DWARF = 4;
+    static final int ROCKY = 0, GAS = 1, STAR = 2, PULSAR = 3, DWARF = 4, BLACKHOLE = 5;
+    /** The planet blocks, by their place in the block atlas. */
+    static final int REGOLITH = 0, BASALT = 1, SAND = 2, ICE = 3, FROST = 4, MAGMA = 5, CLOUD = 6, WATER = 7, MOSS = 8, CRYSTAL = 9, SULFUR = 10,
+            IRONSTONE = 11, STORM = 12, OBSIDIAN = 13, HOTROCK = 14, ASH = 15;
     /** Star colours by spectral class. */
     private static final float[] O_B = {0.62F, 0.72F, 1F}, A_T = {0.82F, 0.88F, 1F}, F_T = {0.98F, 0.96F, 0.9F}, G_T = {1F, 0.9F, 0.72F},
             K_T = {1F, 0.7F, 0.42F}, M_T = {1F, 0.45F, 0.25F}, WD = {0.92F, 0.95F, 1F};
@@ -36,6 +39,9 @@ public final class Catalog {
         float ar = 0.6F, ag = 0.75F, ab = 1F;
         /** A glow round a scorching world. */
         float hr, hg, hb, halo;
+        /** Its ground as blocks: low, middle and high ground, and whether its blue parts are seas. */
+        int lowT = BASALT, midT = REGOLITH, highT = REGOLITH;
+        boolean ocean;
 
         Body(String id, int kind, String map, double radius, double orbit, double period, double incl, double node, double phase, float r, float g,
              float b) {
@@ -102,6 +108,47 @@ public final class Catalog {
             hb = b;
             halo = a;
             return this;
+        }
+
+        Body ground(int low, int mid, int high) {
+            lowT = low;
+            midT = mid;
+            highT = high;
+            return this;
+        }
+
+        Body ocean() {
+            ocean = true;
+            return this;
+        }
+
+        /** This body as a planet of blocks with a radius of `blocks` (for the ray-traced view). */
+        public SpaceShaders.Planet voxel(int blocks) {
+            SpaceShaders.Planet p = new SpaceShaders.Planet();
+            p.map = map;
+            p.radius = blocks;
+            boolean gas = kind == GAS;
+            p.gas = gas;
+            p.relief = gas ? (float) Math.max(1, Math.min(3, Math.round(blocks * 0.04))) : (float) Math.max(2, Math.min(8, Math.round(blocks * 0.08)));
+            p.sea = ocean ? Math.max(1F, Math.round(p.relief * 0.35F)) : -1F;
+            p.tiles = gas ? new float[]{CLOUD, CLOUD, STORM, WATER} : new float[]{lowT, midT, highT, WATER};
+            p.glow = glow;
+            p.ambient = 0.012F;
+            if (air) {
+                p.air = gas ? 0.9F : 0.75F;
+                p.airR = ar;
+                p.airG = ag;
+                p.airB = ab;
+            }
+            return p;
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public boolean isPlanet() {
+            return kind == ROCKY || kind == GAS;
         }
     }
 
@@ -251,36 +298,38 @@ public final class Catalog {
         // ------------------------------------------------------------------------- the solar system
         sun = new Sys("sun", d(0, 1, 0), "1 AU");
         solar("sun", sun, new Body("sun", STAR, "star_surface", Math.atan(0.15), 0, 0, 0, 0, 0, 1F, 0.86F, 0.6F).glow(1F));
-        solar("mercury", new Sys("mercury", 0.4, 22, 0.03, true, "0.6-1.4 AU"), planet("mercury", ROCKY, "mercury", 0.35e-4, 0, 0, 0, 0, 0));
+        solar("mercury", new Sys("mercury", 0.4, 22, 0.03, true, "0.6-1.4 AU"), planet("mercury", ROCKY, "mercury", 0.35e-4, 0, 0, 0, 0, 0).ground(BASALT, REGOLITH, REGOLITH));
         solar("venus", new Sys("venus", 1.7, 44, -0.02, true, "0.3-1.7 AU"), planet("venus", ROCKY, "venus", 1.2e-4, 0, 0, 0, 0, 0)
-                .air(1F, 0.92F, 0.7F));
+                .air(1F, 0.92F, 0.7F).ground(BASALT, SULFUR, ASH));
         earth = new Sys("earth", d(0, 1, 0), "0 km");
-        solar("earth", earth, planet("earth", ROCKY, "toi700d", 1e-4, 0, 0, 0, 0, 0));
+        solar("earth", earth, planet("earth", ROCKY, "earth", 1e-4, 0, 0, 0, 0, 0).air(0.45F, 0.65F, 1F).ground(SAND, MOSS, BASALT).ocean());
         moon = new Sys("moon", d(0, -1, 0), "384 400 km");
-        solar("moon", moon, planet("moon", ROCKY, "moon", Math.atan(0.1), 0, 0, 0, 0, 0));
-        solar("mars", new Sys("mars", 200, 40, 0.05, false, "0.4-2.5 AU"), planet("mars", ROCKY, "mars", 0.6e-4, 0, 0, 0, 0, 0).air(1F, 0.7F, 0.5F));
-        solar("ceres", new Sys("ceres", 250, 60, 0.09, false, "1.6-3.0 AU"), planet("ceres", ROCKY, "ceres", 0.12e-4, 0, 0, 0, 0, 0));
+        solar("moon", moon, planet("moon", ROCKY, "moon", Math.atan(0.1), 0, 0, 0, 0, 0).ground(BASALT, REGOLITH, REGOLITH));
+        solar("mars", new Sys("mars", 200, 40, 0.05, false, "0.4-2.5 AU"), planet("mars", ROCKY, "mars", 0.6e-4, 0, 0, 0, 0, 0).air(1F, 0.7F, 0.5F)
+                .ground(BASALT, IRONSTONE, SAND));
+        solar("ceres", new Sys("ceres", 250, 60, 0.09, false, "1.6-3.0 AU"), planet("ceres", ROCKY, "ceres", 0.12e-4, 0, 0, 0, 0, 0).ground(BASALT, REGOLITH, ICE));
         solar("jupiter", new Sys("jupiter", 165, 80, -0.04, false, "4.2-6.2 AU"),
                 planet("jupiter", GAS, "jupiter", 2.0e-4, 0, 0, 0, 0, 0).air(0.9F, 0.85F, 0.75F),
                 // The four moons Galileo saw, in a line either side.
-                new Body("io", ROCKY, "venus", 0.11e-4, 5.9 * 2.0e-4, 1200, 88, 0, 0.1, 1F, 0.95F, 0.6F),
-                new Body("europa", ROCKY, "lhs1140b", 0.09e-4, 9.4 * 2.0e-4, 2400, 88, 0, 0.6, 1F, 0.98F, 0.92F),
-                new Body("ganymede", ROCKY, "mercury", 0.15e-4, 15 * 2.0e-4, 4800, 88, 0, 0.3, 0.9F, 0.88F, 0.82F),
-                new Body("callisto", ROCKY, "moon", 0.14e-4, 26 * 2.0e-4, 11000, 88, 0, 0.8, 0.7F, 0.66F, 0.6F));
+                new Body("io", ROCKY, "venus", 0.11e-4, 5.9 * 2.0e-4, 1200, 88, 0, 0.1, 1F, 0.95F, 0.6F).ground(SULFUR, SULFUR, ASH),
+                new Body("europa", ROCKY, "lhs1140b", 0.09e-4, 9.4 * 2.0e-4, 2400, 88, 0, 0.6, 1F, 0.98F, 0.92F).ground(ICE, ICE, FROST),
+                new Body("ganymede", ROCKY, "mercury", 0.15e-4, 15 * 2.0e-4, 4800, 88, 0, 0.3, 0.9F, 0.88F, 0.82F).ground(BASALT, REGOLITH, ICE),
+                new Body("callisto", ROCKY, "moon", 0.14e-4, 26 * 2.0e-4, 11000, 88, 0, 0.8, 0.7F, 0.66F, 0.6F).ground(BASALT, REGOLITH, ICE));
         solar("saturn", new Sys("saturn", 140, 75, 0.06, false, "8.0-11.1 AU"), planet("saturn", GAS, "saturn", 0.9e-4, 0, 0, 0, 0, 0).rings(),
-                new Body("titan", ROCKY, "venus", 0.07e-4, 20 * 0.9e-4, 8000, 80, 20, 0.4, 1F, 0.8F, 0.5F));
+                new Body("titan", ROCKY, "venus", 0.07e-4, 20 * 0.9e-4, 8000, 80, 20, 0.4, 1F, 0.8F, 0.5F).ground(ASH, SAND, ICE));
         solar("uranus", new Sys("uranus", 222, 74, -0.07, false, "18-20 AU"), planet("uranus", GAS, "uranus", 0.25e-4, 0, 0, 0, 0, 0)
                 .air(0.6F, 0.9F, 0.95F));
         solar("neptune", new Sys("neptune", 118, 73, 0.08, false, "29-31 AU"), planet("neptune", GAS, "neptune", 0.18e-4, 0, 0, 0, 0, 0)
                 .air(0.4F, 0.55F, 1F));
-        solar("pluto", new Sys("pluto", 200, 72, 0.2, false, "30-50 AU"), planet("pluto", ROCKY, "pluto", 0.09e-4, 0, 0, 0, 0, 0),
-                new Body("charon", ROCKY, "charon", 0.045e-4, 0.3e-4, 1500, 60, 30, 0.2, 1F, 1F, 1F));
+        solar("pluto", new Sys("pluto", 200, 72, 0.2, false, "30-50 AU"), planet("pluto", ROCKY, "pluto", 0.09e-4, 0, 0, 0, 0, 0)
+                        .ground(IRONSTONE, ICE, FROST),
+                new Body("charon", ROCKY, "charon", 0.045e-4, 0.3e-4, 1500, 60, 30, 0.2, 1F, 1F, 1F).ground(BASALT, REGOLITH, ICE));
         solar("haumea", new Sys("haumea", 150, 72, 0.32, false, "35-51 AU"),
-                planet("haumea", ROCKY, "haumea", 0.08e-4, 0, 0, 0, 0, 0).oblate(0.52F).rings(),
+                planet("haumea", ROCKY, "haumea", 0.08e-4, 0, 0, 0, 0, 0).oblate(0.52F).rings().ground(ICE, ICE, CRYSTAL),
                 new Body("hiiaka", ROCKY, "eris", 0.012e-4, 0.55e-4, 5000, 70, 0, 0.3, 1F, 1F, 1F),
                 new Body("namaka", ROCKY, "eris", 0.008e-4, 0.3e-4, 2000, 60, 40, 0.7, 1F, 1F, 1F));
-        solar("makemake", new Sys("makemake", 120, 71, 0.38, false, "38-53 AU"), planet("makemake", ROCKY, "makemake", 0.07e-4, 0, 0, 0, 0, 0));
-        solar("eris", new Sys("eris", 230, 70, 0.28, false, "38-98 AU"), planet("eris", ROCKY, "eris", 0.075e-4, 0, 0, 0, 0, 0),
+        solar("makemake", new Sys("makemake", 120, 71, 0.38, false, "38-53 AU"), planet("makemake", ROCKY, "makemake", 0.07e-4, 0, 0, 0, 0, 0).ground(IRONSTONE, ICE, FROST));
+        solar("eris", new Sys("eris", 230, 70, 0.28, false, "38-98 AU"), planet("eris", ROCKY, "eris", 0.075e-4, 0, 0, 0, 0, 0).ground(ICE, FROST, FROST),
                 new Body("dysnomia", ROCKY, "charon", 0.02e-4, 0.32e-4, 2600, 70, 60, 0.5, 0.9F, 0.9F, 0.9F));
 
         // ------------------------------------------------------------------------- stars
@@ -293,7 +342,8 @@ public final class Catalog {
         double[] ac = alphaCen.dir;
         Sys proxima = new Sys("proxima", d(ac[0] + 0.03, ac[1], ac[2] + 0.02), "4.24 ly");
         proxima.add(star("proxima_centauri", 3.5e-6, M_T, 1.2F).flare(),
-                planet("proxima_b", ROCKY, "proxima_b", 1.15e-6, 1.4e-5, 700, 80, 10, 0.3).air(0.6F, 0.75F, 1F));
+                planet("proxima_b", ROCKY, "proxima_b", 1.15e-6, 1.4e-5, 700, 80, 10, 0.3).air(0.6F, 0.75F, 1F)
+                        .ground(SAND, IRONSTONE, ICE).ocean());
         SYSTEMS.add(proxima);
         target("proxima_centauri", STARS, proxima, "proxima_centauri");
         Sys sirius = sys("sirius", "8.6 ly", star("sirius", 4.5e-6, A_T, 0.8F),
@@ -339,12 +389,17 @@ public final class Catalog {
         eta.nebula = 2;
         target("eta_carinae", STARS, eta, "eta_carinae");
 
+        // TON 618: one of the most massive black holes known (66 billion Suns), feeding a quasar.
+        Sys ton = sys("ton618", "10.8 billion ly", new Body("ton618", BLACKHOLE, null, 1.2e-6, 0, 0, 0, 0, 0, 0.75F, 0.85F, 1F));
+        target("ton618", STARS, ton, "ton618");
+
         // ------------------------------------------------------------------------- exoplanets
         target("proxima_b", EXOPLANETS, proxima, "proxima_b");
         exo("peg51b", "51 Pegasi", "50 ly", star("51_pegasi", 5e-6, G_T, 1F),
                 planet("peg51b", GAS, "peg51b", 2.4e-6, 1.3e-5, 700, 80, 15, 0.2).glow(0.12F).halo(1F, 0.6F, 0.4F, 0.2F).air(1F, 0.8F, 0.6F));
         exo("cnc55e", "55 Cancri", "41 ly", star("55_cancri", 4.5e-6, K_T, 1F),
-                planet("cnc55e", ROCKY, "cnc55e", 1.2e-6, 1.0e-5, 300, 83, 0, 0.6).glow(0.45F).halo(1F, 0.45F, 0.15F, 0.35F));
+                planet("cnc55e", ROCKY, "cnc55e", 1.2e-6, 1.0e-5, 300, 83, 0, 0.6).glow(0.45F).halo(1F, 0.45F, 0.15F, 0.35F)
+                        .ground(MAGMA, OBSIDIAN, CRYSTAL));
         exo("hd189733b", "HD 189733", "64 ly", star("hd189733", 4.5e-6, K_T, 1F),
                 planet("hd189733b", GAS, "hd189733b", 2.6e-6, 1.4e-5, 800, 86, 20, 0.1).air(0.4F, 0.6F, 1F));
         exo("hd209458b", "HD 209458", "157 ly", star("hd209458", 5e-6, G_T, 1F),
@@ -363,21 +418,28 @@ public final class Catalog {
         SYSTEMS.add(k16);
         target("kepler16b", EXOPLANETS, k16, "kepler16b");
         exo("kepler22b", "Kepler-22", "640 ly", star("kepler22", 5e-6, G_T, 1F),
-                planet("kepler22b", ROCKY, "kepler22b", 1.7e-6, 5e-5, 5000, 80, 20, 0.6).air(0.5F, 0.75F, 1F));
+                planet("kepler22b", ROCKY, "kepler22b", 1.7e-6, 5e-5, 5000, 80, 20, 0.6).air(0.5F, 0.75F, 1F).ground(SAND, MOSS, BASALT).ocean());
         exo("kepler186f", "Kepler-186", "580 ly", star("kepler186", 4e-6, M_T, 1F),
-                planet("kepler186f", ROCKY, "kepler186f", 1.3e-6, 5.5e-5, 4500, 78, 0, 0.2).air(0.7F, 0.7F, 0.9F));
+                planet("kepler186f", ROCKY, "kepler186f", 1.3e-6, 5.5e-5, 4500, 78, 0, 0.2).air(0.7F, 0.7F, 0.9F)
+                        .ground(SAND, MOSS, IRONSTONE).ocean());
         exo("kepler452b", "Kepler-452", "1800 ly", star("kepler452", 5.2e-6, G_T, 1F),
-                planet("kepler452b", ROCKY, "kepler452b", 1.6e-6, 6e-5, 7000, 75, 30, 0.45).air(0.55F, 0.7F, 1F));
+                planet("kepler452b", ROCKY, "kepler452b", 1.6e-6, 6e-5, 7000, 75, 30, 0.45).air(0.55F, 0.7F, 1F)
+                        .ground(SAND, MOSS, BASALT).ocean());
         exo("kepler10b", "Kepler-10", "610 ly", star("kepler10", 5e-6, G_T, 1F),
-                planet("kepler10b", ROCKY, "kepler10b", 1.2e-6, 1.0e-5, 260, 84, 10, 0.1).glow(0.4F).halo(1F, 0.45F, 0.12F, 0.3F));
+                planet("kepler10b", ROCKY, "kepler10b", 1.2e-6, 1.0e-5, 260, 84, 10, 0.1).glow(0.4F).halo(1F, 0.45F, 0.12F, 0.3F)
+                        .ground(MAGMA, HOTROCK, OBSIDIAN));
         exo("kepler78b", "Kepler-78", "400 ly", star("kepler78", 4.6e-6, K_T, 1F),
-                planet("kepler78b", ROCKY, "kepler78b", 1.0e-6, 0.9e-5, 200, 80, 50, 0.8).glow(0.45F).halo(1F, 0.6F, 0.2F, 0.3F));
+                planet("kepler78b", ROCKY, "kepler78b", 1.0e-6, 0.9e-5, 200, 80, 50, 0.8).glow(0.45F).halo(1F, 0.6F, 0.2F, 0.3F)
+                        .ground(MAGMA, HOTROCK, OBSIDIAN));
         exo("kepler1649c", "Kepler-1649", "300 ly", star("kepler1649", 3.8e-6, M_T, 1F),
-                planet("kepler1649c", ROCKY, "kepler1649c", 1.2e-6, 3.5e-5, 2600, 80, 20, 0.35).air(0.7F, 0.75F, 0.95F));
+                planet("kepler1649c", ROCKY, "kepler1649c", 1.2e-6, 3.5e-5, 2600, 80, 20, 0.35).air(0.7F, 0.75F, 0.95F)
+                        .ground(SAND, IRONSTONE, ICE).ocean());
         exo("kepler442b", "Kepler-442", "1200 ly", star("kepler442", 4.6e-6, K_T, 1F),
-                planet("kepler442b", ROCKY, "kepler442b", 1.4e-6, 5e-5, 4600, 76, 40, 0.55).air(0.55F, 0.72F, 1F));
+                planet("kepler442b", ROCKY, "kepler442b", 1.4e-6, 5e-5, 4600, 76, 40, 0.55).air(0.55F, 0.72F, 1F)
+                        .ground(SAND, MOSS, BASALT).ocean());
         exo("kepler62f", "Kepler-62", "980 ly", star("kepler62", 4.6e-6, K_T, 1F),
-                planet("kepler62f", ROCKY, "kepler62f", 1.4e-6, 6.5e-5, 7000, 78, 10, 0.15).air(0.6F, 0.8F, 1F));
+                planet("kepler62f", ROCKY, "kepler62f", 1.4e-6, 6.5e-5, 7000, 78, 10, 0.15).air(0.6F, 0.8F, 1F)
+                        .ground(SAND, MOSS, ICE).ocean());
         // TRAPPIST-1: seven Earth-sized worlds round a tiny red star, seen almost edge-on, in a chain of resonances.
         Sys trappist = new Sys("trappist1", at("trappist1"), "40 ly");
         trappist.add(star("trappist1", 3.0e-6, new float[]{1F, 0.35F, 0.2F}, 1.1F).flare());
@@ -386,9 +448,17 @@ public final class Catalog {
         for (int i = 0; i < 7; i++) {
             Body b = planet("trappist1" + tp[i], ROCKY, "trappist1" + tp[i], tr[i] * 1.1e-6, ta[i] * 1e-5, tper[i] * 300, 89.4, 5, i * 0.137);
             if (i == 0) {
-                b.glow(0.25F).halo(1F, 0.45F, 0.2F, 0.2F);
+                b.glow(0.25F).halo(1F, 0.45F, 0.2F, 0.2F).ground(HOTROCK, BASALT, OBSIDIAN);
             } else {
                 b.air(0.6F, 0.75F, 1F);
+                // The inner ones rocky and dry, the middle ones with seas, the outer ones frozen.
+                if (i == 1) {
+                    b.ground(BASALT, REGOLITH, ASH);
+                } else if (i <= 3) {
+                    b.ground(SAND, MOSS, ICE).ocean();
+                } else {
+                    b.ground(ICE, FROST, FROST);
+                }
             }
             trappist.add(b);
         }
@@ -401,13 +471,14 @@ public final class Catalog {
         exo("gj436b", "GJ 436", "32 ly", star("gj436", 5e-6, M_T, 1F),
                 planet("gj436b", GAS, "gj436b", 2.2e-6, 1.7e-5, 900, 86, 10, 0.1).air(0.6F, 0.8F, 1F).tail());
         exo("lhs1140b", "LHS 1140", "49 ly", star("lhs1140", 5e-6, M_T, 1F),
-                planet("lhs1140b", ROCKY, "lhs1140b", 1.7e-6, 4.5e-5, 3000, 78, -20, 0.3).air(0.7F, 0.85F, 1F));
+                planet("lhs1140b", ROCKY, "lhs1140b", 1.7e-6, 4.5e-5, 3000, 78, -20, 0.3).air(0.7F, 0.85F, 1F)
+                        .ground(ICE, ICE, FROST).ocean());
         exo("k2_18b", "K2-18", "124 ly", star("k2_18", 5.5e-6, M_T, 1F),
                 planet("k2_18b", GAS, "k2_18b", 2.1e-6, 4e-5, 2800, 70, 35, 0.55).air(0.4F, 0.8F, 1F));
         Sys toi700 = new Sys("toi700", at("toi700"), "101 ly");
         toi700.add(star("toi700", 5e-6, M_T, 1F),
-                planet("toi700e", ROCKY, "toi700e", 1.35e-6, 4.0e-5, 2700, 74, 0, 0.2).air(0.7F, 0.8F, 1F),
-                planet("toi700d", ROCKY, "toi700d", 1.45e-6, 5.4e-5, 3700, 74, 0, 0.65).air(0.5F, 0.7F, 1F));
+                planet("toi700e", ROCKY, "toi700e", 1.35e-6, 4.0e-5, 2700, 74, 0, 0.2).air(0.7F, 0.8F, 1F).ground(SAND, MOSS, ICE).ocean(),
+                planet("toi700d", ROCKY, "toi700d", 1.45e-6, 5.4e-5, 3700, 74, 0, 0.65).air(0.5F, 0.7F, 1F).ground(SAND, MOSS, BASALT).ocean());
         SYSTEMS.add(toi700);
         target("toi700d", EXOPLANETS, toi700, "toi700d");
         target("toi700e", EXOPLANETS, toi700, "toi700e");
@@ -440,6 +511,15 @@ public final class Catalog {
         s.add(star, p);
         SYSTEMS.add(s);
         target(planet, EXOPLANETS, s, planet);
+    }
+
+    /** The Moon itself (for its blocks). */
+    static Body moonBody() {
+        return moon.bodies.get(0);
+    }
+
+    public static Body body(Target t) {
+        return t.body;
     }
 
     public static Target byId(String id) {

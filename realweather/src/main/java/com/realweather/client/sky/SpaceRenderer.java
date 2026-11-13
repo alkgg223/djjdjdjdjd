@@ -67,7 +67,9 @@ public final class SpaceRenderer {
             return;
         }
         boolean telescope = com.realweather.client.space.Telescope.active();
-        if (ClientSkyEvents.isEmpty() && !telescope) {
+        double camY = event.getCamera().getPosition().y;
+        boolean high = com.realweather.client.space.EarthView.wanted(camY);
+        if (ClientSkyEvents.isEmpty() && !telescope && !high) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -88,6 +90,11 @@ public final class SpaceRenderer {
             }
             Space3D.begin(event, level, pt);
             try {
+                if (high) {
+                    com.realweather.client.space.EarthView.render(level, event.getCamera().getPosition(), pt);
+                    Space3D.clearDepth();
+                    Space3D.range(5F, 80000F);
+                }
                 if (telescope) {
                     com.realweather.client.space.TelescopeView.render(event, level, pt);
                     Space3D.range(5F, 80000F);

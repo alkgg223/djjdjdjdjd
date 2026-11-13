@@ -40,8 +40,13 @@ public final class ModDevices {
             () -> new TelescopeBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(1.5F, 3F).sound(SoundType.METAL)
                     .noOcclusion()));
 
+    public static final DeferredBlock<PlanetMapBlock> PLANET_MAP = ModContent.BLOCKS.register("planet_map",
+            () -> new PlanetMapBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLUE).strength(1.5F, 3F).sound(SoundType.METAL)
+                    .noOcclusion().lightLevel(s -> 7)));
+
     public static final DeferredItem<BlockItem> WEATHER_RADAR_ITEM = blockItem("weather_radar", WEATHER_RADAR);
     public static final DeferredItem<BlockItem> TELESCOPE_ITEM = blockItem("telescope", TELESCOPE);
+    public static final DeferredItem<BlockItem> PLANET_MAP_ITEM = blockItem("planet_map", PLANET_MAP);
     public static final DeferredItem<BlockItem> RADAR_MONITOR_ITEM = blockItem("radar_monitor", RADAR_MONITOR);
     public static final DeferredItem<EclipseGlasses> ECLIPSE_GLASSES = tabItem(ITEMS.register("eclipse_glasses",
             () -> new EclipseGlasses(new Item.Properties().stacksTo(1))));
@@ -52,6 +57,11 @@ public final class ModDevices {
     @SuppressWarnings("DataFlowIssue")
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MonitorBlockEntity>> MONITOR_BE = BLOCK_ENTITIES.register("radar_monitor",
             () -> BlockEntityType.Builder.of(MonitorBlockEntity::new, RADAR_MONITOR.get()).build(null));
+
+    static {
+        // The blocks of other worlds.
+        PlanetBlocks.items();
+    }
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = TABS.register("main", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.realweather"))

@@ -94,6 +94,10 @@ public final class PrecipitationRenderer {
         if (!ClientWeather.active(level)) {
             return false;
         }
+        if (camY > 360) {
+            // Above the clouds: the rain and snow fall below.
+            return true;
+        }
         float rainLevel = level.getRainLevel(partialTick);
         boolean puddles = ClientConfig.PUDDLES.get() && ClientWeather.wetness > 0.02F;
         float sand = ClientWeather.sand;

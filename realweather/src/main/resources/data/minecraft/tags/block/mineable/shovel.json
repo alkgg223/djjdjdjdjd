@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "realweather:planet_regolith",
+    "realweather:planet_sand",
+    "realweather:planet_frost",
+    "realweather:planet_ash",
+    "realweather:planet_moss"
+  ]
+}

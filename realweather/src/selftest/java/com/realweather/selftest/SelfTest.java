@@ -83,6 +83,9 @@ public final class SelfTest {
         if (suite.contains("telescope")) {
             telescopeSuite();
         }
+        if (suite.contains("planets")) {
+            planetsSuite();
+        }
         if (suite.contains("all")) {
             weatherSuite();
         }
@@ -1235,11 +1238,115 @@ public final class SelfTest {
         });
     }
 
+    /**
+     * 1.12: the telescope at its highest powers (planets made of blocks, TON 618), the planet map (round a planet, down
+     * to its block ground, landed), and flying up out of the air until the whole Earth is below.
+     */
+    private static void planetsSuite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 18000");
+            cmd("rw sky natural off");
+            cmd("rw sky stop");
+            goTo("minecraft:plains", 0, 0);
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+        });
+        step(60, SelfTest::platform);
+        step(100, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> {
+                ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                BlockPos at = p.blockPosition().north();
+                server.overworld().setBlock(at, com.realweather.device.ModDevices.TELESCOPE.get().defaultBlockState(), 3);
+                server.overworld().setBlock(at.east(2), com.realweather.device.ModDevices.PLANET_MAP.get().defaultBlockState(), 3);
+                int i = 0;
+                for (var b : com.realweather.device.PlanetBlocks.ALL) {
+                    server.overworld().setBlock(at.west(2 + i % 5).north(i / 5), b.get().defaultBlockState(), 3);
+                    i++;
+                }
+                telescopeAt = at;
+            });
+        });
+        step(20, () -> {
+            turnClient(-30F, 25F);
+            shot("p00_blocks");
+        });
+        String[][] targets = {{"mars", "0.02"}, {"mars", "0.0007"}, {"jupiter", "0.002"}, {"moon", "0.03"}, {"moon", "0.004"}, {"toi700d", "0.0007"},
+                {"kepler10b", "0.0007"}, {"cnc55e", "0.0007"}, {"hd189733b", "0.0007"}, {"trappist1e", "0.0007"}, {"saturn", "0.004"},
+                {"ton618", "0.05"}, {"ton618", "0.004"}, {"ton618", "0.0015"}, {"ton618", "0.0007"}};
+        for (int i = 0; i < targets.length; i++) {
+            String id = targets[i][0];
+            double fov = Double.parseDouble(targets[i][1]);
+            String label = String.format("p%02d_%s_%s", i + 1, id, targets[i][1].replace('.', '_'));
+            step(5, () -> {
+                com.realweather.client.space.Telescope.start(telescopeAt, com.realweather.client.space.Catalog.byId(id));
+                lookAtTarget(id);
+            });
+            step(4, () -> {
+                com.realweather.client.space.Telescope.setFov(fov);
+                lookAtTarget(id);
+            });
+            step(16, () -> lookAtTarget(id));
+            // Two frames a little apart: the target must stay put (no jumping about).
+            step(2, () -> shot(label));
+            step(7, () -> {
+                shot(label + "_b");
+                LOG.info("[telescope {}] {}", id, com.realweather.client.space.TelescopeView.debug);
+            });
+        }
+        step(5, () -> com.realweather.client.space.Telescope.stop());
+        // The planet map.
+        String[] worlds = {"earth", "mars", "jupiter", "moon", "toi700d", "kepler10b", "saturn"};
+        double[][] views = {{-1, 0, -90}, {300, 0, -90}, {60, 0, -60}, {14, 20, -15}, {1.62, 40, -8}, {1.62, 120, 12}};
+        for (String w : worlds) {
+            step(5, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetViewScreen(
+                    com.realweather.client.space.Catalog.byId(w))));
+            for (int v = 0; v < views.length; v++) {
+                double[] vw = views[v];
+                String label = String.format("m_%s_%d", w, v);
+                step(3, () -> {
+                    if (Minecraft.getInstance().screen instanceof com.realweather.client.space.PlanetViewScreen ps) {
+                        ps.testView(vw[0], vw[1], vw[2]);
+                    }
+                });
+                step(8, () -> shot(label));
+            }
+        }
+        step(5, () -> Minecraft.getInstance().setScreen(null));
+        // Up and up: out of the air, through the ozone layer, until the Earth is a ball below.
+        double[][] heights = {{450, 20}, {760, 35}, {760, 70}, {1300, 75}, {2600, 85}, {4200, 89}};
+        for (String time : new String[]{"6000", "18000"}) {
+            step(5, () -> cmd("time set " + time));
+            for (double[] hp : heights) {
+                String label = String.format("s_%s_%d_%d", time, (int) hp[0], (int) hp[1]);
+                step(5, () -> {
+                    MinecraftServer server = server();
+                    server.execute(() -> {
+                        ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                        p.getAbilities().mayfly = true;
+                        p.getAbilities().flying = true;
+                        p.onUpdateAbilities();
+                        p.teleportTo(server.overworld(), p.getX(), hp[0], p.getZ(), 0F, (float) hp[1]);
+                    });
+                });
+                step(40, () -> {
+                    turnClient(0F, (float) hp[1]);
+                    shot(label);
+                });
+            }
+        }
+        step(5, () -> cmd("time set 18000"));
+    }
+
     private static BlockPos telescopeAt = BlockPos.ZERO;
 
     private static void lookAtTarget(String id) {
         Minecraft mc = Minecraft.getInstance();
         double[] d = com.realweather.client.space.TelescopeView.direction(com.realweather.client.space.Catalog.byId(id), mc.level, 1F);
+        if (com.realweather.client.space.Telescope.active()) {
+            com.realweather.client.space.Telescope.point(d, mc.level, 1F);
+            return;
+        }
         float yaw = (float) Math.toDegrees(Math.atan2(-d[0], d[2]));
         float pitch = (float) -Math.toDegrees(Math.asin(Math.max(-1, Math.min(1, d[1]))));
         turnClient(yaw, pitch);
@@ -1269,6 +1376,10 @@ public final class SelfTest {
         float[] d = com.realweather.client.sky.SpaceRenderer.focus(type, mc.level, 1F);
         if (d == null) {
             LOG.warn("no {} to look at", com.realweather.server.SkyEvent.NAMES[type]);
+            return;
+        }
+        if (com.realweather.client.space.Telescope.active()) {
+            com.realweather.client.space.Telescope.point(new double[]{d[0], d[1], d[2]}, mc.level, 1F);
             return;
         }
         float yaw = (float) Math.toDegrees(Math.atan2(-d[0], d[2]));
