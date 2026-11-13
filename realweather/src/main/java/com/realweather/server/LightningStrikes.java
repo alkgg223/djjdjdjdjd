@@ -27,6 +27,8 @@ public final class LightningStrikes {
     private record Pending(ServerLevel level, Vec3 pos, int kind, net.minecraft.world.entity.Entity cause) {}
 
     private static final List<Pending> PENDING = new ArrayList<>();
+    /** Bolts this mod made visual-only (flashes without a strike): they set no fire. */
+    private static final java.util.Set<java.util.UUID> VISUAL = new java.util.HashSet<>();
 
     private LightningStrikes() {}
 
@@ -37,7 +39,11 @@ public final class LightningStrikes {
         }
         int kind = LightningKind.of(bolt.getUUID());
         bolt.setDamage(LightningKind.DAMAGE[kind]);
-        if (!bolt.isVisualOnly() && kind >= LightningKind.WHITE) {
+        boolean visual = VISUAL.remove(bolt.getUUID());
+        if (VISUAL.size() > 256) {
+            VISUAL.clear();
+        }
+        if (!visual && kind >= LightningKind.WHITE) {
             // The world is changed on the next tick, not while the bolt is being added.
             PENDING.add(new Pending(level, bolt.position(), kind, bolt));
         }
@@ -84,6 +90,14 @@ public final class LightningStrikes {
                     e.igniteForSeconds(4F);
                 }
             }
+        }
+    }
+
+    /** Makes a bolt visual-only or not (call after {@link #setKind}, which changes its UUID). */
+    public static void setVisual(LightningBolt bolt, boolean visual) {
+        bolt.setVisualOnly(visual);
+        if (visual) {
+            VISUAL.add(bolt.getUUID());
         }
     }
 

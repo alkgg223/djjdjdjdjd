@@ -196,9 +196,9 @@ public final class WeatherServer {
         }
         bolt.moveTo(Vec3.atBottomCenterOf(best));
         boolean real = rng.nextFloat() < (dist < 64 ? 0.3F : 0.12F);
-        bolt.setVisualOnly(!real);
         // The stronger the storm, the more of its lightning is of the strong kinds.
         LightningStrikes.setKind(bolt, com.realweather.LightningKind.roll(rng, thunder), rng);
+        LightningStrikes.setVisual(bolt, !real);
         level.addFreshEntity(bolt);
     }
 
