@@ -25,6 +25,9 @@
     { "name": "Gas", "type": "float", "count": 1, "values": [ 0.0 ] },
     { "name": "Air", "type": "float", "count": 1, "values": [ 0.0 ] },
     { "name": "AirColor", "type": "float", "count": 3, "values": [ 0.45, 0.65, 1.0 ] },
-    { "name": "AirHeight", "type": "float", "count": 1, "values": [ 80.0 ] }
+    { "name": "AirHeight", "type": "float", "count": 1, "values": [ 80.0 ] },
+    { "name": "PixelSize", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "PixelGrow", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "Hills", "type": "float", "count": 1, "values": [ 2.0 ] }
   ]
 }

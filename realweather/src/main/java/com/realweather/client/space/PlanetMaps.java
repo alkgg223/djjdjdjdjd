@@ -75,10 +75,46 @@ final class PlanetMaps {
             // The sea's surface.
             return p.sea;
         }
-        float h = (float) Math.floor((c[0] * 0.3F + c[1] * 0.59F + c[2] * 0.11F) * p.relief + 0.5F);
+        double l = Math.sqrt(x * x + y * y + z * z);
+        float hx = (float) (x / l) * p.radius, hy = (float) (y / l) * p.radius, hz = (float) (z / l) * p.radius;
+        float h = (float) Math.floor((c[0] * 0.3F + c[1] * 0.59F + c[2] * 0.11F) * p.relief + 0.5F)
+                + (float) Math.floor((hills(hx, hy, hz) - 0.5F) * 2F * p.hills + 0.5F);
         if (p.sea >= 0) {
             h = Math.max(h, p.sea);
         }
-        return h;
+        return Math.max(h, 0F);
+    }
+
+    private static float fract(float v) {
+        return v - (float) Math.floor(v);
+    }
+
+    /** The shader's hash13, in the same float sums. */
+    private static float hash13(float x, float y, float z) {
+        x = fract(x * 0.1031F);
+        y = fract(y * 0.1031F);
+        z = fract(z * 0.1031F);
+        float d = x * (z + 31.32F) + y * (y + 31.32F) + z * (x + 31.32F);
+        x += d;
+        y += d;
+        z += d;
+        return fract((x + y) * z);
+    }
+
+    private static float mix(float a, float b, float t) {
+        return a + (b - a) * t;
+    }
+
+    /** The shader's hill noise. */
+    private static float hills(float cx, float cy, float cz) {
+        float qx = cx / 8F, qy = cy / 8F, qz = cz / 8F;
+        float ix = (float) Math.floor(qx), iy = (float) Math.floor(qy), iz = (float) Math.floor(qz);
+        float fx = qx - ix, fy = qy - iy, fz = qz - iz;
+        fx = fx * fx * (3F - 2F * fx);
+        fy = fy * fy * (3F - 2F * fy);
+        fz = fz * fz * (3F - 2F * fz);
+        float a = mix(mix(hash13(ix, iy, iz), hash13(ix + 1, iy, iz), fx), mix(hash13(ix, iy + 1, iz), hash13(ix + 1, iy + 1, iz), fx), fy);
+        float b = mix(mix(hash13(ix, iy, iz + 1), hash13(ix + 1, iy, iz + 1), fx), mix(hash13(ix, iy + 1, iz + 1), hash13(ix + 1, iy + 1, iz + 1), fx), fy);
+        return mix(a, b, fz);
     }
 }

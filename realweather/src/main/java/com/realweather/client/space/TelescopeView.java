@@ -302,6 +302,9 @@ public final class TelescopeView {
         SpaceShaders.Planet pl = b.voxel(blocksR);
         pl.alpha = a;
         pl.steps = 110F;
+        // Seen from outside: no sky of its own (its air is the glow round its edge).
+        pl.air = 0F;
+        pl.pixelSize = (float) (1 / blockPx);
         pl.lightR = lr;
         pl.lightG = lg;
         pl.lightB = lb;

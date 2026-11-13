@@ -1,0 +1,8 @@
+{
+  "vertex": "realweather:space_quad",
+  "fragment": "realweather:space_composite",
+  "samplers": [
+    { "name": "Sampler0" }
+  ],
+  "uniforms": []
+}

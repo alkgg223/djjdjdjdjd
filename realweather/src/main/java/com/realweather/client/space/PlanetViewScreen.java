@@ -70,6 +70,7 @@ public class PlanetViewScreen extends Screen {
         if (!gas) {
             planet.relief = 14;
             planet.sea = body.ocean ? 5 : -1;
+            planet.hills = 4;
         }
         planet.airHeight = Math.max(60F, radius * 0.15F);
         planet.steps = 200F;
@@ -125,7 +126,11 @@ public class PlanetViewScreen extends Screen {
     /** Height of the ground under the camera (blocks above the radius). */
     private double groundHere() {
         double[] u = up();
-        return PlanetMaps.ground(planet, u[0], u[1], u[2]);
+        float g = PlanetMaps.ground(planet, u[0], u[1], u[2]);
+        // The block column right under us (its cell's own direction, as the ray tracing sees it).
+        double r = radius + g + 0.5;
+        double cx = Math.floor(u[0] * r) + 0.5, cy = Math.floor(u[1] * r) + 0.5, cz = Math.floor(u[2] * r) + 0.5;
+        return Math.max(g, PlanetMaps.ground(planet, cx, cy, cz));
     }
 
     private void descend(double factor) {
@@ -320,6 +325,7 @@ public class PlanetViewScreen extends Screen {
             double h = Math.max(1, alt - groundHere());
             double blockPx = ph / (2 * Math.tan(fovY / 2) * h);
             planet.alpha = Space3D.smooth(1.3F, 3.2F, (float) blockPx);
+            planet.pixelGrow = (float) (2 * Math.tan(fovY / 2) / ph);
             planet.lx = sun[0];
             planet.ly = sun[1];
             planet.lz = sun[2];

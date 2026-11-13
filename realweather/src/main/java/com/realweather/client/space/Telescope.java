@@ -247,6 +247,13 @@ public final class Telescope {
         }
     }
 
+    /** No block outline at the eyepiece (the player's own angles are parked, so it would be on the wrong block). */
+    public static void onHighlight(net.neoforged.neoforge.client.event.RenderHighlightEvent.Block event) {
+        if (active) {
+            event.setCanceled(true);
+        }
+    }
+
     public static void tick(Minecraft mc) {
         if (!active) {
             return;

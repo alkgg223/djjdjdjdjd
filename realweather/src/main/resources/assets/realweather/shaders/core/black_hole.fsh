@@ -97,7 +97,7 @@ vec3 beyond(vec3 p, vec3 v) {
         float knots = noise(vec3(g * 14.0, 1.0));
         float body = exp(-r * 2.4) * (0.25 + 0.75 * arms) * (0.7 + 0.5 * knots);
         float bulge = exp(-r * r * 30.0);
-        col += vec3(0.5, 0.66, 1.0) * body * 1.2 + vec3(1.0, 0.82, 0.55) * bulge * 2.2;
+        col += vec3(0.5, 0.66, 1.0) * body * 0.9 + vec3(1.0, 0.82, 0.55) * bulge * 1.6;
     }
     vec3 sd = v * 70.0;
     vec3 c = floor(sd);
@@ -165,9 +165,17 @@ void main() {
             break;
         }
     }
+    // Close in, the sky behind is the bent light worked out here; further out, where light is hardly bent, the stars
+    // and glow already drawn behind show through.
+    float cover = 1.0 - trans;
     if (escaped) {
-        col += trans * beyond(p, normalize(v)) * fadeOut;
+        float w = 1.0 - smoothstep(8.0, 32.0, b);
+        col += trans * w * beyond(p, normalize(v));
+        cover += trans * w;
+    } else if (trans > 0.0) {
+        cover = 1.0;
     }
     col = vec3(1.0) - exp(-col * Exposure);
-    fragColor = vec4(col, Alpha * fadeOut);
+    float a = clamp(cover, 0.0, 1.0) * Alpha * fadeOut;
+    fragColor = vec4(col * Alpha * fadeOut, a);
 }

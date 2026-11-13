@@ -134,6 +134,7 @@ public final class Catalog {
             p.tiles = gas ? new float[]{CLOUD, CLOUD, STORM, WATER} : new float[]{lowT, midT, highT, WATER};
             p.glow = glow;
             p.ambient = 0.012F;
+            p.hills = gas ? 1F : Math.max(1F, Math.min(4F, p.relief * 0.35F));
             if (air) {
                 p.air = gas ? 0.9F : 0.75F;
                 p.airR = ar;

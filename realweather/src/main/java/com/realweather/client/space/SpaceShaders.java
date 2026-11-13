@@ -21,8 +21,10 @@ import net.neoforged.neoforge.client.event.RegisterShadersEvent;
  */
 public final class SpaceShaders {
     public static final ResourceLocation BLOCKS = RealWeather.id("textures/environment/space3d/planet_blocks.png");
-    private static ShaderInstance voxel, hole;
+    private static ShaderInstance voxel, hole, composite;
     private static boolean broken;
+    /** A lower-resolution layer the ray tracing is done in on slower settings, then laid over the screen. */
+    private static com.mojang.blaze3d.pipeline.TextureTarget layer;
 
     private SpaceShaders() {}
 
@@ -32,6 +34,8 @@ public final class SpaceShaders {
                     s -> voxel = s);
             event.registerShader(new ShaderInstance(event.getResourceProvider(), RealWeather.id("black_hole"), DefaultVertexFormat.POSITION_TEX),
                     s -> hole = s);
+            event.registerShader(new ShaderInstance(event.getResourceProvider(), RealWeather.id("space_composite"), DefaultVertexFormat.POSITION_TEX),
+                    s -> composite = s);
         } catch (Exception | LinkageError e) {
             voxel = null;
             hole = null;
@@ -56,6 +60,10 @@ public final class SpaceShaders {
         public float air;
         public float airR = 0.45F, airG = 0.65F, airB = 1F, airHeight = 80F;
         public float lightR = 1F, lightG = 1F, lightB = 1F;
+        /** Blocks per screen pixel at the start of the ray, and how fast that grows along it (for the texture detail). */
+        public float pixelSize, pixelGrow;
+        /** Height of the hills (blocks). */
+        public float hills = 2F;
         /** Light direction (planet frame). */
         public double lx, ly = 1, lz;
     }
@@ -94,6 +102,9 @@ public final class SpaceShaders {
             s.safeGetUniform("Air").set(p.air);
             s.safeGetUniform("AirColor").set(p.airR, p.airG, p.airB);
             s.safeGetUniform("AirHeight").set(p.airHeight);
+            s.safeGetUniform("PixelSize").set(p.pixelSize);
+            s.safeGetUniform("PixelGrow").set(p.pixelGrow);
+            s.safeGetUniform("Hills").set(p.hills);
             Minecraft.getInstance().getTextureManager().getTexture(p.map).setFilter(true, false);
             Minecraft.getInstance().getTextureManager().getTexture(BLOCKS).setFilter(false, false);
             RenderSystem.setShaderTexture(0, p.map);
@@ -140,20 +151,58 @@ public final class SpaceShaders {
         s.safeGetUniform(name).set((float) v[0], (float) v[1], (float) v[2]);
     }
 
+    /** How much smaller than the screen the ray tracing is done (1 = full resolution). */
+    private static int division() {
+        int q = com.realweather.ClientConfig.quality();
+        return q <= 1 || com.realweather.ClientConfig.maxOptimize() ? 2 : 1;
+    }
+
     private static void draw(float x0, float y0, float x1, float y1) {
-        RenderSystem.enableBlend();
-        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
         RenderSystem.colorMask(true, true, true, true);
-        BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        b.addVertex(x0, y0, 0F).setUv(-1F, -1F);
-        b.addVertex(x1, y0, 0F).setUv(1F, -1F);
-        b.addVertex(x1, y1, 0F).setUv(1F, 1F);
-        b.addVertex(x0, y1, 0F).setUv(-1F, 1F);
-        BufferUploader.drawWithShader(b.buildOrThrow());
+        int div = composite == null ? 1 : division();
+        var main = Minecraft.getInstance().getMainRenderTarget();
+        if (div > 1) {
+            int w = Math.max(1, main.width / div), h = Math.max(1, main.height / div);
+            if (layer == null) {
+                layer = new com.mojang.blaze3d.pipeline.TextureTarget(w, h, false, Minecraft.ON_OSX);
+                layer.setFilterMode(org.lwjgl.opengl.GL11.GL_LINEAR);
+            } else if (layer.width != w || layer.height != h) {
+                layer.resize(w, h, Minecraft.ON_OSX);
+                layer.setFilterMode(org.lwjgl.opengl.GL11.GL_LINEAR);
+            }
+            var shader = RenderSystem.getShader();
+            layer.setClearColor(0F, 0F, 0F, 0F);
+            layer.clear(Minecraft.ON_OSX);
+            layer.bindWrite(true);
+            RenderSystem.disableBlend();
+            RenderSystem.setShader(() -> shader);
+            quad(x0, y0, x1, y1, -1F, -1F, 1F, 1F);
+            main.bindWrite(true);
+            RenderSystem.enableBlend();
+            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                    GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+            RenderSystem.setShader(() -> composite);
+            RenderSystem.setShaderTexture(0, layer.getColorTextureId());
+            quad(x0, y0, x1, y1, (x0 + 1) / 2, (y0 + 1) / 2, (x1 + 1) / 2, (y1 + 1) / 2);
+        } else {
+            // Colour comes premultiplied by its coverage.
+            RenderSystem.enableBlend();
+            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                    GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+            quad(x0, y0, x1, y1, -1F, -1F, 1F, 1F);
+        }
         RenderSystem.enableDepthTest();
         Space3D.invalidate();
+    }
+
+    private static void quad(float x0, float y0, float x1, float y1, float u0, float v0, float u1, float v1) {
+        BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        b.addVertex(x0, y0, 0F).setUv(u0, v0);
+        b.addVertex(x1, y0, 0F).setUv(u1, v0);
+        b.addVertex(x1, y1, 0F).setUv(u1, v1);
+        b.addVertex(x0, y1, 0F).setUv(u0, v1);
+        BufferUploader.drawWithShader(b.buildOrThrow());
     }
 }

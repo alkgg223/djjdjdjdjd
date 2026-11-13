@@ -30,6 +30,9 @@ uniform float Gas;
 uniform float Air;
 uniform vec3 AirColor;
 uniform float AirHeight;
+uniform float PixelSize;
+uniform float PixelGrow;
+uniform float Hills;
 
 in vec2 ab;
 
@@ -45,6 +48,23 @@ vec3 mapAt(vec3 d) {
     return textureLod(Sampler0, equi(d), 0.0).rgb;
 }
 
+// A small hash and value noise (the same sums are done on the CPU to find the ground under the camera).
+float hash13(vec3 p3) {
+    p3 = fract(p3 * 0.1031);
+    p3 += dot(p3, p3.zyx + 31.32);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float hillNoise(vec3 c) {
+    vec3 q = c / 8.0;
+    vec3 i = floor(q);
+    vec3 f = q - i;
+    f = f * f * (3.0 - 2.0 * f);
+    float a = mix(mix(hash13(i), hash13(i + vec3(1.0, 0.0, 0.0)), f.x), mix(hash13(i + vec3(0.0, 1.0, 0.0)), hash13(i + vec3(1.0, 1.0, 0.0)), f.x), f.y);
+    float b = mix(mix(hash13(i + vec3(0.0, 0.0, 1.0)), hash13(i + vec3(1.0, 0.0, 1.0)), f.x), mix(hash13(i + vec3(0.0, 1.0, 1.0)), hash13(i + vec3(1.0, 1.0, 1.0)), f.x), f.y);
+    return mix(a, b, f.z);
+}
+
 float lum(vec3 c) {
     return dot(c, vec3(0.3, 0.59, 0.11));
 }
@@ -53,16 +73,16 @@ bool isOcean(vec3 c) {
     return Sea >= 0.0 && c.b > c.r * 1.15 && c.b > c.g * 0.95;
 }
 
-// Height of the ground (whole blocks above Radius) under this colour of the map.
-float groundOf(vec3 c) {
+// Height of the ground (whole blocks above Radius) under this colour of the map, in this direction (hills on top).
+float groundOf(vec3 c, vec3 dir) {
     if (isOcean(c)) {
         return max(Sea - 2.0, 0.0);
     }
-    float h = floor(lum(c) * Relief + 0.5);
+    float h = floor(lum(c) * Relief + 0.5) + floor((hillNoise(dir * Radius) - 0.5) * 2.0 * Hills + 0.5);
     if (Sea >= 0.0) {
         h = max(h, Sea);
     }
-    return h;
+    return max(h, 0.0);
 }
 
 float tileFor(vec3 c, float h, bool water) {
@@ -119,7 +139,7 @@ void main() {
         if (sky.a <= 0.002) {
             discard;
         }
-        fragColor = vec4(sky.rgb, sky.a * Alpha);
+        fragColor = vec4(sky.rgb * sky.a * Alpha, sky.a * Alpha);
         return;
     }
     float t = max(-b - sqrt(disc), 0.0);
@@ -146,9 +166,10 @@ void main() {
             left = true;
             break;
         }
-        if (r < top) {
+        // (Starting inside a block, as on landing, look out of it.)
+        if (r < top && !(i == 0 && t <= 0.0)) {
             vec3 m = mapAt(cc / r);
-            ground = groundOf(m);
+            ground = groundOf(m, cc / r);
             float lift = r - Radius;
             if (lift < ground) {
                 hit = true;
@@ -185,7 +206,7 @@ void main() {
             if (sky.a <= 0.002) {
                 discard;
             }
-            fragColor = vec4(sky.rgb, sky.a * Alpha);
+            fragColor = vec4(sky.rgb * sky.a * Alpha, sky.a * Alpha);
             return;
         }
         // A grazing ray that would need too many steps: the smooth ground there instead.
@@ -195,7 +216,7 @@ void main() {
             if (sky.a <= 0.002) {
                 discard;
             }
-            fragColor = vec4(sky.rgb, sky.a * Alpha);
+            fragColor = vec4(sky.rgb * sky.a * Alpha, sky.a * Alpha);
             return;
         }
         vec3 q = o + d * max(-b - sqrt(disc2), 0.0);
@@ -206,7 +227,7 @@ void main() {
         if (inside > 0.0) {
             sm = mix(sm, sky.rgb, 0.8 * (1.0 - exp(-length(q - o) / (AirHeight * 3.0))));
         }
-        fragColor = vec4(sm, Alpha);
+        fragColor = vec4(sm * Alpha, Alpha);
         return;
     }
     vec3 n = axis == 0 ? vec3(-st.x, 0.0, 0.0) : (axis == 1 ? vec3(0.0, -st.y, 0.0) : (axis == 2 ? vec3(0.0, 0.0, -st.z) : radial));
@@ -215,8 +236,12 @@ void main() {
     uv = fract(uv);
     float tile = tileFor(col, ground, water);
     vec3 tex = face(tile, uv);
-    float detail = lum(tex) / 0.62;
-    vec3 base = mix(col * detail, tex * (0.35 + lum(col) * 1.1), 0.25);
+    // The block's own texture shows once a block is big enough on the screen (smaller, it would only shimmer).
+    float foot = PixelSize + PixelGrow * tEnter;
+    float dk = smoothstep(0.2, 0.085, foot);
+    float detail = mix(1.0, lum(tex) / 0.62, dk);
+    float jitter = 0.9 + 0.2 * hash13(cell + vec3(7.0, 3.0, 5.0));
+    vec3 base = mix(col * detail, tex * (0.35 + lum(col) * 1.1), 0.25 * dk) * jitter;
     if (water) {
         base = mix(col, vec3(0.1, 0.3, 0.6), 0.4) * (0.75 + 0.35 * detail);
     }
@@ -236,5 +261,5 @@ void main() {
         float f = 1.0 - exp(-length(hp - o) / (AirHeight * 3.0));
         lit = mix(lit, sky.rgb + AirColor * 0.15, f * 0.85);
     }
-    fragColor = vec4(lit, Alpha);
+    fragColor = vec4(lit * Alpha, Alpha);
 }

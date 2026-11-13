@@ -38,6 +38,7 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onInteract);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onMovement);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onRenderHand);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onHighlight);
         NeoForge.EVENT_BUS.addListener(ClientCommands::register);
         NeoForge.EVENT_BUS.addListener(ClientWeather::onLogout);
         NeoForge.EVENT_BUS.addListener(WeatherSounds::onPlaySound);

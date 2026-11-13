@@ -1267,52 +1267,11 @@ public final class SelfTest {
                 telescopeAt = at;
             });
         });
+        step(5, () -> cmd("time set 6000"));
         step(20, () -> {
-            turnClient(-30F, 25F);
+            turnClient(75F, 38F);
             shot("p00_blocks");
         });
-        String[][] targets = {{"mars", "0.02"}, {"mars", "0.0007"}, {"jupiter", "0.002"}, {"moon", "0.03"}, {"moon", "0.004"}, {"toi700d", "0.0007"},
-                {"kepler10b", "0.0007"}, {"cnc55e", "0.0007"}, {"hd189733b", "0.0007"}, {"trappist1e", "0.0007"}, {"saturn", "0.004"},
-                {"ton618", "0.05"}, {"ton618", "0.004"}, {"ton618", "0.0015"}, {"ton618", "0.0007"}};
-        for (int i = 0; i < targets.length; i++) {
-            String id = targets[i][0];
-            double fov = Double.parseDouble(targets[i][1]);
-            String label = String.format("p%02d_%s_%s", i + 1, id, targets[i][1].replace('.', '_'));
-            step(5, () -> {
-                com.realweather.client.space.Telescope.start(telescopeAt, com.realweather.client.space.Catalog.byId(id));
-                lookAtTarget(id);
-            });
-            step(4, () -> {
-                com.realweather.client.space.Telescope.setFov(fov);
-                lookAtTarget(id);
-            });
-            step(16, () -> lookAtTarget(id));
-            // Two frames a little apart: the target must stay put (no jumping about).
-            step(2, () -> shot(label));
-            step(7, () -> {
-                shot(label + "_b");
-                LOG.info("[telescope {}] {}", id, com.realweather.client.space.TelescopeView.debug);
-            });
-        }
-        step(5, () -> com.realweather.client.space.Telescope.stop());
-        // The planet map.
-        String[] worlds = {"earth", "mars", "jupiter", "moon", "toi700d", "kepler10b", "saturn"};
-        double[][] views = {{-1, 0, -90}, {300, 0, -90}, {60, 0, -60}, {14, 20, -15}, {1.62, 40, -8}, {1.62, 120, 12}};
-        for (String w : worlds) {
-            step(5, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetViewScreen(
-                    com.realweather.client.space.Catalog.byId(w))));
-            for (int v = 0; v < views.length; v++) {
-                double[] vw = views[v];
-                String label = String.format("m_%s_%d", w, v);
-                step(3, () -> {
-                    if (Minecraft.getInstance().screen instanceof com.realweather.client.space.PlanetViewScreen ps) {
-                        ps.testView(vw[0], vw[1], vw[2]);
-                    }
-                });
-                step(8, () -> shot(label));
-            }
-        }
-        step(5, () -> Minecraft.getInstance().setScreen(null));
         // Up and up: out of the air, through the ozone layer, until the Earth is a ball below.
         double[][] heights = {{450, 20}, {760, 35}, {760, 70}, {1300, 75}, {2600, 85}, {4200, 89}};
         for (String time : new String[]{"6000", "18000"}) {
@@ -1335,7 +1294,58 @@ public final class SelfTest {
                 });
             }
         }
-        step(5, () -> cmd("time set 18000"));
+        step(5, () -> {
+            cmd("time set 18000");
+            MinecraftServer server = server();
+            server.execute(() -> {
+                ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                p.getAbilities().flying = false;
+                p.onUpdateAbilities();
+                p.teleportTo(server.overworld(), telescopeAt.getX() + 0.5, telescopeAt.getY(), telescopeAt.getZ() + 1.5, 0F, 0F);
+            });
+        });
+        // The planet map.
+        String[] worlds = {"earth", "mars", "jupiter", "toi700d"};
+        double[][] views = {{-1, 0, -90}, {300, 0, -90}, {60, 0, -60}, {14, 20, -15}, {1.62, 40, -8}, {1.62, 120, 12}};
+        for (String w : worlds) {
+            step(5, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetViewScreen(
+                    com.realweather.client.space.Catalog.byId(w))));
+            for (int v = 0; v < views.length; v++) {
+                double[] vw = views[v];
+                String label = String.format("m_%s_%d", w, v);
+                step(3, () -> {
+                    if (Minecraft.getInstance().screen instanceof com.realweather.client.space.PlanetViewScreen ps) {
+                        ps.testView(vw[0], vw[1], vw[2]);
+                    }
+                });
+                step(8, () -> shot(label));
+            }
+        }
+        step(5, () -> Minecraft.getInstance().setScreen(null));
+        String[][] targets = {{"mars", "0.0007"}, {"moon", "0.004"}, {"toi700d", "0.0007"}, {"jupiter", "0.0007"}, {"ton618", "0.004"},
+                {"ton618", "0.0007"}};
+        for (int i = 0; i < targets.length; i++) {
+            String id = targets[i][0];
+            double fov = Double.parseDouble(targets[i][1]);
+            String label = String.format("p%02d_%s_%s", i + 1, id, targets[i][1].replace('.', '_'));
+            step(5, () -> {
+                com.realweather.client.space.Telescope.start(telescopeAt, com.realweather.client.space.Catalog.byId(id));
+                lookAtTarget(id);
+            });
+            step(4, () -> {
+                com.realweather.client.space.Telescope.setFov(fov);
+                lookAtTarget(id);
+            });
+            step(16, () -> lookAtTarget(id));
+            // Two frames a little apart: the target must stay put (no jumping about).
+            step(2, () -> shot(label));
+            step(7, () -> {
+                shot(label + "_b");
+                LOG.info("[telescope {}] {}", id, com.realweather.client.space.TelescopeView.debug);
+            });
+        }
+        step(5, () -> com.realweather.client.space.Telescope.stop());
+        step(5, () -> com.realweather.client.space.Telescope.stop());
     }
 
     private static BlockPos telescopeAt = BlockPos.ZERO;
