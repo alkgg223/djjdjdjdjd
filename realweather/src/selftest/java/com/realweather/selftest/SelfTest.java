@@ -1006,18 +1006,6 @@ public final class SelfTest {
         });
         step(60, SelfTest::platform);
         step(140, () -> LOG.info("waiting for the world around the platform to load"));
-        // The four kinds of lightning at night under a storm, each with the cloud lit in its colour.
-        step(5, () -> cmd("execute as @a at @s run rw thunderstorm"));
-        step(200, () -> turnClient(180F, -8F));
-        String[] kinds = com.realweather.LightningKind.NAMES;
-        for (int k = 0; k < kinds.length; k++) {
-            int kind = k;
-            step(30, () -> boltAhead(kind, 70));
-            step(2, () -> shot("a0_lightning_" + kinds[kind]));
-            step(4, () -> cloudFlashAhead(kind));
-            step(2, () -> shot("a1_cloud_flash_" + kinds[kind]));
-        }
-        step(5, () -> cmd("rw clear"));
         // Sky events at night, each looked at directly.
         int[] night = {com.realweather.server.SkyEvent.LUNAR_ECLIPSE, com.realweather.server.SkyEvent.SUPERMOON,
                 com.realweather.server.SkyEvent.METEOR_SHOWER, com.realweather.server.SkyEvent.COMET, com.realweather.server.SkyEvent.FIREBALLS,
@@ -1029,7 +1017,7 @@ public final class SelfTest {
                 com.realweather.server.SkyEvent.STAR_OCCULTATION, com.realweather.server.SkyEvent.TRIPLE_CONJUNCTION,
                 com.realweather.server.SkyEvent.WANDERING_COMET, com.realweather.server.SkyEvent.FAINT_COMET,
                 com.realweather.server.SkyEvent.DUST_GLOW, com.realweather.server.SkyEvent.STAR_FLARES};
-        float[] at = {0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.47F, 0.5F, 0.5F, 0.42F, 0.05F, 0.0F, 0.33F, 0.5F, 0.5F, 0.5F, 0.42F, 0.5F,
+        float[] at = {0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.33F, 0.5F, 0.5F, 0.42F, 0.05F, 0.035F, 0.33F, 0.5F, 0.5F, 0.5F, 0.42F, 0.5F,
                 0.5F, 0.5F, 0.5F, 0.5F};
         for (int i = 0; i < night.length; i++) {
             int type = night[i];
@@ -1046,9 +1034,12 @@ public final class SelfTest {
                 step(5, () -> skyAt(type, 0.0125F));
                 step(8, () -> lookAtEvent(type));
             }
-            if (type == com.realweather.server.SkyEvent.RECURRENT_NOVA) {
-                step(5, () -> skyAt(type, 0.0005F));
-                step(12, () -> lookAtEvent(type));
+            if (type == com.realweather.server.SkyEvent.LUNAR_ECLIPSE) {
+                // Partly in the shadow first.
+                step(5, () -> skyAt(type, 0.37F));
+                step(10, () -> shot("b00_lunar_eclipse_partial"));
+                step(5, () -> skyAt(type, 0.5F));
+                step(10, () -> lookAtEvent(type));
             }
             step(4, () -> shot(String.format("b%02d_%s", 0, name)));
             if (type == com.realweather.server.SkyEvent.METEOR_SHOWER || type == com.realweather.server.SkyEvent.SPORADIC_METEORS) {
@@ -1057,20 +1048,6 @@ public final class SelfTest {
             }
             step(1, () -> skyState(name));
         }
-        // Lightning high over a storm: sprites, jets and elves.
-        step(5, () -> {
-            cmd("time set 15000");
-            skyAt(com.realweather.server.SkyEvent.UPPER_LIGHTNING, 0.3F);
-            cmd("execute as @a at @s run rw thunderstorm");
-        });
-        for (int i = 0; i < 4; i++) {
-            int n = i;
-            step(40, () -> com.realweather.client.sky.ClientSkyEvents.upperFlash(Minecraft.getInstance().level,
-                    Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()));
-            step(1, () -> lookAtEvent(com.realweather.server.SkyEvent.UPPER_LIGHTNING));
-            step(2, () -> shot("c0_upper_lightning_" + n));
-        }
-        step(5, () -> cmd("rw clear"));
         // In the daytime, at the sun.
         int[] day = {com.realweather.server.SkyEvent.TRANSIT, com.realweather.server.SkyEvent.SATELLITE_TRANSIT,
                 com.realweather.server.SkyEvent.CORONAL_MASS_EJECTION};
@@ -1117,6 +1094,37 @@ public final class SelfTest {
             step(4, () -> shot(String.format("f1_hybrid_%02d", (int) (pr * 100))));
         }
         step(5, () -> eclipseState("hybrid"));
+        // Lightning high over a storm: sprites, jets and elves.
+        step(5, () -> {
+            cmd("time set 15000");
+            skyAt(com.realweather.server.SkyEvent.UPPER_LIGHTNING, 0.3F);
+            cmd("execute as @a at @s run rw thunderstorm");
+        });
+        for (int i = 0; i < 4; i++) {
+            int n = i;
+            step(40, () -> com.realweather.client.sky.ClientSkyEvents.upperFlash(Minecraft.getInstance().level,
+                    Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()));
+            step(1, () -> lookAtEvent(com.realweather.server.SkyEvent.UPPER_LIGHTNING));
+            step(2, () -> shot("c0_upper_lightning_" + n));
+        }
+        step(5, () -> cmd("rw clear"));
+        // The four kinds of lightning at night under a storm, each with the cloud lit in its colour.
+        step(5, () -> {
+            cmd("time set 15000");
+            cmd("execute as @a at @s run rw thunderstorm");
+        });
+        step(200, () -> turnClient(180F, -8F));
+        String[] kinds = com.realweather.LightningKind.NAMES;
+        for (int k = 0; k < kinds.length; k++) {
+            int kind = k;
+            step(30, () -> boltAhead(kind, 70));
+            step(3, () -> shot("a0_lightning_" + kinds[kind] + "_1"));
+            step(3, () -> shot("a0_lightning_" + kinds[kind] + "_2"));
+            step(3, () -> shot("a0_lightning_" + kinds[kind] + "_3"));
+            step(20, () -> cloudFlashAhead(kind));
+            step(1, () -> shot("a1_cloud_flash_" + kinds[kind]));
+        }
+        step(5, () -> cmd("rw clear"));
         // A command to check it is all wired up.
         step(5, () -> {
             cmd("rw sky meteor_shower");

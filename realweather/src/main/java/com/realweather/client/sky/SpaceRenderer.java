@@ -158,13 +158,13 @@ public final class SpaceRenderer {
         switch (type) {
             case SkyEvent.COMET -> d = nightDir(e.seed, 1, 0.55F, 0.6F).clone();
             case SkyEvent.FAINT_COMET -> {
-                float side = h(e.seed, 5) < 0.5F ? -1F : 1F;
-                d = norm((h(e.seed, 6) - 0.5F) * 0.3F, Mth.cos(0.75F), side * Mth.sin(0.75F)).clone();
+                d = norm((h(e.seed, 6) - 0.5F) * 0.3F, Mth.cos(0.75F), -Mth.sin(0.75F)).clone();
             }
             case SkyEvent.CONJUNCTION, SkyEvent.TRIPLE_CONJUNCTION -> d = nightDir(e.seed, 1, 0.12F, 0.55F).clone();
             case SkyEvent.ALIGNMENT -> {
                 float shift = (h(e.seed, 1) - 0.5F) * 0.5F;
-                d = norm(0F, -Mth.cos(shift), Mth.sin(shift)).clone();
+                float lane = (h(e.seed, 2) < 0.5F ? -1F : 1F) * (0.2F + 0.08F * h(e.seed, 3));
+                d = norm(lane, -Mth.cos(shift), Mth.sin(shift)).clone();
             }
             case SkyEvent.SUPERNOVA -> d = nightDir(e.seed, 1, 0.8F, 0.8F).clone();
             case SkyEvent.RECURRENT_NOVA, SkyEvent.STAR_FLARES -> d = nightDir(e.seed, 1, 0.7F, 0.7F).clone();
@@ -375,6 +375,13 @@ public final class SpaceRenderer {
     /** A direction in the sky frame around the point opposite the sun (seen at night), offset by up to `sx`, `sz`. */
     private static float[] nightDir(long seed, int salt, float sx, float sz) {
         float x = (h(seed, salt) - 0.5F) * 2F * sx, z = (h(seed, salt + 1) - 0.5F) * 2F * sz;
+        // Not right behind the moon (it would cover them): at least about 14 degrees from it.
+        float off = Mth.sqrt(x * x + z * z);
+        if (off < 0.25F) {
+            float k = off < 1.0E-3F ? 0F : 0.25F / off;
+            x = off < 1.0E-3F ? 0.25F : x * k;
+            z *= k;
+        }
         return norm(x, -1F, z);
     }
 
@@ -657,18 +664,18 @@ public final class SpaceRenderer {
             return;
         }
         frame(world);
-        float rate = sporadic ? 0.12F : 0.15F + 0.85F * (float) Math.exp(-((p - 0.5F) / 0.22F) * ((p - 0.5F) / 0.22F));
+        float rate = sporadic ? 0.3F : 0.2F + 0.8F * (float) Math.exp(-((p - 0.5F) / 0.22F) * ((p - 0.5F) / 0.22F));
         float raz = h(e.seed, 1) * Mth.TWO_PI, rel = 0.6F + 0.5F * h(e.seed, 2);
         float[] rad = local(raz, rel);
         float rx = rad[0], ry = rad[1], rz = rad[2];
         double age = t - e.start;
-        long first = (long) Math.floor((age - 32) / 5.0), last = (long) Math.floor(age / 5.0);
+        long first = (long) Math.floor((age - 32) / 3.0), last = (long) Math.floor(age / 3.0);
         begin(METEOR, ADD);
         for (long k = Math.max(0, first); k <= last; k++) {
-            if (h(e.seed, k * 7 + 100) > 0.42F * rate) {
+            if (h(e.seed, k * 7 + 100) > 0.8F * rate) {
                 continue;
             }
-            double born = k * 5.0 + h(e.seed, k * 7 + 101) * 5.0;
+            double born = k * 3.0 + h(e.seed, k * 7 + 101) * 3.0;
             float life = 10F + h(e.seed, k * 7 + 102) * 16F;
             float f = (float) ((age - born) / life);
             if (f < 0F || f > 1F) {
@@ -682,7 +689,7 @@ public final class SpaceRenderer {
                 oz = o[2];
             }
             float a0 = Mth.DEG_TO_RAD * (10F + h(e.seed, k * 7 + 103) * 50F);
-            float travel = Mth.DEG_TO_RAD * (6F + h(e.seed, k * 7 + 104) * 18F);
+            float travel = Mth.DEG_TO_RAD * (8F + h(e.seed, k * 7 + 104) * 22F);
             float psi = h(e.seed, k * 7 + 105) * Mth.TWO_PI;
             float bright = 0.5F + (float) Math.pow(h(e.seed, k * 7 + 108), 3) * 1.5F;
             int tint = (int) (h(e.seed, k * 7 + 109) * 4F);
@@ -690,8 +697,8 @@ public final class SpaceRenderer {
             float cg = tint == 1 ? 1F : tint == 2 ? 0.75F : tint == 3 ? 0.9F : 0.95F;
             float cb = tint == 1 ? 0.75F : tint == 2 ? 0.5F : tint == 3 ? 1F : 0.82F;
             float headA = a0 + travel * f, tailA = a0 + travel * Math.max(0F, f - 0.55F);
-            streak(ox, oy, oz, psi, tailA, headA, 0.28F + 0.22F * bright,
-                    cr, cg, cb, (float) Math.pow(Mth.sin(Mth.PI * f), 0.6) * Math.min(1F, bright) * vis);
+            streak(ox, oy, oz, psi, tailA, headA, 0.45F + 0.35F * bright,
+                    cr, cg, cb, (float) Math.pow(Mth.sin(Mth.PI * f), 0.5) * Math.min(1F, 0.35F + bright) * vis);
         }
     }
 
@@ -838,8 +845,8 @@ public final class SpaceRenderer {
         float[] d;
         if (evening) {
             // A faint comet low in the west after sunset (not far from the sun).
-            float side = h(e.seed, 5) < 0.5F ? -1F : 1F;
-            d = norm((h(e.seed, 6) - 0.5F) * 0.3F, Mth.cos(0.75F), side * Mth.sin(0.75F));
+            // On the side of the sun that is still above the horizon after sunset.
+            d = norm((h(e.seed, 6) - 0.5F) * 0.3F, Mth.cos(0.75F), -Mth.sin(0.75F));
         } else {
             d = nightDir(e.seed, 1, 0.55F, 0.6F);
         }
@@ -907,9 +914,10 @@ public final class SpaceRenderer {
         float ex = R[0], ey = R[1], ez = R[2], nx = U[0], ny = U[1], nz = U[2];
         float sep = (2.5F + 4F * Math.abs(p - 0.5F)) * Mth.DEG_TO_RAD;
         if (triple) {
-            place(JUPITER, bx, by, bz, ex, ey, ez, nx, ny, nz, -sep, 0.2F * sep, 2.3F, vis, 0.95F, 0.85F, 0.7F);
-            place(-1, bx, by, bz, ex, ey, ez, nx, ny, nz, 0F, -0.15F * sep, 1.6F, vis, 0.95F, 0.88F, 0.7F);
-            place(MARS, bx, by, bz, ex, ey, ez, nx, ny, nz, sep * 0.95F, 0.3F * sep, 1.1F, vis, 1F, 0.6F, 0.45F);
+            float wide = sep * 2.2F;
+            place(JUPITER, bx, by, bz, ex, ey, ez, nx, ny, nz, -wide, 0.15F * wide, 2.4F, vis, 0.95F, 0.85F, 0.7F);
+            place(-1, bx, by, bz, ex, ey, ez, nx, ny, nz, 0F, -0.12F * wide, 1.8F, vis, 0.95F, 0.88F, 0.7F);
+            place(MARS, bx, by, bz, ex, ey, ez, nx, ny, nz, wide, 0.2F * wide, 1.2F, vis, 1F, 0.6F, 0.45F);
         } else {
             place(JUPITER, bx, by, bz, ex, ey, ez, nx, ny, nz, -sep * 0.5F, 0F, 2.3F, vis, 0.95F, 0.85F, 0.7F);
             place(MARS, bx, by, bz, ex, ey, ez, nx, ny, nz, sep * 0.5F, 0.35F * sep, 1.2F, vis, 1F, 0.6F, 0.45F);
@@ -940,9 +948,11 @@ public final class SpaceRenderer {
         float[] sizes = {1F, 1.15F, 1.45F, 2.3F, 1.05F, 1.7F};
         float[][] glowC = {{0.5F, 0.65F, 1F}, {1F, 0.6F, 0.45F}, {1F, 0.97F, 0.85F}, {0.95F, 0.85F, 0.7F}, {0.6F, 0.9F, 0.95F}, {0.95F, 0.88F, 0.7F}};
         float shift = (h(e.seed, 1) - 0.5F) * 0.5F;
+        // A little north or south of the moon's path, so the moon does not sit on top of one of them.
+        float lane = (h(e.seed, 2) < 0.5F ? -1F : 1F) * (0.2F + 0.08F * h(e.seed, 3));
         for (int i = 0; i < cells.length; i++) {
             float phi = (-48F + i * 19F) * Mth.DEG_TO_RAD + shift;
-            float x = 0.05F * Mth.sin(i * 1.7F) + (h(e.seed, 2) - 0.5F) * 0.15F;
+            float x = 0.05F * Mth.sin(i * 1.7F) + lane;
             float[] d = norm(x, -Mth.cos(phi), Mth.sin(phi));
             float dx = d[0], dy = d[1], dz = d[2];
             glow(dx, dy, dz, sizes[i] * 3.2F, glowC[i][0], glowC[i][1], glowC[i][2], 0.3F * vis);
@@ -1007,10 +1017,10 @@ public final class SpaceRenderer {
                 flare = Math.max(flare, f < 0.08F ? f / 0.08F : (float) Math.exp(-(f - 0.08F) * 5F));
             }
         }
-        glow(dx, dy, dz, 7F + 10F * flare, 1F, 0.32F, 0.15F, (0.45F + 0.45F * flare) * vis);
+        glow(dx, dy, dz, 10F + 14F * flare, 1F, 0.32F, 0.15F, (0.55F + 0.45F * flare) * vis);
         begin(NOVA, ADD);
-        sprite(dx, dy, dz, 5F + 7F * flare, 5F + 7F * flare, 1F, 0F, 0F, 0F, 0F, 1F, 1F, 1F, 0.55F, 0.3F, 0.6F * flare * vis);
-        star(dx, dy, dz, 3F + 9F * flare, 1F, 0.55F + 0.3F * flare, 0.35F + 0.4F * flare, (0.55F + 0.45F * flare) * vis);
+        sprite(dx, dy, dz, 7F + 9F * flare, 7F + 9F * flare, 1F, 0F, 0F, 0F, 0F, 1F, 1F, 1F, 0.55F, 0.3F, (0.25F + 0.6F * flare) * vis);
+        star(dx, dy, dz, 6F + 12F * flare, 1F, 0.55F + 0.3F * flare, 0.35F + 0.4F * flare, (0.7F + 0.3F * flare) * vis);
         basis(dx, dy, dz, 0F, 0F, 1F);
         float[] pd = norm(dx + R[0] * 0.05F - U[0] * 0.025F, dy + R[1] * 0.05F - U[1] * 0.025F, dz + R[2] * 0.05F - U[2] * 0.025F);
         planet(MARS, pd[0], pd[1], pd[2], 0.9F, 1F, 0F, 0F, 0.85F * vis);
@@ -1107,10 +1117,11 @@ public final class SpaceRenderer {
         float px = P[0], py = P[1], pz = P[2];
         float a = vis * smooth(0F, 0.12F, py);
         float warm = 1F - smooth(0.05F, 0.3F, py) * 0.3F;
-        glow(px, py, pz, 9F, 1F, 0.95F * warm, 0.85F * warm, 0.22F * a);
+        glow(px, py, pz, 13F, 1F, 0.95F * warm, 0.85F * warm, 0.22F * a);
         begin(ISS, NORMAL);
-        sprite(px, py, pz, 6.2F, 3.1F, V[0], V[1], V[2], 0F, 0F, 1F, 1F, 1F, 0.97F * warm, 0.9F * warm, a);
-        star(px, py, pz, 2.2F, 1F, 1F, 0.95F, 0.5F * a);
+        sprite(px, py, pz, 9.5F, 4.75F, V[0], V[1], V[2], 0F, 0F, 1F, 1F, 1F, 0.97F * warm, 0.9F * warm, a);
+        // Sunlight glinting off the solar wings.
+        star(px, py, pz, 3.5F, 1F, 1F, 0.95F, 0.45F * a);
     }
 
     /** A train of satellites in a line, gliding across the sky one after another and fading into the Earth's shadow. */
@@ -1164,7 +1175,7 @@ public final class SpaceRenderer {
         frame(world);
         for (double[] f : ClientSkyEvents.FLASHES) {
             float age = (float) (t - f[4]);
-            float a = age < 0F ? 0F : (float) Math.exp(-age / 2.2F) * night;
+            float a = age < 0F ? 0F : Math.min(1F, (float) Math.exp(-age / 3F) * night * 1.4F);
             if (a <= 0.01F) {
                 continue;
             }
@@ -1178,7 +1189,7 @@ public final class SpaceRenderer {
                     float ox = (i - 1) * 110F * size, cy = deck + 520F * size;
                     float[] d = norm(x + ox, cy, z);
                     float dist = Mth.sqrt((x + ox) * (x + ox) + cy * cy + z * z);
-                    float hh = 260F * size / dist * 100F, hw = hh * 0.5F;
+                    float hh = 380F * size / dist * 100F, hw = hh * 0.5F;
                     begin(SPRITE, ADD);
                     spriteUpright(d[0], d[1], d[2], hw, hh, 0F, 0F, 1F, 1F, 1F, 1F, 1F, a * (i == 1 ? 1F : 0.7F));
                 }
@@ -1187,7 +1198,7 @@ public final class SpaceRenderer {
                 float cy = deck + 260F * size;
                 float[] d = norm(x, cy, z);
                 float dist = Mth.sqrt(x * x + cy * cy + z * z);
-                float hh = 180F * size / dist * 100F;
+                float hh = 260F * size / dist * 100F;
                 begin(JET, ADD);
                 spriteUpright(d[0], d[1], d[2], hh * 0.25F, hh, 0F, 0F, 1F, 1F, 1F, 1F, 1F, a);
             } else {
