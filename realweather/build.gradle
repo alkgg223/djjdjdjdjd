@@ -29,7 +29,8 @@ neoForge {
             client()
             gameDirectory = project.file('run/client')
             if (selftest) {
-                programArguments.addAll('--quickPlaySingleplayer', 'rwtest', '--width', '1280', '--height', '720')
+                programArguments.addAll('--quickPlaySingleplayer', 'rwtest', '--width', System.getenv('RW_WIDTH') ?: '1280', '--height',
+                        System.getenv('RW_HEIGHT') ?: '720')
                 systemProperty 'realweather.selftest', 'true'
             }
         }

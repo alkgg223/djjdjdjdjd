@@ -21,6 +21,8 @@ import net.neoforged.neoforge.client.event.RegisterShadersEvent;
  */
 public final class SpaceShaders {
     public static final ResourceLocation BLOCKS = RealWeather.id("textures/environment/space3d/planet_blocks.png");
+    /** On the test machine's software renderer the ray tracing is cut short (only to check it in screenshots). */
+    private static final boolean TESTING = Boolean.getBoolean("realweather.selftest");
     private static ShaderInstance voxel, hole;
     private static boolean broken;
 
@@ -92,7 +94,7 @@ public final class SpaceShaders {
             s.safeGetUniform("Ambient").set(p.ambient);
             s.safeGetUniform("Glow").set(p.glow);
             s.safeGetUniform("Alpha").set(Math.min(1F, p.alpha));
-            s.safeGetUniform("MaxSteps").set(p.steps);
+            s.safeGetUniform("MaxSteps").set(TESTING ? Math.min(p.steps, 72F) : p.steps);
             s.safeGetUniform("Tiles").set(p.tiles[0], p.tiles[1], p.tiles[2], p.tiles[3]);
             s.safeGetUniform("Gas").set(p.gas ? 1F : 0F);
             s.safeGetUniform("Air").set(p.air);
@@ -134,7 +136,7 @@ public final class SpaceShaders {
             s.safeGetUniform("Alpha").set(alpha);
             s.safeGetUniform("Edge").set(edge);
             s.safeGetUniform("Exposure").set(exposure);
-            s.safeGetUniform("MaxSteps").set(steps);
+            s.safeGetUniform("MaxSteps").set(TESTING ? Math.min(steps, 120F) : steps);
             RenderSystem.setShader(() -> s);
             draw(x0, y0, x1, y1);
         } catch (RuntimeException e) {
