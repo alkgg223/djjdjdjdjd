@@ -11,6 +11,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import com.realweather.RealWeather;
 import com.realweather.client.ClientWeather;
+import com.realweather.client.space.Space3D;
 import com.realweather.server.SkyEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -23,43 +24,50 @@ import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.lwjgl.opengl.GL14;
 
+import static com.realweather.client.space.Space3D.ADD;
+import static com.realweather.client.space.Space3D.NORMAL;
+
 /**
- * The sky events, drawn right after the sky (so the clouds and the land are drawn in front of them). Things fixed among
- * the stars (planets, comets, novae, the Milky Way) turn with the sky like the stars do; passes of satellites, meteors,
- * fireballs and the aurora are placed in the local sky. Most are only seen when the sky is dark and clear.
+ * The sky events as real 3D objects out in space, drawn after the sky (so the clouds and the land are in front of
+ * them) but separate from it: lit planets and moons with day and night sides, comets with tails of streaming dust,
+ * meteors and fireballs burning through the air along real paths, the space station and satellites as lit models
+ * flashing in the sun, curtains of aurora hanging high over the land, and stars blazing in fire. Things fixed among the
+ * stars turn with the sky; the rest is placed in the local sky.
  */
 public final class SpaceRenderer {
     private static final ResourceLocation MOON = ResourceLocation.withDefaultNamespace("textures/environment/moon_phases.png");
-    private static final ResourceLocation DISC = RealWeather.id("textures/environment/disc.png");
-    private static final ResourceLocation GLOW = tex("glow"), STAR = tex("star"), METEOR = tex("meteor"), FIREBALL = tex("fireball"),
-            COMET = tex("comet"), PLANETS = tex("planets"), SATURN = tex("saturn"), ISS = tex("iss"), SATELLITE = tex("satellite"),
-            AURORA = tex("aurora"), MILKY_WAY = tex("milky_way"), SUPERNOVA = tex("supernova"), NOVA = tex("nova_shell"),
-            LOOPS = tex("coronal_loops"), SPRITE = tex("red_sprite"), JET = tex("blue_jet");
-    /** Planet cells in the atlas. */
-    private static final int MERCURY = 0, VENUS = 1, MARS = 2, JUPITER = 3, URANUS = 4, NEPTUNE = 5;
-    private static final int ADD = 0, NORMAL = 1, SUBTRACT = 2;
-    /** The vanilla moon: half-size of its quad, and the radius of the disc in it. */
-    private static final float MOON_Q = 20F, MOON_R = 10F;
-    private static final float SUN_R = EclipseRenderer.SUN_R;
+    private static final ResourceLocation MOON_MAP = map("moon"), JUPITER = map("jupiter"), SATURN = map("saturn"), MARS = map("mars"),
+            VENUS = map("venus"), MERCURY = map("mercury"), URANUS = map("uranus"), NEPTUNE = map("neptune"), RINGS = map("rings"),
+            STAR_MAP = map("star_surface"), PANEL = map("panel"), LINE = map("line"), TOI700E = map("toi700e");
+    private static final ResourceLocation METEOR = tex("meteor"), FIREBALL = tex("fireball"), AURORA = tex("aurora"), MILKY_WAY = tex("milky_way"),
+            SPRITE = tex("red_sprite");
+    private static final ResourceLocation GLOW = Space3D.GLOW, STAR = Space3D.STAR, FLAME = Space3D.FLAME, WHITE = Space3D.WHITE;
+    /** Distances (blocks) and the vanilla moon's and sun's angular radii (radians). */
+    private static final double MOON_D = 2500, SUN_D = 3000, PLANET_D = 9000, COMET_D = 14000, STAR_D = 30000, MILKY_D = 50000;
+    private static final double MOON_A = Math.atan(0.1), SUN_A = Math.atan(0.15);
+    private static final float MOON_Q = 20F;
 
     private static boolean failed;
-    private static BufferBuilder buf;
-    private static ResourceLocation bound;
-    private static int boundMode = -1;
-    private static Matrix4f world, sky;
-    private static Matrix4f current;
-    /** This frame: game time, how dark and how clear the sky is, how high the sun is (-1..1). */
     private static double t;
     private static float night, clear, sunY;
+    private static final double[] V = new double[3], W = new double[3];
 
     private SpaceRenderer() {}
+
+    static ResourceLocation map(String name) {
+        return RealWeather.id("textures/environment/space3d/" + name + ".png");
+    }
 
     private static ResourceLocation tex(String name) {
         return RealWeather.id("textures/environment/space/" + name + ".png");
     }
 
     public static void onRenderStage(RenderLevelStageEvent event) {
-        if (failed || event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY || ClientSkyEvents.isEmpty()) {
+        if (failed || event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) {
+            return;
+        }
+        boolean telescope = com.realweather.client.space.Telescope.active();
+        if (ClientSkyEvents.isEmpty() && !telescope) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -71,53 +79,43 @@ public final class SpaceRenderer {
         t = level.getGameTime() + pt;
         night = Mth.clamp(level.getStarBrightness(pt) * 2.2F, 0F, 1F);
         clear = Mth.clamp(1F - level.getRainLevel(pt), 0F, 1F);
-        float angle = level.getTimeOfDay(pt) * Mth.TWO_PI;
-        sunY = Mth.cos(angle);
-        world = new Matrix4f(event.getModelViewMatrix());
-        sky = new Matrix4f(event.getModelViewMatrix()).rotate(Axis.YP.rotationDegrees(-90F)).rotate(Axis.XP.rotationDegrees(level.getTimeOfDay(pt) * 360F));
-        Matrix4fStack mv = RenderSystem.getModelViewStack();
-        mv.pushMatrix();
-        RenderSystem.enableBlend();
-        RenderSystem.disableDepthTest();
-        RenderSystem.depthMask(false);
-        RenderSystem.disableCull();
-        current = null;
+        sunY = Mth.cos(level.getTimeOfDay(pt) * Mth.TWO_PI);
         try {
-            for (SkyEvent e : ClientSkyEvents.EVENTS) {
-                if (e.active(t)) {
-                    draw(e, level, event);
-                }
+            // The events that replace the moon take vanilla's out first (in vanilla's own frame).
+            float swap = Space3D.smooth(0.15F, 0.4F, night);
+            if (swap > 0.01F && (ClientSkyEvents.get(SkyEvent.LUNAR_ECLIPSE, t) != null || ClientSkyEvents.get(SkyEvent.SUPERMOON, t) != null)) {
+                removeVanillaMoon(event, level, pt, swap);
             }
-            flush();
+            Space3D.begin(event, level, pt);
+            try {
+                if (telescope) {
+                    com.realweather.client.space.TelescopeView.render(event, level, pt);
+                    Space3D.range(5F, 80000F);
+                }
+                for (SkyEvent e : ClientSkyEvents.EVENTS) {
+                    if (e.active(t)) {
+                        draw(e, event);
+                    }
+                }
+            } finally {
+                Space3D.end();
+            }
         } catch (RuntimeException e) {
             failed = true;
             RealWeather.LOG.error("Sky events disabled after an error", e);
-        } finally {
-            buf = null;
-            bound = null;
-            boundMode = -1;
-            GlStateManager._blendEquation(GL14.GL_FUNC_ADD);
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.disableBlend();
-            RenderSystem.depthMask(true);
-            RenderSystem.enableDepthTest();
-            RenderSystem.enableCull();
-            mv.popMatrix();
-            RenderSystem.applyModelViewMatrix();
         }
     }
 
-    private static void draw(SkyEvent e, ClientLevel level, RenderLevelStageEvent event) {
+    private static void draw(SkyEvent e, RenderLevelStageEvent event) {
         float p = (float) e.progress(t);
-        // Fade in and out at the very start and end of long events.
         float edge = Mth.clamp(Math.min(p, 1F - p) * 40F, 0F, 1F);
         switch (e.type) {
-            case SkyEvent.LUNAR_ECLIPSE -> lunarEclipse(e, level, p);
-            case SkyEvent.SUPERMOON -> supermoon(level, edge);
+            case SkyEvent.LUNAR_ECLIPSE -> lunarEclipse(e, p);
+            case SkyEvent.SUPERMOON -> supermoon(edge);
             case SkyEvent.METEOR_SHOWER -> meteors(e, p, false);
             case SkyEvent.SPORADIC_METEORS -> meteors(e, p, true);
-            case SkyEvent.COMET -> comet(e, edge, 1F, false);
-            case SkyEvent.FAINT_COMET -> comet(e, edge, 0.42F, true);
+            case SkyEvent.COMET -> comet(e, edge, false);
+            case SkyEvent.FAINT_COMET -> comet(e, edge, true);
             case SkyEvent.WANDERING_COMET -> wanderingComet(e, p, edge);
             case SkyEvent.FIREBALLS, SkyEvent.DEBRIS_REENTRY -> fireballs(e);
             case SkyEvent.CONJUNCTION -> conjunction(e, p, edge, false);
@@ -143,239 +141,28 @@ public final class SpaceRenderer {
         }
     }
 
-    /** Where the main thing of a sky event is right now (a world direction), for pointing the camera at it; or null. */
-    public static float[] focus(int type, ClientLevel level, float pt) {
-        double time = level.getGameTime() + pt;
-        SkyEvent e = ClientSkyEvents.get(type, time);
-        if (e == null) {
-            return null;
-        }
-        t = time;
-        float p = (float) e.progress(time);
-        float th = level.getTimeOfDay(pt) * Mth.TWO_PI;
-        float[] d;
-        boolean skyFrame = true;
-        switch (type) {
-            case SkyEvent.COMET -> d = nightDir(e.seed, 1, 0.55F, 0.6F).clone();
-            case SkyEvent.FAINT_COMET -> {
-                d = norm((h(e.seed, 6) - 0.5F) * 0.3F, Mth.cos(0.75F), -Mth.sin(0.75F)).clone();
-            }
-            case SkyEvent.CONJUNCTION, SkyEvent.TRIPLE_CONJUNCTION -> d = nightDir(e.seed, 1, 0.12F, 0.55F).clone();
-            case SkyEvent.ALIGNMENT -> {
-                float shift = (h(e.seed, 1) - 0.5F) * 0.5F;
-                float lane = (h(e.seed, 2) < 0.5F ? -1F : 1F) * (0.2F + 0.08F * h(e.seed, 3));
-                d = norm(lane, -Mth.cos(shift), Mth.sin(shift)).clone();
-            }
-            case SkyEvent.SUPERNOVA -> d = nightDir(e.seed, 1, 0.8F, 0.8F).clone();
-            case SkyEvent.RECURRENT_NOVA, SkyEvent.STAR_FLARES -> d = nightDir(e.seed, 1, 0.7F, 0.7F).clone();
-            case SkyEvent.WANDERING_COMET -> {
-                float side = h(e.seed, 2) - 0.5F;
-                d = norm(side * 0.6F + 0.25F * Mth.sin(Mth.PI * p) + 0.3F * smooth(0.45F, 0.62F, p) * Math.signum(side + 0.01F), -1F,
-                        Mth.lerp(p, -0.75F, 0.75F)).clone();
-            }
-            case SkyEvent.TRANSIT, SkyEvent.SATELLITE_TRANSIT, SkyEvent.CORONAL_MASS_EJECTION -> d = new float[]{0F, 1F, 0F};
-            case SkyEvent.DUST_GLOW -> {
-                float tilt = (55F + h(e.seed, 1) * 25F) * Mth.DEG_TO_RAD, spin = h(e.seed, 2) * Mth.TWO_PI;
-                d = new float[]{Mth.sin(spin) * Mth.cos(tilt), -Mth.sin(tilt), -Mth.cos(spin) * Mth.cos(tilt)};
-            }
-            case SkyEvent.METEOR_SHOWER -> {
-                skyFrame = false;
-                d = local(h(e.seed, 1) * Mth.TWO_PI, Math.max(0.35F, 0.6F + 0.5F * h(e.seed, 2) - 0.4F)).clone();
-            }
-            case SkyEvent.AURORA, SkyEvent.AURORA_STORM -> {
-                skyFrame = false;
-                d = norm(0F, 0.4F, -1F).clone();
-            }
-            case SkyEvent.ISS, SkyEvent.SATELLITE_FLARE, SkyEvent.STARLINK -> {
-                skyFrame = false;
-                float span = type == SkyEvent.STARLINK ? 95F : type == SkyEvent.ISS ? 82F : 70F;
-                float lo = type == SkyEvent.STARLINK ? 35F : type == SkyEvent.ISS ? 40F : 45F, hi = type == SkyEvent.STARLINK ? 40F : 45F;
-                float shift = type == SkyEvent.STARLINK ? -14F : 0F;
-                pass(h(e.seed, 1) * Mth.TWO_PI, (lo + h(e.seed, 2) * hi) * Mth.DEG_TO_RAD, ((p * 2F - 1F) * span + shift) * Mth.DEG_TO_RAD);
-                d = P.clone();
-            }
-            case SkyEvent.FIREBALLS, SkyEvent.DEBRIS_REENTRY -> {
-                skyFrame = false;
-                boolean debris = type == SkyEvent.DEBRIS_REENTRY;
-                double[] fb = fireball(e, 0);
-                float f = fb == null ? 0.5F : Mth.clamp((float) ((time - fb[0]) / fb[1]), 0F, 1F);
-                float az = h(e.seed, 304) * Mth.TWO_PI + (h(e.seed, 305) - 0.5F) * (debris ? 1.4F : 1.1F) * f;
-                float el0 = debris ? 0.45F : 0.7F + h(e.seed, 306) * 0.5F, el1 = debris ? 0.22F : 0.08F + h(e.seed, 307) * 0.15F;
-                d = local(az, Mth.lerp(f, el0, el1)).clone();
-            }
-            case SkyEvent.UPPER_LIGHTNING -> {
-                skyFrame = false;
-                d = norm(0F, 0.25F, -1F).clone();
-                if (!ClientSkyEvents.FLASHES.isEmpty()) {
-                    double[] f = ClientSkyEvents.FLASHES.get(ClientSkyEvents.FLASHES.size() - 1);
-                    Vec3 cam = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-                    d = norm((float) (f[0] - cam.x), (float) (f[1] + 350 - cam.y), (float) (f[2] - cam.z)).clone();
-                }
-            }
-            case SkyEvent.RAINBOW -> {
-                // Opposite the sun, a little above the horizon.
-                float sx = -Mth.sin(th);
-                d = norm(sx > 0F ? -1F : 1F, 0.3F, 0F).clone();
-                skyFrame = false;
-            }
-            default -> d = new float[]{0F, -1F, 0F};
-        }
-        if (!skyFrame) {
-            return d;
-        }
-        // Sky frame to world: turned -90 degrees about Y after turning by the time of day about X.
-        float c = Mth.cos(th), sn = Mth.sin(th);
-        return new float[]{-(d[1] * sn + d[2] * c), d[1] * c - d[2] * sn, d[0]};
+    // ================================================================================== positions
+
+    /** A point in the sky frame (turning with the stars), in view space. */
+    private static double[] sky(double x, double y, double z) {
+        Space3D.apply(Space3D.SKYVIEW, x, y, z, V);
+        return V;
     }
 
-    // ================================================================================== drawing helpers
-
-    private static void frame(Matrix4f m) {
-        if (current != m) {
-            flush();
-            current = m;
-            Matrix4fStack mv = RenderSystem.getModelViewStack();
-            mv.set(m);
-            RenderSystem.applyModelViewMatrix();
-        }
+    /** A point in the local sky (camera-relative world), in view space. */
+    private static double[] world(double x, double y, double z) {
+        Space3D.apply(Space3D.VIEW, x, y, z, V);
+        return V;
     }
 
-    private static void begin(ResourceLocation texture, int mode) {
-        if (buf != null && bound == texture && boundMode == mode) {
-            return;
-        }
-        flush();
-        switch (mode) {
-            case ADD -> {
-                GlStateManager._blendEquation(GL14.GL_FUNC_ADD);
-                RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE,
-                        GlStateManager.DestFactor.ZERO);
-            }
-            case SUBTRACT -> {
-                GlStateManager._blendEquation(GL14.GL_FUNC_REVERSE_SUBTRACT);
-                RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ZERO,
-                        GlStateManager.DestFactor.ONE);
-            }
-            default -> {
-                GlStateManager._blendEquation(GL14.GL_FUNC_ADD);
-                RenderSystem.defaultBlendFunc();
-            }
-        }
-        if (texture == MOON) {
-            VolumeClouds.useGlowKeepFilter(texture);
-        } else {
-            VolumeClouds.useGlow(texture);
-        }
-        buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        bound = texture;
-        boundMode = mode;
+    private static float[] norm(double x, double y, double z) {
+        double l = Math.sqrt(x * x + y * y + z * z) + 1.0E-12;
+        return new float[]{(float) (x / l), (float) (y / l), (float) (z / l)};
     }
 
-    private static void flush() {
-        if (buf != null) {
-            MeshData mesh = buf.build();
-            if (mesh != null) {
-                BufferUploader.drawWithShader(mesh);
-            }
-            buf = null;
-        }
-    }
-
-    private static void vtx(float x, float y, float z, float u, float v, float r, float g, float b, float a) {
-        buf.addVertex(x, y, z).setUv(u, v).setColor(k(r), k(g), k(b), k(a));
-    }
-
-    private static float k(float v) {
-        return v < 0F ? 0F : v > 1F ? 1F : v;
-    }
-
-    /** A quad round a centre, with half-vectors to its right and up edges. */
-    private static void quad(float cx, float cy, float cz, float rx, float ry, float rz, float ux, float uy, float uz,
-                             float u0, float v0, float u1, float v1, float r, float g, float b, float a) {
-        vtx(cx - rx - ux, cy - ry - uy, cz - rz - uz, u0, v1, r, g, b, a);
-        vtx(cx + rx - ux, cy + ry - uy, cz + rz - uz, u1, v1, r, g, b, a);
-        vtx(cx + rx + ux, cy + ry + uy, cz + rz + uz, u1, v0, r, g, b, a);
-        vtx(cx - rx + ux, cy - ry + uy, cz - rz + uz, u0, v0, r, g, b, a);
-    }
-
-    private static final float[] R = new float[3], U = new float[3];
-
-    /**
-     * A sprite on the sky sphere (100 out) in direction d, facing the viewer, its width along `hint` (made square to
-     * the line of sight).
-     */
-    private static void sprite(float dx, float dy, float dz, float hw, float hh, float hx, float hy, float hz,
-                               float u0, float v0, float u1, float v1, float r, float g, float b, float a) {
-        if (a <= 0.003F) {
-            return;
-        }
-        basis(dx, dy, dz, hx, hy, hz);
-        quad(dx * 100F, dy * 100F, dz * 100F, R[0] * hw, R[1] * hw, R[2] * hw, U[0] * hh, U[1] * hh, U[2] * hh, u0, v0, u1, v1, r, g, b, a);
-    }
-
-    /** Right (along the hint, square to d) and up (right x d) unit vectors for something seen in direction d. */
-    private static void basis(float dx, float dy, float dz, float hx, float hy, float hz) {
-        float dot = hx * dx + hy * dy + hz * dz;
-        float rx = hx - dx * dot, ry = hy - dy * dot, rz = hz - dz * dot;
-        float l = Mth.sqrt(rx * rx + ry * ry + rz * rz);
-        if (l < 1.0E-4F) {
-            // Hint along the line of sight: any square direction will do.
-            rx = dy;
-            ry = -dx;
-            rz = 0F;
-            l = Mth.sqrt(rx * rx + ry * ry) + 1.0E-6F;
-            if (l < 1.0E-3F) {
-                rx = 1F;
-                ry = 0F;
-                rz = 0F;
-                l = 1F;
-            }
-        }
-        R[0] = rx / l;
-        R[1] = ry / l;
-        R[2] = rz / l;
-        U[0] = R[1] * dz - R[2] * dy;
-        U[1] = R[2] * dx - R[0] * dz;
-        U[2] = R[0] * dy - R[1] * dx;
-    }
-
-    /** A sprite whose up edge points as near to world (or sky) up as it can (sprites, jets). */
-    private static void spriteUpright(float dx, float dy, float dz, float hw, float hh, float u0, float v0, float u1, float v1,
-                                      float r, float g, float b, float a) {
-        // Right = d x up.
-        float rx = -dz, rz = dx;
-        sprite(dx, dy, dz, hw, hh, rx, 0F, rz, u0, v0, u1, v1, r, g, b, a);
-    }
-
-    private static void glow(float dx, float dy, float dz, float size, float r, float g, float b, float a) {
-        begin(GLOW, ADD);
-        sprite(dx, dy, dz, size, size, 1F, 0F, 0F, 0F, 0F, 1F, 1F, r, g, b, a);
-    }
-
-    private static void star(float dx, float dy, float dz, float size, float r, float g, float b, float a) {
-        begin(STAR, ADD);
-        sprite(dx, dy, dz, size, size, 1F, 0F, 0F, 0F, 0F, 1F, 1F, r, g, b, a);
-    }
-
-    private static void planet(int cell, float dx, float dy, float dz, float radius, float hx, float hy, float hz, float a) {
-        float u0 = (cell % 4) * 0.25F, v0 = (cell / 4) * 0.5F;
-        float s = radius / 0.92F;
-        begin(PLANETS, NORMAL);
-        sprite(dx, dy, dz, s, s, hx, hy, hz, u0, v0, u0 + 0.25F, v0 + 0.5F, 1F, 1F, 1F, a);
-    }
-
-    private static void saturn(float dx, float dy, float dz, float radius, float hx, float hy, float hz, float a) {
-        float s = radius / 0.22F * 0.5F;
-        begin(SATURN, NORMAL);
-        sprite(dx, dy, dz, s * 2F, s, hx, hy, hz, 0F, 0F, 1F, 1F, 1F, 1F, 1F, a);
-    }
-
-    private static final float[] D = new float[3];
-
-    /** A direction in the sky frame around the point opposite the sun (seen at night), offset by up to `sx`, `sz`. */
+    /** A direction in the sky frame round the point opposite the sun (seen at night), at least 14 degrees off the moon. */
     private static float[] nightDir(long seed, int salt, float sx, float sz) {
         float x = (h(seed, salt) - 0.5F) * 2F * sx, z = (h(seed, salt + 1) - 0.5F) * 2F * sz;
-        // Not right behind the moon (it would cover them): at least about 14 degrees from it.
         float off = Mth.sqrt(x * x + z * z);
         if (off < 0.25F) {
             float k = off < 1.0E-3F ? 0F : 0.25F / off;
@@ -385,208 +172,295 @@ public final class SpaceRenderer {
         return norm(x, -1F, z);
     }
 
-    private static float[] norm(float x, float y, float z) {
-        float l = Mth.sqrt(x * x + y * y + z * z) + 1.0E-6F;
-        D[0] = x / l;
-        D[1] = y / l;
-        D[2] = z / l;
-        return D;
-    }
-
     /** A direction in the local sky: azimuth from north towards east, elevation, radians. */
     private static float[] local(float az, float el) {
         float c = Mth.cos(el);
-        D[0] = c * Mth.sin(az);
-        D[1] = Mth.sin(el);
-        D[2] = -c * Mth.cos(az);
-        return D;
+        return new float[]{c * Mth.sin(az), Mth.sin(el), -c * Mth.cos(az)};
     }
 
     static float h(long seed, long k) {
-        long x = seed * 0x9E3779B97F4A7C15L + k * 0xBF58476D1CE4E5B9L;
-        x ^= x >>> 31;
-        x *= 0x94D049BB133111EBL;
-        x ^= x >>> 29;
-        x *= 0xBF58476D1CE4E5B9L;
-        x ^= x >>> 32;
-        return (x >>> 40) / (float) (1L << 24);
+        return Space3D.h(seed, k);
     }
 
     private static float smooth(float e0, float e1, float x) {
-        float s = Mth.clamp((x - e0) / (e1 - e0), 0F, 1F);
-        return s * s * (3F - 2F * s);
+        return Space3D.smooth(e0, e1, x);
+    }
+
+    /** A body's rotation (its axis tilted a little from the sky frame's X) in view space, spinning with time. */
+    private static double[] bodyRot(boolean skyFrame, double ax, double ay, double az, double spin) {
+        double[] a = new double[3];
+        Space3D.apply(skyFrame ? Space3D.SKYVIEW : Space3D.VIEW, ax, ay, az, a);
+        return Space3D.orient(a[0], a[1], a[2], spin);
     }
 
     // ================================================================================== the moon
 
-    /**
-     * Takes the vanilla moon (drawn additively just before) out of the sky again, exactly (`amount` of it: the moon
-     * of the event is faded in as much). Only in a dark sky, where vanilla's moon can't have been clipped.
-     */
-    private static void removeVanillaMoon(ClientLevel level, float amount) {
+    /** Takes the vanilla moon (drawn additively just before) out of the sky again, exactly, `amount` of it. */
+    private static void removeVanillaMoon(RenderLevelStageEvent event, ClientLevel level, float pt, float amount) {
         int phase = level.getMoonPhase();
         float u0 = (phase % 4) / 4F, u1 = (phase % 4 + 1) / 4F, v0 = (phase / 4 % 2) / 2F, v1 = (phase / 4 % 2 + 1) / 2F;
-        frame(sky);
-        begin(MOON, SUBTRACT);
+        Matrix4f sky = new Matrix4f(event.getModelViewMatrix()).rotate(Axis.YP.rotationDegrees(-90F)).rotate(Axis.XP.rotationDegrees(level.getTimeOfDay(pt) * 360F));
+        Matrix4fStack mv = RenderSystem.getModelViewStack();
+        mv.pushMatrix();
+        mv.set(sky);
+        RenderSystem.applyModelViewMatrix();
+        RenderSystem.enableBlend();
+        RenderSystem.disableDepthTest();
+        RenderSystem.depthMask(false);
+        GlStateManager._blendEquation(GL14.GL_FUNC_REVERSE_SUBTRACT);
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ZERO,
+                GlStateManager.DestFactor.ONE);
+        VolumeClouds.useGlowKeepFilter(MOON);
+        BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
         float a = clear * amount;
-        vtx(-MOON_Q, -100F, MOON_Q, u1, v1, 1F, 1F, 1F, a);
-        vtx(MOON_Q, -100F, MOON_Q, u0, v1, 1F, 1F, 1F, a);
-        vtx(MOON_Q, -100F, -MOON_Q, u0, v0, 1F, 1F, 1F, a);
-        vtx(-MOON_Q, -100F, -MOON_Q, u1, v0, 1F, 1F, 1F, a);
-        flush();
+        b.addVertex(-MOON_Q, -100F, MOON_Q).setUv(u1, v1).setColor(1F, 1F, 1F, a);
+        b.addVertex(MOON_Q, -100F, MOON_Q).setUv(u0, v1).setColor(1F, 1F, 1F, a);
+        b.addVertex(MOON_Q, -100F, -MOON_Q).setUv(u0, v0).setColor(1F, 1F, 1F, a);
+        b.addVertex(-MOON_Q, -100F, -MOON_Q).setUv(u1, v0).setColor(1F, 1F, 1F, a);
+        MeshData mesh = b.build();
+        if (mesh != null) {
+            BufferUploader.drawWithShader(mesh);
+        }
+        GlStateManager._blendEquation(GL14.GL_FUNC_ADD);
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.depthMask(true);
+        RenderSystem.enableDepthTest();
+        mv.popMatrix();
+        RenderSystem.applyModelViewMatrix();
     }
 
-    /** The full moon as a grid over its disc, each corner coloured by `shade` (moon-local x, z in moon radii). */
+    /** The moon as a lit 3D sphere where vanilla's was, each corner coloured by `shade` (sky-frame offsets, moon radii). */
     private interface Shade {
-        void at(float mx, float mz, float[] out);
+        void at(double mx, double mz, float[] out);
     }
 
-    private static final float[] C = new float[3];
-
-    private static void fullMoon(float scale, int n, Shade shade, float alpha) {
-        frame(sky);
-        begin(MOON, ADD);
-        float q = MOON_Q * scale;
-        // Full moon: the first cell of the phases texture.
-        float u0 = 0F, u1 = 0.25F, v0 = 0F, v1 = 0.5F;
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                float x0 = -q + 2F * q * i / n, x1 = -q + 2F * q * (i + 1) / n;
-                float z0 = -q + 2F * q * j / n, z1 = -q + 2F * q * (j + 1) / n;
-                moonVertex(x0, z1, q, scale, u0, u1, v0, v1, shade, alpha);
-                moonVertex(x1, z1, q, scale, u0, u1, v0, v1, shade, alpha);
-                moonVertex(x1, z0, q, scale, u0, u1, v0, v1, shade, alpha);
-                moonVertex(x0, z0, q, scale, u0, u1, v0, v1, shade, alpha);
+    private static void moonSphere(double scale, Shade shade, float alpha) {
+        double r = MOON_D * Math.tan(MOON_A) * scale;
+        double[] c = sky(0, -MOON_D, 0).clone();
+        double[] rot = bodyRot(true, 1, 0, 0, Math.PI * 0.5);
+        int lat = 24, lon = 48;
+        float[] col = new float[3];
+        double[] n = new double[3], sk = new double[3];
+        Space3D.use(MOON_MAP, NORMAL, true, true);
+        for (int i = 0; i < lat; i++) {
+            for (int j = 0; j < lon; j++) {
+                if (!Space3D.facing(rot, c[0], c[1], c[2], r, lat, lon, i, j)) {
+                    continue;
+                }
+                for (int q = 0; q < 4; q++) {
+                    int ii = i + (q == 1 || q == 2 ? 1 : 0), jj = j + (q >= 2 ? 1 : 0);
+                    double th = Math.PI * ii / lat, ph = Math.PI * 2 * jj / lon;
+                    double sx = Math.sin(th) * Math.cos(ph), sy = Math.cos(th), sz = Math.sin(th) * Math.sin(ph);
+                    Space3D.apply(rot, sx, sy, sz, n);
+                    float ndl = (float) (n[0] * Space3D.SUN[0] + n[1] * Space3D.SUN[1] + n[2] * Space3D.SUN[2]);
+                    float lit = smooth(-0.05F, 0.25F, ndl) * (0.4F + 0.6F * Math.max(0F, ndl)) + 0.02F;
+                    // The corner's offset from the moon's centre across the sky (sky-frame x and z), for the shadow.
+                    inverse(n, sk);
+                    shade.at(sk[0] * scale, sk[2] * scale, col);
+                    Space3D.vtx(c[0] + n[0] * r, c[1] + n[1] * r, c[2] + n[2] * r, (float) jj / lon, (float) ii / lat, col[0] * lit, col[1] * lit,
+                            col[2] * lit, alpha);
+                }
             }
         }
     }
 
-    private static void moonVertex(float x, float z, float q, float scale, float u0, float u1, float v0, float v1, Shade shade, float alpha) {
-        float u = u1 - (x + q) / (2F * q) * (u1 - u0);
-        float v = v0 + (z + q) / (2F * q) * (v1 - v0);
-        shade.at(x / (MOON_R * scale), z / (MOON_R * scale), C);
-        vtx(x, -100F, z, u, v, C[0], C[1], C[2], alpha);
+    /** View space back to the sky frame (the transpose of the rotation). */
+    private static void inverse(double[] v, double[] out) {
+        double[] m = Space3D.SKYVIEW;
+        out[0] = m[0] * v[0] + m[1] * v[1] + m[2] * v[2];
+        out[1] = m[3] * v[0] + m[4] * v[1] + m[5] * v[2];
+        out[2] = m[6] * v[0] + m[7] * v[1] + m[8] * v[2];
     }
 
-    /** Earth's shadow sweeps across the full moon: grey in the penumbra, copper red in the umbra (with a blue-green rim). */
-    private static void lunarEclipse(SkyEvent e, ClientLevel level, float p) {
+    /** Earth's shadow sweeps across the full moon: grey in the penumbra, copper red in the umbra, a blue-green rim. */
+    private static void lunarEclipse(SkyEvent e, float p) {
         float swap = smooth(0.15F, 0.4F, night);
         if (swap <= 0.01F) {
             return;
         }
-        removeVanillaMoon(level, swap);
         float q = p * 2F - 1F;
         float along = Math.copySign((float) Math.pow(Math.abs(q), 1.35), q) * 3.9F;
         float miss = (h(e.seed, 1) - 0.5F) * 0.7F;
         float ang = h(e.seed, 2) * Mth.TWO_PI;
         float sx = along * Mth.cos(ang) - miss * Mth.sin(ang), sz = along * Mth.sin(ang) + miss * Mth.cos(ang);
         float ru = 2.65F, rp = 4.5F;
-        fullMoon(1F, 18, (mx, mz, out) -> {
-            float d = Mth.sqrt((mx - sx) * (mx - sx) + (mz - sz) * (mz - sz));
+        moonSphere(1.0, (mx, mz, out) -> {
+            float d = (float) Math.sqrt((mx - sx) * (mx - sx) + (mz - sz) * (mz - sz));
             float umbra = smooth(ru + 0.12F, ru - 0.12F, d);
             float pen = smooth(rp, ru, d);
             float lit = 1F - 0.6F * pen;
-            // Deeper in the umbra the moon is a darker red; nearer its edge more orange.
             float deep = Mth.clamp((ru - d) / 1.2F, 0F, 1F);
-            float cr = Mth.lerp(deep, 0.55F, 0.36F), cg = Mth.lerp(deep, 0.2F, 0.08F), cb = Mth.lerp(deep, 0.1F, 0.05F);
+            float cr = Mth.lerp(deep, 0.6F, 0.4F), cg = Mth.lerp(deep, 0.22F, 0.09F), cb = Mth.lerp(deep, 0.1F, 0.05F);
             float rim = (float) Math.exp(-((d - ru) / 0.16F) * ((d - ru) / 0.16F)) * 0.22F;
             out[0] = Mth.lerp(umbra, lit, cr) + rim * 0.2F;
             out[1] = Mth.lerp(umbra, lit, cg) + rim * 0.55F;
             out[2] = Mth.lerp(umbra, lit, cb) + rim * 0.65F;
         }, clear * swap);
-        // In totality a faint reddish glow round the moon.
         float total = smooth(ru - 0.9F, ru - 1.2F, Mth.sqrt(sx * sx + sz * sz));
         if (total > 0.01F) {
-            glow(0F, -1F, 0F, 22F, 0.8F, 0.25F, 0.12F, 0.12F * total * clear * night);
+            double[] c = sky(0, -MOON_D * 1.01, 0);
+            Space3D.billboard(GLOW, ADD, c[0], c[1], c[2], MOON_D * 0.24, 0F, 0.8F, 0.25F, 0.12F, 0.12F * total * clear * night);
         }
     }
 
-    /** The full moon at its nearest: bigger and brighter (and warm-coloured low over the horizon). */
-    private static void supermoon(ClientLevel level, float edge) {
+    /** The full moon at its nearest: bigger and brighter (warm-coloured low over the horizon). */
+    private static void supermoon(float edge) {
         float swap = smooth(0.15F, 0.4F, night);
         if (swap <= 0.01F) {
             return;
         }
-        removeVanillaMoon(level, swap);
         float low = Mth.clamp(1F - (-sunY) * 4F, 0F, 1F);
         float r = 1F, g = 1F - 0.16F * low, b = 0.97F - 0.35F * low;
-        float s = Mth.lerp(edge, 1F, 1.32F);
-        fullMoon(s, 1, (mx, mz, out) -> {
+        double s = Mth.lerp(edge, 1F, 1.32F);
+        moonSphere(s, (mx, mz, out) -> {
             out[0] = r;
             out[1] = g;
             out[2] = b;
         }, clear * swap);
-        glow(0F, -1F, 0F, 60F * s, r, g * 0.98F, b * 0.95F, 0.2F * clear * Math.max(0.3F, night));
+        double[] c = sky(0, -MOON_D * 1.02, 0);
+        Space3D.billboard(GLOW, ADD, c[0], c[1], c[2], MOON_D * 0.62 * s, 0F, r, g * 0.98F, b * 0.95F, 0.2F * clear * Math.max(0.3F, night));
     }
 
     /**
-     * A planet (or stars, with `stars`) passing behind the moon: it vanishes at the moon's limb (lit or dark) and comes
-     * out again on the other side; its glow peeks round the edge as it goes.
+     * A planet (or stars) passing behind the moon: the moon (as depth only, where vanilla's is) hides it as it goes
+     * behind the limb, lit or dark, and it comes out again on the other side.
      */
     private static void occultation(SkyEvent e, float p, boolean stars) {
-        frame(sky);
         float vis = night * clear;
         if (vis <= 0.01F) {
             return;
         }
+        // The moon's disc, as depth only.
+        double[] mc = sky(0, -MOON_D, 0).clone();
+        Space3D.depthSphere(mc[0], mc[1], mc[2], MOON_D * Math.tan(MOON_A) * 0.99);
         int n = stars ? 6 : 1;
         for (int i = 0; i < n; i++) {
             float miss = stars ? (h(e.seed, 10 + i) - 0.5F) * 1.7F : (h(e.seed, 3) - 0.5F) * 0.9F;
             float offset = stars ? (h(e.seed, 20 + i) - 0.5F) * 2.4F : 0F;
             float mx = (p * 2F - 1F) * 2.8F + offset, mz = miss;
-            float r = Mth.sqrt(mx * mx + mz * mz);
-            float shown = smooth(0.995F, 1.035F, r);
-            float br = stars ? 0.55F + 0.45F * h(e.seed, 30 + i) : 1F;
-            float cr = stars ? 0.85F + 0.15F * h(e.seed, 40 + i) : 1F, cg = stars ? 0.9F : 0.95F, cb = stars ? 1F : 0.82F;
-            // The halo, hidden where it lies over the moon's disc.
-            float size = stars ? 3.2F : 7F;
-            maskedGlow(mx * MOON_R, mz * MOON_R, size, cr, cg, cb, 0.55F * br * vis);
-            if (shown > 0.01F) {
-                float[] d = norm(mx * MOON_R, -100F, mz * MOON_R);
-                star(d[0], d[1], d[2], (stars ? 2.2F : 4.5F) * br, cr, cg, cb, shown * vis * br);
+            double d = stars ? STAR_D : PLANET_D;
+            float[] dir = norm(mx * Math.tan(MOON_A), -1, mz * Math.tan(MOON_A));
+            double[] c = sky(dir[0] * d, dir[1] * d, dir[2] * d).clone();
+            if (stars) {
+                float br = 0.55F + 0.45F * h(e.seed, 30 + i);
+                Space3D.billboard(GLOW, ADD, c[0], c[1], c[2], d * 0.02 * br, 0F, 0.9F, 0.93F, 1F, 0.5F * vis);
+                Space3D.billboard(STAR, ADD, c[0], c[1], c[2], d * 0.014 * br, 0F, 1F, 1F, 1F, vis * br);
+            } else {
+                planet(JUPITER, c, d * 0.011, true, 0.5F, vis, true);
+                Space3D.billboard(GLOW, ADD, c[0], c[1], c[2], d * 0.05, 0F, 1F, 0.95F, 0.85F, 0.3F * vis);
             }
         }
     }
 
-    /** A glow quad near the moon (moon-plane coordinates) whose corners over the moon's disc are transparent. */
-    private static void maskedGlow(float cx, float cz, float size, float r, float g, float b, float a) {
-        begin(GLOW, ADD);
-        int n = 10;
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                float fx0 = (float) i / n, fx1 = (float) (i + 1) / n, fz0 = (float) j / n, fz1 = (float) (j + 1) / n;
-                maskedVertex(cx, cz, size, fx0, fz1, r, g, b, a);
-                maskedVertex(cx, cz, size, fx1, fz1, r, g, b, a);
-                maskedVertex(cx, cz, size, fx1, fz0, r, g, b, a);
-                maskedVertex(cx, cz, size, fx0, fz0, r, g, b, a);
-            }
+    // ================================================================================== planets
+
+    /** A lit planet sphere (with an atmosphere if `air`), turning slowly. */
+    private static void planet(ResourceLocation map, double[] c, double r, boolean gas, float spinRate, float alpha, boolean skyFrame) {
+        double[] rot = bodyRot(skyFrame, 0.18, 1, 0.1, 0);
+        float spin = (float) (t * 0.00025 * spinRate % 1.0);
+        int detail = 16;
+        Space3D.sphere(map, c[0], c[1], c[2], r, rot, Space3D.SUN[0], Space3D.SUN[1], Space3D.SUN[2], 0.015F, 1F, 1F, 1F, 0F, alpha, false, spin,
+                detail);
+        if (gas) {
+            Space3D.atmosphere(c[0], c[1], c[2], r, Space3D.SUN[0], Space3D.SUN[1], Space3D.SUN[2], 0.75F, 0.78F, 0.9F, 0.35F * alpha);
         }
     }
 
-    private static void maskedVertex(float cx, float cz, float size, float fx, float fz, float r, float g, float b, float a) {
-        float x = cx + (fx * 2F - 1F) * size, z = cz + (fz * 2F - 1F) * size;
-        float m = smooth(MOON_R * 0.99F, MOON_R * 1.06F, Mth.sqrt(x * x + z * z));
-        vtx(x, -100F, z, fx, fz, r, g, b, a * m);
+    private static void saturn(double[] c, double r, float alpha) {
+        double[] rot = bodyRot(true, 0.45, 1, 0.2, 0);
+        Space3D.sphere(SATURN, c[0], c[1], c[2], r, rot, Space3D.SUN[0], Space3D.SUN[1], Space3D.SUN[2], 0.015F, 1F, 1F, 1F, 0F, alpha, false,
+                (float) (t * 0.0003 % 1.0), 16);
+        Space3D.ring(RINGS, c[0], c[1], c[2], r * 1.25, r * 2.3, rot, Space3D.SUN[0], Space3D.SUN[1], Space3D.SUN[2], 0.9F * alpha);
+    }
+
+    /** Two (or three) planets close together. */
+    private static void conjunction(SkyEvent e, float p, float edge, boolean triple) {
+        float vis = night * clear * edge;
+        if (vis <= 0.01F) {
+            return;
+        }
+        float[] d0 = nightDir(e.seed, 1, 0.12F, 0.55F);
+        float sep = (2.5F + 4F * Math.abs(p - 0.5F)) * Mth.DEG_TO_RAD;
+        // Along the ecliptic (the sky frame's z) and across it.
+        float[] e1 = norm(0, -d0[2], d0[1]);
+        float[] e2 = norm(d0[1] * e1[2] - d0[2] * e1[1], d0[2] * e1[0] - d0[0] * e1[2], d0[0] * e1[1] - d0[1] * e1[0]);
+        if (triple) {
+            float wide = sep * 2.2F;
+            place(JUPITER, d0, e1, e2, -wide, 0.15F * wide, 0.021, vis);
+            place(SATURN, d0, e1, e2, 0F, -0.12F * wide, 0.014, vis);
+            place(MARS, d0, e1, e2, wide, 0.2F * wide, 0.009, vis);
+        } else {
+            place(JUPITER, d0, e1, e2, -sep * 0.5F, 0F, 0.021, vis);
+            place(MARS, d0, e1, e2, sep * 0.5F, 0.35F * sep, 0.01, vis);
+        }
+    }
+
+    private static void place(ResourceLocation map, float[] d0, float[] e1, float[] e2, float along, float across, double angR, float vis) {
+        float[] d = norm(d0[0] + e1[0] * along + e2[0] * across, d0[1] + e1[1] * along + e2[1] * across, d0[2] + e1[2] * along + e2[2] * across);
+        double[] c = sky(d[0] * PLANET_D, d[1] * PLANET_D, d[2] * PLANET_D).clone();
+        double r = PLANET_D * angR;
+        if (map == SATURN) {
+            saturn(c, r, vis);
+        } else {
+            planet(map, c, r, map == JUPITER || map == VENUS, 1F, vis, true);
+        }
+        // Planet-shine round it.
+        Space3D.billboard(GLOW, ADD, c[0], c[1], c[2], r * 3.5, 0F, 1F, 0.95F, 0.85F, 0.12F * vis);
+    }
+
+    /** The planets strung out along the ecliptic in a line across the night sky. */
+    private static void alignment(SkyEvent e, float edge) {
+        float vis = night * clear * edge;
+        if (vis <= 0.01F) {
+            return;
+        }
+        ResourceLocation[] maps = {NEPTUNE, MARS, VENUS, JUPITER, URANUS, SATURN};
+        double[] sizes = {0.009, 0.01, 0.013, 0.021, 0.0095, 0.014};
+        float shift = (h(e.seed, 1) - 0.5F) * 0.5F;
+        float lane = (h(e.seed, 2) < 0.5F ? -1F : 1F) * (0.2F + 0.08F * h(e.seed, 3));
+        for (int i = 0; i < maps.length; i++) {
+            float phi = (-48F + i * 19F) * Mth.DEG_TO_RAD + shift;
+            float x = 0.05F * Mth.sin(i * 1.7F) + lane;
+            float[] d = norm(x, -Mth.cos(phi), Mth.sin(phi));
+            double[] c = sky(d[0] * PLANET_D, d[1] * PLANET_D, d[2] * PLANET_D).clone();
+            double r = PLANET_D * sizes[i];
+            if (maps[i] == SATURN) {
+                saturn(c, r, vis);
+            } else {
+                planet(maps[i], c, r, maps[i] == JUPITER || maps[i] == VENUS || maps[i] == NEPTUNE || maps[i] == URANUS, 1F, vis, true);
+            }
+            Space3D.billboard(GLOW, ADD, c[0], c[1], c[2], r * 3.5, 0F, 1F, 0.95F, 0.85F, 0.1F * vis);
+        }
     }
 
     // ================================================================================== the sun
 
-    /** A planet (Mercury or Venus) as a small black disc crossing the face of the sun. */
+    private static double sunUp() {
+        return Mth.clamp(sunY * 6F, 0F, 1F) * clear;
+    }
+
+    /** A planet as a black ball crossing the face of the sun (only seen against its disc). */
     private static void transit(SkyEvent e, float p) {
-        float up = Mth.clamp(sunY * 6F, 0F, 1F) * clear;
+        float up = (float) sunUp();
         if (up <= 0.01F) {
             return;
         }
         float ang = h(e.seed, 1) * Mth.TWO_PI, miss = (h(e.seed, 2) - 0.5F) * 1.1F;
         float along = (p * 2F - 1F) * 1.2F;
         float px = along * Mth.cos(ang) - miss * Mth.sin(ang), pz = along * Mth.sin(ang) + miss * Mth.cos(ang);
-        frame(sky);
-        sunMaskedQuad(DISC, px, pz, 0.12F, 0.12F, 0F, 0.012F, 0.01F, 0.01F, 0.95F * up);
+        double[] sun = sky(0, SUN_D, 0).clone();
+        Space3D.mask(sun[0], sun[1], sun[2], SUN_A * 0.995);
+        double tn = Math.tan(SUN_A), d = SUN_D * 0.8;
+        float[] dir = norm(px * tn, 1, pz * tn);
+        double[] c = sky(dir[0] * d, dir[1] * d, dir[2] * d).clone();
+        Space3D.sphere(WHITE, c[0], c[1], c[2], d * tn * 0.12, bodyRot(true, 1, 0, 0, 0), Space3D.SUN[0], Space3D.SUN[1], Space3D.SUN[2], 0F,
+                0.01F, 0.01F, 0.012F, 0F, 0.96F * up, false, 0F, 12);
+        Space3D.unmask();
     }
 
     /** The space station's silhouette flicking across the sun in a second or two, now and then. */
     private static void satelliteTransit(SkyEvent e) {
-        float up = Mth.clamp(sunY * 6F, 0F, 1F) * clear;
+        float up = (float) sunUp();
         if (up <= 0.01F) {
             return;
         }
@@ -600,77 +474,84 @@ public final class SpaceRenderer {
         float ang = h(e.seed, slot * 3L) * Mth.TWO_PI, miss = (h(e.seed, slot * 3L + 1) - 0.5F) * 1.2F;
         float along = (f * 2F - 1F) * 1.3F;
         float px = along * Mth.cos(ang) - miss * Mth.sin(ang), pz = along * Mth.sin(ang) + miss * Mth.cos(ang);
-        frame(sky);
-        sunMaskedQuad(ISS, px, pz, 0.34F, 0.17F, ang, 0.01F, 0.01F, 0.012F, 0.97F * up);
+        double[] sun = sky(0, SUN_D, 0).clone();
+        Space3D.mask(sun[0], sun[1], sun[2], SUN_A * 0.995);
+        double tn = Math.tan(SUN_A), d = SUN_D * 0.7;
+        float[] dir = norm(px * tn, 1, pz * tn);
+        double[] c = sky(dir[0] * d, dir[1] * d, dir[2] * d).clone();
+        // Its velocity across the disc, in the sky frame.
+        double[] vel = new double[3];
+        Space3D.apply(Space3D.SKYVIEW, Mth.cos(ang), 0, Mth.sin(ang), vel);
+        stationModel(c, d * tn * 0.006, dir[0], dir[1], dir[2], true, vel, 0.02F, 0.02F, 0.025F, 0.97F * up, true);
+        Space3D.unmask();
     }
 
-    /**
-     * A dark shape on the sun's disc (sun-plane coordinates in sun radii), drawn only where it is over the disc (it
-     * can't be seen against the sky beside the sun).
-     */
-    private static void sunMaskedQuad(ResourceLocation texture, float px, float pz, float hw, float hh, float rot, float r, float g, float b, float a) {
-        begin(texture, NORMAL);
-        int n = 8;
-        float c = Mth.cos(rot), s = Mth.sin(rot);
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                float a0 = (float) i / n, a1 = (float) (i + 1) / n, b0 = (float) j / n, b1 = (float) (j + 1) / n;
-                sunVertex(px, pz, hw, hh, c, s, a0, b1, r, g, b, a);
-                sunVertex(px, pz, hw, hh, c, s, a1, b1, r, g, b, a);
-                sunVertex(px, pz, hw, hh, c, s, a1, b0, r, g, b, a);
-                sunVertex(px, pz, hw, hh, c, s, a0, b0, r, g, b, a);
-            }
-        }
-    }
-
-    private static void sunVertex(float px, float pz, float hw, float hh, float c, float s, float fu, float fv, float r, float g, float b, float a) {
-        float lx = (fu * 2F - 1F) * hw, lz = (fv * 2F - 1F) * hh;
-        float x = px + lx * c - lz * s, z = pz + lx * s + lz * c;
-        float m = smooth(1.0F, 0.96F, Mth.sqrt(x * x + z * z));
-        vtx(x * SUN_R, 100F, z * SUN_R, fu, fv, r, g, b, a * m);
-    }
-
-    /** Coronal loops and prominences round the sun, and every so often a great cloud of plasma bursting out. */
+    /** Coronal loops and prominences at the sun's edge, fire round it, and every so often a great burst of plasma. */
     private static void coronalMassEjection(SkyEvent e, float edge) {
-        float up = Mth.clamp(sunY * 6F, 0F, 1F) * clear * edge;
+        float up = (float) sunUp() * edge;
         if (up <= 0.01F) {
             return;
         }
-        frame(sky);
-        float s = SUN_R / 0.36F;
-        float rot = (float) (t * 0.0004);
-        begin(LOOPS, ADD);
-        float c = Mth.cos(rot), sn = Mth.sin(rot);
-        quad(0F, 100F, 0F, c * s, 0F, sn * s, -sn * s, 0F, c * s, 0F, 0F, 1F, 1F, 1F, 0.85F, 0.6F, 0.85F * up);
+        double[] c = sky(0, SUN_D, 0).clone();
+        double r = SUN_D * Math.tan(SUN_A) * 0.62;
+        Space3D.starFire(c[0], c[1], c[2], r, e.seed, 160, 0.6F, (float) (t - e.start), up);
+        // Loops: arcs of glowing plasma standing on the surface along the limb.
+        double[] axis = new double[3];
+        for (int i = 0; i < 14; i++) {
+            float a0 = h(e.seed, 100 + i) * Mth.TWO_PI, span = 0.15F + 0.3F * h(e.seed, 120 + i), height = 0.15F + 0.5F * h(e.seed, 140 + i);
+            float drift = (float) ((t - e.start) * 0.0006);
+            double px = 0, py = 0, pz = 0;
+            for (int s = 0; s <= 16; s++) {
+                float f = s / 16F;
+                float aa = a0 + drift + (f - 0.5F) * span;
+                double rr = r * (1 + height * Mth.sin(Mth.PI * f));
+                // Round the limb (in the plane across the line of sight), tipped a little towards or away from us.
+                double lx = Math.cos(aa), lz = Math.sin(aa);
+                Space3D.apply(Space3D.SKYVIEW, lx, 0.15 * Math.sin(i * 1.3), lz, axis);
+                double qx = c[0] + axis[0] * rr, qy = c[1] + axis[1] * rr, qz = c[2] + axis[2] * rr;
+                if (s > 0) {
+                    float a = up * 0.55F * (0.6F + 0.4F * Mth.sin(Mth.PI * f));
+                    Space3D.ribbon(LINE, ADD, px, py, pz, qx, qy, qz, r * 0.018, r * 0.018, 1F, 0.62F, 0.25F, a, a);
+                }
+                px = qx;
+                py = qy;
+                pz = qz;
+            }
+        }
+        // A burst of plasma flung out every so often.
         double age = t - e.start;
         int slot = (int) (age / 1500.0);
         float f = (float) ((age - slot * 1500.0) / 700.0);
         if (f < 1F) {
             float ang = h(e.seed, slot) * Mth.TWO_PI;
-            float size = SUN_R * (1.2F + 3.2F * f);
-            float off = SUN_R * (0.6F + 2.4F * f);
-            float a = (1F - f) * (1F - f) * smooth(0F, 0.08F, f) * 0.8F * up;
-            begin(SUPERNOVA, ADD);
-            quad(Mth.cos(ang) * off, 100F, Mth.sin(ang) * off, size, 0F, 0F, 0F, 0F, size, 0F, 0F, 1F, 1F, 1F, 0.75F, 0.35F, a);
+            for (int i = 0; i < 90; i++) {
+                float spread = (h(e.seed, slot * 100L + i) - 0.5F) * 1.2F;
+                float speed = 0.6F + 0.8F * h(e.seed, slot * 100L + i + 50);
+                double rr = r * (1.05 + 3.2 * f * speed);
+                Space3D.apply(Space3D.SKYVIEW, Math.cos(ang + spread), (h(e.seed, i * 3L) - 0.5) * 0.4, Math.sin(ang + spread), axis);
+                float a = (1F - f) * smooth(0F, 0.08F, f) * 0.5F * up;
+                Space3D.billboard(FLAME, ADD, c[0] + axis[0] * rr, c[1] + axis[1] * rr, c[2] + axis[2] * rr, r * (0.12 + 0.3 * f), i, 1F,
+                        0.55F - 0.3F * f, 0.25F - 0.2F * f, a);
+            }
         }
+        Space3D.billboard(GLOW, ADD, c[0], c[1], c[2], r * 3.2, 0F, 1F, 0.8F, 0.5F, 0.25F * up);
     }
 
     // ================================================================================== meteors and fireballs
 
-    /** A shower: meteors streaking out from one radiant (or, `sporadic`, single meteors from anywhere). */
+    /**
+     * Meteors burning up in the air along real 3D paths. In a shower they all fly parallel, so from the ground they
+     * seem to stream out of one point (the radiant); sporadic ones come from anywhere.
+     */
     private static void meteors(SkyEvent e, float p, boolean sporadic) {
         float vis = night * clear;
         if (vis <= 0.02F) {
             return;
         }
-        frame(world);
         float rate = sporadic ? 0.3F : 0.2F + 0.8F * (float) Math.exp(-((p - 0.5F) / 0.22F) * ((p - 0.5F) / 0.22F));
-        float raz = h(e.seed, 1) * Mth.TWO_PI, rel = 0.6F + 0.5F * h(e.seed, 2);
-        float[] rad = local(raz, rel);
-        float rx = rad[0], ry = rad[1], rz = rad[2];
+        float[] rad = local(h(e.seed, 1) * Mth.TWO_PI, 0.6F + 0.5F * h(e.seed, 2));
         double age = t - e.start;
         long first = (long) Math.floor((age - 32) / 3.0), last = (long) Math.floor(age / 3.0);
-        begin(METEOR, ADD);
         for (long k = Math.max(0, first); k <= last; k++) {
             if (h(e.seed, k * 7 + 100) > 0.8F * rate) {
                 continue;
@@ -681,74 +562,40 @@ public final class SpaceRenderer {
             if (f < 0F || f > 1F) {
                 continue;
             }
-            float ox = rx, oy = ry, oz = rz;
-            if (sporadic) {
-                float[] o = local(h(e.seed, k * 7 + 106) * Mth.TWO_PI, 0.3F + h(e.seed, k * 7 + 107) * 1.1F);
-                ox = o[0];
-                oy = o[1];
-                oz = o[2];
-            }
-            float a0 = Mth.DEG_TO_RAD * (10F + h(e.seed, k * 7 + 103) * 50F);
-            float travel = Mth.DEG_TO_RAD * (8F + h(e.seed, k * 7 + 104) * 22F);
-            float psi = h(e.seed, k * 7 + 105) * Mth.TWO_PI;
+            float[] dir = sporadic ? local(h(e.seed, k * 7 + 106) * Mth.TWO_PI, -0.2F - 0.9F * h(e.seed, k * 7 + 107))
+                    : new float[]{-rad[0], -rad[1], -rad[2]};
+            // Where it burns out: 1000-1500 up, a few kilometres off.
+            float az = h(e.seed, k * 7 + 103) * Mth.TWO_PI, dist = 1500F + 6000F * h(e.seed, k * 7 + 104);
+            double qx = Mth.sin(az) * dist, qy = 1000 + 500 * h(e.seed, k * 7 + 105), qz = -Mth.cos(az) * dist;
+            double len = 1200 + 2200 * h(e.seed, k * 7 + 109);
+            double hx = qx - dir[0] * len * (1 - f), hy = qy - dir[1] * len * (1 - f), hz = qz - dir[2] * len * (1 - f);
+            double train = Math.min(len * f, len * 0.5);
+            double tx = hx - dir[0] * train, ty = hy - dir[1] * train, tz = hz - dir[2] * train;
             float bright = 0.5F + (float) Math.pow(h(e.seed, k * 7 + 108), 3) * 1.5F;
-            int tint = (int) (h(e.seed, k * 7 + 109) * 4F);
+            int tint = (int) (h(e.seed, k * 7 + 110) * 4F);
             float cr = tint == 1 ? 0.7F : tint == 2 ? 1F : tint == 3 ? 0.82F : 1F;
             float cg = tint == 1 ? 1F : tint == 2 ? 0.75F : tint == 3 ? 0.9F : 0.95F;
             float cb = tint == 1 ? 0.75F : tint == 2 ? 0.5F : tint == 3 ? 1F : 0.82F;
-            float headA = a0 + travel * f, tailA = a0 + travel * Math.max(0F, f - 0.55F);
-            streak(ox, oy, oz, psi, tailA, headA, 0.45F + 0.35F * bright,
-                    cr, cg, cb, (float) Math.pow(Mth.sin(Mth.PI * f), 0.5) * Math.min(1F, 0.35F + bright) * vis);
+            float a = (float) Math.pow(Mth.sin(Mth.PI * f), 0.5) * Math.min(1F, 0.35F + bright) * vis;
+            double[] t0 = world(tx, ty, tz).clone();
+            double[] h0 = world(hx, hy, hz).clone();
+            double hd = Math.sqrt(h0[0] * h0[0] + h0[1] * h0[1] + h0[2] * h0[2]);
+            double w = hd * (0.0028 + 0.0022 * bright);
+            Space3D.ribbon(METEOR, ADD, t0[0], t0[1], t0[2], h0[0], h0[1], h0[2], w * 0.6, w, cr, cg, cb, a, a);
+            Space3D.billboard(GLOW, ADD, h0[0], h0[1], h0[2], w * 3.5, 0F, cr, cg, cb, a * 0.6F);
+            // Sparks breaking off the head and fading in the train.
+            for (int s = 0; s < 5; s++) {
+                float sf = h(e.seed, k * 31 + s);
+                double sx = hx - dir[0] * train * sf, sy = hy - dir[1] * train * sf, sz = hz - dir[2] * train * sf;
+                double[] sp = world(sx, sy + (h(e.seed, k * 37 + s) - 0.5) * 20, sz);
+                Space3D.billboard(FLAME, ADD, sp[0], sp[1], sp[2], w * 1.1, s, 1F, 0.8F, 0.5F, a * 0.45F * (1F - sf));
+            }
         }
-    }
-
-    /** A streak along the great circle leaving a point o, at angles a0..a1 from it, in the direction psi round it. */
-    private static void streak(float ox, float oy, float oz, float psi, float a0, float a1, float width, float r, float g, float b, float a) {
-        // Two unit vectors square to o.
-        float ex = -oz, ey = 0F, ez = ox;
-        float el = Mth.sqrt(ex * ex + ez * ez);
-        if (el < 1.0E-3F) {
-            ex = 1F;
-            ez = 0F;
-            el = 1F;
-        }
-        ex /= el;
-        ez /= el;
-        float fx = oy * ez - oz * ey, fy = oz * ex - ox * ez, fz = ox * ey - oy * ex;
-        float wx = Mth.cos(psi) * ex + Mth.sin(psi) * fx, wy = Mth.cos(psi) * ey + Mth.sin(psi) * fy, wz = Mth.cos(psi) * ez + Mth.sin(psi) * fz;
-        float tx = (Mth.cos(a0) * ox + Mth.sin(a0) * wx) * 100F, ty = (Mth.cos(a0) * oy + Mth.sin(a0) * wy) * 100F,
-                tz = (Mth.cos(a0) * oz + Mth.sin(a0) * wz) * 100F;
-        float hx = (Mth.cos(a1) * ox + Mth.sin(a1) * wx) * 100F, hy = (Mth.cos(a1) * oy + Mth.sin(a1) * wy) * 100F,
-                hz = (Mth.cos(a1) * oz + Mth.sin(a1) * wz) * 100F;
-        if (hy < -2F) {
-            return;
-        }
-        segment(METEOR, tx, ty, tz, hx, hy, hz, width, r, g, b, a);
-    }
-
-    /** A textured strip from tail (u = 0) to head (u = 1), turned to face the viewer at the origin. */
-    private static void segment(ResourceLocation texture, float tx, float ty, float tz, float hx, float hy, float hz, float width,
-                                float r, float g, float b, float a) {
-        if (a <= 0.003F) {
-            return;
-        }
-        float dx = hx - tx, dy = hy - ty, dz = hz - tz;
-        float mx = (hx + tx) * 0.5F, my = (hy + ty) * 0.5F, mz = (hz + tz) * 0.5F;
-        float cx = dy * mz - dz * my, cy = dz * mx - dx * mz, cz = dx * my - dy * mx;
-        float l = Mth.sqrt(cx * cx + cy * cy + cz * cz) + 1.0E-5F;
-        cx *= width / l;
-        cy *= width / l;
-        cz *= width / l;
-        vtx(tx - cx, ty - cy, tz - cz, 0F, 1F, r, g, b, a);
-        vtx(hx - cx, hy - cy, hz - cz, 1F, 1F, r, g, b, a);
-        vtx(hx + cx, hy + cy, hz + cz, 1F, 0F, r, g, b, a);
-        vtx(tx + cx, ty + cy, tz + cz, 0F, 0F, r, g, b, a);
     }
 
     /** Fireball k of an event: when it starts and how long it burns (ticks), or null when that slot has none. */
     private static double[] fireball(SkyEvent e, long k) {
-        boolean debris = e.type == SkyEvent.DEBRIS_REENTRY;
-        if (debris) {
+        if (e.type == SkyEvent.DEBRIS_REENTRY) {
             return k == 0 ? new double[]{e.start + 40.0, 620.0} : null;
         }
         if (k != 0 && h(e.seed, k * 5 + 300) > 0.7F) {
@@ -788,10 +635,24 @@ public final class SpaceRenderer {
         return false;
     }
 
+    /** The path of fireball k: start and end (camera-relative world), and fills HEAD at fraction f. */
+    private static final double[] HEAD = new double[3];
+
+    private static void fireballPath(SkyEvent e, long k, float f) {
+        boolean debris = e.type == SkyEvent.DEBRIS_REENTRY;
+        float az = h(e.seed, k * 5 + 304) * Mth.TWO_PI, turn = (h(e.seed, k * 5 + 305) - 0.5F) * 1.6F;
+        float d0 = 3500F + 2500F * h(e.seed, k * 5 + 306), d1 = d0 * (debris ? 1.1F : 0.85F);
+        float h0 = debris ? 2600F : 2800F, h1 = debris ? 1700F : 700F;
+        float a = az + turn * f;
+        float d = Mth.lerp(f, d0, d1);
+        HEAD[0] = Mth.sin(a) * d;
+        HEAD[1] = Mth.lerp(f, h0, h1);
+        HEAD[2] = -Mth.cos(a) * d;
+    }
+
     /** Fireballs (bolides) burning across the sky and bursting at the end; or a satellite falling back in pieces. */
     private static void fireballs(SkyEvent e) {
         float vis = Math.max(night, 0.3F) * clear;
-        frame(world);
         boolean debris = e.type == SkyEvent.DEBRIS_REENTRY;
         long slot = (long) ((t - e.start) / 480.0);
         for (long k = Math.max(0, slot - 1); k <= slot; k++) {
@@ -803,78 +664,75 @@ public final class SpaceRenderer {
             if (f < 0F || f > 1F) {
                 continue;
             }
-            float az0 = h(e.seed, k * 5 + 304) * Mth.TWO_PI;
-            float turn = (h(e.seed, k * 5 + 305) - 0.5F) * (debris ? 1.4F : 1.1F);
-            float el0 = debris ? 0.45F : 0.7F + h(e.seed, k * 5 + 306) * 0.5F, el1 = debris ? 0.22F : 0.08F + h(e.seed, k * 5 + 307) * 0.15F;
             int pieces = debris ? 9 : 1 + (f > 0.78F ? 4 : 0);
             for (int i = 0; i < pieces; i++) {
-                // The pieces lag behind each other and drift apart.
                 float lag = debris ? i * 0.035F : i == 0 ? 0F : (f - 0.78F) * 0.25F * (1 + i * 0.3F);
                 float fi = Mth.clamp(f - lag, 0F, 1F);
-                float spread = debris ? (h(e.seed, 400 + i) - 0.5F) * 0.06F * fi : (h(e.seed, k * 5 + 310 + i) - 0.5F) * 0.08F * (f - 0.78F);
-                float az = az0 + turn * fi + spread, el = Mth.lerp(fi, el0, el1) + spread * 0.5F;
-                float[] hd = local(az, el);
-                float hx = hd[0] * 100F, hy = hd[1] * 100F, hz = hd[2] * 100F;
-                float azb = az0 + turn * Math.max(0F, fi - 0.08F) + spread, elb = Mth.lerp(Math.max(0F, fi - 0.08F), el0, el1) + spread * 0.5F;
-                float[] tl = local(azb, elb);
-                float dx = hx - tl[0] * 100F, dy = hy - tl[1] * 100F, dz = hz - tl[2] * 100F;
-                float dl = Mth.sqrt(dx * dx + dy * dy + dz * dz) + 1.0E-4F;
-                float len = (debris ? 8F : 22F) * (i == 0 ? 1F : 0.4F) * smooth(0F, 0.15F, f);
-                float tx = hx - dx / dl * len, ty = hy - dy / dl * len, tz = hz - dz / dl * len;
+                fireballPath(e, k, fi);
+                double spread = debris ? (h(e.seed, 400 + i) - 0.5) * 300 * fi : (h(e.seed, k * 5 + 310 + i) - 0.5) * 600 * (f - 0.78);
+                double hx = HEAD[0] + spread, hy = HEAD[1] + spread * 0.3, hz = HEAD[2] - spread * 0.5;
                 float bright = (debris ? 0.75F : 0.6F + 0.4F * smooth(0.7F, 0.9F, f)) * Mth.sin(Mth.PI * fi) * (i == 0 ? 1F : 0.7F);
-                if (hy < -2F) {
-                    continue;
+                double[] h0 = world(hx, hy, hz).clone();
+                double hd = Math.sqrt(h0[0] * h0[0] + h0[1] * h0[1] + h0[2] * h0[2]);
+                // The fiery plume: flames shed along the path, cooling from white through orange to red and smoke.
+                int flames = debris ? 14 : 30;
+                for (int s = flames - 1; s >= 0; s--) {
+                    float back = s / (float) flames;
+                    float fs = Math.max(0F, fi - back * (debris ? 0.06F : 0.12F));
+                    fireballPath(e, k, fs);
+                    double[] q = world(HEAD[0] + spread, HEAD[1] + spread * 0.3 + back * 40, HEAD[2] - spread * 0.5).clone();
+                    float heat = 1F - back;
+                    float a = bright * vis * (0.65F - 0.6F * back) * (i == 0 ? 1F : 0.6F);
+                    Space3D.billboard(FLAME, ADD, q[0], q[1], q[2], hd * (0.006 + 0.016 * back) * (debris ? 0.6 : 1), s * 0.7F, 1F,
+                            0.35F + 0.6F * heat, 0.1F + 0.6F * heat * heat, a);
                 }
-                begin(FIREBALL, ADD);
-                segment(FIREBALL, tx, ty, tz, hx, hy, hz, len * 0.22F + 0.5F, 1F, 1F, 1F, bright * vis);
-                float[] n = norm(hx, hy, hz);
-                glow(n[0], n[1], n[2], (debris ? 3F : 6F) + 6F * bright, 1F, 0.75F, 0.45F, 0.4F * bright * vis);
+                Space3D.billboard(GLOW, ADD, h0[0], h0[1], h0[2], hd * (debris ? 0.012 : 0.03) * (0.6 + bright), 0F, 1F, 0.85F, 0.6F, 0.55F * bright * vis);
+                Space3D.billboard(STAR, ADD, h0[0], h0[1], h0[2], hd * (debris ? 0.01 : 0.022), 0F, 0.9F, 1F, 0.85F, 0.7F * bright * vis);
             }
         }
     }
 
-    // ================================================================================== comets, planets, stars
+    // ================================================================================== comets
 
-    /** A comet among the stars: the head, and the tails streaming away from the sun. */
-    private static void comet(SkyEvent e, float edge, float strength, boolean evening) {
-        float vis = night * clear * edge * strength;
+    /** A comet: the glowing head, and tails of dust and gas streaming away from the sun in 3D. */
+    private static void comet(SkyEvent e, float edge, boolean faint) {
+        float vis = night * clear * edge * (faint ? 0.45F : 1F);
         if (vis <= 0.01F) {
             return;
         }
-        frame(sky);
-        float[] d;
-        if (evening) {
-            // A faint comet low in the west after sunset (not far from the sun).
-            // On the side of the sun that is still above the horizon after sunset.
-            d = norm((h(e.seed, 6) - 0.5F) * 0.3F, Mth.cos(0.75F), -Mth.sin(0.75F));
-        } else {
-            d = nightDir(e.seed, 1, 0.55F, 0.6F);
-        }
-        float dx = d[0], dy = d[1], dz = d[2];
-        cometAt(dx, dy, dz, 0F, -1F, 0F, evening ? 24F : 58F, 1F, 1F, 1F, vis);
+        float[] d = faint ? norm((h(e.seed, 6) - 0.5F) * 0.3F, Mth.cos(0.75F), -Mth.sin(0.75F)) : nightDir(e.seed, 1, 0.55F, 0.6F);
+        double len = COMET_D * (faint ? 0.18 : 0.42);
+        cometBody(e.seed, d[0] * COMET_D, d[1] * COMET_D, d[2] * COMET_D, 0, -1, 0, 0, 0, 1, len, vis, faint ? 160 : 280);
     }
 
-    /** The comet sprite with its head at d and its tails along the direction `away` (made square to d). */
-    private static void cometAt(float dx, float dy, float dz, float ax, float ay, float az, float length, float r, float g, float b, float a) {
-        float dot = ax * dx + ay * dy + az * dz;
-        float tx = ax - dx * dot, ty = ay - dy * dot, tz = az - dz * dot;
-        float l = Mth.sqrt(tx * tx + ty * ty + tz * tz);
-        if (l < 1.0E-3F) {
-            tx = 1F;
-            ty = 0F;
-            tz = 0F;
-            l = 1F;
+    /** A comet at a point (sky frame), tails along `away`, the dust tail bending towards `bend`. */
+    private static void cometBody(long seed, double cx, double cy, double cz, double ax, double ay, double az, double bx, double by, double bz,
+                                  double len, float vis, int particles) {
+        double[] head = sky(cx, cy, cz).clone();
+        double hd = Math.sqrt(head[0] * head[0] + head[1] * head[1] + head[2] * head[2]);
+        // The ion tail: a straight, thin, blue streak.
+        double[] tail = sky(cx + ax * len * 1.2, cy + ay * len * 1.2, cz + az * len * 1.2).clone();
+        Space3D.ribbon(METEOR, ADD, tail[0], tail[1], tail[2], head[0], head[1], head[2], hd * 0.006, hd * 0.0015, 0.5F, 0.7F, 1F, 0.65F * vis,
+                0.65F * vis);
+        // The dust tail: a broad, curved stream of glowing dust, flowing outwards.
+        float time = (float) t;
+        for (int i = 0; i < particles; i++) {
+            float speed = 0.0004F + 0.0006F * h(seed, i * 3L);
+            float s = (h(seed, i * 3L + 1) + time * speed) % 1F;
+            double spreadA = h(seed, i * 3L + 2) * Math.PI * 2, spreadR = Math.sqrt(h(seed, i * 5L)) * 0.12 * s;
+            double ux = bz * ay - by * az, uy = bx * az - bz * ax, uz = by * ax - bx * ay;
+            double ox = (Math.cos(spreadA) * bx + Math.sin(spreadA) * ux) * spreadR * len,
+                    oy = (Math.cos(spreadA) * by + Math.sin(spreadA) * uy) * spreadR * len,
+                    oz = (Math.cos(spreadA) * bz + Math.sin(spreadA) * uz) * spreadR * len;
+            double px = cx + ax * s * len + bx * s * s * len * 0.35 + ox, py = cy + ay * s * len + by * s * s * len * 0.35 + oy,
+                    pz = cz + az * s * len + bz * s * s * len * 0.35 + oz;
+            double[] q = sky(px, py, pz);
+            float a = (float) Math.pow(1F - s, 1.3) * 0.13F * vis;
+            Space3D.billboard(GLOW, ADD, q[0], q[1], q[2], hd * (0.004 + 0.026 * s), 0F, 1F, 0.95F, 0.82F, a);
         }
-        tx /= l;
-        ty /= l;
-        tz /= l;
-        // The head is 7% along the texture; the centre of the sprite lies down the tail from it.
-        float half = length * 0.5F;
-        float off = length * 0.43F;
-        float cx = dx * 100F + tx * off, cy = dy * 100F + ty * off, cz = dz * 100F + tz * off;
-        float ux = ty * dz - tz * dy, uy = tz * dx - tx * dz, uz = tx * dy - ty * dx;
-        begin(COMET, ADD);
-        quad(cx, cy, cz, tx * half, ty * half, tz * half, ux * half * 0.5F, uy * half * 0.5F, uz * half * 0.5F, 0F, 0F, 1F, 1F, r, g, b, a);
+        // The head: a bright greenish coma round a tiny star-like nucleus.
+        Space3D.billboard(GLOW, ADD, head[0], head[1], head[2], hd * 0.02, 0F, 0.75F, 1F, 0.85F, 0.75F * vis);
+        Space3D.billboard(STAR, ADD, head[0], head[1], head[2], hd * 0.012, 0F, 1F, 1F, 1F, vis);
     }
 
     /** A comet gliding visibly across the sky and swerving off its course on the way. */
@@ -883,128 +741,83 @@ public final class SpaceRenderer {
         if (vis <= 0.01F) {
             return;
         }
-        frame(sky);
-        float side = h(e.seed, 2) - 0.5F;
-        float x0 = side * 0.6F + 0.25F * Mth.sin(Mth.PI * p) + 0.3F * smooth(0.45F, 0.62F, p) * Math.signum(side + 0.01F);
-        float z0 = Mth.lerp(p, -0.75F, 0.75F);
-        float p2 = Math.min(1F, p + 0.01F);
-        float x1 = side * 0.6F + 0.25F * Mth.sin(Mth.PI * p2) + 0.3F * smooth(0.45F, 0.62F, p2) * Math.signum(side + 0.01F);
-        float z1 = Mth.lerp(p2, -0.75F, 0.75F);
-        float[] a = norm(x0, -1F, z0);
-        float ax = a[0], ay = a[1], az = a[2];
-        float[] b = norm(x1, -1F, z1);
-        float mx = ax - b[0], my = ay - b[1], mz = az - b[2];
-        float ml = Mth.sqrt(mx * mx + my * my + mz * mz) + 1.0E-6F;
+        float[] a = wanderAt(e, p), b = wanderAt(e, Math.min(1F, p + 0.01F));
+        float[] m = norm(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
         // The tail trails behind it, bent away from the sun.
-        cometAt(ax, ay, az, mx / ml * 0.65F, my / ml * 0.65F - 0.35F, mz / ml * 0.65F, 48F, 0.85F, 0.92F, 1F, vis);
-        glow(ax, ay, az, 5F, 0.7F, 0.85F, 1F, 0.5F * vis);
+        float[] away = norm(m[0] * 0.65F, m[1] * 0.65F - 0.35F, m[2] * 0.65F);
+        cometBody(e.seed, a[0] * COMET_D, a[1] * COMET_D, a[2] * COMET_D, away[0], away[1], away[2], m[0], m[1], m[2], COMET_D * 0.32, vis, 220);
     }
 
-    /** Two (or three) planets close together in the sky. */
-    private static void conjunction(SkyEvent e, float p, float edge, boolean triple) {
-        float vis = night * clear * edge;
-        if (vis <= 0.01F) {
-            return;
-        }
-        frame(sky);
-        float[] d0 = nightDir(e.seed, 1, 0.12F, 0.55F);
-        float bx = d0[0], by = d0[1], bz = d0[2];
-        // Along the ecliptic (the z direction in the sky frame) and across it.
-        basis(bx, by, bz, 0F, 0F, 1F);
-        float ex = R[0], ey = R[1], ez = R[2], nx = U[0], ny = U[1], nz = U[2];
-        float sep = (2.5F + 4F * Math.abs(p - 0.5F)) * Mth.DEG_TO_RAD;
-        if (triple) {
-            float wide = sep * 2.2F;
-            place(JUPITER, bx, by, bz, ex, ey, ez, nx, ny, nz, -wide, 0.15F * wide, 2.4F, vis, 0.95F, 0.85F, 0.7F);
-            place(-1, bx, by, bz, ex, ey, ez, nx, ny, nz, 0F, -0.12F * wide, 1.8F, vis, 0.95F, 0.88F, 0.7F);
-            place(MARS, bx, by, bz, ex, ey, ez, nx, ny, nz, wide, 0.2F * wide, 1.2F, vis, 1F, 0.6F, 0.45F);
-        } else {
-            place(JUPITER, bx, by, bz, ex, ey, ez, nx, ny, nz, -sep * 0.5F, 0F, 2.3F, vis, 0.95F, 0.85F, 0.7F);
-            place(MARS, bx, by, bz, ex, ey, ez, nx, ny, nz, sep * 0.5F, 0.35F * sep, 1.2F, vis, 1F, 0.6F, 0.45F);
-        }
+    private static float[] wanderAt(SkyEvent e, float p) {
+        float side = h(e.seed, 2) - 0.5F;
+        return norm(side * 0.6F + 0.25F * Mth.sin(Mth.PI * p) + 0.3F * smooth(0.45F, 0.62F, p) * Math.signum(side + 0.01F), -1F,
+                Mth.lerp(p, -0.75F, 0.75F));
     }
 
-    /** A planet (cell, or -1 for Saturn) at angles (along, across) from a centre direction, with its glow. */
-    private static void place(int cell, float bx, float by, float bz, float ex, float ey, float ez, float nx, float ny, float nz,
-                              float along, float across, float radius, float vis, float gr, float gg, float gb) {
-        float[] d = norm(bx + ex * along + nx * across, by + ey * along + ny * across, bz + ez * along + nz * across);
-        float dx = d[0], dy = d[1], dz = d[2];
-        glow(dx, dy, dz, radius * 3.2F, gr, gg, gb, 0.32F * vis);
-        if (cell < 0) {
-            saturn(dx, dy, dz, radius, ex, ey, ez, vis);
-        } else {
-            planet(cell, dx, dy, dz, radius, ex, ey, ez, vis);
-        }
+    // ================================================================================== stars
+
+    /** A star: a glowing sphere with a granulated, limb-darkened surface, fire round it, and its glare. */
+    private static void star(long seed, double[] c, double r, float cr, float cg, float cb, float fire, float bright, float vis) {
+        double[] rot = bodyRot(true, 0.2, 1, 0.1, 0);
+        Space3D.sphere(STAR_MAP, c[0], c[1], c[2], r, rot, 0, 0, 1, 0F, cr * bright, cg * bright, cb * bright, 0F, vis, true,
+                (float) (t * 0.0002 % 1.0), 14);
+        Space3D.starFire(c[0], c[1], c[2], r, seed, (int) (60 + 120 * fire), cb, (float) t, vis * fire);
+        Space3D.billboard(GLOW, ADD, c[0], c[1], c[2], r * 6, 0F, cr, cg, cb, 0.45F * vis * bright);
+        Space3D.billboard(STAR, ADD, c[0], c[1], c[2], r * 9, 0F, cr, cg, cb, 0.6F * vis * bright);
     }
 
-    /** The planets strung out along the ecliptic in a line across the night sky. */
-    private static void alignment(SkyEvent e, float edge) {
-        float vis = night * clear * edge;
-        if (vis <= 0.01F) {
-            return;
-        }
-        frame(sky);
-        int[] cells = {NEPTUNE, MARS, VENUS, JUPITER, URANUS, -1};
-        float[] sizes = {1F, 1.15F, 1.45F, 2.3F, 1.05F, 1.7F};
-        float[][] glowC = {{0.5F, 0.65F, 1F}, {1F, 0.6F, 0.45F}, {1F, 0.97F, 0.85F}, {0.95F, 0.85F, 0.7F}, {0.6F, 0.9F, 0.95F}, {0.95F, 0.88F, 0.7F}};
-        float shift = (h(e.seed, 1) - 0.5F) * 0.5F;
-        // A little north or south of the moon's path, so the moon does not sit on top of one of them.
-        float lane = (h(e.seed, 2) < 0.5F ? -1F : 1F) * (0.2F + 0.08F * h(e.seed, 3));
-        for (int i = 0; i < cells.length; i++) {
-            float phi = (-48F + i * 19F) * Mth.DEG_TO_RAD + shift;
-            float x = 0.05F * Mth.sin(i * 1.7F) + lane;
-            float[] d = norm(x, -Mth.cos(phi), Mth.sin(phi));
-            float dx = d[0], dy = d[1], dz = d[2];
-            glow(dx, dy, dz, sizes[i] * 3.2F, glowC[i][0], glowC[i][1], glowC[i][2], 0.3F * vis);
-            if (cells[i] < 0) {
-                saturn(dx, dy, dz, sizes[i], 0F, Mth.sin(phi), Mth.cos(phi), vis);
-            } else {
-                planet(cells[i], dx, dy, dz, sizes[i], 0F, Mth.sin(phi), Mth.cos(phi), vis);
-            }
-        }
-    }
-
-    /** A star suddenly blazing up, outshining everything (it can be seen in daylight), then slowly fading for days. */
+    /** A star suddenly blazing up (bright enough to see by day), then slowly fading, in its expanding shell of gas. */
     private static void supernova(SkyEvent e, float p) {
         float b = p < 0.02F ? p / 0.02F : p < 0.08F ? 1F : Math.max(0.12F, (float) Math.exp(-(p - 0.08F) * 4F));
-        frame(sky);
-        float[] d = nightDir(e.seed, 1, 0.8F, 0.8F);
-        float dx = d[0], dy = d[1], dz = d[2];
         float dark = night * clear, seen = Math.max(dark, b > 0.5F ? 0.45F * clear : 0F);
-        float neb = Math.min(1F, p * 12F) * dark;
-        begin(SUPERNOVA, ADD);
-        sprite(dx, dy, dz, 16F + 26F * p, 16F + 26F * p, 1F, 0F, 0F, 0F, 0F, 1F, 1F, 1F, 1F, 1F, 0.55F * neb);
-        glow(dx, dy, dz, 26F * b, 0.85F, 0.88F, 1F, 0.55F * b * seen);
-        star(dx, dy, dz, 18F * b + 5F, 0.92F, 0.95F, 1F, b * seen);
+        float[] d = nightDir(e.seed, 1, 0.8F, 0.8F);
+        double[] c = sky(d[0] * STAR_D, d[1] * STAR_D, d[2] * STAR_D).clone();
+        // The remnant: filaments of glowing gas flung out in every direction.
+        double shell = STAR_D * (0.006 + 0.035 * p);
+        double[] q = new double[3];
+        for (int i = 0; i < 420; i++) {
+            double th = Math.acos(1 - 2 * h(e.seed, i * 4L)), ph = h(e.seed, i * 4L + 1) * Math.PI * 2;
+            double rr = shell * (0.85 + 0.3 * h(e.seed, i * 4L + 2));
+            Space3D.apply(Space3D.SKYVIEW, Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph), q);
+            int tint = (int) (h(e.seed, i * 4L + 3) * 3F);
+            float a = 0.09F * Math.min(1F, p * 15F) * dark;
+            Space3D.billboard(GLOW, ADD, c[0] + q[0] * rr, c[1] + q[1] * rr, c[2] + q[2] * rr, shell * 0.12, 0F, tint == 0 ? 0.8F : tint == 1 ? 1F : 0.5F,
+                    tint == 0 ? 0.35F : tint == 1 ? 0.45F : 0.7F, tint == 0 ? 1F : tint == 1 ? 0.8F : 1F, a);
+        }
+        star(e.seed, c, STAR_D * 0.0025 * (0.5 + b), 0.85F, 0.9F, 1F, 1F, 0.6F + 0.4F * b, seen);
+        Space3D.billboard(GLOW, ADD, c[0], c[1], c[2], STAR_D * 0.06 * b, 0F, 0.85F, 0.88F, 1F, 0.5F * b * seen);
     }
 
-    /** A recurrent nova: a reddish star flaring up again and again, each time fading slowly, in its shell of gas. */
+    /** A recurrent nova: a reddish star flaring up again and again, each time throwing off a shell of gas. */
     private static void recurrentNova(SkyEvent e, float edge) {
         float vis = night * clear * edge;
         if (vis <= 0.01F) {
             return;
         }
-        frame(sky);
         float[] d = nightDir(e.seed, 1, 0.7F, 0.7F);
-        float dx = d[0], dy = d[1], dz = d[2];
+        double[] c = sky(d[0] * STAR_D, d[1] * STAR_D, d[2] * STAR_D).clone();
         double age = t - e.start;
         float ph = (float) ((age % 2400.0) / 2400.0);
         float o = ph < 0.04F ? ph / 0.04F : (float) Math.exp(-(ph - 0.04F) * 7F);
-        begin(NOVA, ADD);
-        sprite(dx, dy, dz, 12F + 6F * ph, 12F + 6F * ph, 1F, 0F, 0F, 0F, 0F, 1F, 1F, 1F, 0.8F, 0.7F, (0.15F + 0.35F * o) * vis);
-        glow(dx, dy, dz, 4F + 14F * o, 1F, 0.45F, 0.22F, (0.35F + 0.5F * o) * vis);
-        star(dx, dy, dz, 3F + 13F * o, 1F, 0.62F, 0.4F, (0.4F + 0.6F * o) * vis);
+        double shell = STAR_D * (0.003 + 0.012 * ph);
+        double[] q = new double[3];
+        for (int i = 0; i < 160; i++) {
+            double th = Math.acos(1 - 2 * h(e.seed, i * 4L)), phi = h(e.seed, i * 4L + 1) * Math.PI * 2;
+            Space3D.apply(Space3D.SKYVIEW, Math.sin(th) * Math.cos(phi), Math.cos(th), Math.sin(th) * Math.sin(phi), q);
+            Space3D.billboard(FLAME, ADD, c[0] + q[0] * shell, c[1] + q[1] * shell, c[2] + q[2] * shell, shell * 0.15, i, 1F, 0.5F, 0.25F,
+                    0.18F * (1F - ph) * vis);
+        }
+        star(e.seed, c, STAR_D * (0.0015 + 0.0015 * o), 1F, 0.55F, 0.3F, 0.8F, 0.5F + 0.5F * o, vis);
     }
 
-    /** A red dwarf star flaring now and then, with a planet beside it. */
+    /** A red dwarf flaring now and then, with a planet beside it lit by its light. */
     private static void starFlares(SkyEvent e, float edge) {
         float vis = night * clear * edge;
         if (vis <= 0.01F) {
             return;
         }
-        frame(sky);
         float[] d = nightDir(e.seed, 1, 0.7F, 0.7F);
-        float dx = d[0], dy = d[1], dz = d[2];
+        double[] c = sky(d[0] * STAR_D, d[1] * STAR_D, d[2] * STAR_D).clone();
         double age = t - e.start;
         long slot = (long) (age / 300.0);
         float flare = 0F;
@@ -1017,92 +830,152 @@ public final class SpaceRenderer {
                 flare = Math.max(flare, f < 0.08F ? f / 0.08F : (float) Math.exp(-(f - 0.08F) * 5F));
             }
         }
-        glow(dx, dy, dz, 10F + 14F * flare, 1F, 0.32F, 0.15F, (0.55F + 0.45F * flare) * vis);
-        begin(NOVA, ADD);
-        sprite(dx, dy, dz, 7F + 9F * flare, 7F + 9F * flare, 1F, 0F, 0F, 0F, 0F, 1F, 1F, 1F, 0.55F, 0.3F, (0.25F + 0.6F * flare) * vis);
-        star(dx, dy, dz, 6F + 12F * flare, 1F, 0.55F + 0.3F * flare, 0.35F + 0.4F * flare, (0.7F + 0.3F * flare) * vis);
-        basis(dx, dy, dz, 0F, 0F, 1F);
-        float[] pd = norm(dx + R[0] * 0.05F - U[0] * 0.025F, dy + R[1] * 0.05F - U[1] * 0.025F, dz + R[2] * 0.05F - U[2] * 0.025F);
-        planet(MARS, pd[0], pd[1], pd[2], 0.9F, 1F, 0F, 0F, 0.85F * vis);
+        double r = STAR_D * 0.003;
+        star(e.seed, c, r, 1F, 0.38F + 0.3F * flare, 0.2F + 0.3F * flare, 1F + flare, 0.7F + 0.6F * flare, vis);
+        // The planet beside it, lit from the star's side.
+        double[] q = sky(d[0] * STAR_D + STAR_D * 0.012, d[1] * STAR_D, d[2] * STAR_D - STAR_D * 0.006).clone();
+        double lx = c[0] - q[0], ly = c[1] - q[1], lz = c[2] - q[2];
+        double ll = Math.sqrt(lx * lx + ly * ly + lz * lz);
+        Space3D.sphere(TOI700E, q[0], q[1], q[2], r * 0.5, bodyRot(true, 0.3, 1, 0, 0), lx / ll, ly / ll, lz / ll, 0.01F, 1F, 0.8F, 0.7F, 0F, vis,
+                false, (float) (t * 0.0004 % 1.0), 14);
     }
 
     // ================================================================================== the aurora
 
-    /** Curtains of green light with red and violet tops, waving and rippling over the northern sky. */
+    /** Curtains of green light with red and violet tops, hanging high over the northern land and rippling. */
     private static void aurora(SkyEvent e, float edge, boolean storm) {
         float vis = night * clear * edge;
         if (vis <= 0.01F) {
             return;
         }
-        frame(world);
-        begin(AURORA, ADD);
         int ribbons = storm ? 6 : 3;
-        int n = 56;
+        int n = 64;
         float time = (float) (t - e.start);
         float speed = storm ? 2.2F : 1F;
+        Space3D.use(AURORA, ADD, true, false);
         for (int i = 0; i < ribbons; i++) {
             float span = storm ? 2.4F : 1.35F;
             float pulse = 0.55F + 0.45F * Mth.sin(time * 0.0021F * speed + i * 1.9F + h(e.seed, i) * 6F);
             float inten = vis * pulse * (storm ? 1.25F : 0.9F) * (0.8F + 0.4F * h(e.seed, i + 10));
-            float dist = storm ? (i == 0 ? 220F : 420F + i * 160F) : 700F + i * 260F;
-            float base = (storm ? 120F : 150F) + i * 25F;
-            float tall = (storm ? 520F : 280F) + 60F * h(e.seed, i + 20);
+            float dist = storm ? (i == 0 ? 1600F : 3200F + i * 1200F) : 5000F + i * 1800F;
+            float base = (storm ? 1400F : 1700F) + i * 180F;
+            float tall = (storm ? 3600F : 2200F) + 400F * h(e.seed, i + 20);
             float az0 = (h(e.seed, i + 30) - 0.5F) * 0.5F;
-            float prevX = 0, prevY = 0, prevZ = 0, prevTX = 0, prevTY = 0, prevTZ = 0, prevU = 0;
+            double[] pl = null, ph = null;
+            float pu = 0F;
             for (int s = 0; s <= n; s++) {
                 float f = (float) s / n;
                 float az = az0 + (f - 0.5F) * 2F * span + 0.06F * Mth.sin(f * 17F + time * 0.01F * speed + i)
                         + 0.12F * Mth.sin(f * 5F - time * 0.004F * speed + i * 2F);
                 float dd = dist * (1F + 0.3F * Mth.sin(f * 4.5F + time * 0.003F * speed + i * 1.3F));
                 float top = base + tall * (0.75F + 0.25F * Mth.sin(f * 7F + time * 0.005F * speed + i));
-                float bx = Mth.sin(az) * dd, bz = -Mth.cos(az) * dd;
-                float[] lo = norm(bx, base, bz);
-                float lx = lo[0] * 100F, ly = lo[1] * 100F, lz = lo[2] * 100F;
-                float[] hi = norm(bx, top, bz);
-                float hx = hi[0] * 100F, hy = hi[1] * 100F, hz = hi[2] * 100F;
+                double bx = Mth.sin(az) * dd, bz = -Mth.cos(az) * dd;
+                double[] lo = world(bx, base, bz).clone();
+                double[] hi = world(bx, top, bz).clone();
                 float u = f * 5F + time * 0.0007F * speed * (i + 1);
-                // The ends of each curtain fade out.
-                float endFade = smooth(0F, 0.12F, f) * smooth(1F, 0.88F, f);
-                if (s > 0) {
-                    float a = inten * endFade;
-                    float gr = storm ? 0.3F : 0.2F, gg = 1F, gb = storm ? 0.55F : 0.45F;
+                if (pl != null) {
+                    float a = inten * smooth(0F, 0.12F, f) * smooth(1F, 0.88F, f);
+                    float gr = storm ? 0.3F : 0.2F, gb = storm ? 0.55F : 0.45F;
                     float tr = storm ? 0.85F : 0.45F, tg = storm ? 0.25F : 0.75F, tb = storm ? 1F : 0.65F;
-                    vtx(prevX, prevY, prevZ, prevU, 1F, gr, gg, gb, a);
-                    vtx(lx, ly, lz, u, 1F, gr, gg, gb, a);
-                    vtx(hx, hy, hz, u, 0F, tr, tg, tb, a * 0.85F);
-                    vtx(prevTX, prevTY, prevTZ, prevU, 0F, tr, tg, tb, a * 0.85F);
+                    Space3D.vtx(pl[0], pl[1], pl[2], pu, 1F, gr, 1F, gb, a);
+                    Space3D.vtx(lo[0], lo[1], lo[2], u, 1F, gr, 1F, gb, a);
+                    Space3D.vtx(hi[0], hi[1], hi[2], u, 0F, tr, tg, tb, a * 0.85F);
+                    Space3D.vtx(ph[0], ph[1], ph[2], pu, 0F, tr, tg, tb, a * 0.85F);
                 }
-                prevX = lx;
-                prevY = ly;
-                prevZ = lz;
-                prevTX = hx;
-                prevTY = hy;
-                prevTZ = hz;
-                prevU = u;
+                pl = lo;
+                ph = hi;
+                pu = u;
             }
         }
-        // A green glow low over the northern horizon.
-        glow(0F, 0.12F, -1F, storm ? 75F : 55F, 0.2F, 1F, 0.45F, 0.12F * vis);
+        double[] g = world(0, 900, -9000);
+        Space3D.billboard(GLOW, ADD, g[0], g[1], g[2], storm ? 9000 : 6500, 0F, 0.2F, 1F, 0.45F, 0.12F * vis);
     }
 
     // ================================================================================== satellites
 
-    private static final float[] P = new float[3], V = new float[3];
+    private static final double[] PP = new double[3], PV = new double[3];
 
     /**
-     * A satellite pass: along the great circle that is highest (at `emax`) in the direction square to the heading.
-     * Fills P with the direction at angle `th` along it (0 = the highest point) and V with its direction of motion.
+     * A pass along the great circle that is highest (at `emax`) square to the heading: fills PP with the direction at
+     * angle `th` along it (0 = the top) and PV with the direction of motion.
      */
     private static void pass(float heading, float emax, float th) {
-        float hx = Mth.cos(emax) * Mth.sin(heading + Mth.HALF_PI), hy = Mth.sin(emax), hz = -Mth.cos(emax) * Mth.cos(heading + Mth.HALF_PI);
-        float fx = Mth.sin(heading), fz = -Mth.cos(heading);
-        float c = Mth.cos(th), s = Mth.sin(th);
-        P[0] = c * hx + s * fx;
-        P[1] = c * hy;
-        P[2] = c * hz + s * fz;
-        V[0] = -s * hx + c * fx;
-        V[1] = -s * hy;
-        V[2] = -s * hz + c * fz;
+        double hx = Math.cos(emax) * Math.sin(heading + Math.PI / 2), hy = Math.sin(emax), hz = -Math.cos(emax) * Math.cos(heading + Math.PI / 2);
+        double fx = Math.sin(heading), fz = -Math.cos(heading);
+        double c = Math.cos(th), s = Math.sin(th);
+        PP[0] = c * hx + s * fx;
+        PP[1] = c * hy;
+        PP[2] = c * hz + s * fz;
+        PV[0] = -s * hx + c * fx;
+        PV[1] = -s * hy;
+        PV[2] = -s * hz + c * fz;
+    }
+
+    /**
+     * The space station: a long truss with four pairs of big solar wings turned to the sun, the pressurised modules
+     * and the radiators, every face lit by the sun (or a black silhouette). Centre and directions in view space.
+     */
+    private static void stationModel(double[] c, double scale, double rx, double ry, double rz, boolean skyFrame, double[] velView, float cr,
+                                     float cg, float cb, float alpha, boolean silhouette) {
+        double[] up = new double[3];
+        Space3D.apply(skyFrame ? Space3D.SKYVIEW : Space3D.VIEW, rx, ry, rz, up);
+        double[] v = velView;
+        double[] tr = cross(v, up);
+        normalize(tr);
+        double[] fw = cross(up, tr);
+        normalize(fw);
+        double[] l = Space3D.SUN;
+        // The wings face the sun as far as they can turn about the truss.
+        double ld = l[0] * tr[0] + l[1] * tr[1] + l[2] * tr[2];
+        double[] pn = {l[0] - tr[0] * ld, l[1] - tr[1] * ld, l[2] - tr[2] * ld};
+        if (!normalize(pn)) {
+            pn = up.clone();
+        }
+        double[] pw = cross(pn, tr);
+        normalize(pw);
+        float amb = silhouette ? 0F : 0.06F;
+        float r = silhouette ? cr : 0.82F, g = silhouette ? cg : 0.82F, b = silhouette ? cb : 0.8F;
+        part(WHITE, c, scale, tr, 0, up, 0, fw, 0, tr, 55, up, 2, fw, 2, r, g, b, amb, 0F, alpha);
+        part(WHITE, c, scale, tr, 0, up, 0, fw, 0, tr, 3, up, 3, fw, 24, r, g, b, amb, 0F, alpha);
+        part(WHITE, c, scale, tr, 0, up, 0, fw, -10, tr, 13, up, 2.5, fw, 3, r, g, b, amb, 0F, alpha);
+        for (int k = -1; k <= 1; k += 2) {
+            part(WHITE, c, scale, tr, k * 13, up, 0, fw, 4, tr, 1, up, 9, fw, 6, r * 1.05F, g * 1.05F, b * 1.05F, amb, 0F, alpha);
+        }
+        float pr = silhouette ? cr : 1F, pg = silhouette ? cg : 1F, pb = silhouette ? cb : 1F;
+        for (int k : new int[]{-52, -40, 40, 52}) {
+            for (int sgn = -1; sgn <= 1; sgn += 2) {
+                part(silhouette ? WHITE : PANEL, c, scale, tr, k, pw, sgn * 20, pn, 0, tr, 5.5, pw, 17, pn, 0.25, pr, pg, pb, amb,
+                        silhouette ? 0F : 2.5F, alpha);
+            }
+        }
+    }
+
+    /** One box of a model: offset along three axes, half-extents along three axes (model units times `scale`). */
+    private static void part(ResourceLocation tex, double[] c, double scale, double[] o1, double k1, double[] o2, double k2, double[] o3, double k3,
+                             double[] a1, double e1, double[] a2, double e2, double[] a3, double e3, float r, float g, float b, float amb, float spec,
+                             float alpha) {
+        double cx = c[0] + (o1[0] * k1 + o2[0] * k2 + o3[0] * k3) * scale;
+        double cy = c[1] + (o1[1] * k1 + o2[1] * k2 + o3[1] * k3) * scale;
+        double cz = c[2] + (o1[2] * k1 + o2[2] * k2 + o3[2] * k3) * scale;
+        double[] x = {a1[0] * e1 * scale, a1[1] * e1 * scale, a1[2] * e1 * scale};
+        double[] y = {a2[0] * e2 * scale, a2[1] * e2 * scale, a2[2] * e2 * scale};
+        double[] z = {a3[0] * e3 * scale, a3[1] * e3 * scale, a3[2] * e3 * scale};
+        Space3D.box(tex, cx, cy, cz, x, y, z, Space3D.SUN[0], Space3D.SUN[1], Space3D.SUN[2], r, g, b, amb, spec, alpha);
+    }
+
+    private static double[] cross(double[] a, double[] b) {
+        return new double[]{a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]};
+    }
+
+    private static boolean normalize(double[] v) {
+        double l = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+        if (l < 1.0E-9) {
+            return false;
+        }
+        v[0] /= l;
+        v[1] /= l;
+        v[2] /= l;
+        return true;
     }
 
     /** The space station sailing across the sky, lit by the sun after dark. */
@@ -1111,150 +984,283 @@ public final class SpaceRenderer {
         if (vis <= 0.01F) {
             return;
         }
-        frame(world);
-        float th = (p * 2F - 1F) * 82F * Mth.DEG_TO_RAD;
-        pass(h(e.seed, 1) * Mth.TWO_PI, (40F + h(e.seed, 2) * 45F) * Mth.DEG_TO_RAD, th);
-        float px = P[0], py = P[1], pz = P[2];
-        float a = vis * smooth(0F, 0.12F, py);
-        float warm = 1F - smooth(0.05F, 0.3F, py) * 0.3F;
-        glow(px, py, pz, 13F, 1F, 0.95F * warm, 0.85F * warm, 0.22F * a);
-        begin(ISS, NORMAL);
-        sprite(px, py, pz, 9.5F, 4.75F, V[0], V[1], V[2], 0F, 0F, 1F, 1F, 1F, 0.97F * warm, 0.9F * warm, a);
-        // Sunlight glinting off the solar wings.
-        star(px, py, pz, 3.5F, 1F, 1F, 0.95F, 0.45F * a);
+        pass(h(e.seed, 1) * Mth.TWO_PI, (40F + h(e.seed, 2) * 45F) * Mth.DEG_TO_RAD, (p * 2F - 1F) * 82F * Mth.DEG_TO_RAD);
+        float a = vis * smooth(0F, 0.12F, (float) PP[1]);
+        if (a <= 0.01F) {
+            return;
+        }
+        double d = 2500;
+        double[] c = world(PP[0] * d, PP[1] * d, PP[2] * d).clone();
+        double[] vel = new double[3];
+        Space3D.apply(Space3D.VIEW, PV[0], PV[1], PV[2], vel);
+        stationModel(c, d * 0.0016, PP[0], PP[1], PP[2], false, vel, 1F, 1F, 1F, a, false);
+        Space3D.billboard(GLOW, ADD, c[0], c[1], c[2], d * 0.06, 0F, 1F, 0.95F, 0.85F, 0.15F * a);
     }
 
-    /** A train of satellites in a line, gliding across the sky one after another and fading into the Earth's shadow. */
+    /** A train of satellites in a line, gliding across the sky and fading one by one into the Earth's shadow. */
     private static void starlink(SkyEvent e, float p) {
         float vis = night * clear;
         if (vis <= 0.01F) {
             return;
         }
-        frame(world);
         float heading = h(e.seed, 1) * Mth.TWO_PI, emax = (35F + h(e.seed, 2) * 40F) * Mth.DEG_TO_RAD;
         float head = (p * 2F - 1F) * 95F * Mth.DEG_TO_RAD;
+        double d = 2200;
+        double[] vel = new double[3];
         for (int i = 0; i < 28; i++) {
             float th = head - i * 1.15F * Mth.DEG_TO_RAD;
             if (th < -85F * Mth.DEG_TO_RAD || th > 55F * Mth.DEG_TO_RAD) {
                 continue;
             }
             pass(heading, emax, th);
-            float px = P[0], py = P[1], pz = P[2];
             float shadow = smooth(55F * Mth.DEG_TO_RAD, 40F * Mth.DEG_TO_RAD, th);
-            float a = vis * smooth(0F, 0.1F, py) * shadow * (0.6F + 0.4F * h(e.seed, i + 10));
-            star(px, py, pz, 1.5F, 1F, 1F, 0.97F, a);
-            glow(px, py, pz, 1.4F, 1F, 1F, 0.95F, 0.6F * a);
+            float a = vis * smooth(0F, 0.1F, (float) PP[1]) * shadow * (0.6F + 0.4F * h(e.seed, i + 10));
+            if (a <= 0.01F) {
+                continue;
+            }
+            double[] c = world(PP[0] * d, PP[1] * d, PP[2] * d).clone();
+            Space3D.apply(Space3D.VIEW, PV[0], PV[1], PV[2], vel);
+            satellite(c, d * 0.0012, PP, vel, a, null);
+            Space3D.billboard(GLOW, ADD, c[0], c[1], c[2], d * 0.012, 0F, 1F, 1F, 0.95F, 0.7F * a);
         }
     }
 
-    /** A satellite whose panels catch the sun for a few seconds: it flares up far brighter than any star, then fades. */
+    /** A small satellite: a box body and two long flat solar panels (mirror-bright when they catch the sun). */
+    private static void satellite(double[] c, double scale, double[] radial, double[] velView, float alpha, double[] panelNormal) {
+        double[] up = new double[3];
+        Space3D.apply(Space3D.VIEW, radial[0], radial[1], radial[2], up);
+        double[] tr = cross(velView, up);
+        normalize(tr);
+        double[] pn = panelNormal != null ? panelNormal : up;
+        double[] pw = cross(pn, tr);
+        normalize(pw);
+        part(WHITE, c, scale, tr, 0, up, 0, velView, 0, tr, 3, up, 3, velView, 4, 0.85F, 0.78F, 0.55F, 0.08F, 0.6F, alpha);
+        for (int sgn = -1; sgn <= 1; sgn += 2) {
+            part(PANEL, c, scale, tr, sgn * 12, up, 0, velView, 0, tr, 8, pw, 3, pn, 0.2, 1F, 1F, 1F, 0.06F, 4F, alpha);
+        }
+    }
+
+    /** A satellite whose panels catch the sun and mirror it to you for a few seconds: a flash far brighter than any star. */
     private static void satelliteFlare(SkyEvent e, float p) {
         float vis = night * clear;
         if (vis <= 0.01F) {
             return;
         }
-        frame(world);
-        float th = (p * 2F - 1F) * 70F * Mth.DEG_TO_RAD;
-        pass(h(e.seed, 1) * Mth.TWO_PI, (45F + h(e.seed, 2) * 40F) * Mth.DEG_TO_RAD, th);
-        float px = P[0], py = P[1], pz = P[2];
-        float a = vis * smooth(0F, 0.1F, py);
-        float flare = (float) Math.exp(-((p - 0.5F) / 0.035F) * ((p - 0.5F) / 0.035F));
-        begin(SATELLITE, NORMAL);
-        sprite(px, py, pz, 2.6F, 1.3F, V[0], V[1], V[2], 0F, 0F, 1F, 1F, 0.95F, 0.95F, 0.95F, a * 0.9F);
-        star(px, py, pz, 1.8F + 16F * flare, 1F, 1F, 0.96F, (0.45F + 0.55F * flare) * a);
-        glow(px, py, pz, 3F + 22F * flare, 1F, 0.97F, 0.9F, 0.6F * flare * a);
+        float heading = h(e.seed, 1) * Mth.TWO_PI, emax = (45F + h(e.seed, 2) * 40F) * Mth.DEG_TO_RAD;
+        // The panels are set so that at the middle of the pass they mirror the sun straight down to you.
+        pass(heading, emax, 0F);
+        double[] mid = PP.clone();
+        double[] sunW = {Space3D.SKY[3], Space3D.SKY[4], Space3D.SKY[5]};
+        double[] nWorld = {sunW[0] - mid[0], sunW[1] - mid[1], sunW[2] - mid[2]};
+        normalize(nWorld);
+        double[] nView = new double[3];
+        Space3D.apply(Space3D.VIEW, nWorld[0], nWorld[1], nWorld[2], nView);
+        pass(heading, emax, (p * 2F - 1F) * 70F * Mth.DEG_TO_RAD);
+        float a = vis * smooth(0F, 0.1F, (float) PP[1]);
+        if (a <= 0.01F) {
+            return;
+        }
+        double d = 2400;
+        double[] c = world(PP[0] * d, PP[1] * d, PP[2] * d).clone();
+        double[] vel = new double[3];
+        Space3D.apply(Space3D.VIEW, PV[0], PV[1], PV[2], vel);
+        satellite(c, d * 0.002, PP, vel, a, nView);
+        // How well the panels mirror the sun into your eye right now.
+        double[] to = {-c[0], -c[1], -c[2]};
+        normalize(to);
+        double nd = 2 * (nView[0] * Space3D.SUN[0] + nView[1] * Space3D.SUN[1] + nView[2] * Space3D.SUN[2]);
+        double rx = nd * nView[0] - Space3D.SUN[0], ry = nd * nView[1] - Space3D.SUN[1], rz = nd * nView[2] - Space3D.SUN[2];
+        float glint = (float) Math.pow(Math.max(0, rx * to[0] + ry * to[1] + rz * to[2]), 400);
+        Space3D.billboard(STAR, ADD, c[0], c[1], c[2], d * (0.006 + 0.08 * glint), 0F, 1F, 1F, 0.96F, (0.35F + 0.65F * glint) * a);
+        Space3D.billboard(GLOW, ADD, c[0], c[1], c[2], d * (0.008 + 0.12 * glint), 0F, 1F, 0.97F, 0.9F, 0.6F * glint * a);
     }
 
     // ================================================================================== above the storms
 
-    /** Red sprites, blue jets and elves flashing high above distant thunderstorms. */
+    /** Red sprites, blue jets and elves flashing high above distant thunderstorms, where they really are. */
     private static void upperLightning(Vec3 cam) {
         if (ClientSkyEvents.FLASHES.isEmpty() || night <= 0.05F) {
             return;
         }
-        frame(world);
         for (double[] f : ClientSkyEvents.FLASHES) {
             float age = (float) (t - f[4]);
             float a = age < 0F ? 0F : Math.min(1F, (float) Math.exp(-age / 3F) * night * 1.4F);
             if (a <= 0.01F) {
                 continue;
             }
-            float x = (float) (f[0] - cam.x), z = (float) (f[2] - cam.z);
-            float deck = (float) (f[1] - cam.y);
+            double x = f[0] - cam.x, z = f[2] - cam.z, deck = f[1] - cam.y;
             float size = (float) f[5];
             int kind = (int) f[3];
+            long seed = (long) (f[0] * 31 + f[2] * 17 + f[4]);
             if (kind == 0) {
-                // Sprites: a cluster of red jellyfish shapes 50-90 km up, well above the cloud tops.
-                for (int i = 0; i < 3; i++) {
-                    float ox = (i - 1) * 110F * size, cy = deck + 520F * size;
-                    float[] d = norm(x + ox, cy, z);
-                    float dist = Mth.sqrt((x + ox) * (x + ox) + cy * cy + z * z);
-                    float hh = 380F * size / dist * 100F, hw = hh * 0.5F;
-                    begin(SPRITE, ADD);
-                    spriteUpright(d[0], d[1], d[2], hw, hh, 0F, 0F, 1F, 1F, 1F, 1F, 1F, a * (i == 1 ? 1F : 0.7F));
+                // A sprite: a red glowing crown 50-90 km up and tendrils hanging below it, blue at their tips.
+                for (int c = 0; c < 3; c++) {
+                    double ox = (c - 1) * 160 * size;
+                    double[] crown = world(x + ox, deck + 760 * size, z).clone();
+                    double cd = Math.sqrt(crown[0] * crown[0] + crown[1] * crown[1] + crown[2] * crown[2]);
+                    Space3D.billboard(GLOW, ADD, crown[0], crown[1], crown[2], 170 * size, 0F, 1F, 0.2F, 0.25F, a * 0.8F);
+                    for (int i = 0; i < 9; i++) {
+                        double tx = x + ox + (h(seed, c * 20L + i) - 0.5) * 220 * size;
+                        double[] top = world(tx, deck + 700 * size, z + (h(seed, c * 20L + i + 9) - 0.5) * 80).clone();
+                        double bottomY = deck + (300 + 160 * h(seed, c * 20L + i + 5)) * size;
+                        double[] bot = world(tx + (h(seed, c * 20L + i + 7) - 0.5) * 60, bottomY, z).clone();
+                        Space3D.ribbon(SPRITE, ADD, bot[0], bot[1], bot[2], top[0], top[1], top[2], cd * 0.0025, cd * 0.004, 1F, 1F, 1F, a * 0.9F, a);
+                    }
                 }
             } else if (kind == 1) {
-                // A blue jet shooting up out of the cloud top.
-                float cy = deck + 260F * size;
-                float[] d = norm(x, cy, z);
-                float dist = Mth.sqrt(x * x + cy * cy + z * z);
-                float hh = 260F * size / dist * 100F;
-                begin(JET, ADD);
-                spriteUpright(d[0], d[1], d[2], hh * 0.25F, hh, 0F, 0F, 1F, 1F, 1F, 1F, 1F, a);
+                // A blue jet shooting up out of the cloud top in a narrow cone.
+                double[] base = world(x, deck + 120, z).clone();
+                double[] up = new double[3];
+                Space3D.apply(Space3D.VIEW, 0, 1, 0, up);
+                Space3D.cone(base[0], base[1], base[2], up[0], up[1], up[2], 420 * size, 70 * size, 0.35F, 0.55F, 1F, a);
             } else {
-                // An elve: a red ring spreading out very high up.
-                float cy = deck + 800F;
-                float r = 300F + age * 120F;
-                float[] d = norm(x, cy, z);
-                float dist = Mth.sqrt(x * x + cy * cy + z * z);
-                float s = r / dist * 100F;
-                begin(NOVA, ADD);
-                // A flat ring seen from the side: wide across the view, squashed up and down.
-                sprite(d[0], d[1], d[2], s, s * (Math.abs(d[1]) * 0.6F + 0.12F), -d[2], 0F, d[0], 0F, 0F, 1F, 1F, 1F, 0.25F, 0.2F, a * 0.8F);
+                // An elve: a red ring of light spreading out very high up.
+                double rr = 300 + age * 160;
+                for (int i = 0; i < 48; i++) {
+                    double an = Math.PI * 2 * i / 48;
+                    double[] q = world(x + Math.cos(an) * rr, deck + 1500, z + Math.sin(an) * rr);
+                    Space3D.billboard(GLOW, ADD, q[0], q[1], q[2], 90, 0F, 1F, 0.25F, 0.2F, a * 0.35F);
+                }
             }
         }
     }
 
     // ================================================================================== the Milky Way
 
-    /** The Milky Way arching across a dark sky, and the faint cone of the zodiacal light after dusk. */
+    /** The Milky Way arching across a dark sky: its glowing band, its star clouds, and the zodiacal light after dusk. */
     private static void dustGlow(SkyEvent e, float edge) {
         float vis = night * clear * edge;
         if (vis <= 0.01F) {
             return;
         }
-        frame(sky);
-        // A great circle tilted well away from the ecliptic.
         float tilt = (55F + h(e.seed, 1) * 25F) * Mth.DEG_TO_RAD, spin = h(e.seed, 2) * Mth.TWO_PI;
-        float ax = Mth.cos(spin), ay = 0F, az = Mth.sin(spin);
-        float bx = -Mth.sin(spin) * Mth.cos(tilt), by = Mth.sin(tilt), bz = Mth.cos(spin) * Mth.cos(tilt);
-        float nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
-        float w = 0.3F;
-        float cw = Mth.cos(w), sw = Mth.sin(w);
-        begin(MILKY_WAY, ADD);
-        int n = 72;
+        double ax = Math.cos(spin), ay = 0, az = Math.sin(spin);
+        double bx = -Math.sin(spin) * Math.cos(tilt), by = Math.sin(tilt), bz = Math.cos(spin) * Math.cos(tilt);
+        double nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
+        double w = 0.3;
+        double cw = Math.cos(w), sw = Math.sin(w);
+        Space3D.use(MILKY_WAY, ADD, true, false);
+        int n = 96;
         for (int i = 0; i < n; i++) {
-            float t0 = Mth.TWO_PI * i / n, t1 = Mth.TWO_PI * (i + 1) / n;
-            float c0 = Mth.cos(t0), s0 = Mth.sin(t0), c1 = Mth.cos(t1), s1 = Mth.sin(t1);
-            float p0x = c0 * ax + s0 * bx, p0y = c0 * ay + s0 * by, p0z = c0 * az + s0 * bz;
-            float p1x = c1 * ax + s1 * bx, p1y = c1 * ay + s1 * by, p1z = c1 * az + s1 * bz;
+            double t0 = Math.PI * 2 * i / n, t1 = Math.PI * 2 * (i + 1) / n;
+            double c0 = Math.cos(t0), s0 = Math.sin(t0), c1 = Math.cos(t1), s1 = Math.sin(t1);
+            double p0x = c0 * ax + s0 * bx, p0y = c0 * ay + s0 * by, p0z = c0 * az + s0 * bz;
+            double p1x = c1 * ax + s1 * bx, p1y = c1 * ay + s1 * by, p1z = c1 * az + s1 * bz;
             float u0 = (float) i / n, u1 = (float) (i + 1) / n;
             float a = 0.8F * vis;
-            vtx((p0x * cw - nx * sw) * 100F, (p0y * cw - ny * sw) * 100F, (p0z * cw - nz * sw) * 100F, u0, 1F, 1F, 1F, 1F, a);
-            vtx((p1x * cw - nx * sw) * 100F, (p1y * cw - ny * sw) * 100F, (p1z * cw - nz * sw) * 100F, u1, 1F, 1F, 1F, 1F, a);
-            vtx((p1x * cw + nx * sw) * 100F, (p1y * cw + ny * sw) * 100F, (p1z * cw + nz * sw) * 100F, u1, 0F, 1F, 1F, 1F, a);
-            vtx((p0x * cw + nx * sw) * 100F, (p0y * cw + ny * sw) * 100F, (p0z * cw + nz * sw) * 100F, u0, 0F, 1F, 1F, 1F, a);
+            double[] q;
+            q = sky((p0x * cw - nx * sw) * MILKY_D, (p0y * cw - ny * sw) * MILKY_D, (p0z * cw - nz * sw) * MILKY_D);
+            Space3D.vtx(q[0], q[1], q[2], u0, 1F, 1F, 1F, 1F, a);
+            q = sky((p1x * cw - nx * sw) * MILKY_D, (p1y * cw - ny * sw) * MILKY_D, (p1z * cw - nz * sw) * MILKY_D);
+            Space3D.vtx(q[0], q[1], q[2], u1, 1F, 1F, 1F, 1F, a);
+            q = sky((p1x * cw + nx * sw) * MILKY_D, (p1y * cw + ny * sw) * MILKY_D, (p1z * cw + nz * sw) * MILKY_D);
+            Space3D.vtx(q[0], q[1], q[2], u1, 0F, 1F, 1F, 1F, a);
+            q = sky((p0x * cw + nx * sw) * MILKY_D, (p0y * cw + ny * sw) * MILKY_D, (p0z * cw + nz * sw) * MILKY_D);
+            Space3D.vtx(q[0], q[1], q[2], u0, 0F, 1F, 1F, 1F, a);
         }
-        // Zodiacal light: a faint glowing cone along the ecliptic, not far from the set sun.
+        // Thousands of stars crowded in the band.
+        for (int i = 0; i < 1400; i++) {
+            double th = h(e.seed, i * 3L) * Math.PI * 2;
+            double off = (h(e.seed, i * 3L + 1) + h(e.seed, i * 3L + 2) - 1.0) * 0.35;
+            double c = Math.cos(th), s = Math.sin(th);
+            double px = (c * ax + s * bx) * Math.cos(off) + nx * Math.sin(off), py = (c * ay + s * by) * Math.cos(off) + ny * Math.sin(off),
+                    pz = (c * az + s * bz) * Math.cos(off) + nz * Math.sin(off);
+            double[] q = sky(px * MILKY_D * 0.9, py * MILKY_D * 0.9, pz * MILKY_D * 0.9);
+            float b = 0.3F + 0.7F * (float) Math.pow(h(e.seed, i * 5L), 3);
+            int tint = (int) (h(e.seed, i * 5L + 1) * 3);
+            Space3D.billboard(GLOW, ADD, q[0], q[1], q[2], MILKY_D * 0.9 * 0.0025 * (0.6 + b), 0F, tint == 0 ? 1F : tint == 1 ? 0.85F : 1F, tint == 0 ? 0.92F : 0.9F,
+                    tint == 0 ? 0.8F : 1F, b * vis * 0.8F);
+        }
         float dusk = smooth(0F, -0.25F, sunY) * smooth(-0.75F, -0.4F, sunY);
         if (dusk > 0.01F) {
             for (int i = 0; i < 4; i++) {
-                float ang = (32F + i * 11F) * Mth.DEG_TO_RAD;
-                for (float side : new float[]{-1F, 1F}) {
-                    float[] d = norm(0F, Mth.cos(ang), side * Mth.sin(ang));
-                    glow(d[0], d[1], d[2], 26F - i * 4F, 1F, 0.95F, 0.85F, 0.06F * dusk * vis);
+                double ang = (32F + i * 11F) * Mth.DEG_TO_RAD;
+                for (double side : new double[]{-1, 1}) {
+                    double[] q = sky(0, Math.cos(ang) * MILKY_D * 0.8, side * Math.sin(ang) * MILKY_D * 0.8);
+                    Space3D.billboard(GLOW, ADD, q[0], q[1], q[2], MILKY_D * 0.8 * (0.26 - i * 0.04), 0F, 1F, 0.95F, 0.85F, 0.06F * dusk * vis);
                 }
             }
         }
+    }
+
+    // ================================================================================== pointing the camera (tests)
+
+    /** Where the main thing of a sky event is right now (a world direction), for pointing the camera at it; or null. */
+    public static float[] focus(int type, ClientLevel level, float pt) {
+        double time = level.getGameTime() + pt;
+        SkyEvent e = ClientSkyEvents.get(type, time);
+        if (e == null) {
+            return null;
+        }
+        t = time;
+        float p = (float) e.progress(time);
+        float th = level.getTimeOfDay(pt) * Mth.TWO_PI;
+        float[] d;
+        boolean skyFrame = true;
+        switch (type) {
+            case SkyEvent.COMET -> d = nightDir(e.seed, 1, 0.55F, 0.6F);
+            case SkyEvent.FAINT_COMET -> d = norm((h(e.seed, 6) - 0.5F) * 0.3F, Mth.cos(0.75F), -Mth.sin(0.75F));
+            case SkyEvent.CONJUNCTION, SkyEvent.TRIPLE_CONJUNCTION -> d = nightDir(e.seed, 1, 0.12F, 0.55F);
+            case SkyEvent.ALIGNMENT -> {
+                float shift = (h(e.seed, 1) - 0.5F) * 0.5F;
+                float lane = (h(e.seed, 2) < 0.5F ? -1F : 1F) * (0.2F + 0.08F * h(e.seed, 3));
+                d = norm(lane, -Mth.cos(shift), Mth.sin(shift));
+            }
+            case SkyEvent.SUPERNOVA -> d = nightDir(e.seed, 1, 0.8F, 0.8F);
+            case SkyEvent.RECURRENT_NOVA, SkyEvent.STAR_FLARES -> d = nightDir(e.seed, 1, 0.7F, 0.7F);
+            case SkyEvent.WANDERING_COMET -> d = wanderAt(e, p);
+            case SkyEvent.TRANSIT, SkyEvent.SATELLITE_TRANSIT, SkyEvent.CORONAL_MASS_EJECTION -> d = new float[]{0F, 1F, 0F};
+            case SkyEvent.DUST_GLOW -> {
+                float tilt = (55F + h(e.seed, 1) * 25F) * Mth.DEG_TO_RAD, spin = h(e.seed, 2) * Mth.TWO_PI;
+                d = new float[]{Mth.sin(spin) * Mth.cos(tilt), -Mth.sin(tilt), -Mth.cos(spin) * Mth.cos(tilt)};
+            }
+            case SkyEvent.METEOR_SHOWER -> {
+                skyFrame = false;
+                d = local(h(e.seed, 1) * Mth.TWO_PI, Math.max(0.35F, 0.6F + 0.5F * h(e.seed, 2) - 0.4F));
+            }
+            case SkyEvent.SPORADIC_METEORS -> {
+                skyFrame = false;
+                d = local(0F, 0.5F);
+            }
+            case SkyEvent.AURORA, SkyEvent.AURORA_STORM -> {
+                skyFrame = false;
+                d = norm(0F, 0.4F, -1F);
+            }
+            case SkyEvent.ISS, SkyEvent.SATELLITE_FLARE, SkyEvent.STARLINK -> {
+                skyFrame = false;
+                float span = type == SkyEvent.STARLINK ? 95F : type == SkyEvent.ISS ? 82F : 70F;
+                float lo = type == SkyEvent.STARLINK ? 35F : type == SkyEvent.ISS ? 40F : 45F, hi = type == SkyEvent.STARLINK ? 40F : 45F;
+                float shift = type == SkyEvent.STARLINK ? -14F : 0F;
+                pass(h(e.seed, 1) * Mth.TWO_PI, (lo + h(e.seed, 2) * hi) * Mth.DEG_TO_RAD, ((p * 2F - 1F) * span + shift) * Mth.DEG_TO_RAD);
+                d = new float[]{(float) PP[0], (float) PP[1], (float) PP[2]};
+            }
+            case SkyEvent.FIREBALLS, SkyEvent.DEBRIS_REENTRY -> {
+                skyFrame = false;
+                double[] fb = fireball(e, 0);
+                float f = fb == null ? 0.5F : Mth.clamp((float) ((time - fb[0]) / fb[1]), 0F, 1F);
+                fireballPath(e, 0, f);
+                d = norm(HEAD[0], HEAD[1], HEAD[2]);
+            }
+            case SkyEvent.UPPER_LIGHTNING -> {
+                skyFrame = false;
+                d = norm(0F, 0.25F, -1F);
+                if (!ClientSkyEvents.FLASHES.isEmpty()) {
+                    double[] f = ClientSkyEvents.FLASHES.get(ClientSkyEvents.FLASHES.size() - 1);
+                    Vec3 cam = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+                    d = norm(f[0] - cam.x, f[1] + 500 - cam.y, f[2] - cam.z);
+                }
+            }
+            case SkyEvent.RAINBOW -> {
+                float sx = -Mth.sin(th);
+                d = norm(sx > 0F ? -1F : 1F, 0.3F, 0F);
+                skyFrame = false;
+            }
+            default -> d = new float[]{0F, -1F, 0F};
+        }
+        if (!skyFrame) {
+            return d;
+        }
+        float c = Mth.cos(th), sn = Mth.sin(th);
+        return new float[]{-(d[1] * sn + d[2] * c), d[1] * c - d[2] * sn, d[0]};
     }
 }

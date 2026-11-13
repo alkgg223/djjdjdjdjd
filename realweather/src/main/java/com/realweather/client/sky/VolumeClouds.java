@@ -63,6 +63,11 @@ public final class VolumeClouds {
         RenderSystem.setShaderTexture(0, texture);
     }
 
+    /** The soft glow shader on a texture, with smooth filtering (for the 3D sky). */
+    public static void useGlowShader(net.minecraft.resources.ResourceLocation texture) {
+        useGlow(texture);
+    }
+
     /** The soft glow shader on a texture, leaving the texture's own filtering as it is (for vanilla's moon). */
     static void useGlowKeepFilter(net.minecraft.resources.ResourceLocation texture) {
         if (glow != null) {

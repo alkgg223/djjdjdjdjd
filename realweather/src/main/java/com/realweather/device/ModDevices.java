@@ -36,7 +36,12 @@ public final class ModDevices {
             () -> new MonitorBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(2.5F, 6F).sound(SoundType.METAL)
                     .noOcclusion().lightLevel(s -> 4)));
 
+    public static final DeferredBlock<TelescopeBlock> TELESCOPE = ModContent.BLOCKS.register("telescope",
+            () -> new TelescopeBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(1.5F, 3F).sound(SoundType.METAL)
+                    .noOcclusion()));
+
     public static final DeferredItem<BlockItem> WEATHER_RADAR_ITEM = blockItem("weather_radar", WEATHER_RADAR);
+    public static final DeferredItem<BlockItem> TELESCOPE_ITEM = blockItem("telescope", TELESCOPE);
     public static final DeferredItem<BlockItem> RADAR_MONITOR_ITEM = blockItem("radar_monitor", RADAR_MONITOR);
     public static final DeferredItem<EclipseGlasses> ECLIPSE_GLASSES = tabItem(ITEMS.register("eclipse_glasses",
             () -> new EclipseGlasses(new Item.Properties().stacksTo(1))));

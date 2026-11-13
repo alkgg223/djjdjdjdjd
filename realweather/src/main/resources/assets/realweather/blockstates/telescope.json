@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "realweather:block/telescope"
+    },
+    "facing=east": {
+      "model": "realweather:block/telescope",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "realweather:block/telescope",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "realweather:block/telescope",
+      "y": 270
+    }
+  }
+}

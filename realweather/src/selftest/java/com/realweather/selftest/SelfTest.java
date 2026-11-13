@@ -80,6 +80,9 @@ public final class SelfTest {
         if (suite.contains("space")) {
             spaceSuite();
         }
+        if (suite.contains("telescope")) {
+            telescopeSuite();
+        }
         if (suite.contains("all")) {
             weatherSuite();
         }
@@ -1131,6 +1134,89 @@ public final class SelfTest {
             cmd("rw lightning purple 40");
             cmd("rw sky stop");
         });
+    }
+
+    /** 1.11.0: the telescope: each kind of target, found and zoomed in on. */
+    private static void telescopeSuite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 18000");
+            cmd("rw sky natural off");
+            cmd("rw sky stop");
+            goTo("minecraft:plains", 0, 0);
+            weatherQuality(com.realweather.ClientConfig.Quality.HIGH);
+        });
+        step(60, SelfTest::platform);
+        step(100, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> {
+                ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                BlockPos at = p.blockPosition().north();
+                server.overworld().setBlock(at, com.realweather.device.ModDevices.TELESCOPE.get().defaultBlockState(), 3);
+                telescopeAt = at;
+                LOG.info("telescope at {}", at);
+            });
+        });
+        step(20, () -> {
+            turnClient(0F, 20F);
+            shot("t0_telescope_block");
+        });
+        String[][] targets = {{"jupiter", "0.6"}, {"jupiter", "4"}, {"saturn", "0.3"}, {"mars", "0.12"}, {"moon", "6"}, {"moon", "1.2"},
+                {"betelgeuse", "0.012"}, {"sirius", "0.01"}, {"hr8799c", "0.016"}, {"betapic_b", "0.016"}, {"psr_b1620_26b", "0.02"},
+                {"gj436b", "0.006"}, {"k2_18b", "0.009"}, {"toi700d", "0.01"}, {"lhs1140b", "0.009"}, {"neptune", "0.02"}};
+        for (int i = 0; i < targets.length; i++) {
+            String id = targets[i][0];
+            double fov = Double.parseDouble(targets[i][1]);
+            String label = String.format("t%02d_%s_%s", i + 1, id, targets[i][1].replace('.', '_'));
+            step(5, () -> {
+                com.realweather.client.space.Telescope.start(telescopeAt, com.realweather.client.space.Catalog.byId(id));
+                lookAtTarget(id);
+            });
+            // First the marker in the ordinary view, then zoomed right in.
+            if (i == 0 || i == 6) {
+                step(6, () -> shot(label + "_marker"));
+            }
+            step(4, () -> {
+                com.realweather.client.space.Telescope.setFov(fov);
+                lookAtTarget(id);
+            });
+            step(14, () -> lookAtTarget(id));
+            step(2, () -> shot(label));
+        }
+        step(5, () -> com.realweather.client.space.Telescope.stop());
+        // The 3D sky events from close by, through the telescope too.
+        step(5, () -> skyAt(com.realweather.server.SkyEvent.ISS, 0.5F));
+        step(10, () -> {
+            com.realweather.client.space.Telescope.start(telescopeAt, com.realweather.client.space.Catalog.byId("moon"));
+            lookAtEvent(com.realweather.server.SkyEvent.ISS);
+        });
+        step(5, () -> shot("t90_iss"));
+        step(5, () -> {
+            com.realweather.client.space.Telescope.setFov(6);
+            lookAtEvent(com.realweather.server.SkyEvent.ISS);
+        });
+        step(3, () -> lookAtEvent(com.realweather.server.SkyEvent.ISS));
+        step(2, () -> shot("t91_iss_zoomed"));
+        step(5, () -> skyAt(com.realweather.server.SkyEvent.CONJUNCTION, 0.5F));
+        step(10, () -> {
+            com.realweather.client.space.Telescope.setFov(5);
+            lookAtEvent(com.realweather.server.SkyEvent.CONJUNCTION);
+        });
+        step(5, () -> shot("t92_conjunction_zoomed"));
+        step(5, () -> {
+            com.realweather.client.space.Telescope.stop();
+            stopSky();
+        });
+    }
+
+    private static BlockPos telescopeAt = BlockPos.ZERO;
+
+    private static void lookAtTarget(String id) {
+        Minecraft mc = Minecraft.getInstance();
+        double[] d = com.realweather.client.space.TelescopeView.direction(com.realweather.client.space.Catalog.byId(id), mc.level, 1F);
+        float yaw = (float) Math.toDegrees(Math.atan2(-d[0], d[2]));
+        float pitch = (float) -Math.toDegrees(Math.asin(Math.max(-1, Math.min(1, d[1]))));
+        turnClient(yaw, pitch);
     }
 
     /** One sky event, already this far through. */

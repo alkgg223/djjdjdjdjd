@@ -30,6 +30,13 @@ public final class ClientInit {
         modBus.addListener(com.realweather.client.sky.VolumeClouds::registerShaders);
 
         NeoForge.EVENT_BUS.addListener(ClientWeather::onClientTick);
+        // The telescope: its zoom, slower turning when zoomed in, no walking or digging at the eyepiece.
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onFov);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onTurn);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onScroll);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onInteract);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onMovement);
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onRenderHand);
         NeoForge.EVENT_BUS.addListener(ClientCommands::register);
         NeoForge.EVENT_BUS.addListener(ClientWeather::onLogout);
         NeoForge.EVENT_BUS.addListener(WeatherSounds::onPlaySound);
@@ -90,6 +97,7 @@ public final class ClientInit {
 
     private static void onGuiLayers(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.CAMERA_OVERLAYS, RealWeather.id("weather_overlay"), WeatherOverlay::render);
+        event.registerAbove(RealWeather.id("weather_overlay"), RealWeather.id("telescope"), com.realweather.client.space.Telescope::renderHud);
         event.registerBelow(VanillaGuiLayers.HOTBAR, RealWeather.id("tsunami_water"), com.realweather.client.tsunami.TsunamiOverlay::render);
         event.registerBelow(VanillaGuiLayers.HOTBAR, RealWeather.id("eclipse_glasses"), com.realweather.client.sky.GlassesOverlay::render);
         event.registerAbove(VanillaGuiLayers.HOTBAR, RealWeather.id("vehicle_hud"), com.realweather.client.vehicle.VehicleHud::render);

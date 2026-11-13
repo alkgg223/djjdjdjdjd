@@ -6,6 +6,10 @@ import net.minecraft.core.BlockPos;
 final class DeviceClientHooks {
     private DeviceClientHooks() {}
 
+    static void openTelescope(BlockPos pos) {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new com.realweather.client.space.TelescopeScreen(pos));
+    }
+
     static void openRadar(BlockPos pos) {
         com.realweather.client.radar.RadarClient.openRadar(pos);
     }
