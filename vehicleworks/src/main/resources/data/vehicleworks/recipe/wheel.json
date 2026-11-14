@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " K ",
+    "KIK",
+    " K "
+  ],
+  "key": {
+    "K": {
+      "item": "minecraft:dried_kelp_block"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:wheel",
+    "count": 2
+  }
+}

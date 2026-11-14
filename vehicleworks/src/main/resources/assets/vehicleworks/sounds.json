@@ -1,0 +1,155 @@
+{
+  "engine.piston": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/piston",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.piston"
+  },
+  "engine.turbine": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/turbine",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.turbine"
+  },
+  "engine.jet": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/jet",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.jet"
+  },
+  "engine.rotor": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/rotor",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.rotor"
+  },
+  "engine.electric": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/electric",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.electric"
+  },
+  "engine.start": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/start",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.start"
+  },
+  "vehicle.wind": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/wind",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.wind"
+  },
+  "vehicle.stall_warning": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/stall_warning",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.stall_warning"
+  },
+  "vehicle.gear": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/gear",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.gear"
+  },
+  "vehicle.assemble": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/assemble",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.assemble"
+  },
+  "weapon.machine_gun": {
+    "sounds": [
+      {
+        "name": "vehicleworks:weapon/machine_gun",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.weapon.machine_gun"
+  },
+  "weapon.cannon": {
+    "sounds": [
+      {
+        "name": "vehicleworks:weapon/cannon",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.weapon.cannon"
+  },
+  "weapon.missile": {
+    "sounds": [
+      {
+        "name": "vehicleworks:weapon/missile",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.weapon.missile"
+  },
+  "weapon.bomb": {
+    "sounds": [
+      {
+        "name": "vehicleworks:weapon/bomb",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.weapon.bomb"
+  },
+  "weapon.reload": {
+    "sounds": [
+      {
+        "name": "vehicleworks:weapon/reload",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.weapon.reload"
+  },
+  "weapon.arm": {
+    "sounds": [
+      {
+        "name": "vehicleworks:weapon/arm",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.weapon.arm"
+  },
+  "ui.click": {
+    "sounds": [
+      {
+        "name": "vehicleworks:ui/click",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.ui.click"
+  }
+}

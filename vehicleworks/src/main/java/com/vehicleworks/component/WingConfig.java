@@ -13,7 +13,7 @@ public final class WingConfig {
     public static WingParams toParams(ComponentType type, CompoundTag c) {
         WingParams p = new WingParams();
         p.type = WingType.byIndex(type.property("wing_type").getInt(c));
-        p.profile = AirfoilProfile.byIndex(type.property("profile").getInt(c));
+        p.profile = AirfoilProfile.byIndex(type.property("airfoil").getInt(c));
         p.role = ControlRole.byIndex(type.property("role").getInt(c));
         p.liftScale = type.property("lift_scale").get(c);
         p.chord = type.property("chord").get(c);

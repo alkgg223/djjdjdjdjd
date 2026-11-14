@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "north": "vehicleworks:block/cannon_front",
+    "south": "vehicleworks:block/cannon_side",
+    "east": "vehicleworks:block/cannon_side",
+    "west": "vehicleworks:block/cannon_side",
+    "up": "vehicleworks:block/cannon_side",
+    "down": "vehicleworks:block/cannon_side",
+    "particle": "vehicleworks:block/cannon_side"
+  }
+}

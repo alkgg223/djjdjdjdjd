@@ -195,7 +195,7 @@ public enum ComponentType {
         double incidence = role == ControlRole.NONE || role == ControlRole.FLAP ? (type == WingType.DELTA ? 0 : 2) : 0;
         return new PropertyDef[]{
                 PropertyDef.choice("wing_type", type.ordinal(), types),
-                PropertyDef.choice("profile", p.ordinal(), profiles),
+                PropertyDef.choice("airfoil", p.ordinal(), profiles),
                 PropertyDef.choice("role", role.ordinal(), roles),
                 PropertyDef.number("lift_scale", 0.1, 2.5, 0.05, 1.0, "x"),
                 PropertyDef.number("chord", 0.25, 4.0, 0.05, 1.0, "m"),

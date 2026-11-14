@@ -143,12 +143,12 @@ public final class DemoVehicles {
             }
             // horizontal tail
             for (int i = 1; i <= 2; i++) {
-                b.wing(side * i, 0, 5, ComponentType.WING, WingOrientation.HORIZONTAL, t -> { t.putInt("profile", 1); t.putDouble("incidence", -1.5); t.putDouble("chord", 1.4); });
+                b.wing(side * i, 0, 5, ComponentType.WING, WingOrientation.HORIZONTAL, t -> { t.putInt("airfoil", 1); t.putDouble("incidence", -1.5); t.putDouble("chord", 1.4); });
                 b.wing(side * i, 0, 6, ComponentType.ELEVATOR, WingOrientation.HORIZONTAL, t -> { t.putDouble("control_max", 25); t.putDouble("chord", 1.2); });
             }
         }
         // vertical fin
-        b.wing(0, 1, 5, ComponentType.WING, WingOrientation.VERTICAL_X, t -> { t.putInt("profile", 1); t.putDouble("incidence", 0); });
+        b.wing(0, 1, 5, ComponentType.WING, WingOrientation.VERTICAL_X, t -> { t.putInt("airfoil", 1); t.putDouble("incidence", 0); });
         b.wing(0, 1, 6, ComponentType.RUDDER, WingOrientation.VERTICAL_X, null);
         b.wing(0, 2, 6, ComponentType.RUDDER, WingOrientation.VERTICAL_X, null);
         // fixed tricycle gear
@@ -191,7 +191,7 @@ public final class DemoVehicles {
         }
         // fin
         for (int y = 1; y <= 2; y++) {
-            b.wing(0, y, 4, ComponentType.WING, WingOrientation.VERTICAL_X, t -> { t.putInt("profile", 1); t.putDouble("incidence", 0); });
+            b.wing(0, y, 4, ComponentType.WING, WingOrientation.VERTICAL_X, t -> { t.putInt("airfoil", 1); t.putDouble("incidence", 0); });
             b.wing(0, y, 5, ComponentType.RUDDER, WingOrientation.VERTICAL_X, null);
         }
         // guns in the nose, missiles under the wings
@@ -275,9 +275,9 @@ public final class DemoVehicles {
         // tail boom
         for (int z = 3; z <= 8; z++) b.block(0, 2, z, body);
         b.c(1, 2, 8, ComponentType.TAIL_ROTOR, Direction.EAST);
-        b.wing(0, 3, 8, ComponentType.WING, WingOrientation.VERTICAL_X, t -> { t.putInt("profile", 1); t.putDouble("incidence", 0); });
-        b.wing(-1, 2, 7, ComponentType.WING, WingOrientation.HORIZONTAL, t -> { t.putInt("profile", 1); t.putDouble("incidence", 0); });
-        b.wing(1, 2, 7, ComponentType.WING, WingOrientation.HORIZONTAL, t -> { t.putInt("profile", 1); t.putDouble("incidence", 0); });
+        b.wing(0, 3, 8, ComponentType.WING, WingOrientation.VERTICAL_X, t -> { t.putInt("airfoil", 1); t.putDouble("incidence", 0); });
+        b.wing(-1, 2, 7, ComponentType.WING, WingOrientation.HORIZONTAL, t -> { t.putInt("airfoil", 1); t.putDouble("incidence", 0); });
+        b.wing(1, 2, 7, ComponentType.WING, WingOrientation.HORIZONTAL, t -> { t.putInt("airfoil", 1); t.putDouble("incidence", 0); });
         // skids
         for (int side = -1; side <= 1; side += 2) {
             b.c(side * 2, 0, -1, ComponentType.LANDING_GEAR, Direction.NORTH, t -> { t.putBoolean("retractable", false); t.putInt("steering", 2); });

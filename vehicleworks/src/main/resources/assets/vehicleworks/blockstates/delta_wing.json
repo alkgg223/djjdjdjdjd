@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "plane=horizontal": {
+      "model": "vehicleworks:block/delta_wing"
+    },
+    "plane=vertical_z": {
+      "model": "vehicleworks:block/delta_wing",
+      "x": 90
+    },
+    "plane=vertical_x": {
+      "model": "vehicleworks:block/delta_wing",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

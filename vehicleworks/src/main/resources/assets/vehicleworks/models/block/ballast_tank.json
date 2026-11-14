@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "vehicleworks:block/ballast",
+    "end": "vehicleworks:block/device_side"
+  }
+}

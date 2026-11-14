@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/cannon"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/cannon",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/cannon",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/cannon",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "vehicleworks:block/cannon",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "vehicleworks:block/cannon",
+      "x": 90
+    }
+  }
+}

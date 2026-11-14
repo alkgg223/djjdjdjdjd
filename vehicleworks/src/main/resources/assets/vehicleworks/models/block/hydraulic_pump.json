@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "north": "vehicleworks:block/hydraulic",
+    "south": "vehicleworks:block/hydraulic",
+    "east": "vehicleworks:block/hydraulic",
+    "west": "vehicleworks:block/hydraulic",
+    "up": "vehicleworks:block/device_side",
+    "down": "vehicleworks:block/hydraulic",
+    "particle": "vehicleworks:block/hydraulic"
+  }
+}

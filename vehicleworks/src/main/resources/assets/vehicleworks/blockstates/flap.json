@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "plane=horizontal": {
+      "model": "vehicleworks:block/flap"
+    },
+    "plane=vertical_z": {
+      "model": "vehicleworks:block/flap",
+      "x": 90
+    },
+    "plane=vertical_x": {
+      "model": "vehicleworks:block/flap",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

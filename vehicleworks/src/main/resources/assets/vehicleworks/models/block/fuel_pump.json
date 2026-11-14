@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "north": "vehicleworks:block/fuel_pump",
+    "south": "vehicleworks:block/fuel_pump",
+    "east": "vehicleworks:block/fuel_pump",
+    "west": "vehicleworks:block/fuel_pump",
+    "up": "vehicleworks:block/device_side",
+    "down": "vehicleworks:block/fuel_pump",
+    "particle": "vehicleworks:block/fuel_pump"
+  }
+}

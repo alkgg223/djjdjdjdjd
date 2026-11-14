@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "north": "vehicleworks:block/mount",
+    "south": "vehicleworks:block/mount",
+    "east": "vehicleworks:block/mount",
+    "west": "vehicleworks:block/mount",
+    "up": "vehicleworks:block/mount",
+    "down": "vehicleworks:block/mount",
+    "particle": "vehicleworks:block/mount"
+  }
+}

@@ -30,6 +30,7 @@ public final class ClientSetup {
         NeoForge.EVENT_BUS.addListener(ClientEvents::onCameraDistance);
         NeoForge.EVENT_BUS.addListener(ClientEvents::onSwapHands);
         NeoForge.EVENT_BUS.addListener(RenderEvents::onRenderStage);
+        if (ClientAutoTest.enabled()) NeoForge.EVENT_BUS.addListener(ClientAutoTest::tick);
     }
 
     @SubscribeEvent

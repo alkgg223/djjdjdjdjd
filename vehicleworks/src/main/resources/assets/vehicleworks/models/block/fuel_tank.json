@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "vehicleworks:block/fuel_tank",
+    "end": "vehicleworks:block/fuel_tank_top"
+  }
+}

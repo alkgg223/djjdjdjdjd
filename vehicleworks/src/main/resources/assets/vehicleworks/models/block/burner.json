@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "vehicleworks:block/burner_side",
+    "end": "vehicleworks:block/burner_top"
+  }
+}

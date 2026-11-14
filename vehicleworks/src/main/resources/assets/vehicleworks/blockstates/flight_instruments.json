@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/flight_instruments"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/flight_instruments",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/flight_instruments",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/flight_instruments",
+      "y": 270
+    }
+  }
+}

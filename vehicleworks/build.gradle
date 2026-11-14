@@ -23,10 +23,15 @@ neoForge {
         client {
             client()
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            if (project.hasProperty('vwAutotest')) {
+                systemProperty 'vehicleworks.autotest', 'true'
+                programArguments.addAll('--quickPlaySingleplayer', 'AutoTest', '--width', '1280', '--height', '720')
+            }
         }
         server {
             server()
             programArgument '--nogui'
+            if (project.hasProperty('vwAutostop')) systemProperty 'vehicleworks.autostop', '200'
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
         gameTestServer {

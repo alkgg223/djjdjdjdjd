@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/navigation_computer"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/navigation_computer",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/navigation_computer",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/navigation_computer",
+      "y": 270
+    }
+  }
+}

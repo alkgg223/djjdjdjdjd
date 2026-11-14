@@ -83,7 +83,7 @@ public class ComponentScreen extends Screen {
                         var wt = com.vehicleworks.physics.aero.WingType.byIndex(v);
                         type.property("sweep").set(config, wt.defaultSweepDeg);
                         type.property("sweep_max").set(config, wt == com.vehicleworks.physics.aero.WingType.VARIABLE_SWEEP ? 68 : wt.defaultSweepDeg);
-                        type.property("profile").set(config, wt.defaultProfile.ordinal());
+                        type.property("airfoil").set(config, wt.defaultProfile.ordinal());
                         init();
                     }
                     b.setMessage(enumLabel(d));

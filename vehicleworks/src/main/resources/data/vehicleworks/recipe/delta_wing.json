@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "vehicleworks:wing"
+    },
+    {
+      "item": "vehicleworks:wing"
+    },
+    {
+      "item": "minecraft:iron_ingot"
+    }
+  ],
+  "result": {
+    "id": "vehicleworks:delta_wing",
+    "count": 2
+  }
+}

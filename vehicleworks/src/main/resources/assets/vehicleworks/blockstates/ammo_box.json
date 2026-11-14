@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/ammo_box"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/ammo_box",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/ammo_box",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/ammo_box",
+      "y": 270
+    }
+  }
+}

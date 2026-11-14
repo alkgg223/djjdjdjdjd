@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "CFC",
+    "IEI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "F": {
+      "item": "minecraft:blast_furnace"
+    },
+    "E": {
+      "item": "vehicleworks:piston_engine"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:turboprop_engine",
+    "count": 1
+  }
+}

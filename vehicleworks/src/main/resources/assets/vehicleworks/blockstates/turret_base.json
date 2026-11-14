@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "vehicleworks:block/turret_base"
+    },
+    "facing=down": {
+      "model": "vehicleworks:block/turret_base",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "vehicleworks:block/turret_base",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/turret_base",
+      "x": 90,
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/turret_base",
+      "x": 90,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/turret_base",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

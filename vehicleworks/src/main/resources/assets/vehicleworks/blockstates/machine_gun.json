@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/machine_gun"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/machine_gun",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/machine_gun",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/machine_gun",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "vehicleworks:block/machine_gun",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "vehicleworks:block/machine_gun",
+      "x": 90
+    }
+  }
+}

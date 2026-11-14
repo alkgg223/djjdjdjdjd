@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/marine_propeller"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/marine_propeller",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/marine_propeller",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/marine_propeller",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "vehicleworks:block/marine_propeller",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "vehicleworks:block/marine_propeller",
+      "x": 90
+    }
+  }
+}

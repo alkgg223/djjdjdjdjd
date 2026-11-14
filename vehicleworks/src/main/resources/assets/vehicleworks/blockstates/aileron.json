@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "plane=horizontal": {
+      "model": "vehicleworks:block/aileron"
+    },
+    "plane=vertical_z": {
+      "model": "vehicleworks:block/aileron",
+      "x": 90
+    },
+    "plane=vertical_x": {
+      "model": "vehicleworks:block/aileron",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

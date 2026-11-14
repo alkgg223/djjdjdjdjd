@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "vehicleworks:block/main_rotor"
+    },
+    "facing=down": {
+      "model": "vehicleworks:block/main_rotor",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "vehicleworks:block/main_rotor",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/main_rotor",
+      "x": 90,
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/main_rotor",
+      "x": 90,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/main_rotor",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

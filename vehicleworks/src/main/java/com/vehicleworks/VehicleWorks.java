@@ -45,6 +45,13 @@ public class VehicleWorks {
         NeoForge.EVENT_BUS.addListener(VehicleWorks::onLevelTick);
         NeoForge.EVENT_BUS.addListener(VehicleWorks::onExplosion);
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> VehicleCommands.register(e.getDispatcher(), e.getBuildContext()));
+        if (Integer.getInteger("vehicleworks.autostop", 0) > 0) {
+            // automated runs: generate the world, then stop cleanly
+            int stopAfter = Integer.getInteger("vehicleworks.autostop");
+            NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) -> {
+                if (e.getServer().getTickCount() == stopAfter) e.getServer().halt(false);
+            });
+        }
     }
 
     private static void onLevelTick(LevelTickEvent.Pre event) {

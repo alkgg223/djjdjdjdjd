@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/engine_starter"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/engine_starter",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/engine_starter",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/engine_starter",
+      "y": 270
+    }
+  }
+}

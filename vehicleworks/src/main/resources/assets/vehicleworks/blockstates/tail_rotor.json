@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/tail_rotor"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/tail_rotor",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/tail_rotor",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/tail_rotor",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "vehicleworks:block/tail_rotor",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "vehicleworks:block/tail_rotor",
+      "x": 90
+    }
+  }
+}

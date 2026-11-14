@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "north": "vehicleworks:block/missile_front",
+    "south": "vehicleworks:block/missile_side",
+    "east": "vehicleworks:block/missile_side",
+    "west": "vehicleworks:block/missile_side",
+    "up": "vehicleworks:block/missile_side",
+    "down": "vehicleworks:block/missile_side",
+    "particle": "vehicleworks:block/missile_side"
+  }
+}

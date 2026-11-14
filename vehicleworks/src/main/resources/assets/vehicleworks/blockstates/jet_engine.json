@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/jet_engine"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/jet_engine",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/jet_engine",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/jet_engine",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "vehicleworks:block/jet_engine",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "vehicleworks:block/jet_engine",
+      "x": 90
+    }
+  }
+}

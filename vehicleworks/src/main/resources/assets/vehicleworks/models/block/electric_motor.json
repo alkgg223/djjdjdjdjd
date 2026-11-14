@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "north": "vehicleworks:block/electric_front",
+    "south": "vehicleworks:block/device_side",
+    "east": "vehicleworks:block/electric_side",
+    "west": "vehicleworks:block/electric_side",
+    "up": "vehicleworks:block/electric_side",
+    "down": "vehicleworks:block/electric_side",
+    "particle": "vehicleworks:block/electric_side"
+  }
+}
