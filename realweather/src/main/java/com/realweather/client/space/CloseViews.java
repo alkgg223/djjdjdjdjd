@@ -150,14 +150,15 @@ final class CloseViews {
         }
         Space3D.billboard(Space3D.GLOW, ADD, c[0], c[1], c[2], R * 3.2, 0F, body.r, body.g, body.b, 0.45F * vis);
         if (body.kind == Catalog.STAR) {
-            Space3D.starFire(c[0], c[1], c[2], R, seed, 300, body.b, (float) (clock * 20), 1.2F * vis);
+            Space3D.starFire(c[0], c[1], c[2], R, seed, 90, body.b, (float) (clock * 20), 0.6F * vis);
             TelescopeView.corona(c[0], c[1], c[2], R, seed, 0.55F * vis);
         }
     }
 
     private static void nebula(Catalog.Body body, double[] c, double[] view, double[] cam, double R, double[] f, double[] dx, double[] dy, double px,
                                double clock) {
-        Nebulae.Recipe rc = Nebulae.at(body.recipe, clock);
+        // (The supernova goes on whether or not you are watching.)
+        Nebulae.Recipe rc = Nebulae.at(body.recipe, System.currentTimeMillis() % 100000000L / 1000.0);
         if (rc == null) {
             return;
         }
@@ -233,7 +234,7 @@ final class CloseViews {
                 Trace.local(rot, sun[0], sun[1], sun[2], lt);
                 double dist = Math.sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]) + 1.0E-9;
                 SpaceShaders.rings((float) in, (float) out, lt[0], lt[1], lt[2], 1F, 0.95F, 0.88F, (float) (seconds % 100000.0), (float) (px / dist),
-                        vis * (b.oblate < 0.8F ? 0.4F : 1F), t.x0, t.y0, t.x1, t.y1, t.o, t.ox, t.oy, t.d, t.dx, t.dy);
+                        vis * (b.oblate < 0.8F ? 0.4F : 1F), t.near, t.x0, t.y0, t.x1, t.y1, t.o, t.ox, t.oy, t.d, t.dx, t.dy);
                 return;
             }
         }

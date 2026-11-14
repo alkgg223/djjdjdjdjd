@@ -38,6 +38,15 @@ public final class SpaceShaders {
     private static double frameMs = 16;
     private static boolean traced, wasTraced;
     private static int mobile = -1;
+    /** How many passes of each kind were drawn (for tests). */
+    private static final int[] COUNT = new int[8];
+
+    public static String stats() {
+        String out = String.format(java.util.Locale.ROOT, "voxel=%d hole=%d air=%d nebula=%d gas=%d star=%d rings=%d scale=%.2f ms=%.0f", COUNT[0],
+                COUNT[1], COUNT[2], COUNT[3], COUNT[4], COUNT[5], COUNT[6], scale, frameMs);
+        java.util.Arrays.fill(COUNT, 0);
+        return out;
+    }
 
     private SpaceShaders() {}
 
@@ -214,6 +223,7 @@ public final class SpaceShaders {
             s.safeGetUniform("PixelGrow").set(p.pixelGrow);
             s.safeGetUniform("Hills").set(p.hills);
             s.safeGetUniform("Snow").set(p.snow);
+            COUNT[0]++;
             Minecraft.getInstance().getTextureManager().getTexture(p.map).setFilter(true, false);
             Minecraft.getInstance().getTextureManager().getTexture(BLOCKS).setFilter(false, false);
             RenderSystem.setShaderTexture(0, p.map);
@@ -251,6 +261,7 @@ public final class SpaceShaders {
             s.safeGetUniform("Edge").set(edge);
             s.safeGetUniform("Exposure").set(exposure);
             s.safeGetUniform("MaxSteps").set(budget(steps, 90F, x0, y0, x1, y1));
+            COUNT[1]++;
             RenderSystem.setShader(() -> s);
             draw(x0, y0, x1, y1);
         } catch (RuntimeException | LinkageError e) {
@@ -288,6 +299,7 @@ public final class SpaceShaders {
             s.safeGetUniform("SunDir").set((float) (sun[0] / l), (float) (sun[1] / l), (float) (sun[2] / l));
             s.safeGetUniform("SunColor").set(a.sr(), a.sg(), a.sb());
             s.safeGetUniform("Intensity").set(a.intensity());
+            COUNT[2]++;
             s.safeGetUniform("Alpha").set(Math.min(1F, a.alpha()));
             RenderSystem.setShader(() -> s);
             draw(-1F, -1F, 1F, 1F);
@@ -338,6 +350,7 @@ public final class SpaceShaders {
             s.safeGetUniform("Exposure").set(r.exposure);
             s.safeGetUniform("Alpha").set(Math.min(1F, alpha));
             s.safeGetUniform("Fine").set(1F);
+            COUNT[3]++;
             noise();
             RenderSystem.setShaderTexture(0, NOISE);
             RenderSystem.setShader(() -> s);
@@ -389,6 +402,7 @@ public final class SpaceShaders {
             s.safeGetUniform("AirColor").set(g.airR, g.airG, g.airB);
             s.safeGetUniform("Alpha").set(Math.min(1F, g.alpha));
             s.safeGetUniform("Pixel").set(g.pixel);
+            COUNT[4]++;
             Minecraft.getInstance().getTextureManager().getTexture(g.map).setFilter(true, false);
             noise();
             RenderSystem.setShaderTexture(0, g.map);
@@ -406,7 +420,8 @@ public final class SpaceShaders {
      * granules across its radius, up to four sunspots (direction and angular size), pixel size (radii) for detail.
      */
     public static void starSurface(float r, float g, float b, float bright, float cells, float time, float pixel, float[] spots, float alpha,
-                                   float x0, float y0, float x1, float y1, double[] o, double[] ox, double[] oy, double[] d, double[] dx, double[] dy) {
+                                   float near, float x0, float y0, float x1, float y1, double[] o, double[] ox, double[] oy, double[] d, double[] dx,
+                                   double[] dy) {
         if (!starReady() || alpha <= 0.01F) {
             return;
         }
@@ -427,6 +442,8 @@ public final class SpaceShaders {
             }
             s.safeGetUniform("Alpha").set(Math.min(1F, alpha));
             s.safeGetUniform("Bright").set(bright);
+            s.safeGetUniform("Near").set(near);
+            COUNT[5]++;
             RenderSystem.setShader(() -> s);
             draw(x0, y0, x1, y1);
         } catch (RuntimeException | LinkageError e) {
@@ -441,8 +458,8 @@ public final class SpaceShaders {
      * break up into particles.
      */
     public static void rings(float inner, float outer, double lx, double ly, double lz, float tr, float tg, float tb, float time, float pixel,
-                             float alpha, float x0, float y0, float x1, float y1, double[] o, double[] ox, double[] oy, double[] d, double[] dx,
-                             double[] dy) {
+                             float alpha, float near, float x0, float y0, float x1, float y1, double[] o, double[] ox, double[] oy, double[] d,
+                             double[] dx, double[] dy) {
         if (!ringsReady() || alpha <= 0.01F) {
             return;
         }
@@ -459,6 +476,8 @@ public final class SpaceShaders {
             s.safeGetUniform("Tint").set(tr, tg, tb);
             s.safeGetUniform("Alpha").set(Math.min(1F, alpha));
             s.safeGetUniform("Spacing").set(0.0035F);
+            COUNT[6]++;
+            s.safeGetUniform("Near").set(near);
             Minecraft.getInstance().getTextureManager().getTexture(RING_MAP).setFilter(true, false);
             RenderSystem.setShaderTexture(0, RING_MAP);
             RenderSystem.setShader(() -> s);

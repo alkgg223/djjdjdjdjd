@@ -56,8 +56,8 @@ final class Merger {
             double bx = cx + (e1[0] * Math.cos(a) + e2[0] * Math.sin(a)) * rr, by = cy + (e1[1] * Math.cos(a) + e2[1] * Math.sin(a)) * rr,
                     bz = cz + (e1[2] * Math.cos(a) + e2[2] * Math.sin(a)) * rr;
             double hr = scale * (t < MERGE ? 0.06 : 0.09) * (k == 0 ? 1.1 : 0.95);
-            Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(px * 2, hr * 3.2), 0F, 0.55F, 0.7F, 1F, 0.35F * vis);
-            Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(px * 1.5, hr * 1.6), 0F, 0.9F, 0.95F, 1F, 0.45F * vis);
+            Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(px * 3, hr * 5), 0F, 0.55F, 0.7F, 1F, 0.6F * vis);
+            Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(px * 2, hr * 2.2), 0F, 1F, 0.85F, 0.6F, 0.8F * vis);
             if (size > 20) {
                 Space3D.sphere(Space3D.WHITE, bx, by, bz, hr, Space3D.orient(axis[0], axis[1], axis[2], 0), 0, 0, 1, 0F, 0F, 0F, 0F, 0F, vis, false, 0F,
                         16);
@@ -77,7 +77,7 @@ final class Merger {
         float detail = Space3D.smooth(6F, 40F, (float) size);
         int rings = (int) Math.max(8, Math.min(30, size / 8)), seg = (int) Math.max(48, Math.min(128, size / 2));
         double reach = scale * 9, speed = scale * 1.1;
-        double w = Math.max(px * 0.6, scale * 0.004);
+        double w = Math.max(px * 1.1, scale * 0.006);
         double[] q0 = new double[3], q1 = new double[3];
         for (int i = 1; i <= rings; i++) {
             double rho = reach * i / rings;
@@ -86,7 +86,7 @@ final class Merger {
                 float l0 = sheet(rho, a0, t, scale, speed, cx, cy, cz, e1, e2, axis, q0), l1 = sheet(rho, a1, t, scale, speed, cx, cy, cz, e1, e2, axis, q1);
                 float fade = (float) (1 - (double) i / rings * 0.7) * detail * vis;
                 Space3D.ribbon(TelescopeView.LINE_PUBLIC, ADD, q0[0], q0[1], q0[2], q1[0], q1[1], q1[2], w, w, 0.35F + 0.5F * l0, 0.75F + 0.25F * l0, 1F,
-                        (0.12F + 0.35F * l0) * fade, (0.12F + 0.35F * l1) * fade);
+                        (0.3F + 0.6F * l0) * fade, (0.3F + 0.6F * l1) * fade);
             }
         }
         int spokes = 24;
@@ -98,7 +98,7 @@ final class Merger {
                 float l0 = sheet(r0, a, t, scale, speed, cx, cy, cz, e1, e2, axis, q0), l1 = sheet(r1, a, t, scale, speed, cx, cy, cz, e1, e2, axis, q1);
                 float fade = (float) (1 - (double) i / n * 0.7) * detail * vis;
                 Space3D.ribbon(TelescopeView.LINE_PUBLIC, ADD, q0[0], q0[1], q0[2], q1[0], q1[1], q1[2], w, w, 0.35F + 0.5F * l0, 0.75F + 0.25F * l0, 1F,
-                        (0.1F + 0.3F * l0) * fade, (0.1F + 0.3F * l1) * fade);
+                        (0.25F + 0.5F * l0) * fade, (0.25F + 0.5F * l1) * fade);
             }
         }
     }

@@ -42,7 +42,7 @@ final class SolarActivity {
             if (t != null) {
                 double dist = Math.sqrt(cx * cx + cy * cy + cz * cz) + 1.0E-9;
                 SpaceShaders.starSurface(cr, cg, cb, 1.3F, (float) Math.min(220, 40 + rPix * 0.15), (float) seconds, (float) (px / dist), spots,
-                        vis * Space3D.smooth(12F, 30F, (float) rPix), t.x0, t.y0, t.x1, t.y1, t.o, t.ox, t.oy, t.d, t.dx, t.dy);
+                        vis * Space3D.smooth(12F, 30F, (float) rPix), t.near, t.x0, t.y0, t.x1, t.y1, t.o, t.ox, t.oy, t.d, t.dx, t.dy);
             }
         }
         if (rPix < 25) {
@@ -101,7 +101,7 @@ final class SolarActivity {
             }
             int n = 16;
             double[] prev = null;
-            double w = r * (0.008 + 0.01 * Space3D.h(g, 9)) * (erupt ? 1 + f * 2 : 1);
+            double w = r * (0.014 + 0.014 * Space3D.h(g, 9)) * (erupt ? 1 + f * 2 : 1);
             for (int j = 0; j <= n; j++) {
                 double s = (double) j / n;
                 double lift = Math.sin(s * Math.PI) * height / r;
@@ -112,10 +112,9 @@ final class SolarActivity {
                 double rr = r * (1 + lift + wob * lift);
                 double[] q = {cx + ux / ul * rr, cy + uy / ul * rr, cz + uz / ul * rr};
                 if (prev != null) {
-                    Space3D.ribbon(Space3D.FLAME, ADD, prev[0], prev[1], prev[2], q[0], q[1], q[2], w * 1.6, w * 1.6, 1F, 0.38F, 0.22F, 0.32F * vis2,
-                            0.32F * vis2);
-                    Space3D.ribbon(Space3D.GLOW, ADD, prev[0], prev[1], prev[2], q[0], q[1], q[2], w * 3.5, w * 3.5, 1F, 0.3F, 0.2F, 0.12F * vis2,
-                            0.12F * vis2);
+                    Space3D.ribbon(Space3D.GLOW, ADD, prev[0], prev[1], prev[2], q[0], q[1], q[2], w, w, 1F, 0.45F, 0.3F, 0.7F * vis2, 0.7F * vis2);
+                    Space3D.ribbon(Space3D.GLOW, ADD, prev[0], prev[1], prev[2], q[0], q[1], q[2], w * 3, w * 3, 1F, 0.3F, 0.2F, 0.22F * vis2,
+                            0.22F * vis2);
                 }
                 prev = q;
             }

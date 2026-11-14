@@ -134,6 +134,14 @@
       "values": [
         0.0
       ]
+    },
+    {
+      "name": "Near",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
     }
   ]
 }

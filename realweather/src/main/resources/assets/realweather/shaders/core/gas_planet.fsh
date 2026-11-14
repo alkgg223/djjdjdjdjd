@@ -138,7 +138,7 @@ void main() {
     // Finer cloud detail once the planet is big on the screen.
     float detail = smoothstep(0.02, 0.002, Pixel);
     col *= 1.0 + (fbm(np * 38.0 + vec3(Time * 0.001)) - 0.5) * 0.35 * detail;
-    float mu = max(dot(n, -d), 0.0);
+    float mu = clamp(dot(n, -d), 0.0, 1.0);
     float ndl = dot(n, LightDir);
     float day = smoothstep(-0.1, 0.2, ndl);
     vec3 lit = col * LightColor * (0.025 + 0.975 * day * (0.3 + 0.7 * max(ndl, 0.0))) * (0.6 + 0.4 * sqrt(mu));

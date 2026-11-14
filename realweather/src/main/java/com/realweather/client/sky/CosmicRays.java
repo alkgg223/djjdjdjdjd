@@ -58,8 +58,8 @@ public final class CosmicRays {
         }
         float pt = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         float night = Mth.clamp(level.getStarBrightness(pt) * 2.2F, 0F, 1F);
-        float vis = (0.15F + 0.85F * night) * (1F - level.getRainLevel(pt) * 0.8F) * air;
-        if (vis < 0.03F) {
+        float vis = night * (1F - level.getRainLevel(pt) * 0.8F) * air;
+        if (vis < 0.03F && testAge < 0) {
             return;
         }
         try {
@@ -103,7 +103,7 @@ public final class CosmicRays {
             }
             for (long k = slot - 1; k <= slot; k++) {
                 long seed = k * 0x9E3779B97F4A7C15L + 77;
-                if (h(seed, 1) > 0.75F) {
+                if (h(seed, 1) > 0.3F) {
                     continue;
                 }
                 double start = k * SLOT + h(seed, 2) * SLOT * 0.8;
@@ -176,9 +176,9 @@ public final class CosmicRays {
         double part = (s1 - s0) * len;
         double ex = x + dx * part, ey = y + dy * part, ez = z + dz * part;
         float a = fade * energy * (float) (depth == 0 ? 0.65 : 0.5 / Math.sqrt(depth + 1));
-        double w = 0.25 + 0.5 / (depth + 1);
-        ribbon(buf, cam, x, y, z, ex, ey, ez, w, 0.62F, 0.8F, 1F, a);
-        ribbon(buf, cam, x, y, z, ex, ey, ez, w * 6, 0.5F, 0.55F, 1F, a * 0.12F);
+        double w = 0.9 + 1.6 / (depth + 1);
+        ribbon(buf, cam, x, y, z, ex, ey, ez, w, 0.7F, 0.85F, 1F, a);
+        ribbon(buf, cam, x, y, z, ex, ey, ez, w * 5, 0.5F, 0.55F, 1F, a * 0.22F);
         if (s1 >= front) {
             return;
         }

@@ -21,6 +21,7 @@ uniform float Pixel;
 uniform vec3 Tint;
 uniform float Alpha;
 uniform float Spacing;
+uniform float Near;
 
 in vec2 ab;
 
@@ -68,7 +69,7 @@ void main() {
     // Lit side or the side away from the star (light coming through).
     float sunSide = sign(LightDir.y) == sign(o.y) ? 1.0 : 0.45;
     vec3 far = ring.rgb * Tint * shadow * sunSide;
-    float foot = Pixel * t;
+    float foot = Pixel * (t + Near);
     float near = smoothstep(Spacing * 1.5, Spacing * 0.3, foot);
     vec3 col = far;
     float alpha = dens * 0.92;

@@ -175,8 +175,11 @@ public final class PlanetSky {
         float day = Space3D.smooth(-0.2F, 0.3F, up);
         Space3D.range(5F, 80000F);
         Space3D.fullScreen(0.004F, 0.005F, 0.01F, 1F);
+        // Inside a gas giant's clouds: nothing but its haze round you.
+        float inGas = w.gas() ? Space3D.smooth((float) (com.realweather.space.PlanetTravel.GAS_TOP + 40), (float) (com.realweather.space.PlanetTravel.GAS_TOP - 30),
+                (float) cam.y) : 0F;
         // Stars (washed out by a bright sky).
-        TelescopeView.brightStars(1F - day * Math.min(1F, w.air() * 1.4F));
+        TelescopeView.brightStars((1F - day * Math.min(1F, w.air() * 1.4F)) * (1F - inGas));
         // Its star.
         double sd = 3000, sr = star[3];
         double sx = sun[0] * sd, sy = sun[1] * sd, sz = sun[2] * sd;
@@ -200,7 +203,13 @@ public final class PlanetSky {
             double alt = EarthView.seenFrom(cam.y - 63) / Worlds.RADIUS;
             SpaceShaders.atmosphere(Atmo.sky(w.ar(), w.ag(), w.ab(), w.air(), star[0], star[1], star[2]), new double[]{0, 1 + Math.max(0, alt), 0}, sw);
         }
-        if (w.gas() && cam.y < com.realweather.space.PlanetTravel.GAS_TOP + 40) {
+        if (inGas > 0.01F) {
+            float t = gasDepth(cam.y);
+            float lit = (0.25F + 0.75F * day) * (1F - t * 0.85F);
+            Space3D.clearDepth();
+            Space3D.range(5F, 80000F);
+            Space3D.fullScreen(Math.min(1F, w.ar() * lit * 0.8F + 0.55F * t * t), w.ag() * lit * 0.75F + 0.14F * t * t, w.ab() * lit * 0.7F + 0.02F * t * t,
+                    0.35F + 0.62F * inGas);
             clouds(level, cam, w, pt);
         }
         // From high above: the whole world below.
@@ -325,8 +334,8 @@ public final class PlanetSky {
                         continue;
                     }
                     Space3D.apply(Space3D.VIEW, x, y, z, q);
-                    float a = (float) (0.28 * (1 - dist / (cell * 3.2)));
-                    float shade = 0.75F + 0.25F * Space3D.h(key, 5);
+                    float a = (float) (0.5 * (1 - dist / (cell * 3.2)));
+                    float shade = 0.55F + 0.75F * Space3D.h(key, 5);
                     Space3D.billboard(Space3D.GLOW, Space3D.NORMAL, q[0], q[1], q[2], cell * (0.6 + 0.6 * Space3D.h(key, 6)), Space3D.h(key, 7) * 6F,
                             Math.min(1F, w.ar() * lit * shade + 0.5F * t * t), w.ag() * lit * shade + 0.1F * t * t, w.ab() * lit * shade, a);
                 }

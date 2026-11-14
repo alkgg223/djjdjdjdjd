@@ -1509,8 +1509,14 @@ public final class SelfTest {
                     com.realweather.client.space.Telescope.setFov(Double.parseDouble(t[1]));
                     lookAtTarget(t[0]);
                 });
-                step(14, () -> lookAtTarget(t[0]));
-                step(2, () -> shot(label));
+                step(14, () -> {
+                    lookAtTarget(t[0]);
+                    com.realweather.client.space.SpaceShaders.stats();
+                });
+                step(2, () -> {
+                    shot(label);
+                    LOG.info("[passes {}] {}", label, com.realweather.client.space.SpaceShaders.stats());
+                });
             }
         }
         step(5, () -> com.realweather.client.space.Telescope.stop());

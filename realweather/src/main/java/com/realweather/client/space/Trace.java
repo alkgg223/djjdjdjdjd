@@ -6,6 +6,8 @@ package com.realweather.client.space;
  */
 final class Trace {
     float x0, y0, x1, y1;
+    /** How far (radii) the rays' starting plane is from the camera. */
+    float near;
     final double[] o = new double[3], ox = new double[3], oy = new double[3], d = new double[3], dx = new double[3], dy = new double[3];
 
     private Trace() {}
@@ -45,7 +47,13 @@ final class Trace {
         t.x1 = (float) x1;
         t.y1 = (float) y1;
         double[] dv = {(x0 + x1) * 0.5 / px, (y0 + y1) * 0.5 / py, -1}, dxv = {(x1 - x0) * 0.5 / px, 0, 0}, dyv = {0, (y1 - y0) * 0.5 / py, 0};
-        local(rot, -cx / r, -cy / r, -cz / r, t.o);
+        // The rays start on a plane just in front of the body (not back at the camera, far off: in the GPU's single
+        // precision the sums would lose all their detail there), each where the camera's own ray crosses it.
+        double t0 = Math.max(0, -cz - reach * 2.2);
+        t.near = (float) (t0 / r);
+        local(rot, (-cx + dv[0] * t0) / r, (-cy + dv[1] * t0) / r, (-cz + dv[2] * t0) / r, t.o);
+        local(rot, dxv[0] * t0 / r, dxv[1] * t0 / r, dxv[2] * t0 / r, t.ox);
+        local(rot, dyv[0] * t0 / r, dyv[1] * t0 / r, dyv[2] * t0 / r, t.oy);
         local(rot, dv[0], dv[1], dv[2], t.d);
         local(rot, dxv[0], dxv[1], dxv[2], t.dx);
         local(rot, dyv[0], dyv[1], dyv[2], t.dy);

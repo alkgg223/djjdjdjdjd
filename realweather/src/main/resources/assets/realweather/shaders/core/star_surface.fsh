@@ -21,6 +21,7 @@ uniform vec4 S2;
 uniform vec4 S3;
 uniform float Alpha;
 uniform float Bright;
+uniform float Near;
 
 in vec2 ab;
 
@@ -89,10 +90,10 @@ void main() {
         discard;
     }
     vec3 n = normalize(o + d * t);
-    float mu = max(dot(n, -d), 0.0);
+    float mu = clamp(dot(n, -d), 0.0, 1.0);
     // Granules: visible once each is a few pixels across.
     float size = 1.0 / Cells;
-    float k = smoothstep(size * 0.9, size * 0.18, Pixel * t);
+    float k = smoothstep(size * 0.9, size * 0.18, Pixel * (t + Near));
     float g = 1.0;
     if (k > 0.0) {
         vec3 w = cells(n * Cells, 0.05);

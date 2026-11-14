@@ -61,8 +61,8 @@ final class Pulsars {
         magnetic(phase, tilt, ax, ay, az);
         double facing = Math.abs(M[0] * tox + M[1] * toy + M[2] * toz);
         float pulse = (float) Math.exp(-(1 - facing) * 45);
-        Space3D.billboard(Space3D.GLOW, ADD, cx, cy, cz, Math.max(r * (3 + 10 * pulse), px * 5), 0F, br, bg, bb, (0.35F + 0.45F * pulse) * vis);
-        Space3D.billboard(Space3D.STAR, ADD, cx, cy, cz, Math.max(r * (5 + 22 * pulse), px * 8), 0F, br, bg, bb, (0.15F + 0.5F * pulse) * vis);
+        Space3D.billboard(Space3D.GLOW, ADD, cx, cy, cz, Math.max(r * (3 + 5 * pulse), px * 5), 0F, br, bg, bb, (0.35F + 0.35F * pulse) * vis);
+        Space3D.billboard(Space3D.STAR, ADD, cx, cy, cz, Math.max(r * (5 + 9 * pulse), px * 8), 0F, br, bg, bb, (0.15F + 0.3F * pulse) * vis);
         // The beams, blurred over the frame for the fast ones.
         int blur = (int) Math.max(1, Math.min(8, Math.round(rate * 1.4)));
         double frame = Math.PI * 2 * rate / 60.0;

@@ -38,7 +38,7 @@ final class Comets {
             double qx = cx + (ax * s - vel[0] * lag) * tail + e2[0] * spread * tail, qy = cy + (ay * s - vel[1] * lag) * tail + e2[1] * spread * tail,
                     qz = cz + (az * s - vel[2] * lag) * tail + e2[2] * spread * tail;
             double size = Math.max(px * 3, coma * 0.8 + tail * 0.06 * s);
-            float a = (float) (0.075 * (1 - s) * (0.6 + 0.4 * Math.sin(sync * 40 + seconds * 0.02))) * vis;
+            float a = (float) (0.13 * (1 - s) * (0.6 + 0.4 * Math.sin(sync * 40 + seconds * 0.02))) * vis;
             Space3D.billboard(Space3D.GLOW, ADD, qx, qy, qz, size, 0F, 1F, 0.9F, 0.72F, a);
         }
         // The ion tail: straight back from the Sun, a bundle of thin rays.
@@ -59,7 +59,7 @@ final class Comets {
                 Space3D.ribbon(Space3D.GLOW, ADD, cx + dx * l * s0 + e1[0] * kink0, cy + dy * l * s0 + e1[1] * kink0, cz + dz * l * s0 + e1[2] * kink0,
                         cx + dx * l * s1 + e1[0] * kink1, cy + dy * l * s1 + e1[1] * kink1, cz + dz * l * s1 + e1[2] * kink1,
                         Math.max(px * 0.8, coma * 0.12 + l * 0.004 * s0), Math.max(px * 0.8, coma * 0.12 + l * 0.004 * s1), 0.45F, 0.68F, 1F,
-                        (float) (0.22 * (1 - s0)) * vis, (float) (0.22 * (1 - s1)) * vis);
+                        (float) (0.4 * (1 - s0 * 0.8)) * vis, (float) (0.4 * (1 - s1 * 0.8)) * vis);
             }
             // Knots of plasma racing outwards.
             for (int j = 0; j < 4; j++) {

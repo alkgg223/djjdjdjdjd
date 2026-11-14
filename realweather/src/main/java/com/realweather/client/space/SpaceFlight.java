@@ -55,6 +55,8 @@ public final class SpaceFlight {
     private static boolean sent;
     private static int cooldown;
     private static boolean saidNoRoute;
+    /** The world just left (no arriving back on it until well away). */
+    private static String leaving, pendingLeaving;
     /** For the screen: names of what is round you, where they are on it, and what you are doing. */
     private static final List<Object[]> LABELS = new ArrayList<>();
     private static String nearName = "";
@@ -102,6 +104,7 @@ public final class SpaceFlight {
                 System.arraycopy(pendingPos, 0, pos, 0, 3);
                 frame = pendingFrame;
                 pendingPos = null;
+                leaving = pendingLeaving;
             } else {
                 // Back out into space after a break: above Earth.
                 SolarSystem.Body e = SolarSystem.byId("earth");
@@ -219,7 +222,8 @@ public final class SpaceFlight {
         double[] fr = SolarSystem.frame(origin, day, th);
         double[] bp = new double[3];
         SolarSystem.position(origin, day, bp);
-        double alt = origin.radius() * 1.35;
+        double alt = origin.radius() * 2.6;
+        pendingLeaving = origin.id();
         pendingPos = new double[]{bp[0] + fr[3] * alt, bp[1] + fr[4] * alt, bp[2] + fr[5] * alt};
         pendingFrame = fr;
         cooldown = 100;
@@ -567,6 +571,12 @@ public final class SpaceFlight {
             SolarSystem.position(b, day, bp);
             double rx = pos[0] - bp[0], ry = pos[1] - bp[1], rz = pos[2] - bp[2];
             double dist = Math.sqrt(rx * rx + ry * ry + rz * rz);
+            if (b.id().equals(leaving)) {
+                if (dist > b.radius() * 4) {
+                    leaving = null;
+                }
+                continue;
+            }
             if (dist < b.radius() * (b.kind() == SolarSystem.GAS ? 2.4 : 2.0) + 500) {
                 sent = true;
                 double lon = Math.atan2(rz, rx), lat = Math.asin(Mth.clamp(ry / dist, -1, 1)) * 0.8;
