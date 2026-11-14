@@ -38,7 +38,7 @@ jobs:
         run: |
           f=$(ls *.jar | grep -v -e sources -e javadoc | head -1)
           echo "JAR $(basename "$f") $(sha256sum "$f" | cut -c1-64)"
-          base64 -w 0 "$f" | fold -w 50000 > b64.txt
+          { base64 -w 0 "$f" | fold -w 50000; echo; } > b64.txt
           n=$(wc -l < b64.txt)
           per=$(( (n + 3) / 4 ))
           from=$(( (${{ matrix.part }} - 1) * per + 1 ))
