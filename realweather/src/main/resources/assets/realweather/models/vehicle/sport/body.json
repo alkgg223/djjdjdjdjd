@@ -1,0 +1,25 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/sport/body.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "amber": "realweather:item/vehicle/amber",
+  "badge": "realweather:item/vehicle/badge",
+  "black": "realweather:item/vehicle/black",
+  "blue_light": "realweather:item/vehicle/blue_light",
+  "chrome": "realweather:item/vehicle/chrome",
+  "gr_hex": "realweather:item/vehicle/gr_hex",
+  "hl_sport": "realweather:item/vehicle/hl_sport",
+  "marker_amber": "realweather:item/vehicle/marker_amber",
+  "paint": "realweather:item/vehicle/paint",
+  "plate_front": "realweather:item/vehicle/plate_front",
+  "plate_rear": "realweather:item/vehicle/plate_rear",
+  "tl_sport": "realweather:item/vehicle/tl_sport",
+  "trim": "realweather:item/vehicle/trim",
+  "vent_mesh": "realweather:item/vehicle/vent_mesh",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}

@@ -1,0 +1,130 @@
+package com.realweather.client;
+
+import com.realweather.ClientConfig;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.FogRenderer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.material.FogType;
+import net.neoforged.neoforge.client.event.ViewportEvent;
+
+/** Visibility and sky colour: grey veils of heavy rain, white-outs in blizzards, brown walls of sand. */
+public final class FogEffects {
+    private FogEffects() {}
+
+    private static boolean applies(Camera camera) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (!ClientConfig.FOG.get() || !ClientWeather.active(level) || camera.getFluidInCamera() != FogType.NONE) {
+            return false;
+        }
+        return level.getFluidState(camera.getBlockPosition()).isEmpty();
+    }
+
+    public static void onRenderFog(ViewportEvent.RenderFog event) {
+        if (!applies(event.getCamera())) {
+            return;
+        }
+        float far = event.getFarPlaneDistance();
+        float near = event.getNearPlaneDistance();
+        float shelter = 0.35F + 0.65F * ClientWeather.exposure;
+        float rain = smooth(0.15F, 1F, ClientWeather.camRain) * shelter;
+        float snow = ClientWeather.camSnow * shelter;
+        float bliz = (float) Math.pow(ClientWeather.camBlizzard * shelter, 0.6);
+        float sand = (float) Math.pow(ClientWeather.camSand * shelter, 0.6);
+
+        float target = far;
+        target = Math.min(target, Mth.lerp(rain * 0.6F, far, Math.max(28F, far * 0.4F)));
+        target = Math.min(target, Mth.lerp(snow * 0.7F, far, Math.max(22F, far * 0.3F)));
+        target = Math.min(target, Mth.lerp(bliz, far, 14F));
+        target = Math.min(target, Mth.lerp(sand, far, 12F));
+        float dust = tornadoDust(event.getCamera());
+        target = Math.min(target, Mth.lerp(dust, far, 10F));
+        if (target >= far - 0.05F) {
+            return;
+        }
+        float density = Math.max(Math.max(bliz, sand), dust);
+        float newNear;
+        if (event.getMode() == FogRenderer.FogMode.FOG_SKY) {
+            newNear = 0F;
+        } else {
+            newNear = Math.min(near, target * Mth.lerp(density, 0.3F, 0F));
+        }
+        event.setNearPlaneDistance(newNear);
+        event.setFarPlaneDistance(target);
+        event.setCanceled(true);
+    }
+
+    public static void onFogColor(ViewportEvent.ComputeFogColor event) {
+        if (!applies(event.getCamera())) {
+            return;
+        }
+        float r = event.getRed();
+        float g = event.getGreen();
+        float b = event.getBlue();
+        float bright = Mth.clamp(Math.max(r, Math.max(g, b)) / 0.8F, 0.04F, 1F);
+        float shelter = 0.35F + 0.65F * ClientWeather.exposure;
+
+        float rain = Math.min(1F, ClientWeather.camRain * 0.6F + ClientWeather.thunder * ClientWeather.camRain * 0.3F) * shelter;
+        r = Mth.lerp(rain, r, 0.40F * bright);
+        g = Mth.lerp(rain, g, 0.44F * bright);
+        b = Mth.lerp(rain, b, 0.49F * bright);
+
+        float bliz = ClientWeather.camBlizzard * 0.9F * shelter;
+        r = Mth.lerp(bliz, r, 0.80F * bright + 0.05F);
+        g = Mth.lerp(bliz, g, 0.84F * bright + 0.05F);
+        b = Mth.lerp(bliz, b, 0.90F * bright + 0.05F);
+
+        float sand = ClientWeather.camSand * 0.92F * shelter;
+        r = Mth.lerp(sand, r, 0.80F * bright + 0.03F);
+        g = Mth.lerp(sand, g, 0.62F * bright + 0.02F);
+        b = Mth.lerp(sand, b, 0.38F * bright + 0.01F);
+
+        float dust = tornadoDust(event.getCamera()) * 0.9F;
+        r = Mth.lerp(dust, r, 0.46F * bright + 0.02F);
+        g = Mth.lerp(dust, g, 0.41F * bright + 0.02F);
+        b = Mth.lerp(dust, b, 0.35F * bright + 0.02F);
+
+        // A solar eclipse: the daylight drains away to a deep blue twilight.
+        float ecl = com.realweather.client.sky.ClientEclipse.dark;
+        if (ecl > 0F) {
+            r = Mth.lerp(ecl * 0.9F, r, 0.03F);
+            g = Mth.lerp(ecl * 0.9F, g, 0.045F);
+            b = Mth.lerp(ecl * 0.9F, b, 0.09F);
+        }
+        float f = LightningFx.flash * 0.35F;
+        event.setRed(Math.min(1F, r + f * LightningFx.flashR * 1.05F));
+        event.setGreen(Math.min(1F, g + f * LightningFx.flashG * 1.05F));
+        event.setBlue(Math.min(1F, b + f * LightningFx.flashB * 1.1F));
+    }
+
+    public static void onCameraAngles(ViewportEvent.ComputeCameraAngles event) {
+        float s = LightningFx.shake;
+        if (s < 0.01F || !ClientConfig.CAMERA_SHAKE.get()) {
+            return;
+        }
+        double t = (Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0) + event.getPartialTick();
+        // Gentle trembling when it is weak, a violent judder when it is strong (several frequencies, so it never
+        // looks like a smooth sway).
+        float amp = (float) Math.pow(s, 1.3) * 5F;
+        double jx = Math.sin(t * 2.7) * 0.5 + Math.sin(t * 7.3 + 0.4) * 0.3 + Math.sin(t * 13.1 + 1.9) * 0.2;
+        double jy = Math.sin(t * 3.3 + 1.0) * 0.5 + Math.sin(t * 8.9 + 2.2) * 0.3 + Math.sin(t * 15.7) * 0.2;
+        double jr = Math.sin(t * 4.1 + 2.0) * 0.6 + Math.sin(t * 11.3 + 0.7) * 0.4;
+        event.setPitch(event.getPitch() + (float) jx * amp);
+        event.setYaw(event.getYaw() + (float) jy * amp * 0.7F);
+        event.setRoll(event.getRoll() + (float) jr * amp * 0.6F);
+    }
+
+    private static float tornadoDust(Camera camera) {
+        if (com.realweather.client.tornado.ClientTornadoes.isEmpty()) {
+            return 0F;
+        }
+        net.minecraft.world.phys.Vec3 p = camera.getPosition();
+        return com.realweather.client.tornado.TornadoRenderer.dustAt(p.x, p.y, p.z);
+    }
+
+    private static float smooth(float e0, float e1, float x) {
+        float t = Mth.clamp((x - e0) / (e1 - e0), 0F, 1F);
+        return t * t * (3F - 2F * t);
+    }
+}

@@ -1,0 +1,17 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/sedan/wheel.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "brake_disc": "realweather:item/vehicle/brake_disc",
+  "chrome": "realweather:item/vehicle/chrome",
+  "dark": "realweather:item/vehicle/dark",
+  "rim_alloy": "realweather:item/vehicle/rim_alloy",
+  "rubber": "realweather:item/vehicle/rubber",
+  "tyre_side": "realweather:item/vehicle/tyre_side",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}

@@ -1,0 +1,17 @@
+newmtl armor
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #armor
+
+newmtl chrome
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #chrome
+
+newmtl dash
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dash

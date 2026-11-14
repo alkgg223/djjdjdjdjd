@@ -1,0 +1,18 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/sport/door_rr.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "black": "realweather:item/vehicle/black",
+  "chrome": "realweather:item/vehicle/chrome",
+  "dash": "realweather:item/vehicle/dash",
+  "door_card_tan": "realweather:item/vehicle/door_card_tan",
+  "paint": "realweather:item/vehicle/paint",
+  "seat_tan": "realweather:item/vehicle/seat_tan",
+  "trim": "realweather:item/vehicle/trim",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}

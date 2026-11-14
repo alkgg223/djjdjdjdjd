@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "realweather:block/planets/atmospheres/saturn_ammonia_cloud"
+  },
+  "render_type": "minecraft:translucent"
+}

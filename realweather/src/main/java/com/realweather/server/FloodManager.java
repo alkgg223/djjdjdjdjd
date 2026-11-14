@@ -1,0 +1,256 @@
+package com.realweather.server;
+
+import com.realweather.ModContent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BiomeTags;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.AABB;
+
+import java.util.List;
+
+/**
+ * Heavy rain raises the water: low ground next to rivers, lakes and swamps floods first, then basins
+ * fill up layer by layer. When the rain eases off, the water drains away, newest layers first.
+ */
+public final class FloodManager {
+    private static final int MAX_BLOCKS = 24000;
+    private static final int RADIUS = 44;
+
+    private FloodManager() {}
+
+    static boolean growing(ServerLevel level, WeatherData d) {
+        return d.flood && level.isRaining();
+    }
+
+    static void tick(ServerLevel level, WeatherData d, List<ServerPlayer> players, RandomSource rng) {
+        boolean anyHeavy = false;
+        if (growing(level, d)) {
+            int count = Math.min(players.size(), 8);
+            for (int p = 0; p < count && d.floodList.size() < MAX_BLOCKS; p++) {
+                ServerPlayer player = players.get(rng.nextInt(players.size()));
+                // Floods follow the heavy rain under the storms, not the weather everywhere.
+                float local = WeatherServer.rainAt(level, player.getX(), player.getZ());
+                if (local < 0.55F) {
+                    continue;
+                }
+                anyHeavy = true;
+                float k = (local - 0.55F) / 0.45F;
+                int attempts = 2 + (int) (k * 10);
+                for (int i = 0; i < attempts; i++) {
+                    tryFlood(level, d, player, rng, k);
+                }
+            }
+            if (anyHeavy && !d.floodList.isEmpty()) {
+                spreadIndoors(level, d, rng);
+            }
+        }
+        if (!anyHeavy && !d.floodList.isEmpty() && level.getGameTime() % 2 == 0) {
+            // The water soaks away over a minute or two, top layers first.
+            int budget = 1 + d.floodList.size() / 1000;
+            drain(level, d, budget);
+        }
+    }
+
+    /** Removes up to `budget` flood blocks, newest first. Blocks in unloaded chunks are kept for later. */
+    public static int drain(ServerLevel level, WeatherData d, int budget) {
+        int removed = 0;
+        int checked = 0;
+        int i = d.floodList.size() - 1;
+        while (i >= 0 && removed < budget && checked < budget * 4) {
+            long packed = d.floodList.getLong(i);
+            BlockPos pos = BlockPos.of(packed);
+            checked++;
+            if (level.isLoaded(pos)) {
+                if (isFlood(level.getFluidState(pos))) {
+                    level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                }
+                d.floodList.removeLong(i);
+                d.floodSet.remove(packed);
+                removed++;
+            }
+            i--;
+        }
+        if (removed > 0) {
+            d.setDirty();
+        }
+        return removed;
+    }
+
+    /**
+     * Rising water pushes against windows and doors: glass shatters, doors give way, and the water runs into
+     * the house at the same level.
+     */
+    private static void spreadIndoors(ServerLevel level, WeatherData d, RandomSource rng) {
+        for (int i = 0; i < 3; i++) {
+            long packed = d.floodList.getLong(rng.nextInt(d.floodList.size()));
+            BlockPos pos = BlockPos.of(packed);
+            if (!level.isLoaded(pos) || !isFlood(level.getFluidState(pos))) {
+                continue;
+            }
+            for (Direction dir : Direction.Plane.HORIZONTAL) {
+                BlockPos n = pos.relative(dir);
+                BlockState s = level.getBlockState(n);
+                if (breaksInFlood(s)) {
+                    if (rng.nextFloat() < 0.12F) {
+                        level.destroyBlock(n, s.is(BlockTags.DOORS) || s.is(BlockTags.TRAPDOORS));
+                        if (s.is(BlockTags.DOORS)) {
+                            // The other half of the door goes with it.
+                            BlockPos other = s.getValue(net.minecraft.world.level.block.DoorBlock.HALF) == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER ? n.above() : n.below();
+                            if (level.getBlockState(other).is(BlockTags.DOORS)) {
+                                level.destroyBlock(other, false);
+                            }
+                        }
+                    }
+                } else if (s.isAir() && level.getBlockState(n.below()).isFaceSturdy(level, n.below(), Direction.UP) && rng.nextFloat() < 0.25F
+                        && d.floodList.size() < MAX_BLOCKS) {
+                    level.setBlock(n, ModContent.FLOOD_FLOWING.get().getFlowing(FloodFluid.SHEET, false).createLegacyBlock(), 3);
+                    d.addFlood(n.asLong());
+                }
+            }
+        }
+    }
+
+    private static boolean breaksInFlood(BlockState s) {
+        return s.is(net.neoforged.neoforge.common.Tags.Blocks.GLASS_BLOCKS) || s.is(net.neoforged.neoforge.common.Tags.Blocks.GLASS_PANES)
+                || s.is(BlockTags.WOODEN_DOORS) || s.is(BlockTags.WOODEN_TRAPDOORS) || s.is(BlockTags.FENCE_GATES);
+    }
+
+    static void onRandomTick(ServerLevel level, BlockPos pos, RandomSource random) {
+        WeatherData d = WeatherData.get(level.getServer().overworld());
+        boolean keep = level.dimension() == Level.OVERWORLD && growing(level, d) && WeatherServer.rainAt(level, pos.getX(), pos.getZ()) > 0.45F;
+        if (!keep && random.nextInt(3) != 0) {
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            d.removeFlood(pos.asLong());
+        }
+    }
+
+    private static boolean isFlood(FluidState f) {
+        return f.getFluidType() == ModContent.FLOOD_TYPE.get();
+    }
+
+    private static boolean isNaturalWaterSource(FluidState f) {
+        return f.is(FluidTags.WATER) && f.isSource() && !isFlood(f);
+    }
+
+    private static void tryFlood(ServerLevel level, WeatherData d, ServerPlayer player, RandomSource rng, float k) {
+        int x = Mth.floor(player.getX()) + rng.nextInt(RADIUS * 2 + 1) - RADIUS;
+        int z = Mth.floor(player.getZ()) + rng.nextInt(RADIUS * 2 + 1) - RADIUS;
+        if (!level.isLoaded(new BlockPos(x, 0, z))) {
+            return;
+        }
+        int h = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+        if (h <= level.getMinBuildHeight() + 2 || h >= level.getMaxBuildHeight() - 2) {
+            return;
+        }
+        BlockPos pos = new BlockPos(x, h, z);
+        if (!level.isRainingAt(pos)) {
+            return;
+        }
+        Holder<Biome> biome = level.getBiome(pos);
+        if (biome.is(BiomeTags.IS_OCEAN) || biome.is(BiomeTags.IS_DEEP_OCEAN) || biome.is(BiomeTags.IS_BEACH)) {
+            return;
+        }
+        BlockState at = level.getBlockState(pos);
+        if (!at.isAir() && !(at.canBeReplaced() && at.getFluidState().isEmpty() && !at.is(Blocks.SNOW))) {
+            return;
+        }
+        BlockPos below = pos.below();
+        BlockState ground = level.getBlockState(below);
+        FluidState groundFluid = ground.getFluidState();
+        boolean onFlood = isFlood(groundFluid);
+        if (onFlood) {
+            int depth = 1;
+            while (depth < 8 && isFlood(level.getFluidState(below.below(depth)))) {
+                depth++;
+            }
+            if (depth >= d.floodDepth) {
+                return;
+            }
+        } else if (!groundFluid.isEmpty()) {
+            // Rivers and lakes are not raised directly; their banks flood instead.
+            return;
+        } else {
+            if (!groundFluid.isEmpty() || !ground.isFaceSturdy(level, below, Direction.UP)) {
+                return;
+            }
+            if (ground.is(Blocks.FARMLAND) || ground.is(BlockTags.LEAVES) || ground.is(BlockTags.ICE) || ground.is(BlockTags.SAND) && rng.nextInt(3) != 0) {
+                return;
+            }
+        }
+
+        boolean spills = false;
+        boolean nextToWater = false;
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            int nx = x + dir.getStepX();
+            int nz = z + dir.getStepZ();
+            int nh = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, nx, nz);
+            BlockPos same = new BlockPos(nx, h, nz);
+            FluidState sameFluid = level.getFluidState(same);
+            FluidState lowFluid = level.getFluidState(same.below());
+            if (isFlood(sameFluid) || isNaturalWaterSource(sameFluid)) {
+                nextToWater = true;
+            } else if (isNaturalWaterSource(lowFluid) || isFlood(lowFluid)) {
+                // Water surface level with our ground: we are on the bank.
+                nextToWater = true;
+            } else if (nh < h) {
+                // The neighbour is lower dry land: water placed here would hang in the air over a slope.
+                spills = true;
+            }
+            if (spills) {
+                return;
+            }
+        }
+
+        int higher = 0;
+        for (int i = 0; i < 8; i++) {
+            double a = i * Math.PI / 4;
+            int nx = x + (int) Math.round(Math.cos(a) * 3);
+            int nz = z + (int) Math.round(Math.sin(a) * 3);
+            if (level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, nx, nz) > h) {
+                higher++;
+            }
+        }
+        boolean basin = higher >= 6;
+        boolean swamp = biome.is(BiomeTags.IS_RIVER) || biome.is(BiomeTags.HAS_CLOSER_WATER_FOG);
+
+        float chance;
+        if (nextToWater) {
+            chance = 0.55F;
+        } else if (basin) {
+            chance = 0.35F;
+        } else {
+            chance = 0F;
+        }
+        if (swamp) {
+            chance *= 1.5F;
+        }
+        chance *= 0.4F + 0.6F * k;
+        if (chance <= 0F || rng.nextFloat() >= chance) {
+            return;
+        }
+        // The water rises around people, not on the very spot they stand on.
+        if (!level.getEntitiesOfClass(Player.class, new AABB(pos).inflate(0.8, 1.5, 0.8)).isEmpty()) {
+            return;
+        }
+        if (onFlood) {
+            // The layer below is now under water: make it a full block so the flood reads as one body.
+            level.setBlock(below, ModContent.FLOOD.get().defaultFluidState().createLegacyBlock(), 3);
+        }
+        level.setBlock(pos, ModContent.FLOOD_FLOWING.get().getFlowing(FloodFluid.SHEET, false).createLegacyBlock(), 3);
+        d.addFlood(pos.asLong());
+    }
+}

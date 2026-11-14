@@ -1,0 +1,35 @@
+newmtl brake_disc
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #brake_disc
+
+newmtl chrome
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #chrome
+
+newmtl dark
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dark
+
+newmtl rim_alloy
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #rim_alloy
+
+newmtl rubber
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #rubber
+
+newmtl tyre_side
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #tyre_side

@@ -1,0 +1,40 @@
+package com.realweather.device;
+
+import net.minecraft.core.BlockPos;
+
+/** Calls from common block code into the client (only ever made on the client side). */
+final class DeviceClientHooks {
+    private DeviceClientHooks() {}
+
+    static void openTelescope(BlockPos pos) {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new com.realweather.client.space.TelescopeScreen(pos));
+    }
+
+    static void openDrive(boolean offhand) {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new com.realweather.client.space.DriveScreen(offhand));
+    }
+
+    static void openObservatory(BlockPos pos) {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new com.realweather.client.space.ObservatoryScreen(pos));
+    }
+
+    static void openPlanetMap() {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetMapScreen());
+    }
+
+    static void openRadar(BlockPos pos) {
+        com.realweather.client.radar.RadarClient.openRadar(pos);
+    }
+
+    static void openMonitor(BlockPos pos, int mode) {
+        com.realweather.client.radar.RadarClient.openMonitor(pos, mode);
+    }
+
+    static void radarLoaded(BlockPos pos, boolean loaded) {
+        com.realweather.client.radar.RadarClient.radarLoaded(pos, loaded);
+    }
+
+    static void monitorRemoved(BlockPos pos) {
+        com.realweather.client.radar.RadarClient.monitorRemoved(pos);
+    }
+}

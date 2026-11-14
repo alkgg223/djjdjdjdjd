@@ -1,0 +1,56 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.78'
+}
+
+version = '1.15.0'
+group = 'com.realweather'
+
+base {
+    archivesName = 'realweather'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+repositories {
+    mavenLocal()
+}
+
+def selftest = project.hasProperty('selftest')
+if (selftest) {
+    // Automated in-game test, never part of a normal build.
+    sourceSets.main.java.srcDir 'src/selftest/java'
+}
+
+neoForge {
+    version = project.neo_version
+    runs {
+        client {
+            client()
+            gameDirectory = project.file('run/client')
+            if (selftest) {
+                programArguments.addAll('--quickPlaySingleplayer', 'rwtest', '--width', System.getenv('RW_WIDTH') ?: '1280', '--height',
+                        System.getenv('RW_HEIGHT') ?: '720')
+                systemProperty 'realweather.selftest', 'true'
+            }
+        }
+        server {
+            server()
+            programArgument '--nogui'
+            gameDirectory = project.file('run/server')
+            if (selftest) {
+                systemProperty 'realweather.selftest', 'true'
+            }
+        }
+    }
+    mods {
+        realweather {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-Xmaxerrs' << '2000'
+}

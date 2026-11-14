@@ -1,0 +1,42 @@
+newmtl black
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #black
+
+newmtl chrome
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #chrome
+
+newmtl dash
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #dash
+
+newmtl door_card_tan
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #door_card_tan
+
+newmtl paint
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #paint
+neoforge_TintIndex 0
+
+newmtl seat_tan
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #seat_tan
+
+newmtl trim
+Kd 1 1 1
+Ka 0 0 0
+d 1.0
+map_Kd #trim

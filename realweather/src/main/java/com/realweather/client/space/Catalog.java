@@ -1,0 +1,839 @@
+package com.realweather.client.space;
+
+import com.realweather.RealWeather;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * What the telescope can find: the Sun, the Moon, the planets and dwarf planets (moving along the ecliptic from night
+ * to night, with their moons), stars from red dwarfs to hypergiants, and the stars with known exoplanets, each planet
+ * going round its star on its own orbit. Sizes and orbits are angles (radians) on the sky: far too small to see without
+ * the telescope, so it has to be pointed at the place and zoomed right in.
+ */
+public final class Catalog {
+    public static final int PLANETS = 0, STARS = 1, EXOPLANETS = 2, NEBULAE = 3, GALAXIES = 4, EVENTS = 5, OBJECTS = 6;
+    /** Kinds of body. */
+    static final int ROCKY = 0, GAS = 1, STAR = 2, PULSAR = 3, DWARF = 4, BLACKHOLE = 5, NEBULA = 6, COMET = 7, MERGER = 8, GALAXY = 9, EVENT = 10, OBJECT = 11;
+    /** The planet blocks, by their place in the block atlas. */
+    static final int REGOLITH = 0, BASALT = 1, SAND = 2, ICE = 3, FROST = 4, MAGMA = 5, CLOUD = 6, WATER = 7, MOSS = 8, CRYSTAL = 9, SULFUR = 10,
+            IRONSTONE = 11, STORM = 12, OBSIDIAN = 13, HOTROCK = 14, ASH = 15, MARE = 19, METHANE_SNOW = 23, NITROGEN_ICE = 24, THOLIN = 25,
+            IRON = 38, DIRT = 44, DRY_ICE = 47;
+    /** Star colours by spectral class. */
+    private static final float[] O_B = {0.62F, 0.72F, 1F}, A_T = {0.82F, 0.88F, 1F}, F_T = {0.98F, 0.96F, 0.9F}, G_T = {1F, 0.9F, 0.72F},
+            K_T = {1F, 0.7F, 0.42F}, M_T = {1F, 0.45F, 0.25F}, WD = {0.92F, 0.95F, 1F};
+
+    /** One body: its look, size, and orbit round the centre of its system (none for the centre itself). */
+    static final class Body {
+        final String id;
+        final int kind;
+        final ResourceLocation map;
+        final double radius;
+        final double orbit, period, incl, node, phase;
+        final float r, g, b;
+        /** Its own glow (a hot planet, a lava world), or for a star how fiery it is. */
+        float glow;
+        boolean air, rings, tail, flare, egg, stream;
+        /** Flattening of a fast-spinning body (polar radius / equatorial). */
+        float oblate = 1F;
+        float ar = 0.6F, ag = 0.75F, ab = 1F;
+        /** A glow round a scorching world. */
+        float hr, hg, hb, halo;
+        /** Its ground as blocks: low, middle and high ground, and whether its blue parts are seas. */
+        int lowT = BASALT, midT = REGOLITH, highT = REGOLITH;
+        boolean ocean;
+        /** A pulsar's real spin rate (per second), the tilt of its magnetic axis (degrees) and the colour of its beams. */
+        double spinHz = 1;
+        float tiltDeg = 45, pr = 0.72F, pg = 0.84F, pb = 1F;
+        /** A nebula's recipe. */
+        String recipe;
+        /** A pulsar with jets (the Crab, Vela); a magnetar. */
+        boolean jets, magnetar;
+        /** A cosmic event's kind, start (game ticks) and length; or an object type's number. */
+        int eventType;
+        long eventStart;
+        long eventLength;
+
+        Body(String id, int kind, String map, double radius, double orbit, double period, double incl, double node, double phase, float r, float g,
+             float b) {
+            this.id = id;
+            this.kind = kind;
+            this.map = map == null ? null : RealWeather.id("textures/environment/space3d/" + map + ".png");
+            this.radius = radius;
+            this.orbit = orbit;
+            this.period = period;
+            this.incl = Math.toRadians(incl);
+            this.node = Math.toRadians(node);
+            this.phase = phase;
+            this.r = r;
+            this.g = g;
+            this.b = b;
+        }
+
+        Body glow(float v) {
+            glow = v;
+            return this;
+        }
+
+        Body air(float r, float g, float b) {
+            air = true;
+            ar = r;
+            ag = g;
+            ab = b;
+            return this;
+        }
+
+        Body rings() {
+            rings = true;
+            return this;
+        }
+
+        Body tail() {
+            tail = true;
+            return this;
+        }
+
+        Body flare() {
+            flare = true;
+            return this;
+        }
+
+        Body oblate(float v) {
+            oblate = v;
+            return this;
+        }
+
+        Body egg() {
+            egg = true;
+            return this;
+        }
+
+        Body stream() {
+            stream = true;
+            return this;
+        }
+
+        Body halo(float r, float g, float b, float a) {
+            hr = r;
+            hg = g;
+            hb = b;
+            halo = a;
+            return this;
+        }
+
+        Body ground(int low, int mid, int high) {
+            lowT = low;
+            midT = mid;
+            highT = high;
+            return this;
+        }
+
+        Body ocean() {
+            ocean = true;
+            return this;
+        }
+
+        Body pulsar(double hz, float tilt, float r, float g, float b) {
+            spinHz = hz;
+            tiltDeg = tilt;
+            pr = r;
+            pg = g;
+            pb = b;
+            return this;
+        }
+
+        Body nebula(String recipe) {
+            this.recipe = recipe;
+            return this;
+        }
+
+        Body jets() {
+            jets = true;
+            return this;
+        }
+
+        Body magnetar() {
+            magnetar = true;
+            return this;
+        }
+
+        /** Somewhere you can go and see up close (and the planet map can take you). */
+        public boolean visitable() {
+            return isPlanet() || com.realweather.space.Sites.IDS.contains(id);
+        }
+
+        public boolean isGalaxy() {
+            return kind == GALAXY;
+        }
+
+        /** This body as a planet of blocks with a radius of `blocks` (for the ray-traced view). */
+        public SpaceShaders.Planet voxel(int blocks) {
+            SpaceShaders.Planet p = new SpaceShaders.Planet();
+            p.map = map;
+            p.radius = blocks;
+            boolean gas = kind == GAS;
+            p.gas = gas;
+            p.relief = gas ? (float) Math.max(1, Math.min(3, Math.round(blocks * 0.04))) : (float) Math.max(2, Math.min(8, Math.round(blocks * 0.08)));
+            p.sea = ocean ? Math.max(1F, Math.round(p.relief * 0.35F)) : -1F;
+            p.tiles = gas ? new float[]{CLOUD, CLOUD, STORM, WATER} : new float[]{lowT, midT, highT, WATER};
+            // The ground of each world, as it is when you travel there.
+            com.realweather.space.Worlds.World w = com.realweather.space.Worlds.byId(id);
+            if (w != null) {
+                p.tiles = new float[]{w.low(), w.mid(), w.high(), WATER};
+                p.snow = w.snow();
+                if (w.ocean()) {
+                    p.sea = Math.max(1F, Math.round(p.relief * 0.35F));
+                }
+            }
+            p.glow = glow;
+            p.ambient = 0.012F;
+            p.hills = gas ? 1F : Math.max(1F, Math.min(4F, p.relief * 0.35F));
+            if (air) {
+                p.air = gas ? 0.9F : 0.75F;
+                p.airR = ar;
+                p.airG = ag;
+                p.airB = ab;
+            }
+            return p;
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public boolean isPlanet() {
+            return kind == ROCKY || kind == GAS;
+        }
+    }
+
+    /** A place in the sky: a centre body (planet or star) and what goes round it. */
+    static final class Sys {
+        final String id;
+        /** Fixed direction in the sky frame (stars), or null for a body of the solar system. */
+        final double[] dir;
+        /** Elongation from the sun at day 0, its swing (inner planets) or days per round (outer ones), and latitude. */
+        final double lon0, lonRate, lat;
+        final boolean inner;
+        final String distance;
+        final List<Body> bodies = new ArrayList<>();
+        boolean cluster;
+        /** A dusty disc or ring: radii, tilt, turn, colour, and how far off centre (eccentric rings). */
+        double diskIn, diskOut, diskIncl, diskNode, diskShift;
+        float diskR = 1F, diskG = 0.88F, diskB = 0.75F;
+        /** A nebula round the star: 1 a lumpy shell of dust, 2 two great lobes. */
+        int nebula;
+
+        Sys(String id, double[] dir, String distance) {
+            this.id = id;
+            this.dir = dir;
+            this.lon0 = this.lonRate = this.lat = 0;
+            this.inner = false;
+            this.distance = distance;
+        }
+
+        Sys(String id, double lon0, double lonRate, double lat, boolean inner, String distance) {
+            this.id = id;
+            this.dir = null;
+            this.lon0 = Math.toRadians(lon0);
+            this.lonRate = lonRate;
+            this.lat = lat;
+            this.inner = inner;
+            this.distance = distance;
+        }
+
+        Sys add(Body... list) {
+            for (Body b : list) {
+                bodies.add(b);
+            }
+            return this;
+        }
+
+        Sys disk(double in, double out, double incl, double node, double shift, float r, float g, float b) {
+            diskIn = in;
+            diskOut = out;
+            diskIncl = Math.toRadians(incl);
+            diskNode = Math.toRadians(node);
+            diskShift = shift;
+            diskR = r;
+            diskG = g;
+            diskB = b;
+            return this;
+        }
+
+        boolean hasDisk() {
+            return diskOut > 0;
+        }
+
+        /** Direction in the sky frame at a given (fractional) day. */
+        double[] direction(double day) {
+            if (dir != null) {
+                return dir;
+            }
+            double lon = inner ? Math.toRadians(lonRate) * Math.sin(Math.PI * 2 * day / 37.0 + lon0) : lon0 + Math.PI * 2 * day / lonRate;
+            double x = lat, y = Math.cos(lon), z = Math.sin(lon);
+            double l = Math.sqrt(x * x + y * y + z * z);
+            return new double[]{x / l, y / l, z / l};
+        }
+    }
+
+    /** A menu entry: a body in a system. */
+    public static final class Target {
+        public final String id;
+        public final int group;
+        final Sys sys;
+        final Body body;
+        /** A name of its own (things that come and go, like cosmic events), instead of the translated one. */
+        net.minecraft.network.chat.Component name;
+
+        Target(String id, int group, Sys sys, Body body) {
+            this.id = id;
+            this.group = group;
+            this.sys = sys;
+            this.body = body;
+        }
+
+        public net.minecraft.network.chat.Component label() {
+            return name != null ? name : net.minecraft.network.chat.Component.translatable("realweather.target." + id);
+        }
+    }
+
+    static final List<Sys> SYSTEMS = new ArrayList<>();
+    public static final List<Target> TARGETS = new ArrayList<>();
+    static Sys moon, sun, earth;
+
+    private static double[] d(double x, double y, double z) {
+        double l = Math.sqrt(x * x + y * y + z * z);
+        return new double[]{x / l, y / l, z / l};
+    }
+
+    static double[] skyAt(String id) {
+        return at(id);
+    }
+
+    /** A place in the night sky for a star (the same every time), well away from the moon. */
+    private static double[] at(String id) {
+        long h = id.hashCode() * 0x9E3779B97F4A7C15L;
+        double x = (Space3D.h(h, 1) - 0.5) * 1.5, z = (Space3D.h(h, 2) - 0.5) * 1.6;
+        double off = Math.sqrt(x * x + z * z);
+        if (off < 0.3) {
+            double k = off < 1.0E-3 ? 0 : 0.3 / off;
+            x = off < 1.0E-3 ? 0.3 : x * k;
+            z *= k;
+        }
+        return d(x, -1, z);
+    }
+
+    private static Body star(String id, double r, float[] c, float fire) {
+        return new Body(id, STAR, "star_surface", r, 0, 0, 0, 0, 0, c[0], c[1], c[2]).glow(fire);
+    }
+
+    private static Body star(String id, double r, float[] c, float fire, double orbit, double period, double incl, double node, double phase) {
+        return new Body(id, STAR, "star_surface", r, orbit, period, incl, node, phase, c[0], c[1], c[2]).glow(fire);
+    }
+
+    private static Body planet(String id, int kind, String map, double r, double orbit, double period, double incl, double node, double phase) {
+        return new Body(id, kind, map, r, orbit, period, incl, node, phase, 1F, 1F, 1F);
+    }
+
+    private static Sys sys(String id, String distance, Body... bodies) {
+        Sys s = new Sys(id, at(id), distance);
+        s.add(bodies);
+        SYSTEMS.add(s);
+        return s;
+    }
+
+    private static void target(String id, int group, Sys s, String body) {
+        for (Body b : s.bodies) {
+            if (b.id.equals(body)) {
+                TARGETS.add(new Target(id, group, s, b));
+                return;
+            }
+        }
+        throw new IllegalStateException("no body " + body + " in " + s.id);
+    }
+
+    private static Sys solar(String id, Sys s, Body... bodies) {
+        s.add(bodies);
+        SYSTEMS.add(s);
+        TARGETS.add(new Target(id, PLANETS, s, bodies[0]));
+        return s;
+    }
+
+    private static Body comet(String id, double coma) {
+        return new Body(id, COMET, null, coma, 0, 0, 0, 0, 0, 0.7F, 0.95F, 0.85F);
+    }
+
+    static {
+        // ------------------------------------------------------------------------- the solar system
+        sun = new Sys("sun", d(0, 1, 0), "1 AU");
+        solar("sun", sun, new Body("sun", STAR, "star_surface", Math.atan(0.15), 0, 0, 0, 0, 0, 1F, 0.86F, 0.6F).glow(1F));
+        solar("mercury", new Sys("mercury", 0.4, 22, 0.03, true, "0.6-1.4 AU"), planet("mercury", ROCKY, "mercury", 0.35e-4, 0, 0, 0, 0, 0).ground(BASALT, REGOLITH, REGOLITH));
+        solar("venus", new Sys("venus", 1.7, 44, -0.02, true, "0.3-1.7 AU"), planet("venus", ROCKY, "venus", 1.2e-4, 0, 0, 0, 0, 0)
+                .air(1F, 0.92F, 0.7F).ground(BASALT, SULFUR, ASH));
+        earth = new Sys("earth", d(0, 1, 0), "0 km");
+        solar("earth", earth, planet("earth", ROCKY, "earth", 1e-4, 0, 0, 0, 0, 0).air(0.45F, 0.65F, 1F).ground(SAND, MOSS, BASALT).ocean());
+        moon = new Sys("moon", d(0, -1, 0), "384 400 km");
+        solar("moon", moon, planet("moon", ROCKY, "moon", Math.atan(0.1), 0, 0, 0, 0, 0).ground(BASALT, REGOLITH, REGOLITH));
+        solar("mars", new Sys("mars", 200, 40, 0.05, false, "0.4-2.5 AU"), planet("mars", ROCKY, "mars", 0.6e-4, 0, 0, 0, 0, 0).air(1F, 0.7F, 0.5F)
+                .ground(BASALT, IRONSTONE, SAND));
+        solar("ceres", new Sys("ceres", 250, 60, 0.09, false, "1.6-3.0 AU"), planet("ceres", ROCKY, "ceres", 0.12e-4, 0, 0, 0, 0, 0).ground(BASALT, REGOLITH, ICE));
+        Sys jup = solar("jupiter", new Sys("jupiter", 165, 80, -0.04, false, "4.2-6.2 AU"),
+                planet("jupiter", GAS, "jupiter", 2.0e-4, 0, 0, 0, 0, 0).air(0.9F, 0.85F, 0.75F),
+                // The four moons Galileo saw, in a line either side.
+                new Body("io", ROCKY, "venus", 0.11e-4, 5.9 * 2.0e-4, 1200, 88, 0, 0.1, 1F, 0.95F, 0.6F).ground(SULFUR, SULFUR, ASH),
+                new Body("europa", ROCKY, "lhs1140b", 0.09e-4, 9.4 * 2.0e-4, 2400, 88, 0, 0.6, 1F, 0.98F, 0.92F).ground(ICE, ICE, FROST),
+                new Body("ganymede", ROCKY, "mercury", 0.15e-4, 15 * 2.0e-4, 4800, 88, 0, 0.3, 0.9F, 0.88F, 0.82F).ground(BASALT, REGOLITH, ICE),
+                new Body("callisto", ROCKY, "moon", 0.14e-4, 26 * 2.0e-4, 11000, 88, 0, 0.8, 0.7F, 0.66F, 0.6F).ground(BASALT, REGOLITH, ICE));
+        Sys sat = solar("saturn", new Sys("saturn", 140, 75, 0.06, false, "8.0-11.1 AU"), planet("saturn", GAS, "saturn", 0.9e-4, 0, 0, 0, 0, 0).rings(),
+                new Body("titan", ROCKY, "venus", 0.07e-4, 20 * 0.9e-4, 8000, 80, 20, 0.4, 1F, 0.8F, 0.5F).ground(ASH, SAND, ICE),
+                new Body("enceladus", ROCKY, "eris", 0.012e-4, 4 * 0.9e-4, 1400, 80, 20, 0.75, 1F, 1F, 1F).ground(ICE, FROST, FROST),
+                new Body("mimas", ROCKY, "moon", 0.008e-4, 3.1 * 0.9e-4, 950, 80, 20, 0.15, 0.95F, 0.95F, 0.95F).ground(ICE, REGOLITH, FROST),
+                new Body("dione", ROCKY, "eris", 0.014e-4, 6.3 * 0.9e-4, 2700, 80, 20, 0.55, 0.92F, 0.92F, 0.94F).ground(ICE, FROST, FROST),
+                new Body("rhea", ROCKY, "charon", 0.02e-4, 8.7 * 0.9e-4, 4500, 80, 20, 0.9, 0.95F, 0.95F, 0.95F).ground(ICE, FROST, REGOLITH),
+                new Body("hyperion", ROCKY, "ceres", 0.006e-4, 25 * 0.9e-4, 21000, 80, 20, 0.05, 0.85F, 0.78F, 0.68F).ground(REGOLITH, ICE, THOLIN),
+                new Body("iapetus", ROCKY, "haumea", 0.019e-4, 40 * 0.9e-4, 79000, 70, 30, 0.35, 0.75F, 0.7F, 0.62F).ground(THOLIN, ICE, FROST));
+        Sys ura = solar("uranus", new Sys("uranus", 222, 74, -0.07, false, "18-20 AU"), planet("uranus", GAS, "uranus", 0.25e-4, 0, 0, 0, 0, 0)
+                        .air(0.6F, 0.9F, 0.95F),
+                new Body("miranda", ROCKY, "mercury", 0.012e-4, 5 * 0.25e-4, 1400, 8, 90, 0.2, 0.85F, 0.85F, 0.86F).ground(ICE, REGOLITH, FROST),
+                new Body("ariel", ROCKY, "eris", 0.03e-4, 7.5 * 0.25e-4, 2500, 8, 90, 0.6, 0.9F, 0.9F, 0.92F).ground(ICE, FROST, REGOLITH),
+                new Body("umbriel", ROCKY, "moon", 0.03e-4, 10.4 * 0.25e-4, 4100, 8, 90, 0.1, 0.55F, 0.55F, 0.56F).ground(MARE, ICE, REGOLITH),
+                new Body("oberon", ROCKY, "charon", 0.04e-4, 23 * 0.25e-4, 13000, 8, 90, 0.8, 0.78F, 0.72F, 0.7F).ground(REGOLITH, ICE, MARE));
+        Sys nep = solar("neptune", new Sys("neptune", 118, 73, 0.08, false, "29-31 AU"), planet("neptune", GAS, "neptune", 0.18e-4, 0, 0, 0, 0, 0)
+                        .air(0.4F, 0.55F, 1F),
+                new Body("triton", ROCKY, "pluto", 0.03e-4, 14 * 0.18e-4, -5900, 23, 40, 0.3, 0.95F, 0.88F, 0.86F).ground(NITROGEN_ICE, METHANE_SNOW, FROST));
+        // Small bodies: a metal asteroid, a rubble-pile asteroid, a comet's nucleus.
+        solar("psyche", new Sys("psyche", 40, 55, 0.05, false, "2.5-3.3 AU"), planet("psyche", ROCKY, "mercury", 0.02e-4, 0, 0, 0, 0, 0)
+                .ground(IRON, REGOLITH, IRON));
+        solar("bennu", new Sys("bennu", 300, 120, -0.03, true, "0.9-1.4 AU"), planet("bennu", ROCKY, "ceres", 0.01e-4, 0, 0, 0, 0, 0)
+                .ground(DIRT, REGOLITH, BASALT));
+        solar("comet_67p", new Sys("comet_67p", 190, 50, 0.12, false, "1.2-5.7 AU"), planet("comet_67p", ROCKY, "ceres", 0.01e-4, 0, 0, 0, 0, 0)
+                .ground(ASH, DRY_ICE, BASALT));
+        Sys plu = solar("pluto", new Sys("pluto", 200, 72, 0.2, false, "30-50 AU"), planet("pluto", ROCKY, "pluto", 0.09e-4, 0, 0, 0, 0, 0)
+                        .ground(IRONSTONE, ICE, FROST),
+                new Body("charon", ROCKY, "charon", 0.045e-4, 0.3e-4, 1500, 60, 30, 0.2, 1F, 1F, 1F).ground(BASALT, REGOLITH, ICE));
+        Sys hau = solar("haumea", new Sys("haumea", 150, 72, 0.32, false, "35-51 AU"),
+                planet("haumea", ROCKY, "haumea", 0.08e-4, 0, 0, 0, 0, 0).oblate(0.52F).rings().ground(ICE, ICE, CRYSTAL),
+                new Body("hiiaka", ROCKY, "eris", 0.012e-4, 0.55e-4, 5000, 70, 0, 0.3, 1F, 1F, 1F),
+                new Body("namaka", ROCKY, "eris", 0.008e-4, 0.3e-4, 2000, 60, 40, 0.7, 1F, 1F, 1F));
+        solar("makemake", new Sys("makemake", 120, 71, 0.38, false, "38-53 AU"), planet("makemake", ROCKY, "makemake", 0.07e-4, 0, 0, 0, 0, 0).ground(IRONSTONE, ICE, FROST));
+        Sys eri = solar("eris", new Sys("eris", 230, 70, 0.28, false, "38-98 AU"), planet("eris", ROCKY, "eris", 0.075e-4, 0, 0, 0, 0, 0).ground(ICE, FROST, FROST),
+                new Body("dysnomia", ROCKY, "charon", 0.02e-4, 0.32e-4, 2600, 70, 60, 0.5, 0.9F, 0.9F, 0.9F));
+
+        // Their moons, each a world of its own.
+        for (String m : new String[]{"io", "europa", "ganymede", "callisto"}) {
+            target(m, PLANETS, jup, m);
+        }
+        target("titan", PLANETS, sat, "titan");
+        target("enceladus", PLANETS, sat, "enceladus");
+        for (String m : new String[]{"mimas", "dione", "rhea", "hyperion", "iapetus"}) {
+            target(m, PLANETS, sat, m);
+        }
+        for (String m : new String[]{"miranda", "ariel", "umbriel", "oberon"}) {
+            target(m, PLANETS, ura, m);
+        }
+        target("triton", PLANETS, nep, "triton");
+        target("charon", PLANETS, plu, "charon");
+        target("hiiaka", PLANETS, hau, "hiiaka");
+        target("namaka", PLANETS, hau, "namaka");
+        target("dysnomia", PLANETS, eri, "dysnomia");
+        // Comets on their way in to the Sun.
+        solar("halley", new Sys("halley", 60, 3000, 0.25, false, "1.4 AU"), comet("halley", 0.35e-4));
+        solar("hale_bopp", new Sys("hale_bopp", 300, 6000, -0.35, false, "2.1 AU"), comet("hale_bopp", 0.8e-4));
+        solar("neowise", new Sys("neowise", 120, 1800, 0.4, false, "0.95 AU"), comet("neowise", 0.3e-4));
+
+        // ------------------------------------------------------------------------- stars
+        Sys alphaCen = sys("alpha_centauri", "4.37 ly", star("alpha_centauri_a", 6e-6, G_T, 1F, 1.2e-5, 40000, 60, 20, 0),
+                star("alpha_centauri_b", 5e-6, K_T, 1F, 1.5e-5, 40000, 60, 20, 0.5));
+        target("alpha_centauri_a", STARS, alphaCen, "alpha_centauri_a");
+        target("alpha_centauri_b", STARS, alphaCen, "alpha_centauri_b");
+        target("rigel_kentaurus", STARS, alphaCen, "alpha_centauri_a");
+        // Proxima is about two degrees from Alpha Centauri, as in the real sky.
+        double[] ac = alphaCen.dir;
+        Sys proxima = new Sys("proxima", d(ac[0] + 0.03, ac[1], ac[2] + 0.02), "4.24 ly");
+        proxima.add(star("proxima_centauri", 3.5e-6, M_T, 1.2F).flare(),
+                planet("proxima_b", ROCKY, "proxima_b", 1.15e-6, 1.4e-5, 700, 80, 10, 0.3).air(0.6F, 0.75F, 1F)
+                        .ground(SAND, IRONSTONE, ICE).ocean());
+        SYSTEMS.add(proxima);
+        target("proxima_centauri", STARS, proxima, "proxima_centauri");
+        Sys sirius = sys("sirius", "8.6 ly", star("sirius", 4.5e-6, A_T, 0.8F),
+                new Body("sirius_b", DWARF, "star_surface", 0.7e-6, 3.5e-5, 20000, 50, 30, 0.2, WD[0], WD[1], WD[2]));
+        target("sirius", STARS, sirius, "sirius");
+        target("betelgeuse", STARS, sys("betelgeuse", "550 ly", star("betelgeuse", 2.4e-5, M_T, 1.7F)), "betelgeuse");
+        target("rigel", STARS, sys("rigel", "860 ly", star("rigel", 8e-6, O_B, 1F)), "rigel");
+        Sys vega = sys("vega", "25 ly", star("vega", 5e-6, A_T, 0.8F).oblate(0.85F));
+        vega.disk(2.5e-5, 6e-5, 10, 0, 0, 0.9F, 0.85F, 0.8F);
+        target("vega", STARS, vega, "vega");
+        target("polaris", STARS, sys("polaris", "430 ly", star("polaris", 6.5e-6, F_T, 0.9F),
+                star("polaris_b", 1.4e-6, F_T, 0.4F, 3e-5, 30000, 40, 60, 0.3)), "polaris");
+        target("altair", STARS, sys("altair", "16.7 ly", star("altair", 5e-6, A_T, 0.8F).oblate(0.78F)), "altair");
+        target("deneb", STARS, sys("deneb", "2600 ly", star("deneb", 1.1e-5, A_T, 1.2F)), "deneb");
+        target("antares", STARS, sys("antares", "550 ly", star("antares", 2.1e-5, M_T, 1.6F),
+                star("antares_b", 1.6e-6, O_B, 0.5F, 4.5e-5, 30000, 40, 60, 0.7)), "antares");
+        target("aldebaran", STARS, sys("aldebaran", "65 ly", star("aldebaran", 1.3e-5, K_T, 1.2F)), "aldebaran");
+        target("arcturus", STARS, sys("arcturus", "37 ly", star("arcturus", 1.2e-5, K_T, 1.2F)), "arcturus");
+        // Spica: two hot blue stars so close they are pulled into egg shapes.
+        target("spica", STARS, sys("spica", "250 ly", star("spica", 5e-6, O_B, 1F, 0.8e-5, 700, 65, 10, 0).oblate(0.88F),
+                star("spica_b", 3.5e-6, O_B, 0.8F, 1.3e-5, 700, 65, 10, 0.5).oblate(0.9F)), "spica");
+        target("canopus", STARS, sys("canopus", "310 ly", star("canopus", 1.2e-5, F_T, 1.2F)), "canopus");
+        target("capella", STARS, sys("capella", "43 ly", star("capella", 7e-6, G_T, 1.1F, 1.5e-5, 6000, 50, 40, 0),
+                star("capella_b", 6.5e-6, G_T, 1.1F, 1.7e-5, 6000, 50, 40, 0.5)), "capella");
+        target("regulus", STARS, sys("regulus", "79 ly", star("regulus", 5.5e-6, O_B, 0.9F).oblate(0.75F)), "regulus");
+        Sys fomalhaut = sys("fomalhaut", "25 ly", star("fomalhaut", 5e-6, A_T, 0.8F));
+        fomalhaut.disk(5.6e-5, 6.6e-5, 66, 20, 0.8e-5, 0.95F, 0.85F, 0.7F);
+        target("fomalhaut", STARS, fomalhaut, "fomalhaut");
+        target("barnards_star", STARS, sys("barnards_star", "6 ly", star("barnards_star", 3.2e-6, M_T, 1F).flare()), "barnards_star");
+        target("wolf_359", STARS, sys("wolf_359", "7.9 ly", star("wolf_359", 2.8e-6, M_T, 1.2F).flare()), "wolf_359");
+        Sys tauCeti = sys("tau_ceti", "11.9 ly", star("tau_ceti", 4.5e-6, G_T, 0.9F));
+        tauCeti.disk(2e-5, 7e-5, 35, 50, 0, 0.9F, 0.85F, 0.75F);
+        target("tau_ceti", STARS, tauCeti, "tau_ceti");
+        Sys epsEri = sys("epsilon_eridani", "10.5 ly", star("epsilon_eridani", 4.5e-6, K_T, 1F));
+        epsEri.disk(4.5e-5, 7.5e-5, 30, 0, 0, 0.95F, 0.82F, 0.65F);
+        target("epsilon_eridani", STARS, epsEri, "epsilon_eridani");
+        target("uy_scuti", STARS, sys("uy_scuti", "5900 ly", star("uy_scuti", 3.6e-5, M_T, 2F)), "uy_scuti");
+        Sys vy = sys("vy_canis_majoris", "3800 ly", star("vy_canis_majoris", 3.2e-5, M_T, 2F));
+        vy.nebula = 1;
+        target("vy_canis_majoris", STARS, vy, "vy_canis_majoris");
+        target("stephenson_2_18", STARS, sys("stephenson_2_18", "19 000 ly", star("stephenson_2_18", 3.9e-5, M_T, 2.2F)), "stephenson_2_18");
+        Sys eta = sys("eta_carinae", "7500 ly", star("eta_carinae", 6.5e-6, O_B, 1.5F));
+        eta.nebula = 2;
+        target("eta_carinae", STARS, eta, "eta_carinae");
+
+        // TON 618: one of the most massive black holes known (66 billion Suns), feeding a quasar.
+        Sys ton = sys("ton618", "10.8 billion ly", new Body("ton618", BLACKHOLE, null, 1.2e-6, 0, 0, 0, 0, 0, 0.75F, 0.85F, 1F).jets());
+        target("ton618", STARS, ton, "ton618");
+        // Sagittarius A*, the black hole at the heart of our own galaxy (4 million Suns), quiet, ringed by its swarm of
+        // stars; and M87*, the first black hole ever pictured (6.5 billion Suns), with its giant jet.
+        Sys sgrA = sys("sgr_a_star", "26 700 ly", new Body("sgr_a_star", BLACKHOLE, null, 1.0e-6, 0, 0, 0, 0, 0, 1F, 0.8F, 0.6F));
+        target("sgr_a_star", STARS, sgrA, "sgr_a_star");
+        Sys m87 = sys("m87_star", "53 million ly", new Body("m87_star", BLACKHOLE, null, 1.1e-6, 0, 0, 0, 0, 0, 1F, 0.75F, 0.5F).jets());
+        target("m87_star", STARS, m87, "m87_star");
+
+        // ------------------------------------------------------------------------- exoplanets
+        target("proxima_b", EXOPLANETS, proxima, "proxima_b");
+        exo("peg51b", "51 Pegasi", "50 ly", star("51_pegasi", 5e-6, G_T, 1F),
+                planet("peg51b", GAS, "peg51b", 2.4e-6, 1.3e-5, 700, 80, 15, 0.2).glow(0.12F).halo(1F, 0.6F, 0.4F, 0.2F).air(1F, 0.8F, 0.6F));
+        exo("cnc55e", "55 Cancri", "41 ly", star("55_cancri", 4.5e-6, K_T, 1F),
+                planet("cnc55e", ROCKY, "cnc55e", 1.2e-6, 1.0e-5, 300, 83, 0, 0.6).glow(0.45F).halo(1F, 0.45F, 0.15F, 0.35F)
+                        .ground(MAGMA, OBSIDIAN, CRYSTAL));
+        exo("hd189733b", "HD 189733", "64 ly", star("hd189733", 4.5e-6, K_T, 1F),
+                planet("hd189733b", GAS, "hd189733b", 2.6e-6, 1.4e-5, 800, 86, 20, 0.1).air(0.4F, 0.6F, 1F));
+        exo("hd209458b", "HD 209458", "157 ly", star("hd209458", 5e-6, G_T, 1F),
+                planet("hd209458b", GAS, "hd209458b", 2.8e-6, 1.5e-5, 900, 86, 10, 0.4).air(0.6F, 0.75F, 1F).tail());
+        exo("wasp12b", "WASP-12", "1400 ly", star("wasp12", 6e-6, F_T, 1F),
+                planet("wasp12b", GAS, "wasp12b", 3.2e-6, 1.1e-5, 420, 83, 0, 0.3).glow(0.5F).egg().stream().halo(1F, 0.4F, 0.15F, 0.3F));
+        exo("wasp76b", "WASP-76", "640 ly", star("wasp76", 6e-6, F_T, 1F),
+                planet("wasp76b", GAS, "wasp76b", 3.0e-6, 1.3e-5, 600, 85, 30, 0.7).glow(0.35F).halo(1F, 0.55F, 0.2F, 0.25F));
+        exo("wasp17b", "WASP-17", "1300 ly", star("wasp17", 5.5e-6, F_T, 1F),
+                planet("wasp17b", GAS, "wasp17b", 3.9e-6, 2.0e-5, -1500, 80, 40, 0.1).air(0.85F, 0.85F, 0.9F));
+        exo("kelt9b", "KELT-9", "670 ly", star("kelt9", 7e-6, O_B, 1.2F),
+                planet("kelt9b", GAS, "kelt9b", 3.2e-6, 1.2e-5, 450, 80, 70, 0.5).glow(0.6F).halo(1F, 0.85F, 0.7F, 0.4F));
+        Sys k16 = new Sys("kepler16", at("kepler16"), "245 ly");
+        k16.add(star("kepler16a", 4.5e-6, K_T, 1F, 0.6e-5, 900, 89, 0, 0), star("kepler16b_star", 2.5e-6, M_T, 1F, 1.6e-5, 900, 89, 0, 0.5),
+                planet("kepler16b", GAS, "kepler16b", 2.2e-6, 4.5e-5, 5000, 89.5, 0, 0.3).air(0.85F, 0.8F, 0.7F));
+        SYSTEMS.add(k16);
+        target("kepler16b", EXOPLANETS, k16, "kepler16b");
+        exo("kepler22b", "Kepler-22", "640 ly", star("kepler22", 5e-6, G_T, 1F),
+                planet("kepler22b", ROCKY, "kepler22b", 1.7e-6, 5e-5, 5000, 80, 20, 0.6).air(0.5F, 0.75F, 1F).ground(SAND, MOSS, BASALT).ocean());
+        exo("kepler186f", "Kepler-186", "580 ly", star("kepler186", 4e-6, M_T, 1F),
+                planet("kepler186f", ROCKY, "kepler186f", 1.3e-6, 5.5e-5, 4500, 78, 0, 0.2).air(0.7F, 0.7F, 0.9F)
+                        .ground(SAND, MOSS, IRONSTONE).ocean());
+        exo("kepler452b", "Kepler-452", "1800 ly", star("kepler452", 5.2e-6, G_T, 1F),
+                planet("kepler452b", ROCKY, "kepler452b", 1.6e-6, 6e-5, 7000, 75, 30, 0.45).air(0.55F, 0.7F, 1F)
+                        .ground(SAND, MOSS, BASALT).ocean());
+        exo("kepler10b", "Kepler-10", "610 ly", star("kepler10", 5e-6, G_T, 1F),
+                planet("kepler10b", ROCKY, "kepler10b", 1.2e-6, 1.0e-5, 260, 84, 10, 0.1).glow(0.4F).halo(1F, 0.45F, 0.12F, 0.3F)
+                        .ground(MAGMA, HOTROCK, OBSIDIAN));
+        exo("kepler78b", "Kepler-78", "400 ly", star("kepler78", 4.6e-6, K_T, 1F),
+                planet("kepler78b", ROCKY, "kepler78b", 1.0e-6, 0.9e-5, 200, 80, 50, 0.8).glow(0.45F).halo(1F, 0.6F, 0.2F, 0.3F)
+                        .ground(MAGMA, HOTROCK, OBSIDIAN));
+        exo("kepler1649c", "Kepler-1649", "300 ly", star("kepler1649", 3.8e-6, M_T, 1F),
+                planet("kepler1649c", ROCKY, "kepler1649c", 1.2e-6, 3.5e-5, 2600, 80, 20, 0.35).air(0.7F, 0.75F, 0.95F)
+                        .ground(SAND, IRONSTONE, ICE).ocean());
+        exo("kepler442b", "Kepler-442", "1200 ly", star("kepler442", 4.6e-6, K_T, 1F),
+                planet("kepler442b", ROCKY, "kepler442b", 1.4e-6, 5e-5, 4600, 76, 40, 0.55).air(0.55F, 0.72F, 1F)
+                        .ground(SAND, MOSS, BASALT).ocean());
+        exo("kepler62f", "Kepler-62", "980 ly", star("kepler62", 4.6e-6, K_T, 1F),
+                planet("kepler62f", ROCKY, "kepler62f", 1.4e-6, 6.5e-5, 7000, 78, 10, 0.15).air(0.6F, 0.8F, 1F)
+                        .ground(SAND, MOSS, ICE).ocean());
+        // TRAPPIST-1: seven Earth-sized worlds round a tiny red star, seen almost edge-on, in a chain of resonances.
+        Sys trappist = new Sys("trappist1", at("trappist1"), "40 ly");
+        trappist.add(star("trappist1", 3.0e-6, new float[]{1F, 0.35F, 0.2F}, 1.1F).flare());
+        String[] tp = {"b", "c", "d", "e", "f", "g", "h"};
+        double[] ta = {1.1, 1.5, 2.1, 2.8, 3.7, 4.5, 5.9}, tr = {1.12, 1.1, 0.79, 0.92, 1.05, 1.13, 0.76}, tper = {1.51, 2.42, 4.05, 6.1, 9.21, 12.35, 18.77};
+        for (int i = 0; i < 7; i++) {
+            Body b = planet("trappist1" + tp[i], ROCKY, "trappist1" + tp[i], tr[i] * 1.1e-6, ta[i] * 1e-5, tper[i] * 300, 89.4, 5, i * 0.137);
+            if (i == 0) {
+                b.glow(0.25F).halo(1F, 0.45F, 0.2F, 0.2F).ground(HOTROCK, BASALT, OBSIDIAN);
+            } else {
+                b.air(0.6F, 0.75F, 1F);
+                // The inner ones rocky and dry, the middle ones with seas, the outer ones frozen.
+                if (i == 1) {
+                    b.ground(BASALT, REGOLITH, ASH);
+                } else if (i <= 3) {
+                    b.ground(SAND, MOSS, ICE).ocean();
+                } else {
+                    b.ground(ICE, FROST, FROST);
+                }
+            }
+            trappist.add(b);
+        }
+        SYSTEMS.add(trappist);
+        for (String p : tp) {
+            target("trappist1" + p, EXOPLANETS, trappist, "trappist1" + p);
+        }
+        exo("gj1214b", "GJ 1214", "48 ly", star("gj1214", 3.8e-6, M_T, 1F),
+                planet("gj1214b", GAS, "gj1214b", 2.2e-6, 1.4e-5, 500, 85, 10, 0.4).air(0.85F, 0.9F, 0.95F));
+        exo("gj436b", "GJ 436", "32 ly", star("gj436", 5e-6, M_T, 1F),
+                planet("gj436b", GAS, "gj436b", 2.2e-6, 1.7e-5, 900, 86, 10, 0.1).air(0.6F, 0.8F, 1F).tail());
+        exo("lhs1140b", "LHS 1140", "49 ly", star("lhs1140", 5e-6, M_T, 1F),
+                planet("lhs1140b", ROCKY, "lhs1140b", 1.7e-6, 4.5e-5, 3000, 78, -20, 0.3).air(0.7F, 0.85F, 1F)
+                        .ground(ICE, ICE, FROST).ocean());
+        exo("k2_18b", "K2-18", "124 ly", star("k2_18", 5.5e-6, M_T, 1F),
+                planet("k2_18b", GAS, "k2_18b", 2.1e-6, 4e-5, 2800, 70, 35, 0.55).air(0.4F, 0.8F, 1F));
+        Sys toi700 = new Sys("toi700", at("toi700"), "101 ly");
+        toi700.add(star("toi700", 5e-6, M_T, 1F),
+                planet("toi700e", ROCKY, "toi700e", 1.35e-6, 4.0e-5, 2700, 74, 0, 0.2).air(0.7F, 0.8F, 1F).ground(SAND, MOSS, ICE).ocean(),
+                planet("toi700d", ROCKY, "toi700d", 1.45e-6, 5.4e-5, 3700, 74, 0, 0.65).air(0.5F, 0.7F, 1F).ground(SAND, MOSS, BASALT).ocean());
+        SYSTEMS.add(toi700);
+        target("toi700d", EXOPLANETS, toi700, "toi700d");
+        target("toi700e", EXOPLANETS, toi700, "toi700e");
+        Sys betapic = new Sys("betapic", at("betapic"), "63 ly");
+        betapic.add(star("betapic", 6e-6, A_T, 1F), planet("betapic_b", GAS, "betapic_b", 2.6e-6, 5.5e-5, 6000, 88.5, 30, 0.35).air(0.9F, 0.75F, 0.6F));
+        betapic.disk(1.2e-5, 9.2e-5, 88.5, 30, 0, 1F, 0.88F, 0.75F);
+        SYSTEMS.add(betapic);
+        target("betapic_b", EXOPLANETS, betapic, "betapic_b");
+        Sys hr8799 = new Sys("hr8799", at("hr8799"), "133 ly");
+        hr8799.add(star("hr8799", 6e-6, A_T, 1F),
+                planet("hr8799e", GAS, "hr8799e", 2.4e-6, 2.6e-5, 2600, 25, 0, 0.0).glow(0.22F).air(1F, 0.6F, 0.5F),
+                planet("hr8799d", GAS, "hr8799d", 2.5e-6, 4.0e-5, 5000, 25, 0, 0.3).glow(0.2F).air(1F, 0.7F, 0.4F),
+                planet("hr8799c", GAS, "hr8799c", 2.5e-6, 5.6e-5, 8000, 25, 0, 0.55).glow(0.18F).air(1F, 0.6F, 0.7F),
+                planet("hr8799b", GAS, "hr8799b", 2.3e-6, 7.5e-5, 13000, 25, 0, 0.8).glow(0.2F).air(1F, 0.5F, 0.4F));
+        SYSTEMS.add(hr8799);
+        for (String p : new String[]{"hr8799b", "hr8799c", "hr8799d", "hr8799e"}) {
+            target(p, EXOPLANETS, hr8799, p);
+        }
+        Sys psr = new Sys("psr1620", at("psr1620"), "12 400 ly (M4)");
+        psr.add(new Body("psr1620", PULSAR, "star_surface", 0.7e-6, 0.4e-5, 1600, 50, 0, 0.0, 0.75F, 0.85F, 1F).glow(1F).pulsar(90.3, 45, 0.7F, 0.82F, 1F),
+                new Body("psr1620_wd", DWARF, "star_surface", 1.2e-6, 0.9e-5, 1600, 50, 0, 0.5, 0.95F, 0.95F, 1F),
+                planet("psr_b1620_26b", GAS, "psr_b", 2.4e-6, 6.2e-5, 12000, 55, 40, 0.25).air(0.8F, 0.85F, 0.95F));
+        psr.cluster = true;
+        SYSTEMS.add(psr);
+        target("psr_b1620_26b", EXOPLANETS, psr, "psr_b1620_26b");
+        nebulaeAndPulsars();
+    }
+
+    /** A place on the sky a little way from another (radians along the sky frame's x and z). */
+    private static double[] near(double[] base, double dx, double dz) {
+        return d(base[0] + dx, base[1], base[2] + dz);
+    }
+
+    private static Sys nebula(String id, double[] dir, String distance, double radius, Body... more) {
+        Sys s = new Sys(id, dir, distance);
+        s.add(new Body(id, NEBULA, null, radius, 0, 0, 0, 0, 0, 1F, 1F, 1F).nebula(id));
+        s.add(more);
+        SYSTEMS.add(s);
+        TARGETS.add(new Target(id, NEBULAE, s, s.bodies.get(0)));
+        return s;
+    }
+
+    private static Body pulsarBody(String id, double hz, float tilt, float r, float g, float b) {
+        return new Body(id, PULSAR, "star_surface", 0.6e-6, 0, 0, 0, 0, 0, 0.78F, 0.86F, 1F).glow(1F).pulsar(hz, tilt, r, g, b);
+    }
+
+    private static void nebulaeAndPulsars() {
+        double[] orion = at("orion_nebula");
+        nebula("orion_nebula", orion, "1344 ly", 0.0087);
+        double[] horse = near(orion, -0.03, 0.055);
+        nebula("horsehead_nebula", horse, "1375 ly", 0.0018);
+        nebula("flame_nebula", near(horse, 0.008, 0.006), "1350 ly", 0.0044);
+        nebula("running_man_nebula", near(orion, 0.0, -0.011), "1500 ly", 0.003);
+        // The Crab Nebula with its pulsar at the centre.
+        Sys crab = nebula("crab_nebula", at("crab_nebula"), "6500 ly", 0.001, pulsarBody("crab_pulsar", 29.9, 55, 0.7F, 0.82F, 1F).jets());
+        TARGETS.add(new Target("crab_pulsar", STARS, crab, crab.bodies.get(1)));
+        nebula("eagle_nebula", at("eagle_nebula"), "7000 ly", 0.0035);
+        nebula("lagoon_nebula", at("lagoon_nebula"), "4100 ly", 0.013);
+        nebula("trifid_nebula", at("trifid_nebula"), "5200 ly", 0.004);
+        // Carina round Eta Carinae.
+        Sys eta = null;
+        for (Sys s : SYSTEMS) {
+            if (s.id.equals("eta_carinae")) {
+                eta = s;
+            }
+        }
+        nebula("carina_nebula", eta != null ? near(eta.dir, 0.002, 0.003) : at("carina_nebula"), "8500 ly", 0.0175);
+        nebula("ring_nebula", at("ring_nebula"), "2300 ly", 0.0003);
+        nebula("helix_nebula", at("helix_nebula"), "650 ly", 0.0036);
+        nebula("dumbbell_nebula", at("dumbbell_nebula"), "1360 ly", 0.0012);
+        nebula("cats_eye_nebula", at("cats_eye_nebula"), "3300 ly", 0.0007);
+        nebula("eskimo_nebula", at("eskimo_nebula"), "2900 ly", 0.0002);
+        nebula("rosette_nebula", at("rosette_nebula"), "5200 ly", 0.011);
+        nebula("north_america_nebula", at("north_america_nebula"), "2590 ly", 0.0175);
+        nebula("veil_nebula", at("veil_nebula"), "2400 ly", 0.026);
+        nebula("tarantula_nebula", at("tarantula_nebula"), "160 000 ly (LMC)", 0.0058);
+        nebula("omega_nebula", at("omega_nebula"), "5500 ly", 0.0016);
+        nebula("cone_nebula", at("cone_nebula"), "2700 ly", 0.003);
+        nebula("bubble_nebula", at("bubble_nebula"), "7100 ly", 0.0022);
+        nebula("california_nebula", at("california_nebula"), "1000 ly", 0.022);
+        double[] heart = at("heart_nebula");
+        nebula("heart_nebula", heart, "7500 ly", 0.022);
+        nebula("soul_nebula", near(heart, 0.044, 0.004), "6500 ly", 0.022);
+        nebula("witch_head_nebula", at("witch_head_nebula"), "900 ly", 0.026);
+        // Pulsars.
+        Sys vela = new Sys("vela", at("vela_pulsar"), "960 ly");
+        vela.add(pulsarBody("vela_pulsar", 11.2, 70, 0.66F, 0.76F, 1F).jets(), new Body("vela_wind", NEBULA, null, 2.5e-5, 0, 0, 0, 0, 0, 1F, 1F, 1F)
+                .nebula("vela_wind"));
+        SYSTEMS.add(vela);
+        TARGETS.add(new Target("vela_pulsar", STARS, vela, vela.bodies.get(0)));
+        Sys b1919 = new Sys("psr_b1919", at("psr_b1919_21"), "2300 ly");
+        b1919.add(pulsarBody("psr_b1919_21", 0.748, 40, 0.8F, 0.86F, 1F));
+        SYSTEMS.add(b1919);
+        TARGETS.add(new Target("psr_b1919_21", STARS, b1919, b1919.bodies.get(0)));
+        Sys terzan = new Sys("terzan5", at("psr_j1748_2446ad"), "18 000 ly (Terzan 5)");
+        terzan.add(pulsarBody("psr_j1748_2446ad", 716, 30, 0.75F, 0.78F, 1F));
+        terzan.cluster = true;
+        SYSTEMS.add(terzan);
+        TARGETS.add(new Target("psr_j1748_2446ad", STARS, terzan, terzan.bodies.get(0)));
+        Sys j0437 = new Sys("psr_j0437", at("psr_j0437_4715"), "510 ly");
+        j0437.add(new Body("psr_j0437_4715", PULSAR, "star_surface", 0.6e-6, 0.3e-5, 3000, 40, 10, 0, 0.78F, 0.86F, 1F).glow(1F)
+                        .pulsar(173.7, 35, 0.6F, 0.9F, 1F),
+                new Body("j0437_dwarf", DWARF, "star_surface", 1.1e-6, 1.1e-5, 3000, 40, 10, 0.5, WD[0], WD[1], WD[2]));
+        SYSTEMS.add(j0437);
+        TARGETS.add(new Target("psr_j0437_4715", STARS, j0437, j0437.bodies.get(0)));
+        // A magnetar: the neutron star with the strongest field known; its giant flare of 2004 lit up Earth's air.
+        Sys sgr = new Sys("sgr_1806_20", at("sgr_1806_20"), "42 000 ly");
+        sgr.add(pulsarBody("sgr_1806_20", 0.133, 25, 0.85F, 0.7F, 1F).magnetar());
+        SYSTEMS.add(sgr);
+        TARGETS.add(new Target("sgr_1806_20", STARS, sgr, sgr.bodies.get(0)));
+        // Two black holes merging, heard by their gravitational waves.
+        Sys gw = new Sys("gw150914", at("gw150914"), "1.3 billion ly");
+        gw.add(new Body("gw150914", MERGER, null, 1.0e-6, 0, 0, 0, 0, 0, 0.6F, 0.8F, 1F));
+        SYSTEMS.add(gw);
+        TARGETS.add(new Target("gw150914", STARS, gw, gw.bodies.get(0)));
+        // A supernova and its shock front.
+        nebula("sn1987a", at("sn1987a"), "168 000 ly (LMC)", 0.0006);
+        galaxies();
+        CosmicObjects.register();
+    }
+
+    private static Sys galaxy(String id, double[] dir, String distance, double radius) {
+        Sys s = new Sys(id, dir, distance);
+        s.add(new Body(id, GALAXY, null, radius, 0, 0, 0, 0, 0, 1F, 0.9F, 0.76F));
+        SYSTEMS.add(s);
+        TARGETS.add(new Target(id, GALAXIES, s, s.bodies.get(0)));
+        return s;
+    }
+
+    /** Fifteen real galaxies (the Milky Way seen towards its heart). */
+    private static void galaxies() {
+        Sys sgrA = null;
+        for (Sys s : SYSTEMS) {
+            if (s.id.equals("sgr_a_star")) {
+                sgrA = s;
+            }
+        }
+        galaxy("milky_way", sgrA != null ? near(sgrA.dir, 0.004, -0.003) : at("milky_way"), "26 700 ly to its centre", 0.25);
+        double[] m31 = at("andromeda");
+        galaxy("andromeda", m31, "2.5 million ly", 0.028);
+        galaxy("triangulum", near(m31, 0.18, 0.12), "2.7 million ly", 0.006);
+        double[] lmc = at("lmc");
+        galaxy("lmc", lmc, "160 000 ly", 0.08);
+        galaxy("smc", near(lmc, 0.3, 0.18), "200 000 ly", 0.04);
+        galaxy("whirlpool", at("whirlpool"), "31 million ly", 0.0016);
+        galaxy("sombrero", at("sombrero"), "31 million ly", 0.0013);
+        galaxy("pinwheel", at("pinwheel"), "21 million ly", 0.0035);
+        galaxy("centaurus_a", at("centaurus_a"), "12 million ly", 0.0017);
+        Sys m87 = null;
+        for (Sys s : SYSTEMS) {
+            if (s.id.equals("m87_star")) {
+                m87 = s;
+            }
+        }
+        galaxy("m87", m87 != null ? near(m87.dir, 0.0004, 0.0003) : at("m87"), "53 million ly", 0.001);
+        galaxy("sculptor", at("sculptor"), "11.4 million ly", 0.0035);
+        galaxy("black_eye", at("black_eye"), "17 million ly", 0.0013);
+        double[] m81 = at("bodes");
+        galaxy("bodes", m81, "12 million ly", 0.0039);
+        galaxy("cigar", near(m81, 0.008, 0.006), "12 million ly", 0.0016);
+        galaxy("cartwheel", at("cartwheel"), "500 million ly", 0.0002);
+    }
+
+    private static void exo(String planet, String host, String distance, Body star, Body p) {
+        Sys s = new Sys(host, at(host), distance);
+        s.add(star, p);
+        SYSTEMS.add(s);
+        target(planet, EXOPLANETS, s, planet);
+    }
+
+    /** Distance from the Sun (AU) of our own worlds, for the size of the Sun in their skies. */
+    private static final String[] SOLAR = {"mercury", "venus", "earth", "moon", "mars", "ceres", "jupiter", "io", "europa", "ganymede", "callisto",
+            "saturn", "titan", "uranus", "neptune", "pluto", "charon", "haumea", "hiiaka", "namaka", "makemake", "eris", "dysnomia", "enceladus",
+            "mimas", "dione", "rhea", "hyperion", "iapetus", "miranda", "ariel", "umbriel", "oberon", "triton", "psyche", "bennu", "comet_67p"};
+    private static final double[] AU = {0.39, 0.72, 1, 1, 1.52, 2.77, 5.2, 5.2, 5.2, 5.2, 5.2, 9.5, 9.5, 19.2, 30, 39, 39, 43, 43, 43, 45, 68, 68, 9.5,
+            9.5, 9.5, 9.5, 9.5, 9.5, 19.2, 19.2, 19.2, 19.2, 30, 2.9, 1.1, 3.5};
+
+    /** The star in a world's sky: its colour and angular radius (radians), as seen from that world. */
+    public static float[] hostStar(Target t) {
+        Body star = null;
+        for (Body b : t.sys.bodies) {
+            if (b.kind == STAR) {
+                star = b;
+                break;
+            }
+        }
+        if (t.sys.dir == null || star == null) {
+            double au = 1;
+            for (int i = 0; i < SOLAR.length; i++) {
+                if (SOLAR[i].equals(t.id)) {
+                    au = AU[i];
+                }
+            }
+            return new float[]{1F, 0.95F, 0.86F, (float) Math.max(0.0035, Math.min(0.06, 0.0093 * 2.2 / au))};
+        }
+        double orbit = t.body.orbit > 0 ? t.body.orbit : 1.0E-5;
+        return new float[]{star.r, star.g, star.b, (float) Math.max(0.004, Math.min(0.16, star.radius / orbit * 0.6))};
+    }
+
+    /** A target for something that comes and goes (a cosmic event) or a catalogue object built elsewhere. */
+    static Target dynamic(String id, int group, double[] dir, String distance, Body body, net.minecraft.network.chat.Component name) {
+        Sys s = new Sys(id, dir, distance);
+        s.add(body);
+        Target t = new Target(id, group, s, body);
+        t.name = name;
+        return t;
+    }
+
+    static Body body(String id, int kind, double radius, float r, float g, float b) {
+        return new Body(id, kind, null, radius, 0, 0, 0, 0, 0, r, g, b);
+    }
+
+    /** The Moon itself (for its blocks). */
+    static Body moonBody() {
+        return moon.bodies.get(0);
+    }
+
+    public static Body body(Target t) {
+        return t.body;
+    }
+
+    public static Target byId(String id) {
+        for (Target t : TARGETS) {
+            if (t.id.equals(id)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
+    public static List<Target> group(int group) {
+        List<Target> out = new ArrayList<>();
+        for (Target t : TARGETS) {
+            if (t.group == group) {
+                out.add(t);
+            }
+        }
+        return out;
+    }
+
+    private Catalog() {}
+}

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "transportation",
+  "pattern": [
+    "BOB",
+    "BRB",
+    "CPC"
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:iron_block"
+    },
+    "O": {
+      "item": "minecraft:observer"
+    },
+    "R": {
+      "item": "minecraft:redstone_block"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "C": {
+      "item": "minecraft:coal_block"
+    }
+  },
+  "result": {
+    "count": 1,
+    "id": "realweather:intercept"
+  }
+}

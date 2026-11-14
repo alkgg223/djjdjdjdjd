@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "realweather:block/titan_dune_material"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "vertex": "realweather:volumetric_clouds",
+  "fragment": "realweather:cloud_composite",
+  "samplers": [
+    { "name": "Sampler0" }
+  ],
+  "uniforms": []
+}

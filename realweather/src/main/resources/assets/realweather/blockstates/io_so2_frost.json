@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "realweather:block/io_so2_frost"
+    }
+  }
+}

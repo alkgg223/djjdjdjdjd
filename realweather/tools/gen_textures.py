@@ -1,0 +1,681 @@
+"""Procedural textures for Real Weather (rain, snow, sand, puddles, particles, water)."""
+import json, os, sys
+import numpy as np
+from PIL import Image
+
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'src', 'main', 'resources', 'assets')
+ENV = os.path.join(ROOT, 'realweather', 'textures', 'environment')
+PART = os.path.join(ROOT, 'realweather', 'textures', 'particle')
+MISC = os.path.join(ROOT, 'realweather', 'textures', 'misc')
+BLOCK = os.path.join(ROOT, 'minecraft', 'textures', 'block')
+WATER_ALPHA = 179
+
+
+def save(path, rgba, blur=False, mcmeta=None):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    a = np.clip(rgba, 0, 255).astype(np.uint8)
+    Image.fromarray(a, 'RGBA').save(path, optimize=True)
+    meta = mcmeta or ({'texture': {'blur': True}} if blur else None)
+    if meta:
+        with open(path + '.mcmeta', 'w') as f:
+            json.dump(meta, f, indent=2)
+
+
+def rgba(rgb, alpha):
+    h, w = alpha.shape
+    out = np.zeros((h, w, 4))
+    out[..., 0] = rgb[0]
+    out[..., 1] = rgb[1]
+    out[..., 2] = rgb[2]
+    out[..., 3] = np.clip(alpha, 0, 1) * 255
+    return out
+
+
+def periodic_noise(rng, shape, scale, aniso=(1.0, 1.0, 1.0), power=2.0):
+    """Tileable noise via spectral shaping; periodic along every axis."""
+    spec = np.fft.fftn(rng.standard_normal(shape))
+    freqs = np.meshgrid(*[np.fft.fftfreq(n) * n for n in shape], indexing='ij')
+    k2 = sum((f * a) ** 2 for f, a in zip(freqs, aniso[-len(shape):]))
+    k = np.sqrt(k2)
+    filt = np.exp(-(k / scale) ** power)
+    filt.flat[0] = 0
+    x = np.real(np.fft.ifftn(spec * filt))
+    x -= x.mean()
+    return x / (x.std() + 1e-9)
+
+
+def streak_canvas(rng, w, h, n, wpx, lmin, lmax, amin, amax):
+    alpha = np.zeros((h, w))
+    ys = np.arange(h)
+    xs = np.arange(w)
+    for _ in range(n):
+        cx = rng.uniform(0, w)
+        y0 = rng.uniform(0, h)
+        ln = rng.uniform(lmin, lmax)
+        a = rng.uniform(amin, amax)
+        sig = wpx * rng.uniform(0.7, 1.3)
+        dx = (xs - cx + w / 2) % w - w / 2
+        col = np.exp(-0.5 * (dx / sig) ** 2)
+        # Along the streak: head (bottom, leading) bright, tail fades upwards.
+        dy = (ys - y0) % h
+        t = dy / ln
+        prof = np.where(t <= 1, (t ** 1.6) * (1 - np.exp(-(1 - t) * 25)), 0)
+        alpha += a * prof[:, None] * col[None, :]
+    return np.clip(alpha, 0, 1)
+
+
+def disc(size, cx, cy, r, soft):
+    yy, xx = np.mgrid[0:size[0], 0:size[1]]
+    d = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
+    return np.clip((r - d) / max(soft, 1e-3) + 0.5, 0, 1)
+
+
+def wrap_disc(h, w, cx, cy, r, soft):
+    a = np.zeros((h, w))
+    for ox in (-w, 0, w):
+        for oy in (-h, 0, h):
+            a = np.maximum(a, disc((h, w), cx + ox, cy + oy, r, soft))
+    return a
+
+
+def environment(rng):
+    # Rain streaks.
+    a = streak_canvas(rng, 128, 512, 64, 0.6, 40, 130, 0.4, 0.9)
+    save(os.path.join(ENV, 'rain_streaks.png'), rgba((225, 232, 245), a), blur=True)
+    a = streak_canvas(rng, 128, 512, 150, 0.45, 25, 80, 0.15, 0.45)
+    save(os.path.join(ENV, 'rain_dense.png'), rgba((215, 222, 235), a), blur=True)
+    n = periodic_noise(rng, (256, 128), 18, aniso=(7.0, 1.0))
+    n2 = periodic_noise(rng, (256, 128), 40, aniso=(5.0, 1.0))
+    a = np.clip(0.28 + 0.2 * n + 0.1 * n2, 0, 0.6)
+    save(os.path.join(ENV, 'rain_mist.png'), rgba((200, 206, 214), a), blur=True)
+
+    # Snow: soft flakes of many sizes, plus out-of-focus big ones.
+    h, w = 512, 256
+    a = np.zeros((h, w))
+    for _ in range(70):
+        r = rng.uniform(1.6, 4.2)
+        a = np.maximum(a, wrap_disc(h, w, rng.uniform(0, w), rng.uniform(0, h), r, 1.6) * rng.uniform(0.7, 1.0))
+    for _ in range(8):
+        r = rng.uniform(5, 8)
+        a = np.maximum(a, wrap_disc(h, w, rng.uniform(0, w), rng.uniform(0, h), r, 5) * rng.uniform(0.25, 0.45))
+    save(os.path.join(ENV, 'snow_flakes.png'), rgba((255, 255, 255), a), blur=True)
+    h, w = 256, 128
+    a = np.zeros((h, w))
+    for _ in range(120):
+        a = np.maximum(a, wrap_disc(h, w, rng.uniform(0, w), rng.uniform(0, h), rng.uniform(0.8, 1.9), 1.0) * rng.uniform(0.5, 0.95))
+    save(os.path.join(ENV, 'snow_fine.png'), rgba((250, 252, 255), a), blur=True)
+    # Blizzard: snow driven sideways, smeared into short horizontal streaks.
+    h, w = 256, 256
+    a = np.zeros((h, w))
+    xs = np.arange(w)
+    ys = np.arange(h)
+    for _ in range(170):
+        cy = rng.uniform(0, h)
+        x0 = rng.uniform(0, w)
+        ln = rng.uniform(8, 34)
+        amp = rng.uniform(0.35, 0.95)
+        sig = rng.uniform(0.6, 1.3)
+        dy = (ys - cy + h / 2) % h - h / 2
+        row = np.exp(-0.5 * (dy / sig) ** 2)
+        dx = (xs - x0) % w
+        t = dx / ln
+        prof = np.where(t <= 1, np.sin(np.pi * np.clip(t, 0, 1)) ** 0.7, 0)
+        a += amp * row[:, None] * prof[None, :]
+    save(os.path.join(ENV, 'snow_streaks.png'), rgba((255, 255, 255), np.clip(a, 0, 1)), blur=True)
+
+    # Sandstorm dust: billowing, horizontally stretched clouds.
+    n1 = periodic_noise(rng, (256, 256), 10, aniso=(1.0, 2.4))
+    n2 = periodic_noise(rng, (256, 256), 30, aniso=(1.0, 2.0))
+    n3 = periodic_noise(rng, (256, 256), 80, aniso=(1.0, 1.7))
+    d = 0.55 * n1 + 0.3 * n2 + 0.15 * n3
+    a = np.clip(0.45 + 0.28 * d, 0, 0.9)
+    shade = np.clip(0.9 + 0.08 * n2, 0.75, 1.0)
+    img = np.zeros((256, 256, 4))
+    img[..., 0] = 214 * shade
+    img[..., 1] = 172 * shade
+    img[..., 2] = 118 * shade
+    img[..., 3] = a * 255
+    save(os.path.join(ENV, 'sand_sheet.png'), img, blur=True)
+    h, w = 256, 256
+    a = np.zeros((h, w))
+    for _ in range(420):
+        cy = rng.uniform(0, h)
+        x0 = rng.uniform(0, w)
+        ln = rng.uniform(4, 16)
+        amp = rng.uniform(0.3, 0.9)
+        dy = (ys - cy + h / 2) % h - h / 2
+        row = np.exp(-0.5 * (dy / 0.6) ** 2)
+        dx = (xs - x0) % w
+        t = dx / ln
+        prof = np.where(t <= 1, 1 - t, 0)
+        a += amp * row[:, None] * prof[None, :]
+    save(os.path.join(ENV, 'sand_grains.png'), rgba((205, 165, 112), np.clip(a, 0, 1)), blur=True)
+
+    # Puddles: one organic noise field cut into three growth stages (core, middle, outer ring).
+    p = periodic_noise(rng, (256, 256), 7) * 0.75 + periodic_noise(rng, (256, 256), 20) * 0.25
+    p = (p - p.min()) / (p.max() - p.min())
+    detail = periodic_noise(rng, (256, 256), 60)
+    # Stages stack: where all three overlap (the middle of a big puddle) the water looks deepest.
+    th = [0.8, 0.72, 0.65]
+    for i in range(3):
+        alpha = np.clip((p - th[i]) / 0.03, 0, 1) * 0.42
+        img = np.zeros((256, 256, 4))
+        lum = np.clip(150 + 12 * detail, 120, 175)
+        img[..., 0] = lum * 0.95
+        img[..., 1] = lum * 0.98
+        img[..., 2] = lum * 1.05
+        img[..., 3] = alpha * 255
+        save(os.path.join(ENV, 'puddle_%d.png' % (i + 1)), img, blur=True)
+
+
+def particles(rng):
+    # Crown splash animation.
+    for f in range(4):
+        s = 16
+        a = np.zeros((s, s))
+        if f == 0:
+            a = np.maximum(a, disc((s, s), 7.5, 13.5, 2.2, 1.0))
+        else:
+            spread = [0, 2.5, 4.5, 6.0][f]
+            rise = [0, 4.0, 6.0, 5.0][f]
+            for k in range(-2, 3):
+                x = 7.5 + k * spread * 0.55
+                y = 14 - rise * (1 - abs(k) * 0.25)
+                a = np.maximum(a, disc((s, s), x, y, 1.3 if f < 3 else 0.9, 0.8))
+            a = np.maximum(a, disc((s, s), 7.5, 14.5, 3.0 - f * 0.5, 1.2) * 0.6)
+            a *= [1, 1, 0.9, 0.6][f]
+        save(os.path.join(PART, 'splash_%d.png' % f), rgba((235, 242, 255), a))
+    s = 32
+    yy, xx = np.mgrid[0:s, 0:s]
+    d = np.sqrt((xx - 15.5) ** 2 + (yy - 15.5) ** 2)
+    a = np.exp(-0.5 * ((d - 13.0) / 1.1) ** 2) + 0.45 * np.exp(-0.5 * ((d - 8.5) / 1.0) ** 2)
+    save(os.path.join(PART, 'ripple.png'), rgba((240, 246, 255), np.clip(a, 0, 1)))
+    # Raindrop streak: round bright head at the top (leading end), fading tail.
+    h, w = 32, 8
+    yy, xx = np.mgrid[0:h, 0:w]
+    t = yy / (h - 1)
+    a = np.exp(-0.5 * ((xx - 3.5) / (1.1 * (1 - 0.5 * t))) ** 2) * (1 - t) ** 1.3
+    a = np.maximum(a, disc((h, w), 3.5, 2.0, 1.8, 1.0))
+    save(os.path.join(PART, 'rain_drop.png'), rgba((230, 238, 255), a))
+    for i in range(3):
+        s = 16
+        a = disc((s, s), 7.5, 7.5, [3.0, 4.5, 6.0][i], [1.5, 2.5, 4.0][i]) * [1.0, 0.85, 0.6][i]
+        if i == 0:
+            # A tiny six-armed crystal.
+            for k in range(3):
+                ang = k * np.pi / 3
+                yy, xx = np.mgrid[0:s, 0:s]
+                dist = np.abs((xx - 7.5) * np.sin(ang) - (yy - 7.5) * np.cos(ang))
+                along = np.abs((xx - 7.5) * np.cos(ang) + (yy - 7.5) * np.sin(ang))
+                arm = np.clip(1.2 - dist, 0, 1) * (along < 6.5)
+                a = np.maximum(a, arm * 0.9)
+        save(os.path.join(PART, 'flake_%d.png' % i), rgba((255, 255, 255), a))
+    h, w = 16, 8
+    yy, xx = np.mgrid[0:h, 0:w]
+    t = yy / (h - 1)
+    a = np.exp(-0.5 * ((xx - 3.5) / 1.4) ** 2) * np.sin(np.pi * np.clip(t * 0.9 + 0.05, 0, 1)) ** 0.6
+    save(os.path.join(PART, 'blizzard_flake.png'), rgba((255, 255, 255), a))
+    a = np.exp(-0.5 * ((xx - 3.5) / 1.0) ** 2) * (1 - t) ** 1.2
+    save(os.path.join(PART, 'sand_grain.png'), rgba((255, 255, 255), a))
+    for i in range(3):
+        s = 32
+        n = periodic_noise(rng, (s, s), 5)
+        yy, xx = np.mgrid[0:s, 0:s]
+        d = np.sqrt((xx - 15.5) ** 2 + (yy - 15.5) ** 2) / 15.5
+        a = np.clip((1 - d ** 1.6) * (0.75 + 0.3 * n), 0, 1)
+        save(os.path.join(PART, 'dust_%d.png' % i), rgba((255, 255, 255), a))
+
+
+def overlay(rng):
+    h, w = 256, 256
+    yy, xx = np.mgrid[0:h, 0:w]
+    d = np.sqrt(((xx - 127.5) / 127.5) ** 2 + ((yy - 127.5) / 127.5) ** 2)
+    n = periodic_noise(rng, (h, w), 25)
+    grit = (rng.random((h, w)) < 0.02) * rng.uniform(0.2, 0.6, (h, w))
+    a = np.clip(0.18 + 0.55 * np.clip(d - 0.45, 0, 1) ** 1.5 * 2.2 + 0.06 * n + grit * 0.5, 0, 0.92)
+    img = np.zeros((h, w, 4))
+    img[..., 0] = 196 + 10 * n
+    img[..., 1] = 150 + 8 * n
+    img[..., 2] = 96 + 6 * n
+    img[..., 3] = a * 255
+    save(os.path.join(MISC, 'sand_overlay.png'), img, blur=True)
+
+
+def water(rng):
+    """Realistic water: soft moving ripples with faint caustic lines, grey so the biome colour tints it."""
+    frames, s = 32, 64
+    big = periodic_noise(rng, (frames, s, s), 4, aniso=(1.4, 1.0, 1.0))
+    mid = periodic_noise(rng, (frames, s, s), 9, aniso=(1.6, 1.0, 1.0))
+    fine = periodic_noise(rng, (frames, s, s), 20, aniso=(2.0, 1.0, 1.0))
+    caustic = 1 - np.abs(np.tanh(mid * 1.2))
+    caustic = caustic ** 6
+    lum = 0.83 + 0.035 * big + 0.025 * fine + 0.07 * caustic
+    lum = np.clip(lum, 0.62, 1.0)
+    img = np.zeros((frames * s, s, 4))
+    for f in range(frames):
+        v = lum[f] * 255
+        img[f * s:(f + 1) * s, :, 0] = v
+        img[f * s:(f + 1) * s, :, 1] = v
+        img[f * s:(f + 1) * s, :, 2] = v
+    img[..., 3] = WATER_ALPHA
+    save(os.path.join(BLOCK, 'water_still.png'), img, mcmeta={'animation': {'frametime': 3, 'interpolate': True}})
+
+    # Flowing water: streaks stretched along the flow, scrolling one full tile per loop.
+    s = 128
+    base = periodic_noise(rng, (s, s), 10, aniso=(4.0, 1.0))
+    base2 = periodic_noise(rng, (s, s), 24, aniso=(3.0, 1.0))
+    foam = np.clip(base2 - 1.2, 0, None)
+    img = np.zeros((frames * s, s, 4))
+    for f in range(frames):
+        shift = int(round(f * s / frames))
+        b = np.roll(base, shift, axis=0)
+        b2 = np.roll(base2, shift * 2 % s, axis=0)
+        fo = np.roll(foam, shift, axis=0)
+        v = np.clip(0.8 + 0.07 * b + 0.05 * b2 + 0.12 * fo, 0.62, 1.0) * 255
+        img[f * s:(f + 1) * s, :, 0] = v
+        img[f * s:(f + 1) * s, :, 1] = v
+        img[f * s:(f + 1) * s, :, 2] = v
+    img[..., 3] = WATER_ALPHA
+    save(os.path.join(BLOCK, 'water_flow.png'), img, mcmeta={'animation': {'frametime': 2, 'interpolate': True}})
+
+    s = 64
+    n = periodic_noise(rng, (s, s), 8)
+    v = np.clip(0.82 + 0.06 * n, 0.6, 1.0) * 255
+    img = np.zeros((s, s, 4))
+    img[..., 0] = v
+    img[..., 1] = v
+    img[..., 2] = v
+    img[..., 3] = WATER_ALPHA
+    save(os.path.join(BLOCK, 'water_overlay.png'), img)
+
+
+def tornado(rng):
+    """Funnel: condensation bands spiralling around the vortex. Cloud: the ragged rotating wall cloud."""
+    s = 256
+    n1 = periodic_noise(rng, (s, s), 7, aniso=(1.0, 5.0))
+    n2 = periodic_noise(rng, (s, s), 18, aniso=(1.0, 3.0))
+    n3 = periodic_noise(rng, (s, s), 90)
+    band = 0.55 * n1 + 0.3 * n2 + 0.15 * n3
+    # Shear the horizontal bands by one full tile height, so they become a seamless spiral.
+    sheared = np.stack([np.roll(band[y], int(y * s / s)) for y in range(s)])
+    alpha = np.clip(0.62 + 0.22 * sheared, 0.25, 0.95)
+    lum = np.clip(0.82 + 0.12 * sheared, 0.55, 1.0) * 255
+    img = np.zeros((s, s, 4))
+    img[..., 0] = lum
+    img[..., 1] = lum
+    img[..., 2] = lum
+    img[..., 3] = alpha * 255
+    save(os.path.join(ENV, 'tornado_funnel.png'), img, blur=True)
+    c1 = periodic_noise(rng, (s, s), 6)
+    c2 = periodic_noise(rng, (s, s), 18)
+    c3 = periodic_noise(rng, (s, s), 50)
+    c = 0.55 * c1 + 0.3 * c2 + 0.15 * c3
+    alpha = np.clip(0.6 + 0.3 * c, 0.15, 1.0)
+    lum = np.clip(0.78 + 0.16 * c, 0.5, 1.0) * 255
+    img = np.zeros((s, s, 4))
+    img[..., 0] = lum
+    img[..., 1] = lum
+    img[..., 2] = lum * 1.02
+    img[..., 3] = alpha * 255
+    save(os.path.join(ENV, 'tornado_cloud.png'), img, blur=True)
+
+
+def sphere_sprite(size, cx, cy, r, base=0.86, tint=(0.95, 0.97, 1.0)):
+    """A small icy ball: lit from the top left, translucent edge."""
+    yy, xx = np.mgrid[0:size[0], 0:size[1]]
+    dx = (xx - cx) / r
+    dy = (yy - cy) / r
+    d = np.sqrt(dx * dx + dy * dy)
+    a = np.clip((1.0 - d) * r * 0.9 + 0.5, 0, 1)
+    lum = base + 0.18 * np.clip(-dx * 0.6 - dy * 0.8, -1, 1) + 0.25 * np.exp(-((dx + 0.35) ** 2 + (dy + 0.4) ** 2) / 0.06)
+    lum = np.clip(lum, 0, 1.15)
+    return a, lum
+
+
+def hail(rng):
+    BLOCKTEX = os.path.join(ROOT, 'realweather', 'textures', 'block')
+    ENTITY = os.path.join(ROOT, 'realweather', 'textures', 'entity')
+    # Particle: a hailstone.
+    a, lum = sphere_sprite((16, 16), 7.5, 7.5, 6.5)
+    img = np.zeros((16, 16, 4))
+    img[..., 0] = np.clip(lum * 0.95, 0, 1) * 255
+    img[..., 1] = np.clip(lum * 0.97, 0, 1) * 255
+    img[..., 2] = np.clip(lum * 1.0, 0, 1) * 255
+    img[..., 3] = a * 235
+    save(os.path.join(PART, 'hailstone.png'), img)
+    # Falling hail sheet: short bright streaks with round heads.
+    h, w = 256, 128
+    alpha = np.zeros((h, w))
+    for _ in range(110):
+        cx, cy = rng.uniform(0, w), rng.uniform(0, h)
+        ln = rng.uniform(5, 14)
+        r = rng.uniform(0.9, 2.0)
+        alpha = np.maximum(alpha, wrap_disc(h, w, cx, cy, r, 0.8) * rng.uniform(0.7, 1.0))
+        for k in range(int(ln)):
+            alpha = np.maximum(alpha, wrap_disc(h, w, cx, (cy - k) % h, r * (1 - k / ln) * 0.7, 0.8) * 0.5 * (1 - k / ln))
+    save(os.path.join(ENV, 'hail_streaks.png'), rgba((240, 245, 255), alpha), blur=True)
+
+    # Ground: loose hailstones, three stages.
+    for stage, count in ((1, 22), (2, 55), (3, 120)):
+        s = 32
+        a = np.zeros((s, s))
+        l = np.zeros((s, s))
+        for _ in range(count):
+            cx, cy = rng.uniform(0, s), rng.uniform(0, s)
+            r = rng.uniform(1.1, 2.3)
+            aa, ll = sphere_sprite((s, s), cx, cy, r, base=0.82)
+            for ox in (-s, 0, s):
+                for oy in (-s, 0, s):
+                    a2, l2 = sphere_sprite((s, s), cx + ox, cy + oy, r, base=0.82)
+                    m = a2 > a
+                    a = np.where(m, a2, a)
+                    l = np.where(m, l2, l)
+        a = (a > 0.45).astype(float)
+        img = np.zeros((s, s, 4))
+        img[..., 0] = np.clip(l * 0.93, 0, 1) * 255
+        img[..., 1] = np.clip(l * 0.96, 0, 1) * 255
+        img[..., 2] = np.clip(l * 1.0, 0, 1) * 255
+        img[..., 3] = a * 255
+        save(os.path.join(BLOCKTEX, 'hail_pellets_%d.png' % stage), img)
+    # Packed hail-snow: grainy, icy white.
+    s = 32
+    n = periodic_noise(rng, (s, s), 10)
+    l = np.full((s, s), 0.9)
+    for _ in range(140):
+        cx, cy = rng.uniform(0, s), rng.uniform(0, s)
+        aa, ll = sphere_sprite((s, s), cx, cy, rng.uniform(0.8, 1.8), base=0.88)
+        l = np.where(aa > 0.5, np.maximum(l * 0.97, ll), l)
+    l = np.clip(l + 0.025 * n, 0.72, 1.0)
+    img = np.zeros((s, s, 4))
+    img[..., 0] = l * 0.94 * 255
+    img[..., 1] = l * 0.97 * 255
+    img[..., 2] = l * 1.0 * 255
+    img[..., 3] = 255
+    save(os.path.join(BLOCKTEX, 'hail_snow.png'), img)
+
+    # Footprints: a boot (left half) and an animal paw (right half), pressed-in shading.
+    img = np.zeros((64, 128, 4))
+    yy, xx = np.mgrid[0:64, 0:64]
+    sole = (((xx - 32) / 14) ** 2 + ((yy - 18) / 15) ** 2 < 1) | (((xx - 32) / 11) ** 2 + ((yy - 47) / 12) ** 2 < 1) | ((abs(xx - 32) < 9) & (yy > 20) & (yy < 45))
+    tread = (np.sin(yy * 1.3) > 0.2) & sole
+    a = sole * 0.55 + tread * 0.3
+    l = 0.55 + 0.1 * tread
+    img[:, :64, 0] = l * 255 * 0.9
+    img[:, :64, 1] = l * 255 * 0.93
+    img[:, :64, 2] = l * 255
+    img[:, :64, 3] = np.clip(a, 0, 1) * 255
+    pad = (((xx - 32) / 13) ** 2 + ((yy - 40) / 11) ** 2 < 1)
+    toes = np.zeros_like(pad)
+    for tx, ty in ((18, 22), (28, 15), (38, 15), (47, 22)):
+        toes |= ((xx - tx) / 5.5) ** 2 + ((yy - ty) / 6.5) ** 2 < 1
+    pa = (pad | toes).astype(float) * 0.7
+    img[:, 64:, 0] = 0.5 * 255 * 0.9
+    img[:, 64:, 1] = 0.5 * 255 * 0.93
+    img[:, 64:, 2] = 0.5 * 255
+    img[:, 64:, 3] = pa * 255
+    save(os.path.join(ENV, 'footprints.png'), img, blur=True)
+
+    # Hail stuck on creatures: scattered stones, then an icy crust.
+    for name, count, crust in (('hail_light', 70, 0.0), ('hail_heavy', 260, 0.55)):
+        s = 64
+        a = np.zeros((s, s))
+        l = np.zeros((s, s))
+        for _ in range(count):
+            cx, cy = rng.uniform(0, s), rng.uniform(0, s)
+            aa, ll = sphere_sprite((s, s), cx, cy, rng.uniform(0.9, 1.9), base=0.86)
+            m = aa > a
+            a = np.where(m, aa, a)
+            l = np.where(m, ll, l)
+        if crust > 0:
+            n = periodic_noise(rng, (s, s), 8)
+            cr = np.clip((n + 0.3) * 1.5, 0, 1) * crust
+            l = np.where(a > 0.5, l, 0.9 + 0.05 * n)
+            a = np.maximum(a, cr)
+        img = np.zeros((s, s, 4))
+        img[..., 0] = np.clip(l * 0.94, 0, 1) * 255
+        img[..., 1] = np.clip(l * 0.97, 0, 1) * 255
+        img[..., 2] = np.clip(l, 0, 1) * 255
+        img[..., 3] = np.clip(a, 0, 1) * 255
+        save(os.path.join(ENTITY, name + '.png'), img)
+
+
+def _smooth(e0, e1, x):
+    t = np.clip((x - e0) / (e1 - e0), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def _fbm(rng, s, scales=(5, 12, 28), weights=(0.55, 0.3, 0.15), aniso=(1.0, 1.0)):
+    out = np.zeros((s, s))
+    for sc, w in zip(scales, weights):
+        out += w * periodic_noise(rng, (s, s), sc, aniso=aniso)
+    return out
+
+
+def _cloud_cell(rng, s, lobes, spread, rmin, rmax, flat=0.24, elong=1.0, rough=0.35, thresh=(0.25, 0.8),
+                light=1.4, lo=0.5, contrast=1.0, alpha_max=0.97):
+    """A soft cloud sprite: overlapping lobes, fractal edges, self-shadowed so tops are bright and bottoms grey."""
+    yy, xx = (np.mgrid[0:s, 0:s] + 0.5) / s - 0.5
+    dens = np.zeros((s, s))
+    for _ in range(lobes):
+        cx = rng.normal(0, spread) * elong
+        cy = rng.uniform(-0.17, 0.06)
+        r = rng.uniform(rmin, rmax)
+        dens += np.exp(-(((xx - cx) / elong) ** 2 + (yy - cy) ** 2) / (2 * r * r))
+    n = _fbm(rng, s)
+    dens = dens * (1 + rough * n)
+    if flat is not None:
+        dens *= _smooth(flat + 0.1, flat - 0.04, yy)
+    dens *= _smooth(0.5, 0.36, np.abs(xx)) * _smooth(0.5, 0.36, np.abs(yy))
+    alpha = _smooth(thresh[0], thresh[1], dens) * alpha_max
+    # Light from above: the more cloud lies above a pixel, the darker it is.
+    depth = np.cumsum(np.clip(dens, 0, None), axis=0) / s
+    lum = lo + (1 - lo) * np.exp(-depth * light)
+    # Each billow is lit on its top and shaded underneath where it overhangs the next one.
+    above = np.roll(dens, 7, axis=0)
+    edge = np.clip(dens - above, -1.5, 1.5)
+    lum = lum + 0.18 * contrast * np.tanh(edge * 1.5)
+    lum = lum * (1 + 0.05 * contrast * _fbm(rng, s, scales=(10, 24, 60)))
+    return alpha, np.clip(lum, 0, 1)
+
+
+def _fbm5(rng, s, base=4, octaves=5, gain=0.55, aniso=(1.0, 1.0)):
+    """fractal noise with many octaves (fine detail without the blobby look of a few smooth bumps)"""
+    out = np.zeros((s, s))
+    amp, tot = 1.0, 0.0
+    for o in range(octaves):
+        out += amp * periodic_noise(rng, (s, s), base * 2 ** o, aniso=aniso)
+        tot += amp
+        amp *= gain
+    return out / tot
+
+
+def _cloud_cell2(rng, s, body=0.2, lumps=7, flat=0.22, elong=1.0, rough=0.35, light=1.5, lo=0.45, contrast=1.0, alpha_max=0.97,
+                 wisp=0.0):
+    """A cumulus sprite built from billows: a rounded body with smaller billows along its top, blended smoothly
+    (soft union, no creases). Each billow is lit like a sphere by the sun above and to the side, the cloud shadows
+    itself so the base is grey, fine fractal noise eats the edges only, and a bright rim shows where it thins."""
+    yy, xx = (np.mgrid[0:s, 0:s] + 0.5) / s - 0.5
+    xx = xx / elong
+    blobs = [(0.0, 0.0, body, 0.97, 1.35)]
+    for _ in range(lumps):
+        a = rng.uniform(-2.7, -0.45)
+        d = body * rng.uniform(0.5, 0.9)
+        blobs.append((np.cos(a) * d * 1.3, np.sin(a) * d * 0.9, body * rng.uniform(0.38, 0.62), rng.uniform(0.75, 0.95), 1.0))
+    for _ in range(lumps * 2):
+        a = rng.uniform(-3.0, -0.15)
+        d = body * rng.uniform(0.8, 1.2)
+        blobs.append((np.cos(a) * d * 1.3, np.sin(a) * d * 0.95, body * rng.uniform(0.16, 0.28), rng.uniform(0.5, 0.75), 1.0))
+    keep = np.ones((s, s))
+    lit = np.zeros((s, s))
+    wsum = np.full((s, s), 1e-6)
+    L = np.array([-0.35, -0.75, 0.55])
+    L /= np.linalg.norm(L)
+    for cx, cy, r, amp, ex in blobs:
+        g = amp * np.exp(-(((xx - cx) / ex) ** 2 + (yy - cy) ** 2) / (2 * r * r))
+        keep *= 1 - g
+        nx = (xx - cx) / (r * 1.6 * ex)
+        ny = (yy - cy) / (r * 1.6)
+        nz = np.sqrt(np.clip(1 - nx * nx - ny * ny, 0, 1))
+        sph = np.clip(nx * L[0] + ny * L[1] + nz * L[2], 0, 1)
+        w = g ** 2 * (1 + 2 / (1 + np.exp((yy - cy) / (r * 0.25))))
+        lit += sph * w
+        wsum += w
+    dens = 1 - keep
+    sphere = lit / wsum
+    n = _fbm5(rng, s, base=6, octaves=5)
+    warp = _fbm5(rng, s, base=3, octaves=3)
+    edge = np.exp(-((dens - 0.45) / 0.28) ** 2)
+    d2 = dens + rough * 0.2 * n * edge + 0.05 * warp
+    if flat is not None:
+        d2 *= _smooth(flat + 0.08, flat - 0.03, yy + 0.012 * n)
+    if wisp > 0:
+        d2 = d2 + wisp * np.clip(_fbm5(rng, s, base=3, octaves=4, aniso=(1.0, 3.0)), 0, None) * np.exp(-(yy / 0.25) ** 2) * 0.3
+    d2 *= _smooth(0.5, 0.36, np.sqrt((xx * elong) ** 2 + yy ** 2))
+    alpha = _smooth(0.16, 0.52, d2) * alpha_max
+    # Self-shadowing: the more cloud above a point, the greyer it is (the flat base ends up darkest).
+    depth = np.cumsum(np.clip(d2, 0, None), axis=0) / s
+    shadow = np.exp(-depth * light * 2.6)
+    lum = lo + (1 - lo) * (0.35 + 0.65 * sphere * contrast) * (0.45 + 0.55 * shadow)
+    rim = _smooth(0.55, 0.2, d2) * _smooth(0.1, 0.24, d2)
+    lum = lum + 0.12 * rim + 0.03 * n
+    return alpha, np.clip(lum, 0, 1)
+
+def sky(rng):
+    """Atlas of cloud sprites (4 x 4 cells of 256) and the tileable streak texture of tornado funnels."""
+    s = 256
+    atlas = np.zeros((4 * s, 4 * s, 4))
+
+    def put(idx, alpha, lum, tint=(1.0, 1.0, 1.0)):
+        r, c = divmod(idx, 4)
+        cell = atlas[r * s:(r + 1) * s, c * s:(c + 1) * s]
+        for k in range(3):
+            cell[..., k] = np.clip(lum * tint[k], 0, 1) * 255
+        cell[..., 3] = np.clip(alpha, 0, 1) * 255
+
+    # 0-5: cumulus puffs.
+    for i in range(6):
+        a, l = _cloud_cell2(rng, s, body=0.15 + 0.01 * i, lumps=5 + i, flat=0.17 + 0.02 * (i % 3), elong=1.0 + 0.08 * (i % 3),
+                            rough=0.9, light=1.4, lo=0.44)
+        put(i, a, l)
+    # 6-7: ragged scud.
+    for i in range(2):
+        a, l = _cloud_cell2(rng, s, body=0.12, lumps=6, flat=None, elong=1.7, rough=1.8, light=0.8, lo=0.6, alpha_max=0.85, wisp=1.0)
+        put(6 + i, a, l)
+    # 8-9: dark storm base (seen from below and from the side): mottled, nearly uniform.
+    yy, xx = (np.mgrid[0:s, 0:s] + 0.5) / s - 0.5
+    for i in range(2):
+        rr = np.sqrt(xx ** 2 + yy ** 2)
+        n = _fbm(rng, s, scales=(4, 10, 26))
+        edge = _smooth(0.5, 0.18, rr + 0.06 * n)
+        a = edge * np.clip(0.9 + 0.1 * n, 0, 1)
+        l = np.clip(0.86 + 0.12 * _fbm(rng, s, scales=(8, 20, 50)), 0.6, 1)
+        put(8 + i, a, l)
+    # 10: stratus / anvil sheet: a long soft layer with horizontal streaks.
+    n = _fbm(rng, s, scales=(4, 10, 24), aniso=(1.0, 4.0))
+    a = _smooth(0.5, 0.08, np.abs(yy) * 2.2 + 0.1 * n) * _smooth(0.5, 0.3, np.abs(xx) + 0.05 * n) * 0.95
+    l = np.clip(0.88 + 0.1 * n - 0.15 * _smooth(-0.05, 0.25, yy), 0.5, 1)
+    put(10, a, l)
+    # 11: dust puff (billowy, softer).
+    a, l = _cloud_cell2(rng, s, body=0.19, lumps=9, flat=0.26, rough=1.4, light=0.9, lo=0.6, alpha_max=0.9)
+    put(11, a, l)
+    # 12: rain shaft: vertical streaks, soft sides, ragged bottom.
+    streaks = periodic_noise(rng, (s, s), 10, aniso=(8.0, 1.0))
+    streaks2 = periodic_noise(rng, (s, s), 30, aniso=(6.0, 1.0))
+    side = np.exp(-(xx / 0.21) ** 2)
+    bottom = _smooth(0.5, 0.3, yy + 0.06 * periodic_noise(rng, (s, s), 6))
+    top = _smooth(-0.5, -0.46, yy)
+    a = np.clip(side * bottom * top * (0.82 + 0.1 * streaks + 0.06 * streaks2), 0, 1)
+    l = np.clip(0.92 + 0.04 * streaks, 0, 1)
+    put(12, a, l)
+    # 13: dust ring on the ground, with spiral arms.
+    rr = np.sqrt(xx ** 2 + yy ** 2) * 2
+    ang = np.arctan2(yy, xx)
+    arms = 0.5 + 0.5 * np.sin(ang * 5 + rr * 9)
+    n = _fbm(rng, s, scales=(6, 14, 30))
+    a = _smooth(1.0, 0.55, rr + 0.08 * n) * (0.45 + 0.35 * arms + 0.2 * n) * _smooth(0.0, 0.25, rr)
+    a = np.clip(a, 0, 1) * 0.9
+    l = np.clip(0.85 + 0.1 * n, 0, 1)
+    put(13, a, l)
+    # 14-15: wall cloud blocks: lumpy, darker, more contrast.
+    for i in range(2):
+        a, l = _cloud_cell2(rng, s, body=0.19, lumps=9, flat=0.2, elong=1.25, rough=1.2, light=1.6, lo=0.5, contrast=1.5)
+        put(14 + i, a, l)
+    save(os.path.join(ENV, 'sky_atlas.png'), atlas, blur=True)
+
+    # Funnel surface: fine helical striations of every width spiralling up round the vortex, soft horizontal
+    # condensation bands, mottled darker patches of dust and rain (tileable both ways).
+    n1 = periodic_noise(rng, (s, s), 40, aniso=(6.0, 1.0))
+    n2 = periodic_noise(rng, (s, s), 18, aniso=(5.0, 1.0))
+    n3 = periodic_noise(rng, (s, s), 80, aniso=(9.0, 1.0))
+    band = 0.45 * n1 + 0.35 * n2 + 0.2 * n3
+    band = np.stack([np.roll(band[y], y) for y in range(s)])
+    rings = periodic_noise(rng, (s, s), 10, aniso=(1.0, 6.0))
+    mottle = _fbm5(rng, s, base=3, octaves=4)
+    lum = 0.86 + 0.09 * band + 0.035 * rings - 0.07 * np.clip(mottle, 0, None)
+    lum = np.clip(lum, 0.6, 1.0)
+    alpha = np.clip(0.95 + 0.05 * band - 0.08 * np.clip(-mottle - 0.6, 0, None), 0.78, 1.0)
+    img = np.zeros((s, s, 4))
+    img[..., 0] = lum * 255
+    img[..., 1] = lum * 255
+    img[..., 2] = lum * 255
+    img[..., 3] = alpha * 255
+    save(os.path.join(ENV, 'tornado_streaks.png'), img, blur=True)
+
+
+def tsunami(rng):
+    """Water of the tsunami wave (tileable): deep green-blue with streaks running up the face and glints, and lacy
+    white foam for the breaking crest, the toe of the wave and the flood behind it."""
+    s = 256
+    streak = periodic_noise(rng, (s, s), 26, aniso=(6.0, 1.0))
+    fine = periodic_noise(rng, (s, s), 70, aniso=(4.0, 1.0))
+    big = _fbm5(rng, s, base=3, octaves=4)
+    k = np.clip(0.5 + 0.22 * streak + 0.1 * fine + 0.18 * big, 0, 1)
+    deep = np.array([18, 62, 74])
+    light = np.array([70, 140, 150])
+    img = np.zeros((s, s, 4))
+    for c in range(3):
+        img[..., c] = deep[c] + (light[c] - deep[c]) * k
+    glint = np.clip(fine * 1.5 - 1.9, 0, 1)
+    img[..., :3] += glint[..., None] * 70
+    img[..., 3] = 255 * np.clip(0.82 + 0.12 * k, 0, 1)
+    save(os.path.join(ENV, 'tsunami_water.png'), img, blur=True)
+    n1 = _fbm5(rng, s, base=5, octaves=5)
+    n2 = periodic_noise(rng, (s, s), 40)
+    lace = np.abs(periodic_noise(rng, (s, s), 18))
+    a = np.clip((n1 + 0.35 * n2) * 1.6 + 0.35 - lace * 0.9, 0, 1)
+    img = np.zeros((s, s, 4))
+    shade = 0.88 + 0.12 * np.clip(n2, -1, 1)
+    img[..., 0] = 245 * shade
+    img[..., 1] = 249 * shade
+    img[..., 2] = 252 * shade
+    img[..., 3] = 255 * a
+    save(os.path.join(ENV, 'tsunami_foam.png'), img, blur=True)
+
+
+def main():
+    rng = np.random.default_rng(2026)
+    if len(sys.argv) > 1 and sys.argv[1] == 'hail':
+        hail(np.random.default_rng(91))
+        print('hail textures done')
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == 'sky':
+        sky(np.random.default_rng(1234))
+        print('sky textures done')
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == 'tsunami':
+        tsunami(np.random.default_rng(555))
+        print('tsunami textures done')
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == 'tornado':
+        tornado(np.random.default_rng(77))
+        print('tornado textures done')
+        return
+    environment(rng)
+    particles(rng)
+    overlay(rng)
+    water(rng)
+    print('textures done')
+
+
+if __name__ == '__main__':
+    main()

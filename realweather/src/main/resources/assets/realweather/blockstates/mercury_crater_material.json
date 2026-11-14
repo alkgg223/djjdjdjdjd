@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "realweather:block/mercury_crater_material"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/sport/wheel.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "blue_light": "realweather:item/vehicle/blue_light",
+  "brake_disc": "realweather:item/vehicle/brake_disc",
+  "dark": "realweather:item/vehicle/dark",
+  "rim_sport": "realweather:item/vehicle/rim_sport",
+  "rubber": "realweather:item/vehicle/rubber",
+  "tyre_side": "realweather:item/vehicle/tyre_side",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}

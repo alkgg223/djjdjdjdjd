@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " W ",
+    "IRI",
+    "IOI"
+  ],
+  "key": {
+    "W": {
+      "item": "minecraft:white_concrete"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone_block"
+    },
+    "O": {
+      "item": "minecraft:observer"
+    }
+  },
+  "result": {
+    "count": 1,
+    "id": "realweather:weather_radar"
+  }
+}

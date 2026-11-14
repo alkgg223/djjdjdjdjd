@@ -1,0 +1,82 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "realweather:block/hail_snow",
+    "t": "realweather:block/hail_snow"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        12,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#t"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#t",
+          "cullface": "down"
+        },
+        "north": {
+          "uv": [
+            0,
+            4,
+            16,
+            16
+          ],
+          "texture": "#t",
+          "cullface": "north"
+        },
+        "south": {
+          "uv": [
+            0,
+            4,
+            16,
+            16
+          ],
+          "texture": "#t",
+          "cullface": "south"
+        },
+        "east": {
+          "uv": [
+            0,
+            4,
+            16,
+            16
+          ],
+          "texture": "#t",
+          "cullface": "east"
+        },
+        "west": {
+          "uv": [
+            0,
+            4,
+            16,
+            16
+          ],
+          "texture": "#t",
+          "cullface": "west"
+        }
+      }
+    }
+  ]
+}

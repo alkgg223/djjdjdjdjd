@@ -1,0 +1,24 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="realweather"
+version="1.15.0"
+displayName="Real Weather"
+logoFile="realweather_logo.png"
+description='''Realistic rain, snow and thunder with real sounds, floods in heavy rain, sandstorms and blizzards, realistic water, and villagers that run home in storms. Commands: /realweather (or /rw).'''
+
+[[dependencies.realweather]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.0,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.realweather]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1]"
+ordering="NONE"
+side="BOTH"

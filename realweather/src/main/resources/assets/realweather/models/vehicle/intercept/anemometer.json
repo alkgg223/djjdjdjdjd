@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "realweather:models/vehicle/intercept/anemometer.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "emissive_ambient": true,
+ "shade_quads": true,
+ "textures": {
+  "steel": "realweather:item/vehicle/steel",
+  "white": "realweather:item/vehicle/white",
+  "particle": "realweather:item/vehicle/paint"
+ }
+}
