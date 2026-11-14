@@ -10,6 +10,10 @@ final class DeviceClientHooks {
         net.minecraft.client.Minecraft.getInstance().setScreen(new com.realweather.client.space.TelescopeScreen(pos));
     }
 
+    static void openDrive(boolean offhand) {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new com.realweather.client.space.DriveScreen(offhand));
+    }
+
     static void openPlanetMap() {
         net.minecraft.client.Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetMapScreen());
     }

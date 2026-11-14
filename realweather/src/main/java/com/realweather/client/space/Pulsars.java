@@ -26,6 +26,15 @@ final class Pulsars {
      */
     static void draw(double cx, double cy, double cz, double r, double[] axis, double tiltDeg, double hz, float br, float bg, float bb, float vis,
                      double px, long seed, double seconds, boolean fieldLines) {
+        draw(cx, cy, cz, r, axis, tiltDeg, hz, br, bg, bb, vis, px, seed, seconds, fieldLines, false, false);
+    }
+
+    /**
+     * As above; `jets`: a pair of relativistic jets along the spin axis (the Crab's and Vela's); `magnetar`: a
+     * magnetar's monstrous field, its quakes far more often and now and then a giant flare.
+     */
+    static void draw(double cx, double cy, double cz, double r, double[] axis, double tiltDeg, double hz, float br, float bg, float bb, float vis,
+                     double px, long seed, double seconds, boolean fieldLines, boolean jets, boolean magnetar) {
         double rate = shownRate(hz);
         double phase = Math.PI * 2 * rate * seconds;
         double tilt = Math.toRadians(tiltDeg);
@@ -86,7 +95,107 @@ final class Pulsars {
             Space3D.billboard(Space3D.GLOW, ADD, cx + M[0] * r * sg, cy + M[1] * r * sg, cz + M[2] * r * sg, r * 0.9, 0F, 1F, 1F, 1F, 0.8F * vis);
         }
         if (fieldLines) {
-            field(cx, cy, cz, r, phase, tilt, ax, ay, az, br, bg, bb, vis, px);
+            field(cx, cy, cz, r, phase, tilt, ax, ay, az, br, bg, bb, vis * (magnetar ? 2.2F : 1F), px);
+        }
+        if (jets) {
+            Jets.draw(cx, cy, cz, axis, r * 70, r * 2.2, 0.62F, 0.78F, 1F, 0.6, seed, seconds, px, vis * 0.7F);
+        }
+        quakes(cx, cy, cz, r, rot, seed, seconds, px, vis, magnetar);
+    }
+
+    /**
+     * Starquakes: the crust, strained by the star's field and spin, suddenly cracks. A flash of X-rays bursts from the
+     * epicentre, ripples race round the whole star, glowing fractures open in the crust, and a spray of hot plasma is
+     * flung off. (A magnetar's are far stronger and more frequent, with now and then a giant flare.)
+     */
+    private static void quakes(double cx, double cy, double cz, double r, double[] rot, long seed, double seconds, double px, float vis,
+                               boolean magnetar) {
+        double every = magnetar ? 12 : 30;
+        long slot = (long) Math.floor(seconds / every);
+        double[] epi = new double[3], q = new double[3], t1 = new double[3], t2 = new double[3];
+        for (long k = slot - 1; k <= slot; k++) {
+            double start = k * every + Space3D.h(seed, k * 13) * every * 0.5;
+            double age = seconds - start;
+            if (age < 0 || age > 6) {
+                continue;
+            }
+            boolean giant = magnetar && Space3D.h(seed, k * 13 + 9) < 0.3F;
+            double lat = Math.asin(Space3D.h(seed, k * 13 + 1) * 2 - 1), lon = Space3D.h(seed, k * 13 + 2) * Math.PI * 2;
+            Space3D.apply(rot, Math.cos(lat) * Math.cos(lon), Math.sin(lat), Math.cos(lat) * Math.sin(lon), epi);
+            // Two directions along the surface there.
+            double tx = Math.abs(epi[1]) < 0.9 ? 0 : 1, ty = Math.abs(epi[1]) < 0.9 ? 1 : 0;
+            t1[0] = ty * epi[2];
+            t1[1] = -tx * epi[2];
+            t1[2] = tx * epi[1] - ty * epi[0];
+            double l = Math.sqrt(t1[0] * t1[0] + t1[1] * t1[1] + t1[2] * t1[2]);
+            t1[0] /= l;
+            t1[1] /= l;
+            t1[2] /= l;
+            t2[0] = epi[1] * t1[2] - epi[2] * t1[1];
+            t2[1] = epi[2] * t1[0] - epi[0] * t1[2];
+            t2[2] = epi[0] * t1[1] - epi[1] * t1[0];
+            float flash = (float) Math.exp(-age * 2.5) * vis;
+            double ex = cx + epi[0] * r, ey = cy + epi[1] * r, ez = cz + epi[2] * r;
+            Space3D.billboard(Space3D.GLOW, ADD, ex, ey, ez, Math.max(px * 3, r * (0.5 + 2.5 * flash)), 0F, 0.85F, 0.9F, 1F, flash);
+            if (giant) {
+                Space3D.billboard(Space3D.STAR, ADD, cx, cy, cz, r * (8 + 30 * flash), 0F, 0.85F, 0.88F, 1F, flash * 0.8F);
+                Space3D.billboard(Space3D.GLOW, ADD, cx, cy, cz, r * (4 + 12 * flash), 0F, 0.9F, 0.9F, 1F, flash * 0.6F);
+            }
+            // Ripples racing round the star from the epicentre.
+            for (int w = 0; w < 3; w++) {
+                double ang = age * 0.9 - w * 0.35;
+                if (ang <= 0.02 || ang >= Math.PI - 0.02) {
+                    continue;
+                }
+                float a = (float) (Math.exp(-age * 0.7) * (1 - ang / Math.PI)) * vis * 0.6F;
+                int n = 40;
+                double[] prev = null;
+                for (int i = 0; i <= n; i++) {
+                    double az = Math.PI * 2 * i / n;
+                    double s = Math.sin(ang), c = Math.cos(ang);
+                    for (int j = 0; j < 3; j++) {
+                        q[j] = (epi[j] * c + (t1[j] * Math.cos(az) + t2[j] * Math.sin(az)) * s) * r * 1.015;
+                    }
+                    double[] cur = {cx + q[0], cy + q[1], cz + q[2]};
+                    if (prev != null) {
+                        Space3D.ribbon(TelescopeView.LINE_PUBLIC, ADD, prev[0], prev[1], prev[2], cur[0], cur[1], cur[2], Math.max(px * 0.8, r * 0.02),
+                                Math.max(px * 0.8, r * 0.02), 0.7F, 0.85F, 1F, a, a);
+                    }
+                    prev = cur;
+                }
+            }
+            // Fractures glowing in the crust.
+            float crack = (float) Math.exp(-age * 0.6) * vis;
+            for (int c = 0; c < 7; c++) {
+                double dirA = Math.PI * 2 * c / 7 + Space3D.h(seed, k * 13 + 20 + c);
+                double u = 0, v = 0;
+                double[] prev = {ex, ey, ez};
+                for (int st = 1; st <= 7; st++) {
+                    dirA += (Space3D.h(seed, k * 131 + c * 17L + st) - 0.5) * 1.1;
+                    u += Math.cos(dirA) * 0.07;
+                    v += Math.sin(dirA) * 0.07;
+                    for (int j = 0; j < 3; j++) {
+                        q[j] = epi[j] + t1[j] * u + t2[j] * v;
+                    }
+                    double ql = Math.sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2]);
+                    double[] cur = {cx + q[0] / ql * r * 1.005, cy + q[1] / ql * r * 1.005, cz + q[2] / ql * r * 1.005};
+                    float fa = crack * (float) Math.min(1, age * 4) * (1F - st / 9F);
+                    Space3D.ribbon(TelescopeView.LINE_PUBLIC, ADD, prev[0], prev[1], prev[2], cur[0], cur[1], cur[2], Math.max(px * 0.7, r * 0.012),
+                            Math.max(px * 0.7, r * 0.008), 1F, 0.75F, 0.45F, fa, fa);
+                    prev = cur;
+                }
+            }
+            // Hot plasma flung off.
+            for (int i = 0; i < 36; i++) {
+                double az = Space3D.h(seed, k * 77 + i) * Math.PI * 2, up = 0.4 + 0.6 * Space3D.h(seed, k * 77 + i + 50);
+                double sp = (giant ? 9 : 3) * (0.4 + Space3D.h(seed, k * 77 + i + 100));
+                double out = age * sp;
+                for (int j = 0; j < 3; j++) {
+                    q[j] = epi[j] * up + (t1[j] * Math.cos(az) + t2[j] * Math.sin(az)) * Math.sqrt(1 - up * up);
+                }
+                Space3D.billboard(Space3D.GLOW, ADD, ex + q[0] * r * out, ey + q[1] * r * out, ez + q[2] * r * out, Math.max(px * 1.5, r * 0.15), 0F,
+                        0.8F, 0.85F, 1F, (float) Math.exp(-age * 1.2) * 0.5F * vis);
+            }
         }
     }
 

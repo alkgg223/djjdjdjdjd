@@ -23,6 +23,7 @@ public final class Network {
                 .playToClient(SkyEventsPayload.TYPE, SkyEventsPayload.CODEC,
                         (payload, context) -> context.enqueueWork(() -> com.realweather.client.sky.ClientSkyEvents.onSync(payload)))
                 .playToServer(VehicleInputPayload.TYPE, VehicleInputPayload.CODEC, VehicleInputPayload::handle)
-                .playToServer(TravelPayload.TYPE, TravelPayload.CODEC, TravelPayload::handle);
+                .playToServer(TravelPayload.TYPE, TravelPayload.CODEC, TravelPayload::handle)
+                .playToServer(DrivePayload.TYPE, DrivePayload.CODEC, DrivePayload::handle);
     }
 }

@@ -9,7 +9,7 @@ import net.minecraft.network.chat.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/** The planet map's list: every planet, dwarf planet and moon it can take you to, page by page. */
+/** The planet map's list: every world, moon, comet, star, pulsar, black hole and nebula it can take you to, page by page. */
 public class PlanetMapScreen extends Screen {
     private static int tab;
     private static final int[] PAGE = new int[4];
@@ -29,7 +29,7 @@ public class PlanetMapScreen extends Screen {
             return out;
         }
         for (Catalog.Target t : Catalog.group(tab == 0 ? Catalog.PLANETS : Catalog.EXOPLANETS)) {
-            if (t.body.isPlanet() && t.body.map != null) {
+            if (t.body.visitable()) {
                 out.add(t);
             }
         }

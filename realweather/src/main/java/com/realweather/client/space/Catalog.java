@@ -15,7 +15,7 @@ import java.util.List;
 public final class Catalog {
     public static final int PLANETS = 0, STARS = 1, EXOPLANETS = 2, NEBULAE = 3;
     /** Kinds of body. */
-    static final int ROCKY = 0, GAS = 1, STAR = 2, PULSAR = 3, DWARF = 4, BLACKHOLE = 5, NEBULA = 6;
+    static final int ROCKY = 0, GAS = 1, STAR = 2, PULSAR = 3, DWARF = 4, BLACKHOLE = 5, NEBULA = 6, COMET = 7, MERGER = 8;
     /** The planet blocks, by their place in the block atlas. */
     static final int REGOLITH = 0, BASALT = 1, SAND = 2, ICE = 3, FROST = 4, MAGMA = 5, CLOUD = 6, WATER = 7, MOSS = 8, CRYSTAL = 9, SULFUR = 10,
             IRONSTONE = 11, STORM = 12, OBSIDIAN = 13, HOTROCK = 14, ASH = 15;
@@ -47,6 +47,8 @@ public final class Catalog {
         float tiltDeg = 45, pr = 0.72F, pg = 0.84F, pb = 1F;
         /** A nebula's recipe. */
         String recipe;
+        /** A pulsar with jets (the Crab, Vela); a magnetar. */
+        boolean jets, magnetar;
 
         Body(String id, int kind, String map, double radius, double orbit, double period, double incl, double node, double phase, float r, float g,
              float b) {
@@ -139,6 +141,21 @@ public final class Catalog {
         Body nebula(String recipe) {
             this.recipe = recipe;
             return this;
+        }
+
+        Body jets() {
+            jets = true;
+            return this;
+        }
+
+        Body magnetar() {
+            magnetar = true;
+            return this;
+        }
+
+        /** Somewhere you can go and see up close (and the planet map can take you). */
+        public boolean visitable() {
+            return isPlanet() || com.realweather.space.Sites.IDS.contains(id);
         }
 
         /** This body as a planet of blocks with a radius of `blocks` (for the ray-traced view). */
@@ -317,10 +334,15 @@ public final class Catalog {
         throw new IllegalStateException("no body " + body + " in " + s.id);
     }
 
-    private static void solar(String id, Sys s, Body... bodies) {
+    private static Sys solar(String id, Sys s, Body... bodies) {
         s.add(bodies);
         SYSTEMS.add(s);
         TARGETS.add(new Target(id, PLANETS, s, bodies[0]));
+        return s;
+    }
+
+    private static Body comet(String id, double coma) {
+        return new Body(id, COMET, null, coma, 0, 0, 0, 0, 0, 0.7F, 0.95F, 0.85F);
     }
 
     static {
@@ -337,29 +359,45 @@ public final class Catalog {
         solar("mars", new Sys("mars", 200, 40, 0.05, false, "0.4-2.5 AU"), planet("mars", ROCKY, "mars", 0.6e-4, 0, 0, 0, 0, 0).air(1F, 0.7F, 0.5F)
                 .ground(BASALT, IRONSTONE, SAND));
         solar("ceres", new Sys("ceres", 250, 60, 0.09, false, "1.6-3.0 AU"), planet("ceres", ROCKY, "ceres", 0.12e-4, 0, 0, 0, 0, 0).ground(BASALT, REGOLITH, ICE));
-        solar("jupiter", new Sys("jupiter", 165, 80, -0.04, false, "4.2-6.2 AU"),
+        Sys jup = solar("jupiter", new Sys("jupiter", 165, 80, -0.04, false, "4.2-6.2 AU"),
                 planet("jupiter", GAS, "jupiter", 2.0e-4, 0, 0, 0, 0, 0).air(0.9F, 0.85F, 0.75F),
                 // The four moons Galileo saw, in a line either side.
                 new Body("io", ROCKY, "venus", 0.11e-4, 5.9 * 2.0e-4, 1200, 88, 0, 0.1, 1F, 0.95F, 0.6F).ground(SULFUR, SULFUR, ASH),
                 new Body("europa", ROCKY, "lhs1140b", 0.09e-4, 9.4 * 2.0e-4, 2400, 88, 0, 0.6, 1F, 0.98F, 0.92F).ground(ICE, ICE, FROST),
                 new Body("ganymede", ROCKY, "mercury", 0.15e-4, 15 * 2.0e-4, 4800, 88, 0, 0.3, 0.9F, 0.88F, 0.82F).ground(BASALT, REGOLITH, ICE),
                 new Body("callisto", ROCKY, "moon", 0.14e-4, 26 * 2.0e-4, 11000, 88, 0, 0.8, 0.7F, 0.66F, 0.6F).ground(BASALT, REGOLITH, ICE));
-        solar("saturn", new Sys("saturn", 140, 75, 0.06, false, "8.0-11.1 AU"), planet("saturn", GAS, "saturn", 0.9e-4, 0, 0, 0, 0, 0).rings(),
-                new Body("titan", ROCKY, "venus", 0.07e-4, 20 * 0.9e-4, 8000, 80, 20, 0.4, 1F, 0.8F, 0.5F).ground(ASH, SAND, ICE));
+        Sys sat = solar("saturn", new Sys("saturn", 140, 75, 0.06, false, "8.0-11.1 AU"), planet("saturn", GAS, "saturn", 0.9e-4, 0, 0, 0, 0, 0).rings(),
+                new Body("titan", ROCKY, "venus", 0.07e-4, 20 * 0.9e-4, 8000, 80, 20, 0.4, 1F, 0.8F, 0.5F).ground(ASH, SAND, ICE),
+                new Body("enceladus", ROCKY, "eris", 0.012e-4, 4 * 0.9e-4, 1400, 80, 20, 0.75, 1F, 1F, 1F).ground(ICE, FROST, FROST));
         solar("uranus", new Sys("uranus", 222, 74, -0.07, false, "18-20 AU"), planet("uranus", GAS, "uranus", 0.25e-4, 0, 0, 0, 0, 0)
                 .air(0.6F, 0.9F, 0.95F));
         solar("neptune", new Sys("neptune", 118, 73, 0.08, false, "29-31 AU"), planet("neptune", GAS, "neptune", 0.18e-4, 0, 0, 0, 0, 0)
                 .air(0.4F, 0.55F, 1F));
-        solar("pluto", new Sys("pluto", 200, 72, 0.2, false, "30-50 AU"), planet("pluto", ROCKY, "pluto", 0.09e-4, 0, 0, 0, 0, 0)
+        Sys plu = solar("pluto", new Sys("pluto", 200, 72, 0.2, false, "30-50 AU"), planet("pluto", ROCKY, "pluto", 0.09e-4, 0, 0, 0, 0, 0)
                         .ground(IRONSTONE, ICE, FROST),
                 new Body("charon", ROCKY, "charon", 0.045e-4, 0.3e-4, 1500, 60, 30, 0.2, 1F, 1F, 1F).ground(BASALT, REGOLITH, ICE));
-        solar("haumea", new Sys("haumea", 150, 72, 0.32, false, "35-51 AU"),
+        Sys hau = solar("haumea", new Sys("haumea", 150, 72, 0.32, false, "35-51 AU"),
                 planet("haumea", ROCKY, "haumea", 0.08e-4, 0, 0, 0, 0, 0).oblate(0.52F).rings().ground(ICE, ICE, CRYSTAL),
                 new Body("hiiaka", ROCKY, "eris", 0.012e-4, 0.55e-4, 5000, 70, 0, 0.3, 1F, 1F, 1F),
                 new Body("namaka", ROCKY, "eris", 0.008e-4, 0.3e-4, 2000, 60, 40, 0.7, 1F, 1F, 1F));
         solar("makemake", new Sys("makemake", 120, 71, 0.38, false, "38-53 AU"), planet("makemake", ROCKY, "makemake", 0.07e-4, 0, 0, 0, 0, 0).ground(IRONSTONE, ICE, FROST));
-        solar("eris", new Sys("eris", 230, 70, 0.28, false, "38-98 AU"), planet("eris", ROCKY, "eris", 0.075e-4, 0, 0, 0, 0, 0).ground(ICE, FROST, FROST),
+        Sys eri = solar("eris", new Sys("eris", 230, 70, 0.28, false, "38-98 AU"), planet("eris", ROCKY, "eris", 0.075e-4, 0, 0, 0, 0, 0).ground(ICE, FROST, FROST),
                 new Body("dysnomia", ROCKY, "charon", 0.02e-4, 0.32e-4, 2600, 70, 60, 0.5, 0.9F, 0.9F, 0.9F));
+
+        // Their moons, each a world of its own.
+        for (String m : new String[]{"io", "europa", "ganymede", "callisto"}) {
+            target(m, PLANETS, jup, m);
+        }
+        target("titan", PLANETS, sat, "titan");
+        target("enceladus", PLANETS, sat, "enceladus");
+        target("charon", PLANETS, plu, "charon");
+        target("hiiaka", PLANETS, hau, "hiiaka");
+        target("namaka", PLANETS, hau, "namaka");
+        target("dysnomia", PLANETS, eri, "dysnomia");
+        // Comets on their way in to the Sun.
+        solar("halley", new Sys("halley", 60, 3000, 0.25, false, "1.4 AU"), comet("halley", 0.35e-4));
+        solar("hale_bopp", new Sys("hale_bopp", 300, 6000, -0.35, false, "2.1 AU"), comet("hale_bopp", 0.8e-4));
+        solar("neowise", new Sys("neowise", 120, 1800, 0.4, false, "0.95 AU"), comet("neowise", 0.3e-4));
 
         // ------------------------------------------------------------------------- stars
         Sys alphaCen = sys("alpha_centauri", "4.37 ly", star("alpha_centauri_a", 6e-6, G_T, 1F, 1.2e-5, 40000, 60, 20, 0),
@@ -562,7 +600,7 @@ public final class Catalog {
         nebula("flame_nebula", near(horse, 0.008, 0.006), "1350 ly", 0.0044);
         nebula("running_man_nebula", near(orion, 0.0, -0.011), "1500 ly", 0.003);
         // The Crab Nebula with its pulsar at the centre.
-        Sys crab = nebula("crab_nebula", at("crab_nebula"), "6500 ly", 0.001, pulsarBody("crab_pulsar", 29.9, 55, 0.7F, 0.82F, 1F));
+        Sys crab = nebula("crab_nebula", at("crab_nebula"), "6500 ly", 0.001, pulsarBody("crab_pulsar", 29.9, 55, 0.7F, 0.82F, 1F).jets());
         TARGETS.add(new Target("crab_pulsar", STARS, crab, crab.bodies.get(1)));
         nebula("eagle_nebula", at("eagle_nebula"), "7000 ly", 0.0035);
         nebula("lagoon_nebula", at("lagoon_nebula"), "4100 ly", 0.013);
@@ -594,7 +632,7 @@ public final class Catalog {
         nebula("witch_head_nebula", at("witch_head_nebula"), "900 ly", 0.026);
         // Pulsars.
         Sys vela = new Sys("vela", at("vela_pulsar"), "960 ly");
-        vela.add(pulsarBody("vela_pulsar", 11.2, 70, 0.66F, 0.76F, 1F), new Body("vela_wind", NEBULA, null, 2.5e-5, 0, 0, 0, 0, 0, 1F, 1F, 1F)
+        vela.add(pulsarBody("vela_pulsar", 11.2, 70, 0.66F, 0.76F, 1F).jets(), new Body("vela_wind", NEBULA, null, 2.5e-5, 0, 0, 0, 0, 0, 1F, 1F, 1F)
                 .nebula("vela_wind"));
         SYSTEMS.add(vela);
         TARGETS.add(new Target("vela_pulsar", STARS, vela, vela.bodies.get(0)));
@@ -613,6 +651,18 @@ public final class Catalog {
                 new Body("j0437_dwarf", DWARF, "star_surface", 1.1e-6, 1.1e-5, 3000, 40, 10, 0.5, WD[0], WD[1], WD[2]));
         SYSTEMS.add(j0437);
         TARGETS.add(new Target("psr_j0437_4715", STARS, j0437, j0437.bodies.get(0)));
+        // A magnetar: the neutron star with the strongest field known; its giant flare of 2004 lit up Earth's air.
+        Sys sgr = new Sys("sgr_1806_20", at("sgr_1806_20"), "42 000 ly");
+        sgr.add(pulsarBody("sgr_1806_20", 0.133, 25, 0.85F, 0.7F, 1F).magnetar());
+        SYSTEMS.add(sgr);
+        TARGETS.add(new Target("sgr_1806_20", STARS, sgr, sgr.bodies.get(0)));
+        // Two black holes merging, heard by their gravitational waves.
+        Sys gw = new Sys("gw150914", at("gw150914"), "1.3 billion ly");
+        gw.add(new Body("gw150914", MERGER, null, 1.0e-6, 0, 0, 0, 0, 0, 0.6F, 0.8F, 1F));
+        SYSTEMS.add(gw);
+        TARGETS.add(new Target("gw150914", STARS, gw, gw.bodies.get(0)));
+        // A supernova and its shock front.
+        nebula("sn1987a", at("sn1987a"), "168 000 ly (LMC)", 0.0006);
     }
 
     private static void exo(String planet, String host, String distance, Body star, Body p) {

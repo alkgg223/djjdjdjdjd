@@ -26,6 +26,11 @@ public final class TelescopeView {
     private static final ResourceLocation MOON_MAP = RealWeather.id("textures/environment/space3d/moon.png");
     /** The brighter stars (sky frame), each with its brightness and colour. */
     private static final float[] FIELD = new float[6000 * 5];
+
+    /** The stars of the field: direction (sky frame), brightness and colour, five numbers each. */
+    static float[] field() {
+        return FIELD;
+    }
     /** The last frame's view (double precision) and projection scale, for the marker on the screen. */
     static final double[] lastView = {1, 0, 0, 0, 1, 0, 0, 0, 1};
     static double lastPx = 1, lastPy = 1;
@@ -363,6 +368,7 @@ public final class TelescopeView {
         double r = D * Math.tan(Math.atan(0.15));
         double[] rot = Space3D.orient(0.1, 1, 0.15, time * 0.00005);
         Space3D.sphere(STAR_MAP, c[0], c[1], c[2], r, rot, 0, 0, 1, 0F, 1F, 0.72F, 0.38F, 0F, up, true, (float) (time * 0.00003 % 1.0), 40);
+        SolarActivity.draw(c[0], c[1], c[2], r, rot, 1F, 0.72F, 0.38F, 4242, time / 20.0, pixel(c), up);
         Space3D.starFire(c[0], c[1], c[2], r, 4242, 220, 0.3F, (float) time, up);
         flares(c[0], c[1], c[2], r, 4242, up);
         corona(c[0], c[1], c[2], r, 4242, 0.55F * up);
@@ -497,12 +503,32 @@ public final class TelescopeView {
                 case Catalog.BLACKHOLE -> blackHole(b, dir, bx, by, bz, r, px, vis);
                 case Catalog.PULSAR -> {
                     double[] ax = pulsarAxis(b);
-                    Pulsars.draw(bx, by, bz, r, ax, b.tiltDeg, b.spinHz, b.pr, b.pg, b.pb, vis, px, seed + b.id.hashCode(), time / 20.0, rPix > 2);
+                    Pulsars.draw(bx, by, bz, r, ax, b.tiltDeg, b.spinHz, b.pr, b.pg, b.pb, vis, px, seed + b.id.hashCode(), time / 20.0, rPix > 2, b.jets,
+                            b.magnetar);
+                }
+                case Catalog.COMET -> comet(b, bx, by, bz, r, px, vis);
+                case Catalog.MERGER -> {
+                    Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(px * 4, r * 30), 0F, 0.6F, 0.78F, 1F, 0.35F * vis);
+                    Merger.draw(bx, by, bz, r * 20, pulsarAxis(b), time / 20.0, px, vis);
                 }
                 case Catalog.NEBULA -> nebula(b, dir, bx, by, bz, r, px, vis);
                 default -> body(s, b, bx, by, bz, r, rPix, px, lightPos, light, vis);
             }
         }
+    }
+
+    /** A comet in the night sky: its tails pointing away from the Sun. */
+    private static void comet(Catalog.Body b, double bx, double by, double bz, double r, double px, float vis) {
+        double l = Math.sqrt(bx * bx + by * by + bz * bz);
+        double tx = bx / l - Space3D.SUN[0], ty = by / l - Space3D.SUN[1], tz = bz / l - Space3D.SUN[2];
+        double tl = Math.sqrt(tx * tx + ty * ty + tz * tz) + 1.0E-9;
+        double[] sun = {-tx / tl, -ty / tl, -tz / tl};
+        double[] vel = {-tz / tl, 0.15, tx / tl};
+        double vl = Math.sqrt(vel[0] * vel[0] + vel[1] * vel[1] + vel[2] * vel[2]) + 1.0E-9;
+        vel[0] /= vl;
+        vel[1] /= vl;
+        vel[2] /= vl;
+        Comets.draw(bx, by, bz, r * 0.4, sun, vel, r * 70, b.id.hashCode(), time / 20.0, px, Math.max(vis, 0.6F));
     }
 
     /** A pulsar's spin axis (fixed among the stars) in view space. */
@@ -523,7 +549,7 @@ public final class TelescopeView {
      * (more steps and finer turbulence the more it fills the view), with the stars that light it.
      */
     private static void nebula(Catalog.Body b, double[] dirSky, double bx, double by, double bz, double rv, double px, float vis) {
-        Nebulae.Recipe rc = Nebulae.get(b.recipe);
+        Nebulae.Recipe rc = Nebulae.at(b.recipe, time / 20.0);
         if (rc == null) {
             return;
         }
@@ -613,6 +639,9 @@ public final class TelescopeView {
                     (float) (time * 0.00015 % 1.0), (int) Mth.clamp(rPix / 3, 10, 26));
             Space3D.scale(1, 1, 1);
             if (b.kind == Catalog.STAR) {
+                if (rPix > 12 && b.oblate >= 0.95F) {
+                    SolarActivity.draw(bx, by, bz, r, rot, b.r * bright, b.g * bright, b.b * bright, seed + b.id.hashCode(), time / 20.0, px, vis);
+                }
                 Space3D.starFire(bx, by, bz, r, seed + b.id.hashCode(), (int) (90 + 70 * b.glow), b.b, (float) time, vis * (1F + 1.5F * fl));
             }
         }
@@ -658,10 +687,33 @@ public final class TelescopeView {
         float spin = (float) (time / ((b.kind == Catalog.GAS ? 3000.0 : b.oblate < 0.8F ? 300.0 : 6000.0) * SLOW) % 1.0);
         Space3D.sphere(b.map, bx, by, bz, r, rot, lx, ly, lz, 0.012F, b.r, b.g, b.b, b.glow, vis, false, spin, (int) Mth.clamp(rPix / 3, 10, 30));
         Space3D.scale(1, 1, 1);
-        // Close enough, it is seen to be made of blocks.
+        // Close enough, it is seen to be made of blocks (a gas giant: its clouds, turning, with its storms).
         float lr = light == null ? 1F : 0.75F + 0.25F * light.r, lg = light == null ? 1F : 0.75F + 0.25F * light.g,
                 lb = light == null ? 1F : 0.75F + 0.25F * light.b;
-        blocks(b, bx, by, bz, r, rot, b.egg ? 1.4 : b.oblate, b.egg ? 0 : spin, lx, ly, lz, px, lr, lg, lb, vis);
+        if (b.kind == Catalog.GAS) {
+            if (rPix > 20 && !b.egg) {
+                Trace t = Trace.sphere(bx, by, bz, r, 1.06, rot);
+                if (t != null) {
+                    SpaceShaders.GasLook g = GasGiants.look(b, time / 20.0);
+                    double[] lt = new double[3];
+                    Trace.local(rot, lx, ly, lz, lt);
+                    g.lx = lt[0];
+                    g.ly = lt[1];
+                    g.lz = lt[2];
+                    g.lightR = lr;
+                    g.lightG = lg;
+                    g.lightB = lb;
+                    g.pixel = (float) (1 / rPix);
+                    g.alpha = Space3D.smooth(20F, 45F, (float) rPix) * vis;
+                    SpaceShaders.gasPlanet(g, t.x0, t.y0, t.x1, t.y1, t.o, t.ox, t.oy, t.d, t.dx, t.dy);
+                }
+            }
+        } else {
+            blocks(b, bx, by, bz, r, rot, b.egg ? 1.4 : b.oblate, b.egg ? 0 : spin, lx, ly, lz, px, lr, lg, lb, vis);
+        }
+        double[] sunV = {lx, ly, lz};
+        Aurorae.draw(b.id, bx, by, bz, r, new double[]{rot[3], rot[4], rot[5]}, sunV, time / 20.0, px, vis);
+        Plumes.draw(b.id, bx, by, bz, r, rot, sunV, time / 20.0, px, vis);
         if (b.air) {
             Space3D.atmosphere(bx, by, bz, r, lx, ly, lz, b.ar, b.ag, b.ab, (b.kind == Catalog.GAS ? 0.4F : 0.55F) * vis);
         }
@@ -669,8 +721,7 @@ public final class TelescopeView {
             Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, r * 2.6, 0F, b.hr, b.hg, b.hb, b.halo * vis);
         }
         if (b.rings) {
-            Space3D.ring(RINGS, bx, by, bz, r * (b.oblate < 0.8F ? 2.0 : 1.25), r * (b.oblate < 0.8F ? 2.3 : 2.3), rot, lx, ly, lz,
-                    (b.oblate < 0.8F ? 0.35F : 0.9F) * vis);
+            CloseViews.rings(b, new double[]{bx, by, bz}, r, rot, new double[]{lx, ly, lz}, time / 20.0, px, vis);
         }
         long seed = b.id.hashCode();
         if (b.tail) {
@@ -802,10 +853,7 @@ public final class TelescopeView {
         double[] n = new double[3];
         Space3D.apply(Space3D.SKYVIEW, nSky[0], nSky[1], nSky[2], n);
         // The jets, along the axis both ways.
-        for (int sgn = -1; sgn <= 1; sgn += 2) {
-            Space3D.cone(bx, by, bz, n[0] * sgn, n[1] * sgn, n[2] * sgn, rs * 900, rs * 40, 0.55F, 0.7F, 1F, 0.2F * vis);
-            Space3D.cone(bx, by, bz, n[0] * sgn, n[1] * sgn, n[2] * sgn, rs * 400, rs * 9, 0.8F, 0.9F, 1F, 0.35F * vis);
-        }
+        Jets.draw(bx, by, bz, n, rs * 900, rs * 16, 0.6F, 0.74F, 1F, 0.98, 618, time / 20.0, px, vis);
         float alpha = Space3D.smooth(5F, 16F, (float) quadPx) * vis;
         if (alpha <= 0.01F || !SpaceShaders.holeReady()) {
             return;

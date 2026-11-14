@@ -132,9 +132,12 @@ public final class Worlds {
         return ALL.indexOf(w);
     }
 
-    /** The world whose stretch of the dimension a block column (x) is in. */
+    /** The world whose stretch of the dimension a block column (x) is in (null out in space, west of them all). */
     public static World at(double x) {
         int i = (int) Math.floorDiv((long) Math.floor(x) + REGION / 2, REGION);
+        if (i < 0) {
+            return null;
+        }
         return ALL.get(Math.floorMod(i, ALL.size()));
     }
 

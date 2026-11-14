@@ -100,6 +100,71 @@ final class Nebulae {
         return ALL.get(id);
     }
 
+    /** A nebula as it is at a moment (the supernova changes as you watch; the rest are as they are). */
+    static Recipe at(String id, double seconds) {
+        if ("sn1987a".equals(id)) {
+            return supernova(seconds);
+        }
+        return get(id);
+    }
+
+    private static final Recipe SN = new Recipe("sn1987a").look(0.8F, 0.75F, 1F, 1.4F);
+    private static final double SN_CYCLE = 110, SN_BANG = 10;
+
+    /** How far through its explosion the supernova is: 0 before, then its shock front's radius (nebula radii). */
+    static double shock(double seconds) {
+        double s = seconds % SN_CYCLE - SN_BANG;
+        return s < 0 ? 0 : 0.04 + 0.96 * (1 - Math.exp(-s / 24));
+    }
+
+    /**
+     * SN 1987A, again and again: the blue supergiant inside its ring of old gas (and two fainter rings above and
+     * below, an hourglass), the blast, and its shock front: a turbulent shell racing out at a tenth of the speed of
+     * light, hot and blue-white at first then cooling to orange, with the debris and new dust behind it; when the
+     * shock reaches the ring it lights up into a string of glowing hot spots.
+     */
+    static Recipe supernova(double seconds) {
+        double s = seconds % SN_CYCLE;
+        double after = s - SN_BANG;
+        float fade = (float) Math.min(1, Math.min(s / 3, (SN_CYCLE - s) / 8));
+        SN.pieces.clear();
+        SN.stars.clear();
+        double sh = shock(seconds);
+        double hit = Math.max(0, Math.min(1, (sh - 0.5) / 0.08));
+        float ring = (float) (0.3 + (after > 0 ? 3.2 * hit * Math.exp(-Math.max(0, after - 30) / 40) : 0)) * fade;
+        float tilt = 1.1F;
+        SN.torus(0, 0, 0, 0.55F, 0.55F, 0.55F, 0.07F, 1F, 0.55F, 0.5F, ring, 0F, tilt, 0.35F);
+        SN.torus(0, 0.42F, 0, 0.9F, 0.9F, 0.9F, 0.05F, 1F, 0.35F, 0.4F, 0.1F * fade, 0F, tilt, 0.3F);
+        SN.torus(0, -0.42F, 0, 0.9F, 0.9F, 0.9F, 0.05F, 1F, 0.35F, 0.4F, 0.1F * fade, 0F, tilt, 0.3F);
+        if (after < 0) {
+            // The blue supergiant before it goes.
+            SN.stars(0, 0, 0, 0.002F, 1, 3F, 0.7F, 0.8F, 1F);
+            return SN;
+        }
+        float hot = (float) Math.exp(-after / 18);
+        float sr = 1F, sg = 0.55F + 0.35F * hot, sb = 0.35F + 0.65F * hot;
+        float dens = (float) (2.6 * Math.exp(-after / 45)) * fade;
+        SN.shell(0, 0, 0, (float) sh, (float) sh, (float) sh, 0.07F, sr, sg, sb, dens, 0F, 1F);
+        SN.blob(0, 0, 0, (float) (sh * 0.55), (float) (sh * 0.5), (float) (sh * 0.55), 1F, 0.6F, 0.32F, (float) (1.4 * Math.exp(-after / 30)) * fade, 0.3F,
+                0.8F);
+        if (after > 25) {
+            SN.blob(0, 0, 0, (float) (sh * 0.3), (float) (sh * 0.3), (float) (sh * 0.3), 0F, 0F, 0F, -0.6F * (float) Math.min(1, (after - 25) / 20) * fade,
+                    0F, 0.7F);
+        }
+        // The string of pearls round the ring.
+        if (hit > 0) {
+            for (int i = 0; i < 4; i++) {
+                double a = Math.PI * 2 * i / 4 + 0.4;
+                float x = (float) (Math.cos(a) * 0.55), y = (float) (Math.sin(a) * 0.55 * Math.cos(tilt)), z = (float) (Math.sin(a) * 0.55 * Math.sin(tilt));
+                SN.blob(x, y, z, 0.06F, 0.06F, 0.06F, 1F, 0.85F, 0.75F, (float) (5 * hit * Math.exp(-Math.max(0, after - 30) / 35)) * fade, 0F, 0.4F);
+            }
+        }
+        // The flash of the explosion, and what is left at the centre.
+        float flash = (float) Math.exp(-after / 2.5);
+        SN.stars(0, 0, 0, 0.002F, 1, 0.6F + 40F * flash, 0.85F, 0.9F, 1F);
+        return SN;
+    }
+
     // Typical colours: hydrogen-alpha red, its pink mix with blue, doubly ionised oxygen teal, reflection blue, dust.
     private static final float[] HA = {1F, 0.28F, 0.34F}, PINK = {1F, 0.45F, 0.62F}, OIII = {0.35F, 0.95F, 0.85F}, BLUE = {0.42F, 0.58F, 1F},
             GOLD = {1F, 0.72F, 0.38F};

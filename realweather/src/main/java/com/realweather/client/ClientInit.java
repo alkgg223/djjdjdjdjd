@@ -58,6 +58,12 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(com.realweather.client.space.PlanetSky::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.GodRays::onRenderStage);
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW, com.realweather.client.space.PlanetSky::onFogColor);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW, com.realweather.client.space.PlanetSky::onRenderFog);
+        // Out in space: flying (the movement keys move you through space), and cosmic ray showers in the air.
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW, com.realweather.client.space.SpaceFlight::onInput);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientTickEvent.Post e) ->
+                com.realweather.client.space.SpaceFlight.tick(net.minecraft.client.Minecraft.getInstance()));
+        NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.CosmicRays::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.SkyRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.tsunami.TsunamiRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.quake.CrackRenderer::onRenderStage);
@@ -109,6 +115,7 @@ public final class ClientInit {
     private static void onGuiLayers(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.CAMERA_OVERLAYS, RealWeather.id("weather_overlay"), WeatherOverlay::render);
         event.registerAbove(RealWeather.id("weather_overlay"), RealWeather.id("telescope"), com.realweather.client.space.Telescope::renderHud);
+        event.registerAbove(RealWeather.id("telescope"), RealWeather.id("space_flight"), com.realweather.client.space.SpaceFlight::hud);
         event.registerBelow(VanillaGuiLayers.HOTBAR, RealWeather.id("tsunami_water"), com.realweather.client.tsunami.TsunamiOverlay::render);
         event.registerBelow(VanillaGuiLayers.HOTBAR, RealWeather.id("eclipse_glasses"), com.realweather.client.sky.GlassesOverlay::render);
         event.registerAbove(VanillaGuiLayers.HOTBAR, RealWeather.id("vehicle_hud"), com.realweather.client.vehicle.VehicleHud::render);

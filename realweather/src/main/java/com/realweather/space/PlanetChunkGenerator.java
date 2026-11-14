@@ -42,7 +42,20 @@ public class PlanetChunkGenerator extends ChunkGenerator {
         return PlanetBlocks.state(tile);
     }
 
+    /** Out in space: nothing but a small invisible platform in the middle of the place, to stand on. */
+    private static boolean platform(int x, int z, int y) {
+        double cx = Math.round(x / (double) Worlds.REGION) * (double) Worlds.REGION;
+        return y == Sites.FLOOR - 1 && Math.abs(x - cx) <= 3 && Math.abs(z) <= 3;
+    }
+
     private static BlockState at(Worlds.World w, int x, int z, int y, int h, int top) {
+        if (w == null) {
+            return platform(x, z, y) ? Blocks.BARRIER.defaultBlockState() : Blocks.AIR.defaultBlockState();
+        }
+        if (w.gas()) {
+            // A gas giant has no ground at all: only its clouds, all the way down to the hot core.
+            return Blocks.AIR.defaultBlockState();
+        }
         if (y <= MIN_Y + 1) {
             return Blocks.BEDROCK.defaultBlockState();
         }
@@ -63,6 +76,12 @@ public class PlanetChunkGenerator extends ChunkGenerator {
             for (int dz = 0; dz < 16; dz++) {
                 int x = bx + dx, z = bz + dz;
                 Worlds.World w = Worlds.at(x);
+                if (w == null || w.gas()) {
+                    if (w == null && platform(x, z, Sites.FLOOR - 1)) {
+                        chunk.setBlockState(pos.set(x, Sites.FLOOR - 1, z), Blocks.BARRIER.defaultBlockState(), false);
+                    }
+                    continue;
+                }
                 int h = PlanetTerrain.height(w, x, z);
                 int top = PlanetTerrain.surfaceTile(w, x, z, h);
                 int upTo = Math.max(h, w.ocean() ? PlanetTerrain.SEA_LEVEL - 1 : h);
@@ -82,6 +101,12 @@ public class PlanetChunkGenerator extends ChunkGenerator {
     @Override
     public int getBaseHeight(int x, int z, Heightmap.Types type, LevelHeightAccessor level, RandomState random) {
         Worlds.World w = Worlds.at(x);
+        if (w == null) {
+            return platform(x, z, Sites.FLOOR - 1) ? Sites.FLOOR : MIN_Y;
+        }
+        if (w.gas()) {
+            return MIN_Y;
+        }
         int h = PlanetTerrain.height(w, x, z);
         if (w.ocean() && (type == Heightmap.Types.WORLD_SURFACE_WG || type == Heightmap.Types.WORLD_SURFACE || type == Heightmap.Types.MOTION_BLOCKING)) {
             h = Math.max(h, PlanetTerrain.SEA_LEVEL - 1);
@@ -92,8 +117,8 @@ public class PlanetChunkGenerator extends ChunkGenerator {
     @Override
     public NoiseColumn getBaseColumn(int x, int z, LevelHeightAccessor level, RandomState random) {
         Worlds.World w = Worlds.at(x);
-        int h = PlanetTerrain.height(w, x, z);
-        int top = PlanetTerrain.surfaceTile(w, x, z, h);
+        int h = w == null || w.gas() ? MIN_Y : PlanetTerrain.height(w, x, z);
+        int top = w == null || w.gas() ? 0 : PlanetTerrain.surfaceTile(w, x, z, h);
         BlockState[] col = new BlockState[HEIGHT];
         for (int i = 0; i < HEIGHT; i++) {
             col[i] = at(w, x, z, MIN_Y + i, h, top);
@@ -131,6 +156,7 @@ public class PlanetChunkGenerator extends ChunkGenerator {
 
     @Override
     public void addDebugScreenInfo(List<String> info, RandomState random, BlockPos pos) {
-        info.add("Real Weather world: " + Worlds.at(pos.getX()).id());
+        Worlds.World w = Worlds.at(pos.getX());
+        info.add("Real Weather world: " + (w != null ? w.id() : "space: " + Sites.at(pos.getX())));
     }
 }

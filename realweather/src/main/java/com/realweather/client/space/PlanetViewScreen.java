@@ -71,7 +71,7 @@ public class PlanetViewScreen extends Screen {
         this.mode = k == Catalog.ROCKY || k == Catalog.GAS ? PLANET : k == Catalog.PULSAR ? PULSAR : k == Catalog.BLACKHOLE ? HOLE
                 : k == Catalog.NEBULA ? NEBULA : SUN;
         boolean gas = body.kind == Catalog.GAS;
-        this.radius = mode == PLANET ? (gas ? 768 : 512) : mode == NEBULA ? 400 : mode == HOLE ? 10 : mode == PULSAR ? 20 : 100;
+        this.radius = mode == PLANET ? (gas ? 768 : 512) : (int) CloseViews.radius(body);
         this.planet = body.voxel(radius);
         if (!gas) {
             planet.relief = 14;
@@ -90,7 +90,7 @@ public class PlanetViewScreen extends Screen {
         planet.lightR = 0.8F + 0.2F * sunR;
         planet.lightG = 0.8F + 0.2F * sunG;
         planet.lightB = 0.8F + 0.2F * sunB;
-        alt = wantAlt = mode == NEBULA ? radius * 1.6 : mode == HOLE ? radius * 5 : radius * 2.6;
+        alt = wantAlt = mode == PLANET ? radius * 2.6 : (CloseViews.start(body) - 1) * radius;
     }
 
     private void travel(int how) {
@@ -113,8 +113,8 @@ public class PlanetViewScreen extends Screen {
         addRenderableWidget(Button.builder(Component.translatable("realweather.planet_map.up"), b -> descend(1 / 0.55)).bounds(x, height / 2 - 24, bw, bh)
                 .build());
         if (mode == PLANET) {
-            addRenderableWidget(Button.builder(Component.translatable("realweather.planet_map.land"), b -> wantAlt = groundHere() + 1.62)
-                    .bounds(x, height / 2 + 4, bw, bh).build());
+            addRenderableWidget(Button.builder(Component.translatable(body.kind == Catalog.GAS ? "realweather.planet_map.dive" : "realweather.planet_map.land"),
+                    b -> wantAlt = groundHere() + 1.62).bounds(x, height / 2 + 4, bw, bh).build());
             addRenderableWidget(Button.builder(Component.translatable("realweather.planet_map.orbit"), b -> wantAlt = radius * 2.6)
                     .bounds(x, height / 2 + 28, bw, bh).build());
         }
@@ -124,6 +124,9 @@ public class PlanetViewScreen extends Screen {
             addRenderableWidget(Button.builder(Component.translatable("realweather.planet_map.go_surface"), b -> travel(0))
                     .bounds(width - tw - 6, height - 50, tw, 20).build());
             addRenderableWidget(Button.builder(Component.translatable("realweather.planet_map.go_orbit"), b -> travel(1))
+                    .bounds(width - tw - 6, height - 26, tw, 20).build());
+        } else if (com.realweather.space.Sites.IDS.contains(target.id)) {
+            addRenderableWidget(Button.builder(Component.translatable("realweather.planet_map.go_there"), b -> travel(com.realweather.net.TravelPayload.SITE))
                     .bounds(width - tw - 6, height - 26, tw, 20).build());
         } else if (away() && "earth".equals(target.id)) {
             addRenderableWidget(Button.builder(Component.translatable("realweather.planet_map.go_home"), b -> travel(2))
@@ -137,7 +140,11 @@ public class PlanetViewScreen extends Screen {
     private double groundHere() {
         if (mode != PLANET) {
             // How close you can come: into a nebula, near a star's fire, outside a black hole's photon sphere.
-            return mode == NEBULA ? -radius * 0.97 : mode == HOLE ? radius * 2.2 : mode == PULSAR ? radius * 1.5 : radius * 0.35;
+            return (Math.max(0.03, CloseViews.closest(body)) - 1) * radius;
+        }
+        if (body.kind == Catalog.GAS) {
+            // No ground at all: down into the clouds, until the heat and pressure would crush you.
+            return -radius * 0.025;
         }
         double[] u = up();
         float g = PlanetMaps.ground(planet, u[0], u[1], u[2]);
@@ -363,13 +370,34 @@ public class PlanetViewScreen extends Screen {
             planet.lz = sun[2];
             double tx = Math.tan(fovY / 2) * aspect, ty = Math.tan(fovY / 2);
             double[] rdx = {right[0] * tx, right[1] * tx, right[2] * tx}, rdy = {cu[0] * ty, cu[1] * ty, cu[2] * ty};
-            if (body.oblate >= 0.9F) {
+            double px = 2 * dist * Math.tan(fovY / 2) / ph;
+            if (body.kind == Catalog.GAS) {
+                SpaceShaders.GasLook gl = GasGiants.look(body, clock);
+                gl.lx = sun[0];
+                gl.ly = sun[1];
+                gl.lz = sun[2];
+                gl.lightR = planet.lightR;
+                gl.lightG = planet.lightG;
+                gl.lightB = planet.lightB;
+                gl.pixel = (float) (px / radius);
+                SpaceShaders.gasPlanet(gl, -1F, -1F, 1F, 1F, new double[]{cam[0] / radius, cam[1] / radius, cam[2] / radius}, new double[3],
+                        new double[3], f, rdx, rdy);
+            } else if (body.oblate >= 0.9F) {
                 SpaceShaders.voxel(planet, -1F, -1F, 1F, 1F, cam, new double[3], new double[3], f, rdx, rdy);
             }
-            // Rings in front, and the air round the edge.
+            // Rings in front (their particles, close up), the air round the edge, aurorae and plumes.
             if (body.rings) {
-                Space3D.ring(RINGS, c[0], c[1], c[2], sr * (body.oblate < 0.8F ? 2.0 : 1.25), sr * 2.3, view, sv[0], sv[1], sv[2],
-                        body.oblate < 0.8F ? 0.35F : 0.9F);
+                CloseViews.rings(body, c, sr, view, sv, clock, px, 1F);
+            }
+            double[] ax = {view[3], view[4], view[5]};
+            Aurorae.draw(body.id, c[0], c[1], c[2], sr, ax, sv, clock, px, 1F);
+            Plumes.draw(body.id, c[0], c[1], c[2], sr, view, sv, clock, px, 1F);
+            if (body.kind == Catalog.GAS && alt < radius * 0.01) {
+                // Inside its clouds: thick haze of its colour, darker deeper down.
+                float in = Space3D.smooth((float) (radius * 0.01), (float) (-radius * 0.02), (float) alt);
+                Space3D.clearDepth();
+                Space3D.range(0.05F, 1000F);
+                Space3D.fullScreen(body.ar * 0.5F * (1 - in * 0.6F), body.ag * 0.45F * (1 - in * 0.7F), body.ab * 0.4F * (1 - in * 0.8F), 0.5F + 0.45F * in);
             }
             if (body.air) {
                 Space3D.limb(c[0], c[1], c[2], sr, planet.airHeight, sv[0], sv[1], sv[2], body.ar, body.ag, body.ab, 0.55F);
@@ -388,74 +416,6 @@ public class PlanetViewScreen extends Screen {
      * nebula's gas all round you, from inside it.
      */
     private void drawObject(double[] view, double[] cam, double[] f, double[] right, double[] cu, double px, double tx, double ty) {
-        double[] c = new double[3];
-        Space3D.apply(view, -cam[0], -cam[1], -cam[2], c);
-        double R = radius, dist = radius + alt;
-        Space3D.clearDepth();
-        Space3D.range((float) Math.max(0.05, (dist - R * 4) * 0.3), (float) (dist + R * 60));
-        long seed = body.id.hashCode();
-        double[] dx = {right[0] * tx, right[1] * tx, right[2] * tx}, dy = {cu[0] * ty, cu[1] * ty, cu[2] * ty};
-        switch (mode) {
-            case SUN -> {
-                double[] axis = new double[3];
-                Space3D.apply(view, 0.1, 1, 0.15, axis);
-                double[] rot = Space3D.orient(axis[0], axis[1], axis[2], clock * 0.01);
-                Space3D.scale(1, body.oblate, 1);
-                Space3D.sphere(Space3D.STAR_MAP_PUBLIC, c[0], c[1], c[2], R, rot, 0, 0, 1, 0F, body.r * 1.25F, body.g * 1.25F, body.b * 1.25F, 0F, 1F, true,
-                        (float) (clock * 0.003 % 1.0), 72);
-                Space3D.scale(1, 1, 1);
-                Space3D.billboard(Space3D.GLOW, ADD, c[0], c[1], c[2], R * 3.2, 0F, body.r, body.g, body.b, 0.45F);
-                if (body.kind == Catalog.STAR) {
-                    Space3D.starFire(c[0], c[1], c[2], R, seed, 300, body.b, (float) (clock * 20), 1.2F);
-                    TelescopeView.corona(c[0], c[1], c[2], R, seed, 0.55F);
-                }
-            }
-            case PULSAR -> {
-                double[] axis = new double[3];
-                Space3D.apply(view, 0.2, 1, 0.1, axis);
-                double l = Math.sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
-                axis[0] /= l;
-                axis[1] /= l;
-                axis[2] /= l;
-                Pulsars.draw(c[0], c[1], c[2], R, axis, body.tiltDeg, body.spinHz, body.pr, body.pg, body.pb, 1F, px, seed, clock, true);
-            }
-            case HOLE -> {
-                // Lengths in the hole's horizon radius; the camera where it is.
-                double[] o = {cam[0] / R, cam[1] / R, cam[2] / R};
-                double[] n = {0.12, 0.98, 0.16};
-                double nl = Math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
-                n[0] /= nl;
-                n[1] /= nl;
-                n[2] /= nl;
-                double[] nv = new double[3];
-                Space3D.apply(view, n[0], n[1], n[2], nv);
-                for (int sg = -1; sg <= 1; sg += 2) {
-                    Space3D.cone(c[0], c[1], c[2], nv[0] * sg, nv[1] * sg, nv[2] * sg, R * 900, R * 40, 0.55F, 0.7F, 1F, 0.2F);
-                }
-                SpaceShaders.blackHole(-1F, -1F, 1F, 1F, o, new double[3], new double[3], f, dx, dy, n, (float) clock, 1F, 0F, 1.15F, 420F);
-            }
-            case NEBULA -> {
-                Nebulae.Recipe rc = Nebulae.get(body.recipe);
-                if (rc != null) {
-                    double[] o = {cam[0] / R, cam[1] / R, cam[2] / R};
-                    SpaceShaders.nebula(rc, -1F, -1F, 1F, 1F, o, new double[3], new double[3], f, dx, dy, 110F, 6F, 1F);
-                    double[] q = new double[3];
-                    for (Nebulae.Stars st : rc.stars) {
-                        long sd = (body.id + st.hashCode()).hashCode();
-                        for (int i = 0; i < st.count(); i++) {
-                            double sx = st.x() + (Space3D.h(sd, i * 3L) - 0.5) * 2 * st.spread(), sy = st.y() + (Space3D.h(sd, i * 3L + 1) - 0.5) * 2 * st.spread(),
-                                    sz = st.z() + (Space3D.h(sd, i * 3L + 2) - 0.5) * st.spread();
-                            Space3D.apply(view, sx * R, sy * R, sz * R, q);
-                            float br = st.bright() * (0.4F + 0.6F * Space3D.h(sd, i * 3L + 7));
-                            Space3D.billboard(Space3D.GLOW, ADD, c[0] + q[0], c[1] + q[1], c[2] + q[2], R * 0.012 * br, 0F, st.r(), st.g(), st.b(),
-                                    Math.min(1F, br));
-                            Space3D.billboard(Space3D.STAR, ADD, c[0] + q[0], c[1] + q[1], c[2] + q[2], R * 0.03 * br, 0F, st.r(), st.g(), st.b(), 0.6F * br);
-                        }
-                    }
-                }
-            }
-            default -> {
-            }
-        }
+        CloseViews.object(body, view, cam, radius, f, right, cu, px, tx, ty, clock);
     }
 }
