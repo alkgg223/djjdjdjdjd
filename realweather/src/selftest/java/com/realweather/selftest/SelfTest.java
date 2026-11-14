@@ -1442,6 +1442,31 @@ public final class SelfTest {
             step(6, () -> shot("o_" + v[0] + "_" + v[1].replace("-", "m")));
         }
         step(5, () -> Minecraft.getInstance().setScreen(null));
+        // The nebulae last changed: the Helix (a ring), the Veil (thin arcs) and the Crab pulsar's softer flash.
+        step(5, () -> {
+            cmd("time set 18000");
+            MinecraftServer server = server();
+            server.execute(() -> {
+                ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                BlockPos at = p.blockPosition().north();
+                server.overworld().setBlock(at, com.realweather.device.ModDevices.TELESCOPE.get().defaultBlockState(), 3);
+                telescopeAt = at;
+            });
+        });
+        String[][] targets = {{"helix_nebula", "0.6"}, {"veil_nebula", "4"}, {"crab_pulsar", "0.0015"}};
+        for (String[] t : targets) {
+            step(20, () -> {
+                com.realweather.client.space.Telescope.start(telescopeAt, com.realweather.client.space.Catalog.byId(t[0]));
+                lookAtTarget(t[0]);
+            });
+            step(4, () -> {
+                com.realweather.client.space.Telescope.setFov(Double.parseDouble(t[1]));
+                lookAtTarget(t[0]);
+            });
+            step(10, () -> lookAtTarget(t[0]));
+            step(2, () -> shot("n_" + t[0]));
+        }
+        step(5, () -> com.realweather.client.space.Telescope.stop());
     }
 
     /** 1.13: travelling to other worlds (their ground, sky and blocks), orbit, and home again. */
