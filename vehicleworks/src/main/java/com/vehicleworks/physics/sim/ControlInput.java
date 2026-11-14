@@ -12,6 +12,8 @@ public final class ControlInput {
     public double throttle;
     /** helicopter collective 0..1 */
     public double collective = 0.0;
+    /** helicopter climb command −1..1 (assist: vertical-speed hold) */
+    public double climb;
     /** ground vehicle drive −1 (reverse/brake) .. +1 (accelerate) */
     public double drive;
     /** ground vehicle steering −1 left .. +1 right */

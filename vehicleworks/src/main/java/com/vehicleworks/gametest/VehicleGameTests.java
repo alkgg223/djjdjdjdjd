@@ -135,7 +135,7 @@ public final class VehicleGameTests {
         });
     }
 
-    @GameTest(template = "platform", timeoutTicks = 400)
+    @GameTest(template = "platform", timeoutTicks = 400, batch = "drive_car")
     public static void carDrivesForward(GameTestHelper h) {
         runway(h, 20, 9, 200);
         VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.CAR, new BlockPos(12, 2, 20));
@@ -153,7 +153,7 @@ public final class VehicleGameTests {
         });
     }
 
-    @GameTest(template = "platform", timeoutTicks = 900)
+    @GameTest(template = "platform", timeoutTicks = 900, batch = "flight_trainer")
     public static void trainerTakesOff(GameTestHelper h) {
         runway(h, 12, 17, 700, 1600);
         VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.TRAINER, new BlockPos(12, 3, 12));
@@ -186,7 +186,7 @@ public final class VehicleGameTests {
         });
     }
 
-    @GameTest(template = "platform", timeoutTicks = 900)
+    @GameTest(template = "platform", timeoutTicks = 900, batch = "flight_fighter")
     public static void fighterTakesOffWithKeyboard(GameTestHelper h) {
         runway(h, 12, 17, 900, 1800);
         VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.FIGHTER, new BlockPos(12, 3, 12));
@@ -214,7 +214,36 @@ public final class VehicleGameTests {
         });
     }
 
-    @GameTest(template = "platform", timeoutTicks = 700)
+    @GameTest(template = "platform", timeoutTicks = 1400, batch = "flight_airliner")
+    public static void airlinerTakesOffWithKeyboard(GameTestHelper h) {
+        runway(h, 12, 33, 1400, 2600);
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.AIRLINER, new BlockPos(12, 3, -30)); // outside the test enclosure
+        v.controls.testPilot = true;
+        double[] ground = new double[1];
+        h.runAfterDelay(20, () -> {
+            ground[0] = v.getY();
+            for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
+            v.controls.flaps = 0.33;
+            VehicleWorks.LOGGER.info("airliner layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
+        });
+        h.onEachTick(() -> {
+            if (v.simulation() == null || ground[0] == 0) return;
+            if (v.tickCount % 40 == 0) debug("airliner", v);
+            double alt = v.getY() - ground[0];
+            boolean fast = v.simulation().airspeed > 62;
+            v.controls.keys = (v.controls.throttle < 1 ? VehicleControls.JUMP : 0) | (fast && alt < 5 ? VehicleControls.BACK : 0);
+            if (alt > 10) { v.controls.gearDown = false; v.controls.flaps = 0; }
+        });
+        h.runAfterDelay(1360, () -> {
+            double climb = v.getY() - ground[0];
+            var up = v.localDirToWorld(0, 1, 0, new org.joml.Vector3d());
+            h.assertTrue(climb > 20, "airliner climbed " + climb + " m (airspeed " + v.simulation().airspeed + ")");
+            h.assertTrue(up.y > 0.8, "airliner wings level: " + up.y);
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "platform", timeoutTicks = 700, batch = "flight_heli")
     public static void helicopterLiftsOff(GameTestHelper h) {
         VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.HELICOPTER, new BlockPos(12, 3, 12));
         v.controls.testPilot = true;
@@ -225,16 +254,25 @@ public final class VehicleGameTests {
             VehicleWorks.LOGGER.info("heli layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
         });
         // hold Space (collective up) after the rotor spun up on its own
+        // Space: climb at 5 m/s; release: hover; then W to fly forward, release to stop
         h.runAfterDelay(260, () -> v.controls.keys = VehicleControls.JUMP);
-        h.onEachTick(() -> {
-            if (v.simulation() != null && v.tickCount % 40 == 0) debug("heli", v);
-            if (v.simulation() != null && ground[0] != 0 && v.getY() - ground[0] > 12) v.controls.keys = 0;
+        h.runAfterDelay(300, () -> v.controls.keys = 0);
+        double[] hoverY = new double[1];
+        h.runAfterDelay(420, () -> { hoverY[0] = v.getY(); v.controls.keys = VehicleControls.FORWARD; });
+        h.onEachTick(() -> { if (v.simulation() != null && v.tickCount % 20 == 0) debug("heli", v); });
+        h.runAfterDelay(500, () -> {
+            var fw = v.localDirToWorld(0, 0, -1, new org.joml.Vector3d());
+            double vf = v.linearVelocity.x * fw.x + v.linearVelocity.z * fw.z;
+            h.assertTrue(vf > 4, "flies forward with W: " + vf);
+            h.assertTrue(Math.abs(v.getY() - hoverY[0]) < 4, "holds altitude while flying forward: " + (v.getY() - hoverY[0]));
+            v.controls.keys = 0;
         });
         h.runAfterDelay(660, () -> {
             double climb = v.getY() - ground[0];
             var up = v.localDirToWorld(0, 1, 0, new org.joml.Vector3d());
-            h.assertTrue(climb > 6, "helicopter climbed " + climb + " m");
-            h.assertTrue(up.y > 0.85, "helicopter stays upright: " + up.y);
+            h.assertTrue(climb > 5, "helicopter hovering " + climb + " m above ground");
+            h.assertTrue(up.y > 0.9, "helicopter stays upright: " + up.y);
+            h.assertTrue(v.linearVelocity.length() < 3, "comes to a hover when released: " + v.linearVelocity.length());
             h.succeed();
         });
     }

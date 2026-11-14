@@ -102,6 +102,7 @@ public final class VehicleControls {
                 in.roll = axRoll;
                 in.yaw = axYaw;
                 collective = Mth.clamp(collective + (jump - sprint) * 0.45 * dt, 0, 1);
+                in.climb = jump - sprint;
                 // rotor governor runs to 100 % on its own once the engines run (F to idle it)
                 throttle = td > 0 ? Math.max(0, throttle - 0.5 * dt) : Math.min(1, throttle + 0.4 * dt);
                 in.collective = collective;

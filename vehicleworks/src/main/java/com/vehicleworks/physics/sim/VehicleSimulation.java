@@ -91,6 +91,7 @@ public final class VehicleSimulation {
     private double holdPitch;
     private boolean holdingPitch;
     private double holdHeading;
+    private double collectiveTrim = 0;
     private boolean holdingHeading;
     private final Vector3d lastVelocity = new Vector3d();
     private final Vector3d wind = new Vector3d();
@@ -274,8 +275,7 @@ public final class VehicleSimulation {
                 double thr = clamp(0.55 + 4.0 * err + m.lastTorque * m.nominalOmega / 1.2e6, 0, 1);
                 if (input.throttle < 0.02) thr = 0;
                 for (ThrusterUnit t : thrusters) if (t.device == ThrusterUnit.Device.ROTOR) t.engine.throttle = thr;
-                m.collective = m.minCollectiveRad + (m.maxCollectiveRad - m.minCollectiveRad) * clamp(input.collective, 0, 1);
-                // helicopter attitude assist: hold level when no cyclic input
+                double collectiveCmd = clamp(input.collective, 0, 1);
                 double cp = -effPitch, cr = effRoll;
                 if (input.assist) {
                     body.localDirToWorld(forward.x, forward.y, forward.z, tmp);
@@ -283,11 +283,38 @@ public final class VehicleSimulation {
                     double pitchAngle = Math.asin(clamp(tmp.y, -1, 1));
                     double bank = Math.atan2(-tmp2.y, Math.max(1e-3, Math.sqrt(1 - tmp2.y * tmp2.y)));
                     double p = body.angularVelocity.dot(tmp), q = body.angularVelocity.dot(tmp2);
-                    if (Math.abs(input.pitch) < 0.05) cp = clamp(cp + 1.6 * pitchAngle + 0.9 * q, -1, 1);
-                    else cp = clamp(cp + 0.5 * q, -1, 1);
-                    if (Math.abs(input.roll) < 0.05) cr = clamp(cr - 1.6 * bank - 0.9 * p, -1, 1);
-                    else cr = clamp(cr - 0.5 * p, -1, 1);
+                    // attitude command: the stick sets a tilt angle; released = hold position (damp drift)
+                    double hx = tmp.x, hz = tmp.z, hl = Math.max(1e-3, Math.hypot(hx, hz));
+                    double vFwd = (body.linearVelocity.x * hx + body.linearVelocity.z * hz) / hl;
+                    double vRight = (body.linearVelocity.x * tmp2.x + body.linearVelocity.z * tmp2.z) / Math.max(1e-3, Math.hypot(tmp2.x, tmp2.z));
+                    double targetPitch = Math.abs(input.pitch) > 0.05 ? input.pitch * Math.toRadians(16) : clamp(0.025 * vFwd, -0.17, 0.17);
+                    double targetBank = Math.abs(input.roll) > 0.05 ? input.roll * Math.toRadians(20) : clamp(-0.025 * vRight, -0.17, 0.17);
+                    if (onGround) { targetPitch = 0; targetBank = 0; }
+                    cp = clamp(1.8 * (pitchAngle - targetPitch) + 0.9 * q, -1, 1);
+                    cr = clamp(-1.8 * (bank - targetBank) - 0.9 * p, -1, 1);
+                    // vertical speed hold: Space/Ctrl command ±5 m/s, released = hover
+                    if (m.omega > m.nominalOmega * 0.8) {
+                        // feed-forward: collective that makes thrust equal weight (momentum theory hover)
+                        double tip = m.nominalOmega * m.radius;
+                        double ct = body.mass * env.gravity() / Math.max(1, airDensity * m.diskArea() * tip * tip * Math.max(1, rotors.stream().filter(x -> !x.tail).count()));
+                        double lam = Math.sqrt(Math.max(1e-6, ct) / 2);
+                        double theta = 3 * (ct / (m.solidity() * m.liftSlope / 2) + lam / 2);
+                        double hover = clamp((theta - m.minCollectiveRad) / (m.maxCollectiveRad - m.minCollectiveRad), 0, 1);
+                        double targetVs = input.climb * 5.0;
+                        double vsErr = targetVs - body.linearVelocity.y;
+                        if (onGround && input.climb <= 0) {
+                            collectiveTrim = 0;
+                            collectiveCmd = 0;
+                        } else {
+                            collectiveTrim = clamp(collectiveTrim + vsErr * 0.04 * dt, -0.35, 0.35);
+                            collectiveCmd = clamp(hover + collectiveTrim + 0.06 * vsErr, 0, 1);
+                        }
+                    } else {
+                        collectiveTrim = 0;
+                        collectiveCmd = 0;
+                    }
                 }
+                m.collective = m.minCollectiveRad + (m.maxCollectiveRad - m.minCollectiveRad) * collectiveCmd;
                 for (RotorUnit r : rotors) {
                     if (r.tail) continue;
                     r.cyclicPitch = approach(r.cyclicPitch, cp * r.maxCyclicRad, Math.toRadians(30) * dt);

@@ -221,7 +221,7 @@ class VehicleTest {
         assertTrue(main.model.omega > main.model.nominalOmega * 0.85, "rotor rpm " + main.model.omega);
         double maxClimb = 0;
         for (int i = 0; i < 400; i++) {
-            sim.input.collective = Math.min(0.75, sim.input.collective + 0.01);
+            sim.input.climb = sim.body.position.y - groundY < 10 ? 1 : 0;
             w.step(0.05, env);
             if (Boolean.getBoolean("vw.debug") || System.getenv("VW_DEBUG") != null) if (i % 20 == 0) System.out.printf("heli t=%d h=%.2f omega=%.1f T=%.0f Q=%.0f power=%.0f spool=%.2f thr=%.2f coll=%.3f tail=%.2f up.y=%.3f w=%s mass=%.0f%n", i, sim.body.position.y - groundY, main.model.omega, main.model.lastThrust, main.model.lastTorque, e.shaftPowerW, e.spool, e.throttle, main.model.collective, tail.tailPitch, sim.body.localDirToWorld(0,1,0,new Vector3d()).y, sim.body.angularVelocity, sim.mass());
             maxClimb = Math.max(maxClimb, sim.body.position.y - groundY);

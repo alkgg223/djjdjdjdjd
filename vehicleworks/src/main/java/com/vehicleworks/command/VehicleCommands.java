@@ -42,6 +42,7 @@ public final class VehicleCommands {
     }
 
     private static DemoVehicles.Demo demo(String s) {
+        if (s.equalsIgnoreCase("a320")) return DemoVehicles.Demo.AIRLINER;
         for (DemoVehicles.Demo d : DemoVehicles.Demo.values()) if (d.id().equalsIgnoreCase(s)) return d;
         return null;
     }
