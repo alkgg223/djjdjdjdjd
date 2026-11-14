@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "realweather:block/planets/exotic/exo_supercritical_fluid"
+  },
+  "render_type": "minecraft:translucent"
+}

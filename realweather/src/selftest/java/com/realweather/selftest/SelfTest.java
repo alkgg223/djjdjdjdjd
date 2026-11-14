@@ -89,6 +89,9 @@ public final class SelfTest {
         if (suite.contains("nebulae")) {
             nebulaSuite();
         }
+        if (suite.contains("v18")) {
+            v18Suite();
+        }
         if (suite.contains("v17")) {
             v17Suite();
         }
@@ -517,7 +520,7 @@ public final class SelfTest {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null || mc.getSingleplayerServer() == null
                 || (mc.screen != null && !(mc.screen instanceof com.realweather.client.radar.RadarScreen)
-                && !(mc.screen instanceof com.realweather.client.space.PlanetViewScreen))) {
+                && !mc.screen.getClass().getName().startsWith("com.realweather.client.space."))) {
             return;
         }
         if (ready < 120) {
@@ -1479,6 +1482,59 @@ public final class SelfTest {
             step(2, () -> shot("n_" + t[0]));
         }
         step(5, () -> com.realweather.client.space.Telescope.stop());
+    }
+
+    /** 1.15 stage E: the 150 planetary materials on a wall, then the ground of many worlds (and a gas giant's cloud decks). */
+    private static void v18Suite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 6000");
+            cmd("rw sky natural off");
+            goTo("minecraft:plains", 0, 0);
+        });
+        step(60, SelfTest::platform);
+        // Three walls of fifty blocks (10 x 5 each), in front of the player.
+        for (int wall = 0; wall < 3; wall++) {
+            int wl = wall;
+            step(10, () -> {
+                MinecraftServer server = server();
+                server.execute(() -> {
+                    ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                    BlockPos base = p.blockPosition().north(4).west(5);
+                    for (int y = -1; y < 8; y++) {
+                        for (int x = -1; x < 12; x++) {
+                            server.overworld().setBlock(base.offset(x, y, 0), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+                            server.overworld().setBlock(base.offset(x, y, -1), net.minecraft.world.level.block.Blocks.BLACK_CONCRETE.defaultBlockState(), 3);
+                        }
+                    }
+                    for (int i = 0; i < 50; i++) {
+                        int tile = com.realweather.space.Geology.BASE + wl * 50 + i;
+                        server.overworld().setBlock(base.offset(i % 10, 4 - i / 10, 0), com.realweather.device.PlanetBlocks.state(tile), 3);
+                    }
+                    p.teleportTo(p.getX(), p.getY(), p.getZ(), 0F, 0F);
+                });
+            });
+            step(30, () -> {
+                turnClient(180F, -8F);
+                shot("g_wall_" + wl);
+            });
+        }
+        // The worlds' ground.
+        String[] worlds = {"mars", "moon", "mercury", "venus", "io", "europa", "ganymede", "callisto", "titan", "enceladus", "iapetus", "triton",
+                "miranda", "pluto", "charon", "ceres", "psyche", "bennu", "comet_67p", "kepler22b", "proxima_b", "cnc55e", "trappist1f"};
+        for (String w : worlds) {
+            step(5, () -> cmd("execute as @a run rw travel " + w));
+            step(70, () -> {
+                turnClient(35F, 22F);
+                shot("w_" + w);
+                LOG.info("[world {}] at {} {}", w, Minecraft.getInstance().player.blockPosition(),
+                        Minecraft.getInstance().level.getBlockState(Minecraft.getInstance().player.blockPosition().below()));
+            });
+            step(3, () -> turnClient(215F, 35F));
+            step(8, () -> shot("w_" + w + "_b"));
+        }
+        step(5, () -> cmd("execute as @a run rw home"));
+        step(40, () -> LOG.info("[home] {}", Minecraft.getInstance().level.dimension().location()));
     }
 
     /** 1.15 stage D: the hundred kinds of object up close (with their information), the map's lists and search, some by telescope. */

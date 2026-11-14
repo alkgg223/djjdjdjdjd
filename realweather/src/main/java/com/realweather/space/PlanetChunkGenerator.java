@@ -53,14 +53,15 @@ public class PlanetChunkGenerator extends ChunkGenerator {
             return platform(x, z, y) ? Blocks.BARRIER.defaultBlockState() : Blocks.AIR.defaultBlockState();
         }
         if (w.gas()) {
-            // A gas giant has no ground at all: only its clouds, all the way down to the hot core.
-            return Blocks.AIR.defaultBlockState();
+            // A gas giant has no ground at all: only its clouds (decks you fall through), all the way down to the hot core.
+            int cloud = PlanetTerrain.cloudAt(w, x, y, z);
+            return cloud >= 0 ? block(cloud) : Blocks.AIR.defaultBlockState();
         }
         if (y <= MIN_Y + 1) {
             return Blocks.BEDROCK.defaultBlockState();
         }
         if (y <= h) {
-            return block(PlanetTerrain.tileAt(w, top, h - y));
+            return block(PlanetTerrain.tileAt(w, top, h - y, x, y, z));
         }
         if (w.ocean() && y <= PlanetTerrain.SEA_LEVEL - 1) {
             return Blocks.WATER.defaultBlockState();
@@ -76,8 +77,23 @@ public class PlanetChunkGenerator extends ChunkGenerator {
             for (int dz = 0; dz < 16; dz++) {
                 int x = bx + dx, z = bz + dz;
                 Worlds.World w = Worlds.at(x);
-                if (w == null || w.gas()) {
-                    if (w == null && platform(x, z, Sites.FLOOR - 1)) {
+                if (w != null && w.gas()) {
+                    // Only the cloud decks.
+                    GeologyProfiles.Profile g = GeologyProfiles.of(w.id());
+                    if (g != null) {
+                        for (int i = 0; i + 1 < g.clouds.length; i += 2) {
+                            for (int y = g.clouds[i + 1] - 6; y <= g.clouds[i + 1] + 12; y++) {
+                                int cloud = PlanetTerrain.cloudAt(w, x, y, z);
+                                if (cloud >= 0) {
+                                    chunk.setBlockState(pos.set(x, y, z), block(cloud), false);
+                                }
+                            }
+                        }
+                    }
+                    continue;
+                }
+                if (w == null) {
+                    if (platform(x, z, Sites.FLOOR - 1)) {
                         chunk.setBlockState(pos.set(x, Sites.FLOOR - 1, z), Blocks.BARRIER.defaultBlockState(), false);
                     }
                     continue;

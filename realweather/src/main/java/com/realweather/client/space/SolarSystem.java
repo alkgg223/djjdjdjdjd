@@ -50,6 +50,18 @@ final class SolarSystem {
         add("makemake", null, 6850e6, 111845, 0.15, 29, 79, 715, ROCKY);
         add("eris", null, 10152e6, 203830, 0.9, 44, 36, 1163, ROCKY);
         add("dysnomia", "eris", 37300, 15.79, 0.5, 0, 0, 350, ROCKY);
+        add("mimas", "saturn", 185539, 0.942, 0.1, 1.6, 0, 198, ROCKY);
+        add("dione", "saturn", 377396, 2.737, 0.7, 0.02, 0, 561, ROCKY);
+        add("rhea", "saturn", 527108, 4.518, 0.2, 0.35, 0, 764, ROCKY);
+        add("hyperion", "saturn", 1481010, 21.28, 0.55, 0.43, 0, 135, ROCKY);
+        add("iapetus", "saturn", 3560820, 79.32, 0.9, 15.5, 0, 734, ROCKY);
+        add("miranda", "uranus", 129390, 1.413, 0.3, 97.8, 167, 236, ROCKY);
+        add("ariel", "uranus", 190900, 2.52, 0.6, 97.8, 167, 579, ROCKY);
+        add("umbriel", "uranus", 266000, 4.144, 0.15, 97.8, 167, 585, ROCKY);
+        add("oberon", "uranus", 583520, 13.46, 0.8, 97.8, 167, 761, ROCKY);
+        add("psyche", null, 437e6, 1828, 0.3, 3.1, 150, 113, ROCKY);
+        add("bennu", null, 168.5e6, 436.6, 0.6, 6.0, 2, 0.245, ROCKY);
+        add("comet_67p", null, 518e6, 2352, 0.85, 7.0, 50, 2.0, ROCKY);
         // Comets, on their way in towards the Sun (their tails growing).
         add("halley", null, 1.4 * AU, 3000, 0.37, 18, 58, 5.5, COMET);
         add("hale_bopp", null, 2.1 * AU, 6000, 0.12, 89, 282, 30, COMET);

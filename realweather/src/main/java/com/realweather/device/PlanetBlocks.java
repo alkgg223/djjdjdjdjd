@@ -22,6 +22,7 @@ import java.util.List;
  */
 public final class PlanetBlocks {
     public static final List<DeferredBlock<Block>> ALL = new ArrayList<>();
+    private static final java.util.Map<String, Integer> TILE_OF = new java.util.HashMap<>();
     @SuppressWarnings("unchecked")
     private static final DeferredBlock<Block>[] BY_TILE = new DeferredBlock[Tiles.ALL.length];
 
@@ -36,8 +37,18 @@ public final class PlanetBlocks {
             if (t.material() == Tiles.M_ICE) {
                 p = p.friction(0.98F);
             }
+            if (t.material() == Tiles.M_GAS) {
+                // Cloud decks: seen, but nothing to stand on.
+                p = p.noCollission().noOcclusion().isViewBlocking((s, l, q) -> false).isSuffocating((s, l, q) -> false)
+                        .isRedstoneConductor((s, l, q) -> false).instabreak();
+            }
+            if (Tiles.geo(i) != null && Tiles.geo(i).density() >= 3 && t.material() != Tiles.M_GAS) {
+                p = p.requiresCorrectToolForDrops();
+            }
             BlockBehaviour.Properties props = p;
-            DeferredBlock<Block> b = ModContent.BLOCKS.register(t.name(), () -> new Block(props));
+            int tile = i;
+            DeferredBlock<Block> b = ModContent.BLOCKS.register(t.name(), () -> Tiles.geo(tile) != null ? new GeoBlock(props, tile) : new Block(props));
+            TILE_OF.put(t.name(), i);
             BY_TILE[i] = b;
             ALL.add(b);
         }
@@ -50,7 +61,7 @@ public final class PlanetBlocks {
             case Tiles.M_DUST -> SoundType.SAND;
             case Tiles.M_ICE, Tiles.M_GLASS -> SoundType.GLASS;
             case Tiles.M_SNOW -> SoundType.SNOW;
-            case Tiles.M_CLOUD -> SoundType.WOOL;
+            case Tiles.M_CLOUD, Tiles.M_GAS -> SoundType.WOOL;
             case Tiles.M_PLANT -> SoundType.MOSS;
             case Tiles.M_CRYSTAL -> SoundType.AMETHYST;
             case Tiles.M_METAL -> SoundType.METAL;
@@ -91,8 +102,14 @@ public final class PlanetBlocks {
     /** Their items (in the creative tab). */
     static void items() {
         for (DeferredBlock<Block> b : ALL) {
-            DeferredItem<BlockItem> item = ModDevices.ITEMS.registerSimpleBlockItem(b.getId().getPath(), b);
-            ModDevices.tabItem(item);
+            String name = b.getId().getPath();
+            int tile = TILE_OF.getOrDefault(name, -1);
+            if (Tiles.geo(tile) != null) {
+                ModDevices.tabItem(ModDevices.ITEMS.register(name, () -> new GeoBlockItem(b.get(), new net.minecraft.world.item.Item.Properties(), tile)));
+            } else {
+                DeferredItem<BlockItem> item = ModDevices.ITEMS.registerSimpleBlockItem(name, b);
+                ModDevices.tabItem(item);
+            }
         }
     }
 }

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "realweather:block/ceres_salt_deposits"
+    }
+  }
+}

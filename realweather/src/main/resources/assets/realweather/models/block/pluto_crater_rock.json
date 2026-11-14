@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "realweather:block/planets/dwarf_planets/pluto_crater_rock"
+  }
+}

@@ -134,11 +134,65 @@ public final class PlanetTerrain {
             if (w.ocean()) {
                 h = Math.max(h, SEA_LEVEL + 1 + hills * 0.15);
             }
+            GeologyProfiles.Profile g = GeologyProfiles.of(w.id());
+            double cs = g == null ? 1 : g.craters;
             if (w.airless()) {
-                h += craters(x, z, 140, seed + 41) + craters(x, z, 37, seed + 43) * 0.6;
+                h += (craters(x, z, 140, seed + 41) + craters(x, z, 37, seed + 43) * 0.6) * cs;
+            }
+            if (g != null) {
+                h += landforms(g, x, z, seed);
             }
         }
         return (int) Math.max(-50, Math.min(300, Math.floor(h)));
+    }
+
+    /** Canyons cut in, volcanoes raised, dunes rippled, icy plains smoothed: each world's own landforms. */
+    private static double landforms(GeologyProfiles.Profile g, int x, int z, long seed) {
+        double h = 0;
+        if (g.canyons > 0) {
+            // Long winding valleys: where a slow noise crosses its middle.
+            double c = Math.abs(noise(x / 520.0, z / 520.0, seed + 61) - 0.5) + (noise(x / 60.0, z / 60.0, seed + 62) - 0.5) * 0.03;
+            h -= g.canyons * 34 * (1 - smooth(0.0, 0.05, c));
+        }
+        if (g.volcanoes > 0) {
+            h += volcano(x, z, seed) * g.volcanoes;
+        }
+        if (g.dunes > 0) {
+            double field = smooth(0.5, 0.7, noise(x / 400.0, z / 400.0, seed + 71));
+            h += field * g.dunes * 3 * Math.sin(x / 9.0 + Math.sin(z / 23.0) * 2 + noise(x / 40.0, z / 40.0, seed + 72) * 3);
+        }
+        if (g.ice > 0) {
+            h *= 1 - g.ice * 0.5;
+        }
+        return h;
+    }
+
+    /** Shield volcanoes, each with a caldera, in a few cells of 900 blocks. */
+    private static double volcano(int x, int z, long seed) {
+        double cell = 900;
+        long cx = (long) Math.floor(x / cell), cz = (long) Math.floor(z / cell);
+        double h = 0;
+        for (long i = cx - 1; i <= cx + 1; i++) {
+            for (long j = cz - 1; j <= cz + 1; j++) {
+                if (hash(i, j, seed + 81) > 0.3) {
+                    continue;
+                }
+                double px = (i + 0.2 + 0.6 * hash(i, j, seed + 82)) * cell, pz = (j + 0.2 + 0.6 * hash(i, j, seed + 83)) * cell;
+                double r = 180 + 220 * hash(i, j, seed + 84);
+                double d = Math.sqrt((x - px) * (x - px) + (z - pz) * (z - pz)) / r;
+                if (d < 1) {
+                    double cone = (1 - d) * (1 - d) * (45 + 40 * hash(i, j, seed + 85));
+                    double caldera = d < 0.12 ? (0.12 - d) / 0.12 * 14 : 0;
+                    h = Math.max(h, cone - caldera);
+                }
+            }
+        }
+        return h;
+    }
+
+    /** How far into a volcanic region a column is (0 none, 1 well in). */
+    private static double volcanic(int x, int z, long seed) {
+        return volcano(x, z, seed) > 6 ? 1 : 0;
     }
 
     private static double smooth(double e0, double e1, double v) {
@@ -148,6 +202,10 @@ public final class PlanetTerrain {
 
     /** Which tile the top block of a column is. */
     public static int surfaceTile(Worlds.World w, int x, int z, int h) {
+        GeologyProfiles.Profile g = GeologyProfiles.of(w.id());
+        if (g != null && g.plains >= 0) {
+            return geologic(w, g, x, z, h);
+        }
         double[] uv = Worlds.mapUV(x, z);
         float[] c = color(w.map(), uv[0], uv[1]);
         float l = lum(c);
@@ -168,6 +226,115 @@ public final class PlanetTerrain {
         double jitter = (hash(x, z, w.id().hashCode() + 99) - 0.5) * 0.08;
         double rel = l + jitter;
         return rel < 0.36 ? w.low() : rel < 0.58 ? w.mid() : w.high();
+    }
+
+    /** The top block by the world's geology: what lies where, by height, slope, craters, volcanoes, dunes, poles and deposits. */
+    private static int geologic(Worlds.World w, GeologyProfiles.Profile g, int x, int z, int h) {
+        double[] uv = Worlds.mapUV(x, z);
+        float[] c = color(w.map(), uv[0], uv[1]);
+        float l = lum(c);
+        long seed = w.id().hashCode();
+        if (w.ocean() && isSea(c)) {
+            return g.seabed >= 0 ? g.seabed : Tiles.SEABED;
+        }
+        double lat = Math.abs(uv[1] - 0.5) * 180;
+        double edge = (noise(x / 80.0, z / 80.0, seed + 91) - 0.5) * 10;
+        if (g.polar >= 0 && lat + edge > 74) {
+            return g.polar;
+        }
+        if (w.ocean() && h <= SEA_LEVEL + 1 && g.wet >= 0) {
+            return g.wet;
+        }
+        if (w.ocean() && h <= SEA_LEVEL + 3 && g.beach >= 0) {
+            return g.beach;
+        }
+        // Steep ground: cliffs and canyon walls.
+        int dx = height(w, x + 2, z) - height(w, x - 2, z), dz = height(w, x, z + 2) - height(w, x, z - 2);
+        double slope = Math.sqrt(dx * dx + dz * dz) / 4.0;
+        if (g.slope >= 0 && slope > 1.6) {
+            return g.slope;
+        }
+        // Craters: their floors and the debris round their rims.
+        if (w.airless() && (g.craterFloor >= 0 || g.ejecta >= 0)) {
+            double cr = craters(x, z, 140, seed + 41) + craters(x, z, 37, seed + 43) * 0.6;
+            if (cr < -2.5 && g.craterFloor >= 0) {
+                return g.craterFloor;
+            }
+            if (cr > 0.8 && g.ejecta >= 0) {
+                return g.ejecta;
+            }
+        }
+        if (g.volcanic >= 0 && g.volcanoes > 0 && volcanic(x, z, seed) > 0) {
+            return g.volcanic;
+        }
+        // Scattered deposits: patches a few tens of blocks across.
+        if (g.deposit >= 0) {
+            long px = Math.floorDiv(x, 64), pz = Math.floorDiv(z, 64);
+            double hx = (px + hash(px, pz, seed + 101)) * 64, hz = (pz + hash(px, pz, seed + 102)) * 64;
+            double rad = 6 + 14 * hash(px, pz, seed + 103);
+            if (hash(px, pz, seed + 104) < 0.22 && (x - hx) * (x - hx) + (z - hz) * (z - hz) < rad * rad * (0.7 + 0.6 * noise(x / 6.0, z / 6.0, seed + 105))) {
+                return g.deposit2 >= 0 && hash(px, pz, seed + 106) < 0.4 ? g.deposit2 : g.deposit;
+            }
+        }
+        double rel = l + (hash(x, z, seed + 99) - 0.5) * 0.08;
+        if (g.dune >= 0 && g.dunes > 0 && rel < 0.5 && noise(x / 400.0, z / 400.0, seed + 71) > 0.58) {
+            return g.dune;
+        }
+        if (g.twoFaced) {
+            // Iapetus: the half facing forward along its orbit dark, the other bright.
+            return uv[0] > 0.25 && uv[0] < 0.75 ? g.lowland : g.highland;
+        }
+        if (g.peak >= 0 && h > 150 + noise(x / 50.0, z / 50.0, seed + 111) * 20) {
+            return g.peak;
+        }
+        return rel < 0.36 ? g.lowland : rel < 0.58 ? g.plains : g.highland;
+    }
+
+    /** The tile at a depth under the top (0 is the top block), at a height (for the layers). */
+    public static int tileAt(Worlds.World w, int top, int depth, int x, int y, int z) {
+        GeologyProfiles.Profile g = GeologyProfiles.of(w.id());
+        if (g == null || g.plains < 0) {
+            return tileAt(w, top, depth);
+        }
+        if (depth == 0) {
+            return top;
+        }
+        if (depth < 4) {
+            return top == g.seabed || top == Tiles.SEABED ? top : g.sub >= 0 ? g.sub : w.sub();
+        }
+        long seed = w.id().hashCode();
+        // Mineral pockets.
+        if (g.ore >= 0 && hash(Math.floorDiv(x, 3), Math.floorDiv(y, 3) * 31L + Math.floorDiv(z, 3), seed + 121) < 0.012) {
+            return g.ore;
+        }
+        if (g.strata.length > 0 && y > 10) {
+            // Layers a few blocks thick, gently warped, as they show in cliffs and canyon walls.
+            double warp = noise(x / 90.0, z / 90.0, seed + 131) * 6;
+            int k = Math.floorMod((int) Math.floor((y + warp) / 4.0), g.strata.length);
+            return g.strata[k];
+        }
+        return g.deep >= 0 ? g.deep : w.deep();
+    }
+
+    /** The cloud deck tile at a height in a gas giant (-1: clear air there). */
+    public static int cloudAt(Worlds.World w, int x, int y, int z) {
+        GeologyProfiles.Profile g = GeologyProfiles.of(w.id());
+        if (g == null || g.clouds.length == 0) {
+            return -1;
+        }
+        long seed = w.id().hashCode();
+        for (int i = 0; i + 1 < g.clouds.length; i += 2) {
+            int base = g.clouds[i + 1];
+            double puff = noise(x / 28.0, z / 28.0, seed + 140 + i) * 0.7 + noise(x / 7.0, z / 7.0, seed + 150 + i) * 0.3;
+            if (puff < 0.52) {
+                continue;
+            }
+            int thick = (int) ((puff - 0.52) * 18);
+            if (y >= base - thick / 2 && y <= base + thick) {
+                return g.clouds[i];
+            }
+        }
+        return -1;
     }
 
     /** The tile at a depth under the top (0 is the top block). */

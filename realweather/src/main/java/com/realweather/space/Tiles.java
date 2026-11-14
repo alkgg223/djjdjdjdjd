@@ -15,12 +15,13 @@ public final class Tiles {
 
     /** Material of a block: how it sounds and breaks. */
     public static final int M_DUST = 0, M_ROCK = 1, M_ICE = 2, M_SNOW = 3, M_CLOUD = 4, M_PLANT = 5, M_CRYSTAL = 6, M_METAL = 7, M_GLASS = 8,
-            M_MUD = 9;
+            M_MUD = 9, M_GAS = 10;
 
     /** One tile: its block's name, material, hardness and light, or null for the sea. */
     public record Tile(String name, int material, float hardness, int light) {}
 
-    public static final Tile[] ALL = {
+    /** The first tiles (those of the block atlas), then the 150 planetary materials of {@link Geology}. */
+    public static final Tile[] ALL = withGeology(
             new Tile("planet_regolith", M_DUST, 0.8F, 0),
             new Tile("planet_basalt", M_ROCK, 2.0F, 0),
             new Tile("planet_sand", M_DUST, 0.6F, 0),
@@ -68,8 +69,25 @@ public final class Tiles {
             new Tile("alien_dirt", M_MUD, 0.5F, 0),
             new Tile("deep_planet_rock", M_ROCK, 3.0F, 0),
             new Tile("impact_glass", M_GLASS, 0.6F, 0),
-            new Tile("dry_ice", M_ICE, 0.6F, 0),
-    };
+            new Tile("dry_ice", M_ICE, 0.6F, 0));
+
+    private static Tile[] withGeology(Tile... first) {
+        if (first.length != Geology.BASE) {
+            throw new IllegalStateException("Geology.BASE must be " + first.length);
+        }
+        Tile[] all = java.util.Arrays.copyOf(first, first.length + Geology.ALL.length);
+        for (int i = 0; i < Geology.ALL.length; i++) {
+            Geology.Geo g = Geology.ALL[i];
+            all[first.length + i] = new Tile(g.name(), g.material(), g.hardness(), g.light());
+        }
+        return all;
+    }
+
+    /** A planetary material's geology (null for the first tiles). */
+    public static Geology.Geo geo(int tile) {
+        int i = tile - Geology.BASE;
+        return i >= 0 && i < Geology.ALL.length ? Geology.ALL[i] : null;
+    }
 
     private Tiles() {}
 }

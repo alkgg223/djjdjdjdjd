@@ -18,7 +18,8 @@ public final class Catalog {
     static final int ROCKY = 0, GAS = 1, STAR = 2, PULSAR = 3, DWARF = 4, BLACKHOLE = 5, NEBULA = 6, COMET = 7, MERGER = 8, GALAXY = 9, EVENT = 10, OBJECT = 11;
     /** The planet blocks, by their place in the block atlas. */
     static final int REGOLITH = 0, BASALT = 1, SAND = 2, ICE = 3, FROST = 4, MAGMA = 5, CLOUD = 6, WATER = 7, MOSS = 8, CRYSTAL = 9, SULFUR = 10,
-            IRONSTONE = 11, STORM = 12, OBSIDIAN = 13, HOTROCK = 14, ASH = 15;
+            IRONSTONE = 11, STORM = 12, OBSIDIAN = 13, HOTROCK = 14, ASH = 15, MARE = 19, METHANE_SNOW = 23, NITROGEN_ICE = 24, THOLIN = 25,
+            IRON = 38, DIRT = 44, DRY_ICE = 47;
     /** Star colours by spectral class. */
     private static final float[] O_B = {0.62F, 0.72F, 1F}, A_T = {0.82F, 0.88F, 1F}, F_T = {0.98F, 0.96F, 0.9F}, G_T = {1F, 0.9F, 0.72F},
             K_T = {1F, 0.7F, 0.42F}, M_T = {1F, 0.45F, 0.25F}, WD = {0.92F, 0.95F, 1F};
@@ -386,11 +387,28 @@ public final class Catalog {
                 new Body("callisto", ROCKY, "moon", 0.14e-4, 26 * 2.0e-4, 11000, 88, 0, 0.8, 0.7F, 0.66F, 0.6F).ground(BASALT, REGOLITH, ICE));
         Sys sat = solar("saturn", new Sys("saturn", 140, 75, 0.06, false, "8.0-11.1 AU"), planet("saturn", GAS, "saturn", 0.9e-4, 0, 0, 0, 0, 0).rings(),
                 new Body("titan", ROCKY, "venus", 0.07e-4, 20 * 0.9e-4, 8000, 80, 20, 0.4, 1F, 0.8F, 0.5F).ground(ASH, SAND, ICE),
-                new Body("enceladus", ROCKY, "eris", 0.012e-4, 4 * 0.9e-4, 1400, 80, 20, 0.75, 1F, 1F, 1F).ground(ICE, FROST, FROST));
-        solar("uranus", new Sys("uranus", 222, 74, -0.07, false, "18-20 AU"), planet("uranus", GAS, "uranus", 0.25e-4, 0, 0, 0, 0, 0)
-                .air(0.6F, 0.9F, 0.95F));
-        solar("neptune", new Sys("neptune", 118, 73, 0.08, false, "29-31 AU"), planet("neptune", GAS, "neptune", 0.18e-4, 0, 0, 0, 0, 0)
-                .air(0.4F, 0.55F, 1F));
+                new Body("enceladus", ROCKY, "eris", 0.012e-4, 4 * 0.9e-4, 1400, 80, 20, 0.75, 1F, 1F, 1F).ground(ICE, FROST, FROST),
+                new Body("mimas", ROCKY, "moon", 0.008e-4, 3.1 * 0.9e-4, 950, 80, 20, 0.15, 0.95F, 0.95F, 0.95F).ground(ICE, REGOLITH, FROST),
+                new Body("dione", ROCKY, "eris", 0.014e-4, 6.3 * 0.9e-4, 2700, 80, 20, 0.55, 0.92F, 0.92F, 0.94F).ground(ICE, FROST, FROST),
+                new Body("rhea", ROCKY, "charon", 0.02e-4, 8.7 * 0.9e-4, 4500, 80, 20, 0.9, 0.95F, 0.95F, 0.95F).ground(ICE, FROST, REGOLITH),
+                new Body("hyperion", ROCKY, "ceres", 0.006e-4, 25 * 0.9e-4, 21000, 80, 20, 0.05, 0.85F, 0.78F, 0.68F).ground(REGOLITH, ICE, THOLIN),
+                new Body("iapetus", ROCKY, "haumea", 0.019e-4, 40 * 0.9e-4, 79000, 70, 30, 0.35, 0.75F, 0.7F, 0.62F).ground(THOLIN, ICE, FROST));
+        Sys ura = solar("uranus", new Sys("uranus", 222, 74, -0.07, false, "18-20 AU"), planet("uranus", GAS, "uranus", 0.25e-4, 0, 0, 0, 0, 0)
+                        .air(0.6F, 0.9F, 0.95F),
+                new Body("miranda", ROCKY, "mercury", 0.012e-4, 5 * 0.25e-4, 1400, 8, 90, 0.2, 0.85F, 0.85F, 0.86F).ground(ICE, REGOLITH, FROST),
+                new Body("ariel", ROCKY, "eris", 0.03e-4, 7.5 * 0.25e-4, 2500, 8, 90, 0.6, 0.9F, 0.9F, 0.92F).ground(ICE, FROST, REGOLITH),
+                new Body("umbriel", ROCKY, "moon", 0.03e-4, 10.4 * 0.25e-4, 4100, 8, 90, 0.1, 0.55F, 0.55F, 0.56F).ground(MARE, ICE, REGOLITH),
+                new Body("oberon", ROCKY, "charon", 0.04e-4, 23 * 0.25e-4, 13000, 8, 90, 0.8, 0.78F, 0.72F, 0.7F).ground(REGOLITH, ICE, MARE));
+        Sys nep = solar("neptune", new Sys("neptune", 118, 73, 0.08, false, "29-31 AU"), planet("neptune", GAS, "neptune", 0.18e-4, 0, 0, 0, 0, 0)
+                        .air(0.4F, 0.55F, 1F),
+                new Body("triton", ROCKY, "pluto", 0.03e-4, 14 * 0.18e-4, -5900, 23, 40, 0.3, 0.95F, 0.88F, 0.86F).ground(NITROGEN_ICE, METHANE_SNOW, FROST));
+        // Small bodies: a metal asteroid, a rubble-pile asteroid, a comet's nucleus.
+        solar("psyche", new Sys("psyche", 40, 55, 0.05, false, "2.5-3.3 AU"), planet("psyche", ROCKY, "mercury", 0.02e-4, 0, 0, 0, 0, 0)
+                .ground(IRON, REGOLITH, IRON));
+        solar("bennu", new Sys("bennu", 300, 120, -0.03, true, "0.9-1.4 AU"), planet("bennu", ROCKY, "ceres", 0.01e-4, 0, 0, 0, 0, 0)
+                .ground(DIRT, REGOLITH, BASALT));
+        solar("comet_67p", new Sys("comet_67p", 190, 50, 0.12, false, "1.2-5.7 AU"), planet("comet_67p", ROCKY, "ceres", 0.01e-4, 0, 0, 0, 0, 0)
+                .ground(ASH, DRY_ICE, BASALT));
         Sys plu = solar("pluto", new Sys("pluto", 200, 72, 0.2, false, "30-50 AU"), planet("pluto", ROCKY, "pluto", 0.09e-4, 0, 0, 0, 0, 0)
                         .ground(IRONSTONE, ICE, FROST),
                 new Body("charon", ROCKY, "charon", 0.045e-4, 0.3e-4, 1500, 60, 30, 0.2, 1F, 1F, 1F).ground(BASALT, REGOLITH, ICE));
@@ -408,6 +426,13 @@ public final class Catalog {
         }
         target("titan", PLANETS, sat, "titan");
         target("enceladus", PLANETS, sat, "enceladus");
+        for (String m : new String[]{"mimas", "dione", "rhea", "hyperion", "iapetus"}) {
+            target(m, PLANETS, sat, m);
+        }
+        for (String m : new String[]{"miranda", "ariel", "umbriel", "oberon"}) {
+            target(m, PLANETS, ura, m);
+        }
+        target("triton", PLANETS, nep, "triton");
         target("charon", PLANETS, plu, "charon");
         target("hiiaka", PLANETS, hau, "hiiaka");
         target("namaka", PLANETS, hau, "namaka");
@@ -742,8 +767,10 @@ public final class Catalog {
 
     /** Distance from the Sun (AU) of our own worlds, for the size of the Sun in their skies. */
     private static final String[] SOLAR = {"mercury", "venus", "earth", "moon", "mars", "ceres", "jupiter", "io", "europa", "ganymede", "callisto",
-            "saturn", "titan", "uranus", "neptune", "pluto", "charon", "haumea", "hiiaka", "namaka", "makemake", "eris", "dysnomia"};
-    private static final double[] AU = {0.39, 0.72, 1, 1, 1.52, 2.77, 5.2, 5.2, 5.2, 5.2, 5.2, 9.5, 9.5, 19.2, 30, 39, 39, 43, 43, 43, 45, 68, 68};
+            "saturn", "titan", "uranus", "neptune", "pluto", "charon", "haumea", "hiiaka", "namaka", "makemake", "eris", "dysnomia", "enceladus",
+            "mimas", "dione", "rhea", "hyperion", "iapetus", "miranda", "ariel", "umbriel", "oberon", "triton", "psyche", "bennu", "comet_67p"};
+    private static final double[] AU = {0.39, 0.72, 1, 1, 1.52, 2.77, 5.2, 5.2, 5.2, 5.2, 5.2, 9.5, 9.5, 19.2, 30, 39, 39, 43, 43, 43, 45, 68, 68, 9.5,
+            9.5, 9.5, 9.5, 9.5, 9.5, 19.2, 19.2, 19.2, 19.2, 30, 2.9, 1.1, 3.5};
 
     /** The star in a world's sky: its colour and angular radius (radians), as seen from that world. */
     public static float[] hostStar(Target t) {

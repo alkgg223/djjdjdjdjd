@@ -117,6 +117,21 @@ public final class Worlds {
         gas("hr8799c", "hr8799c", STORM, RED_SPOT, CLOUD, 0.18F, 1F, 0.6F, 0.7F);
         gas("hr8799b", "hr8799b", RED_SPOT, STORM, JUPITER_CLOUD, 0.2F, 1F, 0.5F, 0.4F);
         gas("psr_b1620_26b", "psr_b", SATURN_CLOUD, CLOUD, STORM, 0F, 0.8F, 0.85F, 0.95F);
+        // More moons and small bodies (added later: on the end, so the worlds before keep their places).
+        rock("enceladus", "eris", ICE, FROST, FROST, ICE, FROST, 0F, 0, 0, 0, 0.5F, "saturn");
+        rock("triton", "pluto", NITROGEN_ICE, METHANE_SNOW, FROST, ICE, METHANE_SNOW, 0.1F, 0.6F, 0.7F, 1F, 0.6F, "neptune");
+        rock("rhea", "charon", ICE, FROST, REGOLITH, ICE, FROST, 0F, 0, 0, 0, 0.9F, "saturn");
+        rock("dione", "eris", ICE, FROST, FROST, ICE, FROST, 0F, 0, 0, 0, 0.8F, "saturn");
+        rock("iapetus", "haumea", THOLIN, ICE, FROST, ICE, FROST, 0F, 0, 0, 0, 1.0F, "saturn");
+        rock("mimas", "moon", ICE, REGOLITH, FROST, ICE, FROST, 0F, 0, 0, 0, 1.1F, "saturn");
+        rock("hyperion", "ceres", REGOLITH, ICE, THOLIN, ICE, FROST, 0F, 0, 0, 0, 1.3F, "saturn");
+        rock("miranda", "mercury", ICE, REGOLITH, FROST, ICE, FROST, 0F, 0, 0, 0, 1.4F, "uranus");
+        rock("ariel", "eris", ICE, FROST, REGOLITH, ICE, FROST, 0F, 0, 0, 0, 0.9F, "uranus");
+        rock("umbriel", "moon", MARE, ICE, REGOLITH, ICE, FROST, 0F, 0, 0, 0, 0.9F, "uranus");
+        rock("oberon", "charon", REGOLITH, ICE, MARE, ICE, FROST, 0F, 0, 0, 0, 1.0F, "uranus");
+        rock("psyche", "mercury", IRON, REGOLITH, IRON, IRON, IRON, 0F, 0, 0, 0, 1.2F, null);
+        rock("bennu", "ceres", DIRT, REGOLITH, BASALT, BASALT, FROST, 0F, 0, 0, 0, 1.4F, null);
+        rock("comet_67p", "ceres", ASH, DRY_ICE, BASALT, DRY_ICE, DRY_ICE, 0F, 0, 0, 0, 1.5F, null);
     }
 
     public static World byId(String id) {
