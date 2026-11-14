@@ -1492,12 +1492,18 @@ public final class SelfTest {
             });
         });
         // Telescope: the Sun's face by day, then the night sky's new things.
-        String[][] day = {{"sun", "10"}, {"sun", "1.5"}};
+        String[][] day = {{"sun", "5"}, {"sun", "1.5"}, {"sun", "0.4"}};
         String[][] night = {{"jupiter", "0.08"}, {"saturn", "0.06"}, {"saturn", "0.004"}, {"halley", "0.4"}, {"crab_pulsar", "0.0015"},
                 {"gw150914", "0.004"}, {"sn1987a", "0.1"}, {"ton618", "0.004"}, {"ton618", "0.06"}, {"sgr_a_star", "0.05"}, {"sgr_1806_20", "0.001"}};
         for (String[][] list : new String[][][]{day, night}) {
             if (list == night) {
-                step(5, () -> cmd("time set 18000"));
+                step(5, () -> {
+                    cmd("time set 18000");
+                    com.realweather.ClientConfig.SPACE_QUALITY.set(com.realweather.ClientConfig.SpaceQuality.AUTO);
+                });
+            } else {
+                // (The Sun at full resolution, to compare.)
+                step(5, () -> com.realweather.ClientConfig.SPACE_QUALITY.set(com.realweather.ClientConfig.SpaceQuality.ULTRA));
             }
             for (String[] t : list) {
                 String label = "t_" + t[0] + "_" + t[1].replace('.', '_');

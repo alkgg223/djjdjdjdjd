@@ -37,8 +37,8 @@ import static com.realweather.client.space.Space3D.ADD;
  * trips would take hours even at the speed of light).
  */
 public final class SpaceFlight {
-    /** How much faster time runs between the planets. */
-    static final double WARP = 200;
+    /** How much faster time runs between the planets (as it does in the game: a day in 20 minutes). */
+    static final double WARP = 72;
     private static final ResourceLocation STAR_MAP = RealWeather.id("textures/environment/space3d/star_surface.png");
     private static final ResourceLocation EARTH_CLOUDS = RealWeather.id("textures/environment/space3d/earth_clouds.png");
     private static final ResourceLocation EARTH_LIGHTS = RealWeather.id("textures/environment/space3d/earth_lights.png");
@@ -57,6 +57,10 @@ public final class SpaceFlight {
     private static boolean saidNoRoute;
     /** The world just left (no arriving back on it until well away). */
     private static String leaving, pendingLeaving;
+    private static double[] pendingVel;
+    /** The speed of the world nearest you (between the planets you keep pace with it when not thrusting). */
+    private static final double[] drift = new double[3];
+
     /** For the screen: names of what is round you, where they are on it, and what you are doing. */
     private static final List<Object[]> LABELS = new ArrayList<>();
     private static String nearName = "";
@@ -96,6 +100,7 @@ public final class SpaceFlight {
         place = now;
         sent = false;
         vel[0] = vel[1] = vel[2] = 0;
+        drift[0] = drift[1] = drift[2] = 0;
         if (now == null) {
             return;
         }
@@ -105,6 +110,9 @@ public final class SpaceFlight {
                 frame = pendingFrame;
                 pendingPos = null;
                 leaving = pendingLeaving;
+                if (pendingVel != null) {
+                    System.arraycopy(pendingVel, 0, vel, 0, 3);
+                }
             } else {
                 // Back out into space after a break: above Earth.
                 SolarSystem.Body e = SolarSystem.byId("earth");
@@ -227,6 +235,10 @@ public final class SpaceFlight {
         pendingPos = new double[]{bp[0] + fr[3] * alt, bp[1] + fr[4] * alt, bp[2] + fr[5] * alt};
         pendingFrame = fr;
         cooldown = 100;
+        // Leaving with the world's own speed round the Sun (so it stays below until you speed away).
+        double[] bv = new double[3];
+        SolarSystem.velocityKmS(origin, day, bv);
+        pendingVel = bv;
         PacketDistributor.sendToServer(new TravelPayload("", TravelPayload.LAUNCH, 0, 0));
         p.displayClientMessage(Component.translatable("realweather.drive.launch", Component.translatable("realweather.target." + origin.id()),
                 drivePct), true);
@@ -254,15 +266,28 @@ public final class SpaceFlight {
         if (solar) {
             double day = days();
             double[] bp = new double[3];
+            double bestPull = 0;
+            SolarSystem.Body pace = null;
             for (SolarSystem.Body b : SolarSystem.ALL) {
                 SolarSystem.position(b, day, bp);
                 double rx = bp[0] - pos[0], ry = bp[1] - pos[1], rz = bp[2] - pos[2];
                 double dist = Math.sqrt(rx * rx + ry * ry + rz * rz);
+                // Whose neighbourhood you are in (its pull the strongest, roughly): you drift along with it.
+                double pull = b.kind() == SolarSystem.SUN ? 0 : b.radius() * b.radius() / (dist * dist);
+                if (pull > bestPull && dist < b.radius() * 60) {
+                    bestPull = pull;
+                    pace = b;
+                }
                 double towards = (rx * dir[0] + ry * dir[1] + rz * dir[2]) / Math.max(1.0E-9, dist);
                 if (towards > 0.2) {
                     double room = dist - b.radius() * (b.kind() == SolarSystem.SUN ? 2.5 : 1.6);
                     brake = Math.min(brake, Math.max(300, room * 0.9));
                 }
+            }
+            if (pace != null) {
+                SolarSystem.velocityKmS(pace, day, drift);
+            } else {
+                drift[0] = drift[1] = drift[2] = 0;
             }
         } else {
             Catalog.Target t = Catalog.byId(place);
@@ -276,7 +301,7 @@ public final class SpaceFlight {
         speedNow = wl > 1.0E-4 ? speed : Math.sqrt(vel[0] * vel[0] + vel[1] * vel[1] + vel[2] * vel[2]);
         double k = 1 - Math.exp(-dt * 2.5);
         for (int i = 0; i < 3; i++) {
-            vel[i] += (dir[i] * (wl > 1.0E-4 ? speed : 0) - vel[i]) * k;
+            vel[i] += (drift[i] + dir[i] * (wl > 1.0E-4 ? speed : 0) - vel[i]) * k;
             pos[i] += vel[i] * dt;
         }
     }

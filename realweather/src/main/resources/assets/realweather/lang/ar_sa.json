@@ -612,7 +612,7 @@
   "realweather.drive.state_on": "شغّال",
   "realweather.drive.state_off": "مطفأ",
   "realweather.drive.help1": "أمسكه وهو شغّال، وانظر إلى كوكب في السماء وامشِ إلى الأمام: تنطلق وتطير إليه عبر الفضاء.",
-  "realweather.drive.help2": "في الفضاء يحدد سرعة طيرانك (الوقت أسرع 200 مرة بين الكواكب).",
+  "realweather.drive.help2": "في الفضاء يحدد سرعة طيرانك (الوقت أسرع 72 مرة بين الكواكب).",
   "realweather.flight.between": "بين كواكب المجموعة الشمسية",
   "realweather.flight.at": "في الفضاء العميق: %s",
   "realweather.flight.drive": "محرك الضوء: %s%% من سرعة الضوء (الوقت ×%s)",

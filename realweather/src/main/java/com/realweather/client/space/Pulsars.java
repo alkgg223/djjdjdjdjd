@@ -70,6 +70,9 @@ final class Pulsars {
         for (int k = 0; k < blur; k++) {
             magnetic(phase - frame * k / blur, tilt, ax, ay, az);
             float a = vis / blur * (k == 0 ? 1.4F : 1F);
+            // (A beam pointing at us is seen end on: the flash, not a cone filling the view.)
+            float endOn = (float) Math.pow(Math.abs(M[0] * tox + M[1] * toy + M[2] * toz), 6);
+            a *= 1F - 0.9F * endOn;
             for (int sg = -1; sg <= 1; sg += 2) {
                 double mx = M[0] * sg, my = M[1] * sg, mz = M[2] * sg;
                 // Nested cones: a bright narrow core inside softer, wider glow (a beam of light in 3D, not a flat cone).

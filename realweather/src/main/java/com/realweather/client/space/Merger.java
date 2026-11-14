@@ -107,16 +107,16 @@ final class Merger {
     private static float sheet(double rho, double a, double t, double scale, double speed, double cx, double cy, double cz, double[] e1, double[] e2,
                                double[] axis, double[] out) {
         double tr = t - rho / speed;
-        double amp = strength(tr) * scale * 0.35 / Math.pow(Math.max(rho / scale, 0.4), 0.8);
+        double amp = strength(tr) * scale * 0.12 / Math.pow(Math.max(rho / scale, 1.0), 0.7);
         // Two crests round the circle (the waves of a pair are quadrupolar), turning with twice the orbital phase.
         double h = amp * Math.cos(2 * (a - phase(tr)));
         // The dip of the pair's gravity well.
-        double well = -scale * 0.5 / (rho / scale + 0.6);
+        double well = -scale * 0.25 / (rho / scale + 1.0);
         double z = h + well;
         out[0] = cx + (e1[0] * Math.cos(a) + e2[0] * Math.sin(a)) * rho + axis[0] * z;
         out[1] = cy + (e1[1] * Math.cos(a) + e2[1] * Math.sin(a)) * rho + axis[1] * z;
         out[2] = cz + (e1[2] * Math.cos(a) + e2[2] * Math.sin(a)) * rho + axis[2] * z;
-        return (float) Math.min(1, Math.abs(h) / (scale * 0.15));
+        return (float) Math.min(1, Math.abs(h) / (scale * 0.06));
     }
 
     private static double[] perp(double[] a) {

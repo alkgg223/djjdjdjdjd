@@ -23,7 +23,7 @@ final class GasGiants {
             case "jupiter" -> {
                 g.oblate = 0.935F;
                 g.bands = 1.4F;
-                g.storm(0, 0, -22, 9, 1.1).storm(1, 70, -33, 4, 0.9).storm(2, 0, 86, 6, -1.4).storm(3, 180, -86, 6, 1.3);
+                g.storm(0, 0, -22, 7, 0.8).storm(1, 70, -33, 4, 0.9).storm(2, 0, 86, 6, -1.4).storm(3, 180, -86, 6, 1.3);
             }
             case "saturn" -> {
                 g.oblate = 0.9F;

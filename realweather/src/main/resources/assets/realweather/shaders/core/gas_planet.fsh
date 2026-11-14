@@ -71,7 +71,7 @@ vec2 vortex(vec2 q, vec4 v) {
         return q;
     }
     float k = (1.0 - r) * (1.0 - r);
-    float a = v.w * (k * 2.6 + Time * 0.02 * (0.4 + k));
+    float a = v.w * (k * 1.6 + Time * 0.02 * (0.4 + k));
     float ca = cos(a);
     float sa = sin(a);
     e = vec2(ca * e.x - sa * e.y, sa * e.x + ca * e.y);

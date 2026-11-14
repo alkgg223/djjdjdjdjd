@@ -612,7 +612,7 @@
   "realweather.drive.state_on": "On",
   "realweather.drive.state_off": "Off",
   "realweather.drive.help1": "Hold it switched on, look up at a planet in the sky and walk forward: you take off and fly through space to it.",
-  "realweather.drive.help2": "In space it sets how fast you fly (time runs 200x faster between the planets).",
+  "realweather.drive.help2": "In space it sets how fast you fly (time runs 72x faster between the planets).",
   "realweather.flight.between": "Between the planets of the solar system",
   "realweather.flight.at": "In deep space: %s",
   "realweather.flight.drive": "Light drive: %s%% of the speed of light (time x%s)",

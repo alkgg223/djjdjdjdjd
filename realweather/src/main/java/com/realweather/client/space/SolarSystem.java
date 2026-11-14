@@ -99,6 +99,16 @@ final class SolarSystem {
         }
     }
 
+    /** How fast it moves (km per second of play: a game day is 20 minutes, so time runs 72 times faster). */
+    static void velocityKmS(Body b, double days, double[] out) {
+        double[] p0 = new double[3], p1 = new double[3];
+        position(b, days, p0);
+        position(b, days + 0.001, p1);
+        for (int i = 0; i < 3; i++) {
+            out[i] = (p1[i] - p0[i]) / 0.001 / 1200.0;
+        }
+    }
+
     private static double sq(double v) {
         return v * v;
     }

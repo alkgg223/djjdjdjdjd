@@ -35,7 +35,7 @@ public final class CosmicRays {
     private CosmicRays() {}
 
     public static void onRenderStage(RenderLevelStageEvent event) {
-        if (failed || event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+        if (failed || event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -74,32 +74,21 @@ public final class CosmicRays {
         return com.realweather.client.space.Space3D.h(seed, k);
     }
 
+    /**
+     * Drawn with the sky (before the land, so hills and buildings hide what is behind them), in the space renderer's
+     * own depth range: the showers are far off and high up, beyond the game's own far plane.
+     */
     private static void render(RenderLevelStageEvent event, ClientLevel level, float pt, float vis) {
         Vec3 cam = event.getCamera().getPosition();
         double t = level.getGameTime() + pt;
         long slot = (long) Math.floor(t / SLOT);
-        BufferBuilder buf = null;
-        Matrix4fStack mv = RenderSystem.getModelViewStack();
-        mv.pushMatrix();
-        mv.set(event.getModelViewMatrix());
-        RenderSystem.applyModelViewMatrix();
+        boolean begun = false;
         try {
             if (testAge >= 0) {
-                RenderSystem.enableBlend();
-                RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ZERO,
-                        GlStateManager.DestFactor.ONE);
-                RenderSystem.enableDepthTest();
-                RenderSystem.depthMask(false);
-                RenderSystem.disableCull();
-                RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-                RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-                RenderSystem.setShaderTexture(0, GLOW);
-                buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-                float yaw = event.getCamera().getYRot();
-                // A seed that puts it straight ahead.
-                long seed = 4242;
-                double want = Math.toRadians(yaw + 90);
-                testShower(buf, cam, seed, testAge, vis, want);
+                com.realweather.client.space.Space3D.begin(event, level, pt);
+                begun = true;
+                double want = Math.toRadians(event.getCamera().getYRot() + 90);
+                showerAt(cam, 4242, testAge, Math.max(vis, 0.8F), want, 260);
             }
             for (long k = slot - 1; k <= slot; k++) {
                 long seed = k * 0x9E3779B97F4A7C15L + 77;
@@ -111,48 +100,25 @@ public final class CosmicRays {
                 if (age < 0 || age > 2.6) {
                     continue;
                 }
-                if (buf == null) {
-                    RenderSystem.enableBlend();
-                    RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ZERO,
-                            GlStateManager.DestFactor.ONE);
-                    RenderSystem.enableDepthTest();
-                    RenderSystem.depthMask(false);
-                    RenderSystem.disableCull();
-                    RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-                    RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-                    RenderSystem.setShaderTexture(0, GLOW);
-                    buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+                if (!begun) {
+                    com.realweather.client.space.Space3D.begin(event, level, pt);
+                    begun = true;
                 }
-                shower(buf, cam, seed, age, vis);
-            }
-            if (buf != null) {
-                MeshData mesh = buf.build();
-                if (mesh != null) {
-                    BufferUploader.drawWithShader(mesh);
-                }
+                shower(cam, seed, age, vis);
             }
         } finally {
-            if (buf != null) {
-                RenderSystem.depthMask(true);
-                RenderSystem.enableCull();
-                RenderSystem.defaultBlendFunc();
-                RenderSystem.disableBlend();
+            if (begun) {
+                com.realweather.client.space.Space3D.end();
             }
-            mv.popMatrix();
-            RenderSystem.applyModelViewMatrix();
         }
     }
 
-    private static void testShower(BufferBuilder buf, Vec3 cam, long seed, double age, float vis, double ang) {
-        showerAt(buf, cam, seed, age, Math.max(vis, 0.8F), ang, 260);
-    }
-
     /** One shower, `age` seconds after the primary hit the top of the air. */
-    private static void shower(BufferBuilder buf, Vec3 cam, long seed, double age, float vis) {
-        showerAt(buf, cam, seed, age, vis, h(seed, 3) * Math.PI * 2, 160 + 420 * h(seed, 4));
+    private static void shower(Vec3 cam, long seed, double age, float vis) {
+        showerAt(cam, seed, age, vis, h(seed, 3) * Math.PI * 2, 160 + 420 * h(seed, 4));
     }
 
-    private static void showerAt(BufferBuilder buf, Vec3 cam, long seed, double age, float vis, double ang, double dist) {
+    private static void showerAt(Vec3 cam, long seed, double age, float vis, double ang, double dist) {
         double top = Math.max(cam.y + 180, 420 + 280 * h(seed, 5));
         double x = cam.x + Math.cos(ang) * dist, z = cam.z + Math.sin(ang) * dist;
         // Coming in at a slant from a random direction.
@@ -162,10 +128,10 @@ public final class CosmicRays {
         // The front races down at the speed of light (all but instantly), then the tracks fade.
         float front = (float) Math.min(1, age / 0.25);
         float fade = (float) (age < 0.25 ? 1 : Math.exp(-(age - 0.25) * 2.2)) * vis;
-        branch(buf, cam, seed, 0, x, top, z, dx, dy, dz, length, 0, front, fade, 0.5F + 0.5F * h(seed, 8));
+        branch(cam, seed, 0, x, top, z, dx, dy, dz, length, 0, front, fade, 0.5F + 0.5F * h(seed, 8));
     }
 
-    private static void branch(BufferBuilder buf, Vec3 cam, long seed, int depth, double x, double y, double z, double dx, double dy, double dz,
+    private static void branch(Vec3 cam, long seed, int depth, double x, double y, double z, double dx, double dy, double dz,
                                double len, double s0, float front, float fade, float energy) {
         if (depth > 5 || s0 >= front) {
             return;
@@ -177,8 +143,8 @@ public final class CosmicRays {
         double ex = x + dx * part, ey = y + dy * part, ez = z + dz * part;
         float a = fade * energy * (float) (depth == 0 ? 0.65 : 0.5 / Math.sqrt(depth + 1));
         double w = 0.9 + 1.6 / (depth + 1);
-        ribbon(buf, cam, x, y, z, ex, ey, ez, w, 0.7F, 0.85F, 1F, a);
-        ribbon(buf, cam, x, y, z, ex, ey, ez, w * 5, 0.5F, 0.55F, 1F, a * 0.22F);
+        ribbon(cam, x, y, z, ex, ey, ez, w, 0.7F, 0.85F, 1F, a);
+        ribbon(cam, x, y, z, ex, ey, ez, w * 5, 0.5F, 0.55F, 1F, a * 0.22F);
         if (s1 >= front) {
             return;
         }
@@ -188,28 +154,21 @@ public final class CosmicRays {
             double spread = 0.08 + 0.1 * depth;
             double nx = dx + (h(sd, 1) - 0.5) * spread, ny = dy, nz = dz + (h(sd, 2) - 0.5) * spread;
             double nl = Math.sqrt(nx * nx + ny * ny + nz * nz);
-            branch(buf, cam, sd, depth + 1, ex, ey, ez, nx / nl, ny / nl, nz / nl, len, s1, front, fade, energy * (0.55F + 0.3F * h(sd, 3)));
+            branch(cam, sd, depth + 1, ex, ey, ez, nx / nl, ny / nl, nz / nl, len, s1, front, fade, energy * (0.55F + 0.3F * h(sd, 3)));
         }
     }
 
-    private static void ribbon(BufferBuilder buf, Vec3 cam, double x0, double y0, double z0, double x1, double y1, double z1, double w, float r,
-                               float g, float b, float a) {
+    private static final double[] A = new double[3], B = new double[3];
+
+    private static void ribbon(Vec3 cam, double x0, double y0, double z0, double x1, double y1, double z1, double w, float r, float g, float b,
+                               float a) {
         if (a <= 0.003F) {
             return;
         }
-        double ax = x0 - cam.x, ay = y0 - cam.y, az = z0 - cam.z, bx = x1 - cam.x, by = y1 - cam.y, bz = z1 - cam.z;
-        double dx = bx - ax, dy = by - ay, dz = bz - az;
-        double mx = (ax + bx) * 0.5, my = (ay + by) * 0.5, mz = (az + bz) * 0.5;
-        double sx = dy * mz - dz * my, sy = dz * mx - dx * mz, sz = dx * my - dy * mx;
-        double l = Math.sqrt(sx * sx + sy * sy + sz * sz) + 1.0E-9;
-        sx *= w / l;
-        sy *= w / l;
-        sz *= w / l;
-        int ia = (int) (Mth.clamp(a, 0F, 1F) * 255);
-        int ir = (int) (r * 255), ig = (int) (g * 255), ib = (int) (b * 255);
-        buf.addVertex((float) (ax - sx), (float) (ay - sy), (float) (az - sz)).setUv(0F, 1F).setColor(ir, ig, ib, ia);
-        buf.addVertex((float) (bx - sx), (float) (by - sy), (float) (bz - sz)).setUv(1F, 1F).setColor(ir, ig, ib, ia);
-        buf.addVertex((float) (bx + sx), (float) (by + sy), (float) (bz + sz)).setUv(1F, 0F).setColor(ir, ig, ib, ia);
-        buf.addVertex((float) (ax + sx), (float) (ay + sy), (float) (az + sz)).setUv(0F, 0F).setColor(ir, ig, ib, ia);
+        double[] v = com.realweather.client.space.Space3D.VIEW;
+        com.realweather.client.space.Space3D.apply(v, x0 - cam.x, y0 - cam.y, z0 - cam.z, A);
+        com.realweather.client.space.Space3D.apply(v, x1 - cam.x, y1 - cam.y, z1 - cam.z, B);
+        com.realweather.client.space.Space3D.ribbon(GLOW, com.realweather.client.space.Space3D.ADD, A[0], A[1], A[2], B[0], B[1], B[2], w, w, r, g, b, a,
+                a);
     }
 }
