@@ -44,6 +44,11 @@ public final class ModDevices {
             () -> new PlanetMapBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLUE).strength(1.5F, 3F).sound(SoundType.METAL)
                     .noOcclusion().lightLevel(s -> 7)));
 
+    public static final DeferredBlock<ObservatoryBlock> OBSERVATORY = ModContent.BLOCKS.register("cosmic_observatory",
+            () -> new ObservatoryBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(2F, 4F).sound(SoundType.METAL)
+                    .noOcclusion().lightLevel(s -> 6)));
+    public static final DeferredItem<BlockItem> OBSERVATORY_ITEM = blockItem("cosmic_observatory", OBSERVATORY);
+
     public static final DeferredItem<BlockItem> WEATHER_RADAR_ITEM = blockItem("weather_radar", WEATHER_RADAR);
     public static final DeferredItem<BlockItem> TELESCOPE_ITEM = blockItem("telescope", TELESCOPE);
     public static final DeferredItem<BlockItem> PLANET_MAP_ITEM = blockItem("planet_map", PLANET_MAP);

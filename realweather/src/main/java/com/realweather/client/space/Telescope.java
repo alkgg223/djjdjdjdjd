@@ -327,7 +327,8 @@ public final class Telescope {
             return;
         }
         if (mc.player == null || mc.level == null || mc.player.position().distanceTo(start) > 2.5
-                || !(mc.level.getBlockState(pos).getBlock() instanceof com.realweather.device.TelescopeBlock)) {
+                || !(mc.level.getBlockState(pos).getBlock() instanceof com.realweather.device.TelescopeBlock
+                || mc.level.getBlockState(pos).getBlock() instanceof com.realweather.device.ObservatoryBlock)) {
             stop();
             return;
         }

@@ -23,6 +23,7 @@ final class CloseViews {
     static double radius(Catalog.Body b) {
         return switch (b.kind) {
             case Catalog.GALAXY -> 1000;
+            case Catalog.EVENT -> 200;
             case Catalog.PULSAR -> 20;
             case Catalog.BLACKHOLE -> 10;
             case Catalog.NEBULA -> 400;
@@ -36,6 +37,7 @@ final class CloseViews {
     static double start(Catalog.Body b) {
         return switch (b.kind) {
             case Catalog.GALAXY -> 2.4;
+            case Catalog.EVENT -> 3.2;
             case Catalog.PULSAR -> b.magnetar ? 7 : 9;
             case Catalog.BLACKHOLE -> 30;
             case Catalog.NEBULA -> 1.7;
@@ -49,6 +51,7 @@ final class CloseViews {
     static double closest(Catalog.Body b) {
         return switch (b.kind) {
             case Catalog.GALAXY -> 0.0;
+            case Catalog.EVENT -> 0.1;
             case Catalog.PULSAR -> 1.6;
             case Catalog.BLACKHOLE -> 0.0;
             case Catalog.NEBULA -> 0.0;
@@ -148,6 +151,10 @@ final class CloseViews {
                         Galaxies.local(g, camG, rot, R, clock, 2.0 / (Space3D.projY() * wh));
                     }
                 }
+            }
+            case Catalog.EVENT -> {
+                Space3D.range((float) Math.max(0.05, R * 0.01), (float) (dist + R * 8));
+                EventVisuals.draw(body.eventType, c[0], c[1], c[2], R, view, CosmicEvents.progress(body), clock, px, seed, 1F);
             }
             case Catalog.MERGER -> Merger.draw(c[0], c[1], c[2], R, unit(view, 0.15, 1, 0.1), clock, px, 1F);
             default -> star(body, c, view, R, seed, clock, px, 1F);

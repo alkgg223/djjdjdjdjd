@@ -63,6 +63,8 @@ public final class ClientInit {
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW, com.realweather.client.space.SpaceFlight::onInput);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientTickEvent.Post e) ->
                 com.realweather.client.space.SpaceFlight.tick(net.minecraft.client.Minecraft.getInstance()));
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientTickEvent.Post e) ->
+                com.realweather.client.space.CosmicEvents.tick(net.minecraft.client.Minecraft.getInstance()));
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.CosmicRays::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.sky.SkyRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.tsunami.TsunamiRenderer::onRenderStage);

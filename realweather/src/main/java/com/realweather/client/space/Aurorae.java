@@ -21,6 +21,7 @@ final class Aurorae {
             case "uranus" -> new Look(22, 0.04, 0.45F, 0.8F, 1F, 0.6F, 59, false);
             case "neptune" -> new Look(25, 0.04, 0.5F, 0.6F, 1F, 0.55F, 47, false);
             case "mars" -> new Look(40, 0.03, 0.4F, 1F, 0.5F, 0.3F, 0, false);
+            case "earth_wander" -> new Look(50, 0.05, 0.4F, 1F, 0.55F, 0.8F, 65, false);
             default -> null;
         };
     }

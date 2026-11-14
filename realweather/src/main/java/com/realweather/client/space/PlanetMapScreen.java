@@ -22,6 +22,14 @@ public class PlanetMapScreen extends Screen {
     /** What a tab lists: our solar system's worlds, other stars' planets, stars (pulsars, the black hole) or nebulae. */
     static List<Catalog.Target> worlds(int tab) {
         List<Catalog.Target> out = new ArrayList<>();
+        if (tab == 5) {
+            for (CosmicEvents.Event e : CosmicEvents.window()) {
+                if (CosmicEvents.status(e) != CosmicEvents.OVER) {
+                    out.add(e.target());
+                }
+            }
+            return out;
+        }
         if (tab >= 2) {
             for (Catalog.Target t : Catalog.group(tab == 2 ? Catalog.STARS : tab == 3 ? Catalog.NEBULAE : Catalog.GALAXIES)) {
                 out.add(t);
@@ -38,7 +46,7 @@ public class PlanetMapScreen extends Screen {
 
     @Override
     protected void init() {
-        String[] tabs = {"planets", "exoplanets", "stars", "nebulae", "galaxies"};
+        String[] tabs = {"planets", "exoplanets", "stars", "nebulae", "galaxies", "events"};
         int tw = Math.min(90, (width - 40) / tabs.length);
         int tx = width / 2 - (tw * tabs.length + 4 * (tabs.length - 1)) / 2;
         for (int i = 0; i < tabs.length; i++) {
@@ -64,9 +72,10 @@ public class PlanetMapScreen extends Screen {
         for (int i = from; i < to; i++) {
             Catalog.Target t = list.get(i);
             int k = i - from;
-            Button b = Button.builder(Component.translatable("realweather.target." + t.id), btn -> minecraft.setScreen(new PlanetViewScreen(t)))
+            Button b = Button.builder(t.label(), btn -> minecraft.setScreen(new PlanetViewScreen(t)))
                     .bounds(x0 + (k % cols) * (bw + 4), top + (k / cols) * (bh + gap), bw, bh)
-                    .tooltip(Tooltip.create(Component.translatable("realweather.target." + t.id + ".info"))).build();
+                    .tooltip(Tooltip.create(t.group == Catalog.EVENTS ? Component.translatable("realweather.event." + t.body.eventType + ".info")
+                            : Component.translatable("realweather.target." + t.id + ".info"))).build();
             addRenderableWidget(b);
         }
         // Away on another world: the way home.

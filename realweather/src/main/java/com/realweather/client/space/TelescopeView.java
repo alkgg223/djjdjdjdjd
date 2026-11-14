@@ -166,6 +166,32 @@ public final class TelescopeView {
             }
             system(s, dir, c, pix, level);
         }
+        // Cosmic events going on (or being replayed), and the one looked for.
+        for (CosmicEvents.Event e : CosmicEvents.active()) {
+            Catalog.Sys s = e.target().sys;
+            double[] dir = s.direction(day);
+            double[] c = new double[3];
+            Space3D.apply(Space3D.SKYVIEW, dir[0] * D, dir[1] * D, dir[2] * D, c);
+            double ang = Math.atan2(Math.sqrt(c[0] * c[0] + c[1] * c[1]), -c[2]);
+            if (ang > fovRad * 0.9 + e.target().body.radius * 2 || c[2] > 0) {
+                continue;
+            }
+            system(s, dir, c, pix, level);
+        }
+        if (target != null && target.group == Catalog.EVENTS) {
+            boolean shown = false;
+            for (CosmicEvents.Event e : CosmicEvents.active()) {
+                shown |= e.target() == target;
+            }
+            if (!shown) {
+                double[] dir = target.sys.direction(day);
+                double[] c = new double[3];
+                Space3D.apply(Space3D.SKYVIEW, dir[0] * D, dir[1] * D, dir[2] * D, c);
+                if (c[2] < 0) {
+                    system(target.sys, dir, c, pix, level);
+                }
+            }
+        }
     }
 
     /** Stars in the field: the brighter ones everywhere, and deeper and deeper ones as you zoom in. */
@@ -510,6 +536,11 @@ public final class TelescopeView {
                 }
                 case Catalog.COMET -> comet(b, bx, by, bz, r, px, vis);
                 case Catalog.GALAXY -> galaxy(b, dir, bx, by, bz, r, px);
+                case Catalog.EVENT -> {
+                    double[] base = skyBase(dir);
+                    EventVisuals.draw(b.eventType, bx, by, bz, r, base, CosmicEvents.progress(b), time / 20.0, px, b.id.hashCode(),
+                            Math.max(Space3D.night, 0.3F) * Space3D.clear);
+                }
                 case Catalog.MERGER -> {
                     Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(px * 4, r * 30), 0F, 0.6F, 0.78F, 1F, 0.35F * vis);
                     Merger.draw(bx, by, bz, r * 20, pulsarAxis(b), time / 20.0, px, vis);
@@ -518,6 +549,20 @@ public final class TelescopeView {
                 default -> body(s, b, bx, by, bz, r, rPix, px, lightPos, light, vis);
             }
         }
+    }
+
+    /** A frame with x and y across the line of sight and z towards us, in view space. */
+    private static double[] skyBase(double[] dirSky) {
+        double[] e1 = new double[3], e2 = new double[3];
+        across(dirSky, e1, e2);
+        double[] base = new double[9], v = new double[3];
+        Space3D.apply(Space3D.SKYVIEW, e1[0], e1[1], e1[2], v);
+        System.arraycopy(v, 0, base, 0, 3);
+        Space3D.apply(Space3D.SKYVIEW, e2[0], e2[1], e2[2], v);
+        System.arraycopy(v, 0, base, 3, 3);
+        Space3D.apply(Space3D.SKYVIEW, -dirSky[0], -dirSky[1], -dirSky[2], v);
+        System.arraycopy(v, 0, base, 6, 3);
+        return base;
     }
 
     /** A galaxy, tipped as we see it: from a smudge of light to its arms, dust and star clouds. */
