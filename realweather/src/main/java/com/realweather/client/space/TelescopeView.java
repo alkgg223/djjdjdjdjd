@@ -562,7 +562,8 @@ public final class TelescopeView {
         Space3D.apply(Space3D.SKYVIEW, e1[0], e1[1], e1[2], e1v);
         Space3D.apply(Space3D.SKYVIEW, e2[0], e2[1], e2[2], e2v);
         Space3D.apply(Space3D.SKYVIEW, -dirSky[0], -dirSky[1], -dirSky[2], zv);
-        float alpha = Space3D.smooth(6F, 30F, (float) quadPx) * vis;
+        // (Zoomed far into it, to what is at its heart, its glow thins out instead of filling the view.)
+        float alpha = Space3D.smooth(6F, 30F, (float) quadPx) * vis * (1F - 0.8F * Space3D.smooth(3000F, 20000F, (float) quadPx));
         if (alpha > 0.01F && SpaceShaders.nebulaReady()) {
             double q = rv * 1.12;
             double ncx = Space3D.projX() * bx / -bz, ncy = Space3D.projY() * by / -bz;

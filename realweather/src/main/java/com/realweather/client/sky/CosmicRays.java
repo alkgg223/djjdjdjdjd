@@ -119,7 +119,7 @@ public final class CosmicRays {
     }
 
     private static void showerAt(Vec3 cam, long seed, double age, float vis, double ang, double dist) {
-        double top = Math.max(cam.y + 180, 420 + 280 * h(seed, 5));
+        double top = Math.max(cam.y + 140, 250 + 170 * h(seed, 5));
         double x = cam.x + Math.cos(ang) * dist, z = cam.z + Math.sin(ang) * dist;
         // Coming in at a slant from a random direction.
         double tilt = h(seed, 6) * 0.6, dir = h(seed, 7) * Math.PI * 2;
@@ -143,8 +143,8 @@ public final class CosmicRays {
         double ex = x + dx * part, ey = y + dy * part, ez = z + dz * part;
         float a = fade * energy * (float) (depth == 0 ? 0.65 : 0.5 / Math.sqrt(depth + 1));
         double w = 0.9 + 1.6 / (depth + 1);
-        ribbon(cam, x, y, z, ex, ey, ez, w, 0.7F, 0.85F, 1F, a);
-        ribbon(cam, x, y, z, ex, ey, ez, w * 5, 0.5F, 0.55F, 1F, a * 0.22F);
+        ribbon(cam, x, y, z, ex, ey, ez, w, 0.75F, 0.88F, 1F, Math.min(1F, a * 1.5F));
+        ribbon(cam, x, y, z, ex, ey, ez, w * 5, 0.5F, 0.55F, 1F, a * 0.35F);
         if (s1 >= front) {
             return;
         }

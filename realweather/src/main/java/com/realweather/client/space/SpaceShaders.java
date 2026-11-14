@@ -445,7 +445,7 @@ public final class SpaceShaders {
             s.safeGetUniform("Near").set(near);
             COUNT[5]++;
             RenderSystem.setShader(() -> s);
-            draw(x0, y0, x1, y1);
+            draw(x0, y0, x1, y1, true);
         } catch (RuntimeException | LinkageError e) {
             broken = true;
             RealWeather.LOG.error("Star surfaces disabled after an error", e);
@@ -516,9 +516,14 @@ public final class SpaceShaders {
      * the resolution into a picture of its own, then put on the screen smoothly enlarged (its colour premultiplied).
      */
     private static void draw(float x0, float y0, float x1, float y1) {
+        draw(x0, y0, x1, y1, false);
+    }
+
+    /** As above; `full`: at the screen's own resolution (cheap passes, whose fine detail would blur). */
+    private static void draw(float x0, float y0, float x1, float y1, boolean full) {
         traced = true;
         RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
-        float sc = scale < 0 ? 0.5F : scale;
+        float sc = full ? 1F : scale < 0 ? 0.5F : scale;
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
         RenderSystem.colorMask(true, true, true, true);
