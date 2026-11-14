@@ -211,7 +211,8 @@ public class PlanetViewScreen extends Screen {
     /** For tests: straight to a height above the ground (negative: high in orbit), looking this way. */
     public void testView(double height, double yaw, double pitch) {
         double g = groundHere();
-        alt = wantAlt = height < 0 ? radius * 2.6 : g + Math.max(1.62, height);
+        // (A negative height below -1: that far inside, for nebulae.)
+        alt = wantAlt = height < -1 ? Math.max(g + 1.62, height) : height < 0 ? radius * 2.6 : g + Math.max(1.62, height);
         lookYaw = yaw;
         lookPitch = pitch;
     }

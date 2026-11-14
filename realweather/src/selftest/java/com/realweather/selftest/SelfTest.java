@@ -86,6 +86,9 @@ public final class SelfTest {
         if (suite.contains("travel")) {
             travelSuite();
         }
+        if (suite.contains("nebulae")) {
+            nebulaSuite();
+        }
         if (suite.contains("planets") || suite.contains("orbit") || suite.contains("ascent") || suite.contains("zoom")) {
             boolean all = suite.contains("planets");
             planetsSuite(all || suite.contains("ascent"), all || suite.contains("orbit"), all || suite.contains("zoom"));
@@ -1350,6 +1353,63 @@ public final class SelfTest {
         }
         step(5, () -> com.realweather.client.space.Telescope.stop());
         step(5, () -> com.realweather.client.space.Telescope.stop());
+    }
+
+    /** 1.13: nebulae and pulsars through the telescope, and the planet map close to a star, a pulsar, the black hole and inside a nebula. */
+    private static void nebulaSuite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 18000");
+            cmd("rw sky natural off");
+            cmd("rw sky stop");
+            goTo("minecraft:plains", 0, 0);
+        });
+        step(60, SelfTest::platform);
+        step(60, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> {
+                ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                BlockPos at = p.blockPosition().north();
+                server.overworld().setBlock(at, com.realweather.device.ModDevices.TELESCOPE.get().defaultBlockState(), 3);
+                telescopeAt = at;
+            });
+        });
+        String[][] targets = {{"orion_nebula", "1.6"}, {"eagle_nebula", "0.6"}, {"crab_nebula", "0.17"}, {"ring_nebula", "0.05"}, {"horsehead_nebula", "0.3"},
+                {"helix_nebula", "0.6"}, {"cats_eye_nebula", "0.12"}, {"veil_nebula", "4"}, {"crab_pulsar", "0.0015"}, {"vela_pulsar", "0.0015"},
+                {"psr_j1748_2446ad", "0.002"}};
+        for (int i = 0; i < targets.length; i++) {
+            String id = targets[i][0];
+            double fov = Double.parseDouble(targets[i][1]);
+            String label = String.format("n%02d_%s", i + 1, id);
+            step(5, () -> {
+                com.realweather.client.space.Telescope.start(telescopeAt, com.realweather.client.space.Catalog.byId(id));
+                lookAtTarget(id);
+            });
+            step(4, () -> {
+                com.realweather.client.space.Telescope.setFov(fov);
+                lookAtTarget(id);
+            });
+            step(10, () -> lookAtTarget(id));
+            step(2, () -> shot(label));
+        }
+        step(5, () -> com.realweather.client.space.Telescope.stop());
+        String[][] views = {{"betelgeuse", "-1"}, {"vela_pulsar", "-1"}, {"ton618", "-1"}, {"ton618", "60"}, {"orion_nebula", "-1"}, {"orion_nebula", "-300"},
+                {"crab_nebula", "-200"}};
+        for (String[] v : views) {
+            step(5, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetViewScreen(
+                    com.realweather.client.space.Catalog.byId(v[0]))));
+            step(3, () -> {
+                double h = Double.parseDouble(v[1]);
+                if (h != -1 && Minecraft.getInstance().screen instanceof com.realweather.client.space.PlanetViewScreen ps) {
+                    ps.testView(h, 0, 0);
+                }
+            });
+            step(10, () -> shot("o_" + v[0] + "_" + v[1].replace("-", "m")));
+        }
+        step(5, () -> Minecraft.getInstance().setScreen(null));
+        step(5, () -> cmd("time set 6000"));
+        step(5, () -> turnClient(270F, -10F));
+        step(40, () -> shot("g_god_rays"));
     }
 
     /** 1.13: travelling to other worlds (their ground, sky and blocks), orbit, and home again. */

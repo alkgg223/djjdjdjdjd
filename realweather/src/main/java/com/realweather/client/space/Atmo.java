@@ -15,7 +15,8 @@ public record Atmo(float top, float scaleH, float br, float bg, float bb, float 
 
     /** The sky over the ground of a world in the planets dimension (the air reaching up to 700 blocks). */
     static Atmo sky(float r, float g, float b, float strength, float sr, float sg, float sb) {
-        float k = 10F * strength;
-        return new Atmo(1.156F, 0.03F, k * r * r, k * g * g, k * b * b, 1.2F * strength, sr, sg, sb, 18F, 1F);
+        // Thin airs still light their whole sky by day (Mars's is a pale butterscotch).
+        float k = 10F * (float) Math.sqrt(strength) * 1.3F;
+        return new Atmo(1.156F, 0.03F, k * r * r, k * g * g, k * b * b, 1.6F * strength, sr, sg, sb, 26F, 1F);
     }
 }
