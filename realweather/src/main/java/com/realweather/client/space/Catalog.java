@@ -13,9 +13,9 @@ import java.util.List;
  * the telescope, so it has to be pointed at the place and zoomed right in.
  */
 public final class Catalog {
-    public static final int PLANETS = 0, STARS = 1, EXOPLANETS = 2, NEBULAE = 3;
+    public static final int PLANETS = 0, STARS = 1, EXOPLANETS = 2, NEBULAE = 3, GALAXIES = 4;
     /** Kinds of body. */
-    static final int ROCKY = 0, GAS = 1, STAR = 2, PULSAR = 3, DWARF = 4, BLACKHOLE = 5, NEBULA = 6, COMET = 7, MERGER = 8;
+    static final int ROCKY = 0, GAS = 1, STAR = 2, PULSAR = 3, DWARF = 4, BLACKHOLE = 5, NEBULA = 6, COMET = 7, MERGER = 8, GALAXY = 9;
     /** The planet blocks, by their place in the block atlas. */
     static final int REGOLITH = 0, BASALT = 1, SAND = 2, ICE = 3, FROST = 4, MAGMA = 5, CLOUD = 6, WATER = 7, MOSS = 8, CRYSTAL = 9, SULFUR = 10,
             IRONSTONE = 11, STORM = 12, OBSIDIAN = 13, HOTROCK = 14, ASH = 15;
@@ -156,6 +156,10 @@ public final class Catalog {
         /** Somewhere you can go and see up close (and the planet map can take you). */
         public boolean visitable() {
             return isPlanet() || com.realweather.space.Sites.IDS.contains(id);
+        }
+
+        public boolean isGalaxy() {
+            return kind == GALAXY;
         }
 
         /** This body as a planet of blocks with a radius of `blocks` (for the ray-traced view). */
@@ -669,6 +673,49 @@ public final class Catalog {
         TARGETS.add(new Target("gw150914", STARS, gw, gw.bodies.get(0)));
         // A supernova and its shock front.
         nebula("sn1987a", at("sn1987a"), "168 000 ly (LMC)", 0.0006);
+        galaxies();
+    }
+
+    private static Sys galaxy(String id, double[] dir, String distance, double radius) {
+        Sys s = new Sys(id, dir, distance);
+        s.add(new Body(id, GALAXY, null, radius, 0, 0, 0, 0, 0, 1F, 0.9F, 0.76F));
+        SYSTEMS.add(s);
+        TARGETS.add(new Target(id, GALAXIES, s, s.bodies.get(0)));
+        return s;
+    }
+
+    /** Fifteen real galaxies (the Milky Way seen towards its heart). */
+    private static void galaxies() {
+        Sys sgrA = null;
+        for (Sys s : SYSTEMS) {
+            if (s.id.equals("sgr_a_star")) {
+                sgrA = s;
+            }
+        }
+        galaxy("milky_way", sgrA != null ? near(sgrA.dir, 0.004, -0.003) : at("milky_way"), "26 700 ly to its centre", 0.25);
+        double[] m31 = at("andromeda");
+        galaxy("andromeda", m31, "2.5 million ly", 0.028);
+        galaxy("triangulum", near(m31, 0.18, 0.12), "2.7 million ly", 0.006);
+        double[] lmc = at("lmc");
+        galaxy("lmc", lmc, "160 000 ly", 0.08);
+        galaxy("smc", near(lmc, 0.3, 0.18), "200 000 ly", 0.04);
+        galaxy("whirlpool", at("whirlpool"), "31 million ly", 0.0016);
+        galaxy("sombrero", at("sombrero"), "31 million ly", 0.0013);
+        galaxy("pinwheel", at("pinwheel"), "21 million ly", 0.0035);
+        galaxy("centaurus_a", at("centaurus_a"), "12 million ly", 0.0017);
+        Sys m87 = null;
+        for (Sys s : SYSTEMS) {
+            if (s.id.equals("m87_star")) {
+                m87 = s;
+            }
+        }
+        galaxy("m87", m87 != null ? near(m87.dir, 0.0004, 0.0003) : at("m87"), "53 million ly", 0.001);
+        galaxy("sculptor", at("sculptor"), "11.4 million ly", 0.0035);
+        galaxy("black_eye", at("black_eye"), "17 million ly", 0.0013);
+        double[] m81 = at("bodes");
+        galaxy("bodes", m81, "12 million ly", 0.0039);
+        galaxy("cigar", near(m81, 0.008, 0.006), "12 million ly", 0.0016);
+        galaxy("cartwheel", at("cartwheel"), "500 million ly", 0.0002);
     }
 
     private static void exo(String planet, String host, String distance, Body star, Body p) {

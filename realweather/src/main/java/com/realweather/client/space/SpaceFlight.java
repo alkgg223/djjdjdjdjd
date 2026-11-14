@@ -260,6 +260,14 @@ public final class SpaceFlight {
             speed = driveOn ? drivePct / 100.0 * SolarSystem.C * WARP : 4000 * (fast ? 6 : 1);
         } else {
             speed = driveOn ? 0.05 + drivePct / 100.0 * 2.0 : 0.12 * (fast ? 3 : 1);
+            Catalog.Target gt = Catalog.byId(place);
+            if (gt != null && gt.body.isGalaxy()) {
+                // Across a galaxy: from its whole width down to one star system, the speed follows the scale.
+                speed = (driveOn ? 0.01 + drivePct / 100.0 * 0.5 : 0.04) * (fast ? 4 : 1);
+                if (Galaxies.nearestDist < 0.01) {
+                    speed = Math.min(speed, Math.max(2.0E-8, Galaxies.nearestDist * 0.7));
+                }
+            }
         }
         // Slowing down on the way in to whatever is ahead (so as not to fly straight through it).
         double brake = Double.MAX_VALUE;
@@ -726,6 +734,16 @@ public final class SpaceFlight {
             Catalog.Target t = Catalog.byId(place);
             if (t != null && CloseViews.deadly(t.body) > 0 && nearDist < CloseViews.deadly(t.body) * 1.6) {
                 g.drawString(font, Component.translatable("realweather.flight.danger"), 6, y + 11, 0xFFFF6040, true);
+            }
+            if (t != null && t.body.isGalaxy()) {
+                Galaxies.Look gl = Galaxies.look(t.body.id);
+                g.drawString(font, Component.translatable("realweather.galaxy.real", String.format(Locale.ROOT, "%,.0f", gl == null ? 0 : gl.diameterLy())), 6,
+                        y + 11, 0xFFB0D8FF, true);
+                if (Galaxies.nearest != null && nearDist < 1.3 && gl != null) {
+                    double ly = Galaxies.nearestDist * gl.diameterLy() / 2;
+                    g.drawString(font, Component.translatable("realweather.galaxy.nearest", Galaxies.nearest, ly < 0.01
+                            ? String.format(Locale.ROOT, "%.0f AU", ly * 63241) : String.format(Locale.ROOT, "%.2f ly", ly)), 6, y + 22, 0xFFFFE0A0, true);
+                }
             }
             if (t != null && t.body.kind == Catalog.BLACKHOLE) {
                 g.drawString(font, holeStage(nearDist), 6, y + 11, nearDist < 1 ? 0xFFFF7050 : 0xFFFFC080, true);

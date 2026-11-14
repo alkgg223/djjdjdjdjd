@@ -20,7 +20,9 @@ public final class Sites {
             "trifid_nebula", "carina_nebula", "ring_nebula", "helix_nebula", "dumbbell_nebula", "cats_eye_nebula", "eskimo_nebula",
             "rosette_nebula", "north_america_nebula", "veil_nebula", "tarantula_nebula", "omega_nebula", "cone_nebula", "bubble_nebula",
             "california_nebula", "heart_nebula", "soul_nebula", "witch_head_nebula", "sn1987a", "halley", "hale_bopp", "neowise",
-            "sgr_a_star", "m87_star");
+            "sgr_a_star", "m87_star",
+            "milky_way", "andromeda", "triangulum", "lmc", "smc", "whirlpool", "sombrero", "pinwheel", "centaurus_a", "m87", "sculptor",
+            "black_eye", "cigar", "bodes", "cartwheel");
     /** Height of the platform's top. */
     public static final int FLOOR = 100;
 

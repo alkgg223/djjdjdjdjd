@@ -22,6 +22,7 @@ final class CloseViews {
     /** How big (view units) an object is drawn up close. */
     static double radius(Catalog.Body b) {
         return switch (b.kind) {
+            case Catalog.GALAXY -> 1000;
             case Catalog.PULSAR -> 20;
             case Catalog.BLACKHOLE -> 10;
             case Catalog.NEBULA -> 400;
@@ -34,6 +35,7 @@ final class CloseViews {
     /** How far off (in its radii) a visit starts. */
     static double start(Catalog.Body b) {
         return switch (b.kind) {
+            case Catalog.GALAXY -> 2.4;
             case Catalog.PULSAR -> b.magnetar ? 7 : 9;
             case Catalog.BLACKHOLE -> 30;
             case Catalog.NEBULA -> 1.7;
@@ -46,6 +48,7 @@ final class CloseViews {
     /** How close (in its radii) you can come; nearer than `deadly` kills. */
     static double closest(Catalog.Body b) {
         return switch (b.kind) {
+            case Catalog.GALAXY -> 0.0;
             case Catalog.PULSAR -> 1.6;
             case Catalog.BLACKHOLE -> 0.0;
             case Catalog.NEBULA -> 0.0;
@@ -130,6 +133,21 @@ final class CloseViews {
                 Space3D.sphere(MOON_MAP, c[0], c[1], c[2], R * 0.06, rv, sun[0], sun[1], sun[2], 0.02F, 0.35F, 0.33F, 0.3F, 0F, 1F, false, 0F, 24);
                 Space3D.scale(1, 1, 1);
                 Comets.draw(c[0], c[1], c[2], R * 0.5, sun, vel, R * 60, seed, clock, px, 1F);
+            }
+            case Catalog.GALAXY -> {
+                Galaxies.Look g = Galaxies.look(body.id);
+                if (g != null) {
+                    double[] rot = Galaxies.frame(g, view);
+                    Space3D.range((float) Math.max(1.0E-4, R * 1.0E-6), (float) (dist + R * 4));
+                    Galaxies.draw(g, c[0], c[1], c[2], R, rot, clock, px, 1F);
+                    if (dist < R * 1.3) {
+                        // Inside it: its stars round you, and their planets.
+                        double[] camG = new double[3];
+                        Trace.local(rot, -c[0] / R, -c[1] / R, -c[2] / R, camG);
+                        int wh = Math.max(1, net.minecraft.client.Minecraft.getInstance().getWindow().getHeight());
+                        Galaxies.local(g, camG, rot, R, clock, 2.0 / (Space3D.projY() * wh));
+                    }
+                }
             }
             case Catalog.MERGER -> Merger.draw(c[0], c[1], c[2], R, unit(view, 0.15, 1, 0.1), clock, px, 1F);
             default -> star(body, c, view, R, seed, clock, px, 1F);

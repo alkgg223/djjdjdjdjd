@@ -12,7 +12,7 @@ import java.util.List;
 /** The planet map's list: every world, moon, comet, star, pulsar, black hole and nebula it can take you to, page by page. */
 public class PlanetMapScreen extends Screen {
     private static int tab;
-    private static final int[] PAGE = new int[4];
+    private static final int[] PAGE = new int[8];
     private int pages = 1;
 
     public PlanetMapScreen() {
@@ -23,7 +23,7 @@ public class PlanetMapScreen extends Screen {
     static List<Catalog.Target> worlds(int tab) {
         List<Catalog.Target> out = new ArrayList<>();
         if (tab >= 2) {
-            for (Catalog.Target t : Catalog.group(tab == 2 ? Catalog.STARS : Catalog.NEBULAE)) {
+            for (Catalog.Target t : Catalog.group(tab == 2 ? Catalog.STARS : tab == 3 ? Catalog.NEBULAE : Catalog.GALAXIES)) {
                 out.add(t);
             }
             return out;
@@ -38,10 +38,10 @@ public class PlanetMapScreen extends Screen {
 
     @Override
     protected void init() {
-        String[] tabs = {"planets", "exoplanets", "stars", "nebulae"};
-        int tw = Math.min(100, (width - 40) / 4);
-        int tx = width / 2 - (tw * 4 + 12) / 2;
-        for (int i = 0; i < 4; i++) {
+        String[] tabs = {"planets", "exoplanets", "stars", "nebulae", "galaxies"};
+        int tw = Math.min(90, (width - 40) / tabs.length);
+        int tx = width / 2 - (tw * tabs.length + 4 * (tabs.length - 1)) / 2;
+        for (int i = 0; i < tabs.length; i++) {
             int idx = i;
             Button b = Button.builder(Component.translatable("realweather.telescope.tab." + tabs[i]), btn -> {
                 tab = idx;

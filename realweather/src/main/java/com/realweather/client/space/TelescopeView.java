@@ -139,7 +139,7 @@ public final class TelescopeView {
             double ang = Math.atan2(Math.sqrt(c[0] * c[0] + c[1] * c[1]), -c[2]);
             double extent = 0;
             for (Catalog.Body b : s.bodies) {
-                extent = Math.max(extent, b.orbit + b.radius * (b.kind == Catalog.BLACKHOLE ? 4200 : b.kind == Catalog.NEBULA ? 1.2 : 3));
+                extent = Math.max(extent, b.orbit + b.radius * (b.kind == Catalog.BLACKHOLE ? 4200 : b.kind == Catalog.NEBULA || b.kind == Catalog.GALAXY ? 1.2 : 3));
             }
             if (s.cluster || s.hasDisk() || s.nebula > 0) {
                 extent = Math.max(extent, 1.6e-4);
@@ -457,7 +457,7 @@ public final class TelescopeView {
         Space3D.clearDepth();
         double extent = 2e-4;
         for (Catalog.Body b : s.bodies) {
-            if (b.kind == Catalog.NEBULA) {
+            if (b.kind == Catalog.NEBULA || b.kind == Catalog.GALAXY) {
                 extent = Math.max(extent, b.radius * 1.3);
             } else if (b.kind == Catalog.BLACKHOLE) {
                 extent = Math.max(extent, b.radius * 4200);
@@ -509,6 +509,7 @@ public final class TelescopeView {
                             b.magnetar);
                 }
                 case Catalog.COMET -> comet(b, bx, by, bz, r, px, vis);
+                case Catalog.GALAXY -> galaxy(b, dir, bx, by, bz, r, px);
                 case Catalog.MERGER -> {
                     Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(px * 4, r * 30), 0F, 0.6F, 0.78F, 1F, 0.35F * vis);
                     Merger.draw(bx, by, bz, r * 20, pulsarAxis(b), time / 20.0, px, vis);
@@ -517,6 +518,30 @@ public final class TelescopeView {
                 default -> body(s, b, bx, by, bz, r, rPix, px, lightPos, light, vis);
             }
         }
+    }
+
+    /** A galaxy, tipped as we see it: from a smudge of light to its arms, dust and star clouds. */
+    private static void galaxy(Catalog.Body b, double[] dirSky, double bx, double by, double bz, double r, double px) {
+        Galaxies.Look g = Galaxies.look(b.id);
+        if (g == null) {
+            return;
+        }
+        double[] e1 = new double[3], e2 = new double[3];
+        across(dirSky, e1, e2);
+        double[] base = new double[9], v = new double[3];
+        Space3D.apply(Space3D.SKYVIEW, e1[0], e1[1], e1[2], v);
+        base[0] = v[0];
+        base[1] = v[1];
+        base[2] = v[2];
+        Space3D.apply(Space3D.SKYVIEW, e2[0], e2[1], e2[2], v);
+        base[3] = v[0];
+        base[4] = v[1];
+        base[5] = v[2];
+        Space3D.apply(Space3D.SKYVIEW, -dirSky[0], -dirSky[1], -dirSky[2], v);
+        base[6] = v[0];
+        base[7] = v[1];
+        base[8] = v[2];
+        Galaxies.draw(g, bx, by, bz, r, Galaxies.frame(g, base), time / 20.0, px, Math.max(Space3D.night, 0.25F) * Space3D.clear);
     }
 
     /** A comet in the night sky: its tails pointing away from the Sun. */
