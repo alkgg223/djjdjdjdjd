@@ -457,8 +457,14 @@ public final class Catalog {
         target("eta_carinae", STARS, eta, "eta_carinae");
 
         // TON 618: one of the most massive black holes known (66 billion Suns), feeding a quasar.
-        Sys ton = sys("ton618", "10.8 billion ly", new Body("ton618", BLACKHOLE, null, 1.2e-6, 0, 0, 0, 0, 0, 0.75F, 0.85F, 1F));
+        Sys ton = sys("ton618", "10.8 billion ly", new Body("ton618", BLACKHOLE, null, 1.2e-6, 0, 0, 0, 0, 0, 0.75F, 0.85F, 1F).jets());
         target("ton618", STARS, ton, "ton618");
+        // Sagittarius A*, the black hole at the heart of our own galaxy (4 million Suns), quiet, ringed by its swarm of
+        // stars; and M87*, the first black hole ever pictured (6.5 billion Suns), with its giant jet.
+        Sys sgrA = sys("sgr_a_star", "26 700 ly", new Body("sgr_a_star", BLACKHOLE, null, 1.0e-6, 0, 0, 0, 0, 0, 1F, 0.8F, 0.6F));
+        target("sgr_a_star", STARS, sgrA, "sgr_a_star");
+        Sys m87 = sys("m87_star", "53 million ly", new Body("m87_star", BLACKHOLE, null, 1.1e-6, 0, 0, 0, 0, 0, 1F, 0.75F, 0.5F).jets());
+        target("m87_star", STARS, m87, "m87_star");
 
         // ------------------------------------------------------------------------- exoplanets
         target("proxima_b", EXOPLANETS, proxima, "proxima_b");

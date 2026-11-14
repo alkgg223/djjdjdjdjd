@@ -837,8 +837,8 @@ public final class TelescopeView {
         Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(px * 7, rs * 24), 0F, 0.72F, 0.82F, 1F, (0.25F + 0.6F * point) * vis);
         Space3D.billboard(Space3D.STAR, ADD, bx, by, bz, Math.max(px * 12, rs * 30), 0F, 0.8F, 0.88F, 1F, 0.8F * point * vis);
         // The nebula of glowing hydrogen round the quasar, hundreds of thousands of light years across.
-        long seed = 618;
-        for (int i = 0; i < 46; i++) {
+        long seed = b.id.hashCode();
+        for (int i = 0; i < ("ton618".equals(b.id) ? 46 : 0); i++) {
             double ang = Space3D.h(seed, i * 3L) * Math.PI * 2, rad = rs * (150 + 1600 * Math.pow(Space3D.h(seed, i * 3L + 1), 1.5));
             double gx = bx + Math.cos(ang) * rad, gy = by + Math.sin(ang) * rad * 0.8;
             Space3D.billboard(Space3D.GLOW, ADD, gx, gy, bz, rs * (300 + 500 * Space3D.h(seed, i * 3L + 2)), (float) ang, 0.35F, 0.85F, 0.7F,
@@ -855,7 +855,10 @@ public final class TelescopeView {
         // The jets, along the axis both ways.
         float alpha = Space3D.smooth(5F, 16F, (float) quadPx) * vis;
         if (alpha <= 0.01F || !SpaceShaders.holeReady()) {
-            Jets.draw(bx, by, bz, n, rs * 900, rs * 16, 0.6F, 0.74F, 1F, 0.98, 618, time / 20.0, px, vis);
+            swarm(b, bx, by, bz, rs, n, px, vis);
+            if (b.jets) {
+                Jets.draw(bx, by, bz, n, rs * 900, rs * 16, 0.6F, 0.74F, 1F, 0.98, 618, time / 20.0, px, vis);
+            }
             return;
         }
         double dist = Math.sqrt(bx * bx + by * by + bz * bz);
@@ -877,8 +880,21 @@ public final class TelescopeView {
         double am = ((x0 + x1) / 2 - ncx) / hx, ha = (x1 - x0) / 2 / hx, bm = ((y0 + y1) / 2 - ncy) / hy, hb = (y1 - y0) / 2 / hy;
         SpaceShaders.blackHole((float) x0, (float) y0, (float) x1, (float) y1, new double[]{am * edge, bm * edge, 60}, new double[]{ha * edge, 0, 0},
                 new double[]{0, hb * edge, 0}, new double[]{0, 0, -1}, new double[3], new double[3], nb, (float) (time % 200000.0) * 0.05F, alpha,
-                (float) edge, 1.15F, 320F);
-        Jets.draw(bx, by, bz, n, rs * 900, rs * 16, 0.6F, 0.74F, 1F, 0.98, 618, time / 20.0, px, vis);
+                (float) edge, CloseViews.exposure(b), 320F);
+        Space3D.depthSphere(bx, by, bz, rs * 2.6);
+        swarm(b, bx, by, bz, rs, n, px, vis);
+        if (b.jets) {
+            Jets.draw(bx, by, bz, n, rs * 900, rs * 16, 0.6F, 0.74F, 1F, 0.98, 618, time / 20.0, px, vis);
+        }
+    }
+
+    /** The bright stars swarming round a black hole (and their planets), once the telescope can pick them out. */
+    private static void swarm(Catalog.Body b, double bx, double by, double bz, double rs, double[] axis, double px, float vis) {
+        float a = Space3D.smooth(20F, 120F, (float) (rs * 700 / px)) * vis;
+        if (a <= 0.01F) {
+            return;
+        }
+        StarSwarm.draw(bx, by, bz, rs, Space3D.orient(axis[0], axis[1], axis[2], 0), b.id.hashCode(), 260, 18, 700, time / 20.0, px, a);
     }
 
     /** The old globular cluster the pulsar lives in: thousands of stars crowding to its centre. */

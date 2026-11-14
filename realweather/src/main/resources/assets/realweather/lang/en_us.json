@@ -485,7 +485,7 @@
   "realweather.planet_map.hint": "Drag to fly round (low down: to look about). Wheel, W/S or the buttons to go down and up. Esc to leave.",
   "realweather.planet_map.touchdown": "Touchdown on %s!",
   "realweather.target.ton618": "TON 618 (black hole)",
-  "realweather.target.ton618.info": "A quasar powered by one of the biggest black holes known: 66 billion times the Sun's mass. Zoom right in to see its shadow, photon ring, accretion disc and the light bent round it.",
+  "realweather.target.ton618.info": "A quasar powered by one of the biggest black holes known: 66 billion times the Sun's mass. Zoom right in to see its shadow, photon ring, accretion disc and the light bent round it. A huge swarm of bright stars with planets circles it.",
   "realweather.space.left_ozone": "You have left the ozone layer: you are in space now",
   "realweather.space.back_in_air": "Back inside the air, under the ozone layer",
   "realweather.space.earth_below": "The whole Earth is below you",
@@ -658,5 +658,9 @@
   "realweather.target.gw150914": "GW150914 (black holes merging)",
   "realweather.target.gw150914.info": "Two black holes spiralling together, sending out gravitational waves: the first ever detected.",
   "realweather.target.sn1987a": "Supernova 1987A",
-  "realweather.target.sn1987a.info": "A star that exploded in 1987: its shock front races out and lights up the ring round it."
+  "realweather.target.sn1987a.info": "A star that exploded in 1987: its shock front races out and lights up the ring round it.",
+  "realweather.target.sgr_a_star": "Sagittarius A* (our galaxy's black hole)",
+  "realweather.target.sgr_a_star.info": "The black hole at the centre of the Milky Way, 4 million Suns, ringed by a swarm of stars racing round it.",
+  "realweather.target.m87_star": "M87* (the first pictured black hole)",
+  "realweather.target.m87_star.info": "6.5 billion Suns in the galaxy M87, photographed in 2019, shooting a jet 5000 light years long."
 }

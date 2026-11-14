@@ -1494,7 +1494,7 @@ public final class SelfTest {
         // Telescope: the Sun's face by day, then the night sky's new things.
         String[][] day = {{"sun", "10"}, {"sun", "1.5"}};
         String[][] night = {{"jupiter", "0.08"}, {"saturn", "0.06"}, {"saturn", "0.004"}, {"halley", "0.4"}, {"crab_pulsar", "0.0015"},
-                {"gw150914", "0.004"}, {"sn1987a", "0.1"}, {"ton618", "0.004"}, {"sgr_1806_20", "0.001"}};
+                {"gw150914", "0.004"}, {"sn1987a", "0.1"}, {"ton618", "0.004"}, {"ton618", "0.06"}, {"sgr_a_star", "0.05"}, {"sgr_1806_20", "0.001"}};
         for (String[][] list : new String[][][]{day, night}) {
             if (list == night) {
                 step(5, () -> cmd("time set 18000"));
@@ -1516,7 +1516,7 @@ public final class SelfTest {
         step(5, () -> com.realweather.client.space.Telescope.stop());
         // The planet map, close up.
         String[][] views = {{"sun", "-1"}, {"jupiter", "-1"}, {"jupiter", "300"}, {"saturn", "-1"}, {"saturn", "600"}, {"io", "80"}, {"halley", "-1"},
-                {"gw150914", "-1"}, {"sgr_1806_20", "-1"}, {"sn1987a", "-1"}, {"ton618", "-1"}};
+                {"gw150914", "-1"}, {"sgr_1806_20", "-1"}, {"sn1987a", "-1"}, {"ton618", "-1"}, {"ton618", "150"}, {"m87_star", "-1"}};
         for (String[] v : views) {
             step(5, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetViewScreen(
                     com.realweather.client.space.Catalog.byId(v[0]))));
@@ -1539,7 +1539,7 @@ public final class SelfTest {
         step(4, () -> shot("c_cosmic_rays_later"));
         step(5, () -> com.realweather.client.sky.CosmicRays.testAge = -1);
         // Deep space: beside the Sun, the black hole, a pulsar; flying in.
-        String[] sites = {"sun", "ton618", "vela_pulsar", "orion_nebula", "neowise"};
+        String[] sites = {"sun", "ton618", "sgr_a_star", "vela_pulsar", "orion_nebula", "neowise"};
         for (String site : sites) {
             step(5, () -> cmd("execute as @a run rw travel " + site));
             step(50, () -> {

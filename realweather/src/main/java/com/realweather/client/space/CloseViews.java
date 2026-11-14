@@ -98,11 +98,18 @@ final class CloseViews {
                 n[1] /= nl;
                 n[2] /= nl;
                 double[] nv = unit(view, n[0], n[1], n[2]);
-                SpaceShaders.blackHole(-1F, -1F, 1F, 1F, o, new double[3], new double[3], f, dx, dy, n, (float) clock, 1F, 0F, 1.15F, 420F);
-                // Its jets over the lensed sky.
+                SpaceShaders.blackHole(-1F, -1F, 1F, 1F, o, new double[3], new double[3], f, dx, dy, n, (float) clock, 1F, 0F, exposure(body), 420F);
+                // The great cluster of bright stars swarming round it (some with planets), and its jets, over the lensed
+                // sky; what is behind the hole's shadow stays hidden.
                 Space3D.clearDepth();
-                Space3D.range((float) Math.max(0.05, (dist - R * 4) * 0.3), (float) (dist + R * 800));
-                Jets.draw(c[0], c[1], c[2], nv, R * 700, R * 14, 0.6F, 0.74F, 1F, 0.98, seed, clock, px, 1F);
+                Space3D.range((float) Math.max(0.05, R * 0.2), (float) (dist + R * 1000));
+                Space3D.depthSphere(c[0], c[1], c[2], R * 2.6);
+                double[] hole = new double[9];
+                Space3D.mul(view, Space3D.orient(n[0], n[1], n[2], 0), hole);
+                StarSwarm.draw(c[0], c[1], c[2], R, hole, seed, 260, 18, 700, clock, px, 1F);
+                if (body.jets) {
+                    Jets.draw(c[0], c[1], c[2], nv, R * 700, R * 14, 0.6F, 0.74F, 1F, 0.98, seed, clock, px, 1F);
+                }
             }
             case Catalog.NEBULA -> nebula(body, c, view, cam, R, f, dx, dy, px, clock);
             case Catalog.COMET -> {
@@ -119,6 +126,15 @@ final class CloseViews {
             case Catalog.MERGER -> Merger.draw(c[0], c[1], c[2], R, unit(view, 0.15, 1, 0.1), clock, px, 1F);
             default -> star(body, c, view, R, seed, clock, px, 1F);
         }
+    }
+
+    /** How bright a black hole's disc glows: TON 618 a blazing quasar, M87* bright, Sagittarius A* dim and quiet. */
+    static float exposure(Catalog.Body b) {
+        return switch (b.id) {
+            case "sgr_a_star" -> 0.55F;
+            case "m87_star" -> 0.9F;
+            default -> 1.15F;
+        };
     }
 
     /** A star up close: its face (ray traced), activity, fire and corona. */
