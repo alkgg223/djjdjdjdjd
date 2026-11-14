@@ -34,13 +34,22 @@ public final class ClientCommands {
                 return show(c.getSource());
             }));
         }
-        root.then(tornado).then(weather);
+        LiteralArgumentBuilder<CommandSourceStack> space = Commands.literal("space");
+        for (ClientConfig.SpaceQuality q : ClientConfig.SpaceQuality.values()) {
+            space.then(Commands.literal(q.name().toLowerCase(Locale.ROOT)).executes(c -> {
+                ClientConfig.SPACE_QUALITY.set(q);
+                ClientConfig.SPEC.save();
+                return show(c.getSource());
+            }));
+        }
+        root.then(tornado).then(weather).then(space);
         event.getDispatcher().register(root);
     }
 
     private static int show(CommandSourceStack src) {
         src.sendSuccess(() -> Component.translatable("realweather.cmd.graphics", ClientConfig.TORNADO_QUALITY.get().name(),
                 ClientConfig.QUALITY.get().name()), false);
+        src.sendSuccess(() -> Component.translatable("realweather.cmd.space_graphics", ClientConfig.SPACE_QUALITY.get().name()), false);
         return 1;
     }
 }

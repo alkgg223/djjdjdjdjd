@@ -1,0 +1,10 @@
+{
+  "vertex": "realweather:space_quad",
+  "fragment": "realweather:space_blit",
+  "samplers": [
+    {
+      "name": "Sampler0"
+    }
+  ],
+  "uniforms": []
+}

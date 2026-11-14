@@ -1,5 +1,7 @@
 package com.realweather.client.space;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -12,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import org.lwjgl.opengl.GL11;
 
 /**
  * The two ray-traced things out in space: planets made of blocks (each ray followed cell by cell through the blocks
@@ -23,35 +26,135 @@ public final class SpaceShaders {
     public static final ResourceLocation BLOCKS = RealWeather.id("textures/environment/space3d/planet_blocks.png");
     /** On the test machine's software renderer the ray tracing is cut short (only to check it in screenshots). */
     private static final boolean TESTING = Boolean.getBoolean("realweather.selftest");
-    private static ShaderInstance voxel, hole, air, gas;
+    private static ShaderInstance voxel, hole, air, gas, blit, giant, starFace, rings;
     private static final ResourceLocation NOISE = RealWeather.id("textures/environment/space3d/nebula_noise.png");
+    private static final ResourceLocation RING_MAP = RealWeather.id("textures/environment/space3d/rings.png");
     private static boolean broken;
+    /** Where the ray-traced passes are worked out at a fraction of the screen's resolution, then put on the screen. */
+    private static TextureTarget low;
+    /** The fraction of the screen's resolution they are worked out at (set by the frame rate when on AUTO). */
+    private static float scale = -1F;
+    private static long lastFrame;
+    private static double frameMs = 16;
+    private static boolean traced, wasTraced;
+    private static int mobile = -1;
 
     private SpaceShaders() {}
 
     public static void register(RegisterShadersEvent event) {
+        load(event, "voxel_planet", s -> voxel = s);
+        load(event, "black_hole", s -> hole = s);
+        load(event, "atmosphere", s -> air = s);
+        load(event, "nebula", s -> gas = s);
+        load(event, "space_blit", s -> blit = s);
+        load(event, "gas_planet", s -> giant = s);
+        load(event, "star_surface", s -> starFace = s);
+        load(event, "ring_particles", s -> rings = s);
+    }
+
+    /** One shader; if this machine can't compile it, that pass is left out (the rest goes on). */
+    private static void load(RegisterShadersEvent event, String name, java.util.function.Consumer<ShaderInstance> set) {
         try {
-            event.registerShader(new ShaderInstance(event.getResourceProvider(), RealWeather.id("voxel_planet"), DefaultVertexFormat.POSITION_TEX),
-                    s -> voxel = s);
-            event.registerShader(new ShaderInstance(event.getResourceProvider(), RealWeather.id("black_hole"), DefaultVertexFormat.POSITION_TEX),
-                    s -> hole = s);
-            event.registerShader(new ShaderInstance(event.getResourceProvider(), RealWeather.id("atmosphere"), DefaultVertexFormat.POSITION_TEX),
-                    s -> air = s);
-            event.registerShader(new ShaderInstance(event.getResourceProvider(), RealWeather.id("nebula"), DefaultVertexFormat.POSITION_TEX),
-                    s -> gas = s);
+            event.registerShader(new ShaderInstance(event.getResourceProvider(), RealWeather.id(name), DefaultVertexFormat.POSITION_TEX), set);
         } catch (Exception | LinkageError e) {
-            voxel = null;
-            hole = null;
-            RealWeather.LOG.warn("Ray-traced planets and black hole unavailable (shaders did not load)", e);
+            RealWeather.LOG.warn("Space shader {} unavailable (it did not load)", name, e);
+            set.accept(null);
         }
     }
 
+    /** A phone or tablet (its GPU is far weaker than a PC's, and stops the game if a frame takes too long). */
+    public static boolean mobile() {
+        if (mobile < 0) {
+            boolean m = false;
+            try {
+                m = new java.io.File("/system/build.prop").exists() || System.getenv("POJAV_RENDERER") != null
+                        || System.getenv("POJAV_NATIVEDIR") != null;
+            } catch (Throwable ignored) {
+            }
+            try {
+                String r = (com.mojang.blaze3d.platform.GlUtil.getRenderer() + " " + com.mojang.blaze3d.platform.GlUtil.getOpenGLVersion() + " "
+                        + com.mojang.blaze3d.platform.GlUtil.getVendor()).toLowerCase(java.util.Locale.ROOT);
+                for (String k : new String[]{"adreno", "mali", "powervr", "immortalis", "xclipse", "mobileglues", "gl4es", "ltw", "turnip",
+                        "opengl es", "angle", "vivante", "videocore"}) {
+                    m |= r.contains(k);
+                }
+            } catch (Throwable ignored) {
+            }
+            mobile = m ? 1 : 0;
+            RealWeather.LOG.info("Space rendering for a {} GPU", m ? "mobile" : "desktop");
+        }
+        return mobile == 1;
+    }
+
+    /** Off: no ray tracing at all (the smooth spheres, glows and particles stay). */
+    public static boolean enabled() {
+        return com.realweather.ClientConfig.SPACE_QUALITY.get() != com.realweather.ClientConfig.SpaceQuality.OFF;
+    }
+
+    /** Called once a frame: keeps the ray tracing as sharp as the frame rate allows. */
+    public static void frame() {
+        long now = System.nanoTime();
+        if (lastFrame != 0 && wasTraced) {
+            double ms = Math.min(500, (now - lastFrame) / 1.0E6);
+            frameMs += (ms - frameMs) * 0.15;
+        }
+        lastFrame = now;
+        wasTraced = traced;
+        traced = false;
+        com.realweather.ClientConfig.SpaceQuality q = com.realweather.ClientConfig.SPACE_QUALITY.get();
+        boolean m = mobile();
+        float max = m ? 0.7F : 1F, min = m ? 0.22F : 0.35F;
+        switch (q) {
+            case LOW -> scale = m ? 0.25F : 0.4F;
+            case MEDIUM -> scale = m ? 0.38F : 0.6F;
+            case HIGH -> scale = m ? 0.55F : 0.8F;
+            case ULTRA -> scale = 1F;
+            default -> {
+                if (scale < 0) {
+                    scale = m ? 0.3F : 0.7F;
+                }
+                if (wasTraced) {
+                    if (frameMs > 45) {
+                        scale = Math.max(min, scale * 0.92F);
+                    } else if (frameMs < 24) {
+                        scale = Math.min(max, scale * 1.02F);
+                    }
+                }
+            }
+        }
+    }
+
+    /** How many ray steps a pass over this part of the screen may take (so no frame takes the GPU too long). */
+    private static float budget(float steps, float least, float x0, float y0, float x1, float y1) {
+        RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
+        float s = Math.max(0.2F, scale < 0 ? 0.5F : scale);
+        double px = Math.max(1, (x1 - x0) * 0.5 * main.width * s) * Math.max(1, (y1 - y0) * 0.5 * main.height * s);
+        double total = mobile() ? 2.2E7 : 2.5E8;
+        float cap = (float) Math.max(least, total / px);
+        if (TESTING) {
+            cap = Math.min(cap, steps * 0.4F + least * 0.6F);
+        }
+        return Math.min(steps, cap);
+    }
+
     public static boolean voxelReady() {
-        return voxel != null && !broken;
+        return voxel != null && !broken && enabled();
     }
 
     public static boolean holeReady() {
-        return hole != null && !broken;
+        return hole != null && !broken && enabled();
+    }
+
+    public static boolean gasReady() {
+        return giant != null && !broken && enabled();
+    }
+
+    public static boolean starReady() {
+        return starFace != null && !broken && enabled();
+    }
+
+    public static boolean ringsReady() {
+        return rings != null && !broken && enabled();
     }
 
     /** What a planet of blocks looks like: its map, size in blocks, how rugged, its sea, blocks and light. */
@@ -101,7 +204,7 @@ public final class SpaceShaders {
             s.safeGetUniform("Ambient").set(p.ambient);
             s.safeGetUniform("Glow").set(p.glow);
             s.safeGetUniform("Alpha").set(Math.min(1F, p.alpha));
-            s.safeGetUniform("MaxSteps").set(TESTING ? Math.min(p.steps, 72F) : p.steps);
+            s.safeGetUniform("MaxSteps").set(budget(p.steps, 48F, x0, y0, x1, y1));
             s.safeGetUniform("Tiles").set(p.tiles[0], p.tiles[1], p.tiles[2], p.tiles[3]);
             s.safeGetUniform("Gas").set(p.gas ? 1F : 0F);
             s.safeGetUniform("Air").set(p.air);
@@ -117,7 +220,7 @@ public final class SpaceShaders {
             RenderSystem.setShaderTexture(1, BLOCKS);
             RenderSystem.setShader(() -> s);
             draw(x0, y0, x1, y1);
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | LinkageError e) {
             broken = true;
             RealWeather.LOG.error("Planets of blocks disabled after an error", e);
         }
@@ -147,10 +250,10 @@ public final class SpaceShaders {
             s.safeGetUniform("Alpha").set(alpha);
             s.safeGetUniform("Edge").set(edge);
             s.safeGetUniform("Exposure").set(exposure);
-            s.safeGetUniform("MaxSteps").set(TESTING ? Math.min(steps, 120F) : steps);
+            s.safeGetUniform("MaxSteps").set(budget(steps, 90F, x0, y0, x1, y1));
             RenderSystem.setShader(() -> s);
             draw(x0, y0, x1, y1);
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | LinkageError e) {
             broken = true;
             RealWeather.LOG.error("Black hole disabled after an error", e);
         }
@@ -161,8 +264,8 @@ public final class SpaceShaders {
      * centre, world axes), the sun along `sun` (world). False if it can't be drawn here.
      */
     public static boolean atmosphere(Atmo a, double[] cam, double[] sun) {
-        if (air == null || broken || a.alpha() <= 0.01F) {
-            return air != null && !broken;
+        if (air == null || broken || !enabled() || a.alpha() <= 0.01F) {
+            return air != null && !broken && enabled();
         }
         try {
             Space3D.flush();
@@ -189,7 +292,7 @@ public final class SpaceShaders {
             RenderSystem.setShader(() -> s);
             draw(-1F, -1F, 1F, 1F);
             return true;
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | LinkageError e) {
             broken = true;
             RealWeather.LOG.error("Atmospheric scattering disabled after an error", e);
             return false;
@@ -197,7 +300,7 @@ public final class SpaceShaders {
     }
 
     public static boolean nebulaReady() {
-        return gas != null && !broken;
+        return gas != null && !broken && enabled();
     }
 
     /**
@@ -229,41 +332,209 @@ public final class SpaceShaders {
                 s.safeGetUniform("P" + i).set(m);
             }
             s.safeGetUniform("Count").set((float) n);
-            s.safeGetUniform("Steps").set(TESTING ? Math.min(steps, 24F) : steps);
+            s.safeGetUniform("Steps").set(budget(steps, 16F, x0, y0, x1, y1));
             s.safeGetUniform("Octaves").set(octaves);
             s.safeGetUniform("Seed").set((float) (Math.abs(r.id.hashCode()) % 97) * 1.37F);
             s.safeGetUniform("Exposure").set(r.exposure);
             s.safeGetUniform("Alpha").set(Math.min(1F, alpha));
             s.safeGetUniform("Fine").set(1F);
-            var tex = Minecraft.getInstance().getTextureManager().getTexture(NOISE);
-            tex.setFilter(true, false);
-            com.mojang.blaze3d.platform.GlStateManager._bindTexture(tex.getId());
-            com.mojang.blaze3d.platform.GlStateManager._texParameter(org.lwjgl.opengl.GL11.GL_TEXTURE_2D, org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S,
-                    org.lwjgl.opengl.GL11.GL_REPEAT);
-            com.mojang.blaze3d.platform.GlStateManager._texParameter(org.lwjgl.opengl.GL11.GL_TEXTURE_2D, org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T,
-                    org.lwjgl.opengl.GL11.GL_REPEAT);
+            noise();
             RenderSystem.setShaderTexture(0, NOISE);
             RenderSystem.setShader(() -> s);
             draw(x0, y0, x1, y1);
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | LinkageError e) {
             broken = true;
             RealWeather.LOG.error("Nebulae disabled after an error", e);
         }
+    }
+
+    /** How a gas giant looks: its map, flattening, light, winds, storms (lon, lat, size, spin), a polar hexagon, glow. */
+    public static final class GasLook {
+        public ResourceLocation map;
+        public float oblate = 1F, time, bands = 1F, hexagon, glow, alpha = 1F, pixel;
+        public float lightR = 1F, lightG = 1F, lightB = 1F, airR = 0.8F, airG = 0.8F, airB = 0.9F;
+        public double lx, ly = 1, lz;
+        public final float[] storms = new float[16];
+
+        public GasLook storm(int i, double lonDeg, double latDeg, double sizeDeg, double spin) {
+            storms[i * 4] = (float) Math.toRadians(lonDeg);
+            storms[i * 4 + 1] = (float) Math.toRadians(latDeg);
+            storms[i * 4 + 2] = (float) Math.toRadians(sizeDeg);
+            storms[i * 4 + 3] = (float) spin;
+            return this;
+        }
+    }
+
+    /** A gas giant's clouds over a rectangle of the screen (rays in its frame, its radius 1). */
+    public static void gasPlanet(GasLook g, float x0, float y0, float x1, float y1, double[] o, double[] ox, double[] oy, double[] d, double[] dx,
+                                 double[] dy) {
+        if (!gasReady() || g.map == null || g.alpha <= 0.01F) {
+            return;
+        }
+        try {
+            Space3D.flush();
+            ShaderInstance s = giant;
+            rays(s, o, ox, oy, d, dx, dy);
+            double l = Math.sqrt(g.lx * g.lx + g.ly * g.ly + g.lz * g.lz) + 1.0E-12;
+            s.safeGetUniform("LightDir").set((float) (g.lx / l), (float) (g.ly / l), (float) (g.lz / l));
+            s.safeGetUniform("LightColor").set(g.lightR, g.lightG, g.lightB);
+            s.safeGetUniform("Oblate").set(g.oblate);
+            s.safeGetUniform("Time").set(g.time);
+            s.safeGetUniform("Bands").set(g.bands);
+            for (int i = 0; i < 4; i++) {
+                s.safeGetUniform("V" + i).set(g.storms[i * 4], g.storms[i * 4 + 1], g.storms[i * 4 + 2], g.storms[i * 4 + 3]);
+            }
+            s.safeGetUniform("Hexagon").set(g.hexagon);
+            s.safeGetUniform("Glow").set(g.glow);
+            s.safeGetUniform("AirColor").set(g.airR, g.airG, g.airB);
+            s.safeGetUniform("Alpha").set(Math.min(1F, g.alpha));
+            s.safeGetUniform("Pixel").set(g.pixel);
+            Minecraft.getInstance().getTextureManager().getTexture(g.map).setFilter(true, false);
+            noise();
+            RenderSystem.setShaderTexture(0, g.map);
+            RenderSystem.setShaderTexture(1, NOISE);
+            RenderSystem.setShader(() -> s);
+            draw(x0, y0, x1, y1);
+        } catch (RuntimeException | LinkageError e) {
+            broken = true;
+            RealWeather.LOG.error("Gas giants disabled after an error", e);
+        }
+    }
+
+    /**
+     * A star's boiling face over a rectangle of the screen (rays in its frame, radius 1): its colour, how many
+     * granules across its radius, up to four sunspots (direction and angular size), pixel size (radii) for detail.
+     */
+    public static void starSurface(float r, float g, float b, float bright, float cells, float time, float pixel, float[] spots, float alpha,
+                                   float x0, float y0, float x1, float y1, double[] o, double[] ox, double[] oy, double[] d, double[] dx, double[] dy) {
+        if (!starReady() || alpha <= 0.01F) {
+            return;
+        }
+        try {
+            Space3D.flush();
+            ShaderInstance s = starFace;
+            rays(s, o, ox, oy, d, dx, dy);
+            s.safeGetUniform("StarColor").set(r, g, b);
+            s.safeGetUniform("Time").set(time);
+            s.safeGetUniform("Pixel").set(pixel);
+            s.safeGetUniform("Cells").set(cells);
+            for (int i = 0; i < 4; i++) {
+                if (spots != null && spots.length >= i * 4 + 4) {
+                    s.safeGetUniform("S" + i).set(spots[i * 4], spots[i * 4 + 1], spots[i * 4 + 2], spots[i * 4 + 3]);
+                } else {
+                    s.safeGetUniform("S" + i).set(0F, 1F, 0F, 0F);
+                }
+            }
+            s.safeGetUniform("Alpha").set(Math.min(1F, alpha));
+            s.safeGetUniform("Bright").set(bright);
+            RenderSystem.setShader(() -> s);
+            draw(x0, y0, x1, y1);
+        } catch (RuntimeException | LinkageError e) {
+            broken = true;
+            RealWeather.LOG.error("Star surfaces disabled after an error", e);
+        }
+    }
+
+    /**
+     * A planet's rings over a rectangle of the screen (rays in the planet's frame, its radius 1, rings in y = 0): inner
+     * and outer radius, the star's direction, their tint, and the pixel size (radii per unit distance) for when they
+     * break up into particles.
+     */
+    public static void rings(float inner, float outer, double lx, double ly, double lz, float tr, float tg, float tb, float time, float pixel,
+                             float alpha, float x0, float y0, float x1, float y1, double[] o, double[] ox, double[] oy, double[] d, double[] dx,
+                             double[] dy) {
+        if (!ringsReady() || alpha <= 0.01F) {
+            return;
+        }
+        try {
+            Space3D.flush();
+            ShaderInstance s = rings;
+            rays(s, o, ox, oy, d, dx, dy);
+            double l = Math.sqrt(lx * lx + ly * ly + lz * lz) + 1.0E-12;
+            s.safeGetUniform("LightDir").set((float) (lx / l), (float) (ly / l), (float) (lz / l));
+            s.safeGetUniform("Inner").set(inner);
+            s.safeGetUniform("Outer").set(outer);
+            s.safeGetUniform("Time").set(time);
+            s.safeGetUniform("Pixel").set(pixel);
+            s.safeGetUniform("Tint").set(tr, tg, tb);
+            s.safeGetUniform("Alpha").set(Math.min(1F, alpha));
+            s.safeGetUniform("Spacing").set(0.0035F);
+            Minecraft.getInstance().getTextureManager().getTexture(RING_MAP).setFilter(true, false);
+            RenderSystem.setShaderTexture(0, RING_MAP);
+            RenderSystem.setShader(() -> s);
+            draw(x0, y0, x1, y1);
+        } catch (RuntimeException | LinkageError e) {
+            broken = true;
+            RealWeather.LOG.error("Ring particles disabled after an error", e);
+        }
+    }
+
+    private static void rays(ShaderInstance s, double[] o, double[] ox, double[] oy, double[] d, double[] dx, double[] dy) {
+        set(s, "RayO", o);
+        set(s, "RayOx", ox);
+        set(s, "RayOy", oy);
+        set(s, "RayD", d);
+        set(s, "RayDx", dx);
+        set(s, "RayDy", dy);
+    }
+
+    /** The noise texture, repeating. */
+    private static void noise() {
+        var tex = Minecraft.getInstance().getTextureManager().getTexture(NOISE);
+        tex.setFilter(true, false);
+        RenderSystem.activeTexture(org.lwjgl.opengl.GL13.GL_TEXTURE0);
+        GlStateManager._bindTexture(tex.getId());
+        GlStateManager._texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
+        GlStateManager._texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
     }
 
     private static void set(ShaderInstance s, String name, double[] v) {
         s.safeGetUniform(name).set((float) v[0], (float) v[1], (float) v[2]);
     }
 
+    /**
+     * Draws the pass set up with RenderSystem.setShader over a rectangle of the screen: worked out at a fraction of
+     * the resolution into a picture of its own, then put on the screen smoothly enlarged (its colour premultiplied).
+     */
     private static void draw(float x0, float y0, float x1, float y1) {
+        traced = true;
+        RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
+        float sc = scale < 0 ? 0.5F : scale;
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
         RenderSystem.colorMask(true, true, true, true);
-        // Full resolution; the colour comes premultiplied by its coverage.
+        if (sc >= 0.97F || blit == null) {
+            RenderSystem.enableBlend();
+            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                    GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+            quad(x0, y0, x1, y1, -1F, -1F, 1F, 1F);
+            RenderSystem.enableDepthTest();
+            Space3D.invalidate();
+            return;
+        }
+        int w = Math.max(1, Math.round(main.width * sc)), h = Math.max(1, Math.round(main.height * sc));
+        if (low == null) {
+            low = new TextureTarget(w, h, false, Minecraft.ON_OSX);
+            low.setFilterMode(GL11.GL_LINEAR);
+        } else if (low.width != w || low.height != h) {
+            low.resize(w, h, Minecraft.ON_OSX);
+            low.setFilterMode(GL11.GL_LINEAR);
+        }
+        var pass = RenderSystem.getShader();
+        low.setClearColor(0F, 0F, 0F, 0F);
+        low.clear(Minecraft.ON_OSX);
+        low.bindWrite(true);
+        RenderSystem.disableBlend();
+        RenderSystem.setShader(() -> pass);
+        quad(x0, y0, x1, y1, -1F, -1F, 1F, 1F);
+        main.bindWrite(true);
+        RenderSystem.setShaderTexture(0, low.getColorTextureId());
+        RenderSystem.setShader(() -> blit);
         RenderSystem.enableBlend();
         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
                 GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-        quad(x0, y0, x1, y1, -1F, -1F, 1F, 1F);
+        quad(x0, y0, x1, y1, (x0 + 1F) * 0.5F, (y0 + 1F) * 0.5F, (x1 + 1F) * 0.5F, (y1 + 1F) * 0.5F);
+        RenderSystem.disableDepthTest();
         RenderSystem.enableDepthTest();
         Space3D.invalidate();
     }

@@ -10,6 +10,9 @@ public final class ClientConfig {
     /** Tornado graphics have their own setting, independent of the rest of the weather. */
     public enum TornadoQuality { LOW, MEDIUM, HIGH, ULTRA }
 
+    /** Ray-traced space graphics (planets of blocks, gas giants, stars, nebulae, the black hole): AUTO follows the frame rate. */
+    public enum SpaceQuality { AUTO, LOW, MEDIUM, HIGH, ULTRA, OFF }
+
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.EnumValue<Quality> QUALITY;
     public static final ModConfigSpec.BooleanValue CUSTOM_PRECIPITATION;
@@ -25,6 +28,7 @@ public final class ClientConfig {
     public static final ModConfigSpec.EnumValue<TornadoQuality> TORNADO_QUALITY;
     public static final ModConfigSpec.BooleanValue CLOUDS;
     public static final ModConfigSpec.BooleanValue MAX_OPTIMIZE;
+    public static final ModConfigSpec.EnumValue<SpaceQuality> SPACE_QUALITY;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -58,6 +62,8 @@ public final class ClientConfig {
         TORNADO_QUALITY = b.comment("LOW, MEDIUM, HIGH or ULTRA.").translation("realweather.config.tornado_quality")
                 .defineEnum("tornadoGraphics", TornadoQuality.MEDIUM);
         b.pop();
+        SPACE_QUALITY = b.comment("Space graphics (telescope, planet map, travel): AUTO (sharpness follows the frame rate; safe on phones), LOW, MEDIUM, HIGH, ULTRA, or OFF (no ray tracing at all, for very weak devices).")
+                .translation("realweather.config.space_quality").defineEnum("spaceGraphics", SpaceQuality.AUTO);
         SPEC = b.build();
     }
 

@@ -107,7 +107,7 @@ public final class PlanetSky {
             } finally {
                 Space3D.end();
             }
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | LinkageError | StackOverflowError e) {
             failed = true;
             RealWeather.LOG.error("The skies of other worlds disabled after an error", e);
         }

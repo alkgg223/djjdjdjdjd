@@ -246,7 +246,16 @@ public class PlanetViewScreen extends Screen {
         double ease = 1 - Math.exp(-dt * 3.5);
         alt = Math.exp(Mth.lerp(ease, Math.log(Math.max(alt - ground, 0.5)), Math.log(wantAlt - ground))) + ground;
         alt = Math.max(alt, ground + 1.62);
-        draw3D();
+        try {
+            draw3D();
+        } catch (RuntimeException | LinkageError | StackOverflowError e) {
+            RealWeather.LOG.error("Planet map view failed", e);
+            if (Space3D.isOpen()) {
+                Space3D.end();
+            }
+            minecraft.setScreen(new PlanetMapScreen());
+            return;
+        }
         super.render(g, mouseX, mouseY, partialTick);
         // What and where.
         double h = alt - ground;

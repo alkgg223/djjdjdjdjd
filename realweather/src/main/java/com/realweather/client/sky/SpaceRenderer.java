@@ -107,7 +107,7 @@ public final class SpaceRenderer {
             } finally {
                 Space3D.end();
             }
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | LinkageError | StackOverflowError e) {
             failed = true;
             RealWeather.LOG.error("Sky events disabled after an error", e);
         }

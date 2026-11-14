@@ -32,6 +32,8 @@ public final class ClientInit {
         modBus.addListener(com.realweather.client.sky.GodRays::register);
 
         NeoForge.EVENT_BUS.addListener(ClientWeather::onClientTick);
+        // The ray-traced space passes keep to what this GPU can draw in time.
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.RenderFrameEvent.Pre e) -> com.realweather.client.space.SpaceShaders.frame());
         // The telescope: its zoom, slower turning when zoomed in, no walking or digging at the eyepiece.
         NeoForge.EVENT_BUS.addListener(com.realweather.client.space.Telescope::onFov);
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW, com.realweather.client.space.Telescope::onCameraAngles);

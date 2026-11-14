@@ -76,7 +76,7 @@ public final class GodRays {
         }
         try {
             draw(mc, sx, sy, strength, sunY);
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | LinkageError | StackOverflowError e) {
             broken = true;
             RealWeather.LOG.error("God rays disabled after an error", e);
         } finally {
