@@ -89,6 +89,9 @@ public final class SelfTest {
         if (suite.contains("nebulae")) {
             nebulaSuite();
         }
+        if (suite.contains("close")) {
+            closeSuite();
+        }
         if (suite.contains("planets") || suite.contains("orbit") || suite.contains("ascent") || suite.contains("zoom")) {
             boolean all = suite.contains("planets");
             planetsSuite(all || suite.contains("ascent"), all || suite.contains("orbit"), all || suite.contains("zoom"));
@@ -1410,6 +1413,34 @@ public final class SelfTest {
         step(5, () -> cmd("time set 6000"));
         step(5, () -> turnClient(270F, -10F));
         step(40, () -> shot("g_god_rays"));
+    }
+
+    /** 1.13: god rays, and the planet map close to a star, a pulsar, the black hole and inside a nebula. */
+    private static void closeSuite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 1500");
+            goTo("minecraft:plains", 0, 0);
+        });
+        step(60, SelfTest::platform);
+        step(60, () -> turnClient(-90F, -12F));
+        step(40, () -> shot("g_god_rays_morning"));
+        step(5, () -> cmd("time set 6000"));
+        step(5, () -> turnClient(0F, -70F));
+        step(40, () -> shot("g_god_rays_noon"));
+        String[][] views = {{"betelgeuse", "-1"}, {"vela_pulsar", "-1"}, {"ton618", "60"}, {"orion_nebula", "-300"}, {"crab_nebula", "-1"}};
+        for (String[] v : views) {
+            step(5, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetViewScreen(
+                    com.realweather.client.space.Catalog.byId(v[0]))));
+            step(3, () -> {
+                double h = Double.parseDouble(v[1]);
+                if (h != -1 && Minecraft.getInstance().screen instanceof com.realweather.client.space.PlanetViewScreen ps) {
+                    ps.testView(h, 0, 0);
+                }
+            });
+            step(6, () -> shot("o_" + v[0] + "_" + v[1].replace("-", "m")));
+        }
+        step(5, () -> Minecraft.getInstance().setScreen(null));
     }
 
     /** 1.13: travelling to other worlds (their ground, sky and blocks), orbit, and home again. */

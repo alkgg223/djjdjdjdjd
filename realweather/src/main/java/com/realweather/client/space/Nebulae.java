@@ -60,7 +60,12 @@ final class Nebulae {
         }
 
         Recipe filaments(float x, float y, float z, float sx, float sy, float sz, float thick, float r, float g, float b, float dens, float rot) {
-            pieces.add(new Piece(FILAMENT, x, y, z, sx, sy, sz, thick, r, g, b, dens, rot, 0, 1, 0.6F));
+            return filaments(x, y, z, sx, sy, sz, thick, r, g, b, dens, rot, 0.6F);
+        }
+
+        Recipe filaments(float x, float y, float z, float sx, float sy, float sz, float thick, float r, float g, float b, float dens, float rot,
+                         float turb) {
+            pieces.add(new Piece(FILAMENT, x, y, z, sx, sy, sz, thick, r, g, b, dens, rot, 0, 1, turb));
             return this;
         }
 
@@ -151,9 +156,9 @@ final class Nebulae {
                 .shell(0, 0, 0, 0.85F, 0.78F, 0.7F, 0.12F, 1F, 0.35F, 0.35F, 0.25F, 0.3F, 0.8F)
                 .stars(0, 0, 0, 0.005F, 1, 0.8F, 0.85F, 0.9F, 1F);
         add("helix_nebula").look(0.8F, 0.6F, 0.55F, 1.4F)
-                .torus(0, 0, 0, 0.62F, 0.55F, 0.4F, 0.36F, 1F, 0.35F, 0.25F, 1.0F, 0.1F, 0.45F, 0.8F)
-                .torus(0, 0, 0, 0.42F, 0.38F, 0.35F, 0.3F, OIII[0], OIII[1], OIII[2], 0.8F, 0.4F, -0.3F, 0.6F)
-                .filaments(0, 0, 0, 0.5F, 0.46F, 0.46F, 0.25F, 1F, 0.6F, 0.5F, 1.2F, 0F)
+                .torus(0, 0, 0, 0.66F, 0.6F, 0.3F, 0.24F, 1F, 0.32F, 0.25F, 1.5F, 0.1F, 0.2F, 0.7F)
+                .torus(0, 0, 0, 0.46F, 0.42F, 0.3F, 0.2F, OIII[0], OIII[1], OIII[2], 0.9F, 0.4F, -0.15F, 0.6F)
+                .blob(0, 0, 0, 0.3F, 0.28F, 0.2F, OIII[0], OIII[1], OIII[2], 0.12F, 0, 0.5F)
                 .stars(0, 0, 0, 0.005F, 1, 0.9F, 0.85F, 0.9F, 1F);
         add("dumbbell_nebula").look(0.6F, 0.85F, 0.6F, 1.4F)
                 .blob(0, 0.32F, 0, 0.44F, 0.38F, 0.4F, 0.45F, 1F, 0.7F, 1.0F, 0, 0.6F)
@@ -197,9 +202,9 @@ final class Nebulae {
                 .blob(0.68F, 0.1F, 0.2F, 0.25F, 0.6F, 0.2F, 0.15F, 0.08F, 0.06F, -4F, 0, 0.8F)
                 .blob(0.06F, -0.46F, 0.1F, 0.36F, 0.05F, 0.1F, 1F, 0.55F, 0.45F, 3F, 0.2F, 0.5F)
                 .stars(0, 0, 0, 0.8F, 30, 0.3F, 0.9F, 0.92F, 1F);
-        add("veil_nebula").look(0.6F, 0.6F, 0.9F, 1.4F)
-                .filaments(0, 0, 0, 0.92F, 0.92F, 0.92F, 0.07F, 0.4F, 0.7F, 1F, 3.2F, 0)
-                .filaments(0.03F, 0.02F, 0, 0.89F, 0.89F, 0.89F, 0.06F, 1F, 0.4F, 0.35F, 2.6F, 0.2F)
+        add("veil_nebula").look(0.6F, 0.6F, 0.9F, 1.3F)
+                .filaments(0, 0, 0, 0.92F, 0.92F, 0.92F, 0.035F, 0.4F, 0.7F, 1F, 1.3F, 0, 1F)
+                .filaments(0.04F, 0.03F, 0, 0.88F, 0.88F, 0.88F, 0.03F, 1F, 0.4F, 0.35F, 1.1F, 0.2F, 1F)
                 .stars(0, 0, 0, 0.8F, 20, 0.3F, 0.9F, 0.92F, 1F);
         add("tarantula_nebula").look(1F, 0.45F, 0.55F, 1.25F)
                 .blob(0, 0, 0, 0.62F, 0.56F, 0.42F, PINK[0], PINK[1], PINK[2], 1.5F, 0, 0.9F)
