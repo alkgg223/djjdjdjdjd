@@ -89,6 +89,9 @@ public final class SelfTest {
         if (suite.contains("nebulae")) {
             nebulaSuite();
         }
+        if (suite.contains("v16")) {
+            v16Suite();
+        }
         if (suite.contains("v15")) {
             v15Suite();
         }
@@ -1473,6 +1476,85 @@ public final class SelfTest {
             step(2, () -> shot("n_" + t[0]));
         }
         step(5, () -> com.realweather.client.space.Telescope.stop());
+    }
+
+    /** 1.15 stage C: the 25 cosmic events, the observatory, inside a black hole, galaxies close. */
+    private static void v16Suite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 18000");
+            cmd("rw sky natural off");
+            cmd("rw sky stop");
+            goTo("minecraft:plains", 0, 0);
+        });
+        step(60, SelfTest::platform);
+        step(60, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> {
+                ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                BlockPos at = p.blockPosition().north();
+                server.overworld().setBlock(at, com.realweather.device.ModDevices.TELESCOPE.get().defaultBlockState(), 3);
+                server.overworld().setBlock(at.east(2), com.realweather.device.ModDevices.OBSERVATORY.get().defaultBlockState(), 3);
+                telescopeAt = at;
+            });
+        });
+        // The observatory's list, then its supernova scan.
+        step(10, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.ObservatoryScreen(telescopeAt.east(2))));
+        step(10, () -> shot("o_list"));
+        step(5, () -> {
+            for (var w : Minecraft.getInstance().screen.children()) {
+                if (w instanceof net.minecraft.client.gui.components.Button b && b.getMessage().getString().toLowerCase().contains("scan")) {
+                    b.onPress();
+                    break;
+                }
+            }
+        });
+        step(8, () -> shot("o_scan"));
+        step(5, () -> Minecraft.getInstance().setScreen(null));
+        // Every kind of event up close, part way through; a few at their start and end too.
+        double[][] list = new double[com.realweather.client.space.CosmicEvents.TYPES + 6][];
+        for (int k = 0; k < com.realweather.client.space.CosmicEvents.TYPES; k++) {
+            list[k] = new double[]{k, 0.45};
+        }
+        double[][] extra = {{0, 0.08}, {0, 0.9}, {4, 0.2}, {4, 0.8}, {23, 0.15}, {8, 0.85}};
+        System.arraycopy(extra, 0, list, com.realweather.client.space.CosmicEvents.TYPES, extra.length);
+        for (double[] e : list) {
+            String label = String.format("e_%02d_%02d", (int) e[0], (int) Math.round(e[1] * 100));
+            step(4, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetViewScreen(
+                    com.realweather.client.space.CosmicEvents.testTarget((int) e[0], e[1]))));
+            step(16, () -> shot(label));
+        }
+        step(5, () -> Minecraft.getInstance().setScreen(null));
+        // A supernova through the telescope.
+        step(10, () -> {
+            com.realweather.client.space.Catalog.Target t = com.realweather.client.space.CosmicEvents.testTarget(0, 0.3);
+            com.realweather.client.space.Telescope.start(telescopeAt, t);
+            com.realweather.client.space.Telescope.point(com.realweather.client.space.TelescopeView.direction(t, Minecraft.getInstance().level, 1F),
+                    Minecraft.getInstance().level, 1F);
+        });
+        step(4, () -> com.realweather.client.space.Telescope.setFov(0.004));
+        step(14, () -> shot("t_supernova"));
+        step(5, () -> com.realweather.client.space.Telescope.stop());
+        // Galaxies, now larger.
+        String[] gal = {"milky_way", "andromeda", "whirlpool"};
+        for (String g : gal) {
+            step(5, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetViewScreen(com.realweather.client.space.Catalog.byId(g))));
+            step(16, () -> shot("m_" + g));
+        }
+        step(5, () -> Minecraft.getInstance().setScreen(null));
+        // Into a black hole: near it, looking aside; inside, looking in and out.
+        step(5, () -> cmd("execute as @a run rw travel ton618"));
+        String[][] stages = {{"2.2", "90"}, {"2.2", "180"}, {"0.7", "180"}, {"0.7", "0"}, {"0.25", "180"}, {"0.25", "90"}, {"0.12", "180"}};
+        step(45, () -> {});
+        for (String[] st : stages) {
+            step(5, () -> com.realweather.client.space.SpaceFlight.testPos(0, Double.parseDouble(st[0]) * 0.15, Double.parseDouble(st[0])));
+            step(10, () -> {
+                turnClient(Float.parseFloat(st[1]), 0F);
+                shot("h_" + st[0].replace('.', '_') + "_" + st[1]);
+            });
+        }
+        step(5, () -> cmd("execute as @a run rw home"));
+        step(40, () -> LOG.info("[home] {}", Minecraft.getInstance().level.dimension().location()));
     }
 
     /** 1.15: galaxies, telescope modes and spectra, entering a black hole, the merger. */

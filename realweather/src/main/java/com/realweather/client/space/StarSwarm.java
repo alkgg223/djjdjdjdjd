@@ -40,7 +40,7 @@ final class StarSwarm {
         double camDist = Math.sqrt(cx * cx + cy * cy + cz * cz);
         // The haze of countless fainter stars: a glow thickest at the middle.
         for (int i = 0; i < 6; i++) {
-            Space3D.billboard(Space3D.GLOW, ADD, cx, cy, cz, unit * outer * (0.15 + 0.17 * i), 0F, 1F, 0.88F, 0.72F, 0.035F * vis);
+            Space3D.billboard(Space3D.GLOW, ADD, cx, cy, cz, unit * outer * (0.15 + 0.17 * i), 0F, 0.9F, 0.86F, 0.8F, 0.014F * vis);
         }
         for (int i = 0; i < count * 5; i++) {
             orbit(seed * 7 + 99991, i, inner * 0.8, outer * 1.3, seconds * 0.3, p);

@@ -22,7 +22,11 @@ final class BlackHoleInterior {
         Space3D.apply(m, out[0], out[1], out[2], o);
         // The window of the outside: its angular radius shrinks as you fall.
         double window = Math.max(0.03, Math.PI * 0.42 * Math.pow(r, 0.75));
+        // Deeper in, space is stretched along the fall and squeezed across it: the sky then gathers into a band
+        // round you instead (as in simulations of a fall into a black hole).
+        double band = smooth(0.55, 0.12, r), bandWidth = 0.08 + 0.7 * r;
         double s = 2000;
+        Space3D.range(1F, (float) (s * 3));
         double[] q = new double[3];
         float blue = (float) Math.min(1, (1 - r) * 1.3);
         for (int i = 0; i < 6000; i++) {
@@ -30,7 +34,7 @@ final class BlackHoleInterior {
             double cos = sx * out[0] + sy * out[1] + sz * out[2];
             double th = Math.acos(Math.max(-1, Math.min(1, cos)));
             // Every star of the sky, squeezed into the window.
-            double th2 = th / Math.PI * window;
+            double th2 = th / Math.PI * window * (1 - band) + (Math.PI / 2 + (th / Math.PI - 0.5) * bandWidth) * band;
             double px0 = sx - out[0] * cos, py0 = sy - out[1] * cos, pz0 = sz - out[2] * cos;
             double pl = Math.sqrt(px0 * px0 + py0 * py0 + pz0 * pz0);
             if (pl < 1.0E-6) {
@@ -57,7 +61,7 @@ final class BlackHoleInterior {
         int n = 96;
         double[] e1 = perp(o), e2 = {o[1] * e1[2] - o[2] * e1[1], o[2] * e1[0] - o[0] * e1[2], o[0] * e1[1] - o[1] * e1[0]};
         for (int k = 0; k < 2; k++) {
-            double rim = window * (k == 0 ? 1.0 : 0.86);
+            double rim = window * (k == 0 ? 1.0 : 0.86) * (1 - band) + (Math.PI / 2 + (k == 0 ? 0.5 : -0.5) * bandWidth) * band;
             float a = (float) (k == 0 ? 0.55 : 0.2);
             double[] prev = null;
             for (int i = 0; i <= n; i++) {
@@ -82,8 +86,37 @@ final class BlackHoleInterior {
             double len = 0.05 + 0.3 * tide * (0.5 + 0.5 * Math.sin(seconds * 2 + i));
             double[] a0 = dir(o, e1, e2, th, ph), a1 = dir(o, e1, e2, th + len, ph);
             Space3D.ribbon(Space3D.GLOW, ADD, a0[0] * s, a0[1] * s, a0[2] * s, a1[0] * s, a1[1] * s, a1[2] * s, s * 0.004, s * 0.001, 1F, 0.25F, 0.15F,
-                    (float) (0.5 * tide), 0F);
+                    (float) (0.35 + 0.5 * tide), 0F);
         }
+        // Ahead: gas from the disc that fell in before you, still falling, its light reddened, spiralling in towards
+        // the centre; a deep red glow where the paths meet (theory only: what happens there is unknown).
+        double[] in = {-o[0], -o[1], -o[2]};
+        double[] g1 = perp(in), g2 = {in[1] * g1[2] - in[2] * g1[1], in[2] * g1[0] - in[0] * g1[2], in[0] * g1[1] - in[1] * g1[0]};
+        float glow = (float) (0.35 + 0.65 * (1 - r));
+        for (int arm = 0; arm < 4; arm++) {
+            double[] prev = null;
+            for (int i = 0; i <= 64; i++) {
+                double u = i / 64.0;
+                double th = (1 - u) * (0.75 + 0.2 * r) + 0.004;
+                double ph = arm * Math.PI / 2 + u * 6.5 + seconds * (0.25 + 0.9 * u) + 0.3 * Math.sin(seconds * 0.7 + arm);
+                double[] d = dir(in, g1, g2, th, ph);
+                double[] cur = {d[0] * s, d[1] * s, d[2] * s};
+                if (prev != null) {
+                    float a = glow * (float) (0.15 + 0.5 * u) * (0.7F + 0.3F * (float) Math.sin(i * 0.7 - seconds * 3 + arm));
+                    double w = s * (0.03 * (1 - u) + 0.004);
+                    Space3D.ribbon(Space3D.GLOW, ADD, prev[0], prev[1], prev[2], cur[0], cur[1], cur[2], w, w, 1F, (float) (0.28 + 0.3 * u),
+                            (float) (0.1 + 0.15 * u), a, a);
+                }
+                prev = cur;
+            }
+        }
+        Space3D.billboard(Space3D.GLOW, ADD, in[0] * s, in[1] * s, in[2] * s, s * (0.1 + 0.25 * (1 - r)), 0F, 1F, 0.28F, 0.1F, 0.5F * glow);
+        Space3D.billboard(Space3D.GLOW, ADD, in[0] * s, in[1] * s, in[2] * s, s * 0.03, 0F, 1F, 0.6F, 0.35F, 0.6F * glow);
+    }
+
+    private static double smooth(double a, double b, double x) {
+        double t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+        return t * t * (3 - 2 * t);
     }
 
     private static double[] dir(double[] o, double[] e1, double[] e2, double th, double ph) {

@@ -226,6 +226,19 @@ public final class CosmicEvents {
         return String.format(java.util.Locale.ROOT, "RA %02dh %02dm  Dec %+.1f", h, m, dec);
     }
 
+    /** (For testing) an event of this kind, this far through. */
+    public static Catalog.Target testTarget(int type, double p) {
+        String id = "event_test_" + type;
+        CACHE.remove(id);
+        long len = LENGTH[type];
+        double[] dir = {0.3, -0.85, 0.43};
+        double l = Math.sqrt(dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2]);
+        for (int i = 0; i < 3; i++) {
+            dir[i] /= l;
+        }
+        return target(id, type, dir, now() - (long) (p * len), len, host(type, 7, type));
+    }
+
     public static String distance(int type) {
         return DIST[type];
     }

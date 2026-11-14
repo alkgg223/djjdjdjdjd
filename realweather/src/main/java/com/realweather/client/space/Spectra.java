@@ -188,18 +188,28 @@ final class Spectra {
             int col = 0xFF000000 | ((int) (c[0] * 255) << 16) | ((int) (c[1] * 255) << 8) | (int) (c[2] * 255);
             g.fill(x0 + i, y0 + ph - hgt, x0 + i + 1, y0 + ph, col);
         }
+        // The line names, set lower in turn where they would run into each other.
+        int[] rowEnd = {Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE};
         for (Line l : lines) {
             if (l.name.isEmpty() || l.nm < LO || l.nm > HI) {
                 continue;
             }
             int x = x0 + (int) ((l.nm - LO) / (HI - LO) * (pw - 1));
-            g.fill(x, y0 + ph + 1, x + 1, y0 + ph + 4, 0xFFFFFFFF);
-            g.drawString(mc.font, l.name, x - mc.font.width(l.name) / 2, y0 + ph + 5, l.depth > 0 ? 0xFFFFE080 : 0xFFA0C0FF, false);
+            int w = mc.font.width(l.name), lx = x - w / 2, row = 0;
+            while (row < 2 && lx < rowEnd[row] + 3) {
+                row++;
+            }
+            rowEnd[row] = lx + w;
+            g.fill(x, y0 + ph + 1, x + 1, y0 + ph + 4 + row * 9, 0xFFFFFFFF);
+            g.drawString(mc.font, l.name, lx, y0 + ph + 5 + row * 9, l.depth > 0 ? 0xFFFFE080 : 0xFFA0C0FF, false);
         }
-        g.drawString(mc.font, "380 nm", x0, y0 + ph + 16, 0xFF909090, false);
-        g.drawString(mc.font, "750 nm", x0 + pw - mc.font.width("750 nm"), y0 + ph + 16, 0xFF909090, false);
-        g.drawString(mc.font, Component.translatable("realweather.spectrum.title", t.label(), note), x0,
-                y0 - 11, 0xFFFFE080, true);
+        g.drawString(mc.font, "380 nm", x0, y0 + ph + 32, 0xFF909090, false);
+        g.drawString(mc.font, "750 nm", x0 + pw - mc.font.width("750 nm"), y0 + ph + 32, 0xFF909090, false);
+        // The title, over as many lines as it needs within the panel.
+        var title = mc.font.split(Component.translatable("realweather.spectrum.title", t.label(), note), pw);
+        for (int i = 0; i < title.size(); i++) {
+            g.drawString(mc.font, title.get(i), x0, y0 - 11 - (title.size() - 1 - i) * 10, 0xFFFFE080, true);
+        }
     }
 
     /** Two black holes merging give no light: their gravitational-wave chirp instead, rising to the merger. */

@@ -204,7 +204,7 @@ public final class Galaxies {
                     y = gauss(seed, k * 13L + 5) * g.thick;
                 } else {
                     // The disc, its stars crowded into the arms (the young ones most of all).
-                    double r = Math.min(1.1, -0.28 * Math.log(Math.max(1.0E-4, 1 - 0.97 * Space3D.h(seed, k * 13L + 2))));
+                    double r = Math.min(1.1, -0.36 * Math.log(Math.max(1.0E-4, 1 - 0.95 * Space3D.h(seed, k * 13L + 2))));
                     if (g.type == LENTICULAR || g.type == PECULIAR) {
                         r = 0.35 + 0.55 * Math.sqrt(Space3D.h(seed, k * 13L + 2));
                     }

@@ -117,7 +117,9 @@ final class CloseViews {
                 // sky; what is behind the hole's shadow stays hidden.
                 Space3D.clearDepth();
                 Space3D.range((float) Math.max(0.05, R * 0.2), (float) (dist + R * 4500));
-                Space3D.depthSphere(c[0], c[1], c[2], R * 2.6);
+                // What the hole's shadow hides (it grows as you come in: half the sky at the photon sphere).
+                double rr = dist / R;
+                Space3D.depthSphere(c[0], c[1], c[2], Math.min(R * 2.6 * Math.sqrt(Math.max(0, 1 - 1 / rr)), dist * 0.995));
                 double[] hole = new double[9];
                 Space3D.mul(view, Space3D.orient(n[0], n[1], n[2], 0), hole);
                 StarSwarm.draw(c[0], c[1], c[2], R, hole, seed, SpaceShaders.killer() ? 420 : 260, 140, 3200, clock, px, 1F);
