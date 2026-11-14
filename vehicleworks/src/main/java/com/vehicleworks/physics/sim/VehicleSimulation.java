@@ -28,8 +28,10 @@ import java.util.List;
  * Independent of Minecraft; the game layer builds it from blocks and supplies an {@link Environment}.
  */
 public final class VehicleSimulation {
-    public static final double BASE_FUEL_FLOW = 0.25;   // kg/s gravity feed
-    public static final double PUMP_FUEL_FLOW = 0.9;    // kg/s per pump
+    public static final double BASE_FUEL_FLOW = 0.6;    // kg/s gravity feed
+    public static final double PUMP_FUEL_FLOW = 2.0;    // kg/s per pump
+    /** gameplay multiplier on fuel consumption */
+    public double fuelScale = 1.0;
 
     public final RigidBody body = new RigidBody();
     public CollisionShape shape;
@@ -204,6 +206,13 @@ public final class VehicleSimulation {
                 holdingHeading = false;
             }
         }
+        if (rotors.isEmpty() && !wings.isEmpty()) {
+            // gentler surfaces at high dynamic pressure, rudder coordinated with roll
+            double sched = clamp(Math.pow(45.0 / Math.max(45.0, airspeed), 2), 0.3, 1.0);
+            pitch *= sched;
+            roll *= sched;
+            if (input.assist && !onGround) yaw += 0.3 * roll;
+        }
         effPitch = clamp(pitch, -1, 1);
         effRoll = clamp(roll, -1, 1);
         effYaw = clamp(yaw, -1, 1);
@@ -218,7 +227,7 @@ public final class VehicleSimulation {
         fuelCapacity = 0;
         for (TankUnit t : tanks) if (t.kind == TankUnit.Kind.FUEL) { fuelAmount += t.amount; fuelCapacity += t.capacity; }
         double demand = 0;
-        for (ThrusterUnit t : thrusters) demand += t.engine.fuelFlowKgS;
+        for (ThrusterUnit t : thrusters) demand += t.engine.fuelFlowKgS * fuelScale;
         double cap = BASE_FUEL_FLOW + PUMP_FUEL_FLOW * fuelPumps;
         if (fuelAmount <= 1e-6) fuelSupply = 0;
         else fuelSupply = demand > cap ? cap / demand : 1.0;
@@ -398,8 +407,8 @@ public final class VehicleSimulation {
             }
             if (w.params.steerable) {
                 double steerCmd = rotors.isEmpty() && !wings.isEmpty() && !hasDrivenWheels() ? effYaw : input.steer;
-                double speedLimit = 1.0 / (1.0 + Math.max(0, airspeed - 8) / 18.0);
-                w.steerAngle = approach(w.steerAngle, steerCmd * Math.toRadians(w.params.maxSteerDeg) * speedLimit, Math.toRadians(140) * dt);
+                double speedLimit = 1.0 / (1.0 + Math.max(0, airspeed - 12) / 30.0);
+                w.steerAngle = approach(w.steerAngle, steerCmd * Math.toRadians(w.params.maxSteerDeg) * speedLimit, Math.toRadians(260) * dt);
             }
         }
         // ---- transmission

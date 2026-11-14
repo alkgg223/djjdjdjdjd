@@ -242,7 +242,7 @@ public final class VehicleHud {
             EngineSim.State st = EngineSim.State.values()[Math.floorMod(t.engineState[i], EngineSim.State.values().length)];
             EngineType type = EngineType.byIndex(t.engineType[i]);
             int c = switch (st) {
-                case RUNNING -> t.engineTemp[i] > type.maxTempC * 0.95 ? RED : GREEN;
+                case RUNNING -> GREEN;
                 case STARTING -> AMBER;
                 case FAILED -> RED;
                 default -> DIM;
@@ -286,10 +286,6 @@ public final class VehicleHud {
         if (p == ControlProfile.AIRCRAFT && t.agl < 40 && t.verticalSpeed < -12) warn.add("vehicleworks.warn.pull_up");
         if (p == ControlProfile.AIRCRAFT && t.agl < 25 && !t.gearDown && t.airspeed < 70) warn.add("vehicleworks.warn.gear");
         if (t.fuelCapacity > 0 && t.fuel < t.fuelCapacity * 0.1) warn.add("vehicleworks.warn.low_fuel");
-        for (int i = 0; i < t.engineState.length; i++) {
-            EngineType type = EngineType.byIndex(t.engineType[i]);
-            if (t.engineTemp[i] > type.maxTempC * 0.97) { warn.add("vehicleworks.warn.overheat"); break; }
-        }
         for (byte s : t.engineState) if (s == EngineSim.State.FAILED.ordinal()) { warn.add("vehicleworks.warn.engine_fail"); break; }
         if (t.stress > 0.9) warn.add("vehicleworks.warn.overstress");
         if (t.integrity < 0.5) warn.add("vehicleworks.warn.damage");

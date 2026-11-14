@@ -37,16 +37,16 @@ public final class BlockPhysics {
         if (s.is(BlockTags.WOOL) || s.is(BlockTags.WOOL_CARPETS)) base = 12;
         else if (s.is(BlockTags.LEAVES)) base = 8;
         else if (snd == SoundType.GLASS || path.contains("glass")) base = 45;
-        else if (s.is(BlockTags.PLANKS) || path.contains("planks") || s.is(BlockTags.WOODEN_SLABS) || s.is(BlockTags.WOODEN_STAIRS)) base = 110;
-        else if (s.is(BlockTags.LOGS)) base = 190;
+        else if (s.is(BlockTags.PLANKS) || path.contains("planks") || s.is(BlockTags.WOODEN_SLABS) || s.is(BlockTags.WOODEN_STAIRS)) base = 80;
+        else if (s.is(BlockTags.LOGS)) base = 140;
         else if (path.equals("iron_block") || path.equals("netherite_block")) base = path.startsWith("netherite") ? 2200 : 1100;
         else if (path.equals("gold_block")) base = 1800;
         else if (path.contains("copper")) base = 850;
         else if (path.equals("obsidian") || path.equals("crying_obsidian")) base = 700;
         else if (snd == SoundType.METAL || snd == SoundType.NETHERITE_BLOCK || snd == SoundType.COPPER) base = 650;
-        else if (snd == SoundType.WOOD || snd == SoundType.BAMBOO_WOOD || snd == SoundType.CHERRY_WOOD || snd == SoundType.NETHER_WOOD) base = 120;
+        else if (snd == SoundType.WOOD || snd == SoundType.BAMBOO_WOOD || snd == SoundType.CHERRY_WOOD || snd == SoundType.NETHER_WOOD) base = 85;
         else if (snd == SoundType.WOOL) base = 12;
-        else if (path.contains("concrete") || path.contains("terracotta")) base = 330;
+        else if (path.contains("concrete") || path.contains("terracotta")) base = 160;
         else if (snd == SoundType.STONE || snd == SoundType.DEEPSLATE || snd == SoundType.DEEPSLATE_BRICKS || snd == SoundType.POLISHED_DEEPSLATE
                 || snd == SoundType.TUFF || snd == SoundType.NETHER_BRICKS || snd == SoundType.MUD_BRICKS) base = 380;
         else base = 150 + 40 * Math.min(10, Math.max(0, b.defaultDestroyTime()));

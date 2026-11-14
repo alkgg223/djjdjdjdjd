@@ -76,7 +76,7 @@ public final class Config {
             b.pop();
             b.push("fuel");
             requireFuel = b.define("requireFuel", true);
-            fuelConsumptionScale = b.defineInRange("fuelConsumptionScale", 1.0, 0.0, 100.0);
+            fuelConsumptionScale = b.comment("Multiplier on fuel use (1 = realistic)").defineInRange("fuelConsumptionScale", 0.5, 0.0, 100.0);
             b.pop();
             b.push("network");
             syncRangeBlocks = b.comment("Distance within which full-rate state sync is sent").defineInRange("syncRangeBlocks", 160, 16, 1024);
@@ -99,7 +99,7 @@ public final class Config {
             renderBlockEntities = b.define("renderBlockEntities", true);
             cameraRoll = b.comment("Roll the first-person camera with the aircraft").define("cameraRoll", true);
             hudScale = b.defineInRange("hudScale", 1.0, 0.5, 2.0);
-            mouseAimDefault = b.define("mouseAimDefault", true);
+            mouseAimDefault = b.define("mouseAimDefault", false);
             engineVolume = b.defineInRange("engineVolume", 1.0, 0.0, 2.0);
         }
     }

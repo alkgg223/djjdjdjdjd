@@ -337,6 +337,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         boolean fresh = (level().getGameTime() - controls.lastInputTick < 10 && pilot != null) || controls.testPilot;
         if (!fresh) controls.keys = 0;
         controls.apply(sim.input, profile(), fresh, 0.05);
+        sim.fuelScale = Config.SERVER.fuelConsumptionScale.get();
         if (!Config.SERVER.requireFuel.get()) {
             for (TankUnit t : sim.tanks) if (t.kind == TankUnit.Kind.FUEL) t.amount = t.capacity;
             if (sim.tanks.stream().noneMatch(t -> t.kind == TankUnit.Kind.FUEL)) {

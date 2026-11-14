@@ -26,12 +26,14 @@ public final class VehicleControls {
     public boolean gearDown = true;
     public boolean armed;
     public boolean assist = true;
-    public boolean mouseAim = true;
+    public boolean mouseAim = false;
     public boolean afterburner;
     public boolean parkingBrake;
     public double lift;
     /** automated tests: behave as if a pilot were seated */
     public boolean testPilot;
+    /** smoothed stick axes (keyboard inputs ramp instead of jumping to full deflection) */
+    public double axPitch, axRoll, axYaw;
 
     public boolean down(int bit) {
         return (keys & bit) != 0;
@@ -65,36 +67,50 @@ public final class VehicleControls {
         in.brake = parkingBrake;
         switch (profile) {
             case AIRCRAFT, AUTO -> {
+                double tp, tr, ty;
                 if (mouseAim && hasPilot) {
                     in.mouseAim = true;
                     double yaw = Math.toRadians(lookYaw), pitch = Math.toRadians(lookPitch);
                     in.aimX = -Math.sin(yaw) * Math.cos(pitch);
                     in.aimY = -Math.sin(pitch);
                     in.aimZ = Math.cos(yaw) * Math.cos(pitch);
-                    throttle += (f - b + tu - td) * 0.5 * dt;
-                    in.pitch = pu - pd;
+                    throttle += (f - b + tu - td + jump - sprint) * 0.5 * dt;
+                    tp = pu - pd;
                 } else {
-                    in.pitch = b - f + pu - pd;
-                    throttle += (tu - td) * 0.5 * dt;
+                    tp = b - f + pu - pd;
+                    throttle += (tu - td + jump - sprint) * 0.5 * dt;
                 }
-                in.roll = r - l;
-                in.yaw = yr - yl;
-                in.brake |= jump > 0;
-                in.steer = in.yaw;
-                if (sprint > 0) in.afterburner = true;
+                tr = r - l;
+                ty = yr - yl;
+                axPitch = smooth(axPitch, tp, dt);
+                axRoll = smooth(axRoll, tr, dt);
+                axYaw = smooth(axYaw, ty, dt);
+                in.pitch = axPitch;
+                in.roll = axRoll;
+                in.yaw = axYaw;
+                in.steer = axYaw + 0.6 * axRoll;
+                // wheel brakes automatically at idle throttle; afterburner when pushing past 100 %
+                in.brake |= throttle < 0.04;
+                if (throttle >= 0.999 && (tu > 0 || jump > 0)) in.afterburner = true;
                 in.throttle = throttle = Mth.clamp(throttle, 0, 1);
             }
             case HELICOPTER -> {
-                in.pitch = b - f + pu - pd;
-                in.roll = r - l;
-                in.yaw = yr - yl;
+                axPitch = smooth(axPitch, b - f + pu - pd, dt);
+                axRoll = smooth(axRoll, r - l, dt);
+                axYaw = smooth(axYaw, yr - yl, dt);
+                in.pitch = axPitch;
+                in.roll = axRoll;
+                in.yaw = axYaw;
                 collective = Mth.clamp(collective + (jump - sprint) * 0.45 * dt, 0, 1);
-                throttle = Mth.clamp(throttle + (tu - td) * 0.5 * dt, 0, 1);
+                // rotor governor runs to 100 % on its own once the engines run (F to idle it)
+                throttle = td > 0 ? Math.max(0, throttle - 0.5 * dt) : Math.min(1, throttle + 0.4 * dt);
                 in.collective = collective;
                 in.throttle = throttle;
                 in.brake |= collective < 0.05;
             }
             case CAR -> {
+                if (f > 0 || b > 0) parkingBrake = false;
+                in.brake = parkingBrake;
                 in.drive = f - b;
                 in.steer = r - l;
                 in.handbrake = jump > 0;
@@ -130,6 +146,11 @@ public final class VehicleControls {
             in.brake = true;
         }
         prevKeys = keys;
+    }
+
+    private static double smooth(double v, double target, double dt) {
+        double rate = (Math.abs(target) < 1e-3 ? 4.0 : 2.2) * dt;
+        return v < target ? Math.min(target, v + rate) : Math.max(target, v - rate);
     }
 
     public CompoundTag save() {

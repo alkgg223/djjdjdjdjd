@@ -16,7 +16,7 @@ import java.util.List;
 public enum ComponentType {
     VEHICLE_CORE("vehicle_core", ComponentCategory.CONTROL, 150, Facing.HORIZONTAL, Shape.FULL,
             PropertyDef.choice("profile", 0, "auto", "aircraft", "helicopter", "car", "ship", "submarine", "airship"),
-            PropertyDef.bool("mouse_aim", true),
+            PropertyDef.bool("mouse_aim", false),
             PropertyDef.bool("assist", true),
             PropertyDef.choice("differential", 1, "open", "limited_slip", "locked"),
             PropertyDef.bool("auto_gearbox", true),

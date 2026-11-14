@@ -162,16 +162,17 @@ public final class DemoVehicles {
 
     private static void fighter(B b) {
         var hull = Blocks.LIGHT_GRAY_CONCRETE;
-        for (int z = -7; z <= 5; z++) if (z != 0) b.block(0, 0, z, hull);
+        for (int z = -6; z <= 6; z++) if (z != 0) b.block(0, 0, z, hull);
         b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH);
-        b.block(0, 0, -8, Blocks.GRAY_CONCRETE);
+        b.block(0, 0, -7, Blocks.GRAY_CONCRETE);
         b.fuel(0, 0, -1);
         b.fuel(0, 0, -2);
-        b.fuel(0, 0, 1);
-        b.c(0, 0, 2, ComponentType.FUEL_PUMP, Direction.NORTH);
-        b.c(0, -1, 2, ComponentType.HYDRAULIC_PUMP, Direction.NORTH);
-        b.c(0, 0, 3, ComponentType.ENGINE_STARTER, Direction.NORTH);
-        b.c(0, 0, 6, ComponentType.JET_ENGINE, Direction.NORTH);
+        b.fuel(0, 0, -3);
+        b.c(0, 0, 1, ComponentType.FUEL_PUMP, Direction.NORTH);
+        b.c(0, -1, 1, ComponentType.FUEL_PUMP, Direction.NORTH);
+        b.c(0, -1, 0, ComponentType.HYDRAULIC_PUMP, Direction.NORTH);
+        b.c(0, 0, 2, ComponentType.ENGINE_STARTER, Direction.NORTH);
+        b.c(0, 0, 7, ComponentType.JET_ENGINE, Direction.NORTH);
         b.c(0, 1, -3, ComponentType.PILOT_SEAT, Direction.NORTH);
         b.c(0, 1, -4, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
         b.c(0, 1, -2, ComponentType.REMOTE_CONTROL_UNIT, Direction.NORTH);
@@ -181,37 +182,44 @@ public final class DemoVehicles {
         b.block(1, 1, -3, Blocks.LIGHT_GRAY_STAINED_GLASS);
         b.c(0, 1, 0, ComponentType.AMMO_BOX, Direction.NORTH);
         b.data(0, 1, 0, d -> { CompoundTag a = new CompoundTag(); a.putInt("BULLET", 1200); a.putInt("MISSILE", 4); d.put("Ammo", a); });
-        // delta wing (elevons), wider toward the tail
-        int[] half = {2, 3, 4, 5, 6};
-        for (int row = 0; row < half.length; row++) {
-            int z = row;
-            for (int side = -1; side <= 1; side += 2)
-                for (int i = 1; i <= half[row]; i++)
-                    b.wing(side * i, 0, z, ComponentType.DELTA_WING, WingOrientation.HORIZONTAL, t -> t.putDouble("incidence", 1.5));
+        // swept main wing: leading row z=0, trailing row z=1 (flaps inboard, ailerons outboard), strakes at z=-1
+        for (int side = -1; side <= 1; side += 2) {
+            for (int i = 1; i <= 7; i++) {
+                b.wing(side * i, 0, 0, ComponentType.SWEPT_WING, WingOrientation.HORIZONTAL, t -> { t.putDouble("chord", 1.5); t.putDouble("incidence", 3); t.putDouble("sweep", 25); });
+                ComponentType tr = i <= 3 ? ComponentType.FLAP : (i >= 5 ? ComponentType.AILERON : ComponentType.SWEPT_WING);
+                b.wing(side * i, 0, 1, tr, WingOrientation.HORIZONTAL, t -> { t.putDouble("chord", 1.3); t.putDouble("sweep", 25); });
+                if (i <= 2) b.wing(side * i, 0, -1, ComponentType.SWEPT_WING, WingOrientation.HORIZONTAL, t -> { t.putDouble("chord", 1.2); t.putDouble("incidence", 3); t.putDouble("sweep", 25); });
+            }
+            // horizontal tail
+            for (int i = 1; i <= 3; i++) {
+                b.wing(side * i, 0, 5, ComponentType.WING, WingOrientation.HORIZONTAL, t -> { t.putInt("airfoil", 1); t.putDouble("incidence", -1); t.putDouble("chord", 1.3); });
+                b.wing(side * i, 0, 6, ComponentType.ELEVATOR, WingOrientation.HORIZONTAL, t -> { t.putDouble("chord", 1.2); t.putDouble("control_max", 25); });
+            }
         }
         // fin
         for (int y = 1; y <= 2; y++) {
-            b.wing(0, y, 4, ComponentType.WING, WingOrientation.VERTICAL_X, t -> { t.putInt("airfoil", 1); t.putDouble("incidence", 0); });
-            b.wing(0, y, 5, ComponentType.RUDDER, WingOrientation.VERTICAL_X, null);
+            b.wing(0, y, 5, ComponentType.WING, WingOrientation.VERTICAL_X, t -> { t.putInt("airfoil", 1); t.putDouble("incidence", 0); t.putDouble("chord", 1.3); });
+            b.wing(0, y, 6, ComponentType.RUDDER, WingOrientation.VERTICAL_X, t -> t.putDouble("chord", 1.2));
         }
         // guns in the nose, missiles under the wings
         for (int side = -1; side <= 1; side += 2) {
             b.c(side, 0, -5, ComponentType.WEAPON_MOUNT, Direction.NORTH);
             b.c(side, 0, -6, ComponentType.MACHINE_GUN, Direction.NORTH);
             b.data(side, 0, -6, d -> d.putInt("Mag", 250));
-            b.c(side * 3, -1, 2, ComponentType.WEAPON_MOUNT, Direction.NORTH);
-            b.c(side * 3, -1, 1, ComponentType.MISSILE_LAUNCHER, Direction.NORTH);
-            b.data(side * 3, -1, 1, d -> d.putInt("Mag", 2));
+            b.c(side * 4, -1, 0, ComponentType.WEAPON_MOUNT, Direction.NORTH);
+            b.c(side * 4, -1, -1, ComponentType.MISSILE_LAUNCHER, Direction.NORTH);
+            b.data(side * 4, -1, -1, d -> d.putInt("Mag", 2));
         }
         b.link(0, 1, -2, -1, 0, -6, 0);
         b.link(0, 1, -2, 1, 0, -6, 0);
-        b.link(0, 1, -2, -3, -1, 1, 1);
-        b.link(0, 1, -2, 3, -1, 1, 1);
-        // retractable gear
-        b.c(0, -1, -5, ComponentType.LANDING_GEAR, Direction.NORTH);
-        b.c(-2, -1, 3, ComponentType.LANDING_GEAR, Direction.NORTH);
-        b.c(2, -1, 3, ComponentType.LANDING_GEAR, Direction.NORTH);
-        b.block(0, -1, -4, hull);
+        b.link(0, 1, -2, -4, -1, -1, 1);
+        b.link(0, 1, -2, 4, -1, -1, 1);
+        // retractable tricycle gear, mains just behind the centre of mass
+        b.c(0, -1, -4, ComponentType.LANDING_GEAR, Direction.NORTH);
+        b.c(-2, -1, 2, ComponentType.LANDING_GEAR, Direction.NORTH);
+        b.c(2, -1, 2, ComponentType.LANDING_GEAR, Direction.NORTH);
+        b.block(-2, 0, 2, hull);
+        b.block(2, 0, 2, hull);
     }
 
     private static void car(B b) {
@@ -255,7 +263,7 @@ public final class DemoVehicles {
     }
 
     private static void helicopter(B b) {
-        var body = Blocks.YELLOW_CONCRETE;
+        var body = Blocks.YELLOW_WOOL;
         for (int x = -1; x <= 1; x++)
             for (int z = -2; z <= 2; z++) {
                 if (!(x == 0 && z == 0)) b.block(x, 0, z, body);

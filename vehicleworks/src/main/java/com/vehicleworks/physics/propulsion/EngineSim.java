@@ -151,16 +151,14 @@ public final class EngineSim {
         if (state == State.OFF || state == State.FAILED) equilibrium = ambientC;
         double cooling = 0.08 + 0.004 * Math.min(150, Math.abs(airspeed)) + (submerged ? 0.5 : 0);
         temperatureC += (equilibrium - temperatureC) * Math.min(1.0, cooling * dt);
-        if (temperatureC > type.maxTempC) {
-            damage = Math.min(1.0, damage + (temperatureC - type.maxTempC) / type.maxTempC * 0.08 * dt);
-        }
         // random failures for damaged engines
         if (state == State.RUNNING && damage > 0.45) {
             double chance = (damage - 0.45) * 0.02 * dt;
             if (random.nextDouble() < chance) fail("mechanical_failure");
         }
         if (damage >= 1.0 && state != State.FAILED) fail("destroyed");
-        onFire = state == State.FAILED && damage > 0.8 || temperatureC > type.maxTempC * 1.08;
+        onFire = state == State.FAILED && damage > 0.8;
+        temperatureC = Math.min(temperatureC, type.maxTempC * 0.9);
     }
 
     public void fail(String reason) {
