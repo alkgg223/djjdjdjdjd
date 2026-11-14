@@ -134,6 +134,52 @@ public class PlanetViewScreen extends Screen {
         }
         addRenderableWidget(Button.builder(Component.translatable("realweather.planet_map.back"), b -> minecraft.setScreen(new PlanetMapScreen()))
                 .bounds(6, height - 26, 70, 20).build());
+        // Mark it to come back to; show or hide what it is.
+        addRenderableWidget(Button.builder(Component.translatable(Bookmarks.has(target.id) ? "realweather.map.unbookmark" : "realweather.map.bookmark"), b -> {
+            Bookmarks.toggle(target.id);
+            rebuildWidgets();
+        }).bounds(80, height - 26, 80, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("realweather.map.info"), b -> showInfo = !showInfo).bounds(164, height - 26, 50, 20).build());
+    }
+
+    private static boolean showInfo = true;
+
+    /** The information panel: what it is, a real example or a simulated one, how far, where; for events, how far along. */
+    private void infoPanel(GuiGraphics g) {
+        java.util.List<Component> lines = new java.util.ArrayList<>();
+        Component info;
+        if (body.kind == Catalog.OBJECT) {
+            int n = body.eventType;
+            CosmicObjects.Kind k = CosmicObjects.ALL[n];
+            lines.add(Component.translatable("realweather.object.cat." + k.group()).withStyle(net.minecraft.ChatFormatting.AQUA));
+            lines.add(k.simulated() ? Component.translatable("realweather.object.simulated_note").withStyle(net.minecraft.ChatFormatting.GOLD)
+                    : Component.translatable("realweather.object.real", k.example()).withStyle(net.minecraft.ChatFormatting.GREEN));
+            lines.add(Component.translatable("realweather.object.distance", k.distance()));
+            if (k.coords() != null) {
+                lines.add(Component.translatable("realweather.object.coords", k.coords()));
+            }
+            info = Component.translatable("realweather.object." + n + ".info");
+        } else if (body.kind == Catalog.EVENT) {
+            double p = CosmicEvents.progress(body);
+            lines.add(Component.translatable(p < 0 ? "realweather.obs.upcoming" : p <= 1 ? "realweather.obs.active" : "realweather.obs.over",
+                    p < 0 ? String.format(java.util.Locale.ROOT, "%.1f", -p * body.eventLength / 1200.0) : String.format(java.util.Locale.ROOT, "%.0f",
+                            Math.min(100, p * 100))).withStyle(net.minecraft.ChatFormatting.AQUA));
+            lines.add(Component.translatable("realweather.object.distance", CosmicEvents.distance(body.eventType)));
+            lines.add(Component.translatable("realweather.obs.note").withStyle(net.minecraft.ChatFormatting.GOLD));
+            info = Component.translatable("realweather.event." + body.eventType + ".info");
+        } else {
+            info = Component.translatable("realweather.target." + target.id + ".info");
+        }
+        int w = Math.min(230, width / 3), x = 8, y = 34;
+        java.util.List<net.minecraft.util.FormattedCharSequence> wrapped = new java.util.ArrayList<>();
+        for (Component c : lines) {
+            wrapped.addAll(font.split(c, w));
+        }
+        wrapped.addAll(font.split(info, w));
+        g.fill(x - 4, y - 4, x + w + 4, y + wrapped.size() * 10 + 2, 0x90000814);
+        for (int i = 0; i < wrapped.size(); i++) {
+            g.drawString(font, wrapped.get(i), x, y + i * 10, 0xFFE8EEF8, false);
+        }
     }
 
     /** Height of the ground under the camera (blocks above the radius). */
@@ -272,6 +318,9 @@ public class PlanetViewScreen extends Screen {
                 : h <= 1.8 ? Component.translatable("realweather.planet_map.landed")
                 : Component.translatable("realweather.planet_map.height", String.format("%.0f", h));
         g.drawString(font, where, 8, 20, 0xFFE0E0E0, true);
+        if (showInfo) {
+            infoPanel(g);
+        }
         g.drawString(font, Component.translatable("realweather.planet_map.hint"), 8, height - 40, 0xFFB0B0B0, true);
         if (mode == PLANET && h <= 1.8 && !landedSaid) {
             landedSaid = true;

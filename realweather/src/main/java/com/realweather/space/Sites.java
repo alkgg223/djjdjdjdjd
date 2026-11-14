@@ -11,7 +11,7 @@ public final class Sites {
     /** Flying between the worlds of the solar system. */
     public static final String FLIGHT = "flight";
     /** Every place out in space, by its catalogue id (new ones only ever go on the end). */
-    public static final List<String> IDS = List.of(
+    public static final List<String> IDS = withObjects(
             "sun", "alpha_centauri_a", "alpha_centauri_b", "rigel_kentaurus", "proxima_centauri", "sirius", "betelgeuse", "rigel", "vega",
             "polaris", "altair", "deneb", "antares", "aldebaran", "arcturus", "spica", "canopus", "capella", "regulus", "fomalhaut",
             "barnards_star", "wolf_359", "tau_ceti", "epsilon_eridani", "uy_scuti", "vy_canis_majoris", "stephenson_2_18", "eta_carinae",
@@ -23,6 +23,15 @@ public final class Sites {
             "sgr_a_star", "m87_star",
             "milky_way", "andromeda", "triangulum", "lmc", "smc", "whirlpool", "sombrero", "pinwheel", "centaurus_a", "m87", "sculptor",
             "black_eye", "cigar", "bodes", "cartwheel");
+
+    /** The list, then the hundred kinds of object (obj_00 to obj_99). */
+    private static List<String> withObjects(String... ids) {
+        java.util.List<String> out = new java.util.ArrayList<>(List.of(ids));
+        for (int n = 0; n < 100; n++) {
+            out.add(String.format(java.util.Locale.ROOT, "obj_%02d", n));
+        }
+        return List.copyOf(out);
+    }
     /** Height of the platform's top. */
     public static final int FLOOR = 100;
 

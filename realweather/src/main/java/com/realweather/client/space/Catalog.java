@@ -306,6 +306,10 @@ public final class Catalog {
         return new double[]{x / l, y / l, z / l};
     }
 
+    static double[] skyAt(String id) {
+        return at(id);
+    }
+
     /** A place in the night sky for a star (the same every time), well away from the moon. */
     private static double[] at(String id) {
         long h = id.hashCode() * 0x9E3779B97F4A7C15L;
@@ -684,6 +688,7 @@ public final class Catalog {
         // A supernova and its shock front.
         nebula("sn1987a", at("sn1987a"), "168 000 ly (LMC)", 0.0006);
         galaxies();
+        CosmicObjects.register();
     }
 
     private static Sys galaxy(String id, double[] dir, String distance, double radius) {

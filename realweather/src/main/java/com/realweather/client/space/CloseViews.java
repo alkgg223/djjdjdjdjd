@@ -24,6 +24,7 @@ final class CloseViews {
         return switch (b.kind) {
             case Catalog.GALAXY -> 1000;
             case Catalog.EVENT -> 200;
+            case Catalog.OBJECT -> 120;
             case Catalog.PULSAR -> 20;
             case Catalog.BLACKHOLE -> 10;
             case Catalog.NEBULA -> 400;
@@ -52,6 +53,7 @@ final class CloseViews {
         return switch (b.kind) {
             case Catalog.GALAXY -> 0.0;
             case Catalog.EVENT -> 0.1;
+            case Catalog.OBJECT -> 0.0;
             case Catalog.PULSAR -> 1.6;
             case Catalog.BLACKHOLE -> 0.0;
             case Catalog.NEBULA -> 0.0;
@@ -157,6 +159,12 @@ final class CloseViews {
             case Catalog.EVENT -> {
                 Space3D.range((float) Math.max(0.05, R * 0.01), (float) (dist + R * 8));
                 EventVisuals.draw(body.eventType, c[0], c[1], c[2], R, view, CosmicEvents.progress(body), clock, px, seed, 1F);
+            }
+            case Catalog.OBJECT -> {
+                Space3D.range((float) Math.max(0.05, R * 0.004), (float) (dist + R * 14));
+                double[] frame = new double[9];
+                Space3D.mul(view, Space3D.orient(0.15, 1, 0.1, 0), frame);
+                ObjectVisuals.draw(body.eventType, c[0], c[1], c[2], R, frame, clock, px, seed, 1F);
             }
             case Catalog.MERGER -> Merger.draw(c[0], c[1], c[2], R, unit(view, 0.15, 1, 0.1), clock, px, 1F);
             default -> star(body, c, view, R, seed, clock, px, 1F);

@@ -23,8 +23,8 @@ public class TelescopeScreen extends Screen {
 
     @Override
     protected void init() {
-        String[] tabs = {"planets", "stars", "exoplanets", "nebulae", "galaxies"};
-        int tw = Math.min(90, (width - 40) / tabs.length);
+        String[] tabs = {"planets", "stars", "exoplanets", "nebulae", "galaxies", "events", "objects"};
+        int tw = Math.min(90, (width - 40) / tabs.length - 4);
         int tx = width / 2 - (tw * tabs.length + 4 * (tabs.length - 1)) / 2;
         for (int i = 0; i < tabs.length; i++) {
             int idx = i;
@@ -35,7 +35,16 @@ public class TelescopeScreen extends Screen {
             b.active = tab != i;
             addRenderableWidget(b);
         }
-        List<Catalog.Target> list = Catalog.group(tab);
+        List<Catalog.Target> list = new java.util.ArrayList<>();
+        if (tab == 5) {
+            for (CosmicEvents.Event e : CosmicEvents.window()) {
+                if (CosmicEvents.status(e) != CosmicEvents.OVER) {
+                    list.add(e.target());
+                }
+            }
+        } else {
+            list = Catalog.group(tab);
+        }
         int cols = width >= 420 ? 3 : 2;
         int bw = Math.min(140, (width - 30) / cols - 4);
         int bh = 18, gap = 2, top = 52;
@@ -50,11 +59,13 @@ public class TelescopeScreen extends Screen {
         for (int i = from; i < to; i++) {
             Catalog.Target t = list.get(i);
             int k = i - from;
-            Button b = Button.builder(Component.translatable("realweather.target." + t.id), btn -> {
+            Button b = Button.builder(t.label(), btn -> {
                 Telescope.start(pos, t);
                 onClose();
             }).bounds(x0 + (k % cols) * (bw + 4), top + (k / cols) * (bh + gap), bw, bh)
-                    .tooltip(Tooltip.create(Component.translatable("realweather.target." + t.id + ".info"))).build();
+                    .tooltip(Tooltip.create(t.group == Catalog.EVENTS ? Component.translatable("realweather.event." + t.body.eventType + ".info")
+                            : t.group == Catalog.OBJECTS ? Component.translatable("realweather.object." + t.body.eventType + ".info")
+                            : Component.translatable("realweather.target." + t.id + ".info"))).build();
             addRenderableWidget(b);
         }
         // Observing mode and tracking.

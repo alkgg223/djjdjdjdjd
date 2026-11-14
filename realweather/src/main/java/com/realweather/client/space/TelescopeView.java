@@ -487,6 +487,8 @@ public final class TelescopeView {
                 extent = Math.max(extent, b.radius * 1.3);
             } else if (b.kind == Catalog.BLACKHOLE) {
                 extent = Math.max(extent, b.radius * 4200);
+            } else if (b.kind == Catalog.OBJECT || b.kind == Catalog.EVENT) {
+                extent = Math.max(extent, b.radius * 12);
             }
         }
         Space3D.range((float) (D * (1 - extent * 4) - 1), (float) (D * (1 + extent * 4) + 1));
@@ -536,6 +538,11 @@ public final class TelescopeView {
                 }
                 case Catalog.COMET -> comet(b, bx, by, bz, r, px, vis);
                 case Catalog.GALAXY -> galaxy(b, dir, bx, by, bz, r, px);
+                case Catalog.OBJECT -> {
+                    double[] frame = new double[9];
+                    Space3D.mul(skyBase(dir), Space3D.orient(0.2, 1, 0.35, 0), frame);
+                    ObjectVisuals.draw(b.eventType, bx, by, bz, r, frame, time / 20.0, px, b.id.hashCode(), Math.max(Space3D.night, 0.3F) * Space3D.clear);
+                }
                 case Catalog.EVENT -> {
                     double[] base = skyBase(dir);
                     EventVisuals.draw(b.eventType, bx, by, bz, r, base, CosmicEvents.progress(b), time / 20.0, px, b.id.hashCode(),

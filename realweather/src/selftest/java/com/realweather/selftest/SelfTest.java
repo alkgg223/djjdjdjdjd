@@ -89,6 +89,9 @@ public final class SelfTest {
         if (suite.contains("nebulae")) {
             nebulaSuite();
         }
+        if (suite.contains("v17")) {
+            v17Suite();
+        }
         if (suite.contains("v16")) {
             v16Suite();
         }
@@ -1476,6 +1479,75 @@ public final class SelfTest {
             step(2, () -> shot("n_" + t[0]));
         }
         step(5, () -> com.realweather.client.space.Telescope.stop());
+    }
+
+    /** 1.15 stage D: the hundred kinds of object up close (with their information), the map's lists and search, some by telescope. */
+    private static void v17Suite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 18000");
+            cmd("rw sky natural off");
+            cmd("rw sky stop");
+            goTo("minecraft:plains", 0, 0);
+        });
+        step(60, SelfTest::platform);
+        step(40, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> {
+                ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                BlockPos at = p.blockPosition().north();
+                server.overworld().setBlock(at, com.realweather.device.ModDevices.TELESCOPE.get().defaultBlockState(), 3);
+                telescopeAt = at;
+            });
+        });
+        for (int n = 0; n < 100; n++) {
+            int k = n;
+            step(3, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetViewScreen(
+                    com.realweather.client.space.Catalog.byId(com.realweather.client.space.CosmicObjects.id(k)))));
+            step(12, () -> shot(String.format("x_%02d", k)));
+        }
+        // The map's object tab and a search.
+        step(5, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetMapScreen()));
+        step(5, () -> {
+            for (var w : Minecraft.getInstance().screen.children()) {
+                if (w instanceof net.minecraft.client.gui.components.Button b && b.getMessage().getString().equals("Objects")) {
+                    b.onPress();
+                    break;
+                }
+            }
+        });
+        step(8, () -> shot("map_objects"));
+        step(5, () -> {
+            for (var w : Minecraft.getInstance().screen.children()) {
+                if (w instanceof net.minecraft.client.gui.components.EditBox e) {
+                    e.setValue("black hole");
+                    break;
+                }
+            }
+        });
+        step(8, () -> shot("map_search"));
+        step(5, () -> Minecraft.getInstance().setScreen(null));
+        // A few through the telescope.
+        int[] seen = {9, 16, 31, 56, 69, 82, 88, 90};
+        for (int n : seen) {
+            step(10, () -> {
+                com.realweather.client.space.Catalog.Target t = com.realweather.client.space.Catalog.byId(com.realweather.client.space.CosmicObjects.id(n));
+                com.realweather.client.space.Telescope.start(telescopeAt, t);
+                com.realweather.client.space.Telescope.point(com.realweather.client.space.TelescopeView.direction(t, Minecraft.getInstance().level, 1F),
+                        Minecraft.getInstance().level, 1F);
+            });
+            step(4, () -> com.realweather.client.space.Telescope.setFov(com.realweather.client.space.CosmicObjects.ALL[n].sky() * 9));
+            step(12, () -> shot(String.format("tx_%02d", n)));
+        }
+        step(5, () -> com.realweather.client.space.Telescope.stop());
+        // Travel to one and look round it.
+        step(5, () -> cmd("execute as @a run rw travel obj_16"));
+        step(50, () -> {
+            turnClient(180F, 10F);
+            shot("site_wr104");
+        });
+        step(5, () -> cmd("execute as @a run rw home"));
+        step(40, () -> LOG.info("[home] {}", Minecraft.getInstance().level.dimension().location()));
     }
 
     /** 1.15 stage C: the 25 cosmic events, the observatory, inside a black hole, galaxies close. */
