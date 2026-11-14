@@ -29,6 +29,9 @@ public final class ClientConfig {
     public static final ModConfigSpec.BooleanValue CLOUDS;
     public static final ModConfigSpec.BooleanValue MAX_OPTIMIZE;
     public static final ModConfigSpec.EnumValue<SpaceQuality> SPACE_QUALITY;
+    public static final ModConfigSpec.IntValue EVENT_RATE;
+    public static final ModConfigSpec.DoubleValue EVENT_LENGTH;
+    public static final ModConfigSpec.DoubleValue EVENT_INTENSITY;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -64,6 +67,14 @@ public final class ClientConfig {
         b.pop();
         SPACE_QUALITY = b.comment("Space graphics (telescope, planet map, travel): AUTO (sharpness follows the frame rate; safe on phones), LOW, MEDIUM, HIGH, ULTRA, ULTRA_KILLER (this mod's own most detailed mode: full resolution, far more ray steps, bloom, denser star clusters; for strong GPUs), or OFF (no ray tracing at all, for very weak devices).")
                 .translation("realweather.config.space_quality").defineEnum("spaceGraphics", SpaceQuality.AUTO);
+        b.comment("Cosmic events out in space (simulations, not predictions).").translation("realweather.config.events").push("cosmicEvents");
+        EVENT_RATE = b.comment("How many cosmic events there are (per game day).").translation("realweather.config.event_rate")
+                .defineInRange("eventsPerDay", 8, 1, 24);
+        EVENT_LENGTH = b.comment("How long each lasts (1 is normal; more to have longer to watch).").translation("realweather.config.event_length")
+                .defineInRange("eventLength", 1.0, 0.25, 4.0);
+        EVENT_INTENSITY = b.comment("How bright and violent they look.").translation("realweather.config.event_intensity")
+                .defineInRange("eventIntensity", 1.0, 0.5, 2.0);
+        b.pop();
         SPEC = b.build();
     }
 

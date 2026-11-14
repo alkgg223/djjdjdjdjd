@@ -64,7 +64,7 @@ public class PlanetViewScreen extends Screen {
     private boolean landedSaid;
 
     public PlanetViewScreen(Catalog.Target target) {
-        super(Component.translatable("realweather.target." + target.id));
+        super(target.label());
         this.target = target;
         this.body = target.body;
         int k = body.kind;

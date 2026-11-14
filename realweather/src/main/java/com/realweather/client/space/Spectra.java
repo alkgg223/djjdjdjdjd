@@ -198,7 +198,7 @@ final class Spectra {
         }
         g.drawString(mc.font, "380 nm", x0, y0 + ph + 16, 0xFF909090, false);
         g.drawString(mc.font, "750 nm", x0 + pw - mc.font.width("750 nm"), y0 + ph + 16, 0xFF909090, false);
-        g.drawString(mc.font, Component.translatable("realweather.spectrum.title", Component.translatable("realweather.target." + t.id), note), x0,
+        g.drawString(mc.font, Component.translatable("realweather.spectrum.title", t.label(), note), x0,
                 y0 - 11, 0xFFFFE080, true);
     }
 

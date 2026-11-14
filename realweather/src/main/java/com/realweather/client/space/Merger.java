@@ -8,7 +8,7 @@ import static com.realweather.client.space.Space3D.ADD;
  * single black hole, and the whole cycle starts again. Spacetime round them is drawn as a sheet of grid lines rippling
  * with the spiral pattern of the waves they send out at the speed of light, stronger and faster as they close in.
  */
-final class Merger {
+public final class Merger {
     private static final double CYCLE = 70, MERGE = 54;
 
     /** For tests: seconds added to the cycle. */

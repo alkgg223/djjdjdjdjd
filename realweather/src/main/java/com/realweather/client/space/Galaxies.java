@@ -19,7 +19,7 @@ import static com.realweather.client.space.Space3D.NORMAL;
  * (those are generated, not catalogued: shown as simulated). Lengths in the galaxy's radius; the disc in x and z,
  * its axis along y.
  */
-final class Galaxies {
+public final class Galaxies {
     private static final ResourceLocation STAR_MAP = RealWeather.id("textures/environment/space3d/star_surface.png");
     static final int SPIRAL = 0, BARRED = 1, ELLIPTICAL = 2, LENTICULAR = 3, IRREGULAR = 4, RING = 5, STARBURST = 6, PECULIAR = 7;
 
@@ -352,8 +352,8 @@ final class Galaxies {
     // ------------------------------------------------------------------------------------------- inside a galaxy
 
     /** The simulated star system nearest the camera (for the screen): its name, type and planets; or null. */
-    static String nearest;
-    static double nearestDist;
+    public static String nearest;
+    public static double nearestDist;
 
     /**
      * Inside a galaxy: the stars round you, generated cell by cell from how crowded the galaxy is there (none of

@@ -13,9 +13,9 @@ import java.util.List;
  * the telescope, so it has to be pointed at the place and zoomed right in.
  */
 public final class Catalog {
-    public static final int PLANETS = 0, STARS = 1, EXOPLANETS = 2, NEBULAE = 3, GALAXIES = 4;
+    public static final int PLANETS = 0, STARS = 1, EXOPLANETS = 2, NEBULAE = 3, GALAXIES = 4, EVENTS = 5, OBJECTS = 6;
     /** Kinds of body. */
-    static final int ROCKY = 0, GAS = 1, STAR = 2, PULSAR = 3, DWARF = 4, BLACKHOLE = 5, NEBULA = 6, COMET = 7, MERGER = 8, GALAXY = 9;
+    static final int ROCKY = 0, GAS = 1, STAR = 2, PULSAR = 3, DWARF = 4, BLACKHOLE = 5, NEBULA = 6, COMET = 7, MERGER = 8, GALAXY = 9, EVENT = 10, OBJECT = 11;
     /** The planet blocks, by their place in the block atlas. */
     static final int REGOLITH = 0, BASALT = 1, SAND = 2, ICE = 3, FROST = 4, MAGMA = 5, CLOUD = 6, WATER = 7, MOSS = 8, CRYSTAL = 9, SULFUR = 10,
             IRONSTONE = 11, STORM = 12, OBSIDIAN = 13, HOTROCK = 14, ASH = 15;
@@ -49,6 +49,10 @@ public final class Catalog {
         String recipe;
         /** A pulsar with jets (the Crab, Vela); a magnetar. */
         boolean jets, magnetar;
+        /** A cosmic event's kind, start (game ticks) and length; or an object type's number. */
+        int eventType;
+        long eventStart;
+        long eventLength;
 
         Body(String id, int kind, String map, double radius, double orbit, double period, double incl, double node, double phase, float r, float g,
              float b) {
@@ -278,12 +282,18 @@ public final class Catalog {
         public final int group;
         final Sys sys;
         final Body body;
+        /** A name of its own (things that come and go, like cosmic events), instead of the translated one. */
+        net.minecraft.network.chat.Component name;
 
         Target(String id, int group, Sys sys, Body body) {
             this.id = id;
             this.group = group;
             this.sys = sys;
             this.body = body;
+        }
+
+        public net.minecraft.network.chat.Component label() {
+            return name != null ? name : net.minecraft.network.chat.Component.translatable("realweather.target." + id);
         }
     }
 
@@ -750,6 +760,19 @@ public final class Catalog {
         }
         double orbit = t.body.orbit > 0 ? t.body.orbit : 1.0E-5;
         return new float[]{star.r, star.g, star.b, (float) Math.max(0.004, Math.min(0.16, star.radius / orbit * 0.6))};
+    }
+
+    /** A target for something that comes and goes (a cosmic event) or a catalogue object built elsewhere. */
+    static Target dynamic(String id, int group, double[] dir, String distance, Body body, net.minecraft.network.chat.Component name) {
+        Sys s = new Sys(id, dir, distance);
+        s.add(body);
+        Target t = new Target(id, group, s, body);
+        t.name = name;
+        return t;
+    }
+
+    static Body body(String id, int kind, double radius, float r, float g, float b) {
+        return new Body(id, kind, null, radius, 0, 0, 0, 0, 0, r, g, b);
     }
 
     /** The Moon itself (for its blocks). */

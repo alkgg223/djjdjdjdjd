@@ -121,7 +121,7 @@ public final class Telescope {
         baseFov = mc.options.fov().get();
         fov = wantFov = baseFov;
         mc.player.displayClientMessage(Component.translatable("realweather.telescope.started",
-                Component.translatable("realweather.target." + t.id)), true);
+                t.label()), true);
     }
 
     /** For tests: zoom straight to a field of view. */
@@ -384,7 +384,7 @@ public final class Telescope {
         double[] m = TelescopeView.lastView;
         double vx = m[0] * d[0] + m[3] * d[1] + m[6] * d[2], vy = m[1] * d[0] + m[4] * d[1] + m[7] * d[2],
                 vz = m[2] * d[0] + m[5] * d[1] + m[8] * d[2];
-        Component name = Component.translatable("realweather.target." + target.id);
+        Component name = target.label();
         int color = 0xFFFFC040;
         boolean ahead = vz < 0;
         double sx = ahead ? (TelescopeView.lastPx * vx / -vz * 0.5 + 0.5) * w : -1, sy = ahead ? (1 - (TelescopeView.lastPy * vy / -vz * 0.5 + 0.5)) * h : -1;
