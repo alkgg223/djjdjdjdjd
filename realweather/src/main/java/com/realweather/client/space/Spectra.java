@@ -195,11 +195,11 @@ final class Spectra {
                 continue;
             }
             int x = x0 + (int) ((l.nm - LO) / (HI - LO) * (pw - 1));
-            int w = mc.font.width(l.name), lx = x - w / 2, row = 0;
+            int lw = mc.font.width(l.name), lx = x - lw / 2, row = 0;
             while (row < 2 && lx < rowEnd[row] + 3) {
                 row++;
             }
-            rowEnd[row] = lx + w;
+            rowEnd[row] = lx + lw;
             g.fill(x, y0 + ph + 1, x + 1, y0 + ph + 4 + row * 9, 0xFFFFFFFF);
             g.drawString(mc.font, l.name, lx, y0 + ph + 5 + row * 9, l.depth > 0 ? 0xFFFFE080 : 0xFFA0C0FF, false);
         }
