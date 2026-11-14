@@ -70,6 +70,7 @@ public final class ClientInit {
         modBus.addListener(ClientInit::onEntityRenderers);
         modBus.addListener(com.realweather.client.vehicle.VehicleModels::register);
         modBus.addListener(com.realweather.client.vehicle.VehicleClient::onKeys);
+        modBus.addListener(com.realweather.client.space.Telescope::onKeys);
         NeoForge.EVENT_BUS.addListener(com.realweather.client.vehicle.VehicleClient::onClientTick);
         com.realweather.client.vehicle.VehicleClient.init();
         modBus.addListener(ClientInit::onAddLayers);

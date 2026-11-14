@@ -139,7 +139,7 @@ public final class TelescopeView {
             double ang = Math.atan2(Math.sqrt(c[0] * c[0] + c[1] * c[1]), -c[2]);
             double extent = 0;
             for (Catalog.Body b : s.bodies) {
-                extent = Math.max(extent, b.orbit + b.radius * (b.kind == Catalog.BLACKHOLE ? 2500 : b.kind == Catalog.NEBULA ? 1.2 : 3));
+                extent = Math.max(extent, b.orbit + b.radius * (b.kind == Catalog.BLACKHOLE ? 4200 : b.kind == Catalog.NEBULA ? 1.2 : 3));
             }
             if (s.cluster || s.hasDisk() || s.nebula > 0) {
                 extent = Math.max(extent, 1.6e-4);
@@ -459,6 +459,8 @@ public final class TelescopeView {
         for (Catalog.Body b : s.bodies) {
             if (b.kind == Catalog.NEBULA) {
                 extent = Math.max(extent, b.radius * 1.3);
+            } else if (b.kind == Catalog.BLACKHOLE) {
+                extent = Math.max(extent, b.radius * 4200);
             }
         }
         Space3D.range((float) (D * (1 - extent * 4) - 1), (float) (D * (1 + extent * 4) + 1));
@@ -891,11 +893,12 @@ public final class TelescopeView {
 
     /** The bright stars swarming round a black hole (and their planets), once the telescope can pick them out. */
     private static void swarm(Catalog.Body b, double bx, double by, double bz, double rs, double[] axis, double px, float vis) {
-        float a = Space3D.smooth(20F, 120F, (float) (rs * 700 / px)) * vis;
+        float a = Space3D.smooth(20F, 120F, (float) (rs * 3200 / px)) * vis;
         if (a <= 0.01F) {
             return;
         }
-        StarSwarm.draw(bx, by, bz, rs, Space3D.orient(axis[0], axis[1], axis[2], 0), b.id.hashCode(), 260, 18, 700, time / 20.0, px, a);
+        StarSwarm.draw(bx, by, bz, rs, Space3D.orient(axis[0], axis[1], axis[2], 0), b.id.hashCode(), SpaceShaders.killer() ? 420 : 260, 140, 3200,
+                time / 20.0, px, a);
     }
 
     /** The old globular cluster the pulsar lives in: thousands of stars crowding to its centre. */

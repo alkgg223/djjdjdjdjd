@@ -1,0 +1,19 @@
+{
+  "vertex": "realweather:space_quad",
+  "fragment": "realweather:bloom_bright",
+  "samplers": [
+    {
+      "name": "Sampler0"
+    }
+  ],
+  "uniforms": [
+    {
+      "name": "Threshold",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    }
+  ]
+}

@@ -255,6 +255,7 @@ public class PlanetViewScreen extends Screen {
         alt = Math.max(alt, ground + 1.62);
         try {
             draw3D();
+            SpaceShaders.bloom(0.5F);
         } catch (RuntimeException | LinkageError | StackOverflowError e) {
             RealWeather.LOG.error("Planet map view failed", e);
             if (Space3D.isOpen()) {

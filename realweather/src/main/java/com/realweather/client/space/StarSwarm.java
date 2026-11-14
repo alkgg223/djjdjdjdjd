@@ -43,7 +43,7 @@ final class StarSwarm {
             Space3D.billboard(Space3D.GLOW, ADD, cx, cy, cz, unit * outer * (0.15 + 0.17 * i), 0F, 1F, 0.88F, 0.72F, 0.035F * vis);
         }
         for (int i = 0; i < count * 5; i++) {
-            orbit(seed * 7 + 99991, i, inner * 0.6, outer * 1.2, seconds * 0.3, p);
+            orbit(seed * 7 + 99991, i, inner * 0.8, outer * 1.3, seconds * 0.3, p);
             Space3D.apply(rot, p[0] * unit, p[1] * unit, p[2] * unit, q);
             double x = cx + q[0], y = cy + q[1], z = cz + q[2];
             if (z > 0) {
@@ -51,7 +51,7 @@ final class StarSwarm {
             }
             double d = Math.sqrt(x * x + y * y + z * z);
             float[] col = COLOURS[Math.min(4, (int) (Space3D.h(seed * 7 + 99991, i * 9L + 8) * 5))];
-            Space3D.billboard(Space3D.GLOW, ADD, x, y, z, Math.max(d * px / camDist * 1.8, unit * 0.25), 0F, col[0], col[1], col[2], 0.55F * vis);
+            Space3D.billboard(Space3D.GLOW, ADD, x, y, z, Math.max(d * px / camDist * 1.8, unit * 0.6), 0F, col[0], col[1], col[2], 0.55F * vis);
         }
         // The bright stars, each on its own orbit.
         for (int i = 0; i < count; i++) {
@@ -67,7 +67,7 @@ final class StarSwarm {
             double h = Space3D.h(seed, i * 9L + 7);
             int kind = h < 0.12 ? 0 : h < 0.3 ? 1 : h < 0.6 ? 2 : h < 0.82 ? 3 : 4;
             float[] col = COLOURS[kind];
-            double r = unit * (kind == 0 ? 0.9 : kind == 4 ? 0.45 : 0.6) * (0.6 + 0.8 * Space3D.h(seed, i * 9L + 6));
+            double r = unit * (kind == 0 ? 2.2 : kind == 4 ? 1.1 : 1.5) * (0.6 + 0.8 * Space3D.h(seed, i * 9L + 6));
             double rPix = r / pxHere;
             // Bright: a dazzling glare with spikes, and the star itself once it shows a disc.
             Space3D.billboard(Space3D.GLOW, ADD, x, y, z, Math.max(pxHere * 4, r * 7), 0F, col[0], col[1], col[2], 0.75F * vis);
@@ -85,7 +85,7 @@ final class StarSwarm {
             for (int k = 0; k < n; k++) {
                 long ps = seed * 31 + i * 7L + k;
                 double a = r * (4 + 4.5 * k + 3 * Space3D.h(ps, 1));
-                double per = 6 + 9 * k + 6 * Space3D.h(ps, 2);
+                double per = 60 + 70 * k + 50 * Space3D.h(ps, 2);
                 double ang = Space3D.h(ps, 3) * Math.PI * 2 + seconds * Math.PI * 2 / per;
                 double tilt = (Space3D.h(ps, 4) - 0.5) * 0.5;
                 pl[0] = Math.cos(ang) * a;
@@ -128,7 +128,8 @@ final class StarSwarm {
     private static void orbit(long seed, int i, double inner, double outer, double seconds, double[] out) {
         double a = inner * Math.pow(outer / inner, Math.pow(Space3D.h(seed, i * 9L), 1.3));
         double e = 0.1 + 0.7 * Space3D.h(seed, i * 9L + 1);
-        double speed = 0.6 * Math.pow(a / inner, -1.5);
+        // Slow and stately: the nearest take minutes to go round, the farthest far longer.
+        double speed = 0.025 * Math.pow(a / inner, -1.5);
         double m = Space3D.h(seed, i * 9L + 2) * Math.PI * 2 + seconds * speed;
         // The angle along its orbit (sped up near the hole, as a stretched orbit is).
         double nu = m + 2 * e * Math.sin(m) + 1.25 * e * e * Math.sin(2 * m);

@@ -630,6 +630,7 @@ public final class SpaceFlight {
         if (mc.options.hideGui) {
             return;
         }
+        SpaceShaders.bloom(0.5F);
         var font = mc.font;
         int w = g.guiWidth(), h = g.guiHeight();
         for (Object[] l : LABELS) {

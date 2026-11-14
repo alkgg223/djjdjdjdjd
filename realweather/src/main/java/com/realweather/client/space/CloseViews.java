@@ -102,11 +102,11 @@ final class CloseViews {
                 // The great cluster of bright stars swarming round it (some with planets), and its jets, over the lensed
                 // sky; what is behind the hole's shadow stays hidden.
                 Space3D.clearDepth();
-                Space3D.range((float) Math.max(0.05, R * 0.2), (float) (dist + R * 1000));
+                Space3D.range((float) Math.max(0.05, R * 0.2), (float) (dist + R * 4500));
                 Space3D.depthSphere(c[0], c[1], c[2], R * 2.6);
                 double[] hole = new double[9];
                 Space3D.mul(view, Space3D.orient(n[0], n[1], n[2], 0), hole);
-                StarSwarm.draw(c[0], c[1], c[2], R, hole, seed, 260, 18, 700, clock, px, 1F);
+                StarSwarm.draw(c[0], c[1], c[2], R, hole, seed, SpaceShaders.killer() ? 420 : 260, 140, 3200, clock, px, 1F);
                 if (body.jets) {
                     Jets.draw(c[0], c[1], c[2], nv, R * 700, R * 14, 0.6F, 0.74F, 1F, 0.98, seed, clock, px, 1F);
                 }

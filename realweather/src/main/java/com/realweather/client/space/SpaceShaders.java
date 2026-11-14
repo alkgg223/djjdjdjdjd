@@ -26,7 +26,8 @@ public final class SpaceShaders {
     public static final ResourceLocation BLOCKS = RealWeather.id("textures/environment/space3d/planet_blocks.png");
     /** On the test machine's software renderer the ray tracing is cut short (only to check it in screenshots). */
     private static final boolean TESTING = Boolean.getBoolean("realweather.selftest");
-    private static ShaderInstance voxel, hole, air, gas, blit, giant, starFace, rings;
+    private static ShaderInstance voxel, hole, air, gas, blit, giant, starFace, rings, bright, blur, filter;
+    private static TextureTarget copy, bloomA, bloomB;
     private static final ResourceLocation NOISE = RealWeather.id("textures/environment/space3d/nebula_noise.png");
     private static final ResourceLocation RING_MAP = RealWeather.id("textures/environment/space3d/rings.png");
     private static boolean broken;
@@ -59,6 +60,9 @@ public final class SpaceShaders {
         load(event, "gas_planet", s -> giant = s);
         load(event, "star_surface", s -> starFace = s);
         load(event, "ring_particles", s -> rings = s);
+        load(event, "bloom_bright", s -> bright = s);
+        load(event, "bloom_blur", s -> blur = s);
+        load(event, "telescope_filter", s -> filter = s);
     }
 
     /** One shader; if this machine can't compile it, that pass is left out (the rest goes on). */
@@ -95,6 +99,11 @@ public final class SpaceShaders {
         return mobile == 1;
     }
 
+    /** ULTRA KILLER: this mod's own most detailed space rendering (full resolution, far more ray steps, bloom). */
+    public static boolean killer() {
+        return com.realweather.ClientConfig.SPACE_QUALITY.get() == com.realweather.ClientConfig.SpaceQuality.ULTRA_KILLER;
+    }
+
     /** Off: no ray tracing at all (the smooth spheres, glows and particles stay). */
     public static boolean enabled() {
         return com.realweather.ClientConfig.SPACE_QUALITY.get() != com.realweather.ClientConfig.SpaceQuality.OFF;
@@ -118,6 +127,7 @@ public final class SpaceShaders {
             case MEDIUM -> scale = m ? 0.38F : 0.6F;
             case HIGH -> scale = m ? 0.55F : 0.8F;
             case ULTRA -> scale = 1F;
+            case ULTRA_KILLER -> scale = m ? 0.75F : 1F;
             default -> {
                 if (scale < 0) {
                     scale = m ? 0.3F : 0.7F;
@@ -138,7 +148,7 @@ public final class SpaceShaders {
         RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
         float s = Math.max(0.2F, scale < 0 ? 0.5F : scale);
         double px = Math.max(1, (x1 - x0) * 0.5 * main.width * s) * Math.max(1, (y1 - y0) * 0.5 * main.height * s);
-        double total = mobile() ? 2.2E7 : 2.5E8;
+        double total = (mobile() ? 2.2E7 : 2.5E8) * (killer() ? 4 : 1);
         float cap = (float) Math.max(least, total / px);
         if (TESTING) {
             cap = Math.min(cap, steps * 0.4F + least * 0.6F);
@@ -485,6 +495,112 @@ public final class SpaceShaders {
         } catch (RuntimeException | LinkageError e) {
             broken = true;
             RealWeather.LOG.error("Ring particles disabled after an error", e);
+        }
+    }
+
+    /** A copy of the finished picture so far (to read while drawing over it). */
+    private static TextureTarget copyOfScreen() {
+        RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
+        if (copy == null) {
+            copy = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
+            copy.setFilterMode(GL11.GL_LINEAR);
+        } else if (copy.width != main.width || copy.height != main.height) {
+            copy.resize(main.width, main.height, Minecraft.ON_OSX);
+            copy.setFilterMode(GL11.GL_LINEAR);
+        }
+        GlStateManager._glBindFramebuffer(org.lwjgl.opengl.GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
+        GlStateManager._glBindFramebuffer(org.lwjgl.opengl.GL30.GL_DRAW_FRAMEBUFFER, copy.frameBufferId);
+        GlStateManager._glBlitFrameBuffer(0, 0, main.width, main.height, 0, 0, copy.width, copy.height, GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
+        main.bindWrite(true);
+        return copy;
+    }
+
+    /**
+     * Bloom (ULTRA KILLER): the brightest parts of the picture (stars, the Sun's face, glowing gas, accretion discs)
+     * spill a soft glow round themselves, as they would in a camera or the eye.
+     */
+    public static void bloom(float strength) {
+        if (!killer() || bright == null || blur == null || blit == null || broken) {
+            return;
+        }
+        try {
+            RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
+            TextureTarget src = copyOfScreen();
+            int w = Math.max(1, main.width / 3), h = Math.max(1, main.height / 3);
+            if (bloomA == null) {
+                bloomA = new TextureTarget(w, h, false, Minecraft.ON_OSX);
+                bloomB = new TextureTarget(w, h, false, Minecraft.ON_OSX);
+            } else if (bloomA.width != w || bloomA.height != h) {
+                bloomA.resize(w, h, Minecraft.ON_OSX);
+                bloomB.resize(w, h, Minecraft.ON_OSX);
+            }
+            bloomA.setFilterMode(GL11.GL_LINEAR);
+            bloomB.setFilterMode(GL11.GL_LINEAR);
+            RenderSystem.disableDepthTest();
+            RenderSystem.depthMask(false);
+            RenderSystem.disableBlend();
+            // The bright parts, smaller.
+            bloomA.bindWrite(true);
+            RenderSystem.setShaderTexture(0, src.getColorTextureId());
+            bright.safeGetUniform("Threshold").set(0.62F);
+            RenderSystem.setShader(() -> bright);
+            quad(-1F, -1F, 1F, 1F, 0F, 0F, 1F, 1F);
+            // Blurred across, then down.
+            for (int pass = 0; pass < 2; pass++) {
+                bloomB.bindWrite(true);
+                RenderSystem.setShaderTexture(0, bloomA.getColorTextureId());
+                blur.safeGetUniform("Direction").set(1.0F / w, 0F);
+                RenderSystem.setShader(() -> blur);
+                quad(-1F, -1F, 1F, 1F, 0F, 0F, 1F, 1F);
+                bloomA.bindWrite(true);
+                RenderSystem.setShaderTexture(0, bloomB.getColorTextureId());
+                blur.safeGetUniform("Direction").set(0F, 1.0F / h);
+                RenderSystem.setShader(() -> blur);
+                quad(-1F, -1F, 1F, 1F, 0F, 0F, 1F, 1F);
+            }
+            // Added on top.
+            main.bindWrite(true);
+            RenderSystem.enableBlend();
+            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.CONSTANT_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ZERO,
+                    GlStateManager.DestFactor.ONE);
+            org.lwjgl.opengl.GL14.glBlendColor(0F, 0F, 0F, Math.min(1F, strength));
+            RenderSystem.setShaderTexture(0, bloomA.getColorTextureId());
+            RenderSystem.setShader(() -> blit);
+            quad(-1F, -1F, 1F, 1F, 0F, 0F, 1F, 1F);
+            org.lwjgl.opengl.GL14.glBlendColor(0F, 0F, 0F, 0F);
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.enableDepthTest();
+            RenderSystem.depthMask(true);
+        } catch (RuntimeException | LinkageError e) {
+            broken = true;
+            RealWeather.LOG.error("Bloom disabled after an error", e);
+        }
+    }
+
+    /**
+     * The telescope's observing modes over the whole picture: infrared (heat and dust glow, false colour), ultraviolet
+     * (hot young stars, blue), X-ray (only the hottest, most violent things), and a blur when it is out of focus.
+     */
+    public static void telescopeFilter(int mode, float blurPx) {
+        if (filter == null || broken || (mode == 0 && blurPx < 0.3F)) {
+            return;
+        }
+        try {
+            RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
+            TextureTarget src = copyOfScreen();
+            RenderSystem.disableDepthTest();
+            RenderSystem.depthMask(false);
+            RenderSystem.disableBlend();
+            filter.safeGetUniform("Mode").set((float) mode);
+            filter.safeGetUniform("Blur").set(blurPx / main.width, blurPx / main.height);
+            RenderSystem.setShaderTexture(0, src.getColorTextureId());
+            RenderSystem.setShader(() -> filter);
+            quad(-1F, -1F, 1F, 1F, 0F, 0F, 1F, 1F);
+            RenderSystem.enableDepthTest();
+            RenderSystem.depthMask(true);
+        } catch (RuntimeException | LinkageError e) {
+            broken = true;
+            RealWeather.LOG.error("Telescope filters disabled after an error", e);
         }
     }
 

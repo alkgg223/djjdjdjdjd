@@ -57,6 +57,16 @@ public class TelescopeScreen extends Screen {
                     .tooltip(Tooltip.create(Component.translatable("realweather.target." + t.id + ".info"))).build();
             addRenderableWidget(b);
         }
+        // Observing mode and tracking.
+        addRenderableWidget(Button.builder(Component.translatable("realweather.telescope.mode." + Telescope.mode), b -> {
+            Telescope.nextMode();
+            b.setMessage(Component.translatable("realweather.telescope.mode." + Telescope.mode));
+        }).bounds(6, height - 24, 96, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable(Telescope.tracking ? "realweather.telescope.track_on" : "realweather.telescope.track_off"),
+                b -> {
+                    Telescope.toggleTracking();
+                    b.setMessage(Component.translatable(Telescope.tracking ? "realweather.telescope.track_on" : "realweather.telescope.track_off"));
+                }).bounds(width - 102, height - 24, 96, 20).build());
         if (pages > 1) {
             Button prev = Button.builder(Component.literal("<"), btn -> {
                 PAGE[tab] = Math.max(0, PAGE[tab] - 1);

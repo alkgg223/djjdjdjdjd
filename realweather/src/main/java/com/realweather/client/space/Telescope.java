@@ -24,8 +24,8 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
  */
 public final class Telescope {
     private static final ResourceLocation EYEPIECE = RealWeather.id("textures/environment/space3d/eyepiece.png");
-    /** Highest power: 100 000 times. */
-    public static final double MAX_POWER = 100000;
+    /** Highest power: a million times. */
+    public static final double MAX_POWER = 1000000;
     private static boolean active;
     private static BlockPos pos;
     private static Vec3 start;
@@ -38,6 +38,52 @@ public final class Telescope {
     /** The player's own angles are parked here while at the eyepiece; turning moves them, and is read back. */
     private static float parkYaw;
     private static boolean parked;
+    /** Ticks since the player last turned the telescope by hand (tracking waits for them). */
+    private static int trackHold;
+    /** Observing mode: visible light, infrared, ultraviolet, X-ray, or the target's spectrum. */
+    public static final int VISIBLE = 0, INFRARED = 1, ULTRAVIOLET = 2, XRAY = 3, SPECTRUM = 4;
+    public static int mode;
+    /** Out of focus by this much (0 is sharp: the automatic focus). */
+    public static float focus;
+    /** Following the target as it moves across the sky (planets, comets), not just the stars. */
+    public static boolean tracking = true;
+    public static final net.minecraft.client.KeyMapping MODE_KEY = new net.minecraft.client.KeyMapping("key.realweather.telescope_mode",
+            com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_M, "key.categories.realweather");
+    public static final net.minecraft.client.KeyMapping TRACK_KEY = new net.minecraft.client.KeyMapping("key.realweather.telescope_track",
+            com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_R, "key.categories.realweather");
+    public static final net.minecraft.client.KeyMapping FOCUS_IN = new net.minecraft.client.KeyMapping("key.realweather.telescope_focus_in",
+            com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_BRACKET, "key.categories.realweather");
+    public static final net.minecraft.client.KeyMapping FOCUS_OUT = new net.minecraft.client.KeyMapping("key.realweather.telescope_focus_out",
+            com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_BRACKET, "key.categories.realweather");
+    public static final net.minecraft.client.KeyMapping AUTO_FOCUS = new net.minecraft.client.KeyMapping("key.realweather.telescope_autofocus",
+            com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSLASH, "key.categories.realweather");
+
+    public static void onKeys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
+        event.register(MODE_KEY);
+        event.register(TRACK_KEY);
+        event.register(FOCUS_IN);
+        event.register(FOCUS_OUT);
+        event.register(AUTO_FOCUS);
+    }
+
+    /** The next observing mode. */
+    public static void nextMode() {
+        mode = (mode + 1) % 5;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            mc.player.displayClientMessage(Component.translatable("realweather.telescope.mode", Component.translatable("realweather.telescope.mode." + mode)),
+                    true);
+        }
+    }
+
+    public static void toggleTracking() {
+        tracking = !tracking;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            mc.player.displayClientMessage(Component.translatable(tracking ? "realweather.telescope.tracking_on" : "realweather.telescope.tracking_off"),
+                    true);
+        }
+    }
 
     private Telescope() {}
 
@@ -194,6 +240,28 @@ public final class Telescope {
             pitch = Mth.clamp(pitch + dp * k, -89.9999, 89.9999);
             if (dy != 0 || dp != 0) {
                 toSky(dirOf(yaw, pitch), th, AIM);
+                trackHold = 60;
+            } else if (tracking && target != null && trackHold <= 0 && target.sys != Catalog.earth) {
+                // Following the target: eased on to it, then held on it as it moves.
+                double[] want = TelescopeView.direction(target, mc.level, pt);
+                double[] ws = new double[3];
+                toSky(want, th, ws);
+                double dot = ws[0] * AIM[0] + ws[1] * AIM[1] + ws[2] * AIM[2];
+                double ang = Math.acos(Mth.clamp(dot, -1, 1));
+                if (ang < Math.toRadians(fov) * 2) {
+                    double f = Math.min(1, 0.15 + 0.85 * (ang < Math.toRadians(fov) * 0.02 ? 1 : 0.15));
+                    for (int i = 0; i < 3; i++) {
+                        AIM[i] += (ws[i] - AIM[i]) * f;
+                    }
+                    double l = Math.sqrt(AIM[0] * AIM[0] + AIM[1] * AIM[1] + AIM[2] * AIM[2]);
+                    for (int i = 0; i < 3; i++) {
+                        AIM[i] /= l;
+                    }
+                    toWorld(AIM, th, w);
+                    ypr = yawPitch(w);
+                    yaw = ypr[0];
+                    pitch = ypr[1];
+                }
             }
         } else {
             parkYaw = p.getYRot();
@@ -263,6 +331,24 @@ public final class Telescope {
             stop();
             return;
         }
+        if (trackHold > 0) {
+            trackHold--;
+        }
+        while (MODE_KEY.consumeClick()) {
+            nextMode();
+        }
+        while (TRACK_KEY.consumeClick()) {
+            toggleTracking();
+        }
+        if (FOCUS_IN.isDown()) {
+            focus = Math.max(-6F, focus - 0.15F);
+        }
+        if (FOCUS_OUT.isDown()) {
+            focus = Math.min(6F, focus + 0.15F);
+        }
+        while (AUTO_FOCUS.consumeClick()) {
+            focus = 0F;
+        }
         // Hold attack to zoom in, use to zoom out (also on a touch screen).
         if (mc.options.keyAttack.isDown()) {
             zoom(0.9);
@@ -281,6 +367,9 @@ public final class Telescope {
         }
         int w = g.guiWidth(), h = g.guiHeight();
         double power = baseFov / fov;
+        // Infrared, ultraviolet, X-ray, focus; and in ULTRA KILLER the glow of the brightest things.
+        SpaceShaders.bloom(0.55F);
+        SpaceShaders.telescopeFilter(mode == SPECTRUM ? 0 : mode, Math.abs(focus) * 2.2F);
         // The eyepiece: a round field of view at high power.
         if (power > 2.5) {
             RenderSystem.enableBlend();
@@ -325,6 +414,14 @@ public final class Telescope {
         Component hint = earth ? Component.translatable("realweather.telescope.earth")
                 : up < -0.02 ? Component.translatable("realweather.telescope.below") : Component.translatable("realweather.telescope.hint");
         g.drawString(mc.font, hint, 8, h - 18, earth ? 0xFF80E0FF : up < -0.02 ? 0xFFFF9070 : 0xFFB0B0B0, true);
+        // Mode, tracking and focus.
+        Component state = Component.translatable("realweather.telescope.state", Component.translatable("realweather.telescope.mode." + mode),
+                Component.translatable(tracking ? "realweather.telescope.track_on" : "realweather.telescope.track_off"),
+                focus == 0F ? Component.translatable("realweather.telescope.focus_auto") : Component.literal(String.format(java.util.Locale.ROOT, "%+.1f", focus)));
+        g.drawString(mc.font, state, 8, 8, 0xFF90D0FF, true);
+        if (mode == SPECTRUM) {
+            Spectra.draw(g, target, w, h);
+        }
     }
 
     private static void bracket(GuiGraphics g, int x, int y, int r, int c) {
