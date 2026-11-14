@@ -853,9 +853,9 @@ public final class TelescopeView {
         double[] n = new double[3];
         Space3D.apply(Space3D.SKYVIEW, nSky[0], nSky[1], nSky[2], n);
         // The jets, along the axis both ways.
-        Jets.draw(bx, by, bz, n, rs * 900, rs * 16, 0.6F, 0.74F, 1F, 0.98, 618, time / 20.0, px, vis);
         float alpha = Space3D.smooth(5F, 16F, (float) quadPx) * vis;
         if (alpha <= 0.01F || !SpaceShaders.holeReady()) {
+            Jets.draw(bx, by, bz, n, rs * 900, rs * 16, 0.6F, 0.74F, 1F, 0.98, 618, time / 20.0, px, vis);
             return;
         }
         double dist = Math.sqrt(bx * bx + by * by + bz * bz);
@@ -878,6 +878,7 @@ public final class TelescopeView {
         SpaceShaders.blackHole((float) x0, (float) y0, (float) x1, (float) y1, new double[]{am * edge, bm * edge, 60}, new double[]{ha * edge, 0, 0},
                 new double[]{0, hb * edge, 0}, new double[]{0, 0, -1}, new double[3], new double[3], nb, (float) (time % 200000.0) * 0.05F, alpha,
                 (float) edge, 1.15F, 320F);
+        Jets.draw(bx, by, bz, n, rs * 900, rs * 16, 0.6F, 0.74F, 1F, 0.98, 618, time / 20.0, px, vis);
     }
 
     /** The old globular cluster the pulsar lives in: thousands of stars crowding to its centre. */

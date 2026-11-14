@@ -49,6 +49,7 @@ Minecraft **1.21.1** · NeoForge **21.1.264** (any 21.1.x)
 - **تسونامي 1.6.0**: الموجة تصعد مع الأرض وتنزل معها (تتسلق التلال وتنزل في الوديان بدل أن تمشي في الهواء)، وتترك خلفها ماء ماينكرافت حقيقياً على الأرض حول اللاعبين (تستطيع السباحة فيه) يختفي بعد خمس دقائق من بداية التسونامي. من يكون تحت الماء ينفد هواؤه ويختنق، والسيارات التي تضربها الموجة يتحطم زجاجها ويدخلها الماء ويختنق من بداخلها.
 - **كسوف الشمس (1.8.0)**: الشمس والقمر صارا دائريين. كسوف كلي وجزئي: القمر يمر أمام الشمس فتصير هلالاً، والنهار يظلم تدريجياً إلى شفق أزرق عميق وتظهر النجوم بوضوح ويتوهج الأفق بلون الغروب من كل الجهات. قبل الكسوف الكلي وبعده مباشرة تلمع آخر حبة من ضوء الشمس عند الحافة ("الخاتم الماسي")، وفي الكسوف الكلي يظهر قرص القمر الأسود داخل هالة الإكليل اللؤلؤية. الغيوم تظلم معه وتلمع لحظة الخاتم الماسي. يحدث نادراً وحده، أو بالأمر.
 - **نظارة الكسوف**: تُصنع من ورق وصبغة سوداء ولوح زجاج وتُلبس على الرأس. من خلالها يصير كل شيء أسود إلا الشمس (أو هلالها). في وضع البقاء النظر إلى الشمس أثناء الكسوف بدونها يعمي عينيك لحظات.
+- **1.14.0**: إصلاح خروج اللعبة على الهاتف عند فتح التلسكوب أو خريطة الكواكب (الرسم الفضائي الثقيل صار بدقة تتكيّف تلقائياً مع قوة الجهاز مع حد للعمل في كل إطار، وإعداد جديد `/rwgraphics space auto|low|medium|high|ultra|off`). السفر بخريطة الكواكب إلى كل شيء: النجوم والشمس والنابضات والثقب الأسود والسدم والمذنبات، فتصبح بجانبه في الفضاء وتطير حوله. **محرك الضوء** (ألماس + عين إندر + غبار جلوستون + بلوكة ريدستون): كلك يمين لضبط سرعته من 1% إلى 100% من سرعة الضوء وتشغيله، ثم انظر إلى كوكب في السماء وامشِ للأمام فتنطلق وتطير عبر المجموعة الشمسية بمقياسها الحقيقي وتهبط على الكوكب الذي تتجه إليه. الكواكب الغازية صارت غيوماً بلا أرض: تغوص فيها وتموت قرب نواتها الحارة. و15 تأثيراً جديداً: الأقواس الشمسية، الشويكات، حبيبات سطح الشمس، الحلقات الإكليلية، ذيل المذنب الأيوني والغباري، جسيمات حلقات زحل، أعمدة براكين آيو ونوافير إنسيلادوس، شفق الكواكب، الدوامات الجوية (البقعة الحمراء العظيمة وسداسي زحل)، جبهات الصدمة للمستعر الأعظم 1987A، النفاثات النسبية، الزلازل النجمية (ومغناطار SGR 1806-20)، موجات الجاذبية (GW150914)، وزخات الأشعة الكونية.
 - **1.13.0**: السفر إلى الكواكب والأقمار (من خريطة الكواكب: إلى السطح أو المدار) والبناء عليها، 47 بلوكة فضائية واقعية، سماء كل كوكب، النجوم والنابضات والثقب الأسود والسدم في خريطة الكواكب، 25 سديماً ثلاثي الأبعاد، 5 نابضات، تشتت الغلاف الجوي وأشعة الضوء الحجمية وهالة الشمس وتوهجاتها. وصُغّرت البقعة البيضاء على المريخ.
 - **1.12.0**: التلسكوب ثابت بدون رجفة ويقرّب حتى 100000 مرة، والكواكب تدور أبطأ. عند التقريب الشديد ترى أن سطح الكواكب مكوّن من بلوكات (15 بلوكة فضائية جديدة يمكنك البناء بها). بلوكة خريطة الكواكب (زجاج + نحاس + خريطة + حديد): اختر كوكباً ودُر حوله بالكامل ثم انزل واهبط على سطحه. وعند الطيران عالياً تسودّ السماء، وعند 700 بلوكة تخرج من طبقة الأوزون، وأعلى من ذلك ترى الأرض كاملة كرة ثلاثية الأبعاد. والثقب الأسود TON 618 مع عدسة الجاذبية وحلقة أينشتاين وقرص التراكم وحلقة الفوتون.
 - **1.11.0**: أحداث السماء صارت أجساماً ثلاثية الأبعاد حقيقية في الفضاء منفصلة عن سماء ماينكرافت (كواكب مضاءة بأطوار، مذنبات، شهب، محطة فضاء، شفق...). وتلسكوب (منظار + نحاس + لوح زجاج + عصي): اضغط عليه واختر القمر أو كوكباً أو نجماً أو كوكباً خارجياً، تظهر علامة مكانه، ثم قرّب حتى 14000 مرة لتراه وكواكبه تدور حوله. اضغط Shift للخروج.
@@ -96,6 +97,8 @@ Minecraft **1.21.1** · NeoForge **21.1.264** (any 21.1.x)
 | `/rw eclipse total` أو `/rw eclipse partial` | كسوف كلي أو جزئي للشمس (نحو 5 دقائق) |
 | `/rw eclipse stop` · `/rw eclipse natural on/off` | إنهاء الكسوف / كسوف طبيعي نادر |
 | `/rwgraphics tornado ultra` / `/rwgraphics weather low` | دقة الإعصار ودقة الطقس: low, medium, high, ultra (لا تحتاج صلاحية) |
+| `/rwgraphics space auto` | رسومات الفضاء: auto (تلقائي وآمن على الهاتف), low, medium, high, ultra, off |
+| `/rw travel sun` · `/rw travel ton618` · `/rw launch` | السفر إلى نجم أو ثقب أسود أو سديم أو مذنب، والانطلاق في الفضاء بين الكواكب |
 | `/rw tornado stop` | الأعاصير تضعف وتتلاشى |
 | `/rw tornado damage on/off` | تكسير البلوكات بالأعاصير |
 | `/rw tornado natural on/off` | أعاصير طبيعية في العواصف الرعدية القوية |
@@ -237,6 +240,18 @@ lights at night). And TON 618, a black hole ray traced in curved space: its shad
 accretion disc with its far side lensed over and under it, an Einstein ring of the galaxy behind, lensed stars and its
 jets.
 
+1.14.0: no more crash on phones at the telescope or the planet map (the ray-traced space passes are worked out at a
+resolution that follows the frame rate, with a cap on the work in any one frame; new setting `/rwgraphics space
+auto|low|medium|high|ultra|off`). The planet map travels to everything: the Sun and stars, pulsars, the black hole,
+nebulae and comets, out into deep space beside them to fly round them. The light drive (diamonds, an eye of ender,
+glowstone dust, a block of redstone): right-click to set it from 1% to 100% of the speed of light and switch it on,
+then look up at a world in the sky and walk forward: you take off and fly through the solar system to scale, and
+arrive above the world you head for. Gas giants are clouds with no ground: you sink through them and die near the hot
+core. 15 new effects: solar prominences, spicules and granulation, coronal loops, comet ion and dust tails, ring
+particles, volcanic plumes (Io, Enceladus), planetary aurorae, atmospheric vortices (the Great Red Spot, Saturn's
+hexagon), the expanding shock front of SN 1987A, relativistic jets, starquakes (and the magnetar SGR 1806-20),
+gravitational waves (GW150914) and cosmic ray air showers.
+
 1.13.0: travel to the planets and moons (from the planet map: to the surface where you are over it, or into orbit
 high above it, drifting slowly down) and build on them: each world is real ground in the planets dimension, made from
 its own map with hills, mountains, craters and seas, out of 47 realistic planet blocks (64 x 64 textures), under its
@@ -250,6 +265,6 @@ PSR J1748-2446ad, PSR J0437-4715) with beams turning with the star, pulses in st
 atmospheric scattering, volumetric god rays, the Sun's corona and flares, auroras seen from space. Mars's polar cap is
 smaller and softer.
 
-Build: `./gradlew build` → `build/libs/realweather-1.13.0.jar`.
+Build: `./gradlew build` → `build/libs/realweather-1.14.0.jar`.
 Sounds, textures and models are generated by `tools/gen_sounds.py`, `tools/gen_vehicle_sounds.py`,
 `tools/gen_textures.py`, `tools/gen_devices.py` and `tools/vehicles/vehicles.py`.

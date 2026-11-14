@@ -50,7 +50,8 @@ public final class GodRays {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         if (!ClientWeather.active(level) || event.getCamera().getFluidInCamera() != FogType.NONE
-                || com.realweather.client.space.Telescope.active() || event.getCamera().getPosition().y > 600) {
+                || com.realweather.client.space.Telescope.active() || event.getCamera().getPosition().y > 600
+                || mc.screen instanceof com.realweather.client.space.PlanetViewScreen) {
             return;
         }
         float pt = event.getPartialTick().getGameTimeDeltaPartialTick(false);

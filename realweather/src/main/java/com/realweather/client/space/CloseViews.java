@@ -98,8 +98,11 @@ final class CloseViews {
                 n[1] /= nl;
                 n[2] /= nl;
                 double[] nv = unit(view, n[0], n[1], n[2]);
-                Jets.draw(c[0], c[1], c[2], nv, R * 700, R * 14, 0.6F, 0.74F, 1F, 0.98, seed, clock, px, 1F);
                 SpaceShaders.blackHole(-1F, -1F, 1F, 1F, o, new double[3], new double[3], f, dx, dy, n, (float) clock, 1F, 0F, 1.15F, 420F);
+                // Its jets over the lensed sky.
+                Space3D.clearDepth();
+                Space3D.range((float) Math.max(0.05, (dist - R * 4) * 0.3), (float) (dist + R * 800));
+                Jets.draw(c[0], c[1], c[2], nv, R * 700, R * 14, 0.6F, 0.74F, 1F, 0.98, seed, clock, px, 1F);
             }
             case Catalog.NEBULA -> nebula(body, c, view, cam, R, f, dx, dy, px, clock);
             case Catalog.COMET -> {
