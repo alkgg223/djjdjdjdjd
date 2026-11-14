@@ -204,12 +204,12 @@ public final class PlanetSky {
             SpaceShaders.atmosphere(Atmo.sky(w.ar(), w.ag(), w.ab(), w.air(), star[0], star[1], star[2]), new double[]{0, 1 + Math.max(0, alt), 0}, sw);
         }
         if (inGas > 0.01F) {
-            float t = gasDepth(cam.y);
-            float lit = (0.25F + 0.75F * day) * (1F - t * 0.85F);
+            float dp = gasDepth(cam.y);
+            float lit = (0.25F + 0.75F * day) * (1F - dp * 0.85F);
             Space3D.clearDepth();
             Space3D.range(5F, 80000F);
-            Space3D.fullScreen(Math.min(1F, w.ar() * lit * 0.8F + 0.55F * t * t), w.ag() * lit * 0.75F + 0.14F * t * t, w.ab() * lit * 0.7F + 0.02F * t * t,
-                    0.35F + 0.62F * inGas);
+            Space3D.fullScreen(Math.min(1F, w.ar() * lit * 0.8F + 0.55F * dp * dp), w.ag() * lit * 0.75F + 0.14F * dp * dp,
+                    w.ab() * lit * 0.7F + 0.02F * dp * dp, 0.35F + 0.62F * inGas);
             clouds(level, cam, w, pt);
         }
         // From high above: the whole world below.
