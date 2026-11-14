@@ -136,6 +136,10 @@ public final class SpaceFlight {
         strafe = in.leftImpulse;
         lift = (in.jumping ? 1F : 0F) - (in.shiftKeyDown ? 1F : 0F);
         fast = Minecraft.getInstance().options.keySprint.isDown();
+        if (testHold) {
+            fwd = testFwd;
+            lift = testLift;
+        }
         in.forwardImpulse = 0F;
         in.leftImpulse = 0F;
         in.up = in.down = in.left = in.right = false;
@@ -163,12 +167,34 @@ public final class SpaceFlight {
         }
     }
 
+    /** For tests: hold the movement keys like this out in space (or let go). */
+    public static boolean testHold;
+    public static float testFwd, testLift;
+
+    /** For tests: as if walking forward with the drive on, looking up, from here. */
+    public static void testLaunch() {
+        Minecraft mc = Minecraft.getInstance();
+        cooldown = 0;
+        driveOn = true;
+        go(mc);
+    }
+
+    public static String testState() {
+        return String.format(Locale.ROOT, "place=%s pos=(%.4g, %.4g, %.4g) vel=%.4g near=%s %.4g drive=%s %d", place, pos[0], pos[1], pos[2],
+                Math.sqrt(vel[0] * vel[0] + vel[1] * vel[1] + vel[2] * vel[2]), nearName, nearDist, driveOn, drivePct);
+    }
+
     /** Holding the drive switched on, looking up into the sky and walking forward: off you go. */
     private static void launch(Minecraft mc) {
         LocalPlayer p = mc.player;
         if (!driveOn || mc.screen != null || cooldown > 0 || !mc.options.keyUp.isDown() || p.getXRot() > -25F) {
             return;
         }
+        go(mc);
+    }
+
+    private static void go(Minecraft mc) {
+        LocalPlayer p = mc.player;
         ClientLevel level = mc.level;
         SolarSystem.Body origin = null;
         if (level.dimension() == Level.OVERWORLD) {

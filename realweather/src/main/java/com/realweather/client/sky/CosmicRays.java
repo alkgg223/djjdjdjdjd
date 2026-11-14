@@ -29,6 +29,8 @@ public final class CosmicRays {
     private static final ResourceLocation GLOW = RealWeather.id("textures/environment/space/glow.png");
     private static final double SLOT = 140;
     private static boolean failed;
+    /** For tests: one shower in front of the camera, this many seconds after it began (or none, below 0). */
+    public static double testAge = -1;
 
     private CosmicRays() {}
 
@@ -82,6 +84,23 @@ public final class CosmicRays {
         mv.set(event.getModelViewMatrix());
         RenderSystem.applyModelViewMatrix();
         try {
+            if (testAge >= 0) {
+                RenderSystem.enableBlend();
+                RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ZERO,
+                        GlStateManager.DestFactor.ONE);
+                RenderSystem.enableDepthTest();
+                RenderSystem.depthMask(false);
+                RenderSystem.disableCull();
+                RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+                RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+                RenderSystem.setShaderTexture(0, GLOW);
+                buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+                float yaw = event.getCamera().getYRot();
+                // A seed that puts it straight ahead.
+                long seed = 4242;
+                double want = Math.toRadians(yaw + 90);
+                testShower(buf, cam, seed, testAge, vis, want);
+            }
             for (long k = slot - 1; k <= slot; k++) {
                 long seed = k * 0x9E3779B97F4A7C15L + 77;
                 if (h(seed, 1) > 0.75F) {
@@ -124,9 +143,16 @@ public final class CosmicRays {
         }
     }
 
+    private static void testShower(BufferBuilder buf, Vec3 cam, long seed, double age, float vis, double ang) {
+        showerAt(buf, cam, seed, age, Math.max(vis, 0.8F), ang, 260);
+    }
+
     /** One shower, `age` seconds after the primary hit the top of the air. */
     private static void shower(BufferBuilder buf, Vec3 cam, long seed, double age, float vis) {
-        double ang = h(seed, 3) * Math.PI * 2, dist = 160 + 420 * h(seed, 4);
+        showerAt(buf, cam, seed, age, vis, h(seed, 3) * Math.PI * 2, 160 + 420 * h(seed, 4));
+    }
+
+    private static void showerAt(BufferBuilder buf, Vec3 cam, long seed, double age, float vis, double ang, double dist) {
         double top = Math.max(cam.y + 180, 420 + 280 * h(seed, 5));
         double x = cam.x + Math.cos(ang) * dist, z = cam.z + Math.sin(ang) * dist;
         // Coming in at a slant from a random direction.

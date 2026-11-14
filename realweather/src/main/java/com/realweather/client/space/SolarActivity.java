@@ -40,7 +40,8 @@ final class SolarActivity {
         if (rPix > 12) {
             Trace t = Trace.sphere(cx, cy, cz, r, 1.0, rot);
             if (t != null) {
-                SpaceShaders.starSurface(cr, cg, cb, 1.3F, (float) Math.min(220, 40 + rPix * 0.15), (float) seconds, (float) (1.0 / rPix), spots,
+                double dist = Math.sqrt(cx * cx + cy * cy + cz * cz) + 1.0E-9;
+                SpaceShaders.starSurface(cr, cg, cb, 1.3F, (float) Math.min(220, 40 + rPix * 0.15), (float) seconds, (float) (px / dist), spots,
                         vis * Space3D.smooth(12F, 30F, (float) rPix), t.x0, t.y0, t.x1, t.y1, t.o, t.ox, t.oy, t.d, t.dx, t.dy);
             }
         }

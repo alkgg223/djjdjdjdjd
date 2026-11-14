@@ -89,6 +89,9 @@ public final class SelfTest {
         if (suite.contains("nebulae")) {
             nebulaSuite();
         }
+        if (suite.contains("v14")) {
+            v14Suite();
+        }
         if (suite.contains("close")) {
             closeSuite();
         }
@@ -1467,6 +1470,142 @@ public final class SelfTest {
             step(2, () -> shot("n_" + t[0]));
         }
         step(5, () -> com.realweather.client.space.Telescope.stop());
+    }
+
+    /** 1.14: the new effects in the telescope and the planet map, deep space, the light drive, a gas giant, cosmic rays. */
+    private static void v14Suite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 6000");
+            cmd("rw sky natural off");
+            cmd("rw sky stop");
+            goTo("minecraft:plains", 0, 0);
+        });
+        step(60, SelfTest::platform);
+        step(60, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> {
+                ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                BlockPos at = p.blockPosition().north();
+                server.overworld().setBlock(at, com.realweather.device.ModDevices.TELESCOPE.get().defaultBlockState(), 3);
+                telescopeAt = at;
+            });
+        });
+        // Telescope: the Sun's face by day, then the night sky's new things.
+        String[][] day = {{"sun", "10"}, {"sun", "1.5"}};
+        String[][] night = {{"jupiter", "0.08"}, {"saturn", "0.06"}, {"saturn", "0.004"}, {"halley", "0.4"}, {"crab_pulsar", "0.0015"},
+                {"gw150914", "0.004"}, {"sn1987a", "0.1"}, {"ton618", "0.004"}, {"sgr_1806_20", "0.001"}};
+        for (String[][] list : new String[][][]{day, night}) {
+            if (list == night) {
+                step(5, () -> cmd("time set 18000"));
+            }
+            for (String[] t : list) {
+                String label = "t_" + t[0] + "_" + t[1].replace('.', '_');
+                step(20, () -> {
+                    com.realweather.client.space.Telescope.start(telescopeAt, com.realweather.client.space.Catalog.byId(t[0]));
+                    lookAtTarget(t[0]);
+                });
+                step(4, () -> {
+                    com.realweather.client.space.Telescope.setFov(Double.parseDouble(t[1]));
+                    lookAtTarget(t[0]);
+                });
+                step(14, () -> lookAtTarget(t[0]));
+                step(2, () -> shot(label));
+            }
+        }
+        step(5, () -> com.realweather.client.space.Telescope.stop());
+        // The planet map, close up.
+        String[][] views = {{"sun", "-1"}, {"jupiter", "-1"}, {"jupiter", "300"}, {"saturn", "-1"}, {"saturn", "600"}, {"io", "80"}, {"halley", "-1"},
+                {"gw150914", "-1"}, {"sgr_1806_20", "-1"}, {"sn1987a", "-1"}, {"ton618", "-1"}};
+        for (String[] v : views) {
+            step(5, () -> Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetViewScreen(
+                    com.realweather.client.space.Catalog.byId(v[0]))));
+            step(3, () -> {
+                double h = Double.parseDouble(v[1]);
+                if (Minecraft.getInstance().screen instanceof com.realweather.client.space.PlanetViewScreen ps) {
+                    ps.testView(h, 0, h > 0 ? -35 : 0);
+                }
+            });
+            step(14, () -> shot("m_" + v[0] + "_" + v[1].replace("-", "m")));
+        }
+        step(5, () -> Minecraft.getInstance().setScreen(null));
+        // Cosmic rays over the plains at night.
+        step(5, () -> {
+            com.realweather.client.sky.CosmicRays.testAge = 0.15;
+            turnClient(0F, -25F);
+        });
+        step(10, () -> shot("c_cosmic_rays"));
+        step(5, () -> com.realweather.client.sky.CosmicRays.testAge = 0.9);
+        step(4, () -> shot("c_cosmic_rays_later"));
+        step(5, () -> com.realweather.client.sky.CosmicRays.testAge = -1);
+        // Deep space: beside the Sun, the black hole, a pulsar; flying in.
+        String[] sites = {"sun", "ton618", "vela_pulsar", "orion_nebula", "neowise"};
+        for (String site : sites) {
+            step(5, () -> cmd("execute as @a run rw travel " + site));
+            step(50, () -> {
+                turnClient(180F, 0F);
+                shot("s_" + site);
+                LOG.info("[site {}] {} {}", site, Minecraft.getInstance().player.blockPosition(), com.realweather.client.space.SpaceFlight.testState());
+            });
+        }
+        step(5, () -> {
+            com.realweather.client.space.SpaceFlight.testHold = true;
+            com.realweather.client.space.SpaceFlight.testFwd = 1F;
+        });
+        step(60, () -> {
+            shot("s_neowise_closer");
+            LOG.info("[site fly] {}", com.realweather.client.space.SpaceFlight.testState());
+            com.realweather.client.space.SpaceFlight.testHold = false;
+        });
+        // A gas giant: no ground, sinking through its clouds.
+        step(5, () -> cmd("execute as @a run rw travel jupiter"));
+        step(40, () -> {
+            turnClient(30F, 10F);
+            shot("g_jupiter_top");
+            LOG.info("[gas] {}", Minecraft.getInstance().player.position());
+        });
+        step(160, () -> {
+            shot("g_jupiter_deep");
+            LOG.info("[gas deeper] {} health={}", Minecraft.getInstance().player.position(), Minecraft.getInstance().player.getHealth());
+        });
+        // The light drive: from Mars, up and away, towards the Sun.
+        step(5, () -> {
+            cmd("time set 5000");
+            cmd("execute as @a run rw travel mars");
+        });
+        step(60, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> {
+                ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                net.minecraft.world.item.ItemStack d = new net.minecraft.world.item.ItemStack(com.realweather.device.ModDevices.LIGHT_DRIVE.get());
+                com.realweather.device.LightDrive.set(d, 100, true);
+                p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, d);
+            });
+        });
+        step(20, () -> {
+            turnClient(0F, -60F);
+            com.realweather.client.space.SpaceFlight.testLaunch();
+        });
+        step(60, () -> {
+            turnClient(0F, 70F);
+            shot("f_leaving_mars");
+            LOG.info("[flight] {}", com.realweather.client.space.SpaceFlight.testState());
+        });
+        step(5, () -> {
+            turnClient(0F, -40F);
+            shot("f_space_up");
+        });
+        step(5, () -> {
+            com.realweather.client.space.SpaceFlight.testHold = true;
+            com.realweather.client.space.SpaceFlight.testFwd = 1F;
+        });
+        step(80, () -> {
+            shot("f_flying");
+            LOG.info("[flight moving] {}", com.realweather.client.space.SpaceFlight.testState());
+            com.realweather.client.space.SpaceFlight.testHold = false;
+        });
+        step(5, () -> cmd("execute as @a run rw home"));
+        step(40, () -> LOG.info("[home] {} {}", Minecraft.getInstance().level.dimension().location(), Minecraft.getInstance().player.blockPosition()));
     }
 
     /** 1.13: travelling to other worlds (their ground, sky and blocks), orbit, and home again. */

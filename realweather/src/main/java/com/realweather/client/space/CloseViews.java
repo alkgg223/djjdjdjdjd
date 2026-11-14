@@ -212,7 +212,8 @@ final class CloseViews {
             if (t != null) {
                 double[] lt = new double[3];
                 Trace.local(rot, sun[0], sun[1], sun[2], lt);
-                SpaceShaders.rings((float) in, (float) out, lt[0], lt[1], lt[2], 1F, 0.95F, 0.88F, (float) (seconds % 100000.0), (float) (1 / rPix),
+                double dist = Math.sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]) + 1.0E-9;
+                SpaceShaders.rings((float) in, (float) out, lt[0], lt[1], lt[2], 1F, 0.95F, 0.88F, (float) (seconds % 100000.0), (float) (px / dist),
                         vis * (b.oblate < 0.8F ? 0.4F : 1F), t.x0, t.y0, t.x1, t.y1, t.o, t.ox, t.oy, t.d, t.dx, t.dy);
                 return;
             }
