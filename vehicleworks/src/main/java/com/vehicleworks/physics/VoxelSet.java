@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 /**
  * Open-addressing hash set/map of packed voxel coordinates to int values.
- * Coordinates must lie within [-2^20, 2^20). No boxing, no per-entry allocation.
+ * x/z within ±2^25, y within ±2^11 (any Minecraft world position). No boxing, no per-entry allocation.
  */
 public final class VoxelSet {
     private static final long EMPTY = Long.MIN_VALUE;
@@ -25,13 +25,14 @@ public final class VoxelSet {
         mask = cap - 1;
     }
 
+    /** Packs coordinates like Minecraft's BlockPos: x and z 26 bits (±33M), y 12 bits (±2048). */
     public static long pack(int x, int y, int z) {
-        return ((long) (x + (1 << 20)) << 42) | ((long) (y + (1 << 20)) << 21) | (long) (z + (1 << 20));
+        return (((long) x & 0x3FFFFFFL) << 38) | (((long) z & 0x3FFFFFFL) << 12) | ((long) y & 0xFFFL);
     }
 
-    public static int unpackX(long k) { return (int) ((k >>> 42) & 0x1FFFFF) - (1 << 20); }
-    public static int unpackY(long k) { return (int) ((k >>> 21) & 0x1FFFFF) - (1 << 20); }
-    public static int unpackZ(long k) { return (int) (k & 0x1FFFFF) - (1 << 20); }
+    public static int unpackX(long k) { return (int) (k >> 38); }
+    public static int unpackY(long k) { return (int) (k << 52 >> 52); }
+    public static int unpackZ(long k) { return (int) (k << 26 >> 38); }
 
     private static int hash(long k) {
         k ^= (k >>> 33);

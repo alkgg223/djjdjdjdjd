@@ -27,6 +27,8 @@ public final class ControlInput {
     /** −1 vent .. +1 burner / increase lift */
     public double lift;
     public boolean afterburner;
+    /** marine propellers run astern */
+    public boolean reverseThrust;
     /** stability augmentation / flight assist */
     public boolean assist = true;
     /** mouse-aim steering active; aim vector in world space */

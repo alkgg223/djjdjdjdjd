@@ -64,15 +64,18 @@ public final class WheelSim {
         }
         body.localToWorld(mountLocal.x - comLocal.x, mountLocal.y - comLocal.y, mountLocal.z - comLocal.z, mountW);
         body.localDirToWorld(downLocal.x, downLocal.y, downLocal.z, downW);
+        // cast from half a block above the mount so the ray never starts inside the ground
+        final double lift = 0.5;
+        double ox = mountW.x - downW.x * lift, oy = mountW.y - downW.y * lift, oz = mountW.z - downW.z * lift;
         double maxLen = p.restLength + p.radius;
-        double hit = terrain.isEmpty() ? -1 : terrain.raycast(mountW.x, mountW.y, mountW.z, downW.x, downW.y, downW.z, maxLen, hitNormal);
+        double hitRaw = terrain.isEmpty() ? -1 : terrain.raycast(ox, oy, oz, downW.x, downW.y, downW.z, maxLen + lift, hitNormal);
+        double hit = hitRaw < 0 ? -1 : Math.max(0, hitRaw - lift);
         lastCompression = compression;
         if (hit < 0) {
             grounded = false;
             compression = 0;
             load = 0;
             skidding = false;
-            // free spin with bearing friction, drive torque spins it up
             double inertia = p.inertia();
             omega += (driveTorque - Math.signum(omega) * brakeInput * p.brakeTorque) / inertia * dt;
             omega *= Math.max(0, 1 - 0.5 * dt);
@@ -84,8 +87,10 @@ public final class WheelSim {
         double compVel = (compression - lastCompression) / dt;
         double springF = p.stiffness * compression + p.damping * compVel;
         if (springF < 0) springF = 0;
-        // bump stop
-        if (compression > p.restLength) springF += p.stiffness * 6 * (compression - p.restLength);
+        // progressive bump stop, bounded so a hard landing cannot launch the vehicle
+        if (compression > p.restLength) springF += p.stiffness * 3 * (compression - p.restLength);
+        double staticLoad = body.mass * 9.81 / Math.max(1, wheelCount);
+        springF = Math.min(springF, staticLoad * 6.0);
         load = springF;
         // contact point
         double cx = mountW.x + downW.x * hit, cy = mountW.y + downW.y * hit, cz = mountW.z + downW.z * hit;

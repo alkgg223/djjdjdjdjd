@@ -158,6 +158,33 @@ class CoreDynamicsTest {
     }
 
     @Test
+    void voxelPackingCoversWholeWorld() {
+        int[][] pts = {{0, 0, 0}, {-1, -1, -1}, {29_999_999, 319, -29_999_999}, {-11_080_346, -64, 3_885_491}, {12, 2047, -7}, {5, -2048, 5}};
+        VoxelSet set = new VoxelSet();
+        for (int i = 0; i < pts.length; i++) {
+            long k = VoxelSet.pack(pts[i][0], pts[i][1], pts[i][2]);
+            assertEquals(pts[i][0], VoxelSet.unpackX(k));
+            assertEquals(pts[i][1], VoxelSet.unpackY(k));
+            assertEquals(pts[i][2], VoxelSet.unpackZ(k));
+            set.put(pts[i][0], pts[i][1], pts[i][2], i);
+        }
+        for (int i = 0; i < pts.length; i++) assertEquals(i, set.get(pts[i][0], pts[i][1], pts[i][2], -1));
+        assertEquals(-1, set.get(1, 0, 0, -1));
+    }
+
+    @Test
+    void boxRestsOnGroundFarFromOrigin() {
+        TestEnv env = new TestEnv();
+        PhysicsWorld w = new PhysicsWorld();
+        SimBuilder sb = new SimBuilder();
+        sb.box(0, 0, 0, 1, 1, 1, 100);
+        VehicleSimulation s = sb.build(11_080_346.3, 3, -3_885_491.2);
+        w.sims.add(s);
+        for (int i = 0; i < 100; i++) w.step(0.05, env);
+        assertEquals(1.0, s.body.position.y, 0.06, "rests on ground far from the origin");
+    }
+
+    @Test
     void terrainRaycastFindsGround() {
         TerrainBoxes t = new TerrainBoxes();
         t.clear();

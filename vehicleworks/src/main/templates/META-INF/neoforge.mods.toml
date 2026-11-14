@@ -1,8 +1,32 @@
 modLoader="javafml"
 loaderVersion="[4,)"
 license="All Rights Reserved"
+issueTrackerURL=""
 
 [[mods]]
 modId="${mod_id}"
 version="${mod_version}"
 displayName="${mod_name}"
+authors="VehicleWorks"
+description='''
+An independent vehicle engineering sandbox: build cars, aircraft, helicopters, ships,
+submarines, balloons and airships from blocks. Custom rigid-body physics, finite-wing
+aerodynamics, engines, buoyancy and modular weapon systems with programmable remote control.
+'''
+
+[[mixins]]
+config="vehicleworks.mixins.json"
+
+[[dependencies.${mod_id}]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.0,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.${mod_id}]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.21.2)"
+ordering="NONE"
+side="BOTH"

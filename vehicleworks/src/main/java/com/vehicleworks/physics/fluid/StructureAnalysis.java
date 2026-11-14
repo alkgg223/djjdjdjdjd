@@ -41,7 +41,7 @@ public final class StructureAnalysis {
         public final double volume;
         public double envelopeFraction;
 
-        Pocket(long[] cells, boolean sealed, int spillY, long[] rim) {
+        public Pocket(long[] cells, boolean sealed, int spillY, long[] rim) {
             this.cells = cells;
             this.sealed = sealed;
             this.spillY = spillY;

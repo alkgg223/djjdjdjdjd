@@ -57,6 +57,8 @@ public final class VehicleSimulation {
     public double[] pocketFlood = new double[0];
     public double[] gasDensity = new double[0];
     public double[] gasFill = new double[0];
+    /** per gas pocket: true = helium cell, false = hot air (heated by burners) */
+    public boolean[] gasHelium = new boolean[0];
     public double envelopeTempC = 15;
     public boolean hotAir;
     public double gasLiftScale = 4.0;
@@ -86,6 +88,8 @@ public final class VehicleSimulation {
     private double tailTrim = 0.0;
     private double holdPitch;
     private boolean holdingPitch;
+    private double holdHeading;
+    private boolean holdingHeading;
     private final Vector3d lastVelocity = new Vector3d();
     private final Vector3d wind = new Vector3d();
     private final Vector3d tmp = new Vector3d(), tmp2 = new Vector3d(), tmp3 = new Vector3d();
@@ -188,6 +192,17 @@ public final class VehicleSimulation {
                 if (Math.abs(bank) < Math.toRadians(70) && rotors.isEmpty() && airspeed > 10) roll -= clamp(bank * 0.9, -0.5, 0.5);
             }
             if (Math.abs(input.yaw) < 0.05) yaw -= r * k * 0.8;
+            // ground roll heading hold (counters propeller torque and crosswind on the runway)
+            if (onGround && rotors.isEmpty() && !wings.isEmpty() && Math.abs(input.yaw) < 0.05 && Math.abs(input.steer) < 0.05 && airspeed > 3) {
+                double hdg = Math.atan2(tmp.x, -tmp.z);
+                if (!holdingHeading) { holdHeading = hdg; holdingHeading = true; }
+                double err = hdg - holdHeading;
+                while (err > Math.PI) err -= 2 * Math.PI;
+                while (err < -Math.PI) err += 2 * Math.PI;
+                yaw += clamp(-3.0 * err - 0.8 * r, -0.8, 0.8);
+            } else if (Math.abs(input.yaw) >= 0.05 || !onGround) {
+                holdingHeading = false;
+            }
         }
         effPitch = clamp(pitch, -1, 1);
         effRoll = clamp(roll, -1, 1);
@@ -345,26 +360,29 @@ public final class VehicleSimulation {
             if (gasFill.length != n) { gasFill = new double[n]; java.util.Arrays.fill(gasFill, 1.0); }
             double ambientK = ambient + 273.15;
             double rhoAir = airDensity;
-            if (hotAir) {
-                double vol = 0;
-                for (var p : fluid.gasPockets) vol += p.volume;
+            double vol = 0;
+            for (int i = 0; i < n; i++) if (!isHelium(i)) vol += fluid.gasPockets.get(i).volume;
+            if (hotAir && vol > 0) {
                 double burner = burners * burnerPowerW * clamp(input.lift, 0, 1) * (fuelSupply > 0 ? 1 : 0);
                 double airMass = Math.max(1, rhoAir * vol * gasLiftScale);
                 double cool = (0.004 + (input.lift < -0.05 ? 0.02 * -input.lift : 0)) * (envelopeTempC - ambient);
                 envelopeTempC += (burner / (1005.0 * airMass) - cool) * dt;
                 envelopeTempC = clamp(envelopeTempC, ambient, 130);
-                double tK = envelopeTempC + 273.15;
-                for (int i = 0; i < n; i++) gasDensity[i] = rhoAir * ambientK / tK;
-                // burners use fuel: 2.5 MW burner ≈ 0.05 kg/s propane
                 if (burner > 0 && fuelAmount > 0) {
                     double u = burner / 46e6 * dt;
                     double f = Math.min(1.0, u / fuelAmount);
                     for (TankUnit t : tanks) if (t.kind == TankUnit.Kind.FUEL) t.amount -= t.amount * f;
                 }
             } else {
-                for (int i = 0; i < n; i++) {
+                envelopeTempC = ambient;
+            }
+            double tK = envelopeTempC + 273.15;
+            for (int i = 0; i < n; i++) {
+                if (isHelium(i)) {
                     gasDensity[i] = rhoAir * 0.138; // helium at ambient pressure/temperature
                     gasFill[i] = clamp(gasFill[i] + input.lift * 0.04 * dt, 0.15, 1.0);
+                } else {
+                    gasDensity[i] = rhoAir * ambientK / tK;
                 }
             }
         }
@@ -393,6 +411,10 @@ public final class VehicleSimulation {
             double fwdSpeed = body.linearVelocity.dot(tmp);
             transmission.autoShift(carEngineRpmFraction, fwdSpeed, input.drive > 0.05 ? 1 : (input.drive < -0.05 ? -1 : 0), dt);
         }
+    }
+
+    private boolean isHelium(int i) {
+        return i < gasHelium.length ? gasHelium[i] : !hotAir;
     }
 
     public boolean hasDrivenWheels() {
@@ -424,7 +446,9 @@ public final class VehicleSimulation {
                     boolean marine = t.device == ThrusterUnit.Device.MARINE_PROPELLER;
                     if (marine == t.deviceInWater) {
                         double rho = marine ? 1000.0 : env.airDensity(tmp.y);
-                        thrust = PropellerModel.thrust(e.shaftPowerW, axial, rho, marine ? Math.min(t.propDiameter, 1.2) : t.propDiameter, t.propEfficiency);
+                        thrust = PropellerModel.thrust(e.shaftPowerW, marine && input.reverseThrust ? -axial : axial, rho,
+                                marine ? Math.min(t.propDiameter, 1.6) : t.propDiameter, t.propEfficiency);
+                        if (marine && input.reverseThrust) thrust = -0.6 * thrust;
                     }
                     t.propOmega = e.isRunning() || e.spool > 0.01 ? e.spool * e.maxRpm() * Math.PI / 30.0 : 0;
                     // propeller torque reaction (roll)
@@ -436,9 +460,9 @@ public final class VehicleSimulation {
                 default -> {}
             }
             t.lastThrust = thrust;
-            if (thrust > 0) {
+            if (thrust != 0) {
                 body.applyForceAtPoint(tmp2.x * thrust, tmp2.y * thrust, tmp2.z * thrust, tmp.x, tmp.y, tmp.z);
-                totalThrust += thrust;
+                totalThrust += Math.abs(thrust);
             }
             t.propSpin += t.propOmega * dt;
         }

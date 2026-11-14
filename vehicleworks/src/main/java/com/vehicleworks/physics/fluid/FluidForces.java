@@ -9,7 +9,10 @@ import org.joml.Vector3d;
  * exposed faces in water and air, and gas-cell lift.
  */
 public final class FluidForces {
-    public double faceDragCoefficient = 0.9;
+    /** Pressure drag coefficient of an exposed block face in air (blocks stand for faired structure). */
+    public double faceDragCoefficient = 0.45;
+    /** Pressure drag coefficient of exposed faces in water (hull form drag). */
+    public double waterFaceDragCoefficient = 0.6;
     public double gravity = 9.81;
 
     // diagnostics of the last step
@@ -91,8 +94,8 @@ public final class FluidForces {
                     double vx = vel.x - (f > 0 ? sample[2] : 0), vy = vel.y, vz = vel.z - (f > 0 ? sample[3] : 0);
                     double vn = vx * nwx + vy * nwy + vz * nwz;
                     if (vn <= 0) continue;
-                    double effRho = rho * f + airRho * (1 - f);
-                    double mag = 0.5 * effRho * faceDragCoefficient * area * vn * vn;
+                    double cdRho = rho * f * waterFaceDragCoefficient + airRho * (1 - f) * faceDragCoefficient;
+                    double mag = 0.5 * cdRho * area * vn * vn;
                     fx -= nwx * mag; fy -= nwy * mag; fz -= nwz * mag;
                 }
             }
