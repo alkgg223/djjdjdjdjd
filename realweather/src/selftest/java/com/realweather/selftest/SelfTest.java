@@ -1511,7 +1511,6 @@ public final class SelfTest {
                         int tile = com.realweather.space.Geology.BASE + wl * 50 + i;
                         server.overworld().setBlock(base.offset(i % 10, 4 - i / 10, 0), com.realweather.device.PlanetBlocks.state(tile), 3);
                     }
-                    p.teleportTo(p.getX(), p.getY(), p.getZ(), 0F, 0F);
                 });
             });
             step(30, () -> {
