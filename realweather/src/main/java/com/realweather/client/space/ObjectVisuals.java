@@ -1237,7 +1237,168 @@ final class ObjectVisuals {
                             R * 0.12, ADD);
                 }
             }
+            case 100 -> {
+                // The main asteroid belt between Mars and Jupiter, with the Kirkwood gaps Jupiter clears and its Trojans at 60 degrees.
+                double au = R * 0.45;
+                dot(c, Math.max(px * 3, R * 0.06), 1F, 0.95F, 0.8F, vis);
+                orbit(c, rot, au * 1.52, 0.09, 0, 1F, 0.5F, 0.4F, 0.15F * vis, px);
+                orbit(c, rot, au * 5.2, 0.05, 0, 1F, 0.85F, 0.6F, 0.15F * vis, px);
+                double jph = t * 0.02;
+                double[] jup = at(c, rot, Math.cos(jph) * au * 5.2, 0, Math.sin(jph) * au * 5.2);
+                dot(jup, Math.max(px * 3, R * 0.05), 1F, 0.85F, 0.65F, vis);
+                double[] mars = at(c, rot, Math.cos(t * 0.2) * au * 1.52, 0, Math.sin(t * 0.2) * au * 1.52);
+                dot(mars, Math.max(px * 2, R * 0.02), 1F, 0.5F, 0.35F, vis);
+                for (int i = 0; i < 2600; i++) {
+                    double a = 2.1 + 1.2 * h(seed, i * 3L);
+                    if (Math.abs(a - 2.5) < 0.025 || Math.abs(a - 2.82) < 0.02 || Math.abs(a - 2.95) < 0.02) {
+                        continue;
+                    }
+                    double ph = h(seed, i * 3L + 1) * Math.PI * 2 + t * 0.2 * Math.pow(a / 1.52, -1.5);
+                    double[] q = at(c, rot, Math.cos(ph) * a * au, gauss(seed, i * 3L + 2) * au * 0.08, Math.sin(ph) * a * au);
+                    Space3D.billboard(GLOW, ADD, q[0], q[1], q[2], Math.max(px * 1.2, R * 0.006), 0F, 0.85F, 0.78F, 0.68F, 0.45F * vis);
+                }
+                for (int side = -1; side <= 1; side += 2) {
+                    for (int i = 0; i < 150; i++) {
+                        double ph = jph + side * Math.PI / 3 + gauss(seed, i + side * 900L) * 0.18;
+                        double a = 5.2 + gauss(seed, i + side * 1900L) * 0.12;
+                        double[] q = at(c, rot, Math.cos(ph) * a * au, gauss(seed, i + side * 2900L) * au * 0.1, Math.sin(ph) * a * au);
+                        Space3D.billboard(GLOW, ADD, q[0], q[1], q[2], Math.max(px * 1.2, R * 0.006), 0F, 0.8F, 0.72F, 0.6F, 0.4F * vis);
+                    }
+                }
+            }
+            case 101 -> {
+                // The Kuiper Belt: icy bodies beyond Neptune, Pluto among them on its tilted, eccentric orbit.
+                double au = R * 0.045;
+                dot(c, Math.max(px * 2, R * 0.03), 1F, 0.95F, 0.8F, vis);
+                orbit(c, rot, au * 30, 0.01, 0, 0.5F, 0.6F, 1F, 0.18F * vis, px);
+                double[] pr = sub(rot, 0.3, 1, 0, 0);
+                orbit(c, pr, au * 39.5, 0.25, 1.9, 0.9F, 0.75F, 0.6F, 0.18F * vis, px);
+                dot(onOrbit(c, pr, au * 39.5, 0.25, 1.9, t * 0.01), Math.max(px * 2, R * 0.02), 0.95F, 0.85F, 0.75F, vis);
+                dot(at(c, rot, Math.cos(t * 0.016) * au * 30, 0, Math.sin(t * 0.016) * au * 30), Math.max(px * 2, R * 0.03), 0.5F, 0.65F, 1F, vis);
+                for (int i = 0; i < 2400; i++) {
+                    double a = 30 + 20 * Math.pow(h(seed, i * 3L), 0.8) + (h(seed, i * 3L + 7) < 0.15 ? 9.5 : 0);
+                    double ph = h(seed, i * 3L + 1) * Math.PI * 2 + t * 0.016 * Math.pow(a / 30, -1.5);
+                    double[] q = at(c, rot, Math.cos(ph) * a * au, gauss(seed, i * 3L + 2) * au * a * 0.08, Math.sin(ph) * a * au);
+                    Space3D.billboard(GLOW, ADD, q[0], q[1], q[2], Math.max(px * 1.2, R * 0.006), 0F, 0.75F, 0.85F, 1F, 0.4F * vis);
+                }
+            }
+            case 102 -> {
+                // The Oort Cloud: a vast shell of comet nuclei, thousands to a hundred thousand times farther out than Earth.
+                dot(c, Math.max(px * 2, R * 0.02), 1F, 0.95F, 0.8F, vis);
+                disk(c, rot, R * 0.03, R * 0.05, 120, 0.6F, 0.7F, 1F, 0.6F, 0.7F, 1F, 0.3F * vis, t, 0.05, 0.02, seed, px, ADD, R * 0.005);
+                for (int i = 0; i < 3000; i++) {
+                    double u = h(seed, i * 3L);
+                    double rr = R * (0.25 + 2.3 * u);
+                    double z = h(seed, i * 3L + 1) * 2 - 1, ph = h(seed, i * 3L + 2) * Math.PI * 2 + t * 0.002, sq = Math.sqrt(1 - z * z);
+                    // The inner (Hills) cloud is flattened towards the planets' plane.
+                    double flat = u < 0.25 ? 0.4 : 1;
+                    double[] q = at(c, rot, sq * Math.cos(ph) * rr, z * rr * flat, sq * Math.sin(ph) * rr);
+                    Space3D.billboard(GLOW, ADD, q[0], q[1], q[2], Math.max(px * 1.2, R * 0.006), 0F, 0.85F, 0.9F, 1F, (float) (0.35 * (1 - u * 0.6)) * vis);
+                }
+            }
+            case 103, 104 -> lifeCycle(type == 104, c, rot, R, t, px, seed, vis);
             default -> dot(c, Math.max(px * 3, R * 0.2), 1F, 1F, 1F, vis);
+        }
+    }
+
+    private static final double CYCLE = 90;
+
+    /** Which stage of its life the star in a life-cycle view is at (an index into its stages' names). */
+    static int lifeStage(int type, double seconds) {
+        double u = (seconds % CYCLE) / CYCLE;
+        double[] edges = type == 104 ? new double[]{0.08, 0.4, 0.6, 0.66, 0.85, 1.01} : new double[]{0.12, 0.45, 0.6, 0.7, 0.82, 0.92, 1.01};
+        for (int i = 0; i < edges.length; i++) {
+            if (u < edges[i]) {
+                return i;
+            }
+        }
+        return edges.length - 1;
+    }
+
+    /**
+     * A star's whole life, sped up into a minute and a half: a Sun-like star (born in a collapsing cloud, the long main
+     * sequence, swelling into a red giant, the helium flash, the pulsing giant shedding its layers, a planetary nebula,
+     * a white dwarf cooling), or a massive one (a blue giant, a red supergiant, its core collapsing, the supernova,
+     * and what is left: a neutron star or a black hole).
+     */
+    private static void lifeCycle(boolean massive, double[] c, double[] rot, double R, double t, double px, long seed, float vis) {
+        double u = (t % CYCLE) / CYCLE;
+        int st = lifeStage(massive ? 104 : 103, t);
+        double[] axis = vec(rot, 0, 1, 0);
+        if (!massive) {
+            switch (st) {
+                case 0 -> {
+                    double k = u / 0.12;
+                    puffs(c, rot, R * (1.6 - 1.2 * k), R * (1.4 - 1.1 * k), R * (1.6 - 1.2 * k), 120, 0.9F, 0.5F, 0.4F, 0.08F * vis, seed, ADD, px, t, R * 0.4);
+                    disk(c, rot, R * 0.1, R * 0.8, 400, 1F, 0.7F, 0.45F, 0.6F, 0.4F, 0.3F, (float) (0.15 * k) * vis, t, 1, 0.04, seed, px, ADD, R * 0.05);
+                    star(c, rot, R * 0.15 * (0.5 + k), 1F, 0.6F, 0.35F, (float) (0.4 + k), t, px, vis, seed, false);
+                    Jets.draw(c[0], c[1], c[2], axis, R * 1.5 * k, R * 0.03, 1F, 0.6F, 0.6F, 0.3, seed, t, px, (float) k * vis);
+                }
+                case 1 -> star(c, rot, R * 0.3, 1F, 0.92F, 0.75F, 1.2F, t, px, vis, seed, true);
+                case 2 -> {
+                    double k = (u - 0.45) / 0.15;
+                    star(c, rot, R * (0.3 + 0.9 * k * k), 1F, (float) (0.9 - 0.45 * k), (float) (0.7 - 0.45 * k), 1F, t * 0.3, px, vis, seed, false);
+                }
+                case 3 -> {
+                    float flash = (float) Math.exp(-Math.pow((u - 0.61) / 0.006, 2));
+                    star(c, rot, R * 0.45, 1F, 0.7F, 0.4F, 1F + 3 * flash, t, px, vis, seed, false);
+                    dot(c, R * (0.4 + 2 * flash), 1F, 0.9F, 0.7F, flash * vis);
+                }
+                case 4 -> {
+                    double k = (u - 0.7) / 0.12;
+                    star(c, rot, R * (1.1 + 0.15 * Math.sin(t * 2)), 1F, 0.35F, 0.18F, 0.9F, t * 0.3, px, vis, seed, false);
+                    shell(c, rot, R * (1.3 + k), 0.2, 160, 0.9F, 0.4F, 0.25F, (float) (0.08 * k) * vis, seed, px, R * 0.2, ADD);
+                }
+                case 5 -> {
+                    double k = (u - 0.82) / 0.1;
+                    star(c, rot, R * 0.04, 0.85F, 0.9F, 1F, 3F, t, px, vis, seed, false);
+                    shell(c, rot, R * (0.5 + 1.6 * k), 0.12, 420, 0.4F, 0.9F, 0.85F, (float) (0.14 * (1 - k * 0.6)) * vis, seed, px, R * 0.08, ADD);
+                    shell(c, rot, R * (0.45 + 1.4 * k), 0.15, 300, 1F, 0.35F, 0.4F, (float) (0.1 * (1 - k * 0.6)) * vis, seed + 1, px, R * 0.08, ADD);
+                }
+                default -> {
+                    double k = (u - 0.92) / 0.08;
+                    star(c, rot, R * 0.04, (float) (0.9 - 0.3 * k), (float) (0.92 - 0.35 * k), 1F, (float) (2.5 - 1.8 * k), t, px, vis, seed, false);
+                    dot(c, Math.max(px * 3, R * 0.15), 0.85F, 0.9F, 1F, (float) (1 - 0.6 * k) * vis);
+                }
+            }
+            return;
+        }
+        switch (st) {
+            case 0 -> {
+                double k = u / 0.08;
+                puffs(c, rot, R * 1.8, R * 1.5, R * 1.8, 160, 1F, 0.35F, 0.5F, 0.07F * vis, seed, ADD, px, t, R * 0.5);
+                star(c, rot, R * 0.2 * (0.4 + k), 0.75F, 0.8F, 1F, (float) (0.5 + k), t, px, vis, seed, false);
+            }
+            case 1 -> {
+                star(c, rot, R * 0.45, 0.65F, 0.75F, 1F, 1.6F, t, px, vis, seed, true);
+                windStreaks(c, rot, R * 0.45, R * 1.8, 60, 0.6F, 0.75F, 1F, 0.2F * vis, seed, t, px, 0.4);
+            }
+            case 2 -> {
+                double k = (u - 0.4) / 0.2;
+                star(c, rot, R * (0.45 + 0.9 * k), (float) (0.65 + 0.35 * k), (float) (0.75 - 0.43 * k), (float) (1 - 0.85 * k), 1.2F, t * 0.3, px, vis, seed,
+                        false);
+            }
+            case 3 -> {
+                double k = (u - 0.6) / 0.06;
+                star(c, rot, R * (1.35 - 0.4 * k), 1F, 0.32F, 0.15F, (float) (0.9 + 2 * k), t * 0.3, px, vis, seed, false);
+                dot(c, R * (0.2 + 0.8 * k), 0.85F, 0.9F, 1F, (float) k * vis);
+            }
+            case 4 -> {
+                double k = (u - 0.66) / 0.19;
+                dot(c, R * (1.5 * (1 - k) + 0.1), 1F, 0.95F, 0.85F, (float) Math.max(0.1, 1 - k * 1.3) * vis);
+                shell(c, sub(rot, 0, 1, 0, t * 0.01), R * (0.3 + 2.4 * k), 0.15, 500, 1F, 0.5F + 0.3F * (float) (1 - k), 0.3F, (float) (0.15 * (1 - k * 0.5)) * vis,
+                        seed, px, R * 0.08, ADD);
+                shell(c, rot, R * (0.25 + 2.0 * k), 0.25, 300, 0.4F, 0.7F, 1F, (float) (0.1 * (1 - k * 0.5)) * vis, seed + 1, px, R * 0.08, ADD);
+            }
+            default -> {
+                double k = (u - 0.85) / 0.15;
+                shell(c, rot, R * 2.6, 0.3, 300, 1F, 0.45F, 0.35F, (float) (0.06 * (1 - k)) * vis, seed, px, R * 0.15, ADD);
+                if (((long) Math.floor(t / CYCLE)) % 2 == 0) {
+                    Pulsars.draw(c[0], c[1], c[2], R * 0.06, axis, 30, 5, 0.8F, 0.85F, 1F, vis, px, seed, t, true);
+                } else {
+                    hole(c, R * 0.08, axis, t, vis, 0.6F, px);
+                }
+            }
         }
     }
 

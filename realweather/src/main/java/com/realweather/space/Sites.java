@@ -24,10 +24,10 @@ public final class Sites {
             "milky_way", "andromeda", "triangulum", "lmc", "smc", "whirlpool", "sombrero", "pinwheel", "centaurus_a", "m87", "sculptor",
             "black_eye", "cigar", "bodes", "cartwheel");
 
-    /** The list, then the hundred kinds of object (obj_00 to obj_99). */
+    /** The list, then the kinds of object (obj_00 to obj_104). */
     private static List<String> withObjects(String... ids) {
         java.util.List<String> out = new java.util.ArrayList<>(List.of(ids));
-        for (int n = 0; n < 100; n++) {
+        for (int n = 0; n < 105; n++) {
             out.add(String.format(java.util.Locale.ROOT, "obj_%02d", n));
         }
         return List.copyOf(out);

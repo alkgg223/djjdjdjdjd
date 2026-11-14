@@ -155,6 +155,11 @@ public class PlanetMapScreen extends Screen {
                             : Component.translatable("realweather.target." + t.id + ".info"))).build();
             addRenderableWidget(b);
         }
+        // The universe map and the simulation's controls.
+        addRenderableWidget(Button.builder(Component.translatable("realweather.universe.short"), btn -> minecraft.setScreen(new UniverseMapScreen(this)))
+                .bounds(4, 4, 76, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("realweather.sim.short"), btn -> minecraft.setScreen(new SimulationScreen(this)))
+                .bounds(width - 80, 4, 76, 16).build());
         // Away on another world: the way home.
         if (minecraft.level != null && minecraft.level.dimension() == com.realweather.space.Worlds.DIMENSION) {
             addRenderableWidget(Button.builder(Component.translatable("realweather.planet_map.go_home"), btn -> {

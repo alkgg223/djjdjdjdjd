@@ -36,6 +36,8 @@ public final class CosmicEvents {
     /** Viewing controls: paused, how fast, and a replay. */
     public static boolean paused;
     public static double rate = 1;
+    /** A message for every event as it begins (not only the tracked ones). */
+    public static boolean notifyAll;
     private static final Map<String, double[]> REPLAY = new HashMap<>();
     private static double pausedAt = -1;
 
@@ -201,7 +203,7 @@ public final class CosmicEvents {
             if (ANNOUNCED.contains(key)) {
                 continue;
             }
-            if (st == ACTIVE && TRACKED.contains(e.id)) {
+            if (st == ACTIVE && (TRACKED.contains(e.id) || notifyAll)) {
                 ANNOUNCED.add(key);
                 mc.player.displayClientMessage(Component.translatable("realweather.event.started", Component.translatable("realweather.event." + e.type)),
                         false);

@@ -121,6 +121,12 @@ public final class CosmicObjects {
             k(4, "NGC 3079", "~50 million ly", "10h 02.0m  +55.7", 8e-4),
             k(4, "W44", "~10 000 ly", "18h 56.0m  +01.4", 8e-4),
             k(4, "GW170817 (NGC 4993)", "~130 million ly", "13h 09.8m  -23.4", 4e-4),
+            // The solar system's swarms of small bodies, and two whole lives of stars (models).
+            k(2, "Main asteroid belt", "2.1-3.3 AU", null, 3e-3),
+            k(2, "Kuiper Belt", "30-50 AU", null, 3e-3),
+            k(2, "Oort Cloud", "2 000-100 000 AU", null, 4e-3),
+            k(0, null, "model", null, 6e-4),
+            k(0, null, "model", null, 6e-4),
     };
 
     private CosmicObjects() {}

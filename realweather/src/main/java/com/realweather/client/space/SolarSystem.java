@@ -68,6 +68,29 @@ final class SolarSystem {
         add("neowise", null, 0.95 * AU, 1800, 0.74, 129, 61, 2.5, COMET);
     }
 
+    /** Orbital eccentricities (0 for the near-circular). */
+    static double eccentricity(String id) {
+        return switch (id) {
+            case "mercury" -> 0.2056;
+            case "mars" -> 0.0934;
+            case "ceres" -> 0.0758;
+            case "jupiter" -> 0.0489;
+            case "saturn" -> 0.0565;
+            case "uranus" -> 0.0457;
+            case "pluto" -> 0.2488;
+            case "haumea" -> 0.195;
+            case "makemake" -> 0.156;
+            case "eris" -> 0.4407;
+            case "psyche" -> 0.134;
+            case "bennu" -> 0.2037;
+            case "comet_67p" -> 0.641;
+            case "moon" -> 0.0549;
+            case "hyperion" -> 0.1;
+            case "triton" -> 0;
+            default -> 0;
+        };
+    }
+
     static Body byId(String id) {
         for (Body b : ALL) {
             if (b.id.equals(id)) {
@@ -87,8 +110,21 @@ final class SolarSystem {
         if (b.a <= 0) {
             return;
         }
-        double th = Math.PI * 2 * (b.phase + days / b.period);
-        double x = b.a * Math.cos(th), z = b.a * Math.sin(th);
+        // On its ellipse (Kepler's equation), for the worlds whose orbits are noticeably eccentric.
+        double e = eccentricity(b.id);
+        double mean = Math.PI * 2 * (b.phase + days / b.period);
+        double x, z;
+        if (e > 0) {
+            double E = mean;
+            for (int k = 0; k < 6; k++) {
+                E -= (E - e * Math.sin(E) - mean) / (1 - e * Math.cos(E));
+            }
+            x = b.a * (Math.cos(E) - e);
+            z = b.a * Math.sqrt(1 - e * e) * Math.sin(E);
+        } else {
+            x = b.a * Math.cos(mean);
+            z = b.a * Math.sin(mean);
+        }
         double inc = Math.toRadians(b.incl), node = Math.toRadians(b.node);
         // Tilted about the line of nodes.
         double cn = Math.cos(node), sn = Math.sin(node);

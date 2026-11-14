@@ -49,6 +49,7 @@ Minecraft **1.21.1** · NeoForge **21.1.264** (any 21.1.x)
 - **تسونامي 1.6.0**: الموجة تصعد مع الأرض وتنزل معها (تتسلق التلال وتنزل في الوديان بدل أن تمشي في الهواء)، وتترك خلفها ماء ماينكرافت حقيقياً على الأرض حول اللاعبين (تستطيع السباحة فيه) يختفي بعد خمس دقائق من بداية التسونامي. من يكون تحت الماء ينفد هواؤه ويختنق، والسيارات التي تضربها الموجة يتحطم زجاجها ويدخلها الماء ويختنق من بداخلها.
 - **كسوف الشمس (1.8.0)**: الشمس والقمر صارا دائريين. كسوف كلي وجزئي: القمر يمر أمام الشمس فتصير هلالاً، والنهار يظلم تدريجياً إلى شفق أزرق عميق وتظهر النجوم بوضوح ويتوهج الأفق بلون الغروب من كل الجهات. قبل الكسوف الكلي وبعده مباشرة تلمع آخر حبة من ضوء الشمس عند الحافة ("الخاتم الماسي")، وفي الكسوف الكلي يظهر قرص القمر الأسود داخل هالة الإكليل اللؤلؤية. الغيوم تظلم معه وتلمع لحظة الخاتم الماسي. يحدث نادراً وحده، أو بالأمر.
 - **نظارة الكسوف**: تُصنع من ورق وصبغة سوداء ولوح زجاج وتُلبس على الرأس. من خلالها يصير كل شيء أسود إلا الشمس (أو هلالها). في وضع البقاء النظر إلى الشمس أثناء الكسوف بدونها يعمي عينيك لحظات.
+- **1.15.0**: خريطة الكون ثلاثية الأبعاد (كل ما في الكتالوج في اتجاهه وعلى بُعده بمقياس لوغاريتمي، مع فلاتر واختيار وعرض قريب وسفر). 15 مجرة حقيقية تستكشفها من الداخل حتى أنظمة نجمية محاكاة. التلسكوب حتى ×1,000,000 مع أنماط الأشعة تحت الحمراء وفوق البنفسجية والسينية والطيف والتتبع والتركيز، وإعداد رسوميات ULTRA KILLER. دخول الثقوب السوداء مرحلة بمرحلة (محاكاة نظرية) واندماج ثقبين أسودين مطوّر. 25 حدثاً كونياً لكل منها حركته الخاصة (محاكاة وليست تنبؤات) وبلوكة **مرصد الأحداث الكونية** للتتبع والرصد والإعادة والتحكم بالسرعة. 100 نوع من الأجرام الفلكية بأشكال ثلاثية الأبعاد ولوحات معلومات (أمثلة حقيقية أو محاكاة مُعلَّمة)، مع البحث والمفضلة والمقارنة. 150 بلوكة سطح كوكبية جديدة بقوام 64×64 (لكل عالم مجلده) بخصائص جيولوجية وجسيمات، وتوزيع جيولوجي لكل عالم (طبقات وفوهات وأخاديد وبراكين وكثبان وأقطاب ورواسب وطبقات سحب للعمالقة الغازية)، و14 عالماً جديداً (أقمار زحل وأورانوس وإنسيلادوس وتريتون وسايكي وبينو والمذنب 67P). حزام الكويكبات وحزام كايبر وسحابة أورت أثناء الطيران، الحقول المغناطيسية، دورة حياة النجوم، السيناريوهات، والتحكم بزمن الكون.
 - **1.14.0**: إصلاح خروج اللعبة على الهاتف عند فتح التلسكوب أو خريطة الكواكب (الرسم الفضائي الثقيل صار بدقة تتكيّف تلقائياً مع قوة الجهاز مع حد للعمل في كل إطار، وإعداد جديد `/rwgraphics space auto|low|medium|high|ultra|off`). السفر بخريطة الكواكب إلى كل شيء: النجوم والشمس والنابضات والثقب الأسود والسدم والمذنبات، فتصبح بجانبه في الفضاء وتطير حوله. **محرك الضوء** (ألماس + عين إندر + غبار جلوستون + بلوكة ريدستون): كلك يمين لضبط سرعته من 1% إلى 100% من سرعة الضوء وتشغيله، ثم انظر إلى كوكب في السماء وامشِ للأمام فتنطلق وتطير عبر المجموعة الشمسية بمقياسها الحقيقي وتهبط على الكوكب الذي تتجه إليه. الكواكب الغازية صارت غيوماً بلا أرض: تغوص فيها وتموت قرب نواتها الحارة. و15 تأثيراً جديداً: الأقواس الشمسية، الشويكات، حبيبات سطح الشمس، الحلقات الإكليلية، ذيل المذنب الأيوني والغباري، جسيمات حلقات زحل، أعمدة براكين آيو ونوافير إنسيلادوس، شفق الكواكب، الدوامات الجوية (البقعة الحمراء العظيمة وسداسي زحل)، جبهات الصدمة للمستعر الأعظم 1987A، النفاثات النسبية، الزلازل النجمية (ومغناطار SGR 1806-20)، موجات الجاذبية (GW150914)، وزخات الأشعة الكونية. والثقوب السوداء العملاقة (TON 618 والقوس A* في قلب مجرتنا وM87*) تحيط بها مجموعات هائلة من النجوم المضيئة تدور حولها، ولكثير منها كواكب، تراها في التلسكوب وخريطة الكواكب وعندما تسافر إليها.
 - **1.13.0**: السفر إلى الكواكب والأقمار (من خريطة الكواكب: إلى السطح أو المدار) والبناء عليها، 47 بلوكة فضائية واقعية، سماء كل كوكب، النجوم والنابضات والثقب الأسود والسدم في خريطة الكواكب، 25 سديماً ثلاثي الأبعاد، 5 نابضات، تشتت الغلاف الجوي وأشعة الضوء الحجمية وهالة الشمس وتوهجاتها. وصُغّرت البقعة البيضاء على المريخ.
 - **1.12.0**: التلسكوب ثابت بدون رجفة ويقرّب حتى 100000 مرة، والكواكب تدور أبطأ. عند التقريب الشديد ترى أن سطح الكواكب مكوّن من بلوكات (15 بلوكة فضائية جديدة يمكنك البناء بها). بلوكة خريطة الكواكب (زجاج + نحاس + خريطة + حديد): اختر كوكباً ودُر حوله بالكامل ثم انزل واهبط على سطحه. وعند الطيران عالياً تسودّ السماء، وعند 700 بلوكة تخرج من طبقة الأوزون، وأعلى من ذلك ترى الأرض كاملة كرة ثلاثية الأبعاد. والثقب الأسود TON 618 مع عدسة الجاذبية وحلقة أينشتاين وقرص التراكم وحلقة الفوتون.
@@ -240,6 +241,16 @@ lights at night). And TON 618, a black hole ray traced in curved space: its shad
 accretion disc with its far side lensed over and under it, an Einstein ring of the galaxy behind, lensed stars and its
 jets.
 
+1.15.0: a 3D map of the universe (everything in the catalogue in its direction and at its distance on a logarithmic scale,
+with filters, selection, close-up view and travel); 15 real galaxies explorable down to simulated star systems; the
+telescope to 1,000,000x with infrared, ultraviolet, X-ray and spectrum modes, tracking and focus, and the ULTRA KILLER
+graphics setting; falling into a black hole stage by stage (a theoretical simulation) and an upgraded binary black hole
+merger; 25 cosmic events each with its own animation (simulations, not predictions) and the Cosmic Event Observatory
+block; 100 kinds of astronomical object in 3D with information panels (real examples or marked simulated), search,
+bookmarks and comparison; 150 new 64x64 planetary surface blocks (a folder per world) with geology, and each world's own
+geology (layers, craters, canyons, volcanoes, dunes, poles, deposits, cloud decks in the giants), with 14 new worlds; the
+asteroid belt, Kuiper Belt and Oort Cloud in flight, magnetic fields, stellar life cycles, scenarios and a universe clock.
+
 1.14.0: no more crash on phones at the telescope or the planet map (the ray-traced space passes are worked out at a
 resolution that follows the frame rate, with a cap on the work in any one frame; new setting `/rwgraphics space
 auto|low|medium|high|ultra|off`). The planet map travels to everything: the Sun and stars, pulsars, the black hole,
@@ -267,6 +278,6 @@ PSR J1748-2446ad, PSR J0437-4715) with beams turning with the star, pulses in st
 atmospheric scattering, volumetric god rays, the Sun's corona and flares, auroras seen from space. Mars's polar cap is
 smaller and softer.
 
-Build: `./gradlew build` → `build/libs/realweather-1.14.0.jar`.
+Build: `./gradlew build` → `build/libs/realweather-1.15.0.jar`.
 Sounds, textures and models are generated by `tools/gen_sounds.py`, `tools/gen_vehicle_sounds.py`,
 `tools/gen_textures.py`, `tools/gen_devices.py` and `tools/vehicles/vehicles.py`.

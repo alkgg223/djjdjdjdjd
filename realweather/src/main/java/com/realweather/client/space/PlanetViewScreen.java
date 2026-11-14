@@ -140,6 +140,10 @@ public class PlanetViewScreen extends Screen {
             rebuildWidgets();
         }).bounds(80, height - 26, 80, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("realweather.map.info"), b -> showInfo = !showInfo).bounds(164, height - 26, 50, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("realweather.compare.short"), b -> {
+            CompareScreen.add(target);
+            minecraft.setScreen(new CompareScreen(this));
+        }).bounds(218, height - 26, 60, 20).build());
     }
 
     private static boolean showInfo = true;
@@ -157,6 +161,10 @@ public class PlanetViewScreen extends Screen {
             lines.add(Component.translatable("realweather.object.distance", k.distance()));
             if (k.coords() != null) {
                 lines.add(Component.translatable("realweather.object.coords", k.coords()));
+            }
+            if (n == 103 || n == 104) {
+                lines.add(Component.translatable("realweather.life.stage", Component.translatable("realweather.life." + n + "."
+                        + ObjectVisuals.lifeStage(n, clock))).withStyle(net.minecraft.ChatFormatting.YELLOW));
             }
             info = Component.translatable("realweather.object." + n + ".info");
         } else if (body.kind == Catalog.EVENT) {
@@ -292,6 +300,10 @@ public class PlanetViewScreen extends Screen {
         double dt = last == 0 ? 0.016 : Mth.clamp((now - last) / 1000.0, 0, 0.1);
         last = now;
         clock += dt;
+        // The world turning under you (its rotation, sped up or slowed in the simulation settings), seen from orbit.
+        if (mode == PLANET && SpaceTime.spin > 0 && alt > radius * 0.3) {
+            lon -= dt * 0.03 * SpaceTime.spin;
+        }
         // Whatever the game's own screen has queued is drawn first, under the view.
         g.flush();
         double ground = groundHere();
@@ -442,6 +454,11 @@ public class PlanetViewScreen extends Screen {
             double[] ax = {view[3], view[4], view[5]};
             Aurorae.draw(body.id, c[0], c[1], c[2], sr, ax, sv, clock, bpx, 1F);
             Plumes.draw(body.id, c[0], c[1], c[2], sr, view, sv, clock, bpx, 1F);
+            if (SpaceTime.fields) {
+                Space3D.range(near, (float) (dist + radius * 12));
+                MagneticFields.draw(body.id, c[0], c[1], c[2], sr, ax, clock, bpx, Space3D.smooth((float) (radius * 0.1), (float) (radius * 0.8),
+                        (float) alt));
+            }
             if (body.kind == Catalog.GAS && alt < radius * 0.01) {
                 // Inside its clouds: thick haze of its colour, darker deeper down.
                 float in = Space3D.smooth((float) (radius * 0.01), (float) (-radius * 0.02), (float) alt);

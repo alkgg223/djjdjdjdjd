@@ -64,6 +64,8 @@ public final class SpaceFlight {
     /** For the screen: names of what is round you, where they are on it, and what you are doing. */
     private static final List<Object[]> LABELS = new ArrayList<>();
     private static String nearName = "";
+    /** The belt the camera is in (a translation key), or null. */
+    private static String region;
     private static double nearDist, speedNow;
     private static int drivePct;
     private static boolean driveOn;
@@ -132,7 +134,7 @@ public final class SpaceFlight {
 
     private static double days() {
         ClientLevel level = Minecraft.getInstance().level;
-        return level == null ? 0 : level.getDayTime() / 24000.0;
+        return level == null ? 0 : SpaceTime.days(level, 0F);
     }
 
     // ------------------------------------------------------------------------------------------- input
@@ -454,7 +456,7 @@ public final class SpaceFlight {
 
     /** The solar system round you, to scale. */
     private static void solar(double[] m, ClientLevel level, float pt) {
-        double day = (level.getDayTime() + pt) / 24000.0;
+        double day = SpaceTime.days(level, pt);
         double vl = Math.sqrt(vel[0] * vel[0] + vel[1] * vel[1] + vel[2] * vel[2]);
         double beta = Math.min(0.995, vl / SolarSystem.C / WARP);
         double[] vdir = vl > 1.0E-6 ? new double[]{vel[0] / vl, vel[1] / vl, vel[2] / vl} : new double[]{0, 0, 1};
@@ -481,6 +483,9 @@ public final class SpaceFlight {
         nearName = "realweather.target." + bestId;
         nearDist = best;
         order.sort((a, b) -> Double.compare(b[0], a[0]));
+        // The belts of small bodies, behind the planets.
+        Belts.draw(m, pos, day, pixAng);
+        region = Belts.region(pos);
         for (double[] o : order) {
             SolarSystem.Body b = SolarSystem.ALL.get((int) o[1]);
             body(b, o, m, day, pixAng);
@@ -736,6 +741,9 @@ public final class SpaceFlight {
         if (solar) {
             g.drawString(font, Component.translatable("realweather.flight.nearest", Component.translatable(nearName), distance(nearDist)), 6, y,
                     0xFFE0E0E0, true);
+            if (region != null) {
+                g.drawString(font, Component.translatable("realweather.belt.inside", Component.translatable(region)), 6, y + 11, 0xFFFFD890, true);
+            }
         } else {
             g.drawString(font, Component.translatable("realweather.flight.distance", String.format(Locale.ROOT, "%.2f", nearDist)), 6, y, 0xFFE0E0E0,
                     true);
