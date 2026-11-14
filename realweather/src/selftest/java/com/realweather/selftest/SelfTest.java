@@ -89,6 +89,9 @@ public final class SelfTest {
         if (suite.contains("nebulae")) {
             nebulaSuite();
         }
+        if (suite.contains("v15")) {
+            v15Suite();
+        }
         if (suite.contains("v14")) {
             v14Suite();
         }
@@ -1470,6 +1473,103 @@ public final class SelfTest {
             step(2, () -> shot("n_" + t[0]));
         }
         step(5, () -> com.realweather.client.space.Telescope.stop());
+    }
+
+    /** 1.15: galaxies, telescope modes and spectra, entering a black hole, the merger. */
+    private static void v15Suite() {
+        step(5, () -> {
+            cmd("rw clear");
+            cmd("time set 18000");
+            cmd("rw sky natural off");
+            cmd("rw sky stop");
+            goTo("minecraft:plains", 0, 0);
+        });
+        step(60, SelfTest::platform);
+        step(60, () -> {
+            MinecraftServer server = server();
+            server.execute(() -> {
+                ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                BlockPos at = p.blockPosition().north();
+                server.overworld().setBlock(at, com.realweather.device.ModDevices.TELESCOPE.get().defaultBlockState(), 3);
+                telescopeAt = at;
+            });
+        });
+        // Galaxies through the telescope; then the observing modes and spectra.
+        String[][] targets = {{"andromeda", "5", "0"}, {"whirlpool", "0.3", "0"}, {"sombrero", "0.25", "0"}, {"cartwheel", "0.05", "0"},
+                {"centaurus_a", "0.3", "0"}, {"cigar", "0.3", "0"}, {"orion_nebula", "1.6", "1"}, {"orion_nebula", "1.6", "2"}, {"orion_nebula", "1.6", "3"},
+                {"vega", "0.01", "4"}, {"orion_nebula", "1.6", "4"}, {"ton618", "0.06", "4"}, {"ton618", "0.06", "3"}};
+        for (String[] t : targets) {
+            String label = "t_" + t[0] + "_" + t[1].replace('.', '_') + "_m" + t[2];
+            step(20, () -> {
+                com.realweather.client.space.Telescope.start(telescopeAt, com.realweather.client.space.Catalog.byId(t[0]));
+                com.realweather.client.space.Telescope.mode = Integer.parseInt(t[2]);
+                lookAtTarget(t[0]);
+            });
+            step(4, () -> {
+                com.realweather.client.space.Telescope.setFov(Double.parseDouble(t[1]));
+                lookAtTarget(t[0]);
+            });
+            step(14, () -> lookAtTarget(t[0]));
+            step(2, () -> shot(label));
+        }
+        step(5, () -> {
+            com.realweather.client.space.Telescope.mode = 0;
+            com.realweather.client.space.Telescope.stop();
+        });
+        // The planet map: galaxies from outside.
+        String[][] views = {{"milky_way", "-1"}, {"m87", "-1"}, {"pinwheel", "-1"}, {"lmc", "-1"}, {"gw150914", "-1"}};
+        for (String[] v : views) {
+            step(5, () -> {
+                com.realweather.client.space.Merger.testOffset = 50;
+                Minecraft.getInstance().setScreen(new com.realweather.client.space.PlanetViewScreen(com.realweather.client.space.Catalog.byId(v[0])));
+            });
+            step(3, () -> {
+                if (Minecraft.getInstance().screen instanceof com.realweather.client.space.PlanetViewScreen ps) {
+                    ps.testView(Double.parseDouble(v[1]), 0, 0);
+                }
+            });
+            step(14, () -> shot("m_" + v[0]));
+        }
+        step(5, () -> Minecraft.getInstance().setScreen(null));
+        // Deep space: Andromeda from outside, then inside it near a star; a black hole from outside to inside.
+        step(5, () -> cmd("execute as @a run rw travel andromeda"));
+        step(50, () -> {
+            turnClient(180F, 20F);
+            shot("s_andromeda");
+        });
+        step(5, () -> com.realweather.client.space.SpaceFlight.testPos(0.32, 0.01, 0.12));
+        step(20, () -> {
+            turnClient(180F, 0F);
+            shot("s_andromeda_inside");
+            LOG.info("[galaxy] {} nearest={} {}", com.realweather.client.space.SpaceFlight.testState(), com.realweather.client.space.Galaxies.nearest,
+                    com.realweather.client.space.Galaxies.nearestDist);
+        });
+        step(5, () -> cmd("execute as @a run rw travel ton618"));
+        step(50, () -> {
+            turnClient(180F, 0F);
+            shot("s_ton618_far");
+        });
+        String[] stages = {"8", "2.2", "1.25", "0.7", "0.25"};
+        for (String r : stages) {
+            step(5, () -> com.realweather.client.space.SpaceFlight.testPos(0, Double.parseDouble(r) * 0.15, Double.parseDouble(r)));
+            step(12, () -> {
+                turnClient(180F, 0F);
+                shot("s_ton618_r" + r.replace('.', '_'));
+                LOG.info("[hole {}] {}", r, com.realweather.client.space.SpaceFlight.testState());
+            });
+        }
+        step(5, () -> cmd("execute as @a run rw travel gw150914"));
+        step(50, () -> {
+            com.realweather.client.space.Merger.testOffset = 52;
+            turnClient(180F, 10F);
+            shot("s_gw_before");
+        });
+        step(60, () -> shot("s_gw_after"));
+        step(5, () -> {
+            com.realweather.client.space.Merger.testOffset = 0;
+            cmd("execute as @a run rw home");
+        });
+        step(40, () -> LOG.info("[home] {}", Minecraft.getInstance().level.dimension().location()));
     }
 
     /** 1.14: the new effects in the telescope and the planet map, deep space, the light drive, a gas giant, cosmic rays. */

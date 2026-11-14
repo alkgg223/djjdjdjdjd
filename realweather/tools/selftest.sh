@@ -6,7 +6,7 @@ export RW_SUITE="${RW_SUITE:-$(cat tools/selftest_suite 2>/dev/null || echo all)
 echo "suite: $RW_SUITE"
 # The ray-traced space views are very slow on the software renderer: a smaller window for them.
 case "$RW_SUITE" in
-  *orbit*|*zoom*|*ascent*|*planets*|*travel*|*nebulae*|*close*|*v14*) export RW_WIDTH=640 RW_HEIGHT=360 ;;
+  *orbit*|*zoom*|*ascent*|*planets*|*travel*|*nebulae*|*close*|*v14*|*v15*) export RW_WIDTH=640 RW_HEIGHT=360 ;;
 esac
 chmod +x gradlew
 mkdir -p run/server run/client/saves

@@ -11,6 +11,9 @@ import static com.realweather.client.space.Space3D.ADD;
 final class Merger {
     private static final double CYCLE = 70, MERGE = 54;
 
+    /** For tests: seconds added to the cycle. */
+    public static double testOffset;
+
     private Merger() {}
 
     /** Separation (units of the starting separation) at a time in the cycle. */
@@ -43,7 +46,7 @@ final class Merger {
         if (vis <= 0.01F) {
             return;
         }
-        double t = seconds % CYCLE;
+        double t = (seconds + testOffset) % CYCLE;
         double[] e1 = perp(axis);
         double[] e2 = {axis[1] * e1[2] - axis[2] * e1[1], axis[2] * e1[0] - axis[0] * e1[2], axis[0] * e1[1] - axis[1] * e1[0]};
         double sep = separation(t) * scale * 0.5, ph = phase(t);

@@ -190,6 +190,14 @@ public final class SpaceFlight {
         go(mc);
     }
 
+    /** For tests: straight to a place (radii from the object, or km between the planets). */
+    public static void testPos(double x, double y, double z) {
+        pos[0] = x;
+        pos[1] = y;
+        pos[2] = z;
+        vel[0] = vel[1] = vel[2] = 0;
+    }
+
     public static String testState() {
         return String.format(Locale.ROOT, "place=%s pos=(%.4g, %.4g, %.4g) vel=%.4g near=%s %.4g drive=%s %d", place, pos[0], pos[1], pos[2],
                 Math.sqrt(vel[0] * vel[0] + vel[1] * vel[1] + vel[2] * vel[2]), nearName, nearDist, driveOn, drivePct);
