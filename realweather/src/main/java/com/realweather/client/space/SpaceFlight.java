@@ -343,8 +343,15 @@ public final class SpaceFlight {
             return;
         }
         Catalog.Body body = t.body;
-        TelescopeView.brightStars(1F);
         double R = CloseViews.radius(body);
+        boolean hole = body.kind == Catalog.BLACKHOLE;
+        double r0 = Math.sqrt(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]);
+        if (hole && r0 < 1) {
+            fall(r0);
+        } else {
+            insideFor = 0;
+            TelescopeView.brightStars(1F);
+        }
         double[] cam = {pos[0] * R, pos[1] * R, pos[2] * R};
         double dist = Math.sqrt(cam[0] * cam[0] + cam[1] * cam[1] + cam[2] * cam[2]);
         double[] f = {-m[2], -m[5], -m[8]}, right = {m[0], m[3], m[6]}, up = {m[1], m[4], m[7]};
@@ -366,9 +373,67 @@ public final class SpaceFlight {
                 pos[i] *= k;
                 vel[i] = 0;
             }
-        } else if (nearDist > deadly + 0.6) {
+        } else if (deadly > 0 && nearDist > deadly + 0.6) {
             sent = false;
         }
+    }
+
+    /** How long since crossing a black hole's event horizon (seconds), and the clock then. */
+    private static double insideFor, lastFall;
+
+    /**
+     * Inside the horizon every path leads in: you fall towards the singularity whatever you do (here in about half a
+     * minute of your own time), the tide pulling harder all the way, until it tears you apart.
+     */
+    private static void fall(double r) {
+        double dt = lastFall == 0 || insideFor == 0 ? 0.016 : Mth.clamp(clock - lastFall, 0, 0.1);
+        lastFall = clock;
+        if (insideFor == 0 && Minecraft.getInstance().player != null) {
+            Minecraft.getInstance().player.displayClientMessage(Component.translatable("realweather.hole.crossed"), true);
+        }
+        insideFor += dt;
+        double next = Math.max(0, r - dt / 28.0 * (1.2 - r * 0.5));
+        double k = r > 1.0E-9 ? next / r : 0;
+        for (int i = 0; i < 3; i++) {
+            pos[i] = r > 1.0E-9 ? pos[i] * k : (i == 2 ? next : 0);
+            vel[i] = 0;
+        }
+        if (next < 0.03 && !sent) {
+            sent = true;
+            PacketDistributor.sendToServer(new TravelPayload(place, TravelPayload.HAZARD, 1, 0));
+        }
+        if (next < 0.005) {
+            // (Not harmed, in creative: out again to where you came in.)
+            Catalog.Target t = Catalog.byId(place);
+            double start = t == null ? 30 : CloseViews.start(t.body);
+            pos[0] = 0;
+            pos[1] = start * 0.12;
+            pos[2] = start;
+            insideFor = 0;
+            sent = false;
+        }
+    }
+
+    /** The stage of a fall into a black hole, for the screen (null far off). */
+    private static Component holeStage(double r) {
+        if (r < 1) {
+            return Component.translatable("realweather.hole.inside", String.format(Locale.ROOT, "%.0f", Math.max(0, (r) * 28)));
+        }
+        double dil = Math.sqrt(Math.max(1.0E-6, 1 - 1 / r));
+        String slow = String.format(Locale.ROOT, "%.2f", dil);
+        if (r < 1.5) {
+            return Component.translatable("realweather.hole.horizon", slow);
+        }
+        if (r < 3) {
+            return Component.translatable("realweather.hole.photon", slow);
+        }
+        if (r < 10) {
+            return Component.translatable("realweather.hole.lensing", slow);
+        }
+        if (r < 30) {
+            return Component.translatable("realweather.hole.disk");
+        }
+        return Component.translatable("realweather.hole.distant");
     }
 
     /** The solar system round you, to scale. */
@@ -661,6 +726,15 @@ public final class SpaceFlight {
             Catalog.Target t = Catalog.byId(place);
             if (t != null && CloseViews.deadly(t.body) > 0 && nearDist < CloseViews.deadly(t.body) * 1.6) {
                 g.drawString(font, Component.translatable("realweather.flight.danger"), 6, y + 11, 0xFFFF6040, true);
+            }
+            if (t != null && t.body.kind == Catalog.BLACKHOLE) {
+                g.drawString(font, holeStage(nearDist), 6, y + 11, nearDist < 1 ? 0xFFFF7050 : 0xFFFFC080, true);
+                if (nearDist < 1) {
+                    g.drawString(font, Component.translatable("realweather.hole.theory"), 6, y + 22, 0xFFB0B0B0, true);
+                    // Darkening and a red tide over everything as the end nears.
+                    float tide = (float) Math.pow(Math.max(0, 1 - nearDist), 2);
+                    g.fill(0, 0, w, h, ((int) (tide * 140) << 24) | 0x300000);
+                }
             }
         }
         g.drawString(font, Component.translatable(solar ? "realweather.flight.hint" : "realweather.flight.hint_site"), 6, h - 52, 0xFFA0A0A0, true);

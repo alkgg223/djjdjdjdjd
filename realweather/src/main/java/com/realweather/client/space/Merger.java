@@ -9,7 +9,7 @@ import static com.realweather.client.space.Space3D.ADD;
  * with the spiral pattern of the waves they send out at the speed of light, stronger and faster as they close in.
  */
 final class Merger {
-    private static final double CYCLE = 45, MERGE = 34;
+    private static final double CYCLE = 70, MERGE = 54;
 
     private Merger() {}
 
@@ -48,32 +48,81 @@ final class Merger {
         double[] e2 = {axis[1] * e1[2] - axis[2] * e1[1], axis[2] * e1[0] - axis[0] * e1[2], axis[0] * e1[1] - axis[1] * e1[0]};
         double sep = separation(t) * scale * 0.5, ph = phase(t);
         double size = scale / px;
-        // The black holes themselves (black, rimmed by their lensed photon rings), or the one they become.
-        double[] d0 = new double[3];
-        for (int k = 0; k < (t < MERGE ? 2 : 1); k++) {
+        boolean merged = t >= MERGE;
+        // The sheet of spacetime behind: rings and spokes, rippled by the waves (spiralling out at their speed).
+        if (size >= 6) {
+            grid(cx, cy, cz, scale, axis, e1, e2, t, px, size, vis);
+        }
+        // The holes, each lensing the sky behind it, each with its own disc (shaken more and more as they close in).
+        double[][] at = new double[merged ? 1 : 2][];
+        for (int k = 0; k < at.length; k++) {
             double a = ph + k * Math.PI;
-            double rr = t < MERGE ? sep * (k == 0 ? 0.9 : 1.1) : 0;
-            double bx = cx + (e1[0] * Math.cos(a) + e2[0] * Math.sin(a)) * rr, by = cy + (e1[1] * Math.cos(a) + e2[1] * Math.sin(a)) * rr,
-                    bz = cz + (e1[2] * Math.cos(a) + e2[2] * Math.sin(a)) * rr;
-            double hr = scale * (t < MERGE ? 0.06 : 0.09) * (k == 0 ? 1.1 : 0.95);
-            Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(px * 3, hr * 5), 0F, 0.55F, 0.7F, 1F, 0.6F * vis);
-            Space3D.billboard(Space3D.GLOW, ADD, bx, by, bz, Math.max(px * 2, hr * 2.2), 0F, 1F, 0.85F, 0.6F, 0.8F * vis);
-            if (size > 20) {
-                Space3D.sphere(Space3D.WHITE, bx, by, bz, hr, Space3D.orient(axis[0], axis[1], axis[2], 0), 0, 0, 1, 0F, 0F, 0F, 0F, 0F, vis, false, 0F,
-                        16);
+            double rr = merged ? 0 : sep * (k == 0 ? 0.9 : 1.1);
+            at[k] = new double[]{cx + (e1[0] * Math.cos(a) + e2[0] * Math.sin(a)) * rr, cy + (e1[1] * Math.cos(a) + e2[1] * Math.sin(a)) * rr,
+                    cz + (e1[2] * Math.cos(a) + e2[2] * Math.sin(a)) * rr};
+            double after = t - MERGE;
+            // After the merger the new hole rings down: its size quivering for a moment, then still.
+            double ring = merged ? 1 + 0.07 * Math.exp(-after * 1.4) * Math.sin(after * 22) : 1;
+            double hr = scale * (merged ? 0.075 : 0.05) * (k == 0 ? 1.08 : 0.94) * ring;
+            double hpx = hr / px;
+            double shake = merged ? 0.25 * Math.exp(-after * 0.6) : 0.12 + 0.6 * Math.pow(1 - separation(t), 3);
+            double wob = seconds * (merged ? 0.5 : 1.4 + k);
+            double[] n = {axis[0] + (e1[0] * Math.cos(wob) + e2[0] * Math.sin(wob)) * shake, axis[1] + (e1[1] * Math.cos(wob) + e2[1] * Math.sin(wob)) * shake,
+                    axis[2] + (e1[2] * Math.cos(wob) + e2[2] * Math.sin(wob)) * shake};
+            double nl = Math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+            n[0] /= nl;
+            n[1] /= nl;
+            n[2] /= nl;
+            if (hpx > 3 && SpaceShaders.holeReady()) {
+                CloseViews.lensed(at[k][0], at[k][1], at[k][2], hr, n, (float) (seconds * (merged ? 1.0 : 1.6)), vis, merged ? 1.0F : 0.8F, 13, 200F);
+            } else {
+                Space3D.billboard(Space3D.GLOW, ADD, at[k][0], at[k][1], at[k][2], Math.max(px * 3, hr * 6), 0F, 1F, 0.8F, 0.55F, 0.7F * vis);
+                Space3D.billboard(Space3D.GLOW, ADD, at[k][0], at[k][1], at[k][2], Math.max(px * 2, hr * 2.5), 0F, 0.6F, 0.75F, 1F, 0.5F * vis);
             }
-            d0[0] = bx;
         }
-        // The flash of the merger.
-        if (t > MERGE - 0.3 && t < MERGE + 3) {
-            float f = (float) Math.exp(-Math.abs(t - MERGE) * 1.6);
-            Space3D.billboard(Space3D.STAR, ADD, cx, cy, cz, scale * 3 * f + px * 4, 0F, 0.8F, 0.9F, 1F, 0.8F * f * vis);
-            Space3D.billboard(Space3D.GLOW, ADD, cx, cy, cz, scale * 1.2, 0F, 0.7F, 0.85F, 1F, 0.6F * f * vis);
+        // The gas round the pair: a ring circling them both, and streams of it spiralling down on to each hole (the
+        // final hole is left with a new, settled disc).
+        long seed = 150914;
+        double ringR = merged ? scale * 0.55 : Math.max(sep * 2.4, scale * 0.3);
+        for (int i = 0; i < 180; i++) {
+            double a = Space3D.h(seed, i) * Math.PI * 2 + seconds * 0.25 * Math.pow(ringR / scale, -1.5) * 0.1;
+            double rad = ringR * (0.8 + 0.5 * Space3D.h(seed, i + 300));
+            double hgt = (Space3D.h(seed, i + 600) - 0.5) * ringR * 0.08;
+            double qx = cx + (e1[0] * Math.cos(a) + e2[0] * Math.sin(a)) * rad + axis[0] * hgt, qy = cy + (e1[1] * Math.cos(a) + e2[1] * Math.sin(a)) * rad
+                    + axis[1] * hgt, qz = cz + (e1[2] * Math.cos(a) + e2[2] * Math.sin(a)) * rad + axis[2] * hgt;
+            Space3D.billboard(Space3D.GLOW, ADD, qx, qy, qz, Math.max(px * 1.5, ringR * 0.05), 0F, 1F, 0.7F, 0.45F, 0.12F * vis);
         }
-        if (size < 6) {
-            return;
+        if (!merged) {
+            for (int k = 0; k < 2; k++) {
+                for (int i = 0; i < 40; i++) {
+                    double f = (Space3D.h(seed, 1000 + k * 100 + i) + seconds * 0.2) % 1.0;
+                    double a = ph + k * Math.PI + (1 - f) * 2.2;
+                    double rad = Math.max(0, ringR * (1 - f));
+                    double qx = at[k][0] + (e1[0] * Math.cos(a) + e2[0] * Math.sin(a)) * rad * 0.6,
+                            qy = at[k][1] + (e1[1] * Math.cos(a) + e2[1] * Math.sin(a)) * rad * 0.6,
+                            qz = at[k][2] + (e1[2] * Math.cos(a) + e2[2] * Math.sin(a)) * rad * 0.6;
+                    Space3D.billboard(Space3D.GLOW, ADD, qx, qy, qz, Math.max(px * 1.2, ringR * 0.03), 0F, 1F, 0.75F + 0.2F * (float) f, 0.5F + 0.4F * (float) f,
+                            0.18F * (float) f * vis);
+                }
+            }
         }
-        // The sheet of spacetime: rings and spokes, rippled by the waves (spiralling out at their speed).
+        // At the merger: no fireball (it is gravitational waves that carry the energy away), only the gas round it
+        // stirred up and briefly lit as spacetime rings.
+        if (t > MERGE - 1.5 && t < MERGE + 6) {
+            float f = (float) Math.exp(-Math.abs(t - MERGE) * 0.9);
+            for (int i = 0; i < 60; i++) {
+                double a = Space3D.h(seed, 2000 + i) * Math.PI * 2 + (t - MERGE) * 3;
+                double rad = scale * (0.15 + 0.5 * Space3D.h(seed, 2100 + i)) * (1 + Math.max(0, t - MERGE) * 0.08);
+                double qx = cx + (e1[0] * Math.cos(a) + e2[0] * Math.sin(a)) * rad, qy = cy + (e1[1] * Math.cos(a) + e2[1] * Math.sin(a)) * rad,
+                        qz = cz + (e1[2] * Math.cos(a) + e2[2] * Math.sin(a)) * rad;
+                Space3D.billboard(Space3D.GLOW, ADD, qx, qy, qz, Math.max(px * 2, scale * 0.06), 0F, 0.75F, 0.85F, 1F, 0.3F * f * vis);
+            }
+        }
+    }
+
+    /** The rippling sheet of spacetime. */
+    private static void grid(double cx, double cy, double cz, double scale, double[] axis, double[] e1, double[] e2, double t, double px, double size,
+                             float vis) {
         float detail = Space3D.smooth(6F, 40F, (float) size);
         int rings = (int) Math.max(8, Math.min(30, size / 8)), seg = (int) Math.max(48, Math.min(128, size / 2));
         double reach = scale * 9, speed = scale * 1.1;

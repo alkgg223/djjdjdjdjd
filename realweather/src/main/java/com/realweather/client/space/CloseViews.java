@@ -47,7 +47,7 @@ final class CloseViews {
     static double closest(Catalog.Body b) {
         return switch (b.kind) {
             case Catalog.PULSAR -> 1.6;
-            case Catalog.BLACKHOLE -> 2.2;
+            case Catalog.BLACKHOLE -> 0.0;
             case Catalog.NEBULA -> 0.0;
             case Catalog.COMET -> 0.2;
             case Catalog.MERGER -> 1.0;
@@ -59,7 +59,7 @@ final class CloseViews {
     static double deadly(Catalog.Body b) {
         return switch (b.kind) {
             case Catalog.PULSAR -> 1.8;
-            case Catalog.BLACKHOLE -> 2.4;
+            case Catalog.BLACKHOLE -> -1;
             case Catalog.MERGER -> 1.2;
             case Catalog.STAR, Catalog.DWARF -> 1.15;
             default -> -1;
@@ -91,6 +91,14 @@ final class CloseViews {
                         body.magnetar);
             }
             case Catalog.BLACKHOLE -> {
+                if (dist < R) {
+                    // Inside the event horizon (a theoretical simulation).
+                    int wh = Math.max(1, net.minecraft.client.Minecraft.getInstance().getWindow().getHeight());
+                    Space3D.fullScreen(0F, 0F, 0F, 1F);
+                    BlackHoleInterior.draw(dist / R, new double[]{cam[0] / Math.max(1.0E-9, dist), cam[1] / Math.max(1.0E-9, dist),
+                            cam[2] / Math.max(1.0E-9, dist)}, view, clock, 2.0 / (Space3D.projY() * wh));
+                    return;
+                }
                 double[] o = {cam[0] / R, cam[1] / R, cam[2] / R};
                 double[] n = {0.12, 0.98, 0.16};
                 double nl = Math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
@@ -126,6 +134,36 @@ final class CloseViews {
             case Catalog.MERGER -> Merger.draw(c[0], c[1], c[2], R, unit(view, 0.15, 1, 0.1), clock, px, 1F);
             default -> star(body, c, view, R, seed, clock, px, 1F);
         }
+    }
+
+    /**
+     * A black hole ray traced over the part of the screen round it, its rays nearly parallel (seen from well outside
+     * it): its shadow, photon ring, disc (axis n, view space) and the lensed sky behind, fading out at `edge` horizon
+     * radii. rs: its horizon radius (view units).
+     */
+    static void lensed(double bx, double by, double bz, double rs, double[] n, float time, float alpha, float exposure, double edge, float steps) {
+        if (!SpaceShaders.holeReady() || alpha <= 0.01F || bz >= 0) {
+            return;
+        }
+        double quad = rs * edge;
+        double dist = Math.sqrt(bx * bx + by * by + bz * bz);
+        double[] zb = {-bx / dist, -by / dist, -bz / dist};
+        double[] xb = {1 - zb[0] * zb[0], -zb[0] * zb[1], -zb[0] * zb[2]};
+        double xl = Math.sqrt(xb[0] * xb[0] + xb[1] * xb[1] + xb[2] * xb[2]);
+        xb[0] /= xl;
+        xb[1] /= xl;
+        xb[2] /= xl;
+        double[] yb = {zb[1] * xb[2] - zb[2] * xb[1], zb[2] * xb[0] - zb[0] * xb[2], zb[0] * xb[1] - zb[1] * xb[0]};
+        double[] nb = {n[0] * xb[0] + n[1] * xb[1] + n[2] * xb[2], n[0] * yb[0] + n[1] * yb[1] + n[2] * yb[2], n[0] * zb[0] + n[1] * zb[1] + n[2] * zb[2]};
+        double ncx = Space3D.projX() * bx / -bz, ncy = Space3D.projY() * by / -bz;
+        double hx = Space3D.projX() * quad / -bz, hy = Space3D.projY() * quad / -bz;
+        double x0 = Math.max(ncx - hx, -1.02), x1 = Math.min(ncx + hx, 1.02), y0 = Math.max(ncy - hy, -1.02), y1 = Math.min(ncy + hy, 1.02);
+        if (x0 >= x1 || y0 >= y1) {
+            return;
+        }
+        double am = ((x0 + x1) / 2 - ncx) / hx, ha = (x1 - x0) / 2 / hx, bm = ((y0 + y1) / 2 - ncy) / hy, hb = (y1 - y0) / 2 / hy;
+        SpaceShaders.blackHole((float) x0, (float) y0, (float) x1, (float) y1, new double[]{am * edge, bm * edge, 60}, new double[]{ha * edge, 0, 0},
+                new double[]{0, hb * edge, 0}, new double[]{0, 0, -1}, new double[3], new double[3], nb, time, alpha, (float) edge, exposure, steps);
     }
 
     /** How bright a black hole's disc glows: TON 618 a blazing quasar, M87* bright, Sagittarius A* dim and quiet. */
