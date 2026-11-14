@@ -370,7 +370,7 @@ public class PlanetViewScreen extends Screen {
             planet.lz = sun[2];
             double tx = Math.tan(fovY / 2) * aspect, ty = Math.tan(fovY / 2);
             double[] rdx = {right[0] * tx, right[1] * tx, right[2] * tx}, rdy = {cu[0] * ty, cu[1] * ty, cu[2] * ty};
-            double px = 2 * dist * Math.tan(fovY / 2) / ph;
+            double bpx = 2 * dist * Math.tan(fovY / 2) / ph;
             if (body.kind == Catalog.GAS) {
                 SpaceShaders.GasLook gl = GasGiants.look(body, clock);
                 gl.lx = sun[0];
@@ -379,7 +379,7 @@ public class PlanetViewScreen extends Screen {
                 gl.lightR = planet.lightR;
                 gl.lightG = planet.lightG;
                 gl.lightB = planet.lightB;
-                gl.pixel = (float) (px / radius);
+                gl.pixel = (float) (bpx / radius);
                 SpaceShaders.gasPlanet(gl, -1F, -1F, 1F, 1F, new double[]{cam[0] / radius, cam[1] / radius, cam[2] / radius}, new double[3],
                         new double[3], f, rdx, rdy);
             } else if (body.oblate >= 0.9F) {
@@ -387,11 +387,11 @@ public class PlanetViewScreen extends Screen {
             }
             // Rings in front (their particles, close up), the air round the edge, aurorae and plumes.
             if (body.rings) {
-                CloseViews.rings(body, c, sr, view, sv, clock, px, 1F);
+                CloseViews.rings(body, c, sr, view, sv, clock, bpx, 1F);
             }
             double[] ax = {view[3], view[4], view[5]};
-            Aurorae.draw(body.id, c[0], c[1], c[2], sr, ax, sv, clock, px, 1F);
-            Plumes.draw(body.id, c[0], c[1], c[2], sr, view, sv, clock, px, 1F);
+            Aurorae.draw(body.id, c[0], c[1], c[2], sr, ax, sv, clock, bpx, 1F);
+            Plumes.draw(body.id, c[0], c[1], c[2], sr, view, sv, clock, bpx, 1F);
             if (body.kind == Catalog.GAS && alt < radius * 0.01) {
                 // Inside its clouds: thick haze of its colour, darker deeper down.
                 float in = Space3D.smooth((float) (radius * 0.01), (float) (-radius * 0.02), (float) alt);
