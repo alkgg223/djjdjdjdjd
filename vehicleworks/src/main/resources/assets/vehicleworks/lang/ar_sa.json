@@ -391,7 +391,7 @@
   "vehicleworks.tooltip.bomb_bay": "يطلق قنابل خيالية للأسفل.",
   "vehicleworks.tooltip.burner": "يسخّن الهواء في الأغلفة (القفز). يستهلك الوقود.",
   "vehicleworks.tooltip.cannon": "قذائف متفجرة خيالية.",
-  "vehicleworks.tooltip.cockpit_panel": "لوحة أزرار: البطارية، الأضواء، المحركات، العجلات، اختبار الطوارئ، الطيار الآلي. اضغط X وأنت جالس أو انقر عليها بالزر الأيمن.",
+  "vehicleworks.tooltip.cockpit_panel": "لوحة أزرار: البطارية، الأضواء، المحركات، العجلات، اختبار الطوارئ، الطيار الآلي. ركّبها في السقف. وأنت جالس انقر بالزر الأيمن على الزر مباشرة أو اضغط X.",
   "vehicleworks.tooltip.delta_wing": "جناح مثلثي برفع دوامي وانهيار متأخر. يعمل كسطح تحكم مزدوج.",
   "vehicleworks.tooltip.electric_motor": "محرك صامت يعمل أيضاً تحت الماء.",
   "vehicleworks.tooltip.elevator": "سطح التحكم بالانحدار (وكذلك الأجنحة الأمامية وزعانف الغوص).",

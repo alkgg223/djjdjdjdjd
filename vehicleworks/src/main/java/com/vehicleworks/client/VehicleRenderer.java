@@ -241,7 +241,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
                 vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
             }
             ps.pushPose();
-            ps.translate(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + 1.0, BlockPos.getZ(k) + 0.5);
+            ps.translate(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + (ct == ComponentType.COCKPIT_PANEL ? 0.76 : 1.0), BlockPos.getZ(k) + 0.5);
             Box.cuboid(ps, vc, sp, -0.12f, 0f, -0.12f, 0.12f, 0.14f, 0.12f, on ? 0xF000F0 : 0x400040, on ? 0xFFFF2020 : 0xFF501010);
             ps.popPose();
         }

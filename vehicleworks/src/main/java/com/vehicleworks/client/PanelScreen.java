@@ -43,10 +43,25 @@ public class PanelScreen extends Screen {
         return Component.translatable("vehicleworks.voice.button", Component.translatable(VoiceCallouts.enabled() ? "vehicleworks.panel.on" : "vehicleworks.panel.off"));
     }
 
+    private static final int[] ACTIONS = {Payloads.ACT_BATTERY, Payloads.ACT_LIGHTS, -1, Payloads.ACT_GEAR, Payloads.ACT_EMERGENCY_TEST, -2};
+
     private void press(int action) {
-        if (action == -2) { Minecraft.getInstance().setScreen(new AutopilotScreen(vehicle)); return; }
-        if (action == -1) action = enginesRunning() ? Payloads.ACT_ENGINES_STOP : Payloads.ACT_ENGINES_START;
-        Payloads.toServer(new Payloads.Action(vehicle.getId(), action, Payloads.ARG_PANEL));
+        send(vehicle, action);
+    }
+
+    /** Press panel button 0..5 (battery, lights, engines, gear, emergency test, autopilot). */
+    public static void pressButton(VehicleEntity v, int button) {
+        send(v, ACTIONS[button]);
+    }
+
+    private static void send(VehicleEntity v, int action) {
+        if (action == -2) { Minecraft.getInstance().setScreen(new AutopilotScreen(v)); return; }
+        if (action == -1) {
+            boolean running = false;
+            for (byte st : v.telemetry.engineState) if (st == 1 || st == 2) running = true;
+            action = running ? Payloads.ACT_ENGINES_STOP : Payloads.ACT_ENGINES_START;
+        }
+        Payloads.toServer(new Payloads.Action(v.getId(), action, Payloads.ARG_PANEL));
     }
 
     private boolean enginesRunning() {

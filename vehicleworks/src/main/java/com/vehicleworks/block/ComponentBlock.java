@@ -41,7 +41,7 @@ public class ComponentBlock extends BaseEntityBlock {
     public static final DirectionProperty HORIZONTAL_FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final EnumProperty<WingOrientation> PLANE = EnumProperty.create("plane", WingOrientation.class);
 
-    private static final VoxelShape PANEL = Block.box(0, 0, 0, 16, 14, 16);
+    private static final VoxelShape PANEL = Block.box(0, 14, 0, 16, 16, 16);
     private static final VoxelShape SEAT = Shapes.or(Block.box(1, 0, 1, 15, 8, 15), Block.box(1, 8, 12, 15, 18, 15));
     private static final VoxelShape WING_Y = Block.box(0, 6.5, 0, 16, 9.5, 16);
     private static final VoxelShape WING_X = Block.box(6.5, 0, 0, 9.5, 16, 16);

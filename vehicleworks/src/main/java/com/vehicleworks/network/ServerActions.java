@@ -250,7 +250,7 @@ public final class ServerActions {
                 else msg(sp, "vehicleworks.msg.engines_starting");
             }
             case Payloads.ACT_ENGINES_STOP -> {
-                if (!isPilot) return;
+                if (!isPilot && p.arg() != Payloads.ARG_PANEL) return;
                 for (ThrusterUnit t : sim.thrusters) t.engine.requestStop();
                 msg(sp, "vehicleworks.msg.engines_stopping");
             }

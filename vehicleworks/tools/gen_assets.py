@@ -339,21 +339,17 @@ PANEL = [('panel_battery', '#7cff8a', ic_battery), ('panel_lights', '#ffe27a', i
          ('panel_gear', '#7cff8a', ic_gear), ('panel_emergency', '#ff4040', ic_emergency), ('panel_autopilot', '#38d3ff', ic_ap)]
 for i, (n, lamp, fn) in enumerate(PANEL): tex(n, panel_tile(i, lamp, fn))
 def pface(t): return face(t, (0, 0, 16, 16))
-side = {"south": pface('s'), "east": pface('s'), "west": pface('s'), "up": pface('s'), "down": pface('s')}
-rot = {"origin": [8, 0, 0], "axis": "x", "angle": 45}
+# overhead panel: flat plate under the ceiling, 3 wide x 2 deep, buttons face down
 els = []
-# model front = north; seen from the front, x 16..32 is the left column
 cols = [(16, 32), (0, 16), (-16, 0)]
-for row, names in ((1, ['b', 'l', 'e']), (0, ['g', 'x', 'a'])):
+for row, names in ((0, ['b', 'l', 'e']), (1, ['g', 'x', 'a'])):
     for (x0, x1), n in zip(cols, names):
-        y0 = row * 16
-        els.append(el([x0, y0, 0], [x1, y0 + 16, 1.5], dict(side, north=pface(n)), rot))
-# support leg
-els.append(el([6, 0, 0], [10, 8, 8], six('s')))
+        z0 = -8 + row * 16
+        els.append(el([x0, 14.5, z0], [x1, 16, z0 + 16], {"down": pface(n), "up": pface('s'), "north": pface('s'), "south": pface('s'), "east": pface('s'), "west": pface('s')}))
 model('cockpit_panel', {"parent": "minecraft:block/block",
                         "textures": {"particle": b('device_side'), "s": b('device_side'), "b": b('panel_battery'), "l": b('panel_lights'), "e": b('panel_engines'),
                                      "g": b('panel_gear'), "x": b('panel_emergency'), "a": b('panel_autopilot')},
-                        "display": {"gui": {"rotation": [30, 160, 0], "translation": [0, 0, 0], "scale": [0.4, 0.4, 0.4]}},
+                        "display": {"gui": {"rotation": [-60, 160, 0], "translation": [0, 0, 0], "scale": [0.4, 0.4, 0.4]}},
                         "elements": els})
 bs_facing('cockpit_panel', 'cockpit_panel', FACE4); item_block('cockpit_panel')
 print('panel ok')

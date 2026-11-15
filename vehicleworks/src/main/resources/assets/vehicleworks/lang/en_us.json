@@ -391,7 +391,7 @@
   "vehicleworks.tooltip.bomb_bay": "Releases fictional bombs downward.",
   "vehicleworks.tooltip.burner": "Heats the air in envelopes (Jump). Uses fuel.",
   "vehicleworks.tooltip.cannon": "Fictional explosive shells.",
-  "vehicleworks.tooltip.cockpit_panel": "Switch panel: battery, lights, engines, gear, emergency test, autopilot. Press X in the seat or right-click it.",
+  "vehicleworks.tooltip.cockpit_panel": "Switch panel: battery, lights, engines, gear, emergency test, autopilot. Mount it on the ceiling. While seated, right-click a button on it directly, or press X.",
   "vehicleworks.tooltip.delta_wing": "Delta planform with vortex lift and late stall. Acts as elevons.",
   "vehicleworks.tooltip.electric_motor": "Silent shaft motor that also works under water.",
   "vehicleworks.tooltip.elevator": "Pitch control surface (also canards and dive planes).",

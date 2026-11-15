@@ -53,7 +53,7 @@ public final class ClientEvents {
             if (Keybinds.BRAKE.isDown()) keys |= VehicleControls.BRAKE;
             int fire = 0;
             if (o.keyAttack.isDown()) fire |= 1;
-            if (o.keyUse.isDown()) fire |= 2;
+            if (o.keyUse.isDown() && panelClickMask <= 0) fire |= 2;
             if (Keybinds.FIRE_3.isDown()) fire |= 4;
             if (Keybinds.FIRE_4.isDown()) fire |= 8;
             if (Keybinds.FIRE_5.isDown()) fire |= 16;
@@ -74,6 +74,7 @@ public final class ClientEvents {
         while (Keybinds.PARKING.consumeClick()) action(v, Payloads.ACT_PARKING);
         while (Keybinds.MENU.consumeClick()) action(v, Payloads.ACT_OPEN_ENGINEERING);
         while (Keybinds.AUTOPILOT.consumeClick()) Minecraft.getInstance().setScreen(new AutopilotScreen(v));
+        if (panelClickMask > 0 && !mc.options.keyUse.isDown()) panelClickMask--;
         while (Keybinds.VOICE.consumeClick()) VoiceCallouts.toggle();
         VoiceCallouts.tick(v);
         while (Keybinds.PANEL.consumeClick()) {
@@ -85,6 +86,49 @@ public final class ClientEvents {
         }
     }
 
+    private static int panelClickMask;
+
+    /**
+     * Seated right-click on the overhead cockpit panel: finds which of its 6 buttons the
+     * crosshair points at (the plate is 3 x 2 blocks under the ceiling) and presses it.
+     */
+    static boolean clickPanel(VehicleEntity v) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return false;
+        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition(1f), look = mc.player.getViewVector(1f);
+        org.joml.Vector3d a = v.worldToLocal(eye.x, eye.y, eye.z, new org.joml.Vector3d());
+        org.joml.Vector3d d = v.worldDirToLocal(look.x, look.y, look.z, new org.joml.Vector3d());
+        if (Math.abs(d.y) < 1e-4) return false;
+        double best = 4.5;
+        int button = -1;
+        for (long k : v.structure.blockEntities().keySet()) {
+            var st = v.structure.get(k);
+            if (com.vehicleworks.vehicle.VehicleBuilder.typeOf(st) != com.vehicleworks.component.ComponentType.COCKPIT_PANEL) continue;
+            int bx = net.minecraft.core.BlockPos.getX(k), by = net.minecraft.core.BlockPos.getY(k), bz = net.minecraft.core.BlockPos.getZ(k);
+            double t = (by + 14.5 / 16.0 - a.y) / d.y;
+            if (t <= 0 || t > best) continue;
+            double rx = a.x + d.x * t - bx - 0.5, rz = a.z + d.z * t - bz - 0.5; // relative to block centre
+            // back into model space (model front = north)
+            net.minecraft.core.Direction f = com.vehicleworks.vehicle.VehicleBuilder.facing(st);
+            double mx, mz;
+            switch (f) {
+                case SOUTH -> { mx = -rx; mz = -rz; }
+                case EAST -> { mx = rz; mz = -rx; }
+                case WEST -> { mx = -rz; mz = rx; }
+                default -> { mx = rx; mz = rz; }
+            }
+            if (mx < -1.5 || mx > 1.5 || mz < -1.0 || mz > 1.0) continue;
+            int col = mx >= 0.5 ? 0 : (mx >= -0.5 ? 1 : 2);
+            int row = mz < 0 ? 0 : 1;
+            best = t;
+            button = row * 3 + col;
+        }
+        if (button < 0) return false;
+        PanelScreen.pressButton(v, button);
+        mc.player.playSound(com.vehicleworks.registry.ModSounds.CLICK.get(), 0.6f, 1.4f);
+        return true;
+    }
+
     static void action(VehicleEntity v, int a) {
         Payloads.toServer(new Payloads.Action(v.getId(), a, 0));
     }
@@ -93,6 +137,12 @@ public final class ClientEvents {
     public static void onInteraction(InputEvent.InteractionKeyMappingTriggered e) {
         Minecraft mc = Minecraft.getInstance();
         if (ridden() != null) {
+            if (e.isUseItem() && clickPanel(ridden())) {
+                e.setCanceled(true);
+                e.setSwingHand(false);
+                panelClickMask = 6;
+                return;
+            }
             if (e.isAttack() || e.isUseItem()) {
                 e.setCanceled(true);
                 e.setSwingHand(false);

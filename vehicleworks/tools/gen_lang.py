@@ -234,7 +234,7 @@ t('vehicleworks.autopilot.now', 'Now: heading %s°, altitude %s', 'الآن: ا�
 t('vehicleworks.autopilot.hint', 'Throttle stays yours. W/S/A/D override while held.', 'الخانق بيدك. W/S/A/D تتحكم مؤقتاً أثناء الضغط.')
 # 1.0.7 cockpit panel
 t('block.vehicleworks.cockpit_panel', 'Cockpit Panel', 'لوحة تحكم المقصورة')
-t('vehicleworks.tooltip.cockpit_panel', 'Switch panel: battery, lights, engines, gear, emergency test, autopilot. Press X in the seat or right-click it.', 'لوحة أزرار: البطارية، الأضواء، المحركات، العجلات، اختبار الطوارئ، الطيار الآلي. اضغط X وأنت جالس أو انقر عليها بالزر الأيمن.')
+t('vehicleworks.tooltip.cockpit_panel', 'Switch panel: battery, lights, engines, gear, emergency test, autopilot. Mount it on the ceiling. While seated, right-click a button on it directly, or press X.', 'لوحة أزرار: البطارية، الأضواء، المحركات، العجلات، اختبار الطوارئ، الطيار الآلي. ركّبها في السقف. وأنت جالس انقر بالزر الأيمن على الزر مباشرة أو اضغط X.')
 t('key.vehicleworks.panel', 'Cockpit panel', 'لوحة التحكم')
 P = {'title': ('Cockpit Panel', 'لوحة التحكم'), 'battery': ('BATTERY', 'البطارية'), 'lights': ('LIGHTS', 'الأضواء'), 'engines': ('ENGINES', 'المحركات'),
      'gear': ('LANDING GEAR', 'عجلات الهبوط'), 'emergency': ('EMERGENCY TEST', 'اختبار الطوارئ'), 'autopilot': ('AUTOPILOT', 'الطيار الآلي'),
