@@ -283,6 +283,8 @@ public final class DemoVehicles {
         b.c(0, -1, -9, ComponentType.LANDING_GEAR, Direction.NORTH);
         b.c(-2, -1, 3, ComponentType.LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 0.55));
         b.c(2, -1, 3, ComponentType.LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 0.55));
+        b.block(-2, 0, 3, floor); // connects the main gear to the fuselage
+        b.block(2, 0, 3, floor);
     }
 
     private static void car(B b) {

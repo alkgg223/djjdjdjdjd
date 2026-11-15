@@ -32,6 +32,8 @@ public final class VehicleSimulation {
     public static final double PUMP_FUEL_FLOW = 2.0;    // kg/s per pump
     /** gameplay multiplier on fuel consumption */
     public double fuelScale = 1.0;
+    /** speed at which flight assist rotates the aircraft for take-off (m/s) */
+    public double rotateSpeed = 40;
 
     public final RigidBody body = new RigidBody();
     public CollisionShape shape;
@@ -168,7 +170,36 @@ public final class VehicleSimulation {
             roll = Math.abs(input.roll) > 0.05 ? input.roll : aimOut[1];
             yaw = clamp(aimOut[2] * 0.5 + input.yaw, -1, 1);
         }
-        if (input.assist) {
+        if (input.assist && !input.mouseAim && rotors.isEmpty() && !wings.isEmpty()) {
+            // EASY FLIGHT: W/S move a pitch-attitude target, A/D set a bank angle, release = wings level.
+            body.localDirToWorld(forward.x, forward.y, forward.z, tmp);
+            body.localDirToWorld(right.x, right.y, right.z, tmp2);
+            body.localDirToWorld(up.x, up.y, up.z, tmp3);
+            double p = body.angularVelocity.dot(tmp), q = body.angularVelocity.dot(tmp2), r = -body.angularVelocity.dot(tmp3);
+            double pitchAngle = Math.asin(clamp(tmp.y, -1, 1));
+            double bank = Math.atan2(-tmp2.y, tmp3.y);
+            if (!holdingPitch) { holdPitch = clamp(pitchAngle, Math.toRadians(-10), Math.toRadians(15)); holdingPitch = true; }
+            holdPitch = clamp(holdPitch + input.pitch * Math.toRadians(7) * dt, Math.toRadians(-15), Math.toRadians(20));
+            if (onGround) {
+                // automatic rotation at take-off speed (or earlier if the pilot pulls)
+                boolean rotate = airspeed > rotateSpeed || (input.pitch > 0.3 && airspeed > rotateSpeed * 0.85);
+                holdPitch = rotate ? Math.toRadians(9) : 0;
+            }
+            if (stallWarning) holdPitch = Math.max(Math.toRadians(-5), holdPitch - Math.toRadians(8) * dt);
+            double targetBank = input.roll * Math.toRadians(30);
+            double bankComp = Math.toRadians(4) * (1 / Math.max(0.5, Math.cos(bank)) - 1);
+            pitch = clamp(2.5 * (holdPitch + bankComp - pitchAngle) - 1.0 * q, -1, 1);
+            roll = onGround ? 0 : clamp(2.0 * (targetBank - bank) - 0.8 * p, -1, 1);
+            yaw = clamp(input.yaw + 0.35 * roll - 0.3 * r, -1, 1);
+            if (onGround && Math.abs(input.yaw) < 0.05 && airspeed > 3) {
+                double hdg = Math.atan2(tmp.x, -tmp.z);
+                if (!holdingHeading) { holdHeading = hdg; holdingHeading = true; }
+                double herr = hdg - holdHeading;
+                while (herr > Math.PI) herr -= 2 * Math.PI;
+                while (herr < -Math.PI) herr += 2 * Math.PI;
+                yaw = clamp(yaw - 3.0 * herr - 0.8 * r, -1, 1);
+            } else if (!onGround || Math.abs(input.yaw) >= 0.05) holdingHeading = false;
+        } else if (input.assist) {
             body.localDirToWorld(forward.x, forward.y, forward.z, tmp);
             body.localDirToWorld(right.x, right.y, right.z, tmp2);
             body.localDirToWorld(up.x, up.y, up.z, tmp3);
@@ -210,9 +241,11 @@ public final class VehicleSimulation {
         if (rotors.isEmpty() && !wings.isEmpty()) {
             // gentler surfaces at high dynamic pressure, rudder coordinated with roll
             double sched = clamp(Math.pow(45.0 / Math.max(45.0, airspeed), 2), 0.3, 1.0);
-            pitch *= sched;
-            roll *= sched;
-            if (input.assist && !onGround) yaw += 0.3 * roll;
+            if (!input.assist || input.mouseAim) {
+                pitch *= sched;
+                roll *= sched;
+                if (input.assist && !onGround) yaw += 0.3 * roll;
+            }
         }
         effPitch = clamp(pitch, -1, 1);
         effRoll = clamp(roll, -1, 1);

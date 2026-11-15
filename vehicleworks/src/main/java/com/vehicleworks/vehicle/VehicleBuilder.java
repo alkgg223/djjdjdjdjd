@@ -427,6 +427,7 @@ public final class VehicleBuilder {
         }
 
         sim.initControlAxes();
+        if (layout.wingArea > 0) sim.rotateSpeed = 1.2 * Math.sqrt(2 * totalMass * 9.81 / (1.225 * layout.wingArea * 1.3));
 
         // ---- profile detection
         double weight = totalMass * 9.81;
