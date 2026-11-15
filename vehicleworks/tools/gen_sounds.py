@@ -123,10 +123,41 @@ write('weapon/arm', norm(x, 0.18))
 tt = t(0.06); x = np.sin(2 * np.pi * 2400 * tt) * np.exp(-tt * 120)
 write('ui/click', norm(x, 0.15))
 
+# ---- cockpit alarms (6 different sounds for 12 warnings)
+# stick shaker (stall): low rattle
+tt = t(0.8); x = np.sign(np.sin(2 * np.pi * 28 * tt)) * lp_fast(noise(len(tt)), 900) * 0.8 + 0.3 * np.sin(2 * np.pi * 56 * tt)
+write('alarm/stall', norm(x * env(len(tt), 0.01, 0.05), 0.24))
+# clacker (overspeed): fast mechanical clicks
+tt = t(1.0); x = np.zeros(len(tt))
+for k in range(12):
+    i0 = int(k / 12 * SR); n = int(0.03 * SR); x[i0:i0 + n] += lp_fast(noise(n), 6000) * np.exp(-np.arange(n) / SR * 160)
+write('alarm/overspeed', norm(x, 0.22))
+# single chime (caution: low fuel, low oil pressure)
+tt = t(1.0); x = (np.sin(2 * np.pi * 880 * tt) + 0.5 * np.sin(2 * np.pi * 1320 * tt) + 0.25 * np.sin(2 * np.pi * 2640 * tt)) * np.exp(-tt * 3.5)
+write('alarm/caution', norm(x * env(len(tt), 0.004, 0.05), 0.2))
+# fire bell (engine failure / fire): rapid bell strikes
+tt = t(1.0); x = np.zeros(len(tt))
+for k in range(16):
+    i0 = int(k / 16 * SR); n = len(tt) - i0; tk = np.arange(n) / SR
+    x[i0:] += (np.sin(2 * np.pi * 1050 * tk) + 0.6 * np.sin(2 * np.pi * 2730 * tk)) * np.exp(-tk * 25)
+write('alarm/fire', norm(x, 0.22))
+# whoop (ground proximity: gear, terrain, pull up, low altitude)
+tt = t(0.9); f = np.where(tt < 0.55, 380 + 900 * (tt / 0.55) ** 1.5, 0)
+x = np.sign(np.sin(2 * np.pi * np.cumsum(f) / SR)) * (tt < 0.55) * 0.6
+write('alarm/whoop', norm(lp_fast(x, 3500) * env(len(tt), 0.02, 0.3), 0.22))
+# triple chime (systems: hydraulic, electrical)
+tt = t(0.9); x = np.zeros(len(tt))
+for k in range(3):
+    i0 = int(k * 0.22 * SR); n = int(0.18 * SR); tk = np.arange(n) / SR
+    x[i0:i0 + n] += (np.sin(2 * np.pi * 1250 * tk) + 0.4 * np.sin(2 * np.pi * 2500 * tk)) * np.exp(-tk * 12)
+write('alarm/warning', norm(x, 0.2))
+
 names = {'engine.piston': 'engine/piston', 'engine.turbine': 'engine/turbine', 'engine.jet': 'engine/jet', 'engine.rotor': 'engine/rotor',
          'engine.electric': 'engine/electric', 'engine.start': 'engine/start', 'vehicle.wind': 'vehicle/wind', 'vehicle.stall_warning': 'vehicle/stall_warning',
          'vehicle.gear': 'vehicle/gear', 'vehicle.assemble': 'vehicle/assemble', 'weapon.machine_gun': 'weapon/machine_gun', 'weapon.cannon': 'weapon/cannon',
-         'weapon.missile': 'weapon/missile', 'weapon.bomb': 'weapon/bomb', 'weapon.reload': 'weapon/reload', 'weapon.arm': 'weapon/arm', 'ui.click': 'ui/click'}
+         'weapon.missile': 'weapon/missile', 'weapon.bomb': 'weapon/bomb', 'weapon.reload': 'weapon/reload', 'weapon.arm': 'weapon/arm', 'ui.click': 'ui/click',
+         'alarm.stall': 'alarm/stall', 'alarm.overspeed': 'alarm/overspeed', 'alarm.caution': 'alarm/caution', 'alarm.fire': 'alarm/fire',
+         'alarm.whoop': 'alarm/whoop', 'alarm.warning': 'alarm/warning'}
 sj = {k: {"sounds": [{"name": "vehicleworks:" + v, "attenuation_distance": 64 if k.startswith('engine') or k.startswith('weapon') else 16}],
           "subtitle": "subtitles.vehicleworks." + k} for k, v in names.items()}
 with open(os.path.join(OUT, 'sounds.json'), 'w') as f: json.dump(sj, f, indent=2)

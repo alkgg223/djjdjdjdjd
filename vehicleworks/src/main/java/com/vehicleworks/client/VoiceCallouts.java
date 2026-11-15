@@ -30,22 +30,33 @@ public final class VoiceCallouts {
         return warning && (System.currentTimeMillis() / 350) % 2 == 0;
     }
 
-    private static boolean computeWarning(VehicleTelemetry t) {
-        boolean air = ControlProfile.byIndex(t.profile) == ControlProfile.AIRCRAFT || ControlProfile.byIndex(t.profile) == ControlProfile.HELICOPTER;
-        if (t.emergencyTest || anyFailed(t) || t.integrity < 0.5f) return true;
-        if (anyRunning(t) && t.fuelCapacity > 0 && t.fuel < 0.1f * t.fuelCapacity) return true;
-        if (!air || t.onGround) return false;
-        return t.stall || (t.agl < 60 && t.verticalSpeed < -12) || (!t.gearDown && t.agl < 25 && t.verticalSpeed < -2) || Math.abs(t.bank) > 70;
-    }
+    /** Currently active warnings (shown on the HUD). */
+    public static java.util.EnumSet<Warnings.W> active = java.util.EnumSet.noneOf(Warnings.W.class);
+    private static java.util.EnumSet<Warnings.W> spoken = java.util.EnumSet.noneOf(Warnings.W.class);
+    private static long testStart;
+    private static boolean testWas;
 
     /** Alarm sound and warning state; runs every client tick while seated. */
     private static void master(VehicleTelemetry t) {
-        warning = computeWarning(t);
         long now = System.currentTimeMillis();
-        if (warning && now > nextAlarm) {
-            nextAlarm = now + 900;
-            Minecraft.getInstance().getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                    com.vehicleworks.registry.ModSounds.STALL_WARNING.get(), 1.25f, 0.9f));
+        Warnings.Sound sound = null;
+        if (t.emergencyTest) {
+            // emergency test: show every warning and play each alarm sound in turn
+            if (!testWas) { testStart = now; nextAlarm = 0; }
+            active = java.util.EnumSet.allOf(Warnings.W.class);
+            sound = Warnings.Sound.values()[(int) Math.min(5, (now - testStart) / 820)];
+        } else {
+            active = Warnings.compute(t);
+            for (Warnings.W w : Warnings.W.values()) if (active.contains(w)) { sound = w.sound; break; }
+            // speak each new warning once (voice callouts)
+            for (Warnings.W w : active) if (!spoken.contains(w) && enabled()) say(w.key(), w.red);
+            spoken = java.util.EnumSet.copyOf(active.isEmpty() ? java.util.EnumSet.noneOf(Warnings.W.class) : active);
+        }
+        testWas = t.emergencyTest;
+        warning = !active.isEmpty();
+        if (sound != null && now > nextAlarm) {
+            nextAlarm = now + (t.emergencyTest ? 820 : sound.periodMs);
+            Minecraft.getInstance().getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(sound.event.get(), 1f, 0.9f));
         }
     }
 
@@ -115,17 +126,12 @@ public final class VoiceCallouts {
         boolean run = anyRunning(t);
         if (run != running) { running = run; say(run ? "vehicleworks.voice.engines_on" : "vehicleworks.voice.engines_off", false); }
         boolean fail = anyFailed(t);
-        if (fail && !engineFail) say("vehicleworks.voice.engine_fail", true);
         engineFail = fail;
-        if (fuelLow && !lowFuel) say("vehicleworks.voice.low_fuel", false);
         lowFuel = fuelLow;
         if (dmg && !damaged) say("vehicleworks.voice.damage", true);
         damaged = dmg;
         if (!air || t.onGround) { stall = false; return; }
-        if (t.stall && now > nextStall) { nextStall = now + 3000; say("vehicleworks.voice.stall", true); }
         stall = t.stall;
-        if (t.agl < 60 && t.verticalSpeed < -12 && now > nextPullUp) { nextPullUp = now + 2500; say("vehicleworks.voice.pull_up", true); }
-        else if (!t.gearDown && t.agl < 25 && t.verticalSpeed < -2 && now > nextGear) { nextGear = now + 6000; say("vehicleworks.voice.too_low_gear", true); }
         if (Math.abs(t.bank) > 60 && now > nextBank) { nextBank = now + 5000; say("vehicleworks.voice.bank_angle", false); }
     }
 }

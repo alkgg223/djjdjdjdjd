@@ -27,6 +27,12 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> RELOAD = reg("weapon.reload");
     public static final DeferredHolder<SoundEvent, SoundEvent> ARM = reg("weapon.arm");
     public static final DeferredHolder<SoundEvent, SoundEvent> CLICK = reg("ui.click");
+    public static final DeferredHolder<SoundEvent, SoundEvent> ALARM_STALL = reg("alarm.stall");
+    public static final DeferredHolder<SoundEvent, SoundEvent> ALARM_OVERSPEED = reg("alarm.overspeed");
+    public static final DeferredHolder<SoundEvent, SoundEvent> ALARM_CAUTION = reg("alarm.caution");
+    public static final DeferredHolder<SoundEvent, SoundEvent> ALARM_FIRE = reg("alarm.fire");
+    public static final DeferredHolder<SoundEvent, SoundEvent> ALARM_WHOOP = reg("alarm.whoop");
+    public static final DeferredHolder<SoundEvent, SoundEvent> ALARM_WARNING = reg("alarm.warning");
 
     private static DeferredHolder<SoundEvent, SoundEvent> reg(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(VehicleWorks.MODID, name)));

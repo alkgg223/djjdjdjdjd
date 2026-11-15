@@ -151,5 +151,59 @@
       }
     ],
     "subtitle": "subtitles.vehicleworks.ui.click"
+  },
+  "alarm.stall": {
+    "sounds": [
+      {
+        "name": "vehicleworks:alarm/stall",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.alarm.stall"
+  },
+  "alarm.overspeed": {
+    "sounds": [
+      {
+        "name": "vehicleworks:alarm/overspeed",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.alarm.overspeed"
+  },
+  "alarm.caution": {
+    "sounds": [
+      {
+        "name": "vehicleworks:alarm/caution",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.alarm.caution"
+  },
+  "alarm.fire": {
+    "sounds": [
+      {
+        "name": "vehicleworks:alarm/fire",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.alarm.fire"
+  },
+  "alarm.whoop": {
+    "sounds": [
+      {
+        "name": "vehicleworks:alarm/whoop",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.alarm.whoop"
+  },
+  "alarm.warning": {
+    "sounds": [
+      {
+        "name": "vehicleworks:alarm/warning",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.alarm.warning"
   }
 }

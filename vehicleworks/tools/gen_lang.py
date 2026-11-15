@@ -259,6 +259,15 @@ V = {'on': ('Voice callouts on', 'التنبيهات الصوتية تعمل'), 
      'pull_up': ('Pull up! Pull up!', 'ارفع المقدمة! ارفع المقدمة!'), 'too_low_gear': ('Too low, gear', 'منخفض جداً، العجلات'), 'bank_angle': ('Bank angle', 'زاوية الميلان')}
 for k, (en, ar) in V.items(): t('vehicleworks.voice.' + k, en, ar)
 t('vehicleworks.hud.master_warning', 'MASTER WARNING', 'إنذار رئيسي')
+# 1.0.11 warnings
+WN = {'stall': ('STALL WARNING', 'تحذير انهيار السرعة'), 'overspeed': ('OVERSPEED', 'سرعة زائدة'), 'low_fuel': ('LOW FUEL', 'وقود منخفض'),
+      'engine_failure': ('ENGINE FAILURE', 'عطل المحرك'), 'engine_fire': ('ENGINE FIRE', 'حريق المحرك'), 'low_oil': ('LOW OIL PRESSURE', 'ضغط زيت منخفض'),
+      'gear': ('GEAR WARNING', 'تحذير العجلات'), 'terrain': ('TERRAIN WARNING', 'تحذير التضاريس'), 'pull_up': ('PULL UP', 'ارفع المقدمة'),
+      'hydraulic': ('HYDRAULIC FAILURE', 'عطل الهيدروليك'), 'electrical': ('ELECTRICAL FAILURE', 'عطل كهربائي'), 'low_altitude': ('LOW ALTITUDE', 'ارتفاع منخفض')}
+for k, (en, ar) in WN.items(): t('vehicleworks.warning.' + k, en, ar)
+for k, en, ar in (('stall', 'Stick shaker', 'هزاز المقود'), ('overspeed', 'Overspeed clacker', 'نقرات السرعة الزائدة'), ('caution', 'Caution chime', 'رنين تنبيه'),
+                  ('fire', 'Fire bell', 'جرس الحريق'), ('whoop', 'Terrain whoop', 'إنذار الأرض'), ('warning', 'Warning chime', 'رنين إنذار')):
+    t('subtitles.vehicleworks.alarm.' + k, en, ar)
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):

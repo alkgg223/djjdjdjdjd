@@ -48,6 +48,17 @@ public final class VehicleHud {
         engines(g, font, t, w, h);
         weapons(g, font, t, w, h);
         warnings(g, font, t, w, h, p);
+        if (!VoiceCallouts.active.isEmpty()) {
+            int yy = 32;
+            boolean on = (System.currentTimeMillis() / 350) % 2 == 0;
+            for (Warnings.W wn : VoiceCallouts.active) {
+                String m = net.minecraft.network.chat.Component.translatable(wn.key()).getString();
+                int col = wn.red ? (on ? 0xFFFF3030 : 0xFFB02020) : 0xFFFFB020;
+                g.fill(w / 2 - 70, yy - 2, w / 2 + 70, yy + 9, 0xA0000000);
+                g.drawCenteredString(font, m, w / 2, yy, col);
+                yy += 12;
+            }
+        }
         if (VoiceCallouts.blink()) {
             // flashing red screen edge = master warning
             int c = 0x90FF1010, e = 6;

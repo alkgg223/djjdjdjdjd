@@ -16,7 +16,7 @@ public final class VehicleTelemetry {
     public int carGear;
     public float rpmFraction, depth, integrity, stress;
     public boolean navActive, autopilot, battery = true, lights, emergencyTest;
-    public float apHeading, apAltitude;
+    public float apHeading, apAltitude, vne, hydraulics = 1;
     public float navBearing, navDistance;
     public float staticMargin, rotorOffset;
     // per engine
@@ -49,7 +49,7 @@ public final class VehicleTelemetry {
         b.writeByte(carGear);
         b.writeFloat(rpmFraction); b.writeFloat(depth); b.writeFloat(integrity); b.writeFloat(stress);
         b.writeFloat(navBearing); b.writeFloat(navDistance); b.writeFloat(staticMargin); b.writeFloat(rotorOffset);
-        b.writeFloat(apHeading); b.writeFloat(apAltitude);
+        b.writeFloat(apHeading); b.writeFloat(apAltitude); b.writeFloat(vne); b.writeFloat(hydraulics);
         int ne = engineSpool.length;
         b.writeVarInt(ne);
         for (int i = 0; i < ne; i++) {
@@ -87,7 +87,7 @@ public final class VehicleTelemetry {
         carGear = b.readByte();
         rpmFraction = b.readFloat(); depth = b.readFloat(); integrity = b.readFloat(); stress = b.readFloat();
         navBearing = b.readFloat(); navDistance = b.readFloat(); staticMargin = b.readFloat(); rotorOffset = b.readFloat();
-        apHeading = b.readFloat(); apAltitude = b.readFloat();
+        apHeading = b.readFloat(); apAltitude = b.readFloat(); vne = b.readFloat(); hydraulics = b.readFloat();
         int ne = b.readVarInt();
         engineState = new byte[ne]; engineType = new byte[ne];
         engineSpool = new float[ne]; engineTemp = new float[ne]; engineDamage = new float[ne]; engineThrust = new float[ne]; propOmega = new float[ne];
