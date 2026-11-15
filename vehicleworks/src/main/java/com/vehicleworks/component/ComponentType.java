@@ -173,7 +173,7 @@ public enum ComponentType {
                 PropertyDef.number("damping", 0.2, 4.0, 0.05, 1.0, "x"),
                 PropertyDef.number("travel", 0.1, 1.2, 0.05, gear ? 0.5 : 0.4, "m"),
                 PropertyDef.choice("steering", 0, "auto", "yes", "no"),
-                PropertyDef.number("max_steer", 5, 50, 1, gear ? 45 : 32, "deg"),
+                PropertyDef.number("max_steer", 5, 60, 1, gear ? 60 : 45, "deg"),
                 PropertyDef.choice("drive", 0, "auto", "yes", "no"),
                 PropertyDef.bool("braked", true),
                 PropertyDef.number("brake_torque", 500, 30000, 250, gear ? 8000 : 5000, "Nm"),

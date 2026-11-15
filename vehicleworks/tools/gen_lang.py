@@ -204,7 +204,7 @@ keys = {'yaw_left': ('Yaw / rudder left', 'انعراج يسار'), 'yaw_right':
         'throttle_down': ('Throttle down / gear down', 'تقليل الخانق'), 'pitch_up': ('Pitch up / dive planes', 'رفع المقدمة'), 'pitch_down': ('Pitch down', 'خفض المقدمة'),
         'engines': ('Start / stop engines', 'تشغيل/إيقاف المحركات'), 'gear': ('Landing gear', 'عجلات الهبوط'), 'flaps': ('Flaps', 'القلابات'), 'master_arm': ('Master arm (weapons)', 'المفتاح الرئيسي (الأسلحة)'),
         'assist': ('Flight assist', 'مساعد الطيران'), 'mouse_aim': ('Mouse-aim toggle', 'تبديل التصويب'), 'vehicle_menu': ('Vehicle engineering menu', 'قائمة هندسة المركبة'),
-        'parking_brake': ('Parking brake', 'فرامل الوقوف'), 'fire_3': ('Fire channel 3', 'قناة الإطلاق 3'), 'fire_4': ('Fire channel 4', 'قناة الإطلاق 4'),
+        'parking_brake': ('Parking brake', 'فرامل الوقوف'), 'brake': ('Strong brake (hold)', 'فرامل قوية (اضغط مطولاً)'), 'fire_3': ('Fire channel 3', 'قناة الإطلاق 3'), 'fire_4': ('Fire channel 4', 'قناة الإطلاق 4'),
         'fire_5': ('Fire channel 5', 'قناة الإطلاق 5'), 'fire_6': ('Fire channel 6', 'قناة الإطلاق 6')}
 for k, (en, ar) in keys.items(): t('key.vehicleworks.' + k, en, ar)
 t('key.categories.vehicleworks', 'VehicleWorks', 'هندسة المركبات')

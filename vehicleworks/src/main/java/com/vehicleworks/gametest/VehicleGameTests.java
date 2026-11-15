@@ -55,7 +55,14 @@ public final class VehicleGameTests {
         var level = h.getLevel();
         var stone = Blocks.SMOOTH_STONE.defaultBlockState();
         for (int z = 0; z < length; z++)
-            for (int x = -width / 2; x <= width / 2; x++) level.setBlock(o.offset(x, 0, -z), stone, 2);
+            for (int x = -width / 2; x <= width / 2; x++) {
+                level.setBlock(o.offset(x, 0, -z), stone, 2);
+                // clear leftovers of neighbouring test structures above the runway
+                for (int y = 1; y <= 14; y++) {
+                    BlockPos p = o.offset(x, y, -z);
+                    if (level.getBlockState(p).is(Blocks.BARRIER)) level.setBlock(p, Blocks.AIR.defaultBlockState(), 2);
+                }
+            }
         // keep the runway chunks entity-ticking (the test server only ticks chunks near tests)
         for (int z = -16; z < corridor; z += 16)
             for (int x = -width / 2 - 40; x <= width / 2 + 40; x += 16) {
@@ -169,7 +176,7 @@ public final class VehicleGameTests {
             v.controls.flaps = 0.33;
         });
         h.onEachTick(() -> {
-            if (v.simulation() != null && v.tickCount % 20 == 0 && v.tickCount > 400) debug("trainer", v);
+            if (v.simulation() != null && v.tickCount % 20 == 0) debug("trainer", v);
             if (v.tickCount == 2) VehicleWorks.LOGGER.info("trainer layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
             if (v.simulation() == null || ground[0] == 0) return;
             boolean fast = v.simulation().airspeed > 33;
@@ -239,6 +246,32 @@ public final class VehicleGameTests {
             var up = v.localDirToWorld(0, 1, 0, new org.joml.Vector3d());
             h.assertTrue(climb > 20, "airliner climbed " + climb + " m (airspeed " + v.simulation().airspeed + ")");
             h.assertTrue(up.y > 0.8, "airliner wings level: " + up.y);
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "platform", timeoutTicks = 1500, batch = "flight_b787")
+    public static void boeing787TakesOffEasyMode(GameTestHelper h) {
+        runway(h, 12, 33, 1400, 2600);
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.BOEING787, new BlockPos(12, 3, -30));
+        v.controls.testPilot = true;
+        double[] ground = new double[1];
+        h.runAfterDelay(20, () -> {
+            ground[0] = v.getY();
+            for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
+            VehicleWorks.LOGGER.info("b787 layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
+        });
+        h.onEachTick(() -> {
+            if (v.simulation() == null || ground[0] == 0) return;
+            if (v.tickCount % 40 == 0) debug("b787", v);
+            double alt = v.getY() - ground[0];
+            // only Space: the easy-flight assist rotates by itself; bank left after climbing
+            v.controls.keys = (v.controls.throttle < 1 ? VehicleControls.JUMP : 0) | (alt > 40 && v.tickCount % 400 < 120 ? VehicleControls.LEFT : 0);
+            if (alt > 10) v.controls.gearDown = false;
+        });
+        h.runAfterDelay(1460, () -> {
+            double climb = v.getY() - ground[0];
+            h.assertTrue(climb > 20, "b787 climbed " + climb + " m (airspeed " + v.simulation().airspeed + ")");
             h.succeed();
         });
     }

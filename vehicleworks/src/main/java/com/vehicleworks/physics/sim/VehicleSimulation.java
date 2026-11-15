@@ -186,19 +186,20 @@ public final class VehicleSimulation {
                 holdPitch = rotate ? Math.toRadians(9) : 0;
             }
             if (stallWarning) holdPitch = Math.max(Math.toRadians(-5), holdPitch - Math.toRadians(8) * dt);
-            double targetBank = input.roll * Math.toRadians(30);
-            double bankComp = Math.toRadians(4) * (1 / Math.max(0.5, Math.cos(bank)) - 1);
+            double targetBank = input.roll * Math.toRadians(60);
+            double bankComp = Math.toRadians(5) * (1 / Math.max(0.45, Math.cos(bank)) - 1);
             pitch = clamp(2.5 * (holdPitch + bankComp - pitchAngle) - 1.0 * q, -1, 1);
-            roll = onGround ? 0 : clamp(2.0 * (targetBank - bank) - 0.8 * p, -1, 1);
-            yaw = clamp(input.yaw + 0.35 * roll - 0.3 * r, -1, 1);
-            if (onGround && Math.abs(input.yaw) < 0.05 && airspeed > 3) {
+            roll = onGround ? 0 : clamp(2.6 * (targetBank - bank) - 0.7 * p, -1, 1);
+            if (!onGround) pitch = clamp(pitch + 0.35 * (1 / Math.max(0.45, Math.cos(bank)) - 1), -1, 1);
+            yaw = clamp(input.yaw + (onGround ? input.roll : 0.5 * roll) - 0.3 * r, -1, 1);
+            if (onGround && Math.abs(input.yaw) < 0.05 && Math.abs(input.roll) < 0.05 && airspeed > 3) {
                 double hdg = Math.atan2(tmp.x, -tmp.z);
                 if (!holdingHeading) { holdHeading = hdg; holdingHeading = true; }
                 double herr = hdg - holdHeading;
                 while (herr > Math.PI) herr -= 2 * Math.PI;
                 while (herr < -Math.PI) herr += 2 * Math.PI;
                 yaw = clamp(yaw - 3.0 * herr - 0.8 * r, -1, 1);
-            } else if (!onGround || Math.abs(input.yaw) >= 0.05) holdingHeading = false;
+            } else if (!onGround || Math.abs(input.yaw) >= 0.05 || Math.abs(input.roll) >= 0.05) holdingHeading = false;
         } else if (input.assist) {
             body.localDirToWorld(forward.x, forward.y, forward.z, tmp);
             body.localDirToWorld(right.x, right.y, right.z, tmp2);
@@ -467,8 +468,8 @@ public final class VehicleSimulation {
             }
             if (w.params.steerable) {
                 double steerCmd = rotors.isEmpty() && !wings.isEmpty() && !hasDrivenWheels() ? effYaw : input.steer;
-                double speedLimit = 1.0 / (1.0 + Math.max(0, airspeed - 12) / 30.0);
-                w.steerAngle = approach(w.steerAngle, steerCmd * Math.toRadians(w.params.maxSteerDeg) * speedLimit, Math.toRadians(260) * dt);
+                double speedLimit = hasDrivenWheels() ? 1.0 / (1.0 + Math.max(0, airspeed - 20) / 60.0) : 1.0 / (1.0 + Math.max(0, airspeed - 12) / 30.0);
+                w.steerAngle = approach(w.steerAngle, steerCmd * Math.toRadians(w.params.maxSteerDeg) * speedLimit, Math.toRadians(hasDrivenWheels() ? 360 : 260) * dt);
             }
         }
         // ---- transmission
@@ -646,11 +647,40 @@ public final class VehicleSimulation {
                 }
                 double br = 0;
                 if (input.brake || braking) br = input.brake ? 1.0 : Math.min(1.0, Math.abs(input.drive));
+                if (input.hardBrake) br = 3.0;
+                // traction control: cut drive torque on a spinning wheel
+                if (w.params.driven && w.grounded && Math.abs(w.slipRatio) > 0.3) w.driveTorque *= 0.6;
                 if (input.handbrake && w.params.axleSign <= 0) br = 1.0;
                 if (!drivetrainRunning && driven > 0 && Math.abs(input.drive) < 0.05 && !hasPilotThrust()) br = Math.max(br, 0.15);
                 w.brakeInput = br;
                 w.wheelCount = wheels.size();
                 w.step(body, com, terrain, dt, env::frictionAt);
+            }
+            groundAssist(driven, dt);
+        }
+    }
+
+    /** Strong brake (B) and car stability assist: easier, more forgiving ground handling. */
+    private void groundAssist(int driven, double dt) {
+        int grounded = 0;
+        for (WheelSim w : wheels) if (w.grounded && !w.retracted) grounded++;
+        if (grounded == 0) return;
+        double gf = Math.min(1.0, grounded / Math.max(1.0, wheels.size() * 0.75));
+        double vx = body.linearVelocity.x, vz = body.linearVelocity.z;
+        double sp = Math.sqrt(vx * vx + vz * vz);
+        if (input.hardBrake && sp > 0.05) {
+            double a = Math.min(10.0 * gf, sp / dt);
+            body.applyForce(-vx / sp * a * body.mass, 0, -vz / sp * a * body.mass);
+        }
+        if (driven > 0 && wings.isEmpty() && rotors.isEmpty() && !input.handbrake) {
+            // remove sideways sliding (keeps the car pointing where it goes) and damp spin-outs
+            body.localDirToWorld(right.x, right.y, right.z, tmp2);
+            double vLat = body.linearVelocity.dot(tmp2);
+            double aLat = clamp(-vLat * 4.0, -7, 7) * gf;
+            body.applyForce(tmp2.x * aLat * body.mass, 0, tmp2.z * aLat * body.mass);
+            if (Math.abs(input.drive) < 0.05 && !input.brake && sp < 1.5) {
+                double a = Math.min(3.0 * gf, sp / dt); // coast to a stop instead of rolling forever
+                if (sp > 0.01) body.applyForce(-vx / sp * a * body.mass, 0, -vz / sp * a * body.mass);
             }
         }
     }

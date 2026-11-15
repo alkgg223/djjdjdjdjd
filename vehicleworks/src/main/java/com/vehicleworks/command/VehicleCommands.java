@@ -43,6 +43,7 @@ public final class VehicleCommands {
 
     private static DemoVehicles.Demo demo(String s) {
         if (s.equalsIgnoreCase("a320")) return DemoVehicles.Demo.AIRLINER;
+        if (s.equalsIgnoreCase("b787") || s.equalsIgnoreCase("787") || s.equalsIgnoreCase("boeing")) return DemoVehicles.Demo.BOEING787;
         for (DemoVehicles.Demo d : DemoVehicles.Demo.values()) if (d.id().equalsIgnoreCase(s)) return d;
         return null;
     }
@@ -54,7 +55,7 @@ public final class VehicleCommands {
         ServerLevel level = src.getLevel();
         Vec3 p = src.getPosition();
         Direction facing = src.getEntity() != null ? src.getEntity().getDirection() : Direction.NORTH;
-        int ahead = demo == DemoVehicles.Demo.AIRLINER ? 26 : 12;
+        int ahead = demo == DemoVehicles.Demo.AIRLINER || demo == DemoVehicles.Demo.BOEING787 ? 30 : 12;
         BlockPos origin = BlockPos.containing(p.add(facing.getStepX() * ahead, 0, facing.getStepZ() * ahead));
         origin = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, origin).above(3);
         if (demo == DemoVehicles.Demo.BOAT || demo == DemoVehicles.Demo.SUBMARINE) origin = origin.below(2);

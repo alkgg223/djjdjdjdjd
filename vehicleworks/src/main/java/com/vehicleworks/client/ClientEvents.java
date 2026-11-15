@@ -49,6 +49,7 @@ public final class ClientEvents {
             if (Keybinds.THROTTLE_DOWN.isDown()) keys |= VehicleControls.THROTTLE_DOWN;
             if (Keybinds.PITCH_UP.isDown()) keys |= VehicleControls.PITCH_UP;
             if (Keybinds.PITCH_DOWN.isDown()) keys |= VehicleControls.PITCH_DOWN;
+            if (Keybinds.BRAKE.isDown()) keys |= VehicleControls.BRAKE;
             int fire = 0;
             if (o.keyAttack.isDown()) fire |= 1;
             if (o.keyUse.isDown()) fire |= 2;

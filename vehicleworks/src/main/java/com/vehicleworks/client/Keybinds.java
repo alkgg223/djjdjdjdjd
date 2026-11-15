@@ -18,17 +18,18 @@ public final class Keybinds {
     public static final KeyMapping ENGINES = key("engines", GLFW.GLFW_KEY_I);
     public static final KeyMapping GEAR = key("gear", GLFW.GLFW_KEY_G);
     public static final KeyMapping FLAPS = key("flaps", GLFW.GLFW_KEY_V);
-    public static final KeyMapping ARM = key("master_arm", GLFW.GLFW_KEY_B);
+    public static final KeyMapping ARM = key("master_arm", GLFW.GLFW_KEY_J);
     public static final KeyMapping ASSIST = key("assist", GLFW.GLFW_KEY_H);
     public static final KeyMapping MOUSE_AIM = key("mouse_aim", GLFW.GLFW_KEY_M);
     public static final KeyMapping MENU = key("vehicle_menu", GLFW.GLFW_KEY_N);
     public static final KeyMapping PARKING = key("parking_brake", GLFW.GLFW_KEY_P);
+    public static final KeyMapping BRAKE = key("brake", GLFW.GLFW_KEY_B);
     public static final KeyMapping FIRE_3 = key("fire_3", GLFW.GLFW_KEY_LEFT_ALT);
     public static final KeyMapping FIRE_4 = key("fire_4", GLFW.GLFW_KEY_K);
     public static final KeyMapping FIRE_5 = key("fire_5", GLFW.GLFW_KEY_U);
     public static final KeyMapping FIRE_6 = key("fire_6", GLFW.GLFW_KEY_Y);
     public static final KeyMapping[] ALL = {YAW_LEFT, YAW_RIGHT, THROTTLE_UP, THROTTLE_DOWN, PITCH_UP, PITCH_DOWN, ENGINES, GEAR, FLAPS,
-            ARM, ASSIST, MOUSE_AIM, MENU, PARKING, FIRE_3, FIRE_4, FIRE_5, FIRE_6};
+            ARM, ASSIST, MOUSE_AIM, MENU, PARKING, BRAKE, FIRE_3, FIRE_4, FIRE_5, FIRE_6};
 
     private Keybinds() {}
 

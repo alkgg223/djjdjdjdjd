@@ -12,6 +12,7 @@ import net.minecraft.util.Mth;
 public final class VehicleControls {
     public static final int FORWARD = 1, BACK = 2, LEFT = 4, RIGHT = 8, JUMP = 16, SPRINT = 32,
             YAW_LEFT = 64, YAW_RIGHT = 128, THROTTLE_UP = 256, THROTTLE_DOWN = 512, PITCH_UP = 1024, PITCH_DOWN = 2048;
+    public static final int BRAKE = 1 << 18;
     public static final int FIRE_SHIFT = 12;
     public static final int CHANNELS = 6;
 
@@ -141,6 +142,7 @@ public final class VehicleControls {
                 throttle = in.throttle;
             }
         }
+        if (down(BRAKE)) { in.brake = true; in.hardBrake = true; }
         if (!hasPilot) {
             in.pitch = in.roll = in.yaw = 0;
             in.drive = in.steer = 0;

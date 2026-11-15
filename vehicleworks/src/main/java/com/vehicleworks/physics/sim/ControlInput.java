@@ -20,6 +20,8 @@ public final class ControlInput {
     public double steer;
     public boolean brake;
     public boolean handbrake;
+    /** B held: maximum braking (stronger brakes + direct ground deceleration) */
+    public boolean hardBrake;
     /** flap lever 0..1 */
     public double flaps;
     public double spoilers;
@@ -46,6 +48,7 @@ public final class ControlInput {
         drive = steer = 0;
         brake = false;
         handbrake = false;
+        hardBrake = false;
         ballast = 0;
         lift = 0;
         mouseAim = false;
