@@ -143,6 +143,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         if (layout != null) {
             layout.sim.differential = t.property("differential").getInt(c);
             layout.sim.transmission.automatic = t.property("auto_gearbox").getBool(c);
+            layout.sim.handling = t.property("handling").getInt(c);
         }
     }
 
@@ -720,6 +721,9 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         t.staticMargin = (float) layout.staticMargin;
         t.rotorOffset = (float) layout.rotorOffset;
         t.navActive = false;
+        t.autopilot = controls.autopilot;
+        t.apHeading = (float) controls.apHeading;
+        t.apAltitude = (float) controls.apAltitude;
         if (layout.navComputer != Long.MIN_VALUE) {
             CompoundTag c = VehicleBuilder.config(structure, layout.navComputer);
             ComponentType nt = ComponentType.NAVIGATION_COMPUTER;

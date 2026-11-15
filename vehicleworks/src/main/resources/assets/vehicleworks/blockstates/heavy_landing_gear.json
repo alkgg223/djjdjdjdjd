@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/heavy_landing_gear"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/heavy_landing_gear",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/heavy_landing_gear",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/heavy_landing_gear",
+      "y": 270
+    }
+  }
+}

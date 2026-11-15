@@ -18,6 +18,9 @@
     },
     "C": {
       "item": "minecraft:compass"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
     }
   },
   "result": {

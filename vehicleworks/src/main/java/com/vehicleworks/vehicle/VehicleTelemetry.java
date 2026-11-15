@@ -15,7 +15,8 @@ public final class VehicleTelemetry {
     public float fuel, fuelCapacity, fuelFlow, ballast, envelopeTemp, gasLift, mass;
     public int carGear;
     public float rpmFraction, depth, integrity, stress;
-    public boolean navActive;
+    public boolean navActive, autopilot;
+    public float apHeading, apAltitude;
     public float navBearing, navDistance;
     public float staticMargin, rotorOffset;
     // per engine
@@ -41,13 +42,14 @@ public final class VehicleTelemetry {
         b.writeFloat(airspeed); b.writeFloat(groundSpeed); b.writeFloat(altitude); b.writeFloat(agl); b.writeFloat(verticalSpeed);
         b.writeFloat(aoa); b.writeFloat(sideslip); b.writeFloat(gLoad); b.writeFloat(mach); b.writeFloat(heading); b.writeFloat(pitch); b.writeFloat(bank);
         int flags = (stall ? 1 : 0) | (onGround ? 2 : 0) | (inWater ? 4 : 0) | (instruments ? 8 : 0) | (gearDown ? 16 : 0) | (armed ? 32 : 0)
-                | (assist ? 64 : 0) | (mouseAim ? 128 : 0) | (afterburner ? 256 : 0) | (parkingBrake ? 512 : 0) | (navActive ? 1024 : 0);
+                | (assist ? 64 : 0) | (mouseAim ? 128 : 0) | (afterburner ? 256 : 0) | (parkingBrake ? 512 : 0) | (navActive ? 1024 : 0) | (autopilot ? 2048 : 0);
         b.writeVarInt(flags);
         b.writeFloat(throttle); b.writeFloat(collective); b.writeFloat(flaps); b.writeFloat(shipThrottle); b.writeFloat(lift);
         b.writeFloat(fuel); b.writeFloat(fuelCapacity); b.writeFloat(fuelFlow); b.writeFloat(ballast); b.writeFloat(envelopeTemp); b.writeFloat(gasLift); b.writeFloat(mass);
         b.writeByte(carGear);
         b.writeFloat(rpmFraction); b.writeFloat(depth); b.writeFloat(integrity); b.writeFloat(stress);
         b.writeFloat(navBearing); b.writeFloat(navDistance); b.writeFloat(staticMargin); b.writeFloat(rotorOffset);
+        b.writeFloat(apHeading); b.writeFloat(apAltitude);
         int ne = engineSpool.length;
         b.writeVarInt(ne);
         for (int i = 0; i < ne; i++) {
@@ -79,12 +81,13 @@ public final class VehicleTelemetry {
         int flags = b.readVarInt();
         stall = (flags & 1) != 0; onGround = (flags & 2) != 0; inWater = (flags & 4) != 0; instruments = (flags & 8) != 0;
         gearDown = (flags & 16) != 0; armed = (flags & 32) != 0; assist = (flags & 64) != 0; mouseAim = (flags & 128) != 0;
-        afterburner = (flags & 256) != 0; parkingBrake = (flags & 512) != 0; navActive = (flags & 1024) != 0;
+        afterburner = (flags & 256) != 0; parkingBrake = (flags & 512) != 0; navActive = (flags & 1024) != 0; autopilot = (flags & 2048) != 0;
         throttle = b.readFloat(); collective = b.readFloat(); flaps = b.readFloat(); shipThrottle = b.readFloat(); lift = b.readFloat();
         fuel = b.readFloat(); fuelCapacity = b.readFloat(); fuelFlow = b.readFloat(); ballast = b.readFloat(); envelopeTemp = b.readFloat(); gasLift = b.readFloat(); mass = b.readFloat();
         carGear = b.readByte();
         rpmFraction = b.readFloat(); depth = b.readFloat(); integrity = b.readFloat(); stress = b.readFloat();
         navBearing = b.readFloat(); navDistance = b.readFloat(); staticMargin = b.readFloat(); rotorOffset = b.readFloat();
+        apHeading = b.readFloat(); apAltitude = b.readFloat();
         int ne = b.readVarInt();
         engineState = new byte[ne]; engineType = new byte[ne];
         engineSpool = new float[ne]; engineTemp = new float[ne]; engineDamage = new float[ne]; engineThrust = new float[ne]; propOmega = new float[ne];

@@ -30,14 +30,14 @@ public final class WheelParams {
     }
 
     public WheelParams sanitize() {
-        radius = clamp(radius, 0.2, 1.5);
+        radius = clamp(radius, 0.2, 2.5);
         restLength = clamp(restLength, 0.05, 1.5);
         stiffness = clamp(stiffness, 2000, 2_000_000);
         damping = clamp(damping, 100, 300_000);
         maxSteerDeg = clamp(maxSteerDeg, 0, 60);
         brakeTorque = clamp(brakeTorque, 0, 60000);
         gripScale = clamp(gripScale, 0.2, 2.0);
-        mass = clamp(mass, 5, 500);
+        mass = clamp(mass, 5, 800);
         return this;
     }
 

@@ -18,6 +18,9 @@
     },
     "K": {
       "item": "minecraft:clock"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
     }
   },
   "result": {

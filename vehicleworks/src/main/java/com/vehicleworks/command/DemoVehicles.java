@@ -165,7 +165,7 @@ public final class DemoVehicles {
     private static void fighter(B b) {
         var hull = Blocks.LIGHT_GRAY_CONCRETE;
         for (int z = -6; z <= 6; z++) if (z != 0) b.block(0, 0, z, hull);
-        b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH);
+        b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH, c -> c.putInt("handling", 3));
         b.block(0, 0, -7, Blocks.GRAY_CONCRETE);
         b.fuel(0, 0, -1);
         b.fuel(0, 0, -2);
@@ -238,7 +238,7 @@ public final class DemoVehicles {
             b.block(1, 2, z, skin);
             for (int x = -1; x <= 1; x++) b.block(x, 3, z, skin);
         }
-        b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH);
+        b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH, c -> c.putInt("handling", 1));
         for (int y = 1; y <= 2; y++) b.block(0, y, -12, Blocks.WHITE_STAINED_GLASS);
         b.block(0, 1, 14, skin);
         b.block(0, 2, 14, skin);
@@ -304,7 +304,7 @@ public final class DemoVehicles {
             }
             for (int x = -2; x <= 2; x++) b.block(x, 4, z, cockpit && Math.abs(x) <= 1 ? Blocks.GLASS : skin);
         }
-        b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH);
+        b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH, c -> c.putInt("handling", 1));
         // cockpit: big windscreen, low instrument panel, captain + first officer
         for (int x = -1; x <= 1; x++) {
             b.block(x, 1, -16, Blocks.GRAY_CONCRETE);

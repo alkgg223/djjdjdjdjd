@@ -72,6 +72,7 @@ public final class ClientEvents {
         while (Keybinds.MOUSE_AIM.consumeClick()) action(v, Payloads.ACT_MOUSE_AIM);
         while (Keybinds.PARKING.consumeClick()) action(v, Payloads.ACT_PARKING);
         while (Keybinds.MENU.consumeClick()) action(v, Payloads.ACT_OPEN_ENGINEERING);
+        while (Keybinds.AUTOPILOT.consumeClick()) Minecraft.getInstance().setScreen(new AutopilotScreen(v));
     }
 
     static void action(VehicleEntity v, int a) {

@@ -142,7 +142,7 @@ public final class VehicleBuilder {
                     case AMMO_BOX -> layout.ammoBoxes.add(key);
                     case REMOTE_CONTROL_UNIT -> layout.rcus.add(key);
                     case MAIN_ROTOR, TAIL_ROTOR -> rotors.add(key);
-                    case WHEEL, LANDING_GEAR -> wheels.add(key);
+                    case WHEEL, LANDING_GEAR, HEAVY_LANDING_GEAR -> wheels.add(key);
                     case FUEL_TANK -> {
                         TankUnit tu = new TankUnit(TankUnit.Kind.FUEL, FUEL_TANK_CAPACITY);
                         tu.amount = Math.min(FUEL_TANK_CAPACITY, data(s, key).getDouble("Fuel"));

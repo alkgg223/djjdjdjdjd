@@ -160,8 +160,6 @@ def full_hor(name, front, side, top, back=None):
 full_hor('vehicle_core', 'core_front', 'core_side', 'core_top')
 full_dir('piston_engine', 'piston_front', 'device_side', 'piston_side')
 full_dir('turboprop_engine', 'turboprop_front', 'turboprop_back', 'engine_side')
-full_dir('turbofan_engine', 'turbofan_front', 'turbofan_back', 'engine_side')
-full_dir('jet_engine', 'jet_front', 'jet_back', 'engine_side')
 full_dir('electric_motor', 'electric_front', 'device_side', 'electric_side')
 full_hor('engine_starter', 'starter', 'device_side', 'device_side')
 column_model('fuel_tank', 'fuel_tank', 'fuel_tank_top'); bs_single('fuel_tank', 'fuel_tank'); item_block('fuel_tank')
@@ -228,6 +226,35 @@ bs_facing('wheel', 'wheel', FACE4); item_block('wheel')
 gear_els = wheel_elements(0, 11, (5, 11)) + [el([7, 9, 4.5], [9, 16, 6.5], six('h'))]
 model('landing_gear', {"parent": "minecraft:block/block", "textures": {"t": b('tire'), "r": b('rim'), "h": b('strut'), "particle": b('strut')}, "elements": gear_els})
 bs_facing('landing_gear', 'landing_gear', FACE4); item_block('landing_gear')
+# heavy gear: twin-wheel bogie on a thick strut (drawn at its radius by the vehicle renderer)
+heavy_els = wheel_elements(0, 11, (1, 6.5), False) + wheel_elements(0, 11, (9.5, 15), False) + \
+    [el([0, 4.5, 4.5], [16, 6.5, 6.5], six('h')), el([6.5, 6, 4], [9.5, 16, 7], six('h')), el([5.5, 13, 3], [10.5, 16, 8], six('h'))]
+model('heavy_landing_gear', {"parent": "minecraft:block/block", "textures": {"t": b('tire'), "r": b('rim'), "h": b('strut'), "particle": b('strut')}, "elements": heavy_els})
+bs_facing('heavy_landing_gear', 'heavy_landing_gear', FACE4); item_block('heavy_landing_gear')
+
+# big jet engines: nacelle larger than one block (front = north)
+def F(t): return face(t, (0, 0, 16, 16))
+def nacelle(name, front, back, side, r0, r1, z0, z1, nozzle):
+    els = [el([r0, r1 - 3, z0], [r1, r1, z1], {"north": F(side), "south": F(side), "east": F(side), "west": F(side), "up": F(side), "down": F(side)}),
+           el([r0, r0, z0], [r1, r0 + 3, z1], {"north": F(side), "south": F(side), "east": F(side), "west": F(side), "up": F(side), "down": F(side)}),
+           el([r0, r0 + 3, z0], [r0 + 3, r1 - 3, z1], {"north": F(side), "south": F(side), "east": F(side), "west": F(side), "up": F(side), "down": F(side)}),
+           el([r1 - 3, r0 + 3, z0], [r1, r1 - 3, z1], {"north": F(side), "south": F(side), "east": F(side), "west": F(side), "up": F(side), "down": F(side)}),
+           # intake lip (rotated square makes the opening look round)
+           el([r0 + 4, r0 + 4, z0 - 1], [r1 - 4, r1 - 4, z0 + 1], {"north": F(front), "south": F(front), "east": F(side), "west": F(side), "up": F(side), "down": F(side)},
+              {"origin": [8, 8, z0], "axis": "z", "angle": 45}),
+           # fan face and spinner
+           el([r0 + 3, r0 + 3, z0 + 2], [r1 - 3, r1 - 3, z0 + 3], {"north": F(front), "south": F(side)}),
+           el([6, 6, z0 + 0.5], [10, 10, z0 + 2], six(side)),
+           # exhaust core / nozzle
+           el([nozzle, nozzle, z1], [16 - nozzle, 16 - nozzle, z1 + 4], {"north": F(side), "south": F(back), "east": F(side), "west": F(side), "up": F(side), "down": F(side)}),
+           # pylon to the wing above
+           el([7, r1, z0 + 4], [9, max(r1 + 1, 17), z1 - 2], six(side))]
+    model(name, {"parent": "minecraft:block/block", "textures": {"particle": b(side), front: b(front), back: b(back), side: b(side)},
+                 "display": {"gui": {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.45, 0.45, 0.45]}},
+                 "elements": els})
+    bs_facing(name, name, FACE6); item_block(name)
+nacelle('turbofan_engine', 'turbofan_front', 'turbofan_back', 'engine_side', -5, 21, -2, 15, 3)
+nacelle('jet_engine', 'jet_front', 'jet_back', 'engine_side', -2, 18, -2, 16, 2)
 
 # propeller: hub at the front (north) with 4 blades
 model('propeller', {"parent": "minecraft:block/block", "textures": {"b": b('propeller'), "h": b('prop_hub'), "particle": b('propeller')},

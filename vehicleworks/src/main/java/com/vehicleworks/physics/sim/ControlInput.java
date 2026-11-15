@@ -22,6 +22,9 @@ public final class ControlInput {
     public boolean handbrake;
     /** B held: maximum braking (stronger brakes + direct ground deceleration) */
     public boolean hardBrake;
+    /** autopilot: hold a compass heading (deg, 0 = north) and an altitude (block Y) */
+    public boolean autopilot;
+    public double apHeading, apAltitude = 100;
     /** flap lever 0..1 */
     public double flaps;
     public double spoilers;

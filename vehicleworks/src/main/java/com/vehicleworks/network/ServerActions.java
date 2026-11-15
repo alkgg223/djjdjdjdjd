@@ -270,6 +270,15 @@ public final class ServerActions {
                 c.flaps = c.flaps >= 0.99 ? 0 : Math.min(1, c.flaps + 1.0 / 3.0);
                 msg(sp, "vehicleworks.msg.flaps", Math.round(c.flaps * 100));
             }
+            case Payloads.ACT_AUTOPILOT -> {
+                if (!isPilot) return;
+                int a = p.arg();
+                c.autopilot = (a & 1) != 0;
+                c.apHeading = Math.floorMod((a >> 1) & 511, 360);
+                c.apAltitude = ((a >> 10) & 16383) - 2048;
+                if (c.autopilot) c.mouseAim = false;
+                msg(sp, c.autopilot ? "vehicleworks.msg.autopilot_on" : "vehicleworks.msg.autopilot_off", (int) c.apHeading, (int) c.apAltitude);
+            }
             case Payloads.ACT_FLAPS_SET -> { if (isPilot) c.flaps = Math.max(0, Math.min(100, p.arg())) / 100.0; }
             case Payloads.ACT_THROTTLE_SET -> {
                 if (!isPilot) return;

@@ -216,6 +216,22 @@ subs = {'engine.piston': ('Piston engine', 'محرك مكبسي'), 'engine.turbi
         'weapon.arm': ('Master arm switch', 'مفتاح التسليح'), 'ui.click': ('Click', 'نقرة')}
 for k, (en, ar) in subs.items(): t('subtitles.vehicleworks.' + k, en, ar)
 
+# 1.0.5 additions
+t('block.vehicleworks.heavy_landing_gear', 'Heavy Landing Gear', 'عجلات هبوط ضخمة')
+t('vehicleworks.tooltip.heavy_landing_gear', 'Huge retractable gear (5x a normal gear) for big aircraft.', 'عجلات هبوط ضخمة قابلة للطي (5 أضعاف العادية) للطائرات الكبيرة.')
+t('vehicleworks.prop.handling', 'Aircraft handling', 'ثقل الطائرة')
+for k, en, ar in (('very_heavy', 'Very heavy', 'ثقيل جداً'), ('heavy', 'Heavy', 'ثقيل'), ('normal', 'Normal', 'عادي'), ('light', 'Light', 'خفيف')): t('vehicleworks.opt.' + k, en, ar)
+t('key.vehicleworks.autopilot', 'Autopilot panel', 'لوحة الطيار الآلي')
+t('vehicleworks.msg.autopilot_on', 'Autopilot ON: heading %s°, altitude %s', 'الطيار الآلي يعمل: الاتجاه %s°، الارتفاع %s')
+t('vehicleworks.msg.autopilot_off', 'Autopilot OFF', 'تم إيقاف الطيار الآلي')
+t('vehicleworks.autopilot.title', 'Autopilot', 'الطيار الآلي')
+t('vehicleworks.autopilot.heading', 'Heading (0-359°)', 'الاتجاه (0-359°)')
+t('vehicleworks.autopilot.altitude', 'Altitude (Y)', 'الارتفاع (Y)')
+t('vehicleworks.autopilot.current', 'Use current heading & altitude', 'استخدم الاتجاه والارتفاع الحاليين')
+t('vehicleworks.autopilot.engage', 'Engage', 'تشغيل')
+t('vehicleworks.autopilot.disengage', 'Disengage', 'إيقاف')
+t('vehicleworks.autopilot.now', 'Now: heading %s°, altitude %s', 'الآن: الاتجاه %s°، الارتفاع %s')
+t('vehicleworks.autopilot.hint', 'Throttle stays yours. W/S/A/D override while held.', 'الخانق بيدك. W/S/A/D تتحكم مؤقتاً أثناء الضغط.')
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):

@@ -266,12 +266,22 @@ public final class VehicleGameTests {
             if (v.tickCount % 40 == 0) debug("b787", v);
             double alt = v.getY() - ground[0];
             // only Space: the easy-flight assist rotates by itself; bank left after climbing
-            v.controls.keys = (v.controls.throttle < 1 ? VehicleControls.JUMP : 0) | (alt > 40 && v.tickCount % 400 < 120 ? VehicleControls.LEFT : 0);
+            v.controls.keys = (v.controls.throttle < 1 ? VehicleControls.JUMP : 0);
             if (alt > 10) v.controls.gearDown = false;
+            if (alt > 40 && !v.controls.autopilot) {
+                v.controls.autopilot = true;
+                v.controls.apHeading = 90;
+                v.controls.apAltitude = ground[0] + 150;
+            }
         });
         h.runAfterDelay(1460, () -> {
             double climb = v.getY() - ground[0];
+            var fw = v.localDirToWorld(0, 0, -1, new org.joml.Vector3d());
+            double hdg = (Math.toDegrees(Math.atan2(fw.x, -fw.z)) + 360) % 360;
+            VehicleWorks.LOGGER.info("b787 autopilot result: heading " + hdg + " alt " + climb);
             h.assertTrue(climb > 20, "b787 climbed " + climb + " m (airspeed " + v.simulation().airspeed + ")");
+            h.assertTrue(hdg > 5 && hdg < 120, "autopilot turning towards 090: heading " + hdg); // leaves the loaded test area while turning
+            h.assertTrue(Math.abs(climb - 150) < 50, "autopilot altitude " + climb);
             h.succeed();
         });
     }

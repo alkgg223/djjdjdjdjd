@@ -30,6 +30,8 @@ public final class VehicleControls {
     public boolean mouseAim = false;
     public boolean afterburner;
     public boolean parkingBrake;
+    public boolean autopilot;
+    public double apHeading, apAltitude = 100;
     public double lift;
     /** automated tests: behave as if a pilot were seated */
     public boolean testPilot;
@@ -69,7 +71,10 @@ public final class VehicleControls {
         switch (profile) {
             case AIRCRAFT, AUTO -> {
                 double tp, tr, ty;
-                if (mouseAim && hasPilot) {
+                in.autopilot = autopilot;
+                in.apHeading = apHeading;
+                in.apAltitude = apAltitude;
+                if (mouseAim && hasPilot && !autopilot) {
                     in.mouseAim = true;
                     double yaw = Math.toRadians(lookYaw), pitch = Math.toRadians(lookPitch);
                     in.aimX = -Math.sin(yaw) * Math.cos(pitch);
@@ -166,6 +171,9 @@ public final class VehicleControls {
         t.putBoolean("Assist", assist);
         t.putBoolean("MouseAim", mouseAim);
         t.putBoolean("Parking", parkingBrake);
+        t.putBoolean("AP", autopilot);
+        t.putDouble("ApHdg", apHeading);
+        t.putDouble("ApAlt", apAltitude);
         return t;
     }
 
@@ -178,5 +186,8 @@ public final class VehicleControls {
         assist = !t.contains("Assist") || t.getBoolean("Assist");
         mouseAim = !t.contains("MouseAim") || t.getBoolean("MouseAim");
         parkingBrake = t.getBoolean("Parking");
+        autopilot = t.getBoolean("AP");
+        apHeading = t.getDouble("ApHdg");
+        apAltitude = t.contains("ApAlt") ? t.getDouble("ApAlt") : 100;
     }
 }

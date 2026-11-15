@@ -38,7 +38,22 @@ public class ComponentScreen extends Screen {
         this.type = ComponentType.byId(data.getString("Type"));
         this.config = data.getCompound("Config").copy();
         this.plane = data.contains("Plane") ? data.getInt("Plane") : -1;
-        if (type != null) defs.addAll(type.properties);
+    }
+
+    /** Core block: show only the options that belong to the chosen vehicle type. */
+    private void refreshDefs() {
+        defs.clear();
+        if (type == null) return;
+        int prof = type == ComponentType.VEHICLE_CORE ? type.property("profile").getInt(config) : 0;
+        for (PropertyDef d : type.properties) {
+            if (type == ComponentType.VEHICLE_CORE) {
+                boolean air = prof == 0 || prof == 1;
+                if ((d.key.equals("handling") || d.key.equals("mouse_aim")) && !air) continue;
+                if ((d.key.equals("differential") || d.key.equals("auto_gearbox")) && prof != 0 && prof != 3) continue;
+            }
+            defs.add(d);
+        }
+        if (page * PER_PAGE >= defs.size()) page = 0;
     }
 
     private boolean isWing() {
@@ -48,6 +63,7 @@ public class ComponentScreen extends Screen {
     @Override
     protected void init() {
         clearWidgets();
+        refreshDefs();
         int left = isWing() ? width / 2 - 200 : width / 2 - 100;
         int y = 40;
         int from = page * PER_PAGE, to = Math.min(defs.size(), from + PER_PAGE);
@@ -78,6 +94,7 @@ public class ComponentScreen extends Screen {
                 case ENUM -> addRenderableWidget(Button.builder(enumLabel(d), b -> {
                     int v = (d.getInt(config) + 1) % d.options.length;
                     d.set(config, v);
+                    if (d.key.equals("profile")) init();
                     if (d.key.equals("wing_type")) {
                         // apply the planform defaults of the new wing type
                         var wt = com.vehicleworks.physics.aero.WingType.byIndex(v);

@@ -20,7 +20,8 @@ public enum ComponentType {
             PropertyDef.bool("assist", true),
             PropertyDef.choice("differential", 1, "open", "limited_slip", "locked"),
             PropertyDef.bool("auto_gearbox", true),
-            PropertyDef.bool("show_com", false)),
+            PropertyDef.bool("show_com", false),
+            PropertyDef.choice("handling", 2, "very_heavy", "heavy", "normal", "light")),
     PILOT_SEAT("pilot_seat", ComponentCategory.CONTROL, 40, Facing.HORIZONTAL, Shape.SEAT),
     PASSENGER_SEAT("passenger_seat", ComponentCategory.CONTROL, 30, Facing.HORIZONTAL, Shape.SEAT,
             PropertyDef.bool("gunner", false)),
@@ -65,6 +66,7 @@ public enum ComponentType {
 
     WHEEL("wheel", ComponentCategory.GROUND, 45, Facing.HORIZONTAL, Shape.DYNAMIC, wheelProps(false)),
     LANDING_GEAR("landing_gear", ComponentCategory.GROUND, 80, Facing.HORIZONTAL, Shape.DYNAMIC, wheelProps(true)),
+    HEAVY_LANDING_GEAR("heavy_landing_gear", ComponentCategory.GROUND, 450, Facing.HORIZONTAL, Shape.DYNAMIC, heavyGearProps()),
 
     BALLAST_TANK("ballast_tank", ComponentCategory.MARINE, 120, Facing.NONE, Shape.FULL),
     BALLOON_ENVELOPE("balloon_envelope", ComponentCategory.LIFT, 1.0, Facing.NONE, Shape.FULL),
@@ -144,7 +146,7 @@ public enum ComponentType {
 
     /** Blocks without rigid collision (handled by their own physics, e.g. suspension). */
     public boolean excludedFromCollision() {
-        return this == WHEEL || this == LANDING_GEAR || this == PROPELLER || this == MAIN_ROTOR || this == TAIL_ROTOR || this == MARINE_PROPELLER;
+        return this == WHEEL || this == LANDING_GEAR || this == HEAVY_LANDING_GEAR || this == PROPELLER || this == MAIN_ROTOR || this == TAIL_ROTOR || this == MARINE_PROPELLER;
     }
 
     /** Rendered dynamically (spinning / animated) instead of in the cached static mesh. */
@@ -179,6 +181,21 @@ public enum ComponentType {
                 PropertyDef.number("brake_torque", 500, 30000, 250, gear ? 8000 : 5000, "Nm"),
                 PropertyDef.number("grip", 0.3, 2.0, 0.05, 1.0, "x"),
                 PropertyDef.bool("retractable", gear)};
+    }
+
+    private static PropertyDef[] heavyGearProps() {
+        return new PropertyDef[]{
+                PropertyDef.number("radius", 0.5, 2.5, 0.05, 2.25, "m"),
+                PropertyDef.number("suspension", 0.2, 4.0, 0.05, 1.0, "x"),
+                PropertyDef.number("damping", 0.2, 4.0, 0.05, 1.0, "x"),
+                PropertyDef.number("travel", 0.2, 1.5, 0.05, 1.0, "m"),
+                PropertyDef.choice("steering", 0, "auto", "yes", "no"),
+                PropertyDef.number("max_steer", 5, 60, 1, 60, "deg"),
+                PropertyDef.choice("drive", 0, "auto", "yes", "no"),
+                PropertyDef.bool("braked", true),
+                PropertyDef.number("brake_torque", 2000, 60000, 500, 40000, "Nm"),
+                PropertyDef.number("grip", 0.3, 2.0, 0.05, 1.0, "x"),
+                PropertyDef.bool("retractable", true)};
     }
 
     private static PropertyDef[] weaponProps() {

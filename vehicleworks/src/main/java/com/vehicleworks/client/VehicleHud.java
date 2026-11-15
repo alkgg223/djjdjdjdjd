@@ -145,6 +145,7 @@ public final class VehicleHud {
             }
         }
         g.fill(cx, hy + 8, cx + 1, hy + 18, AMBER);
+        if (t.autopilot) centered(g, f, String.format("AP  HDG %03.0f  ALT %.0f", t.apHeading, t.apAltitude), cx, cy - 36, GREEN);
         if (t.navActive) {
             float diff = Mth.wrapDegrees(t.navBearing - t.heading);
             int xx = cx + (int) Mth.clamp(diff * 1.5f, -88, 88);
