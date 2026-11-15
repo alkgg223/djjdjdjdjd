@@ -223,12 +223,11 @@ def wheel_elements(r0=0, r1=16, thick=(5, 11), hub=True):
     return els
 model('wheel', {"parent": "minecraft:block/block", "textures": {"t": b('tire'), "r": b('rim'), "h": b('strut'), "particle": b('tire')}, "elements": wheel_elements()})
 bs_facing('wheel', 'wheel', FACE4); item_block('wheel')
-gear_els = wheel_elements(0, 11, (5, 11)) + [el([7, 9, 4.5], [9, 16, 6.5], six('h'))]
+gear_els = wheel_elements(0, 16, (5, 11))
 model('landing_gear', {"parent": "minecraft:block/block", "textures": {"t": b('tire'), "r": b('rim'), "h": b('strut'), "particle": b('strut')}, "elements": gear_els})
 bs_facing('landing_gear', 'landing_gear', FACE4); item_block('landing_gear')
 # heavy gear: twin-wheel bogie on a thick strut (drawn at its radius by the vehicle renderer)
-heavy_els = wheel_elements(0, 11, (1, 6.5), False) + wheel_elements(0, 11, (9.5, 15), False) + \
-    [el([0, 4.5, 4.5], [16, 6.5, 6.5], six('h')), el([6.5, 6, 4], [9.5, 16, 7], six('h')), el([5.5, 13, 3], [10.5, 16, 8], six('h'))]
+heavy_els = wheel_elements(0, 16, (0.5, 6.5)) + wheel_elements(0, 16, (9.5, 15.5))
 model('heavy_landing_gear', {"parent": "minecraft:block/block", "textures": {"t": b('tire'), "r": b('rim'), "h": b('strut'), "particle": b('strut')}, "elements": heavy_els})
 bs_facing('heavy_landing_gear', 'heavy_landing_gear', FACE4); item_block('heavy_landing_gear')
 

@@ -232,5 +232,14 @@
       }
     ],
     "subtitle": "subtitles.vehicleworks.vehicle.hard_landing"
+  },
+  "vehicle.tire_screech": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/tire_screech",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.tire_screech"
   }
 }

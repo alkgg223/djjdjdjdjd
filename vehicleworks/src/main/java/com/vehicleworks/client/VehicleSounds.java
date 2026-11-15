@@ -122,8 +122,19 @@ public final class VehicleSounds {
         }
         // touchdown / hard landing
         if (t.wheelKeys.length > 0) {
-            if (!t.onGround) s.lastVs = t.verticalSpeed;
-            else if (!s.wasGround) {
+            boolean grounded = false;
+            for (float c : t.wheelComp) if (c > 0) { grounded = true; break; }
+            boolean skid = false;
+            for (boolean b : t.wheelSkid) skid |= b;
+            if (skid && grounded && t.groundSpeed > 6 && v.tickCount % 9 == 0)
+                mc.level.playLocalSound(v.getX(), v.getY(), v.getZ(), ModSounds.TIRE_SCREECH.get(), net.minecraft.sounds.SoundSource.NEUTRAL, 0.5f, 0.9f + mc.level.random.nextFloat() * 0.2f, false);
+            if (!grounded) s.lastVs = t.verticalSpeed;
+            else if (!s.wasGround && t.groundSpeed > 8) {
+                // tyres spin up on touchdown: screech
+                mc.level.playLocalSound(v.getX(), v.getY(), v.getZ(), ModSounds.TIRE_SCREECH.get(), net.minecraft.sounds.SoundSource.NEUTRAL,
+                        Math.min(2.5f, 0.6f + t.groundSpeed / 40f), 0.85f + mc.level.random.nextFloat() * 0.2f, false);
+            }
+            if (grounded && !s.wasGround) {
                 float impact = -s.lastVs;
                 boolean inside = mc.player.getVehicle() == v;
                 if (impact > 4.5f) {
@@ -138,7 +149,7 @@ public final class VehicleSounds {
                     if (inside) GroundFx.kick(0.06f + impact * 0.04f);
                 }
             }
-            s.wasGround = t.onGround;
+            s.wasGround = grounded;
         }
     }
 

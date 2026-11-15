@@ -152,6 +152,10 @@ for k in range(3):
     x[i0:i0 + n] += (np.sin(2 * np.pi * 1250 * tk) + 0.4 * np.sin(2 * np.pi * 2500 * tk)) * np.exp(-tk * 12)
 write('alarm/warning', norm(x, 0.2))
 
+# tyre screech (touchdown / skid)
+tt = t(0.75)
+sq = np.sin(2 * np.pi * (1650 + 120 * np.sin(2 * np.pi * 11 * tt)) * tt) * 0.5 + bp_fast(noise(len(tt)), 1800, 5200) * 0.8
+write('vehicle/tire_screech', norm(sq * env(len(tt), 0.01, 0.35) * np.exp(-tt * 1.8), 0.22))
 # ---- ground roll rumble (loop), touchdown thump, hard landing crash
 d = 2.0; tt = t(d)
 x = lp_fast(noise(len(tt)), 180) * 1.0 + 0.35 * bp_fast(noise(len(tt)), 300, 1200) * (0.6 + 0.4 * np.sin(2 * np.pi * 7 * tt) ** 2)
@@ -175,7 +179,7 @@ names = {'engine.piston': 'engine/piston', 'engine.turbine': 'engine/turbine', '
          'weapon.missile': 'weapon/missile', 'weapon.bomb': 'weapon/bomb', 'weapon.reload': 'weapon/reload', 'weapon.arm': 'weapon/arm', 'ui.click': 'ui/click',
          'alarm.stall': 'alarm/stall', 'alarm.overspeed': 'alarm/overspeed', 'alarm.caution': 'alarm/caution', 'alarm.fire': 'alarm/fire',
          'alarm.whoop': 'alarm/whoop', 'alarm.warning': 'alarm/warning',
-         'vehicle.rumble': 'vehicle/rumble', 'vehicle.touchdown': 'vehicle/touchdown', 'vehicle.hard_landing': 'vehicle/hard_landing'}
+         'vehicle.rumble': 'vehicle/rumble', 'vehicle.touchdown': 'vehicle/touchdown', 'vehicle.hard_landing': 'vehicle/hard_landing', 'vehicle.tire_screech': 'vehicle/tire_screech'}
 sj = {k: {"sounds": [{"name": "vehicleworks:" + v, "attenuation_distance": 64 if k.startswith('engine') or k.startswith('weapon') else 16}],
           "subtitle": "subtitles.vehicleworks." + k} for k, v in names.items()}
 with open(os.path.join(OUT, 'sounds.json'), 'w') as f: json.dump(sj, f, indent=2)

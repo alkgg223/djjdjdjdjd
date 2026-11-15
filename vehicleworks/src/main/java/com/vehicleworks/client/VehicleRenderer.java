@@ -124,7 +124,19 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             ps.popPose();
             if (ext > 0.1 && drop > 0.2) {
                 // suspension strut
-                renderStrut(ps, buffers, k, drop, light);
+                renderStrut(ps, buffers, k, drop, light, ct == ComponentType.HEAVY_LANDING_GEAR ? 0.11f * scale / 4.5f + 0.06f : 0.06f);
+            }
+            if (ct == ComponentType.HEAVY_LANDING_GEAR || ct == ComponentType.LANDING_GEAR) {
+                // non-rotating axle through both tyres
+                TextureAtlasSprite axSp = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(ResourceLocation.fromNamespaceAndPath(VehicleWorks.MODID, "block/strut"));
+                VertexConsumer axVc = buffers.getBuffer(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
+                ps.pushPose();
+                ps.translate(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + 0.5 - drop, BlockPos.getZ(k) + 0.5);
+                ps.mulPose(Axis.YP.rotation(-steer));
+                float half = 0.5f * scale, th = 0.07f * Math.max(1f, scale * 0.5f);
+                if (axle.getAxis() == Direction.Axis.X) Box.cuboid(ps, axVc, axSp, -half, -th, -th, half, th, th, light, 0xFFFFFFFF);
+                else Box.cuboid(ps, axVc, axSp, -th, -th, -half, th, th, half, light, 0xFFFFFFFF);
+                ps.popPose();
             }
         }
         // yokes: every yoke follows the same control command (captain and first officer move together)
@@ -265,13 +277,13 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         }
     }
 
-    private void renderStrut(PoseStack ps, MultiBufferSource buffers, long k, double drop, int light) {
+    private void renderStrut(PoseStack ps, MultiBufferSource buffers, long k, double drop, int light, float w) {
         TextureAtlasSprite sp = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(
                 ResourceLocation.fromNamespaceAndPath(VehicleWorks.MODID, "block/strut"));
         VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
         ps.pushPose();
         ps.translate(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + 0.5, BlockPos.getZ(k) + 0.5);
-        Box.cuboid(ps, vc, sp, -0.06f, (float) -drop, -0.06f, 0.06f, 0.3f, 0.06f, light, 0xFFFFFFFF);
+        Box.cuboid(ps, vc, sp, -w, (float) -drop, -w, w, 0.3f, w, light, 0xFFFFFFFF);
         ps.popPose();
     }
 
