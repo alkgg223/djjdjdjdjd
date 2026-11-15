@@ -138,6 +138,7 @@
   "vehicleworks.hud.armed": "مسلّح",
   "vehicleworks.hud.engines": "المحركات",
   "vehicleworks.hud.kmh": "كم/س",
+  "vehicleworks.hud.master_warning": "إنذار رئيسي",
   "vehicleworks.hud.rotor_offset": "الدوّار بعيد %s م عن مركز الكتلة!",
   "vehicleworks.hud.safe": "آمن",
   "vehicleworks.info.armed": "المفتاح الرئيسي: مسلّح",

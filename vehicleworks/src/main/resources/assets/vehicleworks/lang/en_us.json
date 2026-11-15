@@ -138,6 +138,7 @@
   "vehicleworks.hud.armed": "ARMED",
   "vehicleworks.hud.engines": "ENGINES",
   "vehicleworks.hud.kmh": "km/h",
+  "vehicleworks.hud.master_warning": "MASTER WARNING",
   "vehicleworks.hud.rotor_offset": "Rotor %s m off CoM!",
   "vehicleworks.hud.safe": "SAFE",
   "vehicleworks.info.armed": "MASTER ARM: ARMED",

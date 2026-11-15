@@ -48,6 +48,14 @@ public final class VehicleHud {
         engines(g, font, t, w, h);
         weapons(g, font, t, w, h);
         warnings(g, font, t, w, h, p);
+        if (VoiceCallouts.blink()) {
+            // flashing red screen edge = master warning
+            int c = 0x90FF1010, e = 6;
+            g.fill(0, 0, w, e, c); g.fill(0, h - e, w, h, c); g.fill(0, e, e, h - e, c); g.fill(w - e, e, w, h - e, c);
+            String m = net.minecraft.network.chat.Component.translatable("vehicleworks.hud.master_warning").getString();
+            g.fill(w / 2 - font.width(m) / 2 - 5, 12, w / 2 + font.width(m) / 2 + 5, 26, 0xD0C00000);
+            g.drawCenteredString(font, m, w / 2, 15, 0xFFFFFFFF);
+        }
         g.pose().popPose();
     }
 

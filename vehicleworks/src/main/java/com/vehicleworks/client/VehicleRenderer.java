@@ -143,6 +143,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             ps.popPose();
         }
         // block entities (chests, signs, banners…)
+        renderWarningLamps(v, ps, buffers);
         if (Config.CLIENT.renderBlockEntities.get()) renderBlockEntities(v, ps, buffers, partial, light);
         // centre-of-mass marker
         long core = BlockPos.asLong(0, 0, 0);
@@ -224,6 +225,26 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             ps.popPose();
         }
         ps.popPose();
+    }
+
+    /** Red master-warning lamp on top of every cockpit panel / instrument block; flashes while a warning is active. */
+    private void renderWarningLamps(VehicleEntity v, PoseStack ps, MultiBufferSource buffers) {
+        boolean mine = ClientEvents.ridden() == v;
+        boolean on = mine && VoiceCallouts.blink();
+        TextureAtlasSprite sp = null;
+        VertexConsumer vc = null;
+        for (long k : v.structure.blockEntities().keySet()) {
+            ComponentType ct = VehicleBuilder.typeOf(v.structure.get(k));
+            if (ct != ComponentType.COCKPIT_PANEL && ct != ComponentType.FLIGHT_INSTRUMENTS) continue;
+            if (sp == null) {
+                sp = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(ResourceLocation.withDefaultNamespace("block/white_concrete"));
+                vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
+            }
+            ps.pushPose();
+            ps.translate(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + 1.0, BlockPos.getZ(k) + 0.5);
+            Box.cuboid(ps, vc, sp, -0.12f, 0f, -0.12f, 0.12f, 0.14f, 0.12f, on ? 0xF000F0 : 0x400040, on ? 0xFFFF2020 : 0xFF501010);
+            ps.popPose();
+        }
     }
 
     private void renderStrut(PoseStack ps, MultiBufferSource buffers, long k, double drop, int light) {

@@ -22,6 +22,37 @@ public final class VoiceCallouts {
 
     private VoiceCallouts() {}
 
+    /** Master warning: true while any warning is active (cockpit lamp, red screen edge, alarm). */
+    public static boolean warning;
+    private static long nextAlarm;
+
+    public static boolean blink() {
+        return warning && (System.currentTimeMillis() / 350) % 2 == 0;
+    }
+
+    private static boolean computeWarning(VehicleTelemetry t) {
+        boolean air = ControlProfile.byIndex(t.profile) == ControlProfile.AIRCRAFT || ControlProfile.byIndex(t.profile) == ControlProfile.HELICOPTER;
+        if (t.emergencyTest || anyFailed(t) || t.integrity < 0.5f) return true;
+        if (anyRunning(t) && t.fuelCapacity > 0 && t.fuel < 0.1f * t.fuelCapacity) return true;
+        if (!air || t.onGround) return false;
+        return t.stall || (t.agl < 60 && t.verticalSpeed < -12) || (!t.gearDown && t.agl < 25 && t.verticalSpeed < -2) || Math.abs(t.bank) > 70;
+    }
+
+    /** Alarm sound and warning state; runs every client tick while seated. */
+    private static void master(VehicleTelemetry t) {
+        warning = computeWarning(t);
+        long now = System.currentTimeMillis();
+        if (warning && now > nextAlarm) {
+            nextAlarm = now + 900;
+            Minecraft.getInstance().getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                    com.vehicleworks.registry.ModSounds.STALL_WARNING.get(), 1.25f, 0.9f));
+        }
+    }
+
+    public static void reset() {
+        warning = false;
+    }
+
     public static boolean enabled() {
         return Config.CLIENT.voiceCallouts.get();
     }
@@ -58,6 +89,7 @@ public final class VoiceCallouts {
 
     public static void tick(VehicleEntity v) {
         VehicleTelemetry t = v.telemetry;
+        master(t);
         boolean fuelLow = t.fuelCapacity > 0 && t.fuel < 0.1f * t.fuelCapacity;
         boolean dmg = t.integrity < 0.5f;
         if (v.getId() != vehicleId) {

@@ -31,6 +31,7 @@ public final class ClientEvents {
         if (v == null || mc.player == null) {
             // consume toggles so they do not fire later
             for (KeyMapping k : Keybinds.ALL) while (k.consumeClick()) { }
+            VoiceCallouts.reset();
             return;
         }
         var o = mc.options;

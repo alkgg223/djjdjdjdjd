@@ -258,6 +258,7 @@ V = {'on': ('Voice callouts on', 'التنبيهات الصوتية تعمل'), 
      'low_fuel': ('Low fuel', 'الوقود منخفض'), 'damage': ('Structural damage', 'ضرر في الهيكل'), 'stall': ('Stall, stall', 'انهيار السرعة، انهيار السرعة'),
      'pull_up': ('Pull up! Pull up!', 'ارفع المقدمة! ارفع المقدمة!'), 'too_low_gear': ('Too low, gear', 'منخفض جداً، العجلات'), 'bank_angle': ('Bank angle', 'زاوية الميلان')}
 for k, (en, ar) in V.items(): t('vehicleworks.voice.' + k, en, ar)
+t('vehicleworks.hud.master_warning', 'MASTER WARNING', 'إنذار رئيسي')
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):
