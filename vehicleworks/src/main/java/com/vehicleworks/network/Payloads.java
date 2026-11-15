@@ -243,7 +243,9 @@ public final class Payloads {
     public static final int ACT_ENGINES_START = 1, ACT_ENGINES_STOP = 2, ACT_ENGINE_TOGGLE = 3, ACT_GEAR = 4, ACT_FLAPS = 5,
             ACT_ARM = 6, ACT_ASSIST = 7, ACT_MOUSE_AIM = 8, ACT_PARKING = 9, ACT_DISASSEMBLE = 10, ACT_REPAIR = 11,
             ACT_PROFILE = 12, ACT_OPEN_ENGINEERING = 13, ACT_REQUEST_INFO = 14, ACT_THROTTLE_SET = 15, ACT_AFTERBURNER = 16,
-            ACT_FLAPS_SET = 17, ACT_REFUEL = 18, ACT_AUTOPILOT = 19;
+            ACT_FLAPS_SET = 17, ACT_REFUEL = 18, ACT_AUTOPILOT = 19, ACT_BATTERY = 20, ACT_LIGHTS = 21, ACT_EMERGENCY_TEST = 22;
+    /** Action arg marking a press on the cockpit panel (allowed from outside the pilot seat) */
+    public static final int ARG_PANEL = 7777;
     public static final int WACT_ASSEMBLE = 1, WACT_ROTATE_WING = 2;
 
     public static UUID none() {

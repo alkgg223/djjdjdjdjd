@@ -31,6 +31,8 @@ public final class VehicleControls {
     public boolean afterburner;
     public boolean parkingBrake;
     public boolean autopilot;
+    public boolean battery = true, lights;
+    public long emergencyUntil;
     public double apHeading, apAltitude = 100;
     public double lift;
     /** automated tests: behave as if a pilot were seated */
@@ -172,6 +174,8 @@ public final class VehicleControls {
         t.putBoolean("MouseAim", mouseAim);
         t.putBoolean("Parking", parkingBrake);
         t.putBoolean("AP", autopilot);
+        t.putBoolean("Battery", battery);
+        t.putBoolean("Lights", lights);
         t.putDouble("ApHdg", apHeading);
         t.putDouble("ApAlt", apAltitude);
         return t;
@@ -187,6 +191,8 @@ public final class VehicleControls {
         mouseAim = !t.contains("MouseAim") || t.getBoolean("MouseAim");
         parkingBrake = t.getBoolean("Parking");
         autopilot = t.getBoolean("AP");
+        battery = !t.contains("Battery") || t.getBoolean("Battery");
+        lights = t.getBoolean("Lights");
         apHeading = t.getDouble("ApHdg");
         apAltitude = t.contains("ApAlt") ? t.getDouble("ApAlt") : 100;
     }

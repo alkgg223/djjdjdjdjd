@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BLB",
+    "RCR",
+    "III"
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:stone_button"
+    },
+    "L": {
+      "item": "minecraft:redstone_lamp"
+    },
+    "R": {
+      "item": "minecraft:lever"
+    },
+    "C": {
+      "item": "vehicleworks:flight_instruments"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:cockpit_panel",
+    "count": 1
+  }
+}

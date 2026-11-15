@@ -75,6 +75,7 @@ public enum ComponentType {
             PropertyDef.number("power", 0.5, 2.0, 0.05, 1.0, "x")),
 
     FLIGHT_INSTRUMENTS("flight_instruments", ComponentCategory.INSTRUMENT, 15, Facing.HORIZONTAL, Shape.FULL),
+    COCKPIT_PANEL("cockpit_panel", ComponentCategory.INSTRUMENT, 30, Facing.HORIZONTAL, Shape.PANEL),
     NAVIGATION_COMPUTER("navigation_computer", ComponentCategory.INSTRUMENT, 15, Facing.HORIZONTAL, Shape.FULL,
             PropertyDef.integer("waypoint_x", -30000000, 30000000, 0),
             PropertyDef.integer("waypoint_z", -30000000, 30000000, 0),
@@ -94,7 +95,7 @@ public enum ComponentType {
 
     public enum Facing { NONE, HORIZONTAL, ALL, WING }
 
-    public enum Shape { FULL, SEAT, WING, DYNAMIC }
+    public enum Shape { FULL, SEAT, WING, DYNAMIC, PANEL }
 
     public final String id;
     public final ComponentCategory category;

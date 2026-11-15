@@ -232,6 +232,21 @@ t('vehicleworks.autopilot.engage', 'Engage', 'تشغيل')
 t('vehicleworks.autopilot.disengage', 'Disengage', 'إيقاف')
 t('vehicleworks.autopilot.now', 'Now: heading %s°, altitude %s', 'الآن: الاتجاه %s°، الارتفاع %s')
 t('vehicleworks.autopilot.hint', 'Throttle stays yours. W/S/A/D override while held.', 'الخانق بيدك. W/S/A/D تتحكم مؤقتاً أثناء الضغط.')
+# 1.0.7 cockpit panel
+t('block.vehicleworks.cockpit_panel', 'Cockpit Panel', 'لوحة تحكم المقصورة')
+t('vehicleworks.tooltip.cockpit_panel', 'Switch panel: battery, lights, engines, gear, emergency test, autopilot. Press X in the seat or right-click it.', 'لوحة أزرار: البطارية، الأضواء، المحركات، العجلات، اختبار الطوارئ، الطيار الآلي. اضغط X وأنت جالس أو انقر عليها بالزر الأيمن.')
+t('key.vehicleworks.panel', 'Cockpit panel', 'لوحة التحكم')
+P = {'title': ('Cockpit Panel', 'لوحة التحكم'), 'battery': ('BATTERY', 'البطارية'), 'lights': ('LIGHTS', 'الأضواء'), 'engines': ('ENGINES', 'المحركات'),
+     'gear': ('LANDING GEAR', 'عجلات الهبوط'), 'emergency': ('EMERGENCY TEST', 'اختبار الطوارئ'), 'autopilot': ('AUTOPILOT', 'الطيار الآلي'),
+     'on': ('ON', 'تشغيل'), 'off': ('OFF', 'إيقاف'), 'running': ('RUNNING', 'تعمل'), 'down': ('DOWN', 'نازلة'), 'up': ('UP', 'مرفوعة'),
+     'testing': ('TESTING...', 'جارٍ الاختبار...'), 'press': ('PRESS', 'اضغط'), 'open': ('OPEN', 'فتح'),
+     'none': ('This vehicle has no Cockpit Panel', 'هذه المركبة ليس فيها لوحة تحكم'), 'battery_off': ('Battery is OFF - turn it on in the cockpit panel (X)', 'البطارية مطفأة - شغّلها من لوحة التحكم (X)'),
+     'report': ('=== Emergency test ===', '=== اختبار الطوارئ ==='), 'c_battery': ('Battery', 'البطارية'), 'c_starter': ('Engine starter', 'بادئ التشغيل'),
+     'c_engines': ('Engines %s/%s ok', 'المحركات %s/%s سليمة'), 'c_fuel': ('Fuel %s%%', 'الوقود %s%%'), 'c_pumps': ('Fuel supply', 'تغذية الوقود'),
+     'c_hydraulics': ('Hydraulics %s%%', 'الهيدروليك %s%%'), 'c_gear': ('Landing gear', 'عجلات الهبوط'), 'c_structure': ('Structure %s%%', 'الهيكل %s%%'),
+     'c_lights': ('Lights', 'الأضواء'), 'pass': ('ALL SYSTEMS OK', 'كل الأنظمة سليمة'), 'fail': ('%s PROBLEM(S) FOUND', 'تم العثور على %s مشكلة'),
+     'hud_test': ('EMERGENCY TEST', 'اختبار الطوارئ'), 'hud_batt': ('BATTERY OFF', 'البطارية مطفأة')}
+for k, (en, ar) in P.items(): t('vehicleworks.panel.' + k, en, ar)
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):

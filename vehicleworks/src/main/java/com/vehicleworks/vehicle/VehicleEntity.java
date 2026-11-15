@@ -722,6 +722,9 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         t.rotorOffset = (float) layout.rotorOffset;
         t.navActive = false;
         t.autopilot = controls.autopilot;
+        t.battery = controls.battery;
+        t.lights = controls.lights;
+        t.emergencyTest = level().getGameTime() < controls.emergencyUntil;
         t.apHeading = (float) controls.apHeading;
         t.apAltitude = (float) controls.apAltitude;
         if (layout.navComputer != Long.MIN_VALUE) {

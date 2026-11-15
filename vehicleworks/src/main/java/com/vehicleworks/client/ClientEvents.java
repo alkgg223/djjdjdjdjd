@@ -73,6 +73,13 @@ public final class ClientEvents {
         while (Keybinds.PARKING.consumeClick()) action(v, Payloads.ACT_PARKING);
         while (Keybinds.MENU.consumeClick()) action(v, Payloads.ACT_OPEN_ENGINEERING);
         while (Keybinds.AUTOPILOT.consumeClick()) Minecraft.getInstance().setScreen(new AutopilotScreen(v));
+        while (Keybinds.PANEL.consumeClick()) {
+            boolean has = false;
+            for (var st : v.structure.blocks().values())
+                if (com.vehicleworks.vehicle.VehicleBuilder.typeOf(st) == com.vehicleworks.component.ComponentType.COCKPIT_PANEL) { has = true; break; }
+            if (has) Minecraft.getInstance().setScreen(new PanelScreen(v));
+            else if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.displayClientMessage(net.minecraft.network.chat.Component.translatable("vehicleworks.panel.none"), true);
+        }
     }
 
     static void action(VehicleEntity v, int a) {

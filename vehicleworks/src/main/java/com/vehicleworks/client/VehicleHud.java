@@ -146,6 +146,12 @@ public final class VehicleHud {
         }
         g.fill(cx, hy + 8, cx + 1, hy + 18, AMBER);
         if (t.autopilot) centered(g, f, String.format("AP  HDG %03.0f  ALT %.0f", t.apHeading, t.apAltitude), cx, cy - 36, GREEN);
+        if (t.emergencyTest && (System.currentTimeMillis() / 300) % 2 == 0) {
+            String m = net.minecraft.network.chat.Component.translatable("vehicleworks.panel.hud_test").getString();
+            g.fill(cx - f.width(m) / 2 - 4, cy - 62, cx + f.width(m) / 2 + 4, cy - 50, 0xC0B01010);
+            centered(g, f, m, cx, cy - 60, WHITE);
+        }
+        if (!t.battery) centered(g, f, net.minecraft.network.chat.Component.translatable("vehicleworks.panel.hud_batt").getString(), cx, cy - 48, AMBER);
         if (t.navActive) {
             float diff = Mth.wrapDegrees(t.navBearing - t.heading);
             int xx = cx + (int) Mth.clamp(diff * 1.5f, -88, 88);

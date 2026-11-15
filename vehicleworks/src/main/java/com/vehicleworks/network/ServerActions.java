@@ -49,7 +49,7 @@ import org.joml.Vector3d;
 public final class ServerActions {
     private ServerActions() {}
 
-    public static final int SCREEN_CONFIG = 0, SCREEN_ENGINEERING = 1, SCREEN_RCU = 2;
+    public static final int SCREEN_CONFIG = 0, SCREEN_ENGINEERING = 1, SCREEN_RCU = 2, SCREEN_PANEL = 3;
 
     private static void msg(ServerPlayer p, String key, Object... args) {
         p.displayClientMessage(Component.translatable(key, args), true);
@@ -239,7 +239,8 @@ public final class ServerActions {
         boolean isPilot = v.pilot() == sp || sp.getVehicle() == v;
         switch (p.action()) {
             case Payloads.ACT_ENGINES_START -> {
-                if (!isPilot) return;
+                if (!isPilot && p.arg() != Payloads.ARG_PANEL) return;
+                if (!c.battery) { msg(sp, "vehicleworks.panel.battery_off"); return; }
                 boolean any = false;
                 for (ThrusterUnit t : sim.thrusters) if (t.engine.enabled) { t.engine.requestStart(); any = true; }
                 if (any) v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.ENGINE_START.get(), SoundSource.NEUTRAL, 1.5f, 1f);
@@ -256,11 +257,14 @@ public final class ServerActions {
             case Payloads.ACT_ENGINE_TOGGLE -> {
                 if (p.arg() < 0 || p.arg() >= sim.thrusters.size()) return;
                 EngineSim e = sim.thrusters.get(p.arg()).engine;
-                if (e.state == EngineSim.State.OFF || e.state == EngineSim.State.STOPPING) e.requestStart();
+                if (e.state == EngineSim.State.OFF || e.state == EngineSim.State.STOPPING) {
+                    if (!c.battery) { msg(sp, "vehicleworks.panel.battery_off"); return; }
+                    e.requestStart();
+                }
                 else e.requestStop();
             }
             case Payloads.ACT_GEAR -> {
-                if (!isPilot) return;
+                if (!isPilot && p.arg() != Payloads.ARG_PANEL) return;
                 c.gearDown = !c.gearDown;
                 v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.GEAR_MOTOR.get(), SoundSource.NEUTRAL, 1f, 1f);
                 msg(sp, c.gearDown ? "vehicleworks.msg.gear_down" : "vehicleworks.msg.gear_up");
@@ -270,6 +274,15 @@ public final class ServerActions {
                 c.flaps = c.flaps >= 0.99 ? 0 : Math.min(1, c.flaps + 1.0 / 3.0);
                 msg(sp, "vehicleworks.msg.flaps", Math.round(c.flaps * 100));
             }
+            case Payloads.ACT_BATTERY -> {
+                c.battery = !c.battery;
+                v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.CLICK.get(), SoundSource.NEUTRAL, 1f, c.battery ? 1.3f : 0.8f);
+            }
+            case Payloads.ACT_LIGHTS -> {
+                c.lights = !c.lights;
+                v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.CLICK.get(), SoundSource.NEUTRAL, 1f, c.lights ? 1.3f : 0.8f);
+            }
+            case Payloads.ACT_EMERGENCY_TEST -> emergencyTest(sp, v);
             case Payloads.ACT_AUTOPILOT -> {
                 if (!isPilot) return;
                 int a = p.arg();
@@ -416,6 +429,43 @@ public final class ServerActions {
         sp.level().playSound(null, sp.blockPosition(), ModSounds.CLICK.get(), SoundSource.PLAYERS, 0.6f, 1.2f);
     }
 
+    /** Cockpit panel "emergency test": checks every system, reports in chat and sounds the alarm. */
+    private static void emergencyTest(ServerPlayer sp, VehicleEntity v) {
+        VehicleControls c = v.controls;
+        VehicleSimulation s = v.simulation();
+        long now = v.level().getGameTime();
+        if (now < c.emergencyUntil) return;
+        c.emergencyUntil = now + 100;
+        v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.STALL_WARNING.get(), SoundSource.NEUTRAL, 1.5f, 0.8f);
+        int problems = 0;
+        java.util.List<Component> lines = new java.util.ArrayList<>();
+        lines.add(Component.translatable("vehicleworks.panel.report").withStyle(net.minecraft.ChatFormatting.GOLD));
+        int engines = s.thrusters.size(), okEngines = 0;
+        boolean needsStarter = false;
+        for (ThrusterUnit t : s.thrusters) {
+            if (t.engine.state != EngineSim.State.FAILED && t.engine.damage < 0.5) okEngines++;
+            if (t.engine.type.needsStarter) needsStarter = true;
+        }
+        double fuelPct = s.fuelCapacity > 0 ? 100 * s.fuelAmount / s.fuelCapacity : 0;
+        double integrity = 100 * v.integrity();
+        boolean[] ok = {c.battery, !needsStarter || s.hasStarter, okEngines == engines && engines > 0, fuelPct > 10 || engines == 0,
+                s.fuelSupply > 0.5 || engines == 0, s.hydraulicAuthority > 0.5, s.wheels.isEmpty() || c.gearDown, integrity > 80, true};
+        Component[] names = {Component.translatable("vehicleworks.panel.c_battery"), Component.translatable("vehicleworks.panel.c_starter"),
+                Component.translatable("vehicleworks.panel.c_engines", okEngines, engines), Component.translatable("vehicleworks.panel.c_fuel", (int) fuelPct),
+                Component.translatable("vehicleworks.panel.c_pumps"), Component.translatable("vehicleworks.panel.c_hydraulics", (int) (100 * s.hydraulicAuthority)),
+                Component.translatable("vehicleworks.panel.c_gear"), Component.translatable("vehicleworks.panel.c_structure", (int) integrity),
+                Component.translatable("vehicleworks.panel.c_lights")};
+        for (int i = 0; i < ok.length; i++) {
+            boolean good = ok[i];
+            if (i == 8) good = c.lights;
+            if (!good && i != 8 && i != 6) problems++;
+            lines.add(Component.literal(good ? "  [OK]  " : "  [!!]  ").withStyle(good ? net.minecraft.ChatFormatting.GREEN : net.minecraft.ChatFormatting.RED).append(names[i].copy().withStyle(net.minecraft.ChatFormatting.WHITE)));
+        }
+        lines.add(problems == 0 ? Component.translatable("vehicleworks.panel.pass").withStyle(net.minecraft.ChatFormatting.GREEN)
+                : Component.translatable("vehicleworks.panel.fail", problems).withStyle(net.minecraft.ChatFormatting.RED));
+        for (Component l : lines) sp.sendSystemMessage(l);
+    }
+
     private static CompoundTag sanitizeConfig(ComponentType type, CompoundTag current, CompoundTag incoming) {
         CompoundTag out = current.copy();
         for (PropertyDef def : type.properties) {
@@ -527,6 +577,10 @@ public final class ServerActions {
             }
             case VEHICLE_CORE -> {
                 onAction(sp, new Payloads.Action(v.getId(), Payloads.ACT_OPEN_ENGINEERING, 0));
+                return true;
+            }
+            case COCKPIT_PANEL -> {
+                Payloads.toPlayer(sp, new Payloads.OpenScreen(SCREEN_PANEL, v.getId(), key, new CompoundTag()));
                 return true;
             }
             case REMOTE_CONTROL_UNIT -> {

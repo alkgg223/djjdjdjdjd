@@ -25,12 +25,13 @@ public final class Keybinds {
     public static final KeyMapping PARKING = key("parking_brake", GLFW.GLFW_KEY_P);
     public static final KeyMapping BRAKE = key("brake", GLFW.GLFW_KEY_B);
     public static final KeyMapping AUTOPILOT = key("autopilot", GLFW.GLFW_KEY_O);
+    public static final KeyMapping PANEL = key("panel", GLFW.GLFW_KEY_X);
     public static final KeyMapping FIRE_3 = key("fire_3", GLFW.GLFW_KEY_LEFT_ALT);
     public static final KeyMapping FIRE_4 = key("fire_4", GLFW.GLFW_KEY_K);
     public static final KeyMapping FIRE_5 = key("fire_5", GLFW.GLFW_KEY_U);
     public static final KeyMapping FIRE_6 = key("fire_6", GLFW.GLFW_KEY_Y);
     public static final KeyMapping[] ALL = {YAW_LEFT, YAW_RIGHT, THROTTLE_UP, THROTTLE_DOWN, PITCH_UP, PITCH_DOWN, ENGINES, GEAR, FLAPS,
-            ARM, ASSIST, MOUSE_AIM, MENU, PARKING, BRAKE, AUTOPILOT, FIRE_3, FIRE_4, FIRE_5, FIRE_6};
+            ARM, ASSIST, MOUSE_AIM, MENU, PARKING, BRAKE, AUTOPILOT, PANEL, FIRE_3, FIRE_4, FIRE_5, FIRE_6};
 
     private Keybinds() {}
 

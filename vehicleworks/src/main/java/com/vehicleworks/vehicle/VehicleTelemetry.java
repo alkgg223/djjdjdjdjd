@@ -15,7 +15,7 @@ public final class VehicleTelemetry {
     public float fuel, fuelCapacity, fuelFlow, ballast, envelopeTemp, gasLift, mass;
     public int carGear;
     public float rpmFraction, depth, integrity, stress;
-    public boolean navActive, autopilot;
+    public boolean navActive, autopilot, battery = true, lights, emergencyTest;
     public float apHeading, apAltitude;
     public float navBearing, navDistance;
     public float staticMargin, rotorOffset;
@@ -42,7 +42,7 @@ public final class VehicleTelemetry {
         b.writeFloat(airspeed); b.writeFloat(groundSpeed); b.writeFloat(altitude); b.writeFloat(agl); b.writeFloat(verticalSpeed);
         b.writeFloat(aoa); b.writeFloat(sideslip); b.writeFloat(gLoad); b.writeFloat(mach); b.writeFloat(heading); b.writeFloat(pitch); b.writeFloat(bank);
         int flags = (stall ? 1 : 0) | (onGround ? 2 : 0) | (inWater ? 4 : 0) | (instruments ? 8 : 0) | (gearDown ? 16 : 0) | (armed ? 32 : 0)
-                | (assist ? 64 : 0) | (mouseAim ? 128 : 0) | (afterburner ? 256 : 0) | (parkingBrake ? 512 : 0) | (navActive ? 1024 : 0) | (autopilot ? 2048 : 0);
+                | (assist ? 64 : 0) | (mouseAim ? 128 : 0) | (afterburner ? 256 : 0) | (parkingBrake ? 512 : 0) | (navActive ? 1024 : 0) | (autopilot ? 2048 : 0) | (battery ? 4096 : 0) | (lights ? 8192 : 0) | (emergencyTest ? 16384 : 0);
         b.writeVarInt(flags);
         b.writeFloat(throttle); b.writeFloat(collective); b.writeFloat(flaps); b.writeFloat(shipThrottle); b.writeFloat(lift);
         b.writeFloat(fuel); b.writeFloat(fuelCapacity); b.writeFloat(fuelFlow); b.writeFloat(ballast); b.writeFloat(envelopeTemp); b.writeFloat(gasLift); b.writeFloat(mass);
@@ -81,7 +81,7 @@ public final class VehicleTelemetry {
         int flags = b.readVarInt();
         stall = (flags & 1) != 0; onGround = (flags & 2) != 0; inWater = (flags & 4) != 0; instruments = (flags & 8) != 0;
         gearDown = (flags & 16) != 0; armed = (flags & 32) != 0; assist = (flags & 64) != 0; mouseAim = (flags & 128) != 0;
-        afterburner = (flags & 256) != 0; parkingBrake = (flags & 512) != 0; navActive = (flags & 1024) != 0; autopilot = (flags & 2048) != 0;
+        afterburner = (flags & 256) != 0; parkingBrake = (flags & 512) != 0; navActive = (flags & 1024) != 0; autopilot = (flags & 2048) != 0; battery = (flags & 4096) != 0; lights = (flags & 8192) != 0; emergencyTest = (flags & 16384) != 0;
         throttle = b.readFloat(); collective = b.readFloat(); flaps = b.readFloat(); shipThrottle = b.readFloat(); lift = b.readFloat();
         fuel = b.readFloat(); fuelCapacity = b.readFloat(); fuelFlow = b.readFloat(); ballast = b.readFloat(); envelopeTemp = b.readFloat(); gasLift = b.readFloat(); mass = b.readFloat();
         carGear = b.readByte();

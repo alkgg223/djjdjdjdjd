@@ -58,6 +58,7 @@ shaped('gas_cell', [" P ", "PGP", " P "], {"P": "phantom_membrane", "G": "glass_
 shaped('burner', [" F ", "ICI", "III"], {"F": "flint_and_steel", "I": "iron_ingot", "C": "campfire"})
 shaped('flight_instruments', ["GGG", "CRK", "III"], {"G": "glass_pane", "C": "compass", "R": "redstone", "K": "clock", "I": "iron_ingot"})
 shaped('navigation_computer', ["GGG", "MRC", "III"], {"G": "glass_pane", "M": "map", "R": "redstone", "C": "compass", "I": "iron_ingot"})
+shaped('cockpit_panel', ["BLB", "RCR", "III"], {"B": "stone_button", "L": "redstone_lamp", "R": "lever", "C": V('flight_instruments'), "I": "iron_ingot"})
 shaped('weapon_mount', ["IBI", "B B", "IBI"], {"I": "iron_ingot", "B": "iron_bars"}, 2)
 shaped('turret_base', ["IHI", "IRI", "III"], {"I": "iron_ingot", "H": "hopper", "R": "redstone"})
 shaped('machine_gun', ["III", " D ", "IRI"], {"I": "iron_ingot", "D": "dispenser", "R": "redstone"})

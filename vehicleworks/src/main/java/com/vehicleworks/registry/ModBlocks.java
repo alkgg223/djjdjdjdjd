@@ -34,7 +34,7 @@ public final class ModBlocks {
         if (t.shape != ComponentType.Shape.FULL) p = p.noOcclusion();
         if (t == ComponentType.BALLOON_ENVELOPE || t == ComponentType.GAS_CELL) p = p.strength(0.6f, 0.5f);
         if (t == ComponentType.BURNER) p = p.lightLevel(s -> 9);
-        if (t == ComponentType.FLIGHT_INSTRUMENTS || t == ComponentType.NAVIGATION_COMPUTER || t == ComponentType.REMOTE_CONTROL_UNIT) p = p.lightLevel(s -> 5);
+        if (t == ComponentType.FLIGHT_INSTRUMENTS || t == ComponentType.COCKPIT_PANEL || t == ComponentType.NAVIGATION_COMPUTER || t == ComponentType.REMOTE_CONTROL_UNIT) p = p.lightLevel(s -> 5);
         return switch (t.facing) {
             case ALL -> new ComponentBlock.Directional(t, p);
             case HORIZONTAL -> new ComponentBlock.Horizontal(t, p);

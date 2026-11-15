@@ -303,3 +303,57 @@ d.rectangle([32, 0, 47, 15], fill=(226, 228, 230, 255)); d.rectangle([32, 0, 35,
 os.makedirs(os.path.join(A, 'textures', 'entity'), exist_ok=True); im.save(os.path.join(A, 'textures', 'entity', 'projectile.png'))
 
 print('textures/models ok')
+
+# ------------------------------------------------------------------ cockpit panel (3 wide x 2 tall, tilted console)
+from PIL import ImageDraw as _D
+def panel_tile(seed, lamp, draw_icon):
+    im = base('#23272d', 5, 300 + seed); border(im)
+    d = _D.Draw(im)
+    d.rectangle([3, 3, S - 4, S - 4], outline=rgb('#4a525c') + (255,))
+    disc(im, S // 2, S - 8, 3, lamp)        # status lamp
+    draw_icon(d)
+    return im
+C = S // 2
+def ic_battery(d):
+    d.rectangle([C - 8, C - 9, C + 8, C + 3], outline=rgb('#e8edf2') + (255,)); d.rectangle([C - 3, C - 11, C + 3, C - 9], fill=rgb('#e8edf2') + (255,))
+    d.line([(C - 5, C - 3), (C - 1, C - 3)], fill=rgb('#ff5a4a') + (255,)); d.line([(C + 2, C - 3), (C + 6, C - 3)], fill=rgb('#7cff8a') + (255,)); d.line([(C + 4, C - 5), (C + 4, C - 1)], fill=rgb('#7cff8a') + (255,))
+def ic_light(d):
+    d.ellipse([C - 6, C - 12, C + 6, C], fill=rgb('#ffe27a') + (255,)); d.rectangle([C - 3, C, C + 3, C + 3], fill=rgb('#9aa3ad') + (255,))
+    for a in range(0, 360, 45):
+        x, y = C + 10 * math.cos(math.radians(a)), C - 6 + 10 * math.sin(math.radians(a))
+        d.point((x, y), fill=rgb('#ffe27a') + (255,))
+def ic_engine(d):
+    d.ellipse([C - 9, C - 11, C + 9, C + 7], outline=rgb('#cfd5da') + (255,))
+    for a in range(0, 360, 60):
+        d.line([(C, C - 2), (C + 8 * math.cos(math.radians(a)), C - 2 + 8 * math.sin(math.radians(a)))], fill=rgb('#cfd5da') + (255,))
+def ic_gear(d):
+    d.line([(C, C - 12), (C, C - 4)], fill=rgb('#cfd5da') + (255,), width=2)
+    d.ellipse([C - 6, C - 5, C + 6, C + 7], outline=rgb('#cfd5da') + (255,), width=2)
+def ic_emergency(d):
+    d.ellipse([C - 9, C - 12, C + 9, C + 6], fill=rgb('#d63a2e') + (255,), outline=rgb('#ffd23a') + (255,))
+    d.line([(C, C - 8), (C, C - 1)], fill=rgb('#ffffff') + (255,), width=2); d.point((C, C + 2), fill=rgb('#ffffff') + (255,))
+def ic_ap(d):
+    d.polygon([(C - 8, C + 2), (C, C - 12), (C + 8, C + 2), (C, C - 3)], outline=rgb('#38d3ff') + (255,))
+    d.line([(C - 10, C + 4), (C + 10, C + 4)], fill=rgb('#38d3ff') + (255,))
+PANEL = [('panel_battery', '#7cff8a', ic_battery), ('panel_lights', '#ffe27a', ic_light), ('panel_engines', '#7cff8a', ic_engine),
+         ('panel_gear', '#7cff8a', ic_gear), ('panel_emergency', '#ff4040', ic_emergency), ('panel_autopilot', '#38d3ff', ic_ap)]
+for i, (n, lamp, fn) in enumerate(PANEL): tex(n, panel_tile(i, lamp, fn))
+def pface(t): return face(t, (0, 0, 16, 16))
+side = {"south": pface('s'), "east": pface('s'), "west": pface('s'), "up": pface('s'), "down": pface('s')}
+rot = {"origin": [8, 0, 0], "axis": "x", "angle": 45}
+els = []
+# model front = north; seen from the front, x 16..32 is the left column
+cols = [(16, 32), (0, 16), (-16, 0)]
+for row, names in ((1, ['b', 'l', 'e']), (0, ['g', 'x', 'a'])):
+    for (x0, x1), n in zip(cols, names):
+        y0 = row * 16
+        els.append(el([x0, y0, 0], [x1, y0 + 16, 1.5], dict(side, north=pface(n)), rot))
+# support leg
+els.append(el([6, 0, 0], [10, 8, 8], six('s')))
+model('cockpit_panel', {"parent": "minecraft:block/block",
+                        "textures": {"particle": b('device_side'), "s": b('device_side'), "b": b('panel_battery'), "l": b('panel_lights'), "e": b('panel_engines'),
+                                     "g": b('panel_gear'), "x": b('panel_emergency'), "a": b('panel_autopilot')},
+                        "display": {"gui": {"rotation": [30, 160, 0], "translation": [0, 0, 0], "scale": [0.4, 0.4, 0.4]}},
+                        "elements": els})
+bs_facing('cockpit_panel', 'cockpit_panel', FACE4); item_block('cockpit_panel')
+print('panel ok')
