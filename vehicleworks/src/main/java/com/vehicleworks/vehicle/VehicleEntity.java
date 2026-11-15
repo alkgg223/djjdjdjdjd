@@ -366,6 +366,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         angularVelocity.set(sim.body.angularVelocity);
         comLocal.set(sim.com);
         setPos(p.x, p.y, p.z);
+        applyCrash();
         applyPendingDamage();
         checkStructuralLimits(sim);
     }
@@ -373,6 +374,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
     /** Accumulates collision impulses (called from the physics listener per substep). */
     public void onImpact(long voxel, double impulse, double approach, @Nullable VehicleEntity other) {
         if (!Config.SERVER.crashDamage.get()) return;
+        if (approach > crashApproach) { crashApproach = approach; crashVoxel = voxel; }
         double thr = Config.SERVER.crashSpeedThreshold.get();
         if (approach < thr) return;
         double dmg = impulse * (approach - thr) / 400.0 * Config.SERVER.crashDamageScale.get();
@@ -380,6 +382,86 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         long key = BlockPos.asLong(VoxelSet.unpackX(voxel), VoxelSet.unpackY(voxel), VoxelSet.unpackZ(voxel));
         if (!structure.contains(key)) return;
         pendingDamage.addTo(key, (float) dmg);
+    }
+
+    private double crashApproach;
+    private long crashVoxel;
+    private int crashCooldown;
+
+    /**
+     * Big crashes: the faster the hit, the more blocks around the impact point break
+     * (about 23 blocks at 100 km/h, scaling up with speed).
+     */
+    private void applyCrash() {
+        if (crashCooldown > 0) crashCooldown--;
+        double v = crashApproach;
+        long vox = crashVoxel;
+        crashApproach = 0;
+        double kmh = v * 3.6;
+        if (crashCooldown > 0 || kmh < 45 || !(level() instanceof ServerLevel sl)) return;
+        int n = (int) Math.round((kmh - 30) / 3.0 * Config.SERVER.crashDamageScale.get());
+        int size = structure.blocks().size();
+        n = Math.min(n, Math.max(1, (int) (size * 0.7)));
+        if (n <= 0) return;
+        crashCooldown = 10;
+        int cx = VoxelSet.unpackX(vox), cy = VoxelSet.unpackY(vox), cz = VoxelSet.unpackZ(vox);
+        long core = BlockPos.asLong(0, 0, 0);
+        List<long[]> cand = new ArrayList<>();
+        for (long k : structure.blocks().keySet()) {
+            if (k == core && n < size * 0.6) continue;
+            long dx = BlockPos.getX(k) - cx, dy = BlockPos.getY(k) - cy, dz = BlockPos.getZ(k) - cz;
+            cand.add(new long[]{k, dx * dx + dy * dy + dz * dz});
+        }
+        cand.sort(java.util.Comparator.comparingLong(a -> a[1]));
+        int broken = 0;
+        for (long[] c : cand) {
+            if (broken >= n) {
+                // the next ring is only damaged
+                if (broken >= n * 2) break;
+                damageBlock(c[0], BlockPhysics.hitPoints(structure.get(c[0])) * 0.6f);
+                broken++;
+                continue;
+            }
+            int ti = layout != null ? layout.thrusterIndex.get(c[0]) : -1;
+            if (ti >= 0) layout.sim.thrusters.get(ti).engine.fail("crash");
+            destroyBlock(c[0], 0.15);
+            broken++;
+        }
+        Vector3d w = localToWorld(cx + 0.5, cy + 0.5, cz + 0.5, new Vector3d());
+        float vol = (float) Math.min(4, 1 + n / 10.0);
+        sl.playSound(null, w.x, w.y, w.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(), net.minecraft.sounds.SoundSource.NEUTRAL, vol, 0.7f);
+        sl.sendParticles(n > 15 ? net.minecraft.core.particles.ParticleTypes.EXPLOSION_EMITTER : net.minecraft.core.particles.ParticleTypes.EXPLOSION, w.x, w.y, w.z, 1, 0, 0, 0, 0);
+        sl.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE, w.x, w.y, w.z, 20 + n, 1.5, 1.0, 1.5, 0.05);
+        splitDisconnected();
+    }
+
+    /** Make one engine (or all, index &lt; 0) explode: fire, failure and damage to the blocks around it. */
+    public int explodeEngine(int index) {
+        if (layout == null || !(level() instanceof ServerLevel sl)) return 0;
+        int count = 0;
+        for (var e : layout.thrusterIndex.long2IntEntrySet()) {
+            int ti = e.getIntValue();
+            if (index >= 0 && ti != index) continue;
+            long key = e.getLongKey();
+            var eng = layout.sim.thrusters.get(ti).engine;
+            eng.fail("explosion");
+            eng.damage = 1;
+            int bx = BlockPos.getX(key), by = BlockPos.getY(key), bz = BlockPos.getZ(key);
+            for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++) {
+                long k = BlockPos.asLong(bx + dx, by + dy, bz + dz);
+                if (k == key || !structure.contains(k)) continue;
+                damageBlock(k, BlockPhysics.hitPoints(structure.get(k)) * (random.nextFloat() < 0.4f ? 1.1f : 0.5f));
+            }
+            if (structure.contains(key)) structure.setDamage(key, BlockPhysics.hitPoints(structure.get(key)) * 0.95f);
+            damageChanged = true;
+            Vector3d w = localToWorld(bx + 0.5, by + 0.5, bz + 0.5, new Vector3d());
+            sl.playSound(null, w.x, w.y, w.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(), net.minecraft.sounds.SoundSource.NEUTRAL, 3f, 0.8f);
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.EXPLOSION_EMITTER, w.x, w.y, w.z, 1, 0, 0, 0, 0);
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME, w.x, w.y, w.z, 40, 0.6, 0.6, 0.6, 0.08);
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE, w.x, w.y, w.z, 40, 0.8, 0.8, 0.8, 0.05);
+            count++;
+        }
+        return count;
     }
 
     public void damageBlock(long key, float amount) {

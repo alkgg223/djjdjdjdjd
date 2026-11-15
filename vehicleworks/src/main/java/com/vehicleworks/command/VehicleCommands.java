@@ -38,7 +38,30 @@ public final class VehicleCommands {
                 .then(Commands.literal("info").executes(VehicleCommands::info))
                 .then(Commands.literal("disassemble").executes(VehicleCommands::disassemble))
                 .then(Commands.literal("removeall").executes(VehicleCommands::removeAll))
-                .then(Commands.literal("stats").executes(VehicleCommands::stats)));
+                .then(Commands.literal("stats").executes(VehicleCommands::stats))
+                .then(Commands.literal("explode_engine").executes(c -> explodeEngine(c, -1))
+                        .then(Commands.argument("engine", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 64))
+                                .executes(c -> explodeEngine(c, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "engine") - 1)))));
+    }
+
+    /** /vehicleworks explode_engine [n]: blow up engine n (1-based) or all engines of the vehicle you ride / are nearest to. */
+    private static int explodeEngine(CommandContext<CommandSourceStack> c, int index) {
+        CommandSourceStack src = c.getSource();
+        VehicleEntity v = null;
+        if (src.getEntity() != null && src.getEntity().getVehicle() instanceof VehicleEntity ve) v = ve;
+        if (v == null) {
+            double best = 64 * 64;
+            for (Entity e : src.getLevel().getEntities((Entity) null, new net.minecraft.world.phys.AABB(src.getPosition(), src.getPosition()).inflate(64), x -> x instanceof VehicleEntity)) {
+                double d = e.distanceToSqr(src.getPosition());
+                if (d < best) { best = d; v = (VehicleEntity) e; }
+            }
+        }
+        if (v == null) { src.sendFailure(Component.translatable("vehicleworks.cmd.no_vehicle")); return 0; }
+        int n = v.explodeEngine(index);
+        if (n == 0) { src.sendFailure(Component.translatable("vehicleworks.cmd.no_engine")); return 0; }
+        int fn = n;
+        src.sendSuccess(() -> Component.translatable("vehicleworks.cmd.engine_exploded", fn), true);
+        return n;
     }
 
     private static DemoVehicles.Demo demo(String s) {
