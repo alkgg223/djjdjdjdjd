@@ -54,7 +54,7 @@ public final class VehicleGameTests {
         BlockPos o = h.absolutePos(new BlockPos(12, 0, startZ));
         var level = h.getLevel();
         var stone = Blocks.SMOOTH_STONE.defaultBlockState();
-        for (int z = 0; z < length; z++)
+        for (int z = -12; z < length; z++)
             for (int x = -width / 2; x <= width / 2; x++) {
                 level.setBlock(o.offset(x, 0, -z), stone, 2);
                 // clear leftovers of neighbouring test structures above the runway
@@ -144,8 +144,8 @@ public final class VehicleGameTests {
 
     @GameTest(template = "platform", timeoutTicks = 400, batch = "drive_car")
     public static void carDrivesForward(GameTestHelper h) {
-        runway(h, 20, 9, 200);
-        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.CAR, new BlockPos(12, 2, 20));
+        runway(h, -100, 9, 200);
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.CAR, new BlockPos(12, 2, -104));
         v.controls.testPilot = true;
         h.runAfterDelay(20, () -> {
             for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
@@ -162,8 +162,8 @@ public final class VehicleGameTests {
 
     @GameTest(template = "platform", timeoutTicks = 900, batch = "flight_trainer")
     public static void trainerTakesOff(GameTestHelper h) {
-        runway(h, 12, 17, 700, 1600);
-        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.TRAINER, new BlockPos(12, 3, 12));
+        runway(h, -100, 17, 700, 1600);
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.TRAINER, new BlockPos(12, 3, -104));
         v.controls.testPilot = true;
         v.controls.mouseAim = true;          // fly with the mouse-aim instructor
         v.controls.lookYaw = 180;            // look north along the runway
@@ -195,8 +195,8 @@ public final class VehicleGameTests {
 
     @GameTest(template = "platform", timeoutTicks = 900, batch = "flight_fighter")
     public static void fighterTakesOffWithKeyboard(GameTestHelper h) {
-        runway(h, 12, 17, 900, 1800);
-        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.FIGHTER, new BlockPos(12, 3, 12));
+        runway(h, -100, 17, 900, 1800);
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.FIGHTER, new BlockPos(12, 3, -104));
         v.controls.testPilot = true;
         double[] ground = new double[1];
         h.runAfterDelay(20, () -> {
@@ -223,8 +223,8 @@ public final class VehicleGameTests {
 
     @GameTest(template = "platform", timeoutTicks = 1400, batch = "flight_airliner")
     public static void airlinerTakesOffWithKeyboard(GameTestHelper h) {
-        runway(h, 12, 33, 1400, 2600);
-        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.AIRLINER, new BlockPos(12, 3, -30)); // outside the test enclosure
+        runway(h, -100, 33, 1400, 2600);
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.AIRLINER, new BlockPos(12, 5, -116)); // outside the test enclosure
         v.controls.testPilot = true;
         double[] ground = new double[1];
         h.runAfterDelay(20, () -> {
@@ -252,11 +252,11 @@ public final class VehicleGameTests {
 
     @GameTest(template = "platform", timeoutTicks = 1500, batch = "flight_b787")
     public static void boeing787TakesOffEasyMode(GameTestHelper h) {
-        runway(h, 12, 33, 1400, 2600);
-        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.BOEING787, new BlockPos(12, 3, -30));
+        runway(h, -100, 33, 1400, 2600);
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.BOEING787, new BlockPos(12, 5, -118));
         v.controls.testPilot = true;
         double[] ground = new double[1];
-        h.runAfterDelay(20, () -> {
+        h.runAfterDelay(60, () -> {
             ground[0] = v.getY();
             for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
             VehicleWorks.LOGGER.info("b787 layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
@@ -282,6 +282,60 @@ public final class VehicleGameTests {
             h.assertTrue(climb > 20, "b787 climbed " + climb + " m (airspeed " + v.simulation().airspeed + ")");
             h.assertTrue(hdg > 5 && hdg < 120, "autopilot turning towards 090: heading " + hdg); // leaves the loaded test area while turning
             h.assertTrue(Math.abs(climb - 150) < 50, "autopilot altitude " + climb);
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "platform", timeoutTicks = 1000, batch = "flight_pelican")
+    public static void pelicanTakesOffEasyMode(GameTestHelper h) {
+        runway(h, -100, 33, 1000, 1800);
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.PELICAN, new BlockPos(12, 3, -104));
+        v.controls.testPilot = true;
+        double[] ground = new double[1];
+        h.runAfterDelay(30, () -> {
+            ground[0] = v.getY();
+            for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
+            VehicleWorks.LOGGER.info("pelican layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
+        });
+        h.onEachTick(() -> {
+            if (v.simulation() == null || ground[0] == 0) return;
+            if (v.tickCount % 40 == 0) debug("pelican", v);
+            double alt = v.getY() - ground[0];
+            v.controls.keys = (v.controls.throttle < 1 ? VehicleControls.JUMP : 0);
+            if (alt > 10) v.controls.gearDown = false;
+        });
+        h.runAfterDelay(900, () -> {
+            double climb = v.getY() - ground[0];
+            var up = v.localDirToWorld(0, 1, 0, new org.joml.Vector3d());
+            h.assertTrue(climb > 15, "pelican climbed " + climb + " m (airspeed " + v.simulation().airspeed + ")");
+            h.assertTrue(up.y > 0.8, "pelican wings level: " + up.y);
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "platform", timeoutTicks = 1000, batch = "flight_stingray")
+    public static void stingrayTakesOffEasyMode(GameTestHelper h) {
+        runway(h, -100, 33, 1000, 1800);
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.STINGRAY, new BlockPos(12, 3, -104));
+        v.controls.testPilot = true;
+        double[] ground = new double[1];
+        h.runAfterDelay(30, () -> {
+            ground[0] = v.getY();
+            for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
+            VehicleWorks.LOGGER.info("stingray layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
+        });
+        h.onEachTick(() -> {
+            if (v.simulation() == null || ground[0] == 0) return;
+            if (v.tickCount % 40 == 0) debug("stingray", v);
+            double alt = v.getY() - ground[0];
+            v.controls.keys = (v.controls.throttle < 1 ? VehicleControls.JUMP : 0);
+            if (alt > 10) v.controls.gearDown = false;
+        });
+        h.runAfterDelay(900, () -> {
+            double climb = v.getY() - ground[0];
+            var up = v.localDirToWorld(0, 1, 0, new org.joml.Vector3d());
+            h.assertTrue(climb > 15, "stingray climbed " + climb + " m (airspeed " + v.simulation().airspeed + ")");
+            h.assertTrue(up.y > 0.8, "stingray wings level: " + up.y);
             h.succeed();
         });
     }

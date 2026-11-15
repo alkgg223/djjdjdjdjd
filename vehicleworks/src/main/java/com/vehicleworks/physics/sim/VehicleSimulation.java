@@ -36,6 +36,7 @@ public final class VehicleSimulation {
     public double rotateSpeed = 40;
     /** aircraft handling feel: 0 very heavy, 1 heavy, 2 normal, 3 light */
     public int handling = 2;
+    private double pitchTrimI;
     private static final double[] H_RATE = {3, 5, 9, 18}, H_UP = {10, 14, 22, 45}, H_DOWN = {-8, -12, -18, -40},
             H_BANK = {30, 45, 60, 80}, H_ROLL = {1.4, 2.0, 2.6, 3.4}, H_VS = {5, 8, 12, 25};
 
@@ -214,7 +215,11 @@ public final class VehicleSimulation {
             // smoother at high speed: control power grows with dynamic pressure
             double gs = clamp(Math.pow(55.0 / Math.max(55.0, airspeed), 1.5), 0.3, 1.0);
             double bankComp = Math.toRadians(5) * (1 / Math.max(0.45, Math.cos(bank)) - 1);
-            pitch = clamp(gs * (2.5 * (holdPitch + apPitchExtra + bankComp - pitchAngle) - 1.2 * q), -1, 1);
+            double pErr = holdPitch + apPitchExtra + bankComp - pitchAngle;
+            if (onGround) pitchTrimI = 0;
+            else pitchTrimI = clamp(pitchTrimI + 0.6 * pErr * dt, -0.6, 0.6); // automatic trim removes steady attitude error
+            pitch = onGround ? clamp(4.0 * (holdPitch - pitchAngle) - 1.5 * q, -1, 1)
+                    : clamp(gs * (2.5 * pErr - 1.2 * q) + pitchTrimI, -1, 1);
             roll = onGround ? 0 : clamp(gs * (H_ROLL[hi] * (targetBank - bank) - 0.7 * p), -1, 1);
             if (!onGround) pitch = clamp(pitch + 0.35 * (1 / Math.max(0.45, Math.cos(bank)) - 1), -1, 1);
             yaw = clamp(input.yaw + (onGround ? input.roll : 0.5 * roll) - 0.3 * r, -1, 1);

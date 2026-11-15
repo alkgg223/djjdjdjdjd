@@ -55,9 +55,10 @@ public final class VehicleCommands {
         ServerLevel level = src.getLevel();
         Vec3 p = src.getPosition();
         Direction facing = src.getEntity() != null ? src.getEntity().getDirection() : Direction.NORTH;
-        int ahead = demo == DemoVehicles.Demo.AIRLINER || demo == DemoVehicles.Demo.BOEING787 ? 30 : 12;
+        boolean big = demo == DemoVehicles.Demo.AIRLINER || demo == DemoVehicles.Demo.BOEING787;
+        int ahead = big ? 30 : (demo == DemoVehicles.Demo.PELICAN || demo == DemoVehicles.Demo.STINGRAY ? 16 : 12);
         BlockPos origin = BlockPos.containing(p.add(facing.getStepX() * ahead, 0, facing.getStepZ() * ahead));
-        origin = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, origin).above(3);
+        origin = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, origin).above(big ? 4 : 3);
         if (demo == DemoVehicles.Demo.BOAT || demo == DemoVehicles.Demo.SUBMARINE) origin = origin.below(2);
         VehicleStructure s = DemoVehicles.build(demo);
         Rotation rot = switch (facing) {

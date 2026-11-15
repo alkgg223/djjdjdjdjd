@@ -22,7 +22,7 @@ import java.util.function.Consumer;
  * coordinates: the core is at 0,0,0 facing north (forward = −Z, right = +X, up = +Y).
  */
 public final class DemoVehicles {
-    public enum Demo { TRAINER, FIGHTER, AIRLINER, BOEING787, CAR, BOAT, HELICOPTER, BALLOON, AIRSHIP, SUBMARINE;
+    public enum Demo { TRAINER, FIGHTER, AIRLINER, BOEING787, PELICAN, STINGRAY, CAR, BOAT, HELICOPTER, BALLOON, AIRSHIP, SUBMARINE;
         public String id() { return name().toLowerCase(Locale.ROOT); }
     }
 
@@ -110,6 +110,8 @@ public final class DemoVehicles {
             case FIGHTER -> fighter(b);
             case AIRLINER -> airliner(b);
             case BOEING787 -> boeing787(b);
+            case PELICAN -> pelican(b);
+            case STINGRAY -> stingray(b);
             case CAR -> car(b);
             case BOAT -> boat(b);
             case HELICOPTER -> helicopter(b);
@@ -224,68 +226,68 @@ public final class DemoVehicles {
         b.block(2, 0, 2, hull);
     }
 
-    /** Twin-engine narrow-body airliner (A320-style layout): walk-in cabin, swept wing, two turbofans. */
+    /** Narrow-body twin (A320-style), built like the 787: glazed cockpit, two-row cabin, big gear. */
     private static void airliner(B b) {
-        var floor = Blocks.WHITE_CONCRETE;
+        var floor = Blocks.BIRCH_PLANKS;
         var skin = Blocks.WHITE_WOOL;
         var stripe = Blocks.LIGHT_BLUE_WOOL;
-        // fuselage z = -12 (nose) … 14 (tail): concrete floor, wool skin, walk-in cabin 1 x 2 high
-        for (int z = -12; z <= 14; z++) {
-            for (int x = -1; x <= 1; x++) if (!(x == 0 && z == 0)) b.block(x, 0, z, floor);
-            b.block(-1, 1, z, z % 3 == 0 ? Blocks.GLASS : stripe);
-            b.block(1, 1, z, z % 3 == 0 ? Blocks.GLASS : stripe);
-            b.block(-1, 2, z, skin);
-            b.block(1, 2, z, skin);
-            for (int x = -1; x <= 1; x++) b.block(x, 3, z, skin);
+        for (int z = -13; z <= 15; z++) {
+            for (int x = -2; x <= 2; x++) if (!(x == 0 && z == 0)) b.block(x, 0, z, floor);
+            boolean cockpit = z <= -10;
+            for (int side = -1; side <= 1; side += 2) {
+                b.block(side * 2, 1, z, stripe);
+                b.block(side * 2, 2, z, cockpit || z % 2 == 0 ? Blocks.GLASS : skin);
+                b.block(side * 2, 3, z, cockpit ? Blocks.GLASS : skin);
+            }
+            for (int x = -2; x <= 2; x++) b.block(x, 4, z, cockpit && Math.abs(x) <= 1 ? Blocks.GLASS : skin);
         }
         b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH, c -> c.putInt("handling", 1));
-        for (int y = 1; y <= 2; y++) b.block(0, y, -12, Blocks.WHITE_STAINED_GLASS);
-        b.block(0, 1, 14, skin);
-        b.block(0, 2, 14, skin);
-        b.block(0, 0, -13, Blocks.LIGHT_GRAY_CONCRETE);
-        b.block(0, 1, -13, Blocks.LIGHT_GRAY_CONCRETE);
-        // cockpit
-        b.c(0, 1, -10, ComponentType.PILOT_SEAT, Direction.NORTH);
-        b.c(0, 1, -11, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
-        b.c(0, 2, -11, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
-        for (int z = -7; z <= 9; z += 2) b.c(0, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH);
-        // systems in the floor
-        for (int z = -2; z <= 3; z++) if (z != 0) b.fuel(0, 0, z);
-        b.c(0, -1, -1, ComponentType.FUEL_PUMP, Direction.NORTH);
-        b.c(0, -1, 1, ComponentType.FUEL_PUMP, Direction.NORTH);
-        b.c(0, -1, 3, ComponentType.HYDRAULIC_PUMP, Direction.NORTH);
-        b.c(0, -1, 5, ComponentType.ENGINE_STARTER, Direction.NORTH);
-        // swept wing, tapered: 4 chord rows at the root, 2 at the tip
+        for (int x = -1; x <= 1; x++) {
+            b.block(x, 1, -13, Blocks.GRAY_CONCRETE);
+            b.block(x, 2, -13, Blocks.GLASS);
+            b.block(x, 3, -13, Blocks.GLASS);
+            b.block(x, 0, -14, Blocks.LIGHT_GRAY_CONCRETE);
+        }
+        b.block(-2, 1, -13, skin); b.block(2, 1, -13, skin);
+        b.c(-1, 1, -11, ComponentType.PILOT_SEAT, Direction.NORTH);
+        b.c(1, 1, -11, ComponentType.PASSENGER_SEAT, Direction.NORTH);
+        b.c(-1, 1, -12, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
+        b.c(1, 1, -12, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
+        for (int z = -7; z <= 13; z += 2) {
+            b.c(-1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH);
+            b.c(1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH);
+        }
+        for (int x = -1; x <= 1; x++) for (int y = 1; y <= 3; y++) b.block(x, y, 15, skin);
+        for (int z = -3; z <= 4; z++) if (z != 0) { b.fuel(-1, -1, z); b.fuel(1, -1, z); }
+        b.c(0, -1, -2, ComponentType.FUEL_PUMP, Direction.NORTH);
+        b.c(0, -1, 2, ComponentType.FUEL_PUMP, Direction.NORTH);
+        b.c(0, -1, 4, ComponentType.HYDRAULIC_PUMP, Direction.NORTH);
+        b.c(0, -1, 6, ComponentType.ENGINE_STARTER, Direction.NORTH);
         for (int side = -1; side <= 1; side += 2) {
-            for (int i = 2; i <= 14; i++) {
-                int rows = i <= 6 ? 4 : (i <= 10 ? 3 : 2);
-                int zLead = -1 + (i - 2) / 4; // leading edge moves aft = sweep
+            for (int i = 3; i <= 15; i++) {
+                int rows = i <= 6 ? 4 : (i <= 11 ? 3 : 2);
+                int zLead = -1 + (i - 3) / 4;
                 for (int r = 0; r < rows; r++) {
-                    int z = zLead + r;
                     boolean trailing = r == rows - 1;
-                    ComponentType t = trailing ? (i <= 7 ? ComponentType.FLAP : (i >= 11 ? ComponentType.AILERON : ComponentType.SWEPT_WING)) : ComponentType.SWEPT_WING;
-                    b.wing(side * i, 0, z, t, WingOrientation.HORIZONTAL, c -> { c.putDouble("sweep", 25); c.putDouble("chord", 1.2); c.putDouble("incidence", 3); c.putInt("airfoil", 4); });
+                    ComponentType t = trailing ? (i <= 8 ? ComponentType.FLAP : (i >= 12 ? ComponentType.AILERON : ComponentType.SWEPT_WING)) : ComponentType.SWEPT_WING;
+                    b.wing(side * i, 0, zLead + r, t, WingOrientation.HORIZONTAL, c -> { c.putDouble("sweep", 25); c.putDouble("chord", 1.2); c.putDouble("incidence", 3); c.putInt("airfoil", 4); });
                 }
             }
-            // turbofans under the wing
-            b.c(side * 5, -1, 0, ComponentType.TURBOFAN_ENGINE, Direction.NORTH, c -> c.putDouble("power_scale", 1.5));
-            // horizontal tail
-            for (int i = 2; i <= 6; i++) {
-                b.wing(side * i, 1, 12, ComponentType.WING, WingOrientation.HORIZONTAL, c -> { c.putInt("airfoil", 1); c.putDouble("incidence", -1.5); c.putDouble("chord", 1.3); });
-                b.wing(side * i, 1, 13, ComponentType.ELEVATOR, WingOrientation.HORIZONTAL, c -> { c.putDouble("chord", 1.2); c.putDouble("control_max", 25); });
+            b.c(side * 6, -1, -2, ComponentType.TURBOFAN_ENGINE, Direction.NORTH, c -> c.putDouble("power_scale", 1.5));
+            b.c(side * 6, -1, -1, ComponentType.TURBOFAN_ENGINE, Direction.NORTH, c -> c.putDouble("power_scale", 1.5));
+            for (int i = 3; i <= 7; i++) {
+                b.wing(side * i, 2, 12, ComponentType.WING, WingOrientation.HORIZONTAL, c -> { c.putInt("airfoil", 1); c.putDouble("incidence", -1.5); c.putDouble("chord", 1.3); });
+                b.wing(side * i, 2, 13, ComponentType.ELEVATOR, WingOrientation.HORIZONTAL, c -> { c.putDouble("chord", 1.2); c.putDouble("control_max", 25); });
             }
         }
-        // vertical fin
-        for (int y = 4; y <= 8; y++) {
+        for (int y = 5; y <= 9; y++) {
             b.wing(0, y, 12, ComponentType.WING, WingOrientation.VERTICAL_X, c -> { c.putInt("airfoil", 1); c.putDouble("incidence", 0); c.putDouble("chord", 1.3); });
             b.wing(0, y, 13, ComponentType.RUDDER, WingOrientation.VERTICAL_X, c -> c.putDouble("chord", 1.2));
         }
-        // retractable gear: nose and two mains just behind the centre of mass
-        b.c(0, -1, -9, ComponentType.LANDING_GEAR, Direction.NORTH);
-        b.c(-2, -1, 3, ComponentType.LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 0.55));
-        b.c(2, -1, 3, ComponentType.LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 0.55));
-        b.block(-2, 0, 3, floor); // connects the main gear to the fuselage
-        b.block(2, 0, 3, floor);
+        // big gear (heavy landing gear, all three legs the same size)
+        b.c(0, -1, -10, ComponentType.HEAVY_LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 1.6));
+        b.c(-3, -1, 2, ComponentType.HEAVY_LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 1.6));
+        b.c(3, -1, 2, ComponentType.HEAVY_LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 1.6));
     }
 
     /** Wide-body twin (787-style): two-aisle cabin with 28 seats, big glazed cockpit, long swept wing. */
@@ -358,9 +360,121 @@ public final class DemoVehicles {
             b.wing(0, y, 18, ComponentType.RUDDER, WingOrientation.VERTICAL_X, c -> c.putDouble("chord", 1.2));
         }
         // gear: nose + two mains under the wing roots, just aft of the centre of mass
-        b.c(0, -1, -13, ComponentType.LANDING_GEAR, Direction.NORTH);
-        b.c(-3, -1, 2, ComponentType.LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 0.6));
-        b.c(3, -1, 2, ComponentType.LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 0.6));
+        b.c(0, -1, -13, ComponentType.HEAVY_LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 2.0));
+        b.c(-3, -1, 2, ComponentType.HEAVY_LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 2.0));
+        b.c(3, -1, 2, ComponentType.HEAVY_LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 2.0));
+    }
+
+    /** Original design "Pelican": twin-boom turboprop utility plane with a glazed pod and a high wing. */
+    private static void pelican(B b) {
+        var floor = Blocks.BIRCH_PLANKS;
+        var skin = Blocks.ORANGE_WOOL;
+        var trim = Blocks.WHITE_WOOL;
+        // pod x -2..2, z -5..4: floor, walls, roof
+        for (int z = -5; z <= 4; z++) {
+            for (int x = -2; x <= 2; x++) if (!(x == 0 && z == 0)) b.block(x, 0, z, floor);
+            boolean front = z <= -3;
+            for (int side = -1; side <= 1; side += 2) {
+                b.block(side * 2, 1, z, trim);
+                b.block(side * 2, 2, z, front || z % 2 == 0 ? Blocks.GLASS : skin);
+            }
+            for (int x = -2; x <= 2; x++) b.block(x, 3, z, front && Math.abs(x) <= 1 ? Blocks.GLASS : skin);
+        }
+        for (int x = -1; x <= 1; x++) { b.block(x, 1, -5, Blocks.GRAY_CONCRETE); b.block(x, 2, -5, Blocks.GLASS); }
+        for (int x = -1; x <= 1; x++) for (int y = 1; y <= 2; y++) b.block(x, y, 4, trim); // rear door
+        b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH);
+        b.c(-1, 1, -3, ComponentType.PILOT_SEAT, Direction.NORTH);
+        b.c(1, 1, -3, ComponentType.PASSENGER_SEAT, Direction.NORTH);
+        b.c(-1, 1, -4, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
+        b.c(1, 1, -4, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
+        for (int z = -1; z <= 3; z += 2) { b.c(-1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH); b.c(1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH); }
+        for (int z = -2; z <= 3; z++) if (z != 0) b.fuel(0, -1, z);
+        b.c(-1, -1, 0, ComponentType.FUEL_PUMP, Direction.NORTH);
+        b.c(1, -1, 0, ComponentType.ENGINE_STARTER, Direction.NORTH);
+        b.c(0, -1, 0, ComponentType.HYDRAULIC_PUMP, Direction.NORTH);
+        // high straight wing on the roof
+        for (int side = -1; side <= 1; side += 2) {
+            for (int i = 0; i <= 12; i++) {
+                if (i == 0 && side > 0) continue;
+                for (int z = -1; z <= 1; z++) {
+                    ComponentType t = z < 1 ? ComponentType.STRAIGHT_WING : (i <= 6 ? ComponentType.FLAP : (i >= 9 ? ComponentType.AILERON : ComponentType.STRAIGHT_WING));
+                    if (i <= 2) t = z < 1 ? ComponentType.STRAIGHT_WING : ComponentType.FLAP;
+                    b.wing(side * i, 4, z, t, WingOrientation.HORIZONTAL, c -> { c.putDouble("chord", 1.2); c.putDouble("incidence", 3); });
+                }
+            }
+            // tail booms under the wing with a turboprop at the front
+            for (int z = -3; z <= 10; z++) b.block(side * 4, 3, z, trim);
+            b.c(side * 4, 3, -4, ComponentType.TURBOPROP_ENGINE, Direction.NORTH, c -> c.putDouble("power_scale", 1.5));
+            final int spin = side < 0 ? 0 : 1;
+            b.c(side * 4, 3, -5, ComponentType.PROPELLER, Direction.NORTH, c -> { c.putDouble("diameter", 2.8); c.putInt("spin", spin); });
+            // twin fins at the end of the booms
+            for (int y = 4; y <= 6; y++) {
+                b.wing(side * 4, y, 9, ComponentType.WING, WingOrientation.VERTICAL_X, c -> { c.putInt("airfoil", 1); c.putDouble("incidence", 0); c.putDouble("chord", 1.2); });
+                b.wing(side * 4, y, 10, ComponentType.RUDDER, WingOrientation.VERTICAL_X, c -> c.putDouble("chord", 1.1));
+            }
+        }
+        // horizontal tail between the booms
+        for (int x = -3; x <= 3; x++) {
+            b.wing(x, 3, 9, ComponentType.WING, WingOrientation.HORIZONTAL, c -> { c.putInt("airfoil", 1); c.putDouble("incidence", -1.5); c.putDouble("chord", 1.3); });
+            b.wing(x, 3, 10, ComponentType.ELEVATOR, WingOrientation.HORIZONTAL, c -> { c.putDouble("chord", 1.2); c.putDouble("control_max", 25); });
+        }
+        // fixed tricycle gear
+        b.c(0, -1, -4, ComponentType.LANDING_GEAR, Direction.NORTH, c -> c.putBoolean("retractable", false));
+        b.c(-2, -1, 1, ComponentType.LANDING_GEAR, Direction.NORTH, c -> { c.putBoolean("retractable", false); c.putDouble("radius", 0.55); });
+        b.c(2, -1, 1, ComponentType.LANDING_GEAR, Direction.NORTH, c -> { c.putBoolean("retractable", false); c.putDouble("radius", 0.55); });
+    }
+
+    /** Original design "Stingray": tailless delta jet with elevons and a single afterburning engine. */
+    private static void stingray(B b) {
+        var hull = Blocks.CYAN_TERRACOTTA;
+        for (int z = -7; z <= 6; z++) if (z != 0) b.block(0, 0, z, hull);
+        b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH, c -> c.putInt("handling", 3));
+        b.block(0, 0, -8, Blocks.GRAY_CONCRETE);
+        b.block(0, 0, -7, Blocks.IRON_BLOCK); // nose ballast keeps the tailless delta stable
+        b.block(0, 0, -6, Blocks.IRON_BLOCK);
+        b.fuel(0, 0, -1); b.fuel(0, 0, -2); b.fuel(0, 0, 1);
+        b.c(0, -1, 1, ComponentType.FUEL_PUMP, Direction.NORTH);
+        b.c(0, -1, 2, ComponentType.FUEL_PUMP, Direction.NORTH);
+        b.c(0, -1, 0, ComponentType.HYDRAULIC_PUMP, Direction.NORTH);
+        b.c(0, 0, 2, ComponentType.ENGINE_STARTER, Direction.NORTH);
+        b.c(0, 0, 7, ComponentType.JET_ENGINE, Direction.NORTH);
+        // bubble canopy
+        b.c(0, 1, -4, ComponentType.PILOT_SEAT, Direction.NORTH);
+        b.c(0, 1, -5, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
+        b.c(0, 1, -3, ComponentType.NAVIGATION_COMPUTER, Direction.NORTH);
+        b.block(0, 1, -6, Blocks.LIGHT_BLUE_STAINED_GLASS);
+        b.block(-1, 1, -4, Blocks.LIGHT_BLUE_STAINED_GLASS);
+        b.block(1, 1, -4, Blocks.LIGHT_BLUE_STAINED_GLASS);
+        b.block(0, 2, -4, Blocks.LIGHT_BLUE_STAINED_GLASS);
+        b.block(0, 1, -2, hull);
+        // delta wing: leading edge sweeps back, straight trailing edge with elevons
+        for (int side = -1; side <= 1; side += 2) {
+            for (int i = 1; i <= 8; i++) {
+                int zLead = -4 + i;
+                for (int z = zLead; z <= 5; z++) {
+                    boolean te = z == 5;
+                    b.wing(side * i, 0, z, ComponentType.DELTA_WING, WingOrientation.HORIZONTAL, c -> {
+                        c.putInt("role", te ? 6 : 0);
+                        c.putDouble("chord", 1.0);
+                        c.putDouble("incidence", te ? 0 : 4);
+                        if (te) c.putDouble("control_max", 25);
+                    });
+                }
+            }
+        }
+        // fin with rudder
+        for (int y = 1; y <= 3; y++) {
+            b.wing(0, y, 4, ComponentType.WING, WingOrientation.VERTICAL_X, c -> { c.putInt("airfoil", 1); c.putDouble("incidence", 0); c.putDouble("chord", 1.2); });
+            b.wing(0, y, 5, ComponentType.RUDDER, WingOrientation.VERTICAL_X, c -> c.putDouble("chord", 1.1));
+        }
+        // small canards help lift the nose for take-off
+        for (int side = -1; side <= 1; side += 2)
+            for (int i = 1; i <= 3; i++)
+                b.wing(side * i, 0, -6, ComponentType.ELEVATOR, WingOrientation.HORIZONTAL, c -> { c.putDouble("chord", 1.1); c.putDouble("control_max", 25); });
+        // tall gear so the tail clears the runway when rotating
+        b.c(0, -1, -5, ComponentType.LANDING_GEAR, Direction.NORTH, c -> { c.putDouble("radius", 0.75); c.putDouble("travel", 0.7); });
+        b.c(-2, -1, 1, ComponentType.LANDING_GEAR, Direction.NORTH, c -> { c.putDouble("radius", 0.75); c.putDouble("travel", 0.7); });
+        b.c(2, -1, 1, ComponentType.LANDING_GEAR, Direction.NORTH, c -> { c.putDouble("radius", 0.75); c.putDouble("travel", 0.7); });
     }
 
     private static void car(B b) {
