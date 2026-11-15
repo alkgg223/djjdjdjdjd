@@ -35,6 +35,9 @@ public final class VehicleClientState {
     public float[] turretYaw = new float[0], turretPitch = new float[0];
     public double lastYaw = Double.NaN;
     public int telemetryAge;
+    /** landing detection */
+    public boolean wasGround = true;
+    public float lastVs;
     public Object sounds;
 
     public void addSnapshot(long tick, double x, double y, double z, float qx, float qy, float qz, float qw,

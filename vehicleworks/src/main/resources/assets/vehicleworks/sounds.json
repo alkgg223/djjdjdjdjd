@@ -205,5 +205,32 @@
       }
     ],
     "subtitle": "subtitles.vehicleworks.alarm.warning"
+  },
+  "vehicle.rumble": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/rumble",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.rumble"
+  },
+  "vehicle.touchdown": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/touchdown",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.touchdown"
+  },
+  "vehicle.hard_landing": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/hard_landing",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.hard_landing"
   }
 }

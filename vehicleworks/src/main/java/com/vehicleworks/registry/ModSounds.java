@@ -27,6 +27,9 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> RELOAD = reg("weapon.reload");
     public static final DeferredHolder<SoundEvent, SoundEvent> ARM = reg("weapon.arm");
     public static final DeferredHolder<SoundEvent, SoundEvent> CLICK = reg("ui.click");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RUMBLE = reg("vehicle.rumble");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TOUCHDOWN = reg("vehicle.touchdown");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HARD_LANDING = reg("vehicle.hard_landing");
     public static final DeferredHolder<SoundEvent, SoundEvent> ALARM_STALL = reg("alarm.stall");
     public static final DeferredHolder<SoundEvent, SoundEvent> ALARM_OVERSPEED = reg("alarm.overspeed");
     public static final DeferredHolder<SoundEvent, SoundEvent> ALARM_CAUTION = reg("alarm.caution");

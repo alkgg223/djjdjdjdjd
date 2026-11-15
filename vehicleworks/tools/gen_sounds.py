@@ -152,12 +152,30 @@ for k in range(3):
     x[i0:i0 + n] += (np.sin(2 * np.pi * 1250 * tk) + 0.4 * np.sin(2 * np.pi * 2500 * tk)) * np.exp(-tk * 12)
 write('alarm/warning', norm(x, 0.2))
 
+# ---- ground roll rumble (loop), touchdown thump, hard landing crash
+d = 2.0; tt = t(d)
+x = lp_fast(noise(len(tt)), 180) * 1.0 + 0.35 * bp_fast(noise(len(tt)), 300, 1200) * (0.6 + 0.4 * np.sin(2 * np.pi * 7 * tt) ** 2)
+write('vehicle/rumble', norm(loopify(x, 0.4), 0.2))
+tt = t(0.7)
+thump = np.sin(2 * np.pi * (55 + 40 * np.exp(-tt * 20)) * tt) * np.exp(-tt * 9)
+chirp = bp_fast(noise(len(tt)), 1500, 5000) * np.exp(-tt * 14) * 0.5
+write('vehicle/touchdown', norm(thump + chirp, 0.22))
+tt = t(1.4)
+boom = np.sin(2 * np.pi * (40 + 70 * np.exp(-tt * 15)) * tt) * np.exp(-tt * 4)
+crunch = bp_fast(noise(len(tt)), 600, 6000) * np.exp(-tt * 5) * 0.9
+rattle = np.zeros(len(tt))
+for k in range(18):
+    i0 = int((0.05 + k * 0.06 + 0.02 * np.sin(k * 7)) * SR); n = int(0.04 * SR)
+    if i0 + n < len(tt): rattle[i0:i0 + n] += bp_fast(noise(n), 2000, 7000) * np.exp(-np.arange(n) / SR * 90) * (1 - k / 18)
+write('vehicle/hard_landing', norm(boom + crunch + 0.7 * rattle, 0.26, 0.98))
+
 names = {'engine.piston': 'engine/piston', 'engine.turbine': 'engine/turbine', 'engine.jet': 'engine/jet', 'engine.rotor': 'engine/rotor',
          'engine.electric': 'engine/electric', 'engine.start': 'engine/start', 'vehicle.wind': 'vehicle/wind', 'vehicle.stall_warning': 'vehicle/stall_warning',
          'vehicle.gear': 'vehicle/gear', 'vehicle.assemble': 'vehicle/assemble', 'weapon.machine_gun': 'weapon/machine_gun', 'weapon.cannon': 'weapon/cannon',
          'weapon.missile': 'weapon/missile', 'weapon.bomb': 'weapon/bomb', 'weapon.reload': 'weapon/reload', 'weapon.arm': 'weapon/arm', 'ui.click': 'ui/click',
          'alarm.stall': 'alarm/stall', 'alarm.overspeed': 'alarm/overspeed', 'alarm.caution': 'alarm/caution', 'alarm.fire': 'alarm/fire',
-         'alarm.whoop': 'alarm/whoop', 'alarm.warning': 'alarm/warning'}
+         'alarm.whoop': 'alarm/whoop', 'alarm.warning': 'alarm/warning',
+         'vehicle.rumble': 'vehicle/rumble', 'vehicle.touchdown': 'vehicle/touchdown', 'vehicle.hard_landing': 'vehicle/hard_landing'}
 sj = {k: {"sounds": [{"name": "vehicleworks:" + v, "attenuation_distance": 64 if k.startswith('engine') or k.startswith('weapon') else 16}],
           "subtitle": "subtitles.vehicleworks." + k} for k, v in names.items()}
 with open(os.path.join(OUT, 'sounds.json'), 'w') as f: json.dump(sj, f, indent=2)

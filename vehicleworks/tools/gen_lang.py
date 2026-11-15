@@ -268,6 +268,9 @@ for k, (en, ar) in WN.items(): t('vehicleworks.warning.' + k, en, ar)
 for k, en, ar in (('stall', 'Stick shaker', 'هزاز المقود'), ('overspeed', 'Overspeed clacker', 'نقرات السرعة الزائدة'), ('caution', 'Caution chime', 'رنين تنبيه'),
                   ('fire', 'Fire bell', 'جرس الحريق'), ('whoop', 'Terrain whoop', 'إنذار الأرض'), ('warning', 'Warning chime', 'رنين إنذار')):
     t('subtitles.vehicleworks.alarm.' + k, en, ar)
+for k, en, ar in (('rumble', 'Wheels rumble', 'هدير العجلات'), ('touchdown', 'Touchdown', 'ملامسة الأرض'), ('hard_landing', 'Hard landing!', 'هبوط عنيف!')):
+    t('subtitles.vehicleworks.vehicle.' + k, en, ar)
+t('vehicleworks.msg.hard_landing', 'HARD LANDING! (%s m/s)', 'هبوط عنيف! (%s م/ث)')
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):

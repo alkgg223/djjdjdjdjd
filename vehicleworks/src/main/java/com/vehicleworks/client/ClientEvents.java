@@ -161,7 +161,14 @@ public final class ClientEvents {
     /** Roll the first-person camera with the aircraft. */
     public static void onCameraAngles(ViewportEvent.ComputeCameraAngles e) {
         VehicleEntity v = ridden();
-        if (v == null || !Config.CLIENT.cameraRoll.get()) return;
+        if (v == null) return;
+        float[] sh = GroundFx.offsets(v);
+        if (sh[0] != 0 || sh[1] != 0 || sh[2] != 0) {
+            e.setPitch(e.getPitch() + sh[0]);
+            e.setYaw(e.getYaw() + sh[1]);
+            e.setRoll(e.getRoll() + sh[2]);
+        }
+        if (!Config.CLIENT.cameraRoll.get()) return;
         if (Minecraft.getInstance().options.getCameraType() != CameraType.FIRST_PERSON) return;
         if (v.telemetry.mouseAim && VehicleHud.isFlying(v)) return;
         ControlProfile p = ControlProfile.byIndex(v.telemetry.profile);
