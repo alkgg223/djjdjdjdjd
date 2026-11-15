@@ -92,11 +92,13 @@ public final class Config {
         public final ModConfigSpec.DoubleValue hudScale;
         public final ModConfigSpec.BooleanValue mouseAimDefault;
         public final ModConfigSpec.DoubleValue engineVolume;
+        public final ModConfigSpec.BooleanValue voiceCallouts;
 
         Client(ModConfigSpec.Builder b) {
             lodDistance = b.comment("Beyond this distance animated parts and block entities are skipped").defineInRange("lodDistance", 128, 16, 1024);
             farLodDistance = b.comment("Beyond this distance vehicles render as a simplified silhouette mesh").defineInRange("farLodDistance", 320, 32, 4096);
             renderBlockEntities = b.define("renderBlockEntities", true);
+            voiceCallouts = b.comment("Speak VehicleWorks callouts (gear, warnings, autopilot) with text-to-speech, independent of the vanilla narrator").define("voiceCallouts", false);
             cameraRoll = b.comment("Roll the first-person camera with the aircraft").define("cameraRoll", true);
             hudScale = b.defineInRange("hudScale", 1.0, 0.5, 2.0);
             mouseAimDefault = b.define("mouseAimDefault", false);

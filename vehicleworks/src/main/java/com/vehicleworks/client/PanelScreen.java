@@ -35,6 +35,12 @@ public class PanelScreen extends Screen {
             buttons[i] = addRenderableWidget(Button.builder(label(i), b -> press(actions[idx]))
                     .bounds(x0() + col * (W + GAP), y0() + row * (H + GAP) + 14, W, H - 14).build());
         }
+        addRenderableWidget(Button.builder(voiceLabel(), b -> { VoiceCallouts.toggle(); b.setMessage(voiceLabel()); })
+                .bounds(width / 2 - 80, y0() + 2 * (H + GAP) + 6, 160, 18).build());
+    }
+
+    private static Component voiceLabel() {
+        return Component.translatable("vehicleworks.voice.button", Component.translatable(VoiceCallouts.enabled() ? "vehicleworks.panel.on" : "vehicleworks.panel.off"));
     }
 
     private void press(int action) {
@@ -89,8 +95,8 @@ public class PanelScreen extends Screen {
         super.render(g, mx, my, partial);
         int x = x0(), y = y0();
         // panel body
-        g.fill(x - 10, y - 26, x + 3 * W + 2 * GAP + 10, y + 2 * H + GAP + 12, 0xE0262B31);
-        g.renderOutline(x - 10, y - 26, 3 * W + 2 * GAP + 20, 2 * H + GAP + 38, 0xFF59626D);
+        g.fill(x - 10, y - 26, x + 3 * W + 2 * GAP + 10, y + 2 * H + GAP + 34, 0xE0262B31);
+        g.renderOutline(x - 10, y - 26, 3 * W + 2 * GAP + 20, 2 * H + GAP + 60, 0xFF59626D);
         g.drawCenteredString(font, title, width / 2, y - 18, 0xFFFFFF);
         String[] names = {"battery", "lights", "engines", "gear", "emergency", "autopilot"};
         for (int i = 0; i < 6; i++) {

@@ -73,6 +73,8 @@ public final class ClientEvents {
         while (Keybinds.PARKING.consumeClick()) action(v, Payloads.ACT_PARKING);
         while (Keybinds.MENU.consumeClick()) action(v, Payloads.ACT_OPEN_ENGINEERING);
         while (Keybinds.AUTOPILOT.consumeClick()) Minecraft.getInstance().setScreen(new AutopilotScreen(v));
+        while (Keybinds.VOICE.consumeClick()) VoiceCallouts.toggle();
+        VoiceCallouts.tick(v);
         while (Keybinds.PANEL.consumeClick()) {
             boolean has = false;
             for (var st : v.structure.blocks().values())

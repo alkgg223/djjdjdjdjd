@@ -247,6 +247,17 @@ P = {'title': ('Cockpit Panel', 'لوحة التحكم'), 'battery': ('BATTERY',
      'c_lights': ('Lights', 'الأضواء'), 'pass': ('ALL SYSTEMS OK', 'كل الأنظمة سليمة'), 'fail': ('%s PROBLEM(S) FOUND', 'تم العثور على %s مشكلة'),
      'hud_test': ('EMERGENCY TEST', 'اختبار الطوارئ'), 'hud_batt': ('BATTERY OFF', 'البطارية مطفأة')}
 for k, (en, ar) in P.items(): t('vehicleworks.panel.' + k, en, ar)
+# 1.0.8 voice callouts
+t('key.vehicleworks.voice', 'Voice callouts on/off', 'تشغيل/إيقاف التنبيهات الصوتية')
+V = {'on': ('Voice callouts on', 'التنبيهات الصوتية تعمل'), 'off': ('Voice callouts off', 'التنبيهات الصوتية متوقفة'), 'button': ('Voice: %s', 'الصوت: %s'),
+     'gear_down': ('Gear down', 'العجلات نازلة'), 'gear_up': ('Gear up', 'العجلات مرفوعة'), 'ap_on': ('Autopilot engaged', 'الطيار الآلي يعمل'),
+     'ap_off': ('Autopilot disengaged', 'تم فصل الطيار الآلي'), 'battery_on': ('Battery on', 'البطارية تعمل'), 'battery_off': ('Battery off', 'البطارية مطفأة'),
+     'lights_on': ('Lights on', 'الأضواء تعمل'), 'lights_off': ('Lights off', 'الأضواء مطفأة'), 'parking_on': ('Parking brake set', 'فرامل الوقوف مفعلة'),
+     'parking_off': ('Parking brake released', 'فرامل الوقوف محررة'), 'test': ('Emergency test. Master warning.', 'اختبار الطوارئ. إنذار رئيسي.'),
+     'engines_on': ('Engines running', 'المحركات تعمل'), 'engines_off': ('Engines shut down', 'المحركات متوقفة'), 'engine_fail': ('Engine failure', 'عطل في المحرك'),
+     'low_fuel': ('Low fuel', 'الوقود منخفض'), 'damage': ('Structural damage', 'ضرر في الهيكل'), 'stall': ('Stall, stall', 'انهيار السرعة، انهيار السرعة'),
+     'pull_up': ('Pull up! Pull up!', 'ارفع المقدمة! ارفع المقدمة!'), 'too_low_gear': ('Too low, gear', 'منخفض جداً، العجلات'), 'bank_angle': ('Bank angle', 'زاوية الميلان')}
+for k, (en, ar) in V.items(): t('vehicleworks.voice.' + k, en, ar)
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):
