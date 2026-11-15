@@ -37,6 +37,8 @@ public final class VehicleClientState {
     public int telemetryAge;
     /** landing detection */
     public boolean wasGround = true;
+    /** smoothed yoke animation */
+    public float yokePitch, yokeRoll;
     public float lastVs;
     public Object sounds;
 

@@ -725,6 +725,8 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         t.battery = controls.battery;
         t.vne = layout.wingArea > 0 ? (float) Math.max(110, s.rotateSpeed * 4.2) : 0;
         t.hydraulics = (float) s.hydraulicAuthority;
+        t.stickPitch = (float) s.effPitch;
+        t.stickRoll = (float) s.effRoll;
         t.lights = controls.lights;
         t.emergencyTest = level().getGameTime() < controls.emergencyUntil;
         t.apHeading = (float) controls.apHeading;

@@ -251,8 +251,11 @@ public final class DemoVehicles {
         b.block(-2, 1, -13, skin); b.block(2, 1, -13, skin);
         b.c(-1, 1, -11, ComponentType.PILOT_SEAT, Direction.NORTH);
         b.c(1, 1, -11, ComponentType.PASSENGER_SEAT, Direction.NORTH);
-        b.c(-1, 1, -12, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
-        b.c(1, 1, -12, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
+        // captain and first-officer yokes (linked: both move together)
+        b.c(-1, 1, -12, ComponentType.YOKE, Direction.SOUTH);
+        b.c(1, 1, -12, ComponentType.YOKE, Direction.SOUTH);
+        b.c(0, 1, -12, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
+        b.c(0, 1, -13, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
         b.c(0, 3, -11, ComponentType.COCKPIT_PANEL, Direction.SOUTH); // overhead panel
         for (int z = -7; z <= 13; z += 2) {
             b.c(-1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH);
@@ -320,8 +323,11 @@ public final class DemoVehicles {
         b.block(-2, 3, -16, Blocks.GLASS); b.block(2, 3, -16, Blocks.GLASS);
         b.c(-1, 1, -14, ComponentType.PILOT_SEAT, Direction.NORTH);
         b.c(1, 1, -14, ComponentType.PASSENGER_SEAT, Direction.NORTH);
-        b.c(-1, 1, -15, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
-        b.c(1, 1, -15, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
+        // captain and first-officer yokes (linked: both move together)
+        b.c(-1, 1, -15, ComponentType.YOKE, Direction.SOUTH);
+        b.c(1, 1, -15, ComponentType.YOKE, Direction.SOUTH);
+        b.c(0, 1, -15, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
+        b.c(0, 1, -16, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
         b.c(0, 3, -14, ComponentType.COCKPIT_PANEL, Direction.SOUTH); // overhead panel
         // two-aisle style cabin: seats left and right of the centre aisle
         for (int z = -10; z <= 17; z += 2) {
@@ -387,8 +393,11 @@ public final class DemoVehicles {
         b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH);
         b.c(-1, 1, -3, ComponentType.PILOT_SEAT, Direction.NORTH);
         b.c(1, 1, -3, ComponentType.PASSENGER_SEAT, Direction.NORTH);
-        b.c(-1, 1, -4, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
-        b.c(1, 1, -4, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
+        // captain and first-officer yokes (linked: both move together)
+        b.c(-1, 1, -4, ComponentType.YOKE, Direction.SOUTH);
+        b.c(1, 1, -4, ComponentType.YOKE, Direction.SOUTH);
+        b.c(0, 1, -4, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
+        b.c(0, 1, -5, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
         b.c(0, 2, -3, ComponentType.COCKPIT_PANEL, Direction.SOUTH); // overhead panel
         for (int z = -1; z <= 3; z += 2) { b.c(-1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH); b.c(1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH); }
         for (int z = -2; z <= 3; z++) if (z != 0) b.fuel(0, -1, z);

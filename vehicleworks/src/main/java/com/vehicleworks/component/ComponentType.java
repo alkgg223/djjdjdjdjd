@@ -75,6 +75,7 @@ public enum ComponentType {
             PropertyDef.number("power", 0.5, 2.0, 0.05, 1.0, "x")),
 
     FLIGHT_INSTRUMENTS("flight_instruments", ComponentCategory.INSTRUMENT, 15, Facing.HORIZONTAL, Shape.FULL),
+    YOKE("yoke", ComponentCategory.CONTROL, 12, Facing.HORIZONTAL, Shape.DYNAMIC),
     COCKPIT_PANEL("cockpit_panel", ComponentCategory.INSTRUMENT, 30, Facing.HORIZONTAL, Shape.PANEL),
     NAVIGATION_COMPUTER("navigation_computer", ComponentCategory.INSTRUMENT, 15, Facing.HORIZONTAL, Shape.FULL,
             PropertyDef.integer("waypoint_x", -30000000, 30000000, 0),
@@ -147,7 +148,7 @@ public enum ComponentType {
 
     /** Blocks without rigid collision (handled by their own physics, e.g. suspension). */
     public boolean excludedFromCollision() {
-        return this == WHEEL || this == LANDING_GEAR || this == HEAVY_LANDING_GEAR || this == PROPELLER || this == MAIN_ROTOR || this == TAIL_ROTOR || this == MARINE_PROPELLER;
+        return this == WHEEL || this == LANDING_GEAR || this == HEAVY_LANDING_GEAR || this == YOKE || this == PROPELLER || this == MAIN_ROTOR || this == TAIL_ROTOR || this == MARINE_PROPELLER;
     }
 
     /** Rendered dynamically (spinning / animated) instead of in the cached static mesh. */

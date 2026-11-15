@@ -353,3 +353,14 @@ model('cockpit_panel', {"parent": "minecraft:block/block",
                         "elements": els})
 bs_facing('cockpit_panel', 'cockpit_panel', FACE4); item_block('cockpit_panel')
 print('panel ok')
+
+# ------------------------------------------------------------------ yoke (front = north = pilot side); drawn by the vehicle renderer
+yoke_els = [el([7, 9.25, 5], [9, 11.25, 16], six('h')),            # control column
+            el([6, 8.25, 3.5], [10, 12.25, 5.5], six('d')),        # hub
+            el([2, 9.5, 4], [14, 11, 5], six('d')),                # cross bar
+            el([1, 6.5, 3.75], [3, 13, 5.25], six('g')),           # left horn
+            el([13, 6.5, 3.75], [15, 13, 5.25], six('g'))]         # right horn
+model('yoke', {"parent": "minecraft:block/block", "textures": {"particle": b('strut'), "h": b('strut'), "d": b('device_side'), "g": b('seat_frame')},
+               "display": {"gui": {"rotation": [20, 200, 0], "translation": [0, 2, 0], "scale": [0.9, 0.9, 0.9]}}, "elements": yoke_els})
+bs_facing('yoke', 'yoke', FACE4); item_block('yoke')
+print('yoke ok')
