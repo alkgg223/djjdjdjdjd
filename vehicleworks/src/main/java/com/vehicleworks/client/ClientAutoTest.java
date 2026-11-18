@@ -219,30 +219,101 @@ public final class ClientAutoTest {
             });
             case 1190 -> { mc.options.setCameraType(CameraType.FIRST_PERSON); lookAlong(14); }
             case 1210 -> screenshot("a320_glass_cockpit");
-            case 1215 -> lookAlong(-60);
+            case 1215 -> { lookAlong(-60); if (Boolean.getBoolean("vehicleworks.autotest.flight")) ticks = 1425; }
             case 1235 -> screenshot("a320_overhead_panel");
             case 1240 -> { cmd("time set 18000"); lookAlong(14); }
             case 1270 -> screenshot("a320_cockpit_night");
-            case 1290 -> mc.stop();
+            // high speed: walk in the cabin, sit down with a right click, break a block
+            case 1275 -> { cmd("time set 6000"); onServer(sp -> {
+                VehicleEntity v = serverVehicle(sp);
+                sp.stopRiding();
+                if (v == null) return;
+                Vector3d p = v.localToWorld(0.5, 1.05, -1.5, new Vector3d());
+                sp.teleportTo(p.x, p.y, p.z);
+            }); }
+            case 1310 -> { cv = clientVehicle(); if (cv != null) log("in the cabin at {} m/s: local {}", String.format("%.0f", cv.telemetry.groundSpeed), cv.worldToLocal(mc.player.getX(), mc.player.getY(), mc.player.getZ(), new Vector3d())); }
+            case 1315 -> aimAt(1.5, 1.45, -0.5);
+            case 1318 -> net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
+            case 1335 -> log("right-click seat at speed: seated={}", mc.player.getVehicle() instanceof VehicleEntity);
+            case 1340 -> onServer(sp -> {
+                VehicleEntity v = serverVehicle(sp);
+                sp.stopRiding();
+                if (v == null) return;
+                Vector3d p = v.localToWorld(0.5, 1.05, -1.5, new Vector3d());
+                sp.teleportTo(p.x, p.y, p.z);
+                blocksBefore = v.structure.size();
+            });
+            case 1360 -> aimAt(-1.5, 2.5, -1.5);
+            case 1363 -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey());
+            case 1380 -> onServer(sp -> { VehicleEntity v = serverVehicle(sp); if (v != null) log("break block at speed: blocks {} -> {}", blocksBefore, v.structure.size()); });
+            case 1385 -> aimAt(1.5, 1.6, 3.5);
+            case 1400 -> screenshot("passenger_seats");
+            case 1405 -> { cv = clientVehicle(); if (cv != null) { Vector3d p = cv.localToWorld(-0.5, 1.6, -9.5, new Vector3d()); } aimAt(-0.5, 1.4, -11.5); }
+            case 1420 -> screenshot("pilot_seats");
+            // ---- real flight at 100 then 150 m/s, turning and banking, player walking in the cabin
+            case 1425 -> ticks = Boolean.getBoolean("vehicleworks.autotest.quick") ? 1425 : 1425;
+            case 1430 -> onServer(sp -> {
+                VehicleEntity v = serverVehicle(sp);
+                if (v == null || v.simulation() == null) return;
+                v.simulation().body.position.add(0, 30, 0);
+                flySpeed = 100;
+            });
+            case 1445 -> onServer(ServerPlayer::stopRiding);
+            case 1448 -> placeInVehicle(0.5, 1.05, -1.5);
+            case 1465 -> { cv = clientVehicle(); if (cv != null) walkStart = cv.worldToLocal(mc.player.getX(), mc.player.getY(), mc.player.getZ(), new Vector3d()); }
+            case 1480 -> logDrift("flying 100 m/s, turning");
+            case 1482 -> { aimAt(0.5, 1.6, -12); walkStartLocal(); mc.options.keyUp.setDown(true); }
+            case 1497 -> { mc.options.keyUp.setDown(false); logWalk("aisle at 100 m/s (15 ticks, vanilla ~2.9)"); }
+            case 1502 -> jumpBegin(mc);
+            case 1530 -> log("jump in cabin at 100 m/s: peak {} blocks (vanilla 1.25)", String.format("%.2f", jumpMaxY - jumpBaseY));
+            case 1532 -> { flySpeed = 150; placeInVehicle(0.5, 1.05, -1.5); }
+            case 1550 -> { cv = clientVehicle(); if (cv != null) walkStart = cv.worldToLocal(mc.player.getX(), mc.player.getY(), mc.player.getZ(), new Vector3d()); }
+            case 1565 -> logDrift("flying 150 m/s, turning");
+            case 1567 -> aimAt(1.5, 1.45, -0.5);
+            case 1570 -> net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
+            case 1585 -> log("right-click seat at 150 m/s: seated={}", mc.player.getVehicle() instanceof VehicleEntity);
+            case 1588 -> onServer(sp -> { sp.stopRiding(); VehicleEntity v = serverVehicle(sp); if (v != null) blocksBefore = v.structure.size(); });
+            case 1600 -> { cv = clientVehicle(); if (cv != null) log("stepped out of the seat at 150 m/s: aboard={} local {}", EntityAboard(), cv.worldToLocal(mc.player.getX(), mc.player.getY(), mc.player.getZ(), new Vector3d())); }
+            case 1612 -> { cv = clientVehicle(); if (cv != null) log("2 s later at 150 m/s: aboard={} local {}", EntityAboard(), cv.worldToLocal(mc.player.getX(), mc.player.getY(), mc.player.getZ(), new Vector3d())); }
+            case 1613 -> aimAt(2.5, 2.6, -0.5);
+            case 1616 -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey());
+            case 1630 -> onServer(sp -> { VehicleEntity v = serverVehicle(sp); if (v != null) log("break block at 150 m/s: blocks {} -> {}", blocksBefore, v.structure.size()); });
+            case 1633 -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }
+            case 1640 -> screenshot("cabin_at_150ms");
+            case 1645 -> { mc.options.setCameraType(CameraType.FIRST_PERSON); cv = clientVehicle(); if (cv != null) log("end of flight: still aboard={} local {}", EntityAboard(), cv.worldToLocal(mc.player.getX(), mc.player.getY(), mc.player.getZ(), new Vector3d())); }
+            case 1650 -> mc.stop();
             default -> {}
         }
-        if (ticks >= 900 && ticks <= 1070 && ticks % 3 == 0 && mc.player != null && (cv = clientVehicle()) != null) {
+        if (((ticks >= 900 && ticks <= 1070) || (ticks >= 1445 && ticks <= 1650)) && ticks % 5 == 0 && mc.player != null && (cv = clientVehicle()) != null) {
             Vector3d lp = cv.worldToLocal(mc.player.getX(), mc.player.getY(), mc.player.getZ(), new Vector3d());
             log("c{} local=({},{},{}) onGround={} anchored={} vSpeed={} dist={} | {}", ticks, String.format("%.2f", lp.x), String.format("%.2f", lp.y), String.format("%.2f", lp.z),
                     mc.player.onGround(), com.vehicleworks.vehicle.EntityVehicleCollision.anchoredVehicle(mc.player) != null,
                     String.format("%.1f", cv.telemetry.groundSpeed), String.format("%.1f", Math.sqrt(cv.distanceToSqr(mc.player))), com.vehicleworks.vehicle.EntityVehicleCollision.DEBUG);
         }
-        // fast carry: hold the Pelican at 60 m/s with the player standing on the wing
-        if (ticks > 990 && ticks < 1066) onServer(sp -> {
+        // flight: hold speed and altitude, keep turning (yaw) and rocking the wings (roll)
+        if (ticks > 1430 && ticks < 1650) onServer(sp -> {
+            VehicleEntity v = serverVehicle(sp);
+            if (v == null || v.simulation() == null) return;
+            var b = v.simulation().body;
+            Vector3d f = v.localDirToWorld(0, 0, -1, new Vector3d());
+            Vector3d up = v.localDirToWorld(0, 1, 0, new Vector3d());
+            Vector3d fl = new Vector3d(f.x, 0, f.z).normalize();
+            b.linearVelocity.set(fl.x * flySpeed, 0, fl.z * flySpeed);
+            double roll = Math.sin(ticks * 0.08) * 0.25;
+            b.angularVelocity.set(0, 0.12, 0).add(new Vector3d(f).mul(roll)).sub(new Vector3d(up).mul(0));
+            b.wake();
+        });
+        // fast carry: hold the aircraft at 60 m/s with the player on board
+        if ((ticks > 990 && ticks < 1066) || (ticks > 1280 && ticks < 1400)) onServer(sp -> {
             VehicleEntity v = serverVehicle(sp);
             if (v == null || v.simulation() == null) return;
             Vector3d f = v.localDirToWorld(0, 0, -1, new Vector3d());
             v.simulation().body.linearVelocity.set(f.x * 60, 0, f.z * 60);
             v.simulation().body.wake();
         });
-        if (((ticks > 785 && ticks < 815) || (ticks > 905 && ticks < 935)) && (cv = clientVehicle()) != null)
+        if (((ticks > 785 && ticks < 815) || (ticks > 905 && ticks < 935) || (ticks > 1502 && ticks < 1530)) && (cv = clientVehicle()) != null)
             jumpMaxY = Math.max(jumpMaxY, cv.worldToLocal(mc.player.getX(), mc.player.getY(), mc.player.getZ(), new Vector3d()).y);
-        if (((ticks > 760 && ticks <= 780) || (ticks > 880 && ticks <= 900) || (ticks > 785 && ticks < 795)) && mc.player != null)
+        if (((ticks > 760 && ticks <= 780) || (ticks > 880 && ticks <= 900) || (ticks > 785 && ticks < 795) || (ticks >= 1500 && ticks < 1510)) && mc.player != null)
             log("t{} onGround={} hColl={} vColl={} dm={} {}", ticks, mc.player.onGround(), mc.player.horizontalCollision, mc.player.verticalCollision,
                     mc.player.getDeltaMovement(), com.vehicleworks.vehicle.EntityVehicleCollision.DEBUG);
     }
@@ -251,6 +322,60 @@ public final class ClientAutoTest {
     private static void lookAlong(float pitch) {
         VehicleEntity v = ClientEvents.ridden();
         look(v != null ? v.telemetry.heading + 180 : 180, pitch);
+    }
+
+    private static int blocksBefore;
+
+    /** put the local player at a point of the nearest vehicle as this client sees it (like walking in) */
+    private static void placeInVehicle(double lx, double ly, double lz) {
+        Minecraft mc = Minecraft.getInstance();
+        VehicleEntity v = clientVehicle();
+        if (v == null || mc.player.isPassenger()) return;
+        Vector3d p = v.localToWorld(lx, ly, lz, new Vector3d());
+        mc.player.setPos(p.x, p.y, p.z);
+        mc.player.setDeltaMovement(0, 0, 0);
+        com.vehicleworks.vehicle.EntityVehicleCollision.forget(mc.player);
+    }
+    private static double flySpeed = 100;
+    private static Vector3d walkLocal;
+
+    private static boolean EntityAboard() {
+        return com.vehicleworks.vehicle.EntityVehicleCollision.anchoredVehicle(Minecraft.getInstance().player) != null || Minecraft.getInstance().player.getVehicle() != null;
+    }
+
+    private static void logDrift(String what) {
+        Minecraft mc = Minecraft.getInstance();
+        VehicleEntity cv = clientVehicle();
+        if (cv == null || walkStart == null) return;
+        Vector3d now = cv.worldToLocal(mc.player.getX(), mc.player.getY(), mc.player.getZ(), new Vector3d());
+        log("{}: speed {} m/s, drift {} blocks, aboard={}, onGround={}", what, String.format("%.0f", cv.telemetry.groundSpeed), String.format("%.2f", now.distance(walkStart)), EntityAboard(), mc.player.onGround());
+    }
+
+    private static void walkStartLocal() {
+        Minecraft mc = Minecraft.getInstance();
+        VehicleEntity cv = clientVehicle();
+        if (cv != null) walkLocal = cv.worldToLocal(mc.player.getX(), mc.player.getY(), mc.player.getZ(), new Vector3d());
+    }
+
+    private static void logWalk(String what) {
+        Minecraft mc = Minecraft.getInstance();
+        VehicleEntity cv = clientVehicle();
+        if (cv == null || walkLocal == null) return;
+        Vector3d now = cv.worldToLocal(mc.player.getX(), mc.player.getY(), mc.player.getZ(), new Vector3d());
+        log("walk {}: {} blocks, aboard={}", what, String.format("%.2f", Math.hypot(now.x - walkLocal.x, now.z - walkLocal.z)), EntityAboard());
+    }
+
+    /** point the camera at a point given in the nearest vehicle's local coordinates */
+    private static void aimAt(double lx, double ly, double lz) {
+        Minecraft mc = Minecraft.getInstance();
+        VehicleEntity v = clientVehicle();
+        if (v == null) return;
+        Vector3d w = v.localToWorld(lx, ly, lz, new Vector3d());
+        var eye = mc.player.getEyePosition(1f);
+        double dx = w.x - eye.x, dy = w.y - eye.y, dz = w.z - eye.z;
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
+        look(yaw, pitch);
     }
 
     private static void walkBegin(Minecraft mc) {

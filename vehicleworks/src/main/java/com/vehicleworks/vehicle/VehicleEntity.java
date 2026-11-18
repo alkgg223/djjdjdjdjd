@@ -149,27 +149,38 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
 
     // ------------------------------------------------------------------ pose transforms
 
+    /**
+     * Keep the pose quaternion unit length. Interpolated / integrated quaternions drift slightly,
+     * and then transform / transformInverse stop being exact inverses (≈0.1 % scale error), which
+     * broke walking and jumping on a rotating vehicle.
+     */
+    private Quaterniond unitOrientation() {
+        double l2 = orientation.lengthSquared();
+        if (Math.abs(l2 - 1) > 1e-12) orientation.normalize();
+        return orientation;
+    }
+
     /** World position of a structure-local point using the current tick pose. */
     public Vector3d localToWorld(double lx, double ly, double lz, Vector3d out) {
         out.set(lx - comLocal.x, ly - comLocal.y, lz - comLocal.z);
-        orientation.transform(out);
+        unitOrientation().transform(out);
         return out.add(getX(), getY(), getZ());
     }
 
     public Vector3d worldToLocal(double wx, double wy, double wz, Vector3d out) {
         out.set(wx - getX(), wy - getY(), wz - getZ());
-        orientation.transformInverse(out);
+        unitOrientation().transformInverse(out);
         return out.add(comLocal);
     }
 
     public Vector3d localDirToWorld(double x, double y, double z, Vector3d out) {
         out.set(x, y, z);
-        return orientation.transform(out);
+        return unitOrientation().transform(out);
     }
 
     public Vector3d worldDirToLocal(double x, double y, double z, Vector3d out) {
         out.set(x, y, z);
-        return orientation.transformInverse(out);
+        return unitOrientation().transformInverse(out);
     }
 
     /** Interpolated orientation for rendering. */

@@ -51,7 +51,7 @@ public final class EntityVehicleCollision {
     }
 
     public static int DEBUG_PUSHES;
-    public static String DEBUG = "";
+    public static String DEBUG = "", DEBUG2 = "";
     private static final Map<Entity, Anchor> ANCHORS = java.util.Collections.synchronizedMap(new WeakHashMap<>());
     private static final ThreadLocal<MoveInfo> INFO = ThreadLocal.withInitial(MoveInfo::new);
     private static final Map<BlockState, VoxelShape> SHAPES = new IdentityHashMap<>();
@@ -83,11 +83,14 @@ public final class EntityVehicleCollision {
     public static void carry(Entity e) {
         if (!isSimulatedHere(e)) return;
         Anchor a = ANCHORS.get(e);
+        if (a == null || a.vehicle == null) a = autoAnchor(e);
         if (a == null || a.vehicle == null || a.vehicle.isRemoved() || a.vehicle.level() != e.level()) return;
         VehicleEntity v = a.vehicle;
         Vector3d target = v.localToWorld(a.local.x, a.local.y, a.local.z, new Vector3d());
         double d2 = target.distanceSquared(e.getX(), e.getY(), e.getZ());
-        if (d2 > 900) { ANCHORS.remove(e); return; }
+        // no distance limit: at high speed a lag spike can move the vehicle tens of blocks between
+        // two ticks, and dropping the anchor then left the player behind the aircraft
+        if (d2 > 400 * 400) { ANCHORS.remove(e); return; }
         double yaw = vehicleYaw(v);
         float dyaw = (float) Mth.wrapDegrees(yaw - a.yaw);
         a.yaw = yaw;
@@ -167,7 +170,7 @@ public final class EntityVehicleCollision {
         a.vehicle = v;
         v.worldToLocal(e.getX(), e.getY(), e.getZ(), a.local);
         if (info.vehicleGround) a.airTicks = 0;
-        else if (++a.airTicks > 60 || !v.getBoundingBox().inflate(2, 6, 2).contains(e.position())) ANCHORS.remove(e);
+        else if (++a.airTicks > 80 || !nearStructure(v, a.local)) ANCHORS.remove(e);
     }
 
     private static VoxelShape shape(BlockState st) {
@@ -190,7 +193,7 @@ public final class EntityVehicleCollision {
         AABB sweep = box.expandTowards(lm.x, lm.y, lm.z).inflate(1.0);
         int x0 = Mth.floor(sweep.minX), y0 = Mth.floor(sweep.minY), z0 = Mth.floor(sweep.minZ);
         int x1 = Mth.floor(sweep.maxX), y1 = Mth.floor(sweep.maxY), z1 = Mth.floor(sweep.maxZ);
-        if ((long) (x1 - x0 + 1) * (y1 - y0 + 1) * (z1 - z0 + 1) > 20000) return anchored ? toWorldDisplacement(e, v, feet, lm.x, lm.y, lm.z) : motion;
+        if ((long) (x1 - x0 + 1) * (y1 - y0 + 1) * (z1 - z0 + 1) > 20000) return motion;
         List<VoxelShape> shapes = new ArrayList<>();
         VehicleStructure s = v.structure;
         for (int x = x0; x <= x1; x++)
@@ -201,9 +204,11 @@ public final class EntityVehicleCollision {
                     VoxelShape sh = shape(s.get(k));
                     if (!sh.isEmpty()) shapes.add(sh.move(x, y, z));
                 }
-        if (shapes.isEmpty()) return anchored ? toWorldDisplacement(e, v, feet, lm.x, lm.y, lm.z) : motion;
+        if (shapes.isEmpty()) return motion;
         // push out if the vehicle moved / rotated into the entity (never leave it stuck inside)
+        double lmY0 = lm.y; // requested local vertical motion, before any push-out
         double push = depenetrateUp(box, shapes);
+        boolean sidePushed = false;
         if (push > 0) DEBUG_PUSHES++;
         if (push > 0) {
             box = box.move(0, push, 0);
@@ -215,6 +220,7 @@ public final class EntityVehicleCollision {
             double[] side = depenetrateSide(box, shapes);
             if (side != null) {
                 info.blockedH = true;
+                sidePushed = true;
                 box = box.move(side[0], 0, side[1]);
                 feet.x += side[0];
                 feet.z += side[1];
@@ -262,8 +268,16 @@ public final class EntityVehicleCollision {
             info.groundVehicle = v;
         }
         if (blockedH) info.blockedH = true;
+        if (e instanceof Player) DEBUG2 = String.format("dyBlocked=%s", Math.abs(dy - lm.y) > 1e-7 || push > 0);
         if (e instanceof Player) DEBUG = String.format("lm=(%.5f,%.5f,%.5f) d=(%.5f,%.5f,%.5f) feetY=%.9f blockedH=%s shapes=%d", lm.x, lm.y, lm.z, dx, dy, dz, feet.y, blockedH, shapes.size());
-        return toWorldDisplacement(e, v, feet, dx, dy, dz);
+        Vec3 out = toWorldDisplacement(e, v, feet, dx, dy, dz);
+        // Only the axes that were really blocked may differ from the requested motion: in a tilted
+        // or rotating vehicle frame, blocking one local axis slightly changes every world axis, and
+        // vanilla would read that as a floor/ceiling or wall hit (zeroing jump or walk velocity).
+        boolean vBlocked = Math.abs(dy - lmY0) > 1e-7 || push > 0.01; // tiny pushes are frame noise, not a floor hit
+        boolean hBlocked = blockedH || sidePushed;
+        double ox = hBlocked ? out.x : motion.x, oy = vBlocked ? out.y : motion.y, oz = hBlocked ? out.z : motion.z;
+        return new Vec3(ox, oy, oz);
     }
 
     private static Vec3 toWorldDisplacement(Entity e, VehicleEntity v, Vector3d feet, double dx, double dy, double dz) {
@@ -310,6 +324,53 @@ public final class EntityVehicleCollision {
             }
         }
         return out;
+    }
+
+    /**
+     * An entity standing just above vehicle blocks without an anchor (just placed, dismounted,
+     * teleported in, or landed this very tick) is anchored at once: otherwise a fast vehicle
+     * moves on for a whole tick and leaves it behind.
+     */
+    private static Anchor autoAnchor(Entity e) {
+        for (VehicleEntity v : VehicleRegistry.near(e.level(), e.getBoundingBox().inflate(1.0, 3.0, 1.0))) {
+            if (v.isRemoved() || v.structure.isEmpty()) continue;
+            Vector3d l = v.worldToLocal(e.getX(), e.getY(), e.getZ(), new Vector3d());
+            int bx = Mth.floor(l.x), bz = Mth.floor(l.z), by = Mth.floor(l.y - 0.001);
+            for (int k = 0; k <= 2; k++) {
+                if (!v.structure.contains(BlockPos.asLong(bx, by - k, bz))) continue;
+                return anchorTo(e, v, l);
+            }
+        }
+        return null;
+    }
+
+    private static Anchor anchorTo(Entity e, VehicleEntity v, Vector3d local) {
+        Anchor a = new Anchor();
+        a.vehicle = v;
+        a.local.set(local);
+        a.yaw = vehicleYaw(v);
+        ANCHORS.put(e, a);
+        return a;
+    }
+
+    /**
+     * Put an entity at a vehicle-local point, in the vehicle pose this side sees, and anchor it
+     * (used when stepping out of a seat at speed: the server's dismount position is computed in
+     * its own, more recent vehicle pose, which is metres away from what the client shows).
+     */
+    public static void placeOnVehicle(Entity e, VehicleEntity v, double lx, double ly, double lz) {
+        Vector3d w = v.localToWorld(lx, ly, lz, new Vector3d());
+        e.setPos(w.x, w.y, w.z);
+        e.setDeltaMovement(0, 0, 0);
+        e.resetFallDistance();
+        anchorTo(e, v, new Vector3d(lx, ly, lz));
+    }
+
+    /** inside the vehicle's block bounds (local frame, so it is exact at any speed / rotation) */
+    private static boolean nearStructure(VehicleEntity v, Vector3d local) {
+        VehicleStructure s = v.structure;
+        return local.x > s.minX() - 2 && local.x < s.maxX() + 3 && local.z > s.minZ() - 2 && local.z < s.maxZ() + 3
+                && local.y > s.minY() - 3 && local.y < s.maxY() + 8;
     }
 
     public static void forget(Entity e) {

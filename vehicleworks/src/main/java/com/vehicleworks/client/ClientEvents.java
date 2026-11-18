@@ -25,8 +25,28 @@ public final class ClientEvents {
         return p != null && p.getVehicle() instanceof VehicleEntity v ? v : null;
     }
 
+    private static VehicleEntity lastRidden;
+    private static Long lastSeat;
+
     public static void onClientTick(ClientTickEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
+        // stepping out of a seat: stand next to the seat on the vehicle as this client shows it
+        VehicleEntity riding = ridden();
+        if (mc.player != null) {
+            if (riding != null) {
+                lastRidden = riding;
+                Long s = riding.seats.get(mc.player.getUUID());
+                if (s != null) lastSeat = s;
+            } else if (lastRidden != null) {
+                if (!lastRidden.isRemoved() && lastSeat != null && lastRidden.distanceToSqr(mc.player) < 400 * 400) {
+                    long s = lastSeat;
+                    com.vehicleworks.vehicle.EntityVehicleCollision.placeOnVehicle(mc.player, lastRidden,
+                            net.minecraft.core.BlockPos.getX(s) + 0.5, net.minecraft.core.BlockPos.getY(s) + 1.05, net.minecraft.core.BlockPos.getZ(s) + 0.5);
+                }
+                lastRidden = null;
+                lastSeat = null;
+            }
+        }
         // vehicles may tick after the player: re-apply the carry so the player never lags behind
         if (mc.player != null && mc.player.getVehicle() == null) com.vehicleworks.vehicle.EntityVehicleCollision.carry(mc.player);
         VehicleEntity v = ridden();

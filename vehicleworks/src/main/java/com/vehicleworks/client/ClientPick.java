@@ -16,7 +16,9 @@ public final class ClientPick {
         Entity cam = mc.getCameraEntity();
         if (cam == null || mc.level == null || mc.player == null) return;
         if (mc.player.getVehicle() instanceof VehicleEntity) return; // seated: mouse buttons are fire controls
-        Vec3 eye = cam.getEyePosition(partial);
+        // vehicles are ray-cast in their tick pose, so use the eye of the same tick (at speed the
+        // partial-tick eye is metres away from that pose and the ray would miss)
+        Vec3 eye = cam.getEyePosition(1.0f);
         Vec3 look = cam.getViewVector(partial);
         double reach = mc.player.blockInteractionRange();
         VehicleRaycast.Hit h = VehicleRaycast.raycast(mc.level, eye, eye.add(look.scale(reach)), null);

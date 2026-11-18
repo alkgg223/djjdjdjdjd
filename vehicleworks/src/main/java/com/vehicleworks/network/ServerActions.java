@@ -223,8 +223,16 @@ public final class ServerActions {
         Entity e = sp.level().getEntity(id);
         if (!(e instanceof VehicleEntity v)) return null;
         if (sp.getVehicle() == v) return v;
-        AABB bb = v.getBoundingBox().inflate(reach);
+        AABB bb = v.getBoundingBox().inflate(reach + lagAllowance(v));
         return bb.contains(sp.getEyePosition()) ? v : null;
+    }
+
+    /**
+     * The client shows vehicles a few ticks late (interpolation + network), so at speed the player
+     * stands metres away from where the server has the vehicle. Allow that distance.
+     */
+    static double lagAllowance(VehicleEntity v) {
+        return v.getDeltaMovement().length() * 7 + v.linearVelocity.length() * 0.35;
     }
 
     public static void onInput(ServerPlayer sp, Payloads.Input p) {
@@ -566,7 +574,7 @@ public final class ServerActions {
         long key = p.block();
         if (!v.structure.contains(key)) return;
         Vector3d hitW = v.localToWorld(p.hx(), p.hy(), p.hz(), new Vector3d());
-        double reach = sp.blockInteractionRange() + 2.0;
+        double reach = sp.blockInteractionRange() + 2.0 + lagAllowance(v);
         if (sp.getEyePosition().distanceToSqr(hitW.x, hitW.y, hitW.z) > reach * reach) return;
         InteractionHand hand = p.mainHand() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
         ItemStack stack = sp.getItemInHand(hand);

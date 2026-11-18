@@ -530,3 +530,36 @@ model('refuel_port', {"parent": "minecraft:block/cube", "textures": {"north": b(
                                                        "up": b('device_side'), "down": b('device_side'), "particle": b('device_side')}})
 bs_facing('refuel_port', 'refuel_port', FACE4); item_block('refuel_port')
 print('refuel ok')
+
+# ------------------------------------------------------------------ seats (v2): sculpted pilot seat and airline passenger seat
+def _leather(col, seed, stitch='#9aa0a6'):
+    im = base(col, 5, seed); d = _ID.Draw(im)
+    for y in (8, 16, 24): d.line([(2, y), (29, y)], fill=rgb(stitch) + (150,))
+    d.line([(15, 2), (15, 29)], fill=rgb(stitch) + (110,))
+    return im
+tex('seat_pilot2', _leather('#30343b', 501)); tex('seat_pax2', _leather('#22417e', 502, '#5a78b8'))
+im = base('#e9e7df', 3, 503); d = _ID.Draw(im); d.rectangle([0, 22, 31, 25], fill=rgb('#3a6ac0') + (255,)); tex('seat_headrest', im)
+im = base('#c9a13a', 4, 504); d = _ID.Draw(im); d.rectangle([10, 12, 21, 19], fill=rgb('#d8dde2') + (255,)); tex('seat_harness', im)
+def SF(t): return six(t)
+pilot = [el([3, 0, 2], [5, 2, 14], SF('f')), el([11, 0, 2], [13, 2, 14], SF('f')),            # floor rails
+         el([5, 1, 4], [11, 4.5, 12], SF('f')),                                                  # pedestal
+         el([2, 4.5, 1], [14, 7.5, 13], SF('c')),                                                # seat pan
+         el([1, 5.5, 1], [3, 8.5, 13], SF('c')), el([13, 5.5, 1], [15, 8.5, 13], SF('c')),      # cushion bolsters
+         el([2, 7.5, 12], [14, 22, 15], SF('c')),                                                # backrest
+         el([1, 8, 11.5], [3, 20, 15], SF('c')), el([13, 8, 11.5], [15, 20, 15], SF('c')),      # back bolsters
+         el([4, 22, 12.5], [12, 27, 15], SF('c')),                                               # headrest
+         el([0, 9.5, 4], [2, 11, 12], SF('f')), el([14, 9.5, 4], [16, 11, 12], SF('f')),        # armrests
+         el([0.5, 7, 10], [1.5, 9.5, 11], SF('f')), el([14.5, 7, 10], [15.5, 9.5, 11], SF('f')),
+         el([5, 10, 11.7], [6.5, 21, 12], SF('h')), el([9.5, 10, 11.7], [11, 21, 12], SF('h')),  # harness straps
+         el([6.5, 12, 11.7], [9.5, 14, 11.9], SF('h'))]
+recl = {"origin": [8, 7.5, 13.5], "axis": "x", "angle": -22.5}
+pax = [el([2, 0, 3], [3.5, 4.5, 4.5], SF('f')), el([12.5, 0, 3], [14, 4.5, 4.5], SF('f')),       # legs
+       el([2, 0, 10], [3.5, 4.5, 11.5], SF('f')), el([12.5, 0, 10], [14, 4.5, 11.5], SF('f')),
+       el([1, 4.5, 1], [15, 7.5, 13], SF('c')),                                                  # cushion
+       el([1, 7.5, 12], [15, 21, 15], SF('c'), recl),                                            # reclined backrest
+       el([2, 18, 11.6], [14, 23, 15.3], SF('r'), recl),                                         # headrest cover
+       el([0, 9, 3], [1.5, 10.5, 13], SF('f')), el([14.5, 9, 3], [16, 10.5, 13], SF('f')),      # armrests
+       el([0.25, 4.5, 11], [1.25, 9, 12], SF('f')), el([14.75, 4.5, 11], [15.75, 9, 12], SF('f'))]
+model('pilot_seat', {"parent": "minecraft:block/block", "textures": {"c": b('seat_pilot2'), "f": b('seat_frame'), "h": b('seat_harness'), "particle": b('seat_pilot2')}, "elements": pilot})
+model('passenger_seat', {"parent": "minecraft:block/block", "textures": {"c": b('seat_pax2'), "f": b('seat_frame'), "r": b('seat_headrest'), "particle": b('seat_pax2')}, "elements": pax})
+print('seats v2 ok')
