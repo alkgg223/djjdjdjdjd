@@ -30,6 +30,7 @@ neoForge {
                 if (project.hasProperty('vwCabin')) systemProperty 'vehicleworks.autotest.cabin', 'true'
                 if (project.hasProperty('vwSuite')) systemProperty 'vehicleworks.autotest.suite', 'true'
                 if (project.hasProperty('vwSit')) systemProperty 'vehicleworks.autotest.sit', 'true'
+                if (project.hasProperty('vwLights')) systemProperty 'vehicleworks.autotest.lights', 'true'
                 programArguments.addAll('--width', '1280', '--height', '720')
             }
         }

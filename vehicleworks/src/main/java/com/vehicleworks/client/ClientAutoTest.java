@@ -101,6 +101,7 @@ public final class ClientAutoTest {
         }
         ticks++;
         VehicleEntity cv;
+        if (ticks >= 6000) { lightTest(mc, ticks - 6000); return; }
         if (ticks >= 5000) { sitTest(mc, ticks - 5000); return; }
         if (ticks >= 2000) { cockpitAndCabin(mc, ticks - 2000); return; }
         switch (ticks) {
@@ -111,7 +112,8 @@ public final class ClientAutoTest {
                 cmd("tp @s 0 -60 0 180 0");
             }
             case 60 -> {
-                if (Boolean.getBoolean("vehicleworks.autotest.sit")) ticks = 5000;
+                if (Boolean.getBoolean("vehicleworks.autotest.lights")) ticks = 6000;
+                else if (Boolean.getBoolean("vehicleworks.autotest.sit")) ticks = 5000;
                 else if (Boolean.getBoolean("vehicleworks.autotest.cabin")) ticks = 2000;
                 else if (Boolean.getBoolean("vehicleworks.autotest.quick")) ticks = 1079; else cmd("vehicleworks spawn pelican");
             }
@@ -547,6 +549,46 @@ public final class ClientAutoTest {
         if (t2 == 4) net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
         if (t2 == 25 && cv != null) { log("battery after right-click on the overhead switch while seated: {}", cv.telemetry.sw(VehicleControls.SW_BATTERY)); screenshot("s_captain_pressed_batt"); }
         if (t2 == 30) mc.stop();
+    }
+
+    /** put the (flying) camera at a vehicle-local point and look at another */
+    private static void cam(double x, double y, double z, double tx, double ty, double tz) {
+        Minecraft mc = Minecraft.getInstance();
+        VehicleEntity v = clientVehicle();
+        if (v == null) { log("cam: no vehicle"); return; }
+        mc.player.getAbilities().flying = true;
+        Vector3d w = v.localToWorld(x, y, z, new Vector3d());
+        mc.player.setPos(w.x, w.y - 1.62, w.z);
+        mc.player.setDeltaMovement(0, 0, 0);
+        aimAt(tx, ty, tz);
+    }
+
+    /** exterior lights by day and by night, near and far */
+    private static void lightTest(Minecraft mc, int t) {
+        switch (t) {
+            case 0 -> { cmd("tp @s 0.5 -60 200.5 180 0"); cmd("time set 6000"); mc.options.hideGui = true; }
+            case 10 -> cmd("vehicleworks spawn a320");
+            case 60 -> onServer(sp -> { VehicleEntity v = serverVehicle(sp); if (v != null) { var c = v.controls; c.battery = c.masterElec = true;
+                c.lights = c.beacon = c.strobe = c.landingLights = c.taxiLights = c.turnoffLights = true; } });
+            case 80 -> { cam(-14, 2, -22, 0, 0, -2); mc.options.hideGui = true; }
+            case 100 -> screenshot("l1_day_front_left");
+            case 105 -> cmd("time set 18000");
+            case 140 -> screenshot("l2_night_front_left");
+            case 143 -> screenshot("l3_night_front_left_b");
+            case 146 -> screenshot("l4_night_front_left_c");
+            case 150 -> cam(-20, 1.5, -5, -16, 0, 2);
+            case 170 -> screenshot("l5_night_left_wingtip");
+            case 173 -> screenshot("l6_night_left_wingtip_b");
+            case 176 -> cam(0.5, 1, -40, 0.5, -0.5, -10);
+            case 196 -> screenshot("l7_night_head_on");
+            case 200 -> cam(26, 7, -26, 0, -2, -26);
+            case 220 -> screenshot("l8_night_beams_side");
+            case 224 -> cam(-60, 16, -45, 0, 0, 0);
+            case 244 -> screenshot("l9_night_far");
+            case 247 -> screenshot("l10_night_far_b");
+            case 250 -> mc.stop();
+            default -> {}
+        }
     }
 
     private static void look(VehicleEntity v, float pitch) {

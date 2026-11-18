@@ -645,3 +645,24 @@ cabin_model('seat_premium', True, 23, True, False, False)
 cabin_model('seat_business', True, 24, True, True, False)
 cabin_model('seat_first', True, 25, True, True, True)
 print('cabin seats ok')
+
+# ------------------------------------------------------------------ 1.2.2: light effect textures (additive): soft glow, star flare, light beam
+import numpy as _np
+_M = os.path.join(A, 'textures', 'misc'); os.makedirs(_M, exist_ok=True)
+def _save_gray(name, arr):
+    v = (_np.clip(arr, 0, 1) * 255).astype(_np.uint8)
+    im = _I.fromarray(_np.dstack([v, v, v, _np.full_like(v, 255)]), 'RGBA'); im.save(os.path.join(_M, name + '.png'))
+n = 128; yy, xx = _np.mgrid[0:n, 0:n]; r = _np.hypot(xx - (n - 1) / 2, yy - (n - 1) / 2) / (n / 2)
+# glow: bright core + wide soft gaussian halo, exactly black at the edge
+g = 0.85 * _np.exp(-(r / 0.13) ** 2) + 0.35 * _np.exp(-(r / 0.42) ** 2) + 0.12 * _np.exp(-(r / 0.75) ** 2)
+g *= _np.clip((1 - r) / 0.15, 0, 1); _save_gray('glow', g)
+# flare: thin horizontal + vertical streaks and a faint ring (strobes, beacons, landing lights at night)
+dx, dy = (xx - (n - 1) / 2) / (n / 2), (yy - (n - 1) / 2) / (n / 2)
+f = _np.exp(-(dy / 0.025) ** 2) * _np.exp(-(_np.abs(dx) / 0.55) ** 1.5) + 0.6 * _np.exp(-(dx / 0.03) ** 2) * _np.exp(-(_np.abs(dy) / 0.35) ** 1.5)
+f += 0.08 * _np.exp(-((r - 0.55) / 0.04) ** 2) + 0.5 * _np.exp(-(r / 0.08) ** 2)
+f *= _np.clip((1 - r) / 0.1, 0, 1); _save_gray('flare', f)
+# beam: across (u) a soft gaussian, along (v) bright at the lamp and fading out with distance
+w, h = 64, 256; v_, u_ = _np.mgrid[0:h, 0:w]; uu = (u_ - (w - 1) / 2) / (w / 2); vv = v_ / (h - 1)
+b = _np.exp(-(uu / 0.5) ** 2) * (1 - vv) ** 1.1 * (0.75 + 0.25 * _np.exp(-(uu / 0.25) ** 2)) * _np.clip(vv / 0.04, 0.35, 1)
+b *= _np.clip((1 - _np.abs(uu)) / 0.2, 0, 1); _save_gray('beam', b)
+print('light fx textures ok')

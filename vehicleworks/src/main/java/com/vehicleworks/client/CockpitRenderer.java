@@ -96,7 +96,7 @@ public final class CockpitRenderer {
         VehicleTelemetry t = v.telemetry;
         boolean power = t.busPowered;
         double time = System.currentTimeMillis() / 1000.0;
-        VertexConsumer glow = null;
+        boolean begun = false;
         var brd = Minecraft.getInstance().getBlockRenderer();
         for (long k : v.structure.blockEntities().keySet()) {
             BlockState st = v.structure.get(k);
@@ -111,34 +111,60 @@ public final class CockpitRenderer {
             if (!power) continue;
             int type = lightType(v, k);
             if (type == 0) type = bx < 0 ? 1 : (bx > 0 ? 2 : 3);
-            int color = 0;
-            float size = 0.09f, halo = 0.45f;
-            boolean on;
-            switch (type) {
-                case 1 -> { on = t.sw(VehicleControls.SW_NAV); color = 0xFF2020; }
-                case 2 -> { on = t.sw(VehicleControls.SW_NAV); color = 0x20FF40; }
-                case 3 -> { on = t.sw(VehicleControls.SW_NAV); color = 0xFFFFFF; }
-                case 4 -> { on = t.sw(VehicleControls.SW_BEACON) && (time % 1.0) < 0.18; color = 0xFF1A10; halo = 0.9f; }
-                case 5 -> { double p = time % 1.3; on = t.sw(VehicleControls.SW_STROBE) && (p < 0.05 || (p > 0.14 && p < 0.19)); color = 0xFFFFFF; halo = 1.4f; }
-                case 6 -> { on = t.sw(VehicleControls.SW_LANDING); color = 0xFFF6E0; size = 0.12f; halo = 0.7f; }
-                case 7 -> { on = t.sw(VehicleControls.SW_TAXI); color = 0xFFF0D0; size = 0.1f; halo = 0.5f; }
-                case 8 -> { on = t.sw(VehicleControls.SW_TURNOFF); color = 0xFFF0D0; size = 0.1f; halo = 0.5f; }
-                default -> { on = t.cabinLight > 0; color = 0xFFD8A0; size = 0.05f; halo = 0; } // lights the cockpit through the mesh lamps
-            }
-            if (!on) continue;
-            glow = buffers.getBuffer(RenderType.lightning());
-            Matrix4f m = ps.last().pose();
+            if (!begun) { LightFx.begin(ps); begun = true; }
+            float night = LightFx.night();
             float cx = bx + 0.5f, cy = by + 0.5f, cz = bz + 0.5f;
-            glowCube(m, glow, cx, cy, cz, size, 0xFF000000 | color);
-            if (halo > 0) {
-                glowCube(m, glow, cx, cy, cz, halo, 0x30000000 | color);
-                glowCube(m, glow, cx, cy, cz, halo * 0.5f, 0x40000000 | color);
-            }
-            if (type >= 6 && type <= 8) {
-                Direction f = VehicleBuilder.facing(st);
-                float dx = f.getStepX(), dz = f.getStepZ(), dy = type == 6 ? -0.12f : -0.28f;
-                float l = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
-                beam(m, glow, cx + dx * 0.3f, cy, cz + dz * 0.3f, dx / l, dy / l, dz / l, type == 6 ? 26 : 14, 0.12f, type == 6 ? 3.2f : 2.4f, color, type == 6 ? 0.22f : 0.16f);
+            float dist = LightFx.distance(cx, cy, cz);
+            // a real lamp stays a visible point far away: the core never shrinks below ~1.5 px
+            float minCore = dist * 0.0035f;
+            switch (type) {
+                case 1, 2, 3 -> {
+                    if (!t.sw(VehicleControls.SW_NAV)) continue;
+                    int c = type == 1 ? 0xFF2418 : (type == 2 ? 0x18FF50 : 0xFFF4E8);
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, Math.max(0.14f, minCore), c, 1.2f);                 // lens
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 0.55f + 0.6f * night, c, 0.25f + 0.55f * night);    // halo
+                    if (night > 0.3f) LightFx.sprite(ps, buffers, LightFx.FLARE, cx, cy, cz, 0.9f, c, 0.25f * night);
+                }
+                case 4 -> {
+                    if (!t.sw(VehicleControls.SW_BEACON)) continue;
+                    // rotating beacon: a smooth red pulse about once per second
+                    double ph = time % 1.0;
+                    float e = (float) Math.exp(-Math.pow((ph - 0.1) / 0.06, 2));
+                    int c = 0xFF1C10;
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, Math.max(0.16f, minCore), c, 0.25f + 1.1f * e);
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 1.0f + 1.2f * night, c, e * (0.35f + 0.7f * night));
+                    LightFx.sprite(ps, buffers, LightFx.FLARE, cx, cy, cz, 1.4f + 1.4f * night, c, e * (0.2f + 0.5f * night));
+                }
+                case 5 -> {
+                    if (!t.sw(VehicleControls.SW_STROBE)) continue;
+                    // double white flash every 1.3 s, very short and very bright
+                    double p = time % 1.3;
+                    float e = (float) (Math.exp(-Math.pow((p - 0.025) / 0.022, 2)) + Math.exp(-Math.pow((p - 0.165) / 0.022, 2)));
+                    if (e < 0.01f) continue;
+                    int c = 0xF4F8FF;
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, Math.max(0.2f, minCore * 1.5f), c, 1.4f * e);
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 1.6f + 2.4f * night, c, e * (0.4f + 0.8f * night));
+                    LightFx.sprite(ps, buffers, LightFx.FLARE, cx, cy, cz, 2.6f + 2.4f * night, c, e * (0.35f + 0.6f * night));
+                }
+                case 6, 7, 8 -> {
+                    boolean on = type == 6 ? t.sw(VehicleControls.SW_LANDING) : (type == 7 ? t.sw(VehicleControls.SW_TAXI) : t.sw(VehicleControls.SW_TURNOFF));
+                    if (!on) continue;
+                    int c = type == 6 ? 0xFFF2DC : 0xFFEAD0;
+                    Direction f = VehicleBuilder.facing(st);
+                    float dx = f.getStepX(), dz = f.getStepZ(), dy = type == 6 ? -0.1f : -0.22f;
+                    float l = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+                    float lx = cx + dx * 0.32f, lz = cz + dz * 0.32f;
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, lx, cy, lz, Math.max(type == 6 ? 0.3f : 0.22f, minCore * 1.4f), c, 1.3f);
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, lx, cy, lz, 0.9f + 0.9f * night, c, 0.25f + 0.5f * night);
+                    if (night > 0.3f) LightFx.sprite(ps, buffers, LightFx.FLARE, lx, cy, lz, 1.6f, c, 0.25f * night);
+                    float len = type == 6 ? 30 : 16, r1 = type == 6 ? 3.4f : 2.6f;
+                    // soft volumetric shaft (visible in the night air, faint by day)
+                    LightFx.beam(ps, buffers, lx, cy, lz, dx / l, dy / l, dz / l, len, 0.35f, r1, c, 0.03f + 0.4f * night);
+                }
+                default -> {
+                    if (t.cabinLight <= 0) continue;
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 0.08f, 0xFFD8A0, 0.6f + 0.3f * t.cabinLight);
+                }
             }
         }
     }
@@ -582,7 +608,8 @@ public final class CockpitRenderer {
         CockpitParts.prism(ps, vc, glass, x, z, 0.016f, 0.014f, -0.012f, -0.02f, 10, on ? FULL : light, col, col, true);
         if (on) {
             VertexConsumer glow = buf.getBuffer(RenderType.lightning());
-            glowCube(ps.last().pose(), glow, x, -0.0205f, z, 0.009f, 0x70000000 | (col & 0xFFFFFF));
+            LightFx.begin(ps);
+            LightFx.sprite(ps, buf, LightFx.GLOW, x, -0.021f, z, 0.03f, col & 0xFFFFFF, 0.55f);
         }
     }
 
