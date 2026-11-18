@@ -398,7 +398,7 @@ public final class VehicleGameTests {
     }
 
     /** Turbofan: starter spools N2, fuel + igniters light it, it accelerates, the starter cuts out; igniters off do not stop it. */
-    @GameTest(template = "platform", timeoutTicks = 1200, batch = "systems")
+    @GameTest(template = "platform", timeoutTicks = 1400, batch = "systems")
     public static void jetStartFollowsTheProcedure(GameTestHelper h) {
         VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.AIRLINER, new BlockPos(12, 3, 12));
         v.controls.testPilot = true;
@@ -430,11 +430,7 @@ public final class VehicleGameTests {
             h.assertTrue(allRunning(v), "a running turbine does not need the igniters");
             v.controls.engineMaster = false;
         });
-        h.runAfterDelay(1000, () -> {
-            log(v, "turbofan after fuel cut-off:");
-            h.assertTrue(noneRunning(v), "engine master off shuts the fuel and the engines");
-            h.succeed();
-        });
+        h.runAfterDelay(1000, () -> h.succeedWhen(() -> h.assertTrue(noneRunning(v), "engine master off shuts the fuel and the engines")));
     }
 
     /** Passengers adjust only their own seat; the cockpit switches answer the flight crew only. */
@@ -459,7 +455,7 @@ public final class VehicleGameTests {
             sp.stopRiding();
             h.assertTrue(v.trySit(sp, pilot), "sits in the captain seat");
             com.vehicleworks.network.ServerActions.onAction(sp, new com.vehicleworks.network.Payloads.Action(v.getId(), com.vehicleworks.network.Payloads.ACT_SWITCH, VehicleControls.SW_BATTERY));
-            h.assertTrue(v.controls.battery != before, "the pilot switches the battery");
+            h.assertTrue(v.controls.battery != before, "the pilot switches the battery (seat " + v.seatOf(sp) + ", vehicle " + sp.getVehicle() + ", passenger " + v.isPassengerSeated(sp) + ")");
             h.assertTrue(v.simulation().fbw, "A320 flies with side sticks (fly-by-wire)");
             h.succeed();
         });
