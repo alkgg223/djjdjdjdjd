@@ -213,7 +213,25 @@ public final class CabinRenderer {
             // small frosted lens under the pod: the only visible "glow"
             CockpitParts.plate(ps, S(buf), white, -0.025f, -0.032f, 0.025f, 0.012f, backH + 0.0595f, lvl == 1 ? FULL : light, lvl == 1 ? CockpitParts.mix(0xFF000000, 0xFFFFF2DC, lk) : 0xFF6A6C70);
         }
+        if (lvl == 1 && cls >= 2) {
+            LightFx.begin(ps);
+            LightFx.sprite(ps, buf, LightFx.GLOW, 0, backH + 0.055f, -0.01f, 0.05f, 0xFFF2DC, 0.9f * lk);
+            LightFx.sprite(ps, buf, LightFx.GLOW, 0, backH + 0.055f, -0.01f, 0.18f, 0xFFF2DC, 0.18f * lk);
+        }
         ps.popPose();
+        if (lvl == 1 && cls >= 2) {
+            // the reading light shines down and forward onto the lap / tray
+            LightFx.begin(ps);
+            float ry = 0.39f + backH + 0.05f, rz = 0.3f + slideZ;
+            float len = 1.0f;
+            float dy = -1f, dz = -0.55f, dl = (float) Math.sqrt(dy * dy + dz * dz);
+            LightFx.beam(ps, buf, 0, ry, rz, 0, dy / dl, dz / dl, len, 0.03f, 0.32f, 0xFFF0D8, (0.12f + 0.12f * LightFx.night()) * lk);
+            LightFx.sprite(ps, buf, LightFx.GLOW, 0, 0.42f, rz - 0.5f, 0.35f, 0xFFF0D8, 0.07f * lk);
+        }
+        if (cls == 1 && lvl == 1) {
+            LightFx.begin(ps);
+            LightFx.beam(ps, buf, 0, 1.3f, 0.2f + slideZ, 0, -0.85f, -0.53f, 1.0f, 0.03f, 0.3f, 0xFFF0D8, (0.12f + 0.12f * LightFx.night()) * lk);
+        }
         // arm rests (business: wide side console on the right)
         float armH = 0.55f;
         Box.cuboid(ps, S(buf), cls >= 4 ? wood : frame, -hw - 0.04f, 0.26f, -0.3f, -hw + 0.03f, armH, 0.28f, light, cls >= 4 ? 0xFFFFFFFF : 0xFF6A7076);
@@ -262,6 +280,12 @@ public final class CabinRenderer {
             ps.translate(0, 0, slideZ);
             Box.cuboid(ps, S(buf), white, -hw - 0.04f, 0.25f, -0.28f, -hw - 0.035f, 0.258f, 0.26f, FULL, led);
             Box.cuboid(ps, S(buf), white, hw + 0.035f, 0.25f, -0.28f, hw + 0.04f, 0.258f, 0.26f, FULL, led);
+            LightFx.begin(ps);
+            int lc = cls >= 4 ? 0xFFC890 : 0x9AB8FF;
+            for (float z = -0.22f; z <= 0.23f; z += 0.15f) {
+                LightFx.sprite(ps, buf, LightFx.GLOW, -hw - 0.04f, 0.24f, z, 0.12f, lc, 0.16f * lk);
+                LightFx.sprite(ps, buf, LightFx.GLOW, hw + 0.04f, 0.24f, z, 0.12f, lc, 0.16f * lk);
+            }
             ps.popPose();
         }
     }
@@ -296,6 +320,13 @@ public final class CabinRenderer {
             int led = CockpitParts.mix(0xFF000000, lvl == 2 ? 0xFFFFB070 : 0xFFFFE8C8, lk);
             Box.cuboid(ps, S(buf), white, -0.43f, wh - 0.03f, 0.425f, 1.43f, wh - 0.018f, 0.44f, FULL, led);
             Box.cuboid(ps, S(buf), white, -0.44f, wh - 0.03f, -1.43f, -0.425f, wh - 0.018f, 0.43f, FULL, led);
+            LightFx.begin(ps);
+            int lc = lvl == 2 ? 0xFFB070 : 0xFFE8C8;
+            for (float x = -0.3f; x <= 1.31f; x += 0.25f) LightFx.sprite(ps, buf, LightFx.GLOW, x, wh - 0.03f, 0.42f, 0.14f, lc, 0.14f * lk);
+            for (float z = -1.3f; z <= 0.31f; z += 0.25f) LightFx.sprite(ps, buf, LightFx.GLOW, -0.42f, wh - 0.03f, z, 0.14f, lc, 0.14f * lk);
+            // table lamp: warm glow through the shade and a soft pool on the table
+            LightFx.sprite(ps, buf, LightFx.GLOW, 1.0f, 0.76f, -0.35f, 0.12f, 0xFFE6C0, 0.5f * lk);
+            LightFx.sprite(ps, buf, LightFx.GLOW, 1.0f, 0.76f, -0.35f, 0.45f, 0xFFE6C0, 0.12f * lk);
         }
         // the big screen on the front wall
         screen(ps, buf, black, glass, 0.5f, 1.12f, -1.435f, 0.36f, 0.21f, a, s, light, v, now);
@@ -341,6 +372,8 @@ public final class CabinRenderer {
             InstrumentRenderer.BRIGHT = 1;
             ps.popPose();
         }
+        LightFx.begin(ps);
+        LightFx.sprite(ps, buf, LightFx.GLOW, cx, cy, cz + 0.06f, Math.max(hw, hh) * 1.8f, 0x7FA8E0, 0.06f * bright * (0.4f + 0.6f * LightFx.night()));
     }
 
     static void flightInfo(PoseStack ps, MultiBufferSource buf, float ar, VehicleTelemetry t, long now) {

@@ -455,6 +455,7 @@ public final class ClientAutoTest {
                 }
             }
             case 836 -> net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
+            case 838 -> cmd("time set 18000"); // the cabin at night: reading lights, LEDs, screens
             case 850 -> {
                 cv = clientVehicle();
                 Long k = cv == null ? null : cv.seats.get(mc.player.getUUID());

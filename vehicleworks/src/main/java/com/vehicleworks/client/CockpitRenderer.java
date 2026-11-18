@@ -163,7 +163,9 @@ public final class CockpitRenderer {
                 }
                 default -> {
                     if (t.cabinLight <= 0) continue;
-                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 0.08f, 0xFFD8A0, 0.6f + 0.3f * t.cabinLight);
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 0.07f, 0xFFD8A0, 0.7f + 0.3f * t.cabinLight);
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 0.3f, 0xFFD8A0, 0.12f * t.cabinLight);
+                    LightFx.beam(ps, buffers, cx, cy - 0.05f, cz, 0, -1, 0, 2.2f, 0.06f, 0.7f, 0xFFD8A0, 0.05f + 0.06f * t.cabinLight);
                 }
             }
         }
@@ -457,7 +459,14 @@ public final class CockpitRenderer {
                         boolean in = System.currentTimeMillis() - an.press[c.id] < 180;
                         master(ps, buffers, font, glass, bezel, in, t, annBright, light);
                     }
-                    case LEVER -> gearLever(ps, solid, metal, black, white, pos, t, light);
+                    case LEVER -> {
+                        gearLever(ps, solid, metal, black, white, pos, t, light);
+                        int gc = t.emergencyTest ? GREEN : (!t.busPowered ? 0 : (gearInTransit(t) ? RED : (t.gearDown ? GREEN : 0)));
+                        if (gc != 0) {
+                            LightFx.begin(ps);
+                            for (int gi = -1; gi <= 1; gi++) LightFx.sprite(ps, buffers, LightFx.GLOW, 0.12f, -0.02f, gi * 0.06f, 0.035f, gc & 0xFFFFFF, 0.5f * annBright);
+                        }
+                    }
                     case PARK -> parkHandle(ps, solid, metal, black, pos, light);
                     default -> {}
                 }
@@ -483,6 +492,11 @@ public final class CockpitRenderer {
                 VertexConsumer vc2 = buffers.getBuffer(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
                 Box.cuboid(ps, vc2, white, -1.48f, -0.012f, -0.995f, 1.48f, -0.004f, -0.985f, FULL, col);
                 Box.cuboid(ps, vc2, white, -1.48f, -0.012f, 0.985f, 1.48f, -0.004f, 0.995f, FULL, col);
+                LightFx.begin(ps);
+                for (float gx = -1.35f; gx <= 1.36f; gx += 0.3f) {
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, gx, -0.02f, -0.99f, 0.16f, col & 0xFFFFFF, 0.12f);
+                    LightFx.sprite(ps, buffers, LightFx.GLOW, gx, -0.02f, 0.99f, 0.16f, col & 0xFFFFFF, 0.12f);
+                }
             }
             ps.popPose();
         }
@@ -566,6 +580,10 @@ public final class CockpitRenderer {
         int tc = lit ? CockpitParts.scale(lc, bright) : 0xFF5A5E64;
         label(ps, buf, font, top, 0, -0.022f, tc, lit ? FULL : light, 1 / 380f);
         label(ps, buf, font, bot, 0, 0.024f, tc, lit ? FULL : light, 1 / 380f);
+        if (lit) {
+            LightFx.begin(ps);
+            LightFx.sprite(ps, buf, LightFx.GLOW, 0, -0.018f - d, 0, 0.085f, lc & 0xFFFFFF, 0.3f * bright);
+        }
 
     }
 
@@ -584,6 +602,11 @@ public final class CockpitRenderer {
         CockpitParts.plate(ps, vc, glass, -0.11f, 0f, 0.11f, 0.08f, -0.0165f - d, on && !red ? FULL : light, on && !red ? CockpitParts.mix(cc, 0xFF000000, 0.8f) : 0xFF1A1408);
         label(ps, buf, font, "MASTER WARN", 0, -0.04f, on && red ? wc : 0xFF7A3430, on && red ? FULL : light, 1 / 360f);
         label(ps, buf, font, "MASTER CAUT", 0, 0.04f, on && !red ? cc : 0xFF7A6030, on && !red ? FULL : light, 1 / 360f);
+        if (on) {
+            LightFx.begin(ps);
+            LightFx.sprite(ps, buf, LightFx.GLOW, 0, -0.02f - d, red ? -0.04f : 0.04f, 0.2f, (red ? RED : AMBER) & 0xFFFFFF, 0.45f * bright);
+            LightFx.sprite(ps, buf, LightFx.FLARE, 0, -0.02f - d, red ? -0.04f : 0.04f, 0.28f, (red ? RED : AMBER) & 0xFFFFFF, 0.18f * bright);
+        }
     }
 
     /** annunciator: rectangular tinted glass lens with an engraved legend, lit from behind */
@@ -596,6 +619,11 @@ public final class CockpitRenderer {
         int lit = CockpitParts.scale(color, bright);
         CockpitParts.plate(ps, vc, glass, -0.11f, -0.04f, 0.11f, 0.04f, -0.0125f, on ? FULL : light, on ? CockpitParts.mix(lit, 0xFF000000, 0.86f) : 0xFF0E0F11);
         label(ps, buf, font, legend, 0, 0.0f, on ? lit : CockpitParts.mix(color, 0xFF000000, 0.78f), on ? FULL : light, 1 / 430f);
+        if (on) {
+            LightFx.begin(ps);
+            LightFx.sprite(ps, buf, LightFx.GLOW, -0.06f, -0.016f, 0, 0.07f, color & 0xFFFFFF, 0.22f * bright);
+            LightFx.sprite(ps, buf, LightFx.GLOW, 0.06f, -0.016f, 0, 0.07f, color & 0xFFFFFF, 0.22f * bright);
+        }
         ps.popPose();
     }
 
