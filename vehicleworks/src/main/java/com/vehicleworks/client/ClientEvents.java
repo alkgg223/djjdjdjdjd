@@ -199,7 +199,7 @@ public final class ClientEvents {
         if (Math.abs(d.y) < 1e-4) return false;
         java.util.List<Integer> btns = CabinRenderer.buttons(cls);
         int best = -1;
-        double bestD = 0.024;
+        double bestD = 0.032;
         for (int i = 0; i < btns.size(); i++) {
             float[] p = CabinRenderer.buttonPos(cls, i);
             double t = (p[1] - a.y) / d.y;
@@ -222,7 +222,9 @@ public final class ClientEvents {
     public static void onInteraction(InputEvent.InteractionKeyMappingTriggered e) {
         Minecraft mc = Minecraft.getInstance();
         if (ridden() != null) {
-            if (e.isUseItem() && ridden().isPassengerSeated(mc.player) && clickSeatButton(ridden())) {
+            if (e.isUseItem() && ridden().isPassengerSeated(mc.player)) {
+                // passenger: press the arm-rest button under the crosshair, or open the seat controls
+                if (!clickSeatButton(ridden()) && ridden().seatClassOf(mc.player) > 0) mc.setScreen(new SeatScreen(ridden()));
                 e.setCanceled(true);
                 e.setSwingHand(false);
                 return;

@@ -46,7 +46,7 @@ public final class ModBlocks {
     private static SoundType soundFor(ComponentType t) {
         return switch (t) {
             case BALLOON_ENVELOPE, GAS_CELL -> SoundType.WOOL;
-            case PILOT_SEAT, PASSENGER_SEAT -> SoundType.WOOL;
+            case PILOT_SEAT, PASSENGER_SEAT, COPILOT_SEAT, SEAT_ECONOMY, SEAT_ECONOMY_PLUS, SEAT_PREMIUM, SEAT_BUSINESS, SEAT_FIRST -> SoundType.WOOL;
             case WHEEL -> SoundType.MUD_BRICKS;
             default -> SoundType.METAL;
         };

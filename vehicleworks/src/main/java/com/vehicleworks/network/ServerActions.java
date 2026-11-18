@@ -632,16 +632,17 @@ public final class ServerActions {
     }
 
     private static boolean isInteractive(ComponentType t) {
-        return t == ComponentType.PILOT_SEAT || t == ComponentType.PASSENGER_SEAT || t == ComponentType.VEHICLE_CORE
+        return t.isSeat() || t == ComponentType.VEHICLE_CORE
                 || t == ComponentType.REMOTE_CONTROL_UNIT || t.isConfigurable() || t == ComponentType.FUEL_TANK || t == ComponentType.AMMO_BOX;
     }
 
     private static boolean useComponentOnVehicle(ServerPlayer sp, VehicleEntity v, long key, BlockState st, ComponentType t) {
+        // every seat type (pilot, first officer, passenger, the five cabin classes) can be sat in
+        if (t.isSeat()) {
+            if (!v.trySit(sp, key)) msg(sp, "vehicleworks.msg.seat_taken");
+            return true;
+        }
         switch (t) {
-            case PILOT_SEAT, PASSENGER_SEAT -> {
-                if (!v.trySit(sp, key)) msg(sp, "vehicleworks.msg.seat_taken");
-                return true;
-            }
             case VEHICLE_CORE -> {
                 onAction(sp, new Payloads.Action(v.getId(), Payloads.ACT_OPEN_ENGINEERING, 0));
                 return true;

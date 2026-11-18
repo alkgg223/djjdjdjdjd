@@ -101,6 +101,7 @@ public final class ClientAutoTest {
         }
         ticks++;
         VehicleEntity cv;
+        if (ticks >= 5000) { sitTest(mc, ticks - 5000); return; }
         if (ticks >= 2000) { cockpitAndCabin(mc, ticks - 2000); return; }
         switch (ticks) {
             case 40 -> {
@@ -110,7 +111,8 @@ public final class ClientAutoTest {
                 cmd("tp @s 0 -60 0 180 0");
             }
             case 60 -> {
-                if (Boolean.getBoolean("vehicleworks.autotest.cabin")) ticks = 2000;
+                if (Boolean.getBoolean("vehicleworks.autotest.sit")) ticks = 5000;
+                else if (Boolean.getBoolean("vehicleworks.autotest.cabin")) ticks = 2000;
                 else if (Boolean.getBoolean("vehicleworks.autotest.quick")) ticks = 1079; else cmd("vehicleworks spawn pelican");
             }
             case 120 -> { mc.options.setCameraType(CameraType.FIRST_PERSON); cmd("tp @s 15 -55 -4 facing 0 -58 -18"); }
@@ -507,6 +509,44 @@ public final class ClientAutoTest {
             case 1420 -> mc.stop();
             default -> {}
         }
+    }
+
+    /** sit in every seat type the way a player does (right-click it), then press a cockpit switch while seated */
+    private static final double[][] SEATS = {{-1, 1, -7}, {1, 1, -3}, {-1, 1, -1}, {1, 1, 3}, {1, 1, -11}, {-1, 1, -11}};
+    private static final String[] SEAT_NAMES = {"business", "premium", "economy plus", "economy", "first officer", "captain"};
+
+    private static void sitTest(Minecraft mc, int t) {
+        VehicleEntity cv = clientVehicle();
+        if (t == 0) { cmd("tp @s 0.5 -60 200.5 180 0"); cmd("time set 6000"); }
+        if (t == 10) cmd("vehicleworks spawn a320");
+        int i = (t - 80) / 40, ph = (t - 80) % 40;
+        if (t >= 80 && i < SEATS.length) {
+            double[] p = SEATS[i];
+            if (ph == 0) { onServer(ServerPlayer::stopRiding); }
+            if (ph == 5) placeInVehicle(0.5, 1.05, p[2] + (i >= 4 ? 1.6 : 0.9));
+            if (ph == 12) aimAt(p[0] + 0.5, p[1] + 0.35, p[2] + 0.45);
+            if (ph == 15) net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
+            if (ph == 35 && cv != null) {
+                Long k = cv.seats.get(mc.player.getUUID());
+                log("sit by right-click on {}: seated={} seat={} passenger={} class={}", SEAT_NAMES[i], mc.player.getVehicle() == cv,
+                        k == null ? "-" : net.minecraft.core.BlockPos.of(k).toShortString(), cv.isPassengerSeated(mc.player), cv.seatClassOf(mc.player));
+            }
+        }
+        int t2 = t - 80 - 40 * SEATS.length; // seated as captain: right-click the BATT switch on the overhead panel
+        if (t2 == 0 && cv != null) {
+            for (long k : cv.structure.blockEntities().keySet()) {
+                var st = cv.structure.get(k);
+                if (com.vehicleworks.vehicle.VehicleBuilder.typeOf(st) != com.vehicleworks.component.ComponentType.COCKPIT_PANEL) continue;
+                CockpitRenderer.Ctl c = CockpitRenderer.ctl(VehicleControls.SW_BATTERY);
+                Vector3d o = new Vector3d(CockpitRenderer.cellX(c.col()), 14.5 / 16.0 - 0.03, CockpitRenderer.cellZ(c.row()) + 0.04)
+                        .rotateY(-Math.toRadians(CockpitRenderer.facingRot(com.vehicleworks.vehicle.VehicleBuilder.facing(st))));
+                aimAt(net.minecraft.core.BlockPos.getX(k) + 0.5 + o.x, net.minecraft.core.BlockPos.getY(k) + o.y, net.minecraft.core.BlockPos.getZ(k) + 0.5 + o.z);
+                log("battery before click: {}", cv.telemetry.sw(VehicleControls.SW_BATTERY));
+            }
+        }
+        if (t2 == 4) net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
+        if (t2 == 25 && cv != null) { log("battery after right-click on the overhead switch while seated: {}", cv.telemetry.sw(VehicleControls.SW_BATTERY)); screenshot("s_captain_pressed_batt"); }
+        if (t2 == 30) mc.stop();
     }
 
     private static void look(VehicleEntity v, float pitch) {
