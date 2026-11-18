@@ -195,6 +195,19 @@ public final class MinecraftEnvironment implements Environment {
     }
 
     @Override
+    public float roughnessAt(double x, double y, double z) {
+        mpos.set(Mth.floor(x), Mth.floor(y), Mth.floor(z));
+        LevelChunk ch = level.getChunkSource().getChunkNow(mpos.getX() >> 4, mpos.getZ() >> 4);
+        if (ch == null) return 0;
+        BlockState st = ch.getBlockState(mpos);
+        if (st.isAir()) {
+            mpos.move(0, -1, 0);
+            st = ch.getBlockState(mpos);
+        }
+        return BlockPhysics.roughness(st);
+    }
+
+    @Override
     public float frictionAt(double x, double y, double z) {
         mpos.set(Mth.floor(x), Mth.floor(y), Mth.floor(z));
         LevelChunk ch = level.getChunkSource().getChunkNow(mpos.getX() >> 4, mpos.getZ() >> 4);

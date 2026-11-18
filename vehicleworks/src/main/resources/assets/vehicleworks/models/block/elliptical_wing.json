@@ -1,0 +1,214 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "t": "vehicleworks:block/elliptical_wing",
+    "e": "vehicleworks:block/wing_edge",
+    "particle": "vehicleworks:block/elliptical_wing"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        6.5,
+        2
+      ],
+      "to": [
+        16,
+        9.6,
+        14
+      ],
+      "faces": {
+        "up": {
+          "texture": "#t",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#t",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        6.8,
+        0.5
+      ],
+      "to": [
+        14,
+        9.3,
+        15.5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#t",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#t",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        7.0,
+        0
+      ],
+      "to": [
+        11,
+        9.1,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#t",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#t",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        }
+      }
+    }
+  ]
+}

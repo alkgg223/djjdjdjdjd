@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CGC"
+  ],
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "G": {
+      "item": "vehicleworks:landing_gear"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:performance_gear",
+    "count": 1
+  }
+}

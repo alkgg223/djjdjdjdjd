@@ -14,6 +14,16 @@ public final class WheelParams {
     public double gripScale = 1.0;
     public double mass = 40;           // wheel mass (kg) → inertia
     public boolean retractable = false;
+    /** rolling resistance coefficient on a smooth runway */
+    public double rollingResistance = 0.015;
+    /** how much rough ground (grass, dirt, sand, snow) adds to rolling resistance: 1 = normal tyre, low = tundra tyre */
+    public double roughSensitivity = 1.0;
+    /** rated load per gear leg (N); 0 = unlimited. Overload damages the gear. */
+    public double loadCapacity = 0;
+    /** tyre speed rating (m/s); 0 = unlimited. Faster ground roll damages the tyre. */
+    public double maxSpeed = 0;
+    /** gear retraction speed multiplier */
+    public double retractRate = 1.0;
     /** +1 front, -1 rear: Ackermann / handbrake helper, set by layout. */
     public int axleSign;
 
@@ -26,6 +36,7 @@ public final class WheelParams {
         p.radius = radius; p.restLength = restLength; p.stiffness = stiffness; p.damping = damping;
         p.maxSteerDeg = maxSteerDeg; p.steerable = steerable; p.driven = driven; p.braked = braked;
         p.brakeTorque = brakeTorque; p.gripScale = gripScale; p.mass = mass; p.retractable = retractable; p.axleSign = axleSign;
+        p.rollingResistance = rollingResistance; p.roughSensitivity = roughSensitivity; p.loadCapacity = loadCapacity; p.maxSpeed = maxSpeed; p.retractRate = retractRate;
         return p;
     }
 

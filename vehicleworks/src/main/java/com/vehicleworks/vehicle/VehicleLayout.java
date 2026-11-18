@@ -25,6 +25,8 @@ public final class VehicleLayout {
     public final Long2IntOpenHashMap tankIndex = new Long2IntOpenHashMap();
     public final Long2IntOpenHashMap wingStripOfBlock = new Long2IntOpenHashMap();
     public final LongArrayList ammoBoxes = new LongArrayList();
+    /** aircraft light blocks */
+    public final LongArrayList lights = new LongArrayList();
     public final LongArrayList rcus = new LongArrayList();
     public final LongArrayList dynamicBlocks = new LongArrayList();
     public long navComputer = Long.MIN_VALUE;
@@ -83,5 +85,12 @@ public final class VehicleLayout {
     public WeaponSlot weaponAt(long pos) {
         for (WeaponSlot w : weapons) if (w.pos == pos) return w;
         return null;
+    }
+
+    /** set of component types present (filled by the builder) */
+    public final java.util.EnumSet<com.vehicleworks.component.ComponentType> types = java.util.EnumSet.noneOf(com.vehicleworks.component.ComponentType.class);
+
+    public boolean structureHas(com.vehicleworks.component.ComponentType t) {
+        return types.contains(t);
     }
 }

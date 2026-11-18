@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/instrument_panel_a"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/instrument_panel_a",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/instrument_panel_a",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/instrument_panel_a",
+      "y": 270
+    }
+  }
+}

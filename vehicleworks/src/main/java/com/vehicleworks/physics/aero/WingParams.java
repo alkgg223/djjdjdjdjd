@@ -54,7 +54,7 @@ public final class WingParams {
         type = t;
         profile = t.defaultProfile;
         sweepDeg = t.defaultSweepDeg;
-        if (t == WingType.DELTA) {
+        if (t == WingType.DELTA || t == WingType.DOUBLE_DELTA) {
             stallDeg = 32.0;
             incidenceDeg = 0.0;
         } else {
@@ -75,7 +75,7 @@ public final class WingParams {
         flapMaxDeg = clamp(flapMaxDeg, 0, 50);
         controlMaxDeg = clamp(controlMaxDeg, 0, 40);
         spoilerMax = clamp(spoilerMax, 0, 1);
-        sweepDeg = clamp(sweepDeg, 0, 75);
+        sweepDeg = clamp(sweepDeg, -45, 75);
         sweepMaxDeg = clamp(sweepMaxDeg, sweepDeg, 75);
         responsiveness = clamp(responsiveness, 0.1, 3.0);
         if (!Double.isFinite(liftScale)) liftScale = 1;

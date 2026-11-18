@@ -123,6 +123,9 @@ public final class ClientProxy extends CommonProxy {
             case ServerActions.SCREEN_CONFIG -> mc.setScreen(new ComponentScreen(p.vehicleId(), p.pos(), p.data()));
             case ServerActions.SCREEN_ENGINEERING -> mc.setScreen(new EngineeringScreen(p.vehicleId(), p.pos(), p.data()));
             case ServerActions.SCREEN_RCU -> mc.setScreen(new RemoteControlScreen(p.vehicleId(), p.pos(), p.data()));
+            case ServerActions.SCREEN_REFUEL -> {
+                if (mc.level != null && mc.level.getEntity(p.vehicleId()) instanceof com.vehicleworks.vehicle.VehicleEntity v) mc.setScreen(new RefuelScreen(v, p.data()));
+            }
             case ServerActions.SCREEN_PANEL -> {
                 if (mc.level != null && mc.level.getEntity(p.vehicleId()) instanceof com.vehicleworks.vehicle.VehicleEntity v) mc.setScreen(new PanelScreen(v));
             }

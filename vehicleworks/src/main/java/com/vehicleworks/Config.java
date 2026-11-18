@@ -32,6 +32,8 @@ public final class Config {
         public final ModConfigSpec.DoubleValue waveAmplitude;
         public final ModConfigSpec.BooleanValue crashDamage;
         public final ModConfigSpec.DoubleValue crashDamageScale;
+        public final ModConfigSpec.DoubleValue aircraftDamageMultiplier;
+        public final ModConfigSpec.BooleanValue lightsIlluminateWorld;
         public final ModConfigSpec.DoubleValue crashSpeedThreshold;
         public final ModConfigSpec.BooleanValue weaponsBreakBlocks;
         public final ModConfigSpec.DoubleValue weaponDamageScale;
@@ -66,6 +68,10 @@ public final class Config {
             b.push("damage");
             crashDamage = b.define("crashDamage", true);
             crashDamageScale = b.defineInRange("crashDamageScale", 1.0, 0.0, 20.0);
+            aircraftDamageMultiplier = b.comment("Aircraft Damage Multiplier: scales every kind of vehicle damage (crashes, hard landings, structure,",
+                    "wings, engines, landing gear). Applied once, where damage is turned into block wear. 1 = default, 10 = ten times the damage.")
+                    .defineInRange("aircraftDamageMultiplier", 1.0, 1.0, 10.0);
+            lightsIlluminateWorld = b.comment("Landing and taxi lights light up the ground (a few invisible light blocks follow the beam)").define("lightsIlluminateWorld", true);
             crashSpeedThreshold = b.comment("Impact speed (m/s) below which collisions do no damage").defineInRange("crashSpeedThreshold", 9.0, 0.0, 200.0);
             structuralStrength = b.comment("Multiplier on aerodynamic load limits of wings").defineInRange("structuralStrength", 1.0, 0.1, 100.0);
             b.pop();
@@ -93,11 +99,15 @@ public final class Config {
         public final ModConfigSpec.BooleanValue mouseAimDefault;
         public final ModConfigSpec.DoubleValue engineVolume;
         public final ModConfigSpec.BooleanValue voiceCallouts;
+        public final ModConfigSpec.IntValue hudMode;
+        public final ModConfigSpec.BooleanValue hudVisible;
 
         Client(ModConfigSpec.Builder b) {
             lodDistance = b.comment("Beyond this distance animated parts and block entities are skipped").defineInRange("lodDistance", 128, 16, 1024);
             farLodDistance = b.comment("Beyond this distance vehicles render as a simplified silhouette mesh").defineInRange("farLodDistance", 320, 32, 4096);
             renderBlockEntities = b.define("renderBlockEntities", true);
+            hudMode = b.comment("Aircraft HUD style: 0 full flight, 1 minimal, 2 military, 3 navigation").defineInRange("hudMode", 0, 0, 3);
+            hudVisible = b.comment("Show the vehicle HUD").define("hudVisible", true);
             voiceCallouts = b.comment("Speak VehicleWorks callouts (gear, warnings, autopilot) with text-to-speech, independent of the vanilla narrator").define("voiceCallouts", false);
             cameraRoll = b.comment("Roll the first-person camera with the aircraft").define("cameraRoll", true);
             hudScale = b.defineInRange("hudScale", 1.0, 0.5, 2.0);

@@ -1,0 +1,78 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "t": "vehicleworks:block/flap",
+    "e": "vehicleworks:block/wing_edge",
+    "particle": "vehicleworks:block/flap"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        6.9,
+        0
+      ],
+      "to": [
+        16,
+        9.1,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#t",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#t",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#e",
+          "uv": [
+            0,
+            6,
+            16,
+            9
+          ]
+        }
+      }
+    }
+  ]
+}

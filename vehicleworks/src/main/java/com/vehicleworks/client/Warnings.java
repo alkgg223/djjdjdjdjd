@@ -46,7 +46,7 @@ public final class Warnings {
         }
         if (t.fuelCapacity > 0 && t.fuel < 0.1f * t.fuelCapacity && t.engineState.length > 0) s.add(W.LOW_FUEL);
         if (!air) return s;
-        boolean flying = !t.onGround && t.agl > 3;
+        boolean flying = !t.onGround && t.agl > 8 && t.airspeed > 12;
         if (!flying) return s;
         if (t.stall) s.add(W.STALL);
         if (t.vne > 0 && t.airspeed > t.vne) s.add(W.OVERSPEED);

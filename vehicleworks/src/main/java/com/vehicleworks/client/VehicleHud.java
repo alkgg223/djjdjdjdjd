@@ -40,13 +40,25 @@ public final class VehicleHud {
         h = (int) (h / scale);
         ControlProfile p = ControlProfile.byIndex(t.profile);
         boolean pilot = v.seats.getOrDefault(mc.player.getUUID(), Long.MIN_VALUE) != Long.MIN_VALUE;
-        switch (p) {
-            case AIRCRAFT, HELICOPTER, AIRSHIP, AUTO -> flight(g, font, v, t, w, h, p);
-            case CAR -> car(g, font, t, w, h);
-            case SHIP, SUBMARINE -> ship(g, font, t, w, h, p == ControlProfile.SUBMARINE);
+        boolean visible = Config.CLIENT.hudVisible.get();
+        int mode = Config.CLIENT.hudMode.get();
+        boolean air = p == ControlProfile.AIRCRAFT || p == ControlProfile.HELICOPTER || p == ControlProfile.AIRSHIP || p == ControlProfile.AUTO;
+        if (visible) {
+            switch (p) {
+                case AIRCRAFT, HELICOPTER, AIRSHIP, AUTO -> {
+                    switch (mode) {
+                        case 1 -> minimal(g, font, t, w, h);
+                        case 2 -> military(g, font, t, w, h);
+                        case 3 -> navigation(g, font, t, w, h);
+                        default -> flight(g, font, v, t, w, h, p);
+                    }
+                }
+                case CAR -> car(g, font, t, w, h);
+                case SHIP, SUBMARINE -> ship(g, font, t, w, h, p == ControlProfile.SUBMARINE);
+            }
+            if (!air || mode == 0) engines(g, font, t, w, h);
+            weapons(g, font, t, w, h);
         }
-        engines(g, font, t, w, h);
-        weapons(g, font, t, w, h);
         warnings(g, font, t, w, h, p);
         if (!VoiceCallouts.active.isEmpty()) {
             int yy = 32;
@@ -68,6 +80,137 @@ public final class VehicleHud {
             g.drawCenteredString(font, m, w / 2, 15, 0xFFFFFFFF);
         }
         g.pose().popPose();
+    }
+
+    // ------------------------------------------------------------------ HUD styles
+
+    private static String gearFlaps(VehicleTelemetry t) {
+        return (t.gearDown ? "GEAR DN" : "GEAR UP") + String.format("  FLAPS %.0f%%", t.flaps * 100);
+    }
+
+    private static float avgRpm(VehicleTelemetry t) {
+        float s = 0; int n = 0;
+        for (int i = 0; i < t.engineSpool.length; i++) { s += t.engineSpool[i]; n++; }
+        return n > 0 ? s / n : 0;
+    }
+
+    private static float totalThrust(VehicleTelemetry t) {
+        float s = 0;
+        for (float x : t.engineThrust) s += x;
+        return s;
+    }
+
+    /** MINIMAL: one compact strip with the essentials. */
+    private static void minimal(GuiGraphics g, Font f, VehicleTelemetry t, int w, int h) {
+        int cx = w / 2, y = h - 52;
+        String l1 = String.format("%.0f km/h   ALT %.0f   VS %+.1f   HDG %03.0f", t.airspeed * 3.6f, t.altitude, t.verticalSpeed, t.heading);
+        String l2 = String.format("THR %.0f%%   FUEL %.0f%%   ", t.throttle * 100, t.fuelCapacity > 0 ? 100 * t.fuel / t.fuelCapacity : 0) + gearFlaps(t) + (t.autopilot ? "   AP" : "");
+        int bw = Math.max(f.width(l1), f.width(l2)) / 2 + 6;
+        g.fill(cx - bw, y - 4, cx + bw, y + 22, 0x88000000);
+        centered(g, f, l1, cx, y, t.stall ? RED : GREEN);
+        centered(g, f, l2, cx, y + 11, DIM);
+    }
+
+    /** MILITARY: monochrome green, pitch ladder, flight-path marker, boxed speed/altitude. */
+    private static void military(GuiGraphics g, Font f, VehicleTelemetry t, int w, int h) {
+        final int C = 0xFF44FF66;
+        int cx = w / 2, cy = h / 2;
+        float ppd = 6f; // pixels per degree
+        g.pose().pushPose();
+        g.pose().translate(cx, cy, 0);
+        g.enableScissor(cx - 120, cy - 90, cx + 120, cy + 90);
+        g.pose().mulPose(Axis.ZP.rotationDegrees(-t.bank));
+        for (int d = -60; d <= 60; d += 5) {
+            float yy = (t.pitch - d) * ppd;
+            if (Math.abs(yy) > 110) continue;
+            int len = d == 0 ? 110 : (d % 10 == 0 ? 34 : 18);
+            if (d >= 0) { g.fill(-len, (int) yy, -12, (int) yy + 1, C); g.fill(12, (int) yy, len, (int) yy + 1, C); }
+            else for (int x = 12; x < len; x += 6) { g.fill(-x - 3, (int) yy, -x, (int) yy + 1, C); g.fill(x, (int) yy, x + 3, (int) yy + 1, C); }
+            if (d != 0 && d % 10 == 0) { text(g, f, String.valueOf(d), len + 3, (int) yy - 4, C); text(g, f, String.valueOf(d), -len - 3 - f.width(String.valueOf(d)), (int) yy - 4, C); }
+        }
+        g.pose().popPose();
+        g.disableScissor();
+        // boresight and flight-path marker (velocity vector)
+        g.fill(cx - 6, cy, cx - 2, cy + 1, C); g.fill(cx + 3, cy, cx + 7, cy + 1, C); g.fill(cx, cy - 6, cx + 1, cy - 2, C);
+        int fx = cx + (int) Mth.clamp(t.sideslip * ppd, -100, 100), fy = cy + (int) Mth.clamp(t.aoa * ppd, -80, 80);
+        g.renderOutline(fx - 4, fy - 4, 9, 9, C);
+        g.fill(fx - 12, fy, fx - 4, fy + 1, C); g.fill(fx + 5, fy, fx + 13, fy + 1, C); g.fill(fx, fy - 9, fx + 1, fy - 4, C);
+        // speed and altitude boxes
+        g.renderOutline(cx - 150, cy - 7, 44, 15, C);
+        text(g, f, String.format("%4.0f", t.airspeed * 3.6f), cx - 146, cy - 3, C);
+        g.renderOutline(cx + 106, cy - 7, 48, 15, C);
+        text(g, f, String.format("%5.0f", t.altitude), cx + 110, cy - 3, C);
+        text(g, f, String.format("M %.2f", t.mach), cx - 150, cy + 12, C);
+        text(g, f, String.format("G %.1f", t.gLoad), cx - 150, cy + 23, C);
+        text(g, f, String.format("α %.1f", t.aoa), cx - 150, cy + 34, C);
+        text(g, f, String.format("VS %+.0f", t.verticalSpeed), cx + 106, cy + 12, C);
+        text(g, f, String.format("R %.0f", t.agl), cx + 106, cy + 23, C);
+        // heading scale
+        int hy = cy - 112;
+        for (int d = -40; d <= 40; d += 5) {
+            float hd = (float) (Math.floor(t.heading / 5) * 5 + d);
+            int xx = cx + (int) ((hd - t.heading) * 2.4f);
+            if (Math.abs(xx - cx) > 96) continue;
+            int n = Math.floorMod(Math.round(hd), 360);
+            g.fill(xx, hy, xx + 1, hy + (n % 10 == 0 ? 6 : 3), C);
+            if (n % 10 == 0) centered(g, f, String.format("%02d", n / 10), xx, hy - 10, C);
+        }
+        g.fill(cx, hy + 7, cx + 1, hy + 12, C);
+        centered(g, f, String.format("THR %.0f%%%s   %s", t.throttle * 100, t.afterburner ? " AB" : "", gearFlaps(t)), cx, cy + 96, C);
+        if (t.autopilot) centered(g, f, String.format("AP %03.0f / %.0f", t.apHeading, t.apAltitude), cx, cy + 108, C);
+        if (t.armed) centered(g, f, "ARM", cx, cy + 120, 0xFFFF5040);
+    }
+
+    /** NAVIGATION: compass rose with heading bug, waypoint pointer and route data. */
+    private static void navigation(GuiGraphics g, Font f, VehicleTelemetry t, int w, int h) {
+        int cx = w / 2, cy = h - 92, r = 62;
+        g.fill(cx - r - 4, cy - r - 4, cx + r + 4, cy + r + 4, 0x66000000);
+        for (int d = 0; d < 360; d += 10) {
+            double a = Math.toRadians(d - t.heading - 90);
+            int len = d % 30 == 0 ? 8 : 4;
+            for (int k = 0; k < len; k++) {
+                int x = cx + (int) Math.round(Math.cos(a) * (r - k)), y = cy + (int) Math.round(Math.sin(a) * (r - k));
+                g.fill(x, y, x + 1, y + 1, WHITE);
+            }
+            if (d % 30 == 0) {
+                String lbl = switch (d) { case 0 -> "N"; case 90 -> "E"; case 180 -> "S"; case 270 -> "W"; default -> String.valueOf(d / 10); };
+                centered(g, f, lbl, cx + (int) (Math.cos(a) * (r - 16)), cy + (int) (Math.sin(a) * (r - 16)) - 4, d % 90 == 0 ? AMBER : DIM);
+            }
+        }
+        // aircraft symbol
+        g.fill(cx - 8, cy, cx + 9, cy + 2, AMBER); g.fill(cx, cy - 8, cx + 2, cy + 10, AMBER);
+        if (t.autopilot) {
+            double a = Math.toRadians(t.apHeading - t.heading - 90);
+            int x = cx + (int) (Math.cos(a) * (r + 1)), y = cy + (int) (Math.sin(a) * (r + 1));
+            g.fill(x - 3, y - 3, x + 4, y + 4, 0xFF38D3FF);
+        }
+        if (t.navActive) {
+            double a = Math.toRadians(t.navBearing - t.heading - 90);
+            for (int k = 10; k < r - 4; k += 2) {
+                int x = cx + (int) (Math.cos(a) * k), y = cy + (int) (Math.sin(a) * k);
+                g.fill(x, y, x + 2, y + 2, 0xFFFF55FF);
+            }
+        }
+        int tx = cx + r + 16, ty = cy - r;
+        panel(g, tx - 4, ty - 4, tx + 110, ty + 86);
+        text(g, f, String.format("HDG  %03.0f°", t.heading), tx, ty, WHITE);
+        text(g, f, String.format("GS   %.0f km/h", t.groundSpeed * 3.6f), tx, ty + 11, GREEN);
+        text(g, f, String.format("TAS  %.0f km/h", t.airspeed * 3.6f), tx, ty + 22, GREEN);
+        text(g, f, String.format("ALT  %.0f", t.altitude), tx, ty + 33, GREEN);
+        text(g, f, String.format("VS   %+.1f m/s", t.verticalSpeed), tx, ty + 44, DIM);
+        if (t.navActive) {
+            float eta = t.groundSpeed > 1 ? t.navDistance / t.groundSpeed : 0;
+            text(g, f, String.format("WPT  %03.0f° %.1f km", t.navBearing, t.navDistance / 1000f), tx, ty + 55, 0xFFFF88FF);
+            text(g, f, String.format("ETA  %d:%02d", (int) eta / 60, (int) eta % 60), tx, ty + 66, 0xFFFF88FF);
+        } else text(g, f, "WPT  ---", tx, ty + 55, DIM);
+        if (t.autopilot) text(g, f, String.format("AP   %03.0f / %.0f", t.apHeading, t.apAltitude), tx, ty + 77, 0xFF38D3FF);
+        int lx = cx - r - 130;
+        panel(g, lx - 4, ty - 4, lx + 110, ty + 42);
+        text(g, f, String.format("FUEL %.0f kg", t.fuel), lx, ty, t.fuel < t.fuelCapacity * 0.15 ? RED : AMBER);
+        text(g, f, String.format("FLOW %.2f kg/s", t.fuelFlow), lx, ty + 11, DIM);
+        float rng = t.fuelFlow > 1e-3 ? t.fuel / t.fuelFlow * t.groundSpeed / 1000f : 0;
+        text(g, f, String.format("RANGE %.0f km", rng), lx, ty + 22, DIM);
+        text(g, f, gearFlaps(t), lx, ty + 33, DIM);
     }
 
     private static void panel(GuiGraphics g, int x0, int y0, int x1, int y1) {
@@ -93,8 +236,13 @@ public final class VehicleHud {
     private static void flight(GuiGraphics g, Font f, VehicleEntity v, VehicleTelemetry t, int w, int h, ControlProfile p) {
         int cx = w / 2, cy = h / 2;
         boolean full = t.instruments;
-        // attitude indicator
-        if (full) {
+        // attitude indicator (skipped when the cockpit has real instruments, so they stay visible)
+        boolean cockpitGauges = false;
+        for (long k : v.structure.blockEntities().keySet()) {
+            var ct = com.vehicleworks.vehicle.VehicleBuilder.typeOf(v.structure.get(k));
+            if (ct != null && ct.isInstrumentPanel()) { cockpitGauges = true; break; }
+        }
+        if (full && !cockpitGauges) {
             int r = 46;
             int ax = cx, ay = h - 70;
             g.pose().pushPose();
@@ -180,21 +328,21 @@ public final class VehicleHud {
         // levers
         int bx = cx - 175;
         int by = h - 120;
-        panel(g, bx - 6, by - 14, bx + 58, by + 72);
+        panel(g, bx - 6, by - 14, bx + 82, by + 72);
         bar(g, bx, by, 8, 60, p == ControlProfile.AIRSHIP ? t.shipThrottle : t.throttle, t.afterburner ? 0xFFFF8030 : GREEN);
         text(g, f, "THR", bx - 3, by - 11, DIM);
         if (p == ControlProfile.HELICOPTER) {
-            bar(g, bx + 16, by, 8, 60, t.collective, 0xFF60C0FF);
-            text(g, f, "COL", bx + 13, by - 11, DIM);
+            bar(g, bx + 26, by, 8, 60, t.collective, 0xFF60C0FF);
+            text(g, f, "COL", bx + 22, by - 11, DIM);
         } else if (p == ControlProfile.AIRSHIP) {
-            bar(g, bx + 16, by, 8, 60, (t.lift + 1) / 2, 0xFF60C0FF);
-            text(g, f, "LFT", bx + 13, by - 11, DIM);
+            bar(g, bx + 26, by, 8, 60, (t.lift + 1) / 2, 0xFF60C0FF);
+            text(g, f, "LFT", bx + 22, by - 11, DIM);
         } else {
-            bar(g, bx + 16, by, 8, 60, t.flaps, 0xFF60C0FF);
-            text(g, f, "FLP", bx + 13, by - 11, DIM);
+            bar(g, bx + 26, by, 8, 60, t.flaps, 0xFF60C0FF);
+            text(g, f, "FLP", bx + 22, by - 11, DIM);
         }
-        bar(g, bx + 32, by, 8, 60, t.fuelCapacity > 0 ? t.fuel / t.fuelCapacity : 0, t.fuel < t.fuelCapacity * 0.15 ? RED : AMBER);
-        text(g, f, "FUEL", bx + 28, by - 11, DIM);
+        bar(g, bx + 52, by, 8, 60, t.fuelCapacity > 0 ? t.fuel / t.fuelCapacity : 0, t.fuel < t.fuelCapacity * 0.15 ? RED : AMBER);
+        text(g, f, "FUEL", bx + 46, by - 11, DIM);
         text(g, f, (t.gearDown ? "GEAR ▼" : "GEAR ▲"), bx - 3, by + 63, t.gearDown ? GREEN : DIM);
         if (full) {
             text(g, f, String.format("AoA %.1f°  M%.2f", t.aoa, t.mach), cx - 60, h - 14, DIM);
@@ -261,7 +409,7 @@ public final class VehicleHud {
     private static void engines(GuiGraphics g, Font f, VehicleTelemetry t, int w, int h) {
         int n = t.engineState.length;
         if (n == 0) return;
-        int x = 8, y = h / 2 - 10 - n * 6;
+        int x = w - 104, y = h - 26 - n * 12;
         panel(g, x - 4, y - 14, x + 92, y + n * 12 + 2);
         text(g, f, Component.translatable("vehicleworks.hud.engines").getString(), x, y - 11, DIM);
         for (int i = 0; i < n; i++) {

@@ -32,6 +32,38 @@ public final class VehicleControls {
     public boolean parkingBrake;
     public boolean autopilot;
     public boolean battery = true, lights;
+    /** cockpit switches (lights = navigation lights) */
+    public boolean avionics = true, fuelPump, ignition, beacon, strobe, landingLights, taxiLights, turnoffLights;
+    /** 0 both, 1 left, 2 right, 3 off */
+    public int fuelSelector;
+    /** cockpit flood light and panel backlight: 0 off, 1 dim, 2 bright */
+    public int cabinLight, panelLight = 1;
+    /** battery state of charge 0..1 */
+    public double batteryCharge = 1;
+    /** electrical bus powered this tick (battery on and charged, or generator) */
+    public boolean busPowered = true, generator;
+    public static final int SW_BATTERY = 0, SW_AVIONICS = 1, SW_FUEL_PUMP = 2, SW_IGNITION = 3, SW_STARTER = 4, SW_FUEL_SEL = 5,
+            SW_NAV = 6, SW_BEACON = 7, SW_STROBE = 8, SW_LANDING = 9, SW_TAXI = 10, SW_TURNOFF = 11,
+            SW_CABIN = 12, SW_PANEL = 13, SW_GEAR = 14, SW_TEST = 15, SW_AUTOPILOT = 16, SW_PARKING = 17, SWITCH_COUNT = 18;
+
+    /** Bit field of the on/off switches for telemetry (bit = switch id). */
+    public int switchBits() {
+        int b = 0;
+        if (battery) b |= 1 << SW_BATTERY;
+        if (avionics) b |= 1 << SW_AVIONICS;
+        if (fuelPump) b |= 1 << SW_FUEL_PUMP;
+        if (ignition) b |= 1 << SW_IGNITION;
+        if (lights) b |= 1 << SW_NAV;
+        if (beacon) b |= 1 << SW_BEACON;
+        if (strobe) b |= 1 << SW_STROBE;
+        if (landingLights) b |= 1 << SW_LANDING;
+        if (taxiLights) b |= 1 << SW_TAXI;
+        if (turnoffLights) b |= 1 << SW_TURNOFF;
+        if (gearDown) b |= 1 << SW_GEAR;
+        if (autopilot) b |= 1 << SW_AUTOPILOT;
+        if (parkingBrake) b |= 1 << SW_PARKING;
+        return b;
+    }
     public long emergencyUntil;
     public double apHeading, apAltitude = 100;
     public double lift;
@@ -175,6 +207,11 @@ public final class VehicleControls {
         t.putBoolean("Parking", parkingBrake);
         t.putBoolean("AP", autopilot);
         t.putBoolean("Battery", battery);
+        t.putBoolean("Avionics", avionics); t.putBoolean("FuelPump", fuelPump); t.putBoolean("Ignition", ignition);
+        t.putBoolean("Beacon", beacon); t.putBoolean("Strobe", strobe); t.putBoolean("Landing", landingLights);
+        t.putBoolean("Taxi", taxiLights); t.putBoolean("Turnoff", turnoffLights);
+        t.putInt("FuelSel", fuelSelector); t.putInt("Cabin", cabinLight); t.putInt("PanelLight", panelLight);
+        t.putDouble("Charge", batteryCharge);
         t.putBoolean("Lights", lights);
         t.putDouble("ApHdg", apHeading);
         t.putDouble("ApAlt", apAltitude);
@@ -192,6 +229,13 @@ public final class VehicleControls {
         parkingBrake = t.getBoolean("Parking");
         autopilot = t.getBoolean("AP");
         battery = !t.contains("Battery") || t.getBoolean("Battery");
+        avionics = !t.contains("Avionics") || t.getBoolean("Avionics");
+        fuelPump = t.getBoolean("FuelPump"); ignition = t.getBoolean("Ignition");
+        beacon = t.getBoolean("Beacon"); strobe = t.getBoolean("Strobe"); landingLights = t.getBoolean("Landing");
+        taxiLights = t.getBoolean("Taxi"); turnoffLights = t.getBoolean("Turnoff");
+        fuelSelector = t.getInt("FuelSel"); cabinLight = t.getInt("Cabin");
+        panelLight = t.contains("PanelLight") ? t.getInt("PanelLight") : 1;
+        batteryCharge = t.contains("Charge") ? t.getDouble("Charge") : 1;
         lights = t.getBoolean("Lights");
         apHeading = t.getDouble("ApHdg");
         apAltitude = t.contains("ApAlt") ? t.getDouble("ApAlt") : 100;

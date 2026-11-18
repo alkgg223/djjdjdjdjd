@@ -92,6 +92,9 @@ def T():
     t['aileron'] = wingtex('#c3c9ce', '#2f6fd6', 36); t['elevator'] = wingtex('#c3c9ce', '#2fae55', 37); t['rudder'] = wingtex('#c3c9ce', '#d6402f', 38)
     t['flap'] = wingtex('#c3c9ce', '#e2b422', 39); t['spoiler'] = wingtex('#c3c9ce', '#e2762a', 40)
     t['wing_edge'] = base('#9aa1a7', 4, 41)
+    for n, col, sd in (('forward_swept_wing', '#b7c2cc', 71), ('double_delta_wing', '#9ea6ad', 72), ('elliptical_wing', '#dfe6ea', 73), ('tapered_wing', '#ced6dc', 74),
+                       ('high_wing', '#e2e7ea', 75), ('low_wing', '#bfc8cf', 76), ('canard_wing', '#a9b4bd', 77), ('flying_wing', '#4a5058', 78)):
+        t[n] = wingtex(col, seed=sd)
     # ground
     t['tire'] = tire(42); t['rim'] = rim()
     # marine / lift
@@ -200,13 +203,58 @@ for name, cushion in (('pilot_seat', 'seat'), ('passenger_seat', 'seat_passenger
     bs_facing(name, name, FACE4); item_block(name)
 
 # wings: thin plate
-WINGS = ['wing', 'straight_wing', 'swept_wing', 'delta_wing', 'variable_sweep_wing', 'aileron', 'elevator', 'rudder', 'flap', 'spoiler']
+# wings: real cross-sections and planform hints (model front = north = leading edge, span along x)
+def WF(t): return {"up": face(t), "down": face(t), "north": face('e', (0, 6, 16, 9)), "south": face('e', (0, 6, 16, 9)), "east": face('e', (0, 6, 16, 9)), "west": face('e', (0, 6, 16, 9))}
+def airfoil(x0=0, x1=16, z0=0, z1=16, yc=8, t=3.4, tex='t', rot=None):
+    c = z1 - z0
+    a, b2 = z0 + 0.22 * c, z0 + 0.62 * c
+    return [el([x0, yc - t * 0.55, z0], [x1, yc + t * 0.6, a], WF(tex), rot),           # thick rounded leading edge
+            el([x0, yc - t * 0.42, a], [x1, yc + t * 0.48, b2], WF(tex), rot),          # main box
+            el([x0, yc - t * 0.18, b2], [x1, yc + t * 0.22, z1], WF(tex), rot)]         # thin trailing edge
+def chevron(back=True, t=2.6):
+    # two half-plates angled like a swept (or forward-swept) wing; symmetric left/right
+    ang = 22.5 if back else -22.5
+    return [el([-2, 6.8, 1], [8, 6.8 + t, 15], WF('t'), {"origin": [8, 8, 8], "axis": "y", "angle": ang}),
+            el([8, 6.8, 1], [18, 6.8 + t, 15], WF('t'), {"origin": [8, 8, 8], "axis": "y", "angle": -ang}),
+            el([0, 6.6, 0], [16, 7.0 + t, 16], WF('t'))]
+def stepped(rows, y0=6.6, t=2.8):
+    # stacked plates narrowing toward the front: triangle-like planforms
+    out = []
+    for (z0, z1, w) in rows:
+        out.append(el([8 - w / 2, y0, z0], [8 + w / 2, y0 + t, z1], WF('t')))
+    return out
+def plate(t=3.0): return [el([0, 8 - t / 2, 0], [16, 8 + t / 2, 16], WF('t'))]
+def control(t=2.2):
+    # fixed part + hinged surface with a visible hinge gap
+    return [el([0, 8 - t / 2, 0], [16, 8 + t / 2, 6.5], WF('t')), el([0.5, 8 - t / 2 + 0.3, 7.5], [15.5, 8 + t / 2 - 0.3, 16], WF('t')),
+            el([1, 7.6, 6.5], [15, 8.4, 7.5], six('e'))]
+SHAPES = {
+    'wing': airfoil(), 'straight_wing': airfoil(t=4.2), 'swept_wing': chevron(True), 'forward_swept_wing': chevron(False),
+    'delta_wing': stepped([(0, 4, 5), (4, 8, 9), (8, 12, 13), (12, 16, 16)]),
+    'double_delta_wing': stepped([(0, 3, 3), (3, 6, 5), (6, 9, 11), (9, 12.5, 14), (12.5, 16, 16)]),
+    'elliptical_wing': [el([0, 6.5, 2], [16, 9.6, 14], WF('t')), el([2, 6.8, 0.5], [14, 9.3, 15.5], WF('t')), el([5, 7.0, 0], [11, 9.1, 16], WF('t'))],
+    'tapered_wing': airfoil(0, 16, 0, 16, 8, 2.4) + [el([3, 5.9, 1], [13, 10.1, 9], WF('t'))],
+    'variable_sweep_wing': plate(2.6) + [el([5, 5.5, 5], [11, 10.5, 11], six('e'))],
+    'high_wing': airfoil(yc=13.6) + [el([2, 0, 6], [3.5, 12, 7.5], six('e')), el([12.5, 0, 6], [14, 12, 7.5], six('e'))],
+    'low_wing': airfoil(yc=2.6) + [el([4, 4, 3], [12, 6, 12], six('e'))],
+    'canard_wing': airfoil(0, 16, 1, 9, 8, 2.6) + [el([7, 6, 3], [9, 10, 5], six('e'))],
+    'flying_wing': [el([0, 5.2, 0], [16, 10.8, 5], WF('t')), el([0, 5.6, 5], [16, 10.2, 11], WF('t')), el([0, 7.6, 11], [16, 9.6, 16], WF('t'))],
+    'aileron': control(), 'elevator': control(), 'rudder': control(), 'flap': control(), 'spoiler': plate(1.6) + [el([1, 8.8, 4], [15, 9.6, 12], six('e'))],
+}
+WINGS = list(SHAPES.keys())
+HFACE = {"north": 0, "east": 90, "south": 180, "west": 270}
 for wname in WINGS:
-    model(wname, {"parent": "minecraft:block/block", "textures": {"t": b(wname), "e": b('wing_edge'), "particle": b(wname)},
-                  "elements": [el([0, 6.5, 0], [16, 9.5, 16], {"up": face('t'), "down": face('t'), "north": face('e', (0, 6, 16, 9)),
-                                                               "south": face('e', (0, 6, 16, 9)), "east": face('e', (0, 6, 16, 9)), "west": face('e', (0, 6, 16, 9))})]})
-    blockstate(wname, {"variants": {"plane=horizontal": {"model": b(wname)}, "plane=vertical_z": {"model": b(wname), "x": 90},
-                                    "plane=vertical_x": {"model": b(wname), "x": 90, "y": 90}}})
+    model(wname, {"parent": "minecraft:block/block", "textures": {"t": b(wname), "e": b('wing_edge'), "particle": b(wname)}, "elements": SHAPES[wname]})
+    # vertical (fin) orientation: symmetric airfoil plate
+    model(wname + '_v', {"parent": "minecraft:block/block", "textures": {"t": b(wname), "e": b('wing_edge'), "particle": b(wname)},
+                         "elements": plate(2.6) if wname not in ('aileron', 'elevator', 'rudder', 'flap', 'spoiler') else plate(2.2)})
+    variants = {}
+    for f, ry in HFACE.items():
+        variants[f"facing={f},plane=horizontal"] = {"model": b(wname), "y": ry} if ry else {"model": b(wname)}
+        # vertical_z: plate in the X-Y plane (flight along X); vertical_x: plate in Z-Y plane (flight along Z)
+        variants[f"facing={f},plane=vertical_z"] = {"model": b(wname + '_v'), "x": 90}
+        variants[f"facing={f},plane=vertical_x"] = {"model": b(wname + '_v'), "x": 90, "y": 90}
+    blockstate(wname, {"variants": variants})
     item_block(wname)
 
 # wheel: octagonal tyre, axle along X (forward = north)
@@ -363,3 +411,122 @@ model('yoke', {"parent": "minecraft:block/block", "textures": {"particle": b('st
                "display": {"gui": {"rotation": [20, 200, 0], "translation": [0, 2, 0], "scale": [0.9, 0.9, 0.9]}}, "elements": yoke_els})
 bs_facing('yoke', 'yoke', FACE4); item_block('yoke')
 print('yoke ok')
+
+# ------------------------------------------------------------------ aircraft wheel family (tyres spin about the block centre)
+def tread(seed, col, block=False):
+    im = base(col, 6, seed); px = im.load()
+    for y in range(S):
+        for x in range(S):
+            if block:
+                if (y // 4) % 2 == 0 and (x // 6 + y // 4) % 2 == 0: px[x, y] = shade(px[x, y], 1.6)
+            elif x % 8 < 2: px[x, y] = shade(px[x, y], 1.4)
+    return im
+def rim_colored(col, spokes):
+    im = tire(9); disc(im, 16, 16, 11, col); ring(im, 16, 16, 7, 8.5, '#3a3f44'); disc(im, 16, 16, 3.5, '#e8ecef')
+    for a in range(spokes):
+        ang = a * 2 * math.pi / spokes
+        for rr in range(4, 11): disc(im, 16 + math.cos(ang) * rr, 16 + math.sin(ang) * rr, 0.8, '#2a2e33', False)
+    return im
+tex('tire_tundra', tread(401, '#2e2b27', True)); tex('rim_tundra', rim_colored('#e8c040', 6))
+tex('tire_perf', tread(402, '#1d1d1f')); tex('rim_perf', rim_colored('#c02828', 10))
+tex('rim_heavy', rim_colored('#9aa2a8', 8))
+def gear_model(name, els, t='tire', r='rim'):
+    model(name, {"parent": "minecraft:block/block", "textures": {"t": b(t), "r": b(r), "h": b('strut'), "particle": b('strut')}, "elements": els})
+    bs_facing(name, name, FACE4); item_block(name)
+gear_model('dual_wheel_gear', wheel_elements(0, 16, (0.5, 6.5)) + wheel_elements(0, 16, (9.5, 15.5)))
+gear_model('bogie_gear', wheel_elements(1, 15, (0.5, 6.5)) + wheel_elements(1, 15, (9.5, 15.5)), r='rim_heavy')
+gear_model('reinforced_gear', wheel_elements(0, 16, (2.5, 13.5)) + [el([1.5, 5.5, 5.5], [14.5, 10.5, 10.5], six('h'))], r='rim_heavy')
+gear_model('tundra_gear', wheel_elements(0, 16, (1.5, 14.5)), t='tire_tundra', r='rim_tundra')
+gear_model('performance_gear', wheel_elements(1, 15, (6, 10)), t='tire_perf', r='rim_perf')
+print('gear family ok')
+
+# ------------------------------------------------------------------ cockpit instruments (64 px faces)
+from PIL import Image as _I, ImageDraw as _ID, ImageFont as _IF
+_F = _IF.load_default(size=7)
+N = 64; CC = 32
+def _dial(bg='#0d0f12'):
+    im = _I.new('RGBA', (N, N), (0, 0, 0, 0)); d = _ID.Draw(im)
+    d.ellipse([2, 2, N - 3, N - 3], fill=bg)
+    return im, d
+def _ticks(d, a0, a1, n, r0, r1, col='#e8e8e8', every=1, r0b=None):
+    for i in range(n + 1):
+        a = math.radians(a0 + (a1 - a0) * i / n - 90)
+        rr = r0b if (r0b and i % every == 0) else r0
+        d.line([(CC + rr * math.cos(a), CC + rr * math.sin(a)), (CC + r1 * math.cos(a), CC + r1 * math.sin(a))], fill=col, width=1)
+def _labels(d, a0, a1, labels, r, col='#ffffff'):
+    n = len(labels) - 1
+    for i, s in enumerate(labels):
+        a = math.radians(a0 + (a1 - a0) * i / max(1, n) - 90)
+        tw = d.textlength(s, font=_F)
+        d.text((CC + r * math.cos(a) - tw / 2, CC + r * math.sin(a) - 4), s, font=_F, fill=col)
+def _arc(d, a0, a1, r, col, w=3):
+    d.arc([CC - r, CC - r, CC + r, CC + r], a0 - 90, a1 - 90, fill=col, width=w)
+def _title(d, s, y=40, col='#9fb3c8'):
+    tw = d.textlength(s, font=_F); d.text((CC - tw / 2, y), s, font=_F, fill=col)
+def itex64(name, im):
+    p = os.path.join(A, 'textures', 'block', name + '.png'); im.save(p)
+# altimeter: 0-9 (hundreds) around the dial
+im, d = _dial(); _ticks(d, 0, 360, 50, 25, 29, every=5, r0b=22); _labels(d, 0, 324, [str(i) for i in range(10)], 19); _title(d, 'ALT', 38); itex64('inst_altimeter', im)
+# airspeed: 0..1000 km/h over 300 deg, coloured arcs
+im, d = _dial(); _arc(d, 18, 75, 27, '#e8e8e8'); _arc(d, 30, 210, 25, '#2fae55'); _arc(d, 210, 255, 25, '#e2b422'); _ticks(d, 255, 258, 1, 20, 29, '#ff3030')
+_ticks(d, 0, 300, 20, 25, 29, every=2, r0b=22); _labels(d, 0, 240, ['0', '2', '4', '6', '8'], 19); _title(d, 'KM/H', 38); itex64('inst_airspeed', im)
+# vertical speed: -30..+30 m/s, zero at 9 o'clock
+im, d = _dial(); _ticks(d, -90 - 160, -90 + 160, 24, 25, 29, every=4, r0b=21)
+_labels(d, -250, -90, ['30', '20', '10', ''], 19); _labels(d, -90, 70, ['0', '10', '20', '30'], 19); _title(d, 'VS', 38); d.text((40, 18), 'UP', font=_F, fill='#9fb3c8'); d.text((38, 40), 'DN', font=_F, fill='#9fb3c8'); itex64('inst_vsi', im)
+# tachometer 0..110 %
+im, d = _dial(); _arc(d, 20, 230, 25, '#2fae55'); _ticks(d, 250, 252, 1, 19, 29, '#ff3030'); _ticks(d, 0, 275, 22, 25, 29, every=2, r0b=21)
+_labels(d, 0, 250, ['0', '2', '4', '6', '8', '10'], 19); _title(d, 'RPM%', 38); itex64('inst_tachometer', im)
+# fuel gauge: E .. F
+im, d = _dial(); _arc(d, -60, -35, 25, '#ff3030', 4); _arc(d, -35, 60, 25, '#e8e8e8', 2); _ticks(d, -60, 60, 8, 24, 29, every=2, r0b=20)
+_labels(d, -60, 60, ['E', '1/2', 'F'], 19); _title(d, 'FUEL', 38); itex64('inst_fuel_gauge', im)
+# engine pressure
+im, d = _dial(); _arc(d, -120, -80, 25, '#ff3030', 4); _arc(d, -80, 70, 25, '#2fae55', 3); _arc(d, 70, 120, 25, '#e2b422', 3); _ticks(d, -120, 120, 12, 24, 29, every=3, r0b=20)
+_labels(d, -120, 120, ['0', '25', '50', '75', '100'], 19); _title(d, 'OIL', 38); itex64('inst_engine_pressure', im)
+# heading indicator card (rotates), compass card (rotates)
+for nm, col, bg in (('inst_hdg_card', '#ffffff', '#101418'), ('inst_compass_card', '#ffd040', '#1b1206')):
+    im, d = _dial(bg); _ticks(d, 0, 360, 36, 25, 29, col, every=3, r0b=21)
+    for i, s in enumerate(['N', '3', '6', 'E', '12', '15', 'S', '21', '24', 'W', '30', '33']):
+        a = math.radians(i * 30 - 90); tw = d.textlength(s, font=_F)
+        d.text((CC + 18 * math.cos(a) - tw / 2, CC + 18 * math.sin(a) - 4), s, font=_F, fill='#ff8040' if s in 'NESW' and len(s) == 1 else col)
+    itex64(nm, im)
+# turn coordinator face
+im, d = _dial(); _ticks(d, -90 - 20, -90 + 20, 2, 22, 29, every=1); _ticks(d, 90 - 20, 90 + 20, 2, 22, 29, every=1)
+d.text((8, 36), 'L', font=_F, fill='#ffffff'); d.text((52, 36), 'R', font=_F, fill='#ffffff'); d.rounded_rectangle([18, 44, 46, 52], 3, outline='#9fb3c8'); _title(d, '2 MIN', 12); itex64('inst_turn', im)
+# bezel: square frame with a round window (cutout masks the horizon card / needles)
+im = _I.new('RGBA', (N, N), (0, 0, 0, 0)); d = _ID.Draw(im)
+d.rectangle([0, 0, N - 1, N - 1], fill='#24282d'); d.ellipse([3, 3, N - 4, N - 4], fill=(0, 0, 0, 0)); d.ellipse([1, 1, N - 2, N - 2], outline='#5a6068', width=2)
+for (x, y) in ((4, 4), (N - 6, 4), (4, N - 6), (N - 6, N - 6)): d.rectangle([x, y, x + 1, y + 1], fill='#9aa0a6')
+itex64('inst_bezel', im)
+# screen bezel for large displays
+im = _I.new('RGBA', (N, N), (0, 0, 0, 0)); d = _ID.Draw(im)
+d.rectangle([0, 0, N - 1, N - 1], fill='#1c1f23'); d.rectangle([3, 3, N - 4, N - 4], fill=(0, 0, 0, 0)); d.rectangle([2, 2, N - 3, N - 3], outline='#4a5058')
+for x in range(8, N - 8, 10): d.rectangle([x, N - 3, x + 4, N - 2], fill='#5a6068')
+itex64('inst_screen_bezel', im)
+# instrument panel block faces
+im = _I.new('RGBA', (32, 32), (0, 0, 0, 255)); d = _ID.Draw(im); d.rectangle([0, 0, 31, 31], fill='#1d2024'); d.rectangle([0, 0, 31, 31], outline='#3a3f45')
+p = os.path.join(A, 'textures', 'block', 'instrument_face.png'); im.save(p)
+for nm in ('instrument_panel_a', 'instrument_panel_b', 'instrument_panel_c'):
+    model(nm, {"parent": "minecraft:block/cube", "textures": {"north": b('instrument_face'), "south": b('device_side'), "east": b('device_side'), "west": b('device_side'),
+                                                             "up": b('device_side'), "down": b('device_side'), "particle": b('device_side')}})
+    bs_facing(nm, nm, FACE4); item_block(nm)
+# aircraft light housing (glow is drawn by the renderer)
+model('aircraft_light', {"parent": "minecraft:block/block", "textures": {"h": b('strut'), "l": b('wing_edge'), "particle": b('strut')},
+                         "elements": [el([5.5, 5.5, 5.5], [10.5, 8, 10.5], six('h')), el([6.5, 8, 6.5], [9.5, 10.5, 9.5], six('l'))]})
+bs_facing('aircraft_light', 'aircraft_light', FACE4); item_block('aircraft_light')
+# overhead switch panel plate (switches, knobs and lamps are drawn live by the renderer)
+im = _I.new('RGBA', (32, 32), (0, 0, 0, 255)); d = _ID.Draw(im); d.rectangle([0, 0, 31, 31], fill='#2a2e33')
+for x in range(0, 32, 8): d.line([(x, 0), (x, 31)], fill='#383d43')
+d.line([(0, 15), (31, 15)], fill='#383d43')
+p = os.path.join(A, 'textures', 'block', 'panel_plate.png'); im.save(p)
+model('cockpit_panel', {"parent": "minecraft:block/block", "textures": {"particle": b('device_side'), "s": b('device_side'), "p": b('panel_plate')},
+                        "display": {"gui": {"rotation": [-60, 160, 0], "translation": [0, 0, 0], "scale": [0.4, 0.4, 0.4]}},
+                        "elements": [el([-16, 14.5, -8], [32, 16, 24], {"down": face('p'), "up": face('s'), "north": face('s'), "south": face('s'), "east": face('s'), "west": face('s')})]})
+print('instruments ok')
+# refuel port: cap with hose coupling
+im = _I.new('RGBA', (32, 32), (0, 0, 0, 255)); d = _ID.Draw(im); d.rectangle([0, 0, 31, 31], fill='#3a3f45')
+d.ellipse([7, 7, 24, 24], fill='#d8b020'); d.ellipse([11, 11, 20, 20], fill='#1a1a1a'); d.text((3, 1), 'FUEL', font=_IF.load_default(size=7), fill='#ffffff')
+p = os.path.join(A, 'textures', 'block', 'refuel_port.png'); im.save(p)
+model('refuel_port', {"parent": "minecraft:block/cube", "textures": {"north": b('refuel_port'), "south": b('device_side'), "east": b('device_side'), "west": b('device_side'),
+                                                       "up": b('device_side'), "down": b('device_side'), "particle": b('device_side')}})
+bs_facing('refuel_port', 'refuel_port', FACE4); item_block('refuel_port')
+print('refuel ok')

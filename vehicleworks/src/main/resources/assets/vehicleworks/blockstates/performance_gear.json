@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/performance_gear"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/performance_gear",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/performance_gear",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/performance_gear",
+      "y": 270
+    }
+  }
+}

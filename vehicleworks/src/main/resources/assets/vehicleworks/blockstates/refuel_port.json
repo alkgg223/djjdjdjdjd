@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/refuel_port"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/refuel_port",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/refuel_port",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/refuel_port",
+      "y": 270
+    }
+  }
+}

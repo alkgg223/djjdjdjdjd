@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GIG"
+  ],
+  "key": {
+    "G": {
+      "item": "vehicleworks:landing_gear"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:dual_wheel_gear",
+    "count": 1
+  }
+}

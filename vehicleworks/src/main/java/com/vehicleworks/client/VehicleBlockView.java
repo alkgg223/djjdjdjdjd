@@ -48,14 +48,28 @@ public final class VehicleBlockView implements BlockAndTintGetter {
         throw new UnsupportedOperationException("vehicle view has no light engine");
     }
 
+    /** interior light sources (block key → light level), falling off by one level per block */
+    public it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap lamps;
+
+    private int lampLight(BlockPos pos) {
+        if (lamps == null || lamps.isEmpty()) return 0;
+        int best = 0;
+        for (var e : lamps.long2IntEntrySet()) {
+            long k = e.getLongKey();
+            int d = Math.abs(BlockPos.getX(k) - pos.getX()) + Math.abs(BlockPos.getY(k) - pos.getY()) + Math.abs(BlockPos.getZ(k) - pos.getZ());
+            best = Math.max(best, e.getIntValue() - d);
+        }
+        return best;
+    }
+
     @Override
     public int getBrightness(LightLayer layer, BlockPos pos) {
-        return layer == LightLayer.SKY ? sky : block;
+        return layer == LightLayer.SKY ? sky : Math.max(block, lampLight(pos));
     }
 
     @Override
     public int getRawBrightness(BlockPos pos, int darkening) {
-        return Math.max(sky - darkening, block);
+        return Math.max(sky - darkening, Math.max(block, lampLight(pos)));
     }
 
     @Override

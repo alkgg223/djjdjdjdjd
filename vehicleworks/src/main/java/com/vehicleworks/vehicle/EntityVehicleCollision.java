@@ -44,11 +44,15 @@ public final class EntityVehicleCollision {
     private static final class MoveInfo {
         boolean processed;
         boolean vehicleGround;
+        /** a vehicle really blocked the entity's horizontal motion this move */
+        boolean blockedH;
         VehicleEntity groundVehicle;
         double carryY;
     }
 
-    private static final Map<Entity, Anchor> ANCHORS = new WeakHashMap<>();
+    public static int DEBUG_PUSHES;
+    public static String DEBUG = "";
+    private static final Map<Entity, Anchor> ANCHORS = java.util.Collections.synchronizedMap(new WeakHashMap<>());
     private static final ThreadLocal<MoveInfo> INFO = ThreadLocal.withInitial(MoveInfo::new);
     private static final Map<BlockState, VoxelShape> SHAPES = new IdentityHashMap<>();
 
@@ -69,6 +73,34 @@ public final class EntityVehicleCollision {
         return Math.toDegrees(Math.atan2(-a.x, a.z));
     }
 
+    /**
+     * Carry an entity standing on (or jumping above) a vehicle along with the vehicle's motion
+     * since the last tick. Done as a teleport before the move, so vanilla never sees the carry as
+     * a collision (which would zero the entity's own velocity every tick: slow "feather" walking
+     * and jumping). Also called after the client tick, when the vehicle may have moved later
+     * than the player in the same tick (keeps the player from lagging one tick behind / inside).
+     */
+    public static void carry(Entity e) {
+        if (!isSimulatedHere(e)) return;
+        Anchor a = ANCHORS.get(e);
+        if (a == null || a.vehicle == null || a.vehicle.isRemoved() || a.vehicle.level() != e.level()) return;
+        VehicleEntity v = a.vehicle;
+        Vector3d target = v.localToWorld(a.local.x, a.local.y, a.local.z, new Vector3d());
+        double d2 = target.distanceSquared(e.getX(), e.getY(), e.getZ());
+        if (d2 > 900) { ANCHORS.remove(e); return; }
+        double yaw = vehicleYaw(v);
+        float dyaw = (float) Mth.wrapDegrees(yaw - a.yaw);
+        a.yaw = yaw;
+        if (Math.abs(dyaw) > 1e-4) {
+            e.setYRot(e.getYRot() + dyaw);
+            if (e instanceof LivingEntity le) {
+                le.yHeadRot += dyaw;
+                le.yBodyRot += dyaw;
+            }
+        }
+        if (d2 > 1e-10) e.setPos(target.x, target.y, target.z);
+    }
+
     /** Called at the end of Entity.collide with vanilla's result. Returns the final movement. */
     public static Vec3 collide(Entity e, Vec3 movement, Vec3 resolved) {
         MoveInfo info = INFO.get();
@@ -76,6 +108,7 @@ public final class EntityVehicleCollision {
         info.vehicleGround = false;
         info.groundVehicle = null;
         info.carryY = 0;
+        info.blockedH = false;
         if (!isSimulatedHere(e)) return resolved;
         AABB box = e.getBoundingBox();
         Anchor anchor = ANCHORS.get(e);
@@ -83,31 +116,23 @@ public final class EntityVehicleCollision {
         if (near.isEmpty() && (anchor == null || anchor.vehicle == null)) return resolved;
         info.processed = true;
         Vec3 total = resolved;
-        VehicleEntity anchored = null;
-        if (anchor != null && anchor.vehicle != null && !anchor.vehicle.isRemoved() && anchor.vehicle.level() == e.level()) {
-            Vector3d target = anchor.vehicle.localToWorld(anchor.local.x, anchor.local.y, anchor.local.z, new Vector3d());
-            if (target.distanceSquared(e.getX(), e.getY(), e.getZ()) < 400) {
-                anchored = anchor.vehicle;
-                info.carryY = target.y - e.getY();
-                double yaw = vehicleYaw(anchored);
-                float dy = (float) Mth.wrapDegrees(yaw - anchor.yaw);
-                if (Math.abs(dy) > 1e-4) {
-                    e.setYRot(e.getYRot() + dy);
-                    if (e instanceof LivingEntity le) {
-                        le.yHeadRot += dy;
-                        le.yBodyRot += dy;
-                    }
-                }
-                anchor.yaw = yaw;
-                // start from the anchor point in the vehicle frame: the carry is implicit
-                total = collideWith(e, anchored, new Vector3d(anchor.local), resolved, true, info);
-            }
-        }
         for (VehicleEntity v : near) {
-            if (v == anchored || v.structure.isEmpty()) continue;
+            if (v.structure.isEmpty()) continue;
             Vector3d start = v.worldToLocal(e.getX(), e.getY(), e.getZ(), new Vector3d());
-            total = collideWith(e, v, start, total, false, info);
+            total = collideWith(e, v, start, total, anchor != null && anchor.vehicle == v, info);
         }
+        // On a tilted deck the motion follows the deck plane, which differs slightly from the
+        // requested world motion. Vanilla would read that as hitting a wall and zero the walking
+        // velocity every tick (slow walking), so keep the requested horizontal motion unless a
+        // vehicle block really stopped it.
+        if (!info.blockedH) total = new Vec3(resolved.x, total.y, resolved.z);
+        // the frame round trip leaves ~1e-15 noise; vanilla compares the vertical movement exactly
+        // and would treat the noise as a collision (zeroing the jump / fall velocity)
+        double tx = Math.abs(total.x - resolved.x) < 1e-7 ? resolved.x : total.x;
+        double ty = Math.abs(total.y - resolved.y) < 1e-7 ? resolved.y : total.y;
+        double tz = Math.abs(total.z - resolved.z) < 1e-7 ? resolved.z : total.z;
+        if (tx != total.x || ty != total.y || tz != total.z) total = new Vec3(tx, ty, tz);
+        if (e instanceof Player) DEBUG += String.format(" | move=(%.5f,%.5f,%.5f) vanilla=(%.5f,%.5f,%.5f) out=(%.5f,%.5f,%.5f)", movement.x, movement.y, movement.z, resolved.x, resolved.y, resolved.z, total.x, total.y, total.z);
         return total;
     }
 
@@ -123,6 +148,11 @@ public final class EntityVehicleCollision {
             e.fallDistance = Math.max(0, e.fallDistance + (float) info.carryY);
         }
         Anchor a = ANCHORS.get(e);
+        // landed on the world (fell off the vehicle): stop carrying immediately
+        if (!info.vehicleGround && e.onGround()) {
+            ANCHORS.remove(e);
+            return;
+        }
         VehicleEntity v = info.vehicleGround ? info.groundVehicle : (a != null ? a.vehicle : null);
         if (v == null || v.isRemoved()) {
             ANCHORS.remove(e);
@@ -172,13 +202,23 @@ public final class EntityVehicleCollision {
                     if (!sh.isEmpty()) shapes.add(sh.move(x, y, z));
                 }
         if (shapes.isEmpty()) return anchored ? toWorldDisplacement(e, v, feet, lm.x, lm.y, lm.z) : motion;
-        // push out if the vehicle moved into the entity
-        double push = anchored ? 0 : depenetrateUp(box, shapes);
+        // push out if the vehicle moved / rotated into the entity (never leave it stuck inside)
+        double push = depenetrateUp(box, shapes);
+        if (push > 0) DEBUG_PUSHES++;
         if (push > 0) {
             box = box.move(0, push, 0);
-            lm.y = Math.max(lm.y, 0) + push;
+            feet.y += push;
+            if (lm.y < 0) lm.y = 0;
             if (push < 0.75) info.vehicleGround = true;
             info.groundVehicle = v;
+        } else {
+            double[] side = depenetrateSide(box, shapes);
+            if (side != null) {
+                info.blockedH = true;
+                box = box.move(side[0], 0, side[1]);
+                feet.x += side[0];
+                feet.z += side[1];
+            }
         }
         double dy = Shapes.collide(Direction.Axis.Y, box, shapes, lm.y);
         AABB b = box.move(0, dy, 0);
@@ -213,6 +253,7 @@ public final class EntityVehicleCollision {
                     dz = sdz;
                     dy = sb.minY - box.minY;
                     groundedNow = true;
+                    blockedH = Math.abs(dx - lm.x) > 1e-7 || Math.abs(dz - lm.z) > 1e-7;
                 }
             }
         }
@@ -220,6 +261,8 @@ public final class EntityVehicleCollision {
             info.vehicleGround = true;
             info.groundVehicle = v;
         }
+        if (blockedH) info.blockedH = true;
+        if (e instanceof Player) DEBUG = String.format("lm=(%.5f,%.5f,%.5f) d=(%.5f,%.5f,%.5f) feetY=%.9f blockedH=%s shapes=%d", lm.x, lm.y, lm.z, dx, dy, dz, feet.y, blockedH, shapes.size());
         return toWorldDisplacement(e, v, feet, dx, dy, dz);
     }
 
@@ -244,6 +287,29 @@ public final class EntityVehicleCollision {
         if (!overlap) return 0;
         double push = maxTop - box.minY;
         return push > 0 && push <= 1.0 ? push + 1e-4 : 0;
+    }
+
+    /** Smallest horizontal push (≤ 1.2 blocks) out of the shapes when pushing up is not possible. */
+    private static double[] depenetrateSide(AABB box, List<VoxelShape> shapes) {
+        AABB shrunk = box.deflate(1e-4);
+        boolean overlap = false;
+        for (VoxelShape s : shapes) for (AABB a : s.toAabbs()) if (a.intersects(shrunk)) { overlap = true; break; }
+        if (!overlap) return null;
+        double[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        double best = Double.MAX_VALUE;
+        double[] out = null;
+        for (double[] d : dirs) {
+            for (double step = 0.05; step <= 1.2; step += 0.05) {
+                AABB m = shrunk.move(d[0] * step, 0, d[1] * step);
+                boolean hit = false;
+                for (VoxelShape s : shapes) { for (AABB a : s.toAabbs()) if (a.intersects(m)) { hit = true; break; } if (hit) break; }
+                if (!hit) {
+                    if (step < best) { best = step; out = new double[]{d[0] * step, d[1] * step}; }
+                    break;
+                }
+            }
+        }
+        return out;
     }
 
     public static void forget(Entity e) {

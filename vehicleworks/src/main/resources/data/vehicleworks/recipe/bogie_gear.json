@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "DD",
+    "II"
+  ],
+  "key": {
+    "D": {
+      "item": "vehicleworks:dual_wheel_gear"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:bogie_gear",
+    "count": 1
+  }
+}

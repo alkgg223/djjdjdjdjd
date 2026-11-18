@@ -276,6 +276,78 @@ t('vehicleworks.tooltip.yoke', 'Place in front of a seat, facing the pilot. Ever
 t('vehicleworks.cmd.no_vehicle', 'No vehicle found (ride one or stand near it)', 'لا توجد مركبة (اركب واحدة أو قف بجانبها)')
 t('vehicleworks.cmd.no_engine', 'No such engine', 'لا يوجد هذا المحرك')
 t('vehicleworks.cmd.engine_exploded', '%s engine(s) exploded!', 'انفجر %s محرك!')
+# 1.1.0 aircraft wheel family
+for k, en, ar, ten, tar in (
+    ('dual_wheel_gear', 'Dual Wheel Gear', 'عجلات هبوط مزدوجة', 'Two tyres side by side for larger aircraft. Rated 35 t per leg.', 'إطاران متجاوران للطائرات الأكبر. تتحمل 35 طن لكل ساق.'),
+    ('bogie_gear', 'Heavy-Duty Bogie Gear', 'مجموعة عجلات ثقيلة', 'Four-tyre bogie (two axles) for heavy aircraft. Rated 90 t per leg, strong brakes.', 'مجموعة بأربعة إطارات (محوران) للطائرات الثقيلة. تتحمل 90 طن لكل ساق مع مكابح قوية.'),
+    ('reinforced_gear', 'Reinforced Landing Gear', 'عجلات هبوط مقواة', 'Stiff, long-travel gear that absorbs hard landings. Rated 55 t per leg.', 'عجلات قاسية بشوط تعليق طويل تمتص الهبوط العنيف. تتحمل 55 طن لكل ساق.'),
+    ('tundra_gear', 'Tundra Wheels', 'عجلات التندرا', 'Big soft balloon tyres: rough-field landings on grass, dirt, sand and snow. Light aircraft only (6 t), max 200 km/h.', 'إطارات كبيرة طرية للهبوط على العشب والتراب والرمل والثلج. للطائرات الخفيفة فقط (6 طن)، أقصى سرعة 200 كم/س.'),
+    ('performance_gear', 'High-Performance Wheels', 'عجلات عالية الأداء', 'Narrow low-drag tyres rated to 500 km/h, fast retraction. Bad on rough ground.', 'إطارات ضيقة قليلة المقاومة حتى 500 كم/س، تُرفع بسرعة. سيئة على الأرض الوعرة.')):
+    t('block.vehicleworks.' + k, en, ar); t('vehicleworks.tooltip.' + k, ten, tar)
+t('block.vehicleworks.landing_gear', 'Standard Aircraft Wheel', 'عجلة طائرة قياسية')
+# 1.1.0 wing collection
+for k, en, ar, ten, tar in (
+    ('forward_swept_wing', 'Forward-Swept Wing', 'جناح مائل للأمام', 'Root stalls first: ailerons keep working, agile, docile stall.', 'يبدأ الانهيار من الجذر: الجنيحات تبقى فعالة، رشيق وانهياره هادئ.'),
+    ('double_delta_wing', 'Double-Delta Wing', 'جناح دلتا مزدوج', 'Strake + delta: strong vortex lift and a very high stall angle.', 'دلتا مزدوج: رفع دوامي قوي وزاوية انهيار عالية جداً.'),
+    ('elliptical_wing', 'Elliptical Wing', 'جناح بيضاوي', 'Lowest induced drag, but the whole span stalls at once.', 'أقل مقاومة مستحثة، لكن الجناح كله ينهار مرة واحدة.'),
+    ('tapered_wing', 'Tapered Wing', 'جناح مستدق', 'Near-elliptic efficiency, light and low drag.', 'كفاءة قريبة من البيضاوي، خفيف وقليل المقاومة.'),
+    ('high_wing', 'High Wing', 'جناح علوي', 'Mounted above the fuselage: strong roll stability, forgiving, more lift.', 'فوق جسم الطائرة: ثبات قوي في الميلان، متسامح، رفع أكبر.'),
+    ('low_wing', 'Low Wing', 'جناح سفلي', 'Mounted under the fuselage: strong ground effect, agile roll.', 'تحت جسم الطائرة: تأثير أرضي قوي وميلان رشيق.'),
+    ('canard_wing', 'Canard', 'جناح أمامي (كنارد)', 'Small all-moving foreplane (pitch control); stalls before the main wing.', 'جناح أمامي صغير متحرك للتحكم بالمقدمة؛ ينهار قبل الجناح الرئيسي.'),
+    ('flying_wing', 'Flying Wing', 'جناح طائر', 'Tailless all-wing section: very low drag, high efficiency. Use elevons at the trailing edge.', 'قسم جناح طائر بلا ذيل: مقاومة قليلة جداً وكفاءة عالية. استخدم elevon في الحافة الخلفية.')):
+    t('block.vehicleworks.' + k, en, ar); t('vehicleworks.tooltip.' + k, ten, tar)
+for k, en, ar in (('forward_swept', 'Forward-swept', 'مائل للأمام'), ('double_delta', 'Double delta', 'دلتا مزدوج'), ('elliptical', 'Elliptical', 'بيضاوي'), ('tapered', 'Tapered', 'مستدق'),
+                  ('high_wing', 'High wing', 'جناح علوي'), ('low_wing', 'Low wing', 'جناح سفلي'), ('canard', 'Canard', 'كنارد'), ('flying_wing', 'Flying wing', 'جناح طائر')):
+    t('vehicleworks.opt.' + k, en, ar)
+t('key.vehicleworks.hud_toggle', 'Show / hide HUD', 'إظهار/إخفاء الشاشة HUD')
+t('key.vehicleworks.hud_mode', 'HUD style', 'نمط الشاشة HUD')
+t('vehicleworks.hud.shown', 'HUD shown', 'تم إظهار HUD')
+t('vehicleworks.hud.hidden', 'HUD hidden', 'تم إخفاء HUD')
+for i, en, ar in ((0, 'HUD: Full flight', 'HUD: الطيران الكامل'), (1, 'HUD: Minimal', 'HUD: مختصر'), (2, 'HUD: Military', 'HUD: عسكري'), (3, 'HUD: Navigation', 'HUD: الملاحة')):
+    t(f'vehicleworks.hud.mode.{i}', en, ar)
+# 1.1.0 cockpit systems
+for k, en, ar, ten, tar in (
+    ('instrument_panel_a', 'Instrument Panel A (6 slots)', 'لوحة عدادات A (6 خانات)', 'Six small instrument slots. Right-click to choose the gauges.', 'ست خانات صغيرة للعدادات. انقر بالزر الأيمن لاختيار العدادات.'),
+    ('instrument_panel_b', 'Instrument Panel B (2 small + 1 large)', 'لوحة عدادات B (2 صغيرة + 1 كبيرة)', 'Two small gauges and one large screen.', 'عدادان صغيران وشاشة كبيرة.'),
+    ('instrument_panel_c', 'Instrument Panel C (1 large)', 'لوحة عدادات C (خانة كبيرة)', 'One large display: navigation, radar, flight director, PFD or engines.', 'شاشة كبيرة واحدة: ملاحة، رادار، موجه طيران، شاشة طيران أو محركات.'),
+    ('aircraft_light', 'Aircraft Light', 'ضوء طائرة', 'Navigation, beacon, strobe, landing, taxi, turn-off or cockpit light. Choose the type with right-click; faces where you look.', 'ضوء ملاحة أو منارة أو وميض أو هبوط أو تدرج أو انعطاف أو مقصورة. اختر النوع بالزر الأيمن؛ يتجه حيث تنظر.'),
+    ('refuel_port', 'Refuel Port', 'منفذ تعبئة الوقود', 'Right-click to refuel the aircraft: choose AVGAS or JET-A and the amount.', 'انقر بالزر الأيمن لتعبئة الطائرة: اختر AVGAS أو JET-A والكمية.')):
+    t('block.vehicleworks.' + k, en, ar); t('vehicleworks.tooltip.' + k, ten, tar)
+for k, en, ar in (('slot_1', 'Small slot 1', 'خانة صغيرة 1'), ('slot_2', 'Small slot 2', 'خانة صغيرة 2'), ('slot_3', 'Small slot 3', 'خانة صغيرة 3'),
+                  ('slot_4', 'Small slot 4', 'خانة صغيرة 4'), ('slot_5', 'Small slot 5', 'خانة صغيرة 5'), ('slot_6', 'Small slot 6', 'خانة صغيرة 6'),
+                  ('large_slot', 'Large slot', 'الخانة الكبيرة'), ('light_type', 'Light type', 'نوع الضوء')):
+    t('vehicleworks.prop.' + k, en, ar)
+for k, en, ar in (('none', '— empty —', '— فارغة —'), ('altimeter', 'Altimeter', 'مقياس الارتفاع'), ('airspeed', 'Airspeed Indicator', 'مؤشر السرعة الجوية'),
+                  ('vsi', 'Vertical Speed Indicator', 'مؤشر السرعة العمودية'), ('horizon', 'Artificial Horizon', 'الأفق الاصطناعي'), ('heading', 'Heading Indicator', 'مؤشر الاتجاه'),
+                  ('compass', 'Compass', 'البوصلة'), ('turn', 'Turn Coordinator', 'منسق الانعطاف'), ('tachometer', 'Tachometer', 'عداد الدوران'),
+                  ('fuel_gauge', 'Fuel Gauge', 'مقياس الوقود'), ('engine_pressure', 'Engine Pressure Gauge', 'مقياس ضغط المحرك'), ('nav_display', 'Navigation Display', 'شاشة الملاحة'),
+                  ('radar', 'Radar Display', 'شاشة الرادار'), ('flight_director', 'Flight Director', 'موجه الطيران'), ('attitude_display', 'Attitude Display (PFD)', 'شاشة الوضعية (PFD)'),
+                  ('engine_display', 'Engine Monitoring Display', 'شاشة مراقبة المحركات'),
+                  ('auto_nav', 'Navigation (auto colour)', 'ملاحة (لون تلقائي)'), ('nav_red', 'Navigation red (left)', 'ملاحة أحمر (يسار)'), ('nav_green', 'Navigation green (right)', 'ملاحة أخضر (يمين)'),
+                  ('nav_white', 'Navigation white (tail)', 'ملاحة أبيض (ذيل)'), ('beacon', 'Anti-collision beacon', 'منارة منع التصادم'), ('strobe', 'Strobe', 'وميض'),
+                  ('landing', 'Landing light', 'ضوء الهبوط'), ('taxi', 'Taxi light', 'ضوء التدرج'), ('turnoff', 'Runway turn-off light', 'ضوء الانعطاف من المدرج'), ('cockpit', 'Cockpit light', 'ضوء المقصورة')):
+    t('vehicleworks.opt.' + k, en, ar)
+SW = ['Battery', 'Avionics', 'Fuel pump', 'Ignition', 'Starter', 'Fuel selector', 'Nav lights', 'Beacon', 'Strobes', 'Landing lights', 'Taxi lights', 'Turn-off lights',
+      'Cockpit light', 'Panel light', 'Landing gear', 'Emergency test', 'Autopilot', 'Parking brake']
+SWA = ['البطارية', 'الإلكترونيات', 'مضخة الوقود', 'الإشعال', 'المشغّل', 'محدد الوقود', 'أضواء الملاحة', 'المنارة', 'الوميض', 'أضواء الهبوط', 'أضواء التدرج', 'أضواء الانعطاف',
+       'ضوء المقصورة', 'إضاءة اللوحة', 'عجلات الهبوط', 'اختبار الطوارئ', 'الطيار الآلي', 'فرامل الوقوف']
+for i in range(18): t(f'vehicleworks.switch.{i}', SW[i], SWA[i])
+for k, en, ar in (('both', 'BOTH', 'الكل'), ('left', 'LEFT', 'يسار'), ('right', 'RIGHT', 'يمين'), ('dim', 'DIM', 'خافت'), ('bright', 'BRIGHT', 'ساطع'),
+                  ('cranking', 'CRANKING', 'يدور'), ('elec', 'Battery %s%%  Bus: %s', 'البطارية %s%%  الطاقة: %s'), ('fuel', 'Fuel %s / %s kg', 'الوقود %s / %s كغ'),
+                  ('wrong_fuel', 'WRONG FUEL GRADE!', 'نوع وقود خاطئ!')):
+    t('vehicleworks.panel.' + k, en, ar)
+for k, en, ar in (('ok', 'Starter engaged - engines spooling up', 'تم تشغيل المشغّل - المحركات تدور'), ('no_power', 'No electrical power: turn the BATTERY on', 'لا توجد طاقة كهربائية: شغّل البطارية'),
+                  ('no_pump', 'Turn the FUEL PUMP on first', 'شغّل مضخة الوقود أولاً'), ('no_ignition', 'Turn the IGNITION on first', 'شغّل الإشعال أولاً'),
+                  ('fuel_off', 'Fuel selector is OFF', 'محدد الوقود على OFF'), ('no_avionics', 'Autopilot needs AVIONICS power', 'الطيار الآلي يحتاج طاقة الإلكترونيات')):
+    t('vehicleworks.start.' + k, en, ar)
+for k, en, ar in (('title', 'Refuelling', 'تعبئة الوقود'), ('grade', 'Fuel: %s', 'الوقود: %s'), ('amount', 'Amount: %s kg', 'الكمية: %s كغ'), ('start', 'Start pump', 'تشغيل المضخة'),
+                  ('stop', 'Stop pump', 'إيقاف المضخة'), ('needs', 'Engines need: %s', 'المحركات تحتاج: %s'), ('canisters', 'Fuel canisters in inventory: %s', 'علب الوقود في المخزون: %s'),
+                  ('flowing', 'Fuel flowing... %s kg to go', 'الوقود يتدفق... باقي %s كغ'), ('no_port', 'This aircraft has no Refuel Port', 'هذه الطائرة ليس فيها منفذ تعبئة'),
+                  ('stopped', 'Refuelling stopped (%s kg on board)', 'توقفت التعبئة (%s كغ في الخزانات)'), ('done', 'Refuelling complete (%s kg on board)', 'اكتملت التعبئة (%s كغ في الخزانات)'),
+                  ('no_canisters', 'Out of fuel canisters', 'نفدت علب الوقود')):
+    t('vehicleworks.refuel.' + k, en, ar)
+t('vehicleworks.fuel.avgas', 'AVGAS 100LL (piston)', 'AVGAS 100LL (مكبسي)')
+t('vehicleworks.fuel.jet', 'JET-A (turbine)', 'JET-A (توربيني)')
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):

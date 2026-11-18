@@ -25,7 +25,8 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
             if (project.hasProperty('vwAutotest')) {
                 systemProperty 'vehicleworks.autotest', 'true'
-                programArguments.addAll('--quickPlaySingleplayer', 'AutoTest', '--width', '1280', '--height', '720')
+                if (project.hasProperty('vwQuick')) systemProperty 'vehicleworks.autotest.quick', 'true'
+                programArguments.addAll('--width', '1280', '--height', '720')
             }
         }
         server {

@@ -16,7 +16,16 @@ public final class VehicleTelemetry {
     public int carGear;
     public float rpmFraction, depth, integrity, stress;
     public boolean navActive, autopilot, battery = true, lights, emergencyTest;
-    public float apHeading, apAltitude, vne, hydraulics = 1, stickPitch, stickRoll;
+    public float apHeading, apAltitude, vne, hydraulics = 1, stickPitch, stickRoll, batteryCharge = 1;
+    public int switches, fuelSelector, cabinLight, panelLight;
+    public boolean busPowered = true, generator, wrongFuel, refueling;
+    public float refuelRemaining;
+    /** per fuel tank: fill 0..1, grade, side */
+    public float[] tankFill = new float[0];
+    public byte[] tankGrade = new byte[0], tankSide = new byte[0];
+
+    public boolean sw(int id) { return (switches & (1 << id)) != 0; }
+    public boolean avionicsPowered() { return busPowered && sw(1); }
     public float navBearing, navDistance;
     public float staticMargin, rotorOffset;
     // per engine
@@ -50,6 +59,11 @@ public final class VehicleTelemetry {
         b.writeFloat(rpmFraction); b.writeFloat(depth); b.writeFloat(integrity); b.writeFloat(stress);
         b.writeFloat(navBearing); b.writeFloat(navDistance); b.writeFloat(staticMargin); b.writeFloat(rotorOffset);
         b.writeFloat(apHeading); b.writeFloat(apAltitude); b.writeFloat(vne); b.writeFloat(hydraulics); b.writeFloat(stickPitch); b.writeFloat(stickRoll);
+        b.writeFloat(batteryCharge); b.writeVarInt(switches); b.writeByte(fuelSelector); b.writeByte(cabinLight); b.writeByte(panelLight);
+        b.writeByte((busPowered ? 1 : 0) | (generator ? 2 : 0) | (wrongFuel ? 4 : 0) | (refueling ? 8 : 0));
+        b.writeFloat(refuelRemaining);
+        b.writeVarInt(tankFill.length);
+        for (int i = 0; i < tankFill.length; i++) { b.writeFloat(tankFill[i]); b.writeByte(tankGrade[i]); b.writeByte(tankSide[i]); }
         int ne = engineSpool.length;
         b.writeVarInt(ne);
         for (int i = 0; i < ne; i++) {
@@ -88,6 +102,12 @@ public final class VehicleTelemetry {
         rpmFraction = b.readFloat(); depth = b.readFloat(); integrity = b.readFloat(); stress = b.readFloat();
         navBearing = b.readFloat(); navDistance = b.readFloat(); staticMargin = b.readFloat(); rotorOffset = b.readFloat();
         apHeading = b.readFloat(); apAltitude = b.readFloat(); vne = b.readFloat(); hydraulics = b.readFloat(); stickPitch = b.readFloat(); stickRoll = b.readFloat();
+        batteryCharge = b.readFloat(); switches = b.readVarInt(); fuelSelector = b.readByte(); cabinLight = b.readByte(); panelLight = b.readByte();
+        int ef = b.readByte(); busPowered = (ef & 1) != 0; generator = (ef & 2) != 0; wrongFuel = (ef & 4) != 0; refueling = (ef & 8) != 0;
+        refuelRemaining = b.readFloat();
+        int nt = b.readVarInt();
+        if (tankFill.length != nt) { tankFill = new float[nt]; tankGrade = new byte[nt]; tankSide = new byte[nt]; }
+        for (int i = 0; i < nt; i++) { tankFill[i] = b.readFloat(); tankGrade[i] = b.readByte(); tankSide[i] = b.readByte(); }
         int ne = b.readVarInt();
         engineState = new byte[ne]; engineType = new byte[ne];
         engineSpool = new float[ne]; engineTemp = new float[ne]; engineDamage = new float[ne]; engineThrust = new float[ne]; propOmega = new float[ne];

@@ -50,6 +50,7 @@ public enum ComponentType {
             PropertyDef.integer("blades", 2, 6, 4)),
     ENGINE_STARTER("engine_starter", ComponentCategory.SYSTEMS, 90, Facing.HORIZONTAL, Shape.FULL),
     FUEL_TANK("fuel_tank", ComponentCategory.FUEL, 60, Facing.NONE, Shape.FULL),
+    REFUEL_PORT("refuel_port", ComponentCategory.FUEL, 15, Facing.HORIZONTAL, Shape.FULL),
     FUEL_PUMP("fuel_pump", ComponentCategory.FUEL, 40, Facing.HORIZONTAL, Shape.FULL),
     HYDRAULIC_PUMP("hydraulic_pump", ComponentCategory.SYSTEMS, 70, Facing.HORIZONTAL, Shape.FULL),
 
@@ -58,6 +59,14 @@ public enum ComponentType {
     SWEPT_WING("swept_wing", ComponentCategory.AERODYNAMICS, 38, Facing.WING, Shape.WING, wingProps(WingType.SWEPT, ControlRole.NONE)),
     DELTA_WING("delta_wing", ComponentCategory.AERODYNAMICS, 40, Facing.WING, Shape.WING, wingProps(WingType.DELTA, ControlRole.ELEVON)),
     VARIABLE_SWEEP_WING("variable_sweep_wing", ComponentCategory.AERODYNAMICS, 55, Facing.WING, Shape.WING, wingProps(WingType.VARIABLE_SWEEP, ControlRole.NONE)),
+    FORWARD_SWEPT_WING("forward_swept_wing", ComponentCategory.AERODYNAMICS, 40, Facing.WING, Shape.WING, wingProps(WingType.FORWARD_SWEPT, ControlRole.NONE)),
+    DOUBLE_DELTA_WING("double_delta_wing", ComponentCategory.AERODYNAMICS, 42, Facing.WING, Shape.WING, wingProps(WingType.DOUBLE_DELTA, ControlRole.NONE)),
+    ELLIPTICAL_WING("elliptical_wing", ComponentCategory.AERODYNAMICS, 34, Facing.WING, Shape.WING, wingProps(WingType.ELLIPTICAL, ControlRole.NONE)),
+    TAPERED_WING("tapered_wing", ComponentCategory.AERODYNAMICS, 32, Facing.WING, Shape.WING, wingProps(WingType.TAPERED, ControlRole.NONE)),
+    HIGH_WING("high_wing", ComponentCategory.AERODYNAMICS, 36, Facing.WING, Shape.WING, wingProps(WingType.HIGH_WING, ControlRole.NONE)),
+    LOW_WING("low_wing", ComponentCategory.AERODYNAMICS, 36, Facing.WING, Shape.WING, wingProps(WingType.LOW_WING, ControlRole.NONE)),
+    CANARD_WING("canard_wing", ComponentCategory.AERODYNAMICS, 22, Facing.WING, Shape.WING, wingProps(WingType.CANARD, ControlRole.ELEVATOR)),
+    FLYING_WING("flying_wing", ComponentCategory.AERODYNAMICS, 45, Facing.WING, Shape.WING, wingProps(WingType.FLYING_WING, ControlRole.NONE)),
     AILERON("aileron", ComponentCategory.AERODYNAMICS, 25, Facing.WING, Shape.WING, wingProps(WingType.STANDARD, ControlRole.AILERON)),
     ELEVATOR("elevator", ComponentCategory.AERODYNAMICS, 25, Facing.WING, Shape.WING, wingProps(WingType.STANDARD, ControlRole.ELEVATOR)),
     RUDDER("rudder", ComponentCategory.AERODYNAMICS, 25, Facing.WING, Shape.WING, wingProps(WingType.STANDARD, ControlRole.RUDDER)),
@@ -67,6 +76,11 @@ public enum ComponentType {
     WHEEL("wheel", ComponentCategory.GROUND, 45, Facing.HORIZONTAL, Shape.DYNAMIC, wheelProps(false)),
     LANDING_GEAR("landing_gear", ComponentCategory.GROUND, 80, Facing.HORIZONTAL, Shape.DYNAMIC, wheelProps(true)),
     HEAVY_LANDING_GEAR("heavy_landing_gear", ComponentCategory.GROUND, 450, Facing.HORIZONTAL, Shape.DYNAMIC, heavyGearProps()),
+    DUAL_WHEEL_GEAR("dual_wheel_gear", ComponentCategory.GROUND, 180, Facing.HORIZONTAL, Shape.DYNAMIC, gearProps(0.55, 0.6, 1.2, 1.0, 16000, 1.05)),
+    BOGIE_GEAR("bogie_gear", ComponentCategory.GROUND, 620, Facing.HORIZONTAL, Shape.DYNAMIC, gearProps(0.6, 0.7, 1.6, 1.3, 40000, 1.1)),
+    REINFORCED_GEAR("reinforced_gear", ComponentCategory.GROUND, 260, Facing.HORIZONTAL, Shape.DYNAMIC, gearProps(0.6, 0.75, 1.8, 1.6, 22000, 1.0)),
+    TUNDRA_GEAR("tundra_gear", ComponentCategory.GROUND, 95, Facing.HORIZONTAL, Shape.DYNAMIC, gearProps(0.85, 0.8, 0.6, 1.2, 7000, 1.25)),
+    PERFORMANCE_GEAR("performance_gear", ComponentCategory.GROUND, 55, Facing.HORIZONTAL, Shape.DYNAMIC, gearProps(0.4, 0.4, 1.4, 1.2, 12000, 0.95)),
 
     BALLAST_TANK("ballast_tank", ComponentCategory.MARINE, 120, Facing.NONE, Shape.FULL),
     BALLOON_ENVELOPE("balloon_envelope", ComponentCategory.LIFT, 1.0, Facing.NONE, Shape.FULL),
@@ -75,7 +89,15 @@ public enum ComponentType {
             PropertyDef.number("power", 0.5, 2.0, 0.05, 1.0, "x")),
 
     FLIGHT_INSTRUMENTS("flight_instruments", ComponentCategory.INSTRUMENT, 15, Facing.HORIZONTAL, Shape.FULL),
+    AIRCRAFT_LIGHT("aircraft_light", ComponentCategory.SYSTEMS, 3, Facing.HORIZONTAL, Shape.DYNAMIC,
+            PropertyDef.choice("light_type", 0, "auto_nav", "nav_red", "nav_green", "nav_white", "beacon", "strobe", "landing", "taxi", "turnoff", "cockpit")),
     YOKE("yoke", ComponentCategory.CONTROL, 12, Facing.HORIZONTAL, Shape.DYNAMIC),
+    INSTRUMENT_PANEL_A("instrument_panel_a", ComponentCategory.INSTRUMENT, 18, Facing.HORIZONTAL, Shape.FULL,
+            slot("slot_1", 1, true), slot("slot_2", 2, true), slot("slot_3", 3, true), slot("slot_4", 4, true), slot("slot_5", 5, true), slot("slot_6", 9, true)),
+    INSTRUMENT_PANEL_B("instrument_panel_b", ComponentCategory.INSTRUMENT, 20, Facing.HORIZONTAL, Shape.FULL,
+            slot("slot_1", 1, true), slot("slot_2", 2, true), slot("large_slot", 4, false)),
+    INSTRUMENT_PANEL_C("instrument_panel_c", ComponentCategory.INSTRUMENT, 22, Facing.HORIZONTAL, Shape.FULL,
+            slot("large_slot", 1, false)),
     COCKPIT_PANEL("cockpit_panel", ComponentCategory.INSTRUMENT, 30, Facing.HORIZONTAL, Shape.PANEL),
     NAVIGATION_COMPUTER("navigation_computer", ComponentCategory.INSTRUMENT, 15, Facing.HORIZONTAL, Shape.FULL,
             PropertyDef.integer("waypoint_x", -30000000, 30000000, 0),
@@ -148,7 +170,7 @@ public enum ComponentType {
 
     /** Blocks without rigid collision (handled by their own physics, e.g. suspension). */
     public boolean excludedFromCollision() {
-        return this == WHEEL || this == LANDING_GEAR || this == HEAVY_LANDING_GEAR || this == YOKE || this == PROPELLER || this == MAIN_ROTOR || this == TAIL_ROTOR || this == MARINE_PROPELLER;
+        return isAircraftGear() || this == WHEEL || this == YOKE || this == AIRCRAFT_LIGHT || this == PROPELLER || this == MAIN_ROTOR || this == TAIL_ROTOR || this == MARINE_PROPELLER;
     }
 
     /** Rendered dynamically (spinning / animated) instead of in the cached static mesh. */
@@ -183,6 +205,44 @@ public enum ComponentType {
                 PropertyDef.number("brake_torque", 500, 30000, 250, gear ? 8000 : 5000, "Nm"),
                 PropertyDef.number("grip", 0.3, 2.0, 0.05, 1.0, "x"),
                 PropertyDef.bool("retractable", gear)};
+    }
+
+    /** Instrument catalogue (own class: enum constants are built before the enum's static fields). */
+    public static final class Instruments {
+        /** Small (analog) instruments that fit a small slot; index 0 = empty. */
+        public static final String[] SMALL = {"none", "altimeter", "airspeed", "vsi", "horizon", "heading", "compass", "turn", "tachometer", "fuel_gauge", "engine_pressure"};
+        /** Large (digital) instruments that need a large slot; index 0 = empty. */
+        public static final String[] LARGE = {"none", "nav_display", "radar", "flight_director", "attitude_display", "engine_display"};
+        private Instruments() {}
+    }
+
+    private static PropertyDef slot(String key, int def, boolean small) {
+        return PropertyDef.choice(key, def, small ? Instruments.SMALL : Instruments.LARGE);
+    }
+
+    public boolean isInstrumentPanel() {
+        return this == INSTRUMENT_PANEL_A || this == INSTRUMENT_PANEL_B || this == INSTRUMENT_PANEL_C;
+    }
+
+    /** All aircraft landing-gear types (retractable, aircraft physics). */
+    public boolean isAircraftGear() {
+        return this == LANDING_GEAR || this == HEAVY_LANDING_GEAR || this == DUAL_WHEEL_GEAR || this == BOGIE_GEAR
+                || this == REINFORCED_GEAR || this == TUNDRA_GEAR || this == PERFORMANCE_GEAR;
+    }
+
+    private static PropertyDef[] gearProps(double radius, double travel, double susp, double damp, double brake, double grip) {
+        return new PropertyDef[]{
+                PropertyDef.number("radius", 0.3, 1.5, 0.05, radius, "m"),
+                PropertyDef.number("suspension", 0.2, 4.0, 0.05, susp, "x"),
+                PropertyDef.number("damping", 0.2, 4.0, 0.05, damp, "x"),
+                PropertyDef.number("travel", 0.1, 1.5, 0.05, travel, "m"),
+                PropertyDef.choice("steering", 0, "auto", "yes", "no"),
+                PropertyDef.number("max_steer", 5, 60, 1, 60, "deg"),
+                PropertyDef.choice("drive", 0, "auto", "yes", "no"),
+                PropertyDef.bool("braked", true),
+                PropertyDef.number("brake_torque", 500, 60000, 250, brake, "Nm"),
+                PropertyDef.number("grip", 0.3, 2.0, 0.05, grip, "x"),
+                PropertyDef.bool("retractable", true)};
     }
 
     private static PropertyDef[] heavyGearProps() {
@@ -224,7 +284,7 @@ public enum ComponentType {
                 PropertyDef.number("flap_max", 0, 50, 1, 30, "deg"),
                 PropertyDef.number("control_max", 0, 40, 1, role == ControlRole.RUDDER ? 25 : 20, "deg"),
                 PropertyDef.number("spoiler_max", 0, 1, 0.05, role == ControlRole.SPOILER ? 1 : 0, ""),
-                PropertyDef.number("sweep", 0, 75, 1, type.defaultSweepDeg, "deg"),
+                PropertyDef.number("sweep", -45, 75, 1, type.defaultSweepDeg, "deg"),
                 PropertyDef.number("sweep_max", 0, 75, 1, type == WingType.VARIABLE_SWEEP ? 68 : type.defaultSweepDeg, "deg"),
                 PropertyDef.number("responsiveness", 0.1, 3.0, 0.05, 1.0, "x"),
                 PropertyDef.bool("invert", false)};

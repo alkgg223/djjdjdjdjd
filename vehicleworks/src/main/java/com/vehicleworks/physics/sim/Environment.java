@@ -24,5 +24,8 @@ public interface Environment extends FluidSampler {
     /** Friction coefficient of the block below a world point. */
     float frictionAt(double x, double y, double z);
 
+    /** ground roughness for rolling resistance (0 = paved) */
+    default float roughnessAt(double x, double y, double z) { return 0; }
+
     double gravity();
 }

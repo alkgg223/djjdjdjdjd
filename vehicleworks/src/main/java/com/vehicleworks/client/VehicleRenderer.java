@@ -61,7 +61,16 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         VehicleClientState s = ClientProxy.state(v);
         var cam = entityRenderDispatcher.camera;
         double dist = cam.getPosition().distanceTo(v.position());
-        if (dist > Config.CLIENT.lodDistance.get()) return;
+        if (dist > Config.CLIENT.lodDistance.get()) {
+            // far away: only the aircraft lights (visible from a distance at night)
+            Quaternionf qf = new Quaternionf(v.renderOrientation(partial, new org.joml.Quaterniond()));
+            ps.pushPose();
+            ps.mulPose(qf);
+            ps.translate(-v.comLocal.x, -v.comLocal.y, -v.comLocal.z);
+            CockpitRenderer.renderLights(v, ps, buffers, light, false);
+            ps.popPose();
+            return;
+        }
         Quaternionf q = new Quaternionf(v.renderOrientation(partial, new org.joml.Quaterniond()));
         ps.pushPose();
         ps.mulPose(q);
@@ -112,21 +121,47 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             double drop = comp > 0 ? Math.max(0, travel - comp) : travel * 0.6;
             drop *= ext;
             Direction f = VehicleBuilder.facing(st);
-            ps.pushPose();
-            ps.translate(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + 0.5 - drop, BlockPos.getZ(k) + 0.5);
-            ps.mulPose(Axis.YP.rotation(-steer));
             Direction axle = f.getClockWise();
-            ps.mulPose(axisRot(axle, -angle));
             float scale = (float) (ct.property("radius").get(cfg) / 0.5);
-            ps.scale(scale, scale, scale);
-            ps.translate(-0.5, -0.5, -0.5);
-            brd.renderSingleBlock(st, ps, buffers, light, OverlayTexture.NO_OVERLAY);
-            ps.popPose();
-            if (ext > 0.1 && drop > 0.2) {
-                // suspension strut
-                renderStrut(ps, buffers, k, drop, light, ct == ComponentType.HEAVY_LANDING_GEAR ? 0.11f * scale / 4.5f + 0.06f : 0.06f);
+            if (ext < 0.02 && ct.isAircraftGear()) continue; // fully retracted into the gear bay
+            // a bogie has two axles one behind the other; each tyre pair spins about its own axle
+            float[] axleOffsets = ct == ComponentType.BOGIE_GEAR ? new float[]{-0.55f * scale, 0.55f * scale} : new float[]{0};
+            for (float off : axleOffsets) {
+                ps.pushPose();
+                ps.translate(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + 0.5 - drop, BlockPos.getZ(k) + 0.5);
+                ps.mulPose(Axis.YP.rotation(-steer));
+                ps.translate(f.getStepX() * off, 0, f.getStepZ() * off);
+                ps.mulPose(axisRot(axle, -angle));
+                ps.scale(scale, scale, scale);
+                ps.translate(-0.5, -0.5, -0.5);
+                brd.renderSingleBlock(st, ps, buffers, light, OverlayTexture.NO_OVERLAY);
+                ps.popPose();
             }
-            if (ct == ComponentType.HEAVY_LANDING_GEAR || ct == ComponentType.LANDING_GEAR) {
+            if (ext > 0.1 && drop > 0.2) {
+                // suspension strut (thicker for heavier gear)
+                float sw = switch (ct) {
+                    case HEAVY_LANDING_GEAR -> 0.11f * scale / 4.5f + 0.06f;
+                    case BOGIE_GEAR, REINFORCED_GEAR -> 0.12f;
+                    case DUAL_WHEEL_GEAR -> 0.09f;
+                    case TUNDRA_GEAR -> 0.07f;
+                    case PERFORMANCE_GEAR -> 0.045f;
+                    default -> 0.06f;
+                };
+                renderStrut(ps, buffers, k, drop, light, sw);
+            }
+            if (ct == ComponentType.BOGIE_GEAR && ext > 0.1) {
+                // bogie beam joining both axles
+                TextureAtlasSprite bSp = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(ResourceLocation.fromNamespaceAndPath(VehicleWorks.MODID, "block/strut"));
+                VertexConsumer bVc = buffers.getBuffer(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
+                ps.pushPose();
+                ps.translate(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + 0.5 - drop, BlockPos.getZ(k) + 0.5);
+                ps.mulPose(Axis.YP.rotation(-steer));
+                float L = 0.62f * scale, w2 = 0.08f;
+                if (f.getAxis() == Direction.Axis.Z) Box.cuboid(ps, bVc, bSp, -w2, -w2, -L, w2, w2, L, light, 0xFFFFFFFF);
+                else Box.cuboid(ps, bVc, bSp, -L, -w2, -w2, L, w2, w2, light, 0xFFFFFFFF);
+                ps.popPose();
+            }
+            if (ct.isAircraftGear()) {
                 // non-rotating axle through both tyres
                 TextureAtlasSprite axSp = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(ResourceLocation.fromNamespaceAndPath(VehicleWorks.MODID, "block/strut"));
                 VertexConsumer axVc = buffers.getBuffer(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
@@ -174,6 +209,9 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         }
         // block entities (chests, signs, banners…)
         renderWarningLamps(v, ps, buffers);
+        CockpitRenderer.renderLights(v, ps, buffers, light, true);
+        CockpitRenderer.renderPanels(v, ps, buffers, light);
+        InstrumentRenderer.render(v, ps, buffers, light, dist);
         if (Config.CLIENT.renderBlockEntities.get()) renderBlockEntities(v, ps, buffers, partial, light);
         // centre-of-mass marker
         long core = BlockPos.asLong(0, 0, 0);
@@ -265,13 +303,13 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         VertexConsumer vc = null;
         for (long k : v.structure.blockEntities().keySet()) {
             ComponentType ct = VehicleBuilder.typeOf(v.structure.get(k));
-            if (ct != ComponentType.COCKPIT_PANEL && ct != ComponentType.FLIGHT_INSTRUMENTS) continue;
+            if (ct != ComponentType.FLIGHT_INSTRUMENTS && (ct == null || !ct.isInstrumentPanel())) continue;
             if (sp == null) {
                 sp = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(ResourceLocation.withDefaultNamespace("block/white_concrete"));
                 vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
             }
             ps.pushPose();
-            ps.translate(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + (ct == ComponentType.COCKPIT_PANEL ? 0.76 : 1.0), BlockPos.getZ(k) + 0.5);
+            ps.translate(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + 1.0, BlockPos.getZ(k) + 0.5);
             Box.cuboid(ps, vc, sp, -0.12f, 0f, -0.12f, 0.12f, 0.14f, 0.12f, on ? 0xF000F0 : 0x400040, on ? 0xFFFF2020 : 0xFF501010);
             ps.popPose();
         }

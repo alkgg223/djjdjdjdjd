@@ -5,6 +5,8 @@ import org.joml.Vector3d;
 
 /** An engine together with the device it drives. */
 public final class ThrusterUnit {
+    /** fuel-grade supply factor (set by the fuel system) */
+    public double gradeFactor = 1;
     public enum Device { JET, PROPELLER, MARINE_PROPELLER, DRIVETRAIN, ROTOR }
 
     public final EngineSim engine;

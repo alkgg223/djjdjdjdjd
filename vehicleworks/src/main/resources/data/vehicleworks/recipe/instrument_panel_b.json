@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GG",
+    "RR"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "R": {
+      "item": "vehicleworks:flight_instruments"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:instrument_panel_b",
+    "count": 1
+  }
+}

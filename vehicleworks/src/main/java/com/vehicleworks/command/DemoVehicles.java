@@ -85,6 +85,20 @@ public final class DemoVehicles {
             return this;
         }
 
+        /** aircraft light: 0 auto nav, 1 red, 2 green, 3 white, 4 beacon, 5 strobe, 6 landing, 7 taxi, 8 turn-off, 9 cockpit */
+        public B light(int x, int y, int z, int type, Direction f) {
+            return c(x, y, z, ComponentType.AIRCRAFT_LIGHT, f, c -> c.putInt("light_type", type));
+        }
+
+        /** instrument panel with slot selections (indices into the small / large instrument lists) */
+        public B panel(int x, int y, int z, ComponentType t, Direction f, int... slots) {
+            return c(x, y, z, t, f, c -> {
+                String[] keys = t == ComponentType.INSTRUMENT_PANEL_A ? new String[]{"slot_1", "slot_2", "slot_3", "slot_4", "slot_5", "slot_6"}
+                        : t == ComponentType.INSTRUMENT_PANEL_B ? new String[]{"slot_1", "slot_2", "large_slot"} : new String[]{"large_slot"};
+                for (int i = 0; i < keys.length; i++) c.putInt(keys[i], i < slots.length ? slots[i] : 0);
+            });
+        }
+
         public B fuel(int x, int y, int z) {
             c(x, y, z, ComponentType.FUEL_TANK);
             return data(x, y, z, d -> d.putDouble("Fuel", 300));
@@ -254,8 +268,21 @@ public final class DemoVehicles {
         // captain and first-officer yokes (linked: both move together)
         b.c(-1, 1, -12, ComponentType.YOKE, Direction.SOUTH);
         b.c(1, 1, -12, ComponentType.YOKE, Direction.SOUTH);
-        b.c(0, 1, -12, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
-        b.c(0, 1, -13, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
+        b.c(-1, -1, -8, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
+        b.c(1, -1, -8, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
+        // glass cockpit: PFD + standby gauges, navigation display, engine display
+        b.panel(-1, 1, -13, ComponentType.INSTRUMENT_PANEL_B, Direction.SOUTH, 2, 1, 4);
+        b.panel(0, 1, -13, ComponentType.INSTRUMENT_PANEL_C, Direction.SOUTH, 1);
+        b.panel(1, 1, -13, ComponentType.INSTRUMENT_PANEL_B, Direction.SOUTH, 9, 8, 5);
+        b.light(-16, 0, 2, 1, Direction.NORTH); b.light(16, 0, 2, 2, Direction.NORTH);
+        b.light(-16, 0, 3, 5, Direction.NORTH); b.light(16, 0, 3, 5, Direction.NORTH);
+        b.light(0, 2, 16, 3, Direction.SOUTH);
+        b.light(0, 5, 0, 4, Direction.NORTH);
+        b.light(-4, -1, -1, 6, Direction.NORTH); b.light(4, -1, -1, 6, Direction.NORTH);
+        b.light(0, -1, -11, 7, Direction.NORTH);
+        b.light(-3, -1, 0, 8, Direction.WEST); b.light(3, -1, 0, 8, Direction.EAST);
+        b.light(1, 3, -12, 9, Direction.SOUTH);
+        b.c(5, -1, 1, ComponentType.REFUEL_PORT, Direction.EAST);
         b.c(0, 3, -11, ComponentType.COCKPIT_PANEL, Direction.SOUTH); // overhead panel
         for (int z = -7; z <= 13; z += 2) {
             b.c(-1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH);
@@ -326,8 +353,20 @@ public final class DemoVehicles {
         // captain and first-officer yokes (linked: both move together)
         b.c(-1, 1, -15, ComponentType.YOKE, Direction.SOUTH);
         b.c(1, 1, -15, ComponentType.YOKE, Direction.SOUTH);
-        b.c(0, 1, -15, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
-        b.c(0, 1, -16, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
+        b.c(1, -1, -12, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
+        b.c(0, -1, -12, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
+        b.panel(-1, 1, -16, ComponentType.INSTRUMENT_PANEL_B, Direction.SOUTH, 2, 1, 4);
+        b.panel(0, 1, -16, ComponentType.INSTRUMENT_PANEL_C, Direction.SOUTH, 1);
+        b.panel(1, 1, -16, ComponentType.INSTRUMENT_PANEL_B, Direction.SOUTH, 9, 8, 5);
+        b.light(-21, 0, 3, 1, Direction.NORTH); b.light(21, 0, 3, 2, Direction.NORTH);
+        b.light(-21, 0, 4, 5, Direction.NORTH); b.light(21, 0, 4, 5, Direction.NORTH);
+        b.light(0, 2, 21, 3, Direction.SOUTH);
+        b.light(0, 5, 0, 4, Direction.NORTH);
+        b.light(-4, -1, -2, 6, Direction.NORTH); b.light(4, -1, -2, 6, Direction.NORTH);
+        b.light(0, -1, -14, 7, Direction.NORTH);
+        b.light(-3, -1, -1, 8, Direction.WEST); b.light(3, -1, -1, 8, Direction.EAST);
+        b.light(1, 3, -15, 9, Direction.SOUTH);
+        b.c(4, -1, 0, ComponentType.REFUEL_PORT, Direction.EAST);
         b.c(0, 3, -14, ComponentType.COCKPIT_PANEL, Direction.SOUTH); // overhead panel
         // two-aisle style cabin: seats left and right of the centre aisle
         for (int z = -10; z <= 17; z += 2) {
@@ -391,14 +430,29 @@ public final class DemoVehicles {
         for (int x = -1; x <= 1; x++) { b.block(x, 1, -5, Blocks.GRAY_CONCRETE); b.block(x, 2, -5, Blocks.GLASS); }
         for (int x = -1; x <= 1; x++) for (int y = 1; y <= 2; y++) b.block(x, y, 4, trim); // rear door
         b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH);
-        b.c(-1, 1, -3, ComponentType.PILOT_SEAT, Direction.NORTH);
-        b.c(1, 1, -3, ComponentType.PASSENGER_SEAT, Direction.NORTH);
+        // cockpit seats sit low (in the floor) so the overhead switch panel is above the pilots' heads
+        b.c(-1, 0, -3, ComponentType.PILOT_SEAT, Direction.NORTH);
+        b.c(1, 0, -3, ComponentType.PASSENGER_SEAT, Direction.NORTH);
         // captain and first-officer yokes (linked: both move together)
-        b.c(-1, 1, -4, ComponentType.YOKE, Direction.SOUTH);
-        b.c(1, 1, -4, ComponentType.YOKE, Direction.SOUTH);
-        b.c(0, 1, -4, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
-        b.c(0, 1, -5, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
-        b.c(0, 2, -3, ComponentType.COCKPIT_PANEL, Direction.SOUTH); // overhead panel
+        b.c(-1, 0, -4, ComponentType.YOKE, Direction.SOUTH);
+        b.c(1, 0, -4, ComponentType.YOKE, Direction.SOUTH);
+        b.c(1, -1, 2, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
+        b.c(-1, -1, 2, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
+        b.c(0, 2, -3, ComponentType.COCKPIT_PANEL, Direction.SOUTH); // overhead switch panel
+        // analog "six-pack", navigation display and engine gauges
+        b.panel(-1, 1, -5, ComponentType.INSTRUMENT_PANEL_A, Direction.SOUTH, 2, 4, 1, 7, 5, 3);
+        b.panel(0, 1, -5, ComponentType.INSTRUMENT_PANEL_C, Direction.SOUTH, 1);
+        b.panel(1, 1, -5, ComponentType.INSTRUMENT_PANEL_A, Direction.SOUTH, 8, 9, 10, 6, 0, 0);
+        // lights: wingtip nav + strobes, tail, beacon, landing, taxi, turn-off, cockpit
+        b.light(-13, 4, 0, 1, Direction.NORTH); b.light(13, 4, 0, 2, Direction.NORTH);
+        b.light(-13, 4, 1, 5, Direction.NORTH); b.light(13, 4, 1, 5, Direction.NORTH);
+        b.light(0, 3, 11, 3, Direction.SOUTH);
+        b.light(0, 5, 0, 4, Direction.NORTH);
+        b.light(-6, 3, -1, 6, Direction.NORTH); b.light(6, 3, -1, 6, Direction.NORTH);
+        b.light(0, -1, -5, 7, Direction.NORTH);
+        b.light(-3, 3, 0, 8, Direction.WEST); b.light(3, 3, 0, 8, Direction.EAST);
+        b.light(1, 2, -4, 9, Direction.SOUTH);
+        b.c(-3, 0, 2, ComponentType.REFUEL_PORT, Direction.WEST);
         for (int z = -1; z <= 3; z += 2) { b.c(-1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH); b.c(1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH); }
         for (int z = -2; z <= 3; z++) if (z != 0) b.fuel(0, -1, z);
         b.c(-1, -1, 0, ComponentType.FUEL_PUMP, Direction.NORTH);
@@ -409,8 +463,8 @@ public final class DemoVehicles {
             for (int i = 0; i <= 12; i++) {
                 if (i == 0 && side > 0) continue;
                 for (int z = -1; z <= 1; z++) {
-                    ComponentType t = z < 1 ? ComponentType.STRAIGHT_WING : (i <= 6 ? ComponentType.FLAP : (i >= 9 ? ComponentType.AILERON : ComponentType.STRAIGHT_WING));
-                    if (i <= 2) t = z < 1 ? ComponentType.STRAIGHT_WING : ComponentType.FLAP;
+                    ComponentType t = z < 1 ? ComponentType.HIGH_WING : (i <= 6 ? ComponentType.FLAP : (i >= 9 ? ComponentType.AILERON : ComponentType.HIGH_WING));
+                    if (i <= 2) t = z < 1 ? ComponentType.HIGH_WING : ComponentType.FLAP;
                     b.wing(side * i, 4, z, t, WingOrientation.HORIZONTAL, c -> { c.putDouble("chord", 1.2); c.putDouble("incidence", 3); });
                 }
             }
@@ -431,9 +485,10 @@ public final class DemoVehicles {
             b.wing(x, 3, 10, ComponentType.ELEVATOR, WingOrientation.HORIZONTAL, c -> { c.putDouble("chord", 1.2); c.putDouble("control_max", 25); });
         }
         // fixed tricycle gear
-        b.c(0, -1, -4, ComponentType.LANDING_GEAR, Direction.NORTH, c -> c.putBoolean("retractable", false));
-        b.c(-2, -1, 1, ComponentType.LANDING_GEAR, Direction.NORTH, c -> { c.putBoolean("retractable", false); c.putDouble("radius", 0.55); });
-        b.c(2, -1, 1, ComponentType.LANDING_GEAR, Direction.NORTH, c -> { c.putBoolean("retractable", false); c.putDouble("radius", 0.55); });
+        // tundra wheels: rough-field utility plane (grass, dirt, sand, snow)
+        b.c(0, -1, -4, ComponentType.TUNDRA_GEAR, Direction.NORTH, c -> c.putBoolean("retractable", false));
+        b.c(-2, -1, 1, ComponentType.TUNDRA_GEAR, Direction.NORTH, c -> c.putBoolean("retractable", false));
+        b.c(2, -1, 1, ComponentType.TUNDRA_GEAR, Direction.NORTH, c -> c.putBoolean("retractable", false));
     }
 
     /** Original design "Stingray": tailless delta jet with elevons and a single afterburning engine. */
@@ -452,8 +507,17 @@ public final class DemoVehicles {
         b.c(0, 0, 7, ComponentType.JET_ENGINE, Direction.NORTH);
         // bubble canopy
         b.c(0, 1, -4, ComponentType.PILOT_SEAT, Direction.NORTH);
-        b.c(0, 1, -5, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
+        b.panel(0, 1, -5, ComponentType.INSTRUMENT_PANEL_B, Direction.SOUTH, 2, 1, 2); // airspeed, altimeter, radar
+        b.c(0, -1, -3, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
         b.c(0, 1, -3, ComponentType.NAVIGATION_COMPUTER, Direction.NORTH);
+        b.light(-9, 0, 4, 1, Direction.NORTH); b.light(9, 0, 4, 2, Direction.NORTH);
+        b.light(-9, 0, 5, 5, Direction.NORTH); b.light(9, 0, 5, 5, Direction.NORTH);
+        b.light(0, 4, 5, 3, Direction.SOUTH);
+        b.light(0, -1, 3, 4, Direction.NORTH);
+        b.light(-1, -1, -2, 6, Direction.NORTH); b.light(1, -1, -2, 6, Direction.NORTH);
+        b.light(0, -1, -6, 7, Direction.NORTH);
+        b.light(0, 2, -3, 9, Direction.NORTH);
+        b.c(0, 1, 2, ComponentType.REFUEL_PORT, Direction.NORTH);
         b.block(0, 1, -6, Blocks.LIGHT_BLUE_STAINED_GLASS);
         b.block(-1, 1, -4, Blocks.LIGHT_BLUE_STAINED_GLASS);
         b.block(1, 1, -4, Blocks.LIGHT_BLUE_STAINED_GLASS);
@@ -465,7 +529,7 @@ public final class DemoVehicles {
                 int zLead = -4 + i;
                 for (int z = zLead; z <= 5; z++) {
                     boolean te = z == 5;
-                    b.wing(side * i, 0, z, ComponentType.DELTA_WING, WingOrientation.HORIZONTAL, c -> {
+                    b.wing(side * i, 0, z, ComponentType.DOUBLE_DELTA_WING, WingOrientation.HORIZONTAL, c -> {
                         c.putInt("role", te ? 6 : 0);
                         c.putDouble("chord", 1.0);
                         c.putDouble("incidence", te ? 0 : 4);
@@ -482,11 +546,12 @@ public final class DemoVehicles {
         // small canards help lift the nose for take-off
         for (int side = -1; side <= 1; side += 2)
             for (int i = 1; i <= 3; i++)
-                b.wing(side * i, 0, -6, ComponentType.ELEVATOR, WingOrientation.HORIZONTAL, c -> { c.putDouble("chord", 1.1); c.putDouble("control_max", 25); });
+                b.wing(side * i, 0, -6, ComponentType.CANARD_WING, WingOrientation.HORIZONTAL, c -> { c.putDouble("chord", 1.1); c.putDouble("control_max", 25); });
         // tall gear so the tail clears the runway when rotating
-        b.c(0, -1, -5, ComponentType.LANDING_GEAR, Direction.NORTH, c -> { c.putDouble("radius", 0.75); c.putDouble("travel", 0.7); });
-        b.c(-2, -1, 1, ComponentType.LANDING_GEAR, Direction.NORTH, c -> { c.putDouble("radius", 0.75); c.putDouble("travel", 0.7); });
-        b.c(2, -1, 1, ComponentType.LANDING_GEAR, Direction.NORTH, c -> { c.putDouble("radius", 0.75); c.putDouble("travel", 0.7); });
+        // high-performance wheels (rated to 500 km/h), tall legs so the tail clears the runway
+        b.c(0, -1, -5, ComponentType.PERFORMANCE_GEAR, Direction.NORTH, c -> { c.putDouble("radius", 0.75); c.putDouble("travel", 0.7); });
+        b.c(-2, -1, 1, ComponentType.PERFORMANCE_GEAR, Direction.NORTH, c -> { c.putDouble("radius", 0.75); c.putDouble("travel", 0.7); });
+        b.c(2, -1, 1, ComponentType.PERFORMANCE_GEAR, Direction.NORTH, c -> { c.putDouble("radius", 0.75); c.putDouble("travel", 0.7); });
     }
 
     private static void car(B b) {

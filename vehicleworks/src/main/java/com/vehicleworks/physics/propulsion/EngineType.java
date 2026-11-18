@@ -14,6 +14,15 @@ public enum EngineType {
 
     public enum Output { SHAFT, THRUST }
 
+    /** fuel grade this engine burns: 1 AVGAS, 2 JET-A, 0 none (electric) */
+    public int fuelGrade() {
+        return switch (this) {
+            case PISTON -> 1;
+            case TURBOPROP, TURBOFAN, TURBOJET -> 2;
+            case ELECTRIC -> 0;
+        };
+    }
+
     public final String id;
     public final Output output;
     public final double maxPowerW;

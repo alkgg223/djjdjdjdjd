@@ -10,6 +10,8 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
+import com.vehicleworks.component.ComponentType;
+import com.vehicleworks.vehicle.VehicleBuilder;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -69,23 +71,35 @@ public final class VehicleMesh implements AutoCloseable {
         BlockPos center = BlockPos.containing(v.getX(), v.getBoundingBox().maxY + 0.5, v.getZ());
         int sky = level.getBrightness(LightLayer.SKY, center);
         int blk = level.getBrightness(LightLayer.BLOCK, center);
-        int lightKey = sky * 16 + blk;
+        // interior lighting: cockpit flood lights and panel backlight light up nearby blocks
+        var tel = v.telemetry;
+        int cabin = tel.busPowered ? tel.cabinLight : 0, backl = tel.busPowered ? tel.panelLight : 0;
+        int lightKey = sky * 16 + blk + ((cabin * 3 + backl) << 8);
         long now = Util.getMillis();
         boolean structureChanged = v.structure.version != version;
-        boolean lightChanged = Math.abs((lightKey >> 4) - (light >> 4)) >= 2 || Math.abs((lightKey & 15) - (light & 15)) >= 2;
+        boolean lightChanged = Math.abs(((lightKey >> 4) & 15) - ((light >> 4) & 15)) >= 2 || Math.abs((lightKey & 15) - (light & 15)) >= 2 || (lightKey >> 8) != (light >> 8);
         if (structureChanged || (lightChanged && now - lastBuild > 1500)) {
             lastBuild = now;
             Long2ObjectOpenHashMap<BlockState> snapshot = new Long2ObjectOpenHashMap<>(v.structure.blocks());
+            it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap lamps = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
+            for (long k : v.structure.blockEntities().keySet()) {
+                var ct = VehicleBuilder.typeOf(v.structure.get(k));
+                if (ct == ComponentType.AIRCRAFT_LIGHT && cabin > 0 && CockpitRenderer.lightType(v, k) == 9) lamps.put(k, cabin == 2 ? 14 : 10);
+                else if ((ct == ComponentType.COCKPIT_PANEL || ct == ComponentType.FLIGHT_INSTRUMENTS || (ct != null && ct.isInstrumentPanel())) && backl > 0)
+                    lamps.put(k, Math.max(lamps.get(k), backl == 2 ? 8 : 5));
+            }
             Biome biome = level.getBiome(center).value();
             int ver = v.structure.version;
             boolean big = snapshot.size() > 600;
-            if (big) pending = CompletableFuture.supplyAsync(() -> build(snapshot, sky, blk, biome, ver, lightKey), Util.backgroundExecutor());
-            else upload(build(snapshot, sky, blk, biome, ver, lightKey));
+            if (big) pending = CompletableFuture.supplyAsync(() -> build(snapshot, sky, blk, biome, ver, lightKey, lamps), Util.backgroundExecutor());
+            else upload(build(snapshot, sky, blk, biome, ver, lightKey, lamps));
         }
     }
 
-    private static Built build(Long2ObjectOpenHashMap<BlockState> blocks, int sky, int blk, Biome biome, int version, int lightKey) {
+    private static Built build(Long2ObjectOpenHashMap<BlockState> blocks, int sky, int blk, Biome biome, int version, int lightKey,
+                               it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap lamps) {
         VehicleBlockView view = new VehicleBlockView(blocks, sky, blk, biome);
+        view.lamps = lamps;
         BlockRenderDispatcher brd = Minecraft.getInstance().getBlockRenderer();
         Map<RenderType, BufferBuilder> builders = new HashMap<>();
         List<ByteBufferBuilder> memory = new ArrayList<>();

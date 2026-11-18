@@ -178,11 +178,25 @@ public final class WheelSim {
         }
         spinAngle += omega * dt;
 
+        // rolling resistance (much higher on rough ground unless the tyre is made for it)
+        groundRoughness = frictionAt != null ? frictionAt.roughness(cx, cy - 0.05, cz) : 0;
+        double crr = p.rollingResistance * (1 + 6.0 * groundRoughness * p.roughSensitivity);
+        double fRoll = crr * fzN;
+        double stopAll = share * Math.abs(vLong) / dt * 0.5;
+        fRoll = -Math.signum(vLong) * Math.min(fRoll, stopAll);
+        fLong += fRoll;
+
         body.applyForceAtPoint(fwdW.x * fLong + sideW.x * fLat, fwdW.y * fLong + sideW.y * fLat, fwdW.z * fLong + sideW.z * fLat, cx, cy, cz);
     }
 
     @FunctionalInterface
     public interface FrictionLookup {
         float friction(double x, double y, double z);
+
+        /** 0 = smooth runway … ~2.5 = deep sand / snow */
+        default float roughness(double x, double y, double z) { return 0; }
     }
+
+    /** roughness of the ground under the tyre (last step) */
+    public float groundRoughness;
 }

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "LGL"
+  ],
+  "key": {
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "G": {
+      "item": "vehicleworks:landing_gear"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:tundra_gear",
+    "count": 1
+  }
+}

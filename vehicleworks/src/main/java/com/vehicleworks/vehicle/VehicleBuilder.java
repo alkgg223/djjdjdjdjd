@@ -127,6 +127,7 @@ public final class VehicleBuilder {
                 }
             }
             if (t != null) {
+                layout.types.add(t);
                 switch (t) {
                     case BALLOON_ENVELOPE -> f |= StructureAnalysis.FLAG_ENVELOPE | StructureAnalysis.FLAG_SOLID;
                     case GAS_CELL -> gasCells.add(key);
@@ -140,12 +141,15 @@ public final class VehicleBuilder {
                     case FLIGHT_INSTRUMENTS -> layout.instruments = true;
                     case NAVIGATION_COMPUTER -> layout.navComputer = key;
                     case AMMO_BOX -> layout.ammoBoxes.add(key);
+                    case AIRCRAFT_LIGHT -> layout.lights.add(key);
                     case REMOTE_CONTROL_UNIT -> layout.rcus.add(key);
                     case MAIN_ROTOR, TAIL_ROTOR -> rotors.add(key);
-                    case WHEEL, LANDING_GEAR, HEAVY_LANDING_GEAR -> wheels.add(key);
+                    case WHEEL, LANDING_GEAR, HEAVY_LANDING_GEAR, DUAL_WHEEL_GEAR, BOGIE_GEAR, REINFORCED_GEAR, TUNDRA_GEAR, PERFORMANCE_GEAR -> wheels.add(key);
                     case FUEL_TANK -> {
                         TankUnit tu = new TankUnit(TankUnit.Kind.FUEL, FUEL_TANK_CAPACITY);
                         tu.amount = Math.min(FUEL_TANK_CAPACITY, data(s, key).getDouble("Fuel"));
+                        tu.fuelType = data(s, key).getInt("FuelType");
+                        tu.side = Integer.signum(x);
                         tu.localPos.set(x + 0.5, y + 0.5, z + 0.5);
                         tu.voxel = key;
                         layout.tankIndex.put(key, sim.tanks.size());
@@ -402,6 +406,17 @@ public final class VehicleBuilder {
             p.gripScale = t.property("grip").get(c);
             p.retractable = t.property("retractable").getBool(c);
             p.mass = 20 + 60 * p.radius;
+            // per-type tyre physics: rolling resistance, rough-ground behaviour, rated load, speed rating
+            switch (t) {
+                case LANDING_GEAR -> { p.rollingResistance = 0.015; p.roughSensitivity = 1.0; p.loadCapacity = 120e3; p.maxSpeed = 95; }
+                case DUAL_WHEEL_GEAR -> { p.rollingResistance = 0.016; p.roughSensitivity = 0.9; p.loadCapacity = 350e3; p.maxSpeed = 100; p.mass = 160; }
+                case BOGIE_GEAR -> { p.rollingResistance = 0.018; p.roughSensitivity = 0.8; p.loadCapacity = 900e3; p.maxSpeed = 105; p.mass = 400; }
+                case REINFORCED_GEAR -> { p.rollingResistance = 0.017; p.roughSensitivity = 0.7; p.loadCapacity = 550e3; p.maxSpeed = 100; p.mass = 220; }
+                case TUNDRA_GEAR -> { p.rollingResistance = 0.022; p.roughSensitivity = 0.15; p.loadCapacity = 60e3; p.maxSpeed = 55; p.mass = 70; }
+                case PERFORMANCE_GEAR -> { p.rollingResistance = 0.010; p.roughSensitivity = 1.6; p.loadCapacity = 150e3; p.maxSpeed = 140; p.retractRate = 2.2; p.mass = 40; }
+                case HEAVY_LANDING_GEAR -> { p.rollingResistance = 0.018; p.roughSensitivity = 0.6; p.loadCapacity = 1200e3; p.maxSpeed = 100; }
+                default -> { p.rollingResistance = 0.014; p.roughSensitivity = 1.0; }
+            }
             p.sanitize();
             WheelSim w = new WheelSim(p);
             w.mountLocal.set(BlockPos.getX(key) + 0.5, BlockPos.getY(key) + 0.5, BlockPos.getZ(key) + 0.5);

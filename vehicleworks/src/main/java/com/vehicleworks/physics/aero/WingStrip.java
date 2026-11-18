@@ -139,6 +139,13 @@ public final class WingStrip {
         double v = Math.sqrt(v2);
         double alphaFlow = Math.atan2(-vn, vf);
         double alpha = wrap(alphaFlow + Math.toRadians(params.incidenceDeg));
+        if (params.type.dihedralDeg != 0 && Math.abs(normal.y) > 0.7) {
+            // effective dihedral: the wing moving into a sideslip sees more angle of attack (restores wings level)
+            double rx = forward.y * normal.z - forward.z * normal.y, ry = forward.z * normal.x - forward.x * normal.z, rz = forward.x * normal.y - forward.y * normal.x;
+            double side = Math.signum(lx * rx + ly * ry + lz * rz);
+            double vr = flow.x * rx + flow.y * ry + flow.z * rz;
+            alpha += Math.toRadians(params.type.dihedralDeg) * (vr / Math.max(1, Math.abs(vf))) * side;
+        }
         double hOverB = span > 0 ? groundHeight / Math.max(1.0, span) : 99;
         model.compute(params, alpha, controlDeflection, flapDeflection, spoiler, aspectRatio, currentSweepRad, mach, hOverB);
         double q = 0.5 * density * v2;

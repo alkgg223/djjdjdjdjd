@@ -45,12 +45,12 @@ public final class AeroModel {
         // Helmbold equation for finite wings
         double k = a0 / (Math.PI * ar);
         double a = a0 / (Math.sqrt(1.0 + k * k) + k);
-        a *= p.liftScale;
+        a *= p.liftScale * p.type.liftSlopeScale;
 
         double tauControl = CONTROL_EFFECTIVENESS * controlDefl + FLAP_EFFECTIVENESS * flapDefl;
         double cl0 = pf.cl0 * p.liftScale * cosL;
 
-        double stall = Math.toRadians(p.stallAngleDeg()) * (1.0 + 0.35 * Math.sin(sweepRad));
+        double stall = Math.toRadians(p.stallAngleDeg() + p.type.stallOffsetDeg) * (1.0 + 0.35 * Math.abs(Math.sin(sweepRad)));
         // flaps reduce stall angle a little but raise clmax
         stall -= 0.1 * Math.abs(flapDefl);
 
@@ -64,13 +64,13 @@ public final class AeroModel {
             vortex = p.type.vortexLiftK * Math.signum(s) * s * s * Math.cos(aAtt) * p.liftScale;
         }
         clLin += vortex;
-        double clMaxEff = (pf.clMax + 0.9 * Math.abs(flapDefl)) * p.liftScale * (p.type.vortexLiftK > 0 ? 1.35 : 1.0);
+        double clMaxEff = (pf.clMax + 0.9 * Math.abs(flapDefl)) * p.liftScale * p.type.clMaxScale * (p.type.vortexLiftK > 0 ? 1.35 : 1.0);
         clLin = Math.max(-clMaxEff, Math.min(clMaxEff, clLin));
         this.clLinear = clLin;
 
         // separation blend (sigmoid around stall angle, width ~2.5°)
         double absA = Math.abs(alpha + controlDefl * 0.25);
-        double width = Math.toRadians(1.2);
+        double width = Math.toRadians(1.2 * p.type.stallWidth);
         double sep = 1.0 / (1.0 + Math.exp(-(absA - stall - Math.toRadians(1.0)) / width));
         if (Math.abs(alpha) > Math.PI / 2) sep = 1.0; // reverse flow
         this.separation = sep;
@@ -85,6 +85,7 @@ public final class AeroModel {
 
         // ground effect: induced drag reduction and mild lift increase
         double phi = 1.0;
+        hOverB /= p.type.groundEffect;
         if (hOverB < 3.0) {
             double x = 16.0 * Math.max(0.01, hOverB);
             phi = (x * x) / (1.0 + x * x);
@@ -94,7 +95,7 @@ public final class AeroModel {
         // spoilers dump lift
         clv *= 1.0 - 0.65 * spoiler;
 
-        double cdProfile = (pf.cd0 + pf.cdAlpha2 * aAtt * aAtt * (1.0 - sep)) * p.dragScale;
+        double cdProfile = (pf.cd0 * p.type.cd0Scale + pf.cdAlpha2 * aAtt * aAtt * (1.0 - sep)) * p.dragScale;
         double cdFlap = 1.2 * flapDefl * flapDefl + 0.3 * controlDefl * controlDefl;
         double cdSpoiler = 0.45 * spoiler;
         double e = p.type.oswald;

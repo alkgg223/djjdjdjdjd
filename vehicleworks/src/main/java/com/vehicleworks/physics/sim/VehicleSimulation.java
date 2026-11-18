@@ -89,6 +89,12 @@ public final class VehicleSimulation {
     public double totalLift, totalDrag, totalThrust, buoyancy, gasLift;
     public boolean stallWarning, inWater, onGround;
     public double fuelSupply = 1, fuelAmount, fuelCapacity, fuelFlow;
+    /** fuel selector: 0 both, 1 left, 2 right, 3 off */
+    public int fuelSelector;
+    /** electric boost pumps switched on (and powered) */
+    public boolean boostPumps = true;
+    /** per-engine supply factor from fuel grade (1 = right fuel, 0 = wrong fuel / none) */
+    public boolean wrongFuel;
     public double ballastFill, carEngineRpmFraction;
     public double hydraulicAuthority = 1;
     public double effPitch, effRoll, effYaw;
@@ -292,16 +298,35 @@ public final class VehicleSimulation {
         fuelAmount = 0;
         fuelCapacity = 0;
         for (TankUnit t : tanks) if (t.kind == TankUnit.Kind.FUEL) { fuelAmount += t.amount; fuelCapacity += t.capacity; }
+        // tanks the fuel selector connects to the engines
+        double feedAmount = 0;
+        double[] grade = new double[4];
+        for (TankUnit t : tanks) {
+            if (t.kind != TankUnit.Kind.FUEL || !feeds(t)) continue;
+            feedAmount += t.amount;
+            grade[Math.max(0, Math.min(3, t.fuelType))] += t.amount;
+        }
         double demand = 0;
         for (ThrusterUnit t : thrusters) demand += t.engine.fuelFlowKgS * fuelScale;
-        double cap = BASE_FUEL_FLOW + PUMP_FUEL_FLOW * fuelPumps;
-        if (fuelAmount <= 1e-6) fuelSupply = 0;
+        // gravity feed + engine-driven pumps; the electric boost pumps add the rest
+        double cap = BASE_FUEL_FLOW + PUMP_FUEL_FLOW * fuelPumps * (boostPumps ? 1.0 : 0.3);
+        if (feedAmount <= 1e-6) fuelSupply = 0;
         else fuelSupply = demand > cap ? cap / demand : 1.0;
-        double used = Math.min(demand, cap) * dt;
-        fuelFlow = Math.min(demand, cap);
-        if (used > 0 && fuelAmount > 0) {
-            double f = Math.min(1.0, used / fuelAmount);
-            for (TankUnit t : tanks) if (t.kind == TankUnit.Kind.FUEL) t.amount = Math.max(0, t.amount - t.amount * f);
+        double used = feedAmount > 0 ? Math.min(demand, cap) * dt : 0;
+        fuelFlow = feedAmount > 0 ? Math.min(demand, cap) : 0;
+        if (used > 0) {
+            double f = Math.min(1.0, used / feedAmount);
+            for (TankUnit t : tanks) if (t.kind == TankUnit.Kind.FUEL && feeds(t)) t.amount = Math.max(0, t.amount - t.amount * f);
+        }
+        // fuel grade per engine: right grade (or universal) = full, mixed = rough, only wrong grade = no combustion
+        wrongFuel = false;
+        for (ThrusterUnit t : thrusters) {
+            int g = t.engine.type.fuelGrade();
+            if (g == 0 || feedAmount <= 1e-6) { t.gradeFactor = 1; continue; }
+            double good = grade[0] + grade[g], mixed = grade[3];
+            if (good > 1e-6) t.gradeFactor = 1;
+            else if (mixed > 1e-6) t.gradeFactor = 0.55;
+            else { t.gradeFactor = 0; wrongFuel = true; }
         }
 
         // ---- engines
@@ -326,7 +351,7 @@ public final class VehicleSimulation {
             }
             e.afterburner = input.afterburner;
             double axial = airspeed * Math.max(0, Math.cos(angleOfAttack));
-            e.update(dt, fuelSupply, sigma, axial, ambient, hasStarter, t.submergedIntake);
+            e.update(dt, fuelSupply * t.gradeFactor, sigma, axial, ambient, hasStarter, t.submergedIntake);
         }
 
         // ---- rotors: governor and collective/cyclic
@@ -493,7 +518,7 @@ public final class VehicleSimulation {
             if (w.params.retractable) {
                 boolean down = input.gearDown;
                 w.retracted = !down && w.extension <= 0.01;
-                w.extension = approach(w.extension, down ? 1 : 0, 0.33 * Math.max(0.3, hydraulicAuthority) * dt);
+                w.extension = approach(w.extension, down ? 1 : 0, 0.33 * w.params.retractRate * Math.max(0.3, hydraulicAuthority) * dt);
                 if (!down) w.retracted = true;
                 if (down && w.extension >= 0.95) w.retracted = false;
             }
@@ -512,6 +537,15 @@ public final class VehicleSimulation {
             double fwdSpeed = body.linearVelocity.dot(tmp);
             transmission.autoShift(carEngineRpmFraction, fwdSpeed, input.drive > 0.05 ? 1 : (input.drive < -0.05 ? -1 : 0), dt);
         }
+    }
+
+    private boolean feeds(TankUnit t) {
+        return switch (fuelSelector) {
+            case 1 -> t.side <= 0;
+            case 2 -> t.side >= 0;
+            case 3 -> false;
+            default -> true;
+        };
     }
 
     private boolean isHelium(int i) {
@@ -685,7 +719,10 @@ public final class VehicleSimulation {
                 if (!drivetrainRunning && driven > 0 && Math.abs(input.drive) < 0.05 && !hasPilotThrust()) br = Math.max(br, 0.15);
                 w.brakeInput = br;
                 w.wheelCount = wheels.size();
-                w.step(body, com, terrain, dt, env::frictionAt);
+                w.step(body, com, terrain, dt, new WheelSim.FrictionLookup() {
+                    @Override public float friction(double x, double y, double z) { return env.frictionAt(x, y, z); }
+                    @Override public float roughness(double x, double y, double z) { return env.roughnessAt(x, y, z); }
+                });
             }
             groundAssist(driven, dt);
         }

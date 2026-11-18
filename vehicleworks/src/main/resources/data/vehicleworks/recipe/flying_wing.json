@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "WWW",
+    " W "
+  ],
+  "key": {
+    "W": {
+      "item": "vehicleworks:swept_wing"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:flying_wing",
+    "count": 3
+  }
+}

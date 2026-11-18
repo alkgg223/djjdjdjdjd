@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "W",
+    "S"
+  ],
+  "key": {
+    "W": {
+      "item": "vehicleworks:straight_wing"
+    },
+    "S": {
+      "item": "minecraft:iron_bars"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:high_wing",
+    "count": 1
+  }
+}

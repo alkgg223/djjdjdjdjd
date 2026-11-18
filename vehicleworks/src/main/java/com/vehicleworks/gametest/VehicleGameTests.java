@@ -148,7 +148,7 @@ public final class VehicleGameTests {
         VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.CAR, new BlockPos(12, 2, -104));
         v.controls.testPilot = true;
         h.runAfterDelay(20, () -> {
-            for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
+            v.startEngines(true);
         });
         double startZ = v.getZ();
         h.runAfterDelay(80, () -> v.controls.keys = VehicleControls.FORWARD);
@@ -171,7 +171,7 @@ public final class VehicleGameTests {
         double[] ground = new double[1];
         h.runAfterDelay(30, () -> {
             ground[0] = v.getY();
-            for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
+            v.startEngines(true);
             v.controls.throttle = 1;
             v.controls.flaps = 0.33;
         });
@@ -201,7 +201,7 @@ public final class VehicleGameTests {
         double[] ground = new double[1];
         h.runAfterDelay(20, () -> {
             ground[0] = v.getY();
-            for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
+            v.startEngines(true);
             v.controls.flaps = 0.33;
             VehicleWorks.LOGGER.info("fighter layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
         });
@@ -229,7 +229,7 @@ public final class VehicleGameTests {
         double[] ground = new double[1];
         h.runAfterDelay(20, () -> {
             ground[0] = v.getY();
-            for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
+            v.startEngines(true);
             v.controls.flaps = 0.33;
             VehicleWorks.LOGGER.info("airliner layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
         });
@@ -258,7 +258,7 @@ public final class VehicleGameTests {
         double[] ground = new double[1];
         h.runAfterDelay(60, () -> {
             ground[0] = v.getY();
-            for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
+            v.startEngines(true);
             VehicleWorks.LOGGER.info("b787 layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
         });
         h.onEachTick(() -> {
@@ -294,7 +294,7 @@ public final class VehicleGameTests {
         double[] ground = new double[1];
         h.runAfterDelay(30, () -> {
             ground[0] = v.getY();
-            for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
+            v.startEngines(true);
             VehicleWorks.LOGGER.info("pelican layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
         });
         h.onEachTick(() -> {
@@ -321,7 +321,7 @@ public final class VehicleGameTests {
         double[] ground = new double[1];
         h.runAfterDelay(30, () -> {
             ground[0] = v.getY();
-            for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
+            v.startEngines(true);
             VehicleWorks.LOGGER.info("stingray layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
         });
         h.onEachTick(() -> {
@@ -340,6 +340,150 @@ public final class VehicleGameTests {
         });
     }
 
+    // ------------------------------------------------------------------ cockpit systems
+
+    @GameTest(template = "platform", timeoutTicks = 400, batch = "systems")
+    public static void startupSequenceNeedsPowerFuelAndIgnition(GameTestHelper h) {
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.PELICAN, new BlockPos(12, 3, 12));
+        v.controls.testPilot = true;
+        h.runAfterDelay(20, () -> {
+            v.controls.battery = false;
+            h.assertTrue("vehicleworks.start.no_power".equals(v.startEngines(false)), "no power must refuse");
+            v.controls.battery = true;
+            v.controls.busPowered = true;
+            h.assertTrue("vehicleworks.start.no_pump".equals(v.startEngines(false)), "no fuel pump must refuse");
+            v.controls.fuelPump = true;
+            h.assertTrue("vehicleworks.start.no_ignition".equals(v.startEngines(false)), "no ignition must refuse");
+            v.controls.ignition = true;
+            h.assertTrue(v.startEngines(false) == null, "full sequence starts");
+        });
+        h.runAfterDelay(260, () -> {
+            boolean running = v.simulation().thrusters.stream().allMatch(t -> t.engine.isRunning());
+            h.assertTrue(running, "engines running after the start sequence");
+            h.assertTrue(v.controls.generator, "generator online");
+            v.controls.ignition = false;
+        });
+        h.runAfterDelay(340, () -> {
+            boolean stopped = v.simulation().thrusters.stream().noneMatch(t -> t.engine.isRunning());
+            h.assertTrue(stopped, "ignition off shuts the engines down");
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "platform", timeoutTicks = 300, batch = "systems")
+    public static void batteryDrainsWithLoadAndPowerFails(GameTestHelper h) {
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.PELICAN, new BlockPos(12, 3, 12));
+        v.controls.testPilot = true;
+        h.runAfterDelay(10, () -> {
+            v.controls.batteryCharge = 0.002;
+            v.controls.landingLights = true; v.controls.taxiLights = true; v.controls.lights = true; v.controls.beacon = true; v.controls.strobe = true;
+        });
+        h.runAfterDelay(200, () -> {
+            h.assertTrue(v.controls.batteryCharge <= 1e-6, "battery drained: " + v.controls.batteryCharge);
+            h.assertTrue(!v.controls.busPowered, "bus unpowered without battery and generator");
+            h.assertTrue("vehicleworks.start.no_power".equals(v.startEngines(false)), "flat battery cannot start");
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "platform", timeoutTicks = 600, batch = "systems")
+    public static void refuelPortFillsTanksGradually(GameTestHelper h) {
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.PELICAN, new BlockPos(12, 3, 12));
+        v.controls.testPilot = true;
+        var sp = h.makeMockServerPlayerInLevel();
+        sp.getAbilities().instabuild = true;
+        double[] f0 = new double[1];
+        h.runAfterDelay(20, () -> {
+            sp.teleportTo(v.getX(), v.getY(), v.getZ());
+            for (var t : v.simulation().tanks) { t.amount = 10; t.fuelType = 0; }
+            f0[0] = v.simulation().tanks.stream().mapToDouble(t -> t.amount).sum();
+            v.startRefuel(sp, 2, 400);
+        });
+        h.runAfterDelay(80, () -> {
+            double f = v.simulation().tanks.stream().mapToDouble(t -> t.amount).sum();
+            h.assertTrue(f > f0[0] + 20 && f < f0[0] + 400, "fuel rises gradually: " + f0[0] + " -> " + f);
+            h.assertTrue(v.isRefueling(), "still refuelling");
+        });
+        h.runAfterDelay(560, () -> {
+            double f = v.simulation().tanks.stream().mapToDouble(t -> t.amount).sum();
+            h.assertTrue(Math.abs(f - (f0[0] + 400)) < 2, "stops at the requested amount: " + f);
+            h.assertTrue(!v.isRefueling(), "pump stopped");
+            h.assertTrue(v.simulation().tanks.stream().anyMatch(t -> t.fuelType == 2), "JET-A in the tanks");
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "platform", timeoutTicks = 200, batch = "systems")
+    public static void wrongFuelGradeStopsCombustion(GameTestHelper h) {
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.PELICAN, new BlockPos(12, 3, 12)); // turboprops: JET-A
+        v.controls.testPilot = true;
+        h.runAfterDelay(10, () -> { for (var t : v.simulation().tanks) t.fuelType = 1; }); // AVGAS in a turbine
+        h.runAfterDelay(30, () -> {
+            h.assertTrue(v.simulation().wrongFuel, "wrong fuel grade detected");
+            h.assertTrue(v.simulation().thrusters.stream().allMatch(t -> t.gradeFactor == 0), "no combustion with the wrong grade");
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "platform", timeoutTicks = 120, batch = "systems")
+    public static void damageMultiplierScalesDamageOnce(GameTestHelper h) {
+        VehicleEntity a = spawnDemo(h, DemoVehicles.Demo.CAR, new BlockPos(6, 3, 6));
+        VehicleEntity b = spawnDemo(h, DemoVehicles.Demo.CAR, new BlockPos(18, 3, 18));
+        long key = BlockPos.asLong(1, 0, 1);
+        double old = com.vehicleworks.Config.SERVER.aircraftDamageMultiplier.get();
+        h.runAfterDelay(10, () -> {
+            com.vehicleworks.Config.SERVER.aircraftDamageMultiplier.set(1.0);
+            a.damageBlock(key, 2f);
+        });
+        h.runAfterDelay(12, () -> {
+            com.vehicleworks.Config.SERVER.aircraftDamageMultiplier.set(5.0);
+            b.damageBlock(key, 2f);
+        });
+        h.runAfterDelay(16, () -> {
+            com.vehicleworks.Config.SERVER.aircraftDamageMultiplier.set(old);
+            float da = a.structure.damage(key), db = b.structure.damage(key);
+            h.assertTrue(Math.abs(da - 2f) < 1e-3, "1x damage = 2: " + da);
+            h.assertTrue(Math.abs(db - 10f) < 1e-3, "5x damage = 10 (not 50): " + db);
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "platform", timeoutTicks = 40)
+    public static void wingTypesHaveDifferentAerodynamics(GameTestHelper h) {
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (var wt : com.vehicleworks.physics.aero.WingType.values()) {
+            var p = new com.vehicleworks.physics.aero.WingParams().applyTypeDefaults(wt);
+            double[] c8 = com.vehicleworks.physics.aero.AeroModel.polar(p, 6, 8);
+            double[] c20 = com.vehicleworks.physics.aero.AeroModel.polar(p, 6, 20);
+            seen.add(String.format("%.4f/%.4f/%.4f", c8[0], c8[1], c20[0]));
+        }
+        h.assertTrue(seen.size() == com.vehicleworks.physics.aero.WingType.values().length, "every wing type has its own polar: " + seen.size());
+        h.succeed();
+    }
+
+    @GameTest(template = "platform", timeoutTicks = 400, batch = "walk")
+    public static void entityIsCarriedByMovingVehicle(GameTestHelper h) {
+        runway(h, -100, 9, 200);
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.CAR, new BlockPos(12, 2, -104));
+        v.controls.testPilot = true;
+        var stand = new net.minecraft.world.entity.decoration.ArmorStand(h.getLevel(), 0, 0, 0);
+        h.runAfterDelay(30, () -> {
+            var top = v.localToWorld(1.5, 1.05, 1.5, new org.joml.Vector3d());
+            stand.setPos(top.x, top.y, top.z);
+            h.getLevel().addFreshEntity(stand);
+            v.startEngines(true);
+        });
+        h.runAfterDelay(80, () -> v.controls.keys = VehicleControls.FORWARD);
+        h.runAfterDelay(300, () -> {
+            var local = v.worldToLocal(stand.getX(), stand.getY(), stand.getZ(), new org.joml.Vector3d());
+            double moved = v.getZ();
+            h.assertTrue(v.getDeltaMovement() != null, "ok");
+            h.assertTrue(Math.abs(local.x - 1.5) < 1.2 && Math.abs(local.z - 1.5) < 1.2 && local.y > 0.8 && local.y < 1.6,
+                    "armor stand stays on the moving car (local " + local + ")");
+            h.succeed();
+        });
+    }
+
     @GameTest(template = "platform", timeoutTicks = 700, batch = "flight_heli")
     public static void helicopterLiftsOff(GameTestHelper h) {
         VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.HELICOPTER, new BlockPos(12, 3, 12));
@@ -347,7 +491,7 @@ public final class VehicleGameTests {
         double[] ground = new double[1];
         h.runAfterDelay(20, () -> {
             ground[0] = v.getY();
-            for (ThrusterUnit t : v.simulation().thrusters) t.engine.requestStart();
+            v.startEngines(true);
             VehicleWorks.LOGGER.info("heli layout: " + com.vehicleworks.vehicle.EngineeringInfo.build(v));
         });
         // hold Space (collective up) after the rotor spun up on its own

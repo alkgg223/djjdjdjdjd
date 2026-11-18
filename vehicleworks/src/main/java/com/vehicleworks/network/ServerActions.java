@@ -49,7 +49,7 @@ import org.joml.Vector3d;
 public final class ServerActions {
     private ServerActions() {}
 
-    public static final int SCREEN_CONFIG = 0, SCREEN_ENGINEERING = 1, SCREEN_RCU = 2, SCREEN_PANEL = 3;
+    public static final int SCREEN_CONFIG = 0, SCREEN_ENGINEERING = 1, SCREEN_RCU = 2, SCREEN_PANEL = 3, SCREEN_REFUEL = 4;
 
     private static void msg(ServerPlayer p, String key, Object... args) {
         p.displayClientMessage(Component.translatable(key, args), true);
@@ -240,14 +240,11 @@ public final class ServerActions {
         switch (p.action()) {
             case Payloads.ACT_ENGINES_START -> {
                 if (!isPilot && p.arg() != Payloads.ARG_PANEL) return;
-                if (!c.battery) { msg(sp, "vehicleworks.panel.battery_off"); return; }
-                boolean any = false;
-                for (ThrusterUnit t : sim.thrusters) if (t.engine.enabled) { t.engine.requestStart(); any = true; }
-                if (any) v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.ENGINE_START.get(), SoundSource.NEUTRAL, 1.5f, 1f);
-                if (!any) msg(sp, "vehicleworks.msg.no_engines");
-                else if (!sim.hasStarter && sim.thrusters.stream().anyMatch(t -> t.engine.type.needsStarter)) msg(sp, "vehicleworks.msg.need_starter");
-                else if (sim.fuelAmount <= 0 && com.vehicleworks.Config.SERVER.requireFuel.get()) msg(sp, "vehicleworks.msg.no_fuel");
-                else msg(sp, "vehicleworks.msg.engines_starting");
+                String err = v.startEngines(p.arg() != Payloads.ARG_PANEL);
+                if (err != null) { msg(sp, err); return; }
+                v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.ENGINE_START.get(), SoundSource.NEUTRAL, 1.5f, 1f);
+                if (!sim.hasStarter && sim.thrusters.stream().anyMatch(t -> t.engine.type.needsStarter)) msg(sp, "vehicleworks.msg.need_starter");
+                else msg(sp, "vehicleworks.start.ok");
             }
             case Payloads.ACT_ENGINES_STOP -> {
                 if (!isPilot && p.arg() != Payloads.ARG_PANEL) return;
@@ -259,6 +256,7 @@ public final class ServerActions {
                 EngineSim e = sim.thrusters.get(p.arg()).engine;
                 if (e.state == EngineSim.State.OFF || e.state == EngineSim.State.STOPPING) {
                     if (!c.battery) { msg(sp, "vehicleworks.panel.battery_off"); return; }
+                    c.ignition = true;
                     e.requestStart();
                 }
                 else e.requestStop();
@@ -274,6 +272,49 @@ public final class ServerActions {
                 c.flaps = c.flaps >= 0.99 ? 0 : Math.min(1, c.flaps + 1.0 / 3.0);
                 msg(sp, "vehicleworks.msg.flaps", Math.round(c.flaps * 100));
             }
+            case Payloads.ACT_SWITCH -> {
+                int id = p.arg();
+                switch (id) {
+                    case VehicleControls.SW_BATTERY -> c.battery = !c.battery;
+                    case VehicleControls.SW_AVIONICS -> c.avionics = !c.avionics;
+                    case VehicleControls.SW_FUEL_PUMP -> c.fuelPump = !c.fuelPump;
+                    case VehicleControls.SW_IGNITION -> c.ignition = !c.ignition;
+                    case VehicleControls.SW_STARTER -> {
+                        String err = v.startEngines(false);
+                        if (err != null) msg(sp, err);
+                        else {
+                            v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.ENGINE_START.get(), SoundSource.NEUTRAL, 1.5f, 1f);
+                            msg(sp, "vehicleworks.start.ok");
+                        }
+                    }
+                    case VehicleControls.SW_FUEL_SEL -> c.fuelSelector = (c.fuelSelector + 1) % 4;
+                    case VehicleControls.SW_NAV -> c.lights = !c.lights;
+                    case VehicleControls.SW_BEACON -> c.beacon = !c.beacon;
+                    case VehicleControls.SW_STROBE -> c.strobe = !c.strobe;
+                    case VehicleControls.SW_LANDING -> c.landingLights = !c.landingLights;
+                    case VehicleControls.SW_TAXI -> c.taxiLights = !c.taxiLights;
+                    case VehicleControls.SW_TURNOFF -> c.turnoffLights = !c.turnoffLights;
+                    case VehicleControls.SW_CABIN -> c.cabinLight = (c.cabinLight + 1) % 3;
+                    case VehicleControls.SW_PANEL -> c.panelLight = (c.panelLight + 1) % 3;
+                    case VehicleControls.SW_GEAR -> {
+                        c.gearDown = !c.gearDown;
+                        v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.GEAR_MOTOR.get(), SoundSource.NEUTRAL, 1f, 1f);
+                    }
+                    case VehicleControls.SW_TEST -> emergencyTest(sp, v);
+                    case VehicleControls.SW_AUTOPILOT -> { if (c.autopilot) c.autopilot = false; }
+                    case VehicleControls.SW_PARKING -> c.parkingBrake = !c.parkingBrake;
+                    default -> { return; }
+                }
+                if (id != VehicleControls.SW_TEST && id != VehicleControls.SW_STARTER)
+                    v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.CLICK.get(), SoundSource.NEUTRAL, 0.9f, 1.25f);
+            }
+            case Payloads.ACT_REFUEL_START -> {
+                int grade = p.arg() & 3;
+                double kg = (p.arg() >> 2);
+                if (grade != 1 && grade != 2) return;
+                v.startRefuel(sp, grade, kg);
+            }
+            case Payloads.ACT_REFUEL_STOP -> v.stopRefuel(sp, true);
             case Payloads.ACT_BATTERY -> {
                 c.battery = !c.battery;
                 v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.CLICK.get(), SoundSource.NEUTRAL, 1f, c.battery ? 1.3f : 0.8f);
@@ -286,7 +327,8 @@ public final class ServerActions {
             case Payloads.ACT_AUTOPILOT -> {
                 if (!isPilot) return;
                 int a = p.arg();
-                c.autopilot = (a & 1) != 0;
+                c.autopilot = (a & 1) != 0 && c.busPowered && c.avionics;
+                if ((a & 1) != 0 && !c.autopilot) { msg(sp, "vehicleworks.start.no_avionics"); return; }
                 c.apHeading = Math.floorMod((a >> 1) & 511, 360);
                 c.apAltitude = ((a >> 10) & 16383) - 2048;
                 if (c.autopilot) c.mouseAim = false;
@@ -581,6 +623,19 @@ public final class ServerActions {
             }
             case COCKPIT_PANEL -> {
                 Payloads.toPlayer(sp, new Payloads.OpenScreen(SCREEN_PANEL, v.getId(), key, new CompoundTag()));
+                return true;
+            }
+            case REFUEL_PORT -> {
+                CompoundTag d = new CompoundTag();
+                int canisters = 0;
+                var inv = sp.getInventory();
+                for (int i = 0; i < inv.getContainerSize(); i++) if (inv.getItem(i).getItem() instanceof FuelItem) canisters += inv.getItem(i).getCount();
+                d.putInt("Canisters", canisters);
+                d.putBoolean("Creative", sp.getAbilities().instabuild);
+                int need = 0;
+                for (var tu : v.simulation().thrusters) need |= 1 << tu.engine.type.fuelGrade();
+                d.putInt("Grades", need);
+                Payloads.toPlayer(sp, new Payloads.OpenScreen(SCREEN_REFUEL, v.getId(), key, d));
                 return true;
             }
             case REMOTE_CONTROL_UNIT -> {

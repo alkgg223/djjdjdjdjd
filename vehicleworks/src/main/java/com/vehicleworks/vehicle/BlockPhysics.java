@@ -68,6 +68,17 @@ public final class BlockPhysics {
         return (float) Math.max(0.05, Math.min(1.0, 1.6 - 1.55 * mc));
     }
 
+    /** Ground roughness for tyres: 0 = paved runway, higher = grass, dirt, sand, snow. */
+    public static float roughness(BlockState s) {
+        if (s.is(net.minecraft.tags.BlockTags.SAND) || s.is(net.minecraft.world.level.block.Blocks.SNOW_BLOCK) || s.is(net.minecraft.world.level.block.Blocks.SNOW)
+                || s.is(net.minecraft.world.level.block.Blocks.POWDER_SNOW) || s.is(net.minecraft.world.level.block.Blocks.MUD)) return 2.5f;
+        if (s.is(net.minecraft.world.level.block.Blocks.GRAVEL) || s.is(net.minecraft.world.level.block.Blocks.FARMLAND) || s.is(net.minecraft.world.level.block.Blocks.SOUL_SAND)
+                || s.is(net.minecraft.world.level.block.Blocks.SOUL_SOIL)) return 1.8f;
+        if (s.is(net.minecraft.tags.BlockTags.DIRT) || s.is(net.minecraft.world.level.block.Blocks.MOSS_BLOCK)) return 1.0f;
+        if (s.is(net.minecraft.tags.BlockTags.LOGS) || s.getSoundType() == net.minecraft.world.level.block.SoundType.GRASS) return 0.6f;
+        return 0f;
+    }
+
     /** Hit points of a block before it breaks off a vehicle. */
     public static float hitPoints(BlockState s) {
         float hardness = Math.max(0.2f, s.getBlock().defaultDestroyTime());

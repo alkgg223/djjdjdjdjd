@@ -1,0 +1,55 @@
+{
+  "variants": {
+    "facing=north,plane=horizontal": {
+      "model": "vehicleworks:block/flying_wing"
+    },
+    "facing=north,plane=vertical_z": {
+      "model": "vehicleworks:block/flying_wing_v",
+      "x": 90
+    },
+    "facing=north,plane=vertical_x": {
+      "model": "vehicleworks:block/flying_wing_v",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,plane=horizontal": {
+      "model": "vehicleworks:block/flying_wing",
+      "y": 90
+    },
+    "facing=east,plane=vertical_z": {
+      "model": "vehicleworks:block/flying_wing_v",
+      "x": 90
+    },
+    "facing=east,plane=vertical_x": {
+      "model": "vehicleworks:block/flying_wing_v",
+      "x": 90,
+      "y": 90
+    },
+    "facing=south,plane=horizontal": {
+      "model": "vehicleworks:block/flying_wing",
+      "y": 180
+    },
+    "facing=south,plane=vertical_z": {
+      "model": "vehicleworks:block/flying_wing_v",
+      "x": 90
+    },
+    "facing=south,plane=vertical_x": {
+      "model": "vehicleworks:block/flying_wing_v",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,plane=horizontal": {
+      "model": "vehicleworks:block/flying_wing",
+      "y": 270
+    },
+    "facing=west,plane=vertical_z": {
+      "model": "vehicleworks:block/flying_wing_v",
+      "x": 90
+    },
+    "facing=west,plane=vertical_x": {
+      "model": "vehicleworks:block/flying_wing_v",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

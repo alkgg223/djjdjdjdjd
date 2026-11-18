@@ -305,6 +305,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
             if (be == null) continue;
             CompoundTag d = be.getCompound(ComponentBlockEntity.DATA);
             d.putDouble(t.kind == TankUnit.Kind.FUEL ? "Fuel" : "Water", t.amount);
+            if (t.kind == TankUnit.Kind.FUEL) d.putInt("FuelType", t.fuelType);
             be.put(ComponentBlockEntity.DATA, d);
         }
         for (ThrusterUnit t : s.thrusters) {
@@ -338,6 +339,8 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         boolean fresh = (level().getGameTime() - controls.lastInputTick < 10 && pilot != null) || controls.testPilot;
         if (!fresh) controls.keys = 0;
         controls.apply(sim.input, profile(), fresh, 0.05);
+        updateElectrical(sim, 0.05);
+        tickRefuel(sim);
         sim.fuelScale = Config.SERVER.fuelConsumptionScale.get();
         if (!Config.SERVER.requireFuel.get()) {
             for (TankUnit t : sim.tanks) if (t.kind == TankUnit.Kind.FUEL) t.amount = t.capacity;
@@ -349,6 +352,188 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
                 sim.tanks.add(virtual);
             }
         }
+    }
+
+    private final it.unimi.dsi.fastutil.longs.LongOpenHashSet groundLights = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+
+    /** Landing / taxi lights light the ground ahead with invisible light blocks that follow the beam. */
+    private void updateGroundLights() {
+        if (!(level() instanceof ServerLevel sl)) return;
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet want = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        if (layout != null && controls.busPowered && Config.SERVER.lightsIlluminateWorld.get() && !layout.lights.isEmpty()) {
+            for (long k : layout.lights) {
+                if (!structure.contains(k)) continue;
+                int type = ComponentType.AIRCRAFT_LIGHT.property("light_type").getInt(VehicleBuilder.config(structure, k));
+                boolean landing = type == 6 && controls.landingLights, taxi = type == 7 && controls.taxiLights, turn = type == 8 && controls.turnoffLights;
+                if (!landing && !taxi && !turn) continue;
+                net.minecraft.core.Direction f = VehicleBuilder.facing(structure.get(k));
+                Vector3d o = localToWorld(BlockPos.getX(k) + 0.5 + f.getStepX() * 0.6, BlockPos.getY(k) + 0.5, BlockPos.getZ(k) + 0.5 + f.getStepZ() * 0.6, new Vector3d());
+                Vector3d d = localDirToWorld(f.getStepX(), landing ? -0.18 : -0.3, f.getStepZ(), new Vector3d()).normalize();
+                double range = landing ? 60 : 30;
+                Vec3 from = new Vec3(o.x, o.y, o.z), to = from.add(d.x * range, d.y * range, d.z * range);
+                var hit = sl.clip(new net.minecraft.world.level.ClipContext(from, to, net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, this));
+                if (hit.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK) continue;
+                BlockPos lp = hit.getBlockPos().relative(hit.getDirection());
+                if (sl.getBlockState(lp).isAir() || sl.getBlockState(lp).is(net.minecraft.world.level.block.Blocks.LIGHT)) want.add(lp.asLong());
+                if (want.size() >= 3) break;
+            }
+        }
+        // remove light blocks no longer lit, place the new ones
+        var it = groundLights.iterator();
+        while (it.hasNext()) {
+            long p = it.nextLong();
+            if (want.contains(p)) continue;
+            BlockPos bp = BlockPos.of(p);
+            if (sl.isLoaded(bp) && sl.getBlockState(bp).is(net.minecraft.world.level.block.Blocks.LIGHT)) sl.setBlock(bp, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+            it.remove();
+        }
+        for (long p : want) {
+            if (groundLights.contains(p)) continue;
+            BlockPos bp = BlockPos.of(p);
+            if (sl.getBlockState(bp).isAir()) {
+                sl.setBlock(bp, net.minecraft.world.level.block.Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 14), 2);
+                groundLights.add(p);
+            }
+        }
+    }
+
+    private void clearGroundLights() {
+        if (!(level() instanceof ServerLevel sl)) return;
+        for (long p : groundLights) {
+            BlockPos bp = BlockPos.of(p);
+            if (sl.isLoaded(bp) && sl.getBlockState(bp).is(net.minecraft.world.level.block.Blocks.LIGHT)) sl.setBlock(bp, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+        }
+        groundLights.clear();
+    }
+
+    // ------------------------------------------------------------------ refuelling (interactive, through a refuel port)
+    private java.util.UUID refueler;
+    private int refuelGrade;
+    private double refuelRemaining, refuelBuffer;
+
+    public boolean isRefueling() { return refueler != null; }
+    public double refuelRemaining() { return refuelRemaining; }
+
+    public void startRefuel(ServerPlayer sp, int grade, double kg) {
+        if (layout == null || kg <= 0) return;
+        if (!layout.structureHas(ComponentType.REFUEL_PORT)) { sp.displayClientMessage(net.minecraft.network.chat.Component.translatable("vehicleworks.refuel.no_port"), true); return; }
+        refueler = sp.getUUID();
+        refuelGrade = grade;
+        refuelRemaining = kg;
+        refuelBuffer = 0;
+        level().playSound(null, getX(), getY(), getZ(), net.minecraft.sounds.SoundEvents.BUCKET_FILL, net.minecraft.sounds.SoundSource.NEUTRAL, 1f, 0.8f);
+    }
+
+    public void stopRefuel(ServerPlayer sp, boolean byPlayer) {
+        if (refueler == null) return;
+        refueler = null;
+        writeRuntimeToStructure();
+        if (sp != null) sp.displayClientMessage(net.minecraft.network.chat.Component.translatable(byPlayer ? "vehicleworks.refuel.stopped" : "vehicleworks.refuel.done",
+                String.format("%.0f", layout != null ? layout.sim.fuelAmount : 0)), true);
+    }
+
+    /** Fuel flows from the hose into the emptiest tanks, a little every tick (15 kg/s + 3 kg/s per tank). */
+    private void tickRefuel(VehicleSimulation sim) {
+        if (refueler == null || !(level() instanceof ServerLevel sl)) return;
+        ServerPlayer sp = sl.getServer().getPlayerList().getPlayer(refueler);
+        if (sp == null || sp.distanceToSqr(this) > 40 * 40) { stopRefuel(sp, true); return; }
+        int ntank = 0;
+        for (TankUnit t : sim.tanks) if (t.kind == TankUnit.Kind.FUEL && t.voxel != Long.MIN_VALUE) ntank++;
+        double step = Math.min(refuelRemaining, (15 + 3 * ntank) * 0.05);
+        // fuel comes from canisters in the player's inventory unless creative
+        if (!sp.getAbilities().instabuild && refuelBuffer < step) {
+            var inv = sp.getInventory();
+            for (int i = 0; i < inv.getContainerSize() && refuelBuffer < step; i++) {
+                var st = inv.getItem(i);
+                if (st.getItem() instanceof com.vehicleworks.item.FuelItem fi) { refuelBuffer += fi.kg; st.shrink(1); }
+            }
+            if (refuelBuffer < 1e-6) { sp.displayClientMessage(net.minecraft.network.chat.Component.translatable("vehicleworks.refuel.no_canisters"), true); stopRefuel(null, false); return; }
+            step = Math.min(step, refuelBuffer);
+        }
+        TankUnit best = null;
+        for (TankUnit t : sim.tanks) {
+            if (t.kind != TankUnit.Kind.FUEL || t.voxel == Long.MIN_VALUE || t.amount >= t.capacity - 1e-3) continue;
+            if (best == null || t.fill() < best.fill()) best = t;
+        }
+        if (best == null || step <= 0) { stopRefuel(sp, false); return; }
+        double add = Math.min(step, best.capacity - best.amount);
+        if (best.amount > 1 && best.fuelType != 0 && best.fuelType != refuelGrade) best.fuelType = 3; // contaminated
+        else if (best.amount <= 1 || best.fuelType == 0) best.fuelType = refuelGrade;
+        best.amount += add;
+        refuelRemaining -= add;
+        if (!sp.getAbilities().instabuild) refuelBuffer -= add;
+        if (tickCount % 20 == 0) level().playSound(null, getX(), getY(), getZ(), net.minecraft.sounds.SoundEvents.BUCKET_EMPTY, net.minecraft.sounds.SoundSource.NEUTRAL, 0.5f, 1.3f);
+        if (refuelRemaining <= 1e-3) stopRefuel(sp, false);
+    }
+
+    /** Battery capacity (J) of the aircraft electrical system. */
+    private static final double BATTERY_J = 1.5e6;
+
+    /**
+     * Electrical bus: battery (drains with the load) and engine generators (power the bus and
+     * recharge the battery). Systems without power stop working; ignition and fuel pumps gate the engines.
+     */
+    private void updateElectrical(VehicleSimulation sim, double dt) {
+        VehicleControls c = controls;
+        boolean gen = false, cranking = false;
+        for (ThrusterUnit t : sim.thrusters) {
+            if (t.engine.type == com.vehicleworks.physics.propulsion.EngineType.ELECTRIC) continue;
+            if (t.engine.isRunning() && t.engine.spool > 0.18) gen = true;
+            if (t.engine.state == com.vehicleworks.physics.propulsion.EngineSim.State.STARTING) cranking = true;
+        }
+        double load = 0;
+        if (c.avionics) load += 280;
+        if (c.fuelPump) load += 90 * Math.max(1, sim.fuelPumps);
+        if (c.lights) load += 60;
+        if (c.beacon) load += 50;
+        if (c.strobe) load += 70;
+        if (c.landingLights) load += 250;
+        if (c.taxiLights) load += 150;
+        if (c.turnoffLights) load += 120;
+        load += c.cabinLight * 40 + c.panelLight * 20;
+        if (cranking) load += 2500;
+        if (c.autopilot) load += 60;
+        double genW = gen ? 3500 : 0;
+        if (c.battery) c.batteryCharge = Math.max(0, Math.min(1, c.batteryCharge + (genW - load) / BATTERY_J * dt));
+        c.generator = gen;
+        c.busPowered = c.battery && (c.batteryCharge > 0.001 || gen);
+        boolean avionicsOn = c.busPowered && c.avionics;
+        if (!avionicsOn && c.autopilot) c.autopilot = false;
+        sim.boostPumps = c.busPowered && c.fuelPump;
+        sim.fuelSelector = c.fuelSelector;
+        // ignition (magnetos / igniters) keeps combustion going; off = engines shut down
+        boolean aircraft = layout != null && layout.wingArea > 0 || !sim.rotors.isEmpty();
+        if (aircraft && !c.ignition) {
+            for (ThrusterUnit t : sim.thrusters) {
+                var st = t.engine.state;
+                if (t.engine.type != com.vehicleworks.physics.propulsion.EngineType.ELECTRIC
+                        && (st == com.vehicleworks.physics.propulsion.EngineSim.State.RUNNING || st == com.vehicleworks.physics.propulsion.EngineSim.State.STARTING)) t.engine.requestStop();
+            }
+        }
+    }
+
+    /** Engine start through the panel: power, fuel, ignition, then starter. Returns a message key if refused. */
+    public String startEngines(boolean automatic) {
+        if (layout == null) return "vehicleworks.msg.no_engines";
+        VehicleControls c = controls;
+        VehicleSimulation sim = layout.sim;
+        if (automatic) {
+            // quick start (I key): runs the whole checklist
+            c.battery = true;
+            c.avionics = true;
+            c.fuelPump = true;
+            c.ignition = true;
+            if (c.fuelSelector == 3) c.fuelSelector = 0;
+            c.busPowered = c.batteryCharge > 0.001;
+        }
+        if (!c.battery || !c.busPowered) return "vehicleworks.start.no_power";
+        if (!c.fuelPump && sim.fuelPumps > 0) return "vehicleworks.start.no_pump";
+        if (!c.ignition) return "vehicleworks.start.no_ignition";
+        if (c.fuelSelector == 3) return "vehicleworks.start.fuel_off";
+        sim.boostPumps = true;
+        boolean any = false;
+        for (ThrusterUnit t : sim.thrusters) if (t.engine.enabled) { t.engine.requestStart(); any = true; }
+        return any ? null : "vehicleworks.msg.no_engines";
     }
 
     /** Called by the physics manager after the world step. */
@@ -367,6 +552,8 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         comLocal.set(sim.com);
         setPos(p.x, p.y, p.z);
         applyCrash();
+        checkGearLoads();
+        if (tickCount % 4 == 0) updateGroundLights();
         applyPendingDamage();
         checkStructuralLimits(sim);
     }
@@ -384,6 +571,19 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         pendingDamage.addTo(key, (float) dmg);
     }
 
+    /** Landing gear overload (hard landings, too heavy aircraft) and tyre over-speed damage the gear. */
+    private void checkGearLoads() {
+        if (layout == null || tickCount % 2 != 0) return;
+        for (var w : layout.sim.wheels) {
+            if (!w.grounded || !structure.contains(w.voxel)) continue;
+            float hp = BlockPhysics.hitPoints(structure.get(w.voxel));
+            double cap = w.params.loadCapacity;
+            if (cap > 0 && w.load > 1.5 * cap) damageBlock(w.voxel, (float) (hp * 0.04 * (w.load / cap - 1.5)));
+            double v = Math.abs(w.omega * w.params.radius);
+            if (w.params.maxSpeed > 0 && v > w.params.maxSpeed) damageBlock(w.voxel, (float) (hp * 0.01 * (v / w.params.maxSpeed - 1) * 10));
+        }
+    }
+
     private double crashApproach;
     private long crashVoxel;
     private int crashCooldown;
@@ -399,7 +599,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         crashApproach = 0;
         double kmh = v * 3.6;
         if (crashCooldown > 0 || kmh < 45 || !(level() instanceof ServerLevel sl)) return;
-        int n = (int) Math.round((kmh - 30) / 3.0 * Config.SERVER.crashDamageScale.get());
+        int n = (int) Math.round((kmh - 30) / 3.0 * Config.SERVER.crashDamageScale.get() * Config.SERVER.aircraftDamageMultiplier.get());
         int size = structure.blocks().size();
         n = Math.min(n, Math.max(1, (int) (size * 0.7)));
         if (n <= 0) return;
@@ -475,7 +675,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
             long key = e.getLongKey();
             BlockState st = structure.get(key);
             if (st.isAir()) continue;
-            float d = structure.damage(key) + e.getFloatValue();
+            float d = structure.damage(key) + e.getFloatValue() * (float) (double) Config.SERVER.aircraftDamageMultiplier.get();
             if (d >= BlockPhysics.hitPoints(st)) destroyed.add(key);
             else {
                 structure.setDamage(key, d);
@@ -809,6 +1009,24 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         t.hydraulics = (float) s.hydraulicAuthority;
         t.stickPitch = (float) s.effPitch;
         t.stickRoll = (float) s.effRoll;
+        t.batteryCharge = (float) controls.batteryCharge;
+        t.switches = controls.switchBits();
+        t.fuelSelector = controls.fuelSelector;
+        t.cabinLight = controls.cabinLight;
+        t.panelLight = controls.panelLight;
+        t.busPowered = controls.busPowered;
+        t.generator = controls.generator;
+        t.wrongFuel = s.wrongFuel;
+        t.refueling = isRefueling();
+        t.refuelRemaining = (float) refuelRemaining;
+        int nft = 0;
+        for (TankUnit tu : s.tanks) if (tu.kind == TankUnit.Kind.FUEL && tu.voxel != Long.MIN_VALUE) nft++;
+        if (t.tankFill.length != nft) { t.tankFill = new float[nft]; t.tankGrade = new byte[nft]; t.tankSide = new byte[nft]; }
+        int ti2 = 0;
+        for (TankUnit tu : s.tanks) {
+            if (tu.kind != TankUnit.Kind.FUEL || tu.voxel == Long.MIN_VALUE) continue;
+            t.tankFill[ti2] = (float) tu.fill(); t.tankGrade[ti2] = (byte) tu.fuelType; t.tankSide[ti2] = (byte) tu.side; ti2++;
+        }
         t.lights = controls.lights;
         t.emergencyTest = level().getGameTime() < controls.emergencyUntil;
         t.apHeading = (float) controls.apHeading;
@@ -935,6 +1153,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
 
     @Override
     public void remove(RemovalReason reason) {
+        clearGroundLights();
         super.remove(reason);
         if (layout != null && level() instanceof ServerLevel sl) VehiclePhysicsManager.get(sl).forget(layout.sim);
     }

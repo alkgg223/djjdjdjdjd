@@ -27,6 +27,8 @@ public final class ClientEvents {
 
     public static void onClientTick(ClientTickEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
+        // vehicles may tick after the player: re-apply the carry so the player never lags behind
+        if (mc.player != null && mc.player.getVehicle() == null) com.vehicleworks.vehicle.EntityVehicleCollision.carry(mc.player);
         VehicleEntity v = ridden();
         if (v == null || mc.player == null) {
             // consume toggles so they do not fire later
@@ -76,13 +78,26 @@ public final class ClientEvents {
         while (Keybinds.AUTOPILOT.consumeClick()) Minecraft.getInstance().setScreen(new AutopilotScreen(v));
         if (panelClickMask > 0 && !mc.options.keyUse.isDown()) panelClickMask--;
         while (Keybinds.VOICE.consumeClick()) VoiceCallouts.toggle();
+        while (Keybinds.HUD_TOGGLE.consumeClick()) {
+            boolean vis = !Config.CLIENT.hudVisible.get();
+            Config.CLIENT.hudVisible.set(vis);
+            Config.CLIENT_SPEC.save();
+            mc.player.displayClientMessage(net.minecraft.network.chat.Component.translatable(vis ? "vehicleworks.hud.shown" : "vehicleworks.hud.hidden"), true);
+        }
+        while (Keybinds.HUD_MODE.consumeClick()) {
+            int m = (Config.CLIENT.hudMode.get() + 1) % 4;
+            Config.CLIENT.hudMode.set(m);
+            Config.CLIENT.hudVisible.set(true);
+            Config.CLIENT_SPEC.save();
+            mc.player.displayClientMessage(net.minecraft.network.chat.Component.translatable("vehicleworks.hud.mode." + m), true);
+        }
         VoiceCallouts.tick(v);
         while (Keybinds.PANEL.consumeClick()) {
             boolean has = false;
             for (var st : v.structure.blocks().values())
                 if (com.vehicleworks.vehicle.VehicleBuilder.typeOf(st) == com.vehicleworks.component.ComponentType.COCKPIT_PANEL) { has = true; break; }
-            if (has) Minecraft.getInstance().setScreen(new PanelScreen(v));
-            else if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.displayClientMessage(net.minecraft.network.chat.Component.translatable("vehicleworks.panel.none"), true);
+            // the overhead panel block shows the switches in 3D; the screen works in every cockpit
+            Minecraft.getInstance().setScreen(new PanelScreen(v));
         }
     }
 
@@ -118,13 +133,14 @@ public final class ClientEvents {
                 default -> { mx = rx; mz = rz; }
             }
             if (mx < -1.5 || mx > 1.5 || mz < -1.0 || mz > 1.0) continue;
-            int col = mx >= 0.5 ? 0 : (mx >= -0.5 ? 1 : 2);
-            int row = mz < 0 ? 0 : 1;
+            double px = (mx + 0.5) * 16, pz = (mz + 0.5) * 16; // model pixels: x -16..32, z -8..24
+            int col = Math.max(0, Math.min(CockpitRenderer.COLS - 1, (int) Math.floor((32 - px) / 8)));
+            int row = Math.max(0, Math.min(CockpitRenderer.ROWS - 1, (int) Math.floor((pz + 8) / (32.0 / CockpitRenderer.ROWS))));
             best = t;
-            button = row * 3 + col;
+            button = row * CockpitRenderer.COLS + col;
         }
         if (button < 0) return false;
-        PanelScreen.pressButton(v, button);
+        PanelScreen.pressSwitch(v, button);
         mc.player.playSound(com.vehicleworks.registry.ModSounds.CLICK.get(), 0.6f, 1.4f);
         return true;
     }

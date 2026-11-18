@@ -175,12 +175,12 @@ public class ComponentBlock extends BaseEntityBlock {
     public static class Wing extends ComponentBlock {
         public Wing(ComponentType type, Properties props) {
             super(type, props);
-            registerDefaultState(stateDefinition.any().setValue(PLANE, WingOrientation.HORIZONTAL));
+            registerDefaultState(stateDefinition.any().setValue(PLANE, WingOrientation.HORIZONTAL).setValue(HORIZONTAL_FACING, Direction.NORTH));
         }
 
         @Override
         protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
-            b.add(PLANE);
+            b.add(PLANE, HORIZONTAL_FACING); // facing = flight direction (shapes the planform model)
         }
 
         @Override
@@ -198,11 +198,12 @@ public class ComponentBlock extends BaseEntityBlock {
             if (ctx.getPlayer() != null && ctx.getPlayer().isShiftKeyDown()) {
                 normal = span == Direction.Axis.Y ? Direction.Axis.Y : (span == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X);
             }
-            return defaultBlockState().setValue(PLANE, WingOrientation.forNormal(normal));
+            return defaultBlockState().setValue(PLANE, WingOrientation.forNormal(normal)).setValue(HORIZONTAL_FACING, ctx.getHorizontalDirection());
         }
 
         @Override
         protected BlockState rotate(BlockState state, Rotation rot) {
+            state = state.setValue(HORIZONTAL_FACING, rot.rotate(state.getValue(HORIZONTAL_FACING)));
             WingOrientation o = state.getValue(PLANE);
             if (o == WingOrientation.HORIZONTAL || rot == Rotation.NONE || rot == Rotation.CLOCKWISE_180) return state;
             return state.setValue(PLANE, o == WingOrientation.VERTICAL_X ? WingOrientation.VERTICAL_Z : WingOrientation.VERTICAL_X);

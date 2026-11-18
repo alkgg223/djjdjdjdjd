@@ -18,6 +18,11 @@ public abstract class EntityMixin {
         if (result != cir.getReturnValue()) cir.setReturnValue(result);
     }
 
+    @Inject(method = "move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V", at = @At("HEAD"))
+    private void vehicleworks$carry(MoverType type, Vec3 movement, CallbackInfo ci) {
+        if (type == MoverType.SELF || type == MoverType.PLAYER) EntityVehicleCollision.carry((Entity) (Object) this);
+    }
+
     @Inject(method = "move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V", at = @At("TAIL"))
     private void vehicleworks$afterMove(MoverType type, Vec3 movement, CallbackInfo ci) {
         EntityVehicleCollision.afterMove((Entity) (Object) this);
