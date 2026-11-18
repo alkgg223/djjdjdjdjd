@@ -348,6 +348,29 @@ for k, en, ar in (('title', 'Refuelling', 'تعبئة الوقود'), ('grade', 
     t('vehicleworks.refuel.' + k, en, ar)
 t('vehicleworks.fuel.avgas', 'AVGAS 100LL (piston)', 'AVGAS 100LL (مكبسي)')
 t('vehicleworks.fuel.jet', 'JET-A (turbine)', 'JET-A (توربيني)')
+# 1.1.2 configuration screen
+CFG = {
+ 'construction': ('Construction', 'البناء'), 'physics': ('Physics', 'الفيزياء'), 'environment': ('Environment', 'البيئة'), 'damage': ('Damage', 'الضرر'),
+ 'weapons': ('Weapons', 'الأسلحة'), 'fuel': ('Fuel', 'الوقود'), 'network': ('Network', 'الشبكة'),
+ 'maxBlocks': ('Max blocks per vehicle', 'أقصى عدد بلوكات للمركبة'), 'maxExtent': ('Max vehicle size (blocks)', 'أقصى حجم للمركبة'),
+ 'substeps': ('Physics substeps', 'خطوات الفيزياء'), 'maxSubsteps': ('Max adaptive substeps', 'أقصى خطوات تكيفية'), 'gravity': ('Gravity (m/s²)', 'الجاذبية'),
+ 'altitudeScale': ('Altitude scale', 'مقياس الارتفاع'), 'blockMassScale': ('Block mass multiplier', 'مضاعف وزن البلوكات'), 'gasLiftScale': ('Balloon lift multiplier', 'مضاعف رفع المناطيد'),
+ 'maxSpeed': ('Speed limit (m/s)', 'حد السرعة (م/ث)'), 'windSpeed': ('Wind speed (m/s)', 'سرعة الرياح'), 'turbulence': ('Turbulence', 'الاضطراب'),
+ 'waveAmplitude': ('Wave height (m)', 'ارتفاع الموج'), 'crushDepth': ('Submarine crush depth (m)', 'عمق تحطم الغواصة'),
+ 'crashDamage': ('Crash damage', 'ضرر الاصطدام'), 'crashDamageScale': ('Crash destruction strength', 'قوة التدمير عند الاصطدام'),
+ 'aircraftDamageMultiplier': ('Aircraft Damage Multiplier (1-10)', 'مضاعف ضرر الطائرات (1-10)'), 'lightsIlluminateWorld': ('Landing lights light the ground', 'أضواء الهبوط تضيء الأرض'),
+ 'crashSpeedThreshold': ('No-damage impact speed (m/s)', 'سرعة الاصطدام بدون ضرر'), 'structuralStrength': ('Wing structural strength', 'قوة هيكل الجناح'),
+ 'weaponsEnabled': ('Weapons enabled', 'تفعيل الأسلحة'), 'weaponsBreakBlocks': ('Weapons break blocks', 'الأسلحة تكسر البلوكات'), 'weaponDamageScale': ('Weapon damage', 'ضرر الأسلحة'),
+ 'requireFuel': ('Engines need fuel', 'المحركات تحتاج وقود'), 'fuelConsumptionScale': ('Fuel consumption', 'استهلاك الوقود'), 'syncRangeBlocks': ('Sync range (blocks)', 'مدى المزامنة'),
+ 'lodDistance': ('Detail distance', 'مسافة التفاصيل'), 'farLodDistance': ('Far detail distance', 'مسافة التفاصيل البعيدة'), 'renderBlockEntities': ('Render block entities', 'رسم كيانات البلوكات'),
+ 'hudMode': ('HUD style (0-3)', 'نمط HUD (0-3)'), 'hudVisible': ('Show HUD', 'إظهار HUD'), 'voiceCallouts': ('Voice callouts', 'التنبيهات الصوتية'),
+ 'cameraRoll': ('Camera rolls with the aircraft', 'الكاميرا تميل مع الطائرة'), 'hudScale': ('HUD scale', 'حجم HUD'), 'mouseAimDefault': ('Mouse-aim by default', 'التصويب بالفأرة افتراضياً'),
+ 'engineVolume': ('Engine volume', 'صوت المحركات')}
+for k, (en, ar) in CFG.items():
+    t('vehicleworks.configuration.' + k, en, ar)
+t('vehicleworks.configuration.title', 'VehicleWorks settings', 'إعدادات VehicleWorks')
+t('vehicleworks.cmd.damage_now', 'Aircraft damage multiplier: %s  (crash destruction strength: %s)', 'مضاعف ضرر الطائرات: %s  (قوة التدمير عند الاصطدام: %s)')
+t('vehicleworks.cmd.damage_set', 'Aircraft damage multiplier set to %s', 'تم ضبط مضاعف ضرر الطائرات على %s')
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):

@@ -39,6 +39,17 @@ public final class VehicleCommands {
                 .then(Commands.literal("disassemble").executes(VehicleCommands::disassemble))
                 .then(Commands.literal("removeall").executes(VehicleCommands::removeAll))
                 .then(Commands.literal("stats").executes(VehicleCommands::stats))
+                .then(Commands.literal("damage").executes(c -> {
+                            c.getSource().sendSuccess(() -> Component.translatable("vehicleworks.cmd.damage_now", com.vehicleworks.Config.SERVER.aircraftDamageMultiplier.get(), com.vehicleworks.Config.SERVER.crashDamageScale.get()), false);
+                            return 1;
+                        })
+                        .then(Commands.argument("multiplier", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(1, 10)).requires(s -> s.hasPermission(2)).executes(c -> {
+                            double m = com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(c, "multiplier");
+                            com.vehicleworks.Config.SERVER.aircraftDamageMultiplier.set(m);
+                            com.vehicleworks.Config.SERVER_SPEC.save();
+                            c.getSource().sendSuccess(() -> Component.translatable("vehicleworks.cmd.damage_set", m), true);
+                            return 1;
+                        })))
                 .then(Commands.literal("explode_engine").executes(c -> explodeEngine(c, -1))
                         .then(Commands.argument("engine", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 64))
                                 .executes(c -> explodeEngine(c, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "engine") - 1)))));
