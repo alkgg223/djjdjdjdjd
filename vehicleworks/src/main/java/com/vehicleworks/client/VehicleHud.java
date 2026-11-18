@@ -40,9 +40,24 @@ public final class VehicleHud {
         h = (int) (h / scale);
         ControlProfile p = ControlProfile.byIndex(t.profile);
         boolean pilot = v.seats.getOrDefault(mc.player.getUUID(), Long.MIN_VALUE) != Long.MIN_VALUE;
+        if (v.isPassengerSeated(mc.player)) {
+            // passengers: no flight HUD, instruments or controls; only their seat
+            passenger(g, font, v, w, h);
+            g.pose().popPose();
+            return;
+        }
         boolean visible = Config.CLIENT.hudVisible.get();
         int mode = Config.CLIENT.hudMode.get();
         boolean air = p == ControlProfile.AIRCRAFT || p == ControlProfile.HELICOPTER || p == ControlProfile.AIRSHIP || p == ControlProfile.AUTO;
+        // the aircraft HUD is an avionics display: no power, no HUD; it aligns at the end of the power-up
+        float hudA = air ? Avionics.hud(v) * Config.CLIENT.hudBrightness.get().floatValue() : 1;
+        if (air && visible && Avionics.stage(v) >= Avionics.GLOW && Avionics.hud(v) < 1 && t.avionicsPowered()) {
+            float f = Avionics.progress(v);
+            String m = f < 0.88f ? String.format("HUD ALIGN  %.0f%%", Math.min(99, f / 0.88f * 100)) : "HUD";
+            g.drawCenteredString(font, m, w / 2, h / 2 - 40, 0xFF40FF70);
+        }
+        if (air && hudA <= 0.02f) visible = false;
+        if (hudA < 0.999f) g.setColor(1, 1, 1, Math.max(0.02f, hudA));
         if (visible) {
             switch (p) {
                 case AIRCRAFT, HELICOPTER, AIRSHIP, AUTO -> {
@@ -59,6 +74,7 @@ public final class VehicleHud {
             if (!air || mode == 0) engines(g, font, t, w, h);
             weapons(g, font, t, w, h);
         }
+        g.setColor(1, 1, 1, 1);
         warnings(g, font, t, w, h, p);
         if (!VoiceCallouts.active.isEmpty()) {
             int yy = 32;
@@ -80,6 +96,18 @@ public final class VehicleHud {
             g.drawCenteredString(font, m, w / 2, 15, 0xFFFFFFFF);
         }
         g.pose().popPose();
+    }
+
+    /** Passenger seat: just the seat and how to adjust it. */
+    private static void passenger(GuiGraphics g, Font f, VehicleEntity v, int w, int h) {
+        int cls = v.seatClassOf(Minecraft.getInstance().player);
+        String seat = net.minecraft.network.chat.Component.translatable(cls > 0 ? "vehicleworks.cabin.class." + cls : "vehicleworks.cabin.passenger").getString();
+        String hint = net.minecraft.network.chat.Component.translatable(cls > 0 ? "vehicleworks.cabin.hint" : "vehicleworks.cabin.hint_plain",
+                Keybinds.PANEL.getTranslatedKeyMessage()).getString();
+        int y = h - 46;
+        g.fill(w / 2 - 110, y - 4, w / 2 + 110, y + 22, 0x80101418);
+        g.drawCenteredString(f, seat, w / 2, y, 0xFFE8EDF2);
+        g.drawCenteredString(f, hint, w / 2, y + 11, 0xFF9AA4AE);
     }
 
     // ------------------------------------------------------------------ HUD styles

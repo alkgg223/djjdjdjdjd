@@ -342,30 +342,147 @@ public final class VehicleGameTests {
 
     // ------------------------------------------------------------------ cockpit systems
 
-    @GameTest(template = "platform", timeoutTicks = 400, batch = "systems")
-    public static void startupSequenceNeedsPowerFuelAndIgnition(GameTestHelper h) {
-        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.PELICAN, new BlockPos(12, 3, 12));
+    static boolean allRunning(VehicleEntity v) {
+        return v.simulation().thrusters.stream().allMatch(t -> t.engine.isRunning());
+    }
+
+    static boolean noneRunning(VehicleEntity v) {
+        return v.simulation().thrusters.stream().noneMatch(t -> t.engine.isRunning());
+    }
+
+    static void log(VehicleEntity v, String what) {
+        StringBuilder b = new StringBuilder(what);
+        b.append(String.format(" bus=%s starter=%d", v.controls.busPowered, v.controls.starterTicks));
+        for (var t : v.simulation().thrusters) b.append(String.format(" [%s %s %s spool=%.3f egt=%.0f fail=%s ign=%s fuel=%s sup=%.2f gf=%.2f]", t.engine.type, t.engine.state, t.engine.phase, t.engine.spool, t.engine.temperatureC, t.engine.lastFailure, t.engine.ignitionCmd, t.engine.fuelCmd, v.simulation().fuelSupply, t.gradeFactor));
+        VehicleWorks.LOGGER.info(b.toString());
+    }
+
+    /** New aircraft are cold and dark; a piston engine cranks on the starter and catches only with magnetos and fuel. */
+    @GameTest(template = "platform", timeoutTicks = 600, batch = "systems")
+    public static void pistonStartFollowsTheProcedure(GameTestHelper h) {
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.TRAINER, new BlockPos(12, 3, 12));
         v.controls.testPilot = true;
         h.runAfterDelay(20, () -> {
-            v.controls.battery = false;
-            h.assertTrue("vehicleworks.start.no_power".equals(v.startEngines(false)), "no power must refuse");
+            h.assertTrue(!v.controls.battery && !v.controls.masterElec && !v.controls.busPowered, "spawns cold and dark");
+            h.assertTrue("vehicleworks.start.no_power".equals(v.engageStarter()), "no battery: starter refused");
             v.controls.battery = true;
-            v.controls.busPowered = true;
-            h.assertTrue("vehicleworks.start.no_pump".equals(v.startEngines(false)), "no fuel pump must refuse");
-            v.controls.fuelPump = true;
-            h.assertTrue("vehicleworks.start.no_ignition".equals(v.startEngines(false)), "no ignition must refuse");
-            v.controls.ignition = true;
-            h.assertTrue(v.startEngines(false) == null, "full sequence starts");
         });
-        h.runAfterDelay(260, () -> {
-            boolean running = v.simulation().thrusters.stream().allMatch(t -> t.engine.isRunning());
-            h.assertTrue(running, "engines running after the start sequence");
-            h.assertTrue(v.controls.generator, "generator online");
+        h.runAfterDelay(25, () -> {
+            h.assertTrue("vehicleworks.start.no_bus".equals(v.engageStarter()), "master off: no bus");
+            v.controls.masterElec = true;
+        });
+        h.runAfterDelay(30, () -> {
+            h.assertTrue(v.controls.busPowered, "battery + master power the bus");
+            h.assertTrue(v.engageStarter() == null, "starter engages");
+        });
+        h.runAfterDelay(90, () -> {
+            log(v, "piston cranking, no ignition/fuel:");
+            var e = v.simulation().thrusters.get(0).engine;
+            h.assertTrue(e.state == com.vehicleworks.physics.propulsion.EngineSim.State.STARTING && e.phase == com.vehicleworks.physics.propulsion.EngineSim.Phase.CRANK, "cranking");
+            h.assertTrue(e.spool > 0.06 && e.spool < 0.12, "turned by the starter only: " + e.spool);
+            v.controls.ignition = true;
+            v.controls.engineMaster = true;
+            v.controls.fuelPump = true;
+        });
+        h.runAfterDelay(200, () -> {
+            log(v, "piston after ignition + fuel:");
+            h.assertTrue(allRunning(v), "piston catches and runs");
+            h.assertTrue(v.controls.starterTicks == 0, "starter released once running");
+            h.assertTrue(v.controls.generator, "alternator online");
             v.controls.ignition = false;
         });
-        h.runAfterDelay(340, () -> {
-            boolean stopped = v.simulation().thrusters.stream().noneMatch(t -> t.engine.isRunning());
-            h.assertTrue(stopped, "ignition off shuts the engines down");
+        h.runAfterDelay(320, () -> {
+            h.assertTrue(noneRunning(v), "magnetos off stop a piston engine");
+            h.succeed();
+        });
+    }
+
+    /** Turbofan: starter spools N2, fuel + igniters light it, it accelerates, the starter cuts out; igniters off do not stop it. */
+    @GameTest(template = "platform", timeoutTicks = 1200, batch = "systems")
+    public static void jetStartFollowsTheProcedure(GameTestHelper h) {
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.AIRLINER, new BlockPos(12, 3, 12));
+        v.controls.testPilot = true;
+        h.runAfterDelay(20, () -> {
+            v.controls.battery = v.controls.masterElec = v.controls.fuelPump = v.controls.avionics = true;
+        });
+        h.runAfterDelay(25, () -> h.assertTrue(v.engageStarter() == null, "starter engages"));
+        h.runAfterDelay(200, () -> {
+            log(v, "turbofan dry crank:");
+            for (var t : v.simulation().thrusters) {
+                h.assertTrue(t.engine.phase == com.vehicleworks.physics.propulsion.EngineSim.Phase.CRANK, "still cranking without fuel");
+                h.assertTrue(t.engine.spool > t.engine.type.idleFraction * 0.3, "starter spools N2: " + t.engine.spool);
+            }
+            v.controls.ignition = true;
+            v.controls.engineMaster = true;
+        });
+        h.runAfterDelay(240, () -> {
+            log(v, "turbofan light-off:");
+            for (var t : v.simulation().thrusters)
+                h.assertTrue(t.engine.phase != com.vehicleworks.physics.propulsion.EngineSim.Phase.CRANK, "light-off after fuel + igniters");
+        });
+        h.runAfterDelay(800, () -> {
+            log(v, "turbofan after start:");
+            h.assertTrue(allRunning(v), "turbofans at stable idle");
+            h.assertTrue(v.controls.starterTicks == 0, "starter cut out");
+            v.controls.ignition = false;
+        });
+        h.runAfterDelay(860, () -> {
+            h.assertTrue(allRunning(v), "a running turbine does not need the igniters");
+            v.controls.engineMaster = false;
+        });
+        h.runAfterDelay(1000, () -> {
+            log(v, "turbofan after fuel cut-off:");
+            h.assertTrue(noneRunning(v), "engine master off shuts the fuel and the engines");
+            h.succeed();
+        });
+    }
+
+    /** Passengers adjust only their own seat; the cockpit switches answer the flight crew only. */
+    @GameTest(template = "platform", timeoutTicks = 200, batch = "systems")
+    public static void passengersHaveNoCockpitAccess(GameTestHelper h) {
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.AIRLINER, new BlockPos(12, 3, 12));
+        var sp = h.makeMockServerPlayerInLevel();
+        long business = BlockPos.asLong(-1, 1, -7), pilot = BlockPos.asLong(-1, 1, -11);
+        h.runAfterDelay(20, () -> {
+            sp.teleportTo(v.getX(), v.getY(), v.getZ());
+            h.assertTrue(v.trySit(sp, business), "sits in business class");
+            h.assertTrue(v.isPassengerSeated(sp) && v.seatClassOf(sp) == 4, "business class passenger");
+            boolean before = v.controls.battery;
+            com.vehicleworks.network.ServerActions.onAction(sp, new com.vehicleworks.network.Payloads.Action(v.getId(), com.vehicleworks.network.Payloads.ACT_SWITCH, VehicleControls.SW_BATTERY));
+            h.assertTrue(v.controls.battery == before, "a passenger cannot switch the battery");
+            v.cabinControl(sp, com.vehicleworks.vehicle.CabinSeat.RECLINE_DOWN);
+            v.cabinControl(sp, com.vehicleworks.vehicle.CabinSeat.FLAT);
+            v.cabinControl(sp, com.vehicleworks.vehicle.CabinSeat.DOOR); // business has no door
+            int st = v.cabin.get(business);
+            h.assertTrue(com.vehicleworks.vehicle.CabinSeat.flat(st) && com.vehicleworks.vehicle.CabinSeat.recline(st) == 10, "lie-flat: " + st);
+            h.assertTrue(!com.vehicleworks.vehicle.CabinSeat.door(st), "no door on a business seat");
+            sp.stopRiding();
+            h.assertTrue(v.trySit(sp, pilot), "sits in the captain seat");
+            com.vehicleworks.network.ServerActions.onAction(sp, new com.vehicleworks.network.Payloads.Action(v.getId(), com.vehicleworks.network.Payloads.ACT_SWITCH, VehicleControls.SW_BATTERY));
+            h.assertTrue(v.controls.battery != before, "the pilot switches the battery");
+            h.assertTrue(v.simulation().fbw, "A320 flies with side sticks (fly-by-wire)");
+            h.succeed();
+        });
+    }
+
+    /** Releasing the starter before self-sustaining speed gives a hung start. */
+    @GameTest(template = "platform", timeoutTicks = 900, batch = "systems")
+    public static void jetHungStartWhenStarterReleasedEarly(GameTestHelper h) {
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.FIGHTER, new BlockPos(12, 3, 12));
+        v.controls.testPilot = true;
+        h.runAfterDelay(20, () -> {
+            v.controls.battery = v.controls.masterElec = v.controls.fuelPump = v.controls.ignition = v.controls.engineMaster = true;
+        });
+        h.runAfterDelay(25, () -> h.assertTrue(v.engageStarter() == null, "starter engages"));
+        h.runAfterDelay(110, () -> {
+            log(v, "jet before starter release:");
+            var e = v.simulation().thrusters.get(0).engine;
+            h.assertTrue(e.state == com.vehicleworks.physics.propulsion.EngineSim.State.STARTING, "starting");
+            h.assertTrue("vehicleworks.start.released".equals(v.engageStarter()), "starter released");
+        });
+        h.runAfterDelay(700, () -> {
+            log(v, "jet after early release:");
+            h.assertTrue(noneRunning(v), "hung start: never reaches idle");
             h.succeed();
         });
     }
@@ -376,12 +493,13 @@ public final class VehicleGameTests {
         v.controls.testPilot = true;
         h.runAfterDelay(10, () -> {
             v.controls.batteryCharge = 0.002;
+            v.controls.battery = v.controls.masterElec = true;
             v.controls.landingLights = true; v.controls.taxiLights = true; v.controls.lights = true; v.controls.beacon = true; v.controls.strobe = true;
         });
         h.runAfterDelay(200, () -> {
             h.assertTrue(v.controls.batteryCharge <= 1e-6, "battery drained: " + v.controls.batteryCharge);
             h.assertTrue(!v.controls.busPowered, "bus unpowered without battery and generator");
-            h.assertTrue("vehicleworks.start.no_power".equals(v.startEngines(false)), "flat battery cannot start");
+            h.assertTrue(v.engageStarter() != null, "flat battery cannot start");
             h.succeed();
         });
     }

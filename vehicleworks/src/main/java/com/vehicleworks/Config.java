@@ -44,6 +44,10 @@ public final class Config {
         public final ModConfigSpec.DoubleValue structuralStrength;
         public final ModConfigSpec.BooleanValue weaponsEnabled;
         public final ModConfigSpec.IntValue syncRangeBlocks;
+        public final ModConfigSpec.BooleanValue passengerSeatInteraction;
+        public final ModConfigSpec.DoubleValue controlSensitivity;
+        public final ModConfigSpec.DoubleValue sidestickSensitivity;
+        public final ModConfigSpec.DoubleValue sidestickDeadZone;
 
         Server(ModConfigSpec.Builder b) {
             b.push("construction");
@@ -87,6 +91,12 @@ public final class Config {
             b.push("network");
             syncRangeBlocks = b.comment("Distance within which full-rate state sync is sent").defineInRange("syncRangeBlocks", 160, 16, 1024);
             b.pop();
+            b.push("controls");
+            passengerSeatInteraction = b.comment("Passengers can adjust their seat (recline, leg rest, tray, screen, light, suite door)").define("passengerSeatInteraction", true);
+            controlSensitivity = b.comment("Flight control sensitivity (yoke / stick / keyboard deflection rate)").defineInRange("controlSensitivity", 1.0, 0.2, 3.0);
+            sidestickSensitivity = b.comment("Airbus-style side stick: pitch / roll rate commanded at full deflection").defineInRange("sidestickSensitivity", 1.0, 0.2, 3.0);
+            sidestickDeadZone = b.comment("Side stick dead zone around the centre (0..0.5)").defineInRange("sidestickDeadZone", 0.08, 0.0, 0.5);
+            b.pop();
         }
     }
 
@@ -101,6 +111,13 @@ public final class Config {
         public final ModConfigSpec.BooleanValue voiceCallouts;
         public final ModConfigSpec.IntValue hudMode;
         public final ModConfigSpec.BooleanValue hudVisible;
+        public final ModConfigSpec.DoubleValue cockpitBrightness;
+        public final ModConfigSpec.DoubleValue instrumentBrightness;
+        public final ModConfigSpec.DoubleValue hudBrightness;
+        public final ModConfigSpec.DoubleValue startupAnimationSeconds;
+        public final ModConfigSpec.DoubleValue cockpitVolume;
+        public final ModConfigSpec.DoubleValue warningVolume;
+        public final ModConfigSpec.DoubleValue passengerScreenBrightness;
 
         Client(ModConfigSpec.Builder b) {
             lodDistance = b.comment("Beyond this distance animated parts and block entities are skipped").defineInRange("lodDistance", 128, 16, 1024);
@@ -113,6 +130,13 @@ public final class Config {
             hudScale = b.defineInRange("hudScale", 1.0, 0.5, 2.0);
             mouseAimDefault = b.define("mouseAimDefault", false);
             engineVolume = b.defineInRange("engineVolume", 1.0, 0.0, 2.0);
+            cockpitBrightness = b.comment("Cockpit lighting brightness (flood, console and panel lights)").defineInRange("cockpitBrightness", 1.0, 0.0, 2.0);
+            instrumentBrightness = b.comment("Instrument and display brightness").defineInRange("instrumentBrightness", 1.0, 0.1, 2.0);
+            hudBrightness = b.comment("HUD brightness (opacity)").defineInRange("hudBrightness", 1.0, 0.1, 1.0);
+            startupAnimationSeconds = b.comment("Duration of the electrical power-up / display boot sequence (seconds)").defineInRange("startupAnimationSeconds", 8.0, 1.0, 30.0);
+            cockpitVolume = b.comment("Cockpit sounds: switches, relays, avionics, starter").defineInRange("cockpitVolume", 1.0, 0.0, 2.0);
+            warningVolume = b.comment("Warning chimes and alarms").defineInRange("warningVolume", 1.0, 0.0, 2.0);
+            passengerScreenBrightness = b.comment("Passenger entertainment screen brightness").defineInRange("passengerScreenBrightness", 1.0, 0.1, 2.0);
         }
     }
 

@@ -63,6 +63,49 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
     public final WeaponSystem weapons = new WeaponSystem(this);
     /** passenger UUID → seat position (structure-local key) */
     public final Map<UUID, Long> seats = new HashMap<>();
+    /** interactive passenger seat states (CabinSeat packing), by seat block */
+    public final it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap cabin = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
+    {
+        cabin.defaultReturnValue(CabinSeat.DEFAULT);
+    }
+
+    /** seat class of the seat a player sits in: -1 not seated, 0 crew / plain seat, 1..5 cabin class */
+    public int seatClassOf(Entity e) {
+        Long k = seats.get(e.getUUID());
+        if (k == null) return -1;
+        ComponentType ct = VehicleBuilder.typeOf(structure.get(k));
+        return ct == null ? 0 : ct.seatClass();
+    }
+
+    /** Seated as a passenger (cabin seat, or a plain passenger seat that is not a gunner station). */
+    public boolean isPassengerSeated(Entity e) {
+        Long k = seats.get(e.getUUID());
+        if (k == null) return false;
+        ComponentType ct = VehicleBuilder.typeOf(structure.get(k));
+        if (ct == null) return false;
+        if (ct.seatClass() > 0) return true;
+        return ct == ComponentType.PASSENGER_SEAT && !ComponentType.PASSENGER_SEAT.property("gunner").getBool(VehicleBuilder.config(structure, k));
+    }
+
+    /** a passenger operates its own seat (recline, leg rest, screen, tray, light, suite door) */
+    public void cabinControl(ServerPlayer sp, int control) {
+        Long k = seats.get(sp.getUUID());
+        if (k == null) return;
+        int cls = seatClassOf(sp);
+        if (cls <= 0 || !Config.SERVER.passengerSeatInteraction.get()) return;
+        int before = cabin.get((long) k), after = CabinSeat.apply(cls, before, control);
+        if (after == before) return;
+        cabin.put((long) k, after);
+        Vector3d w = localToWorld(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + 0.5, BlockPos.getZ(k) + 0.5, new Vector3d());
+        var snd = switch (control) {
+            case CabinSeat.DOOR -> com.vehicleworks.registry.ModSounds.CABIN_DOOR.get();
+            case CabinSeat.SCREEN, CabinSeat.PAGE, CabinSeat.LIGHT -> com.vehicleworks.registry.ModSounds.BUTTON.get();
+            case CabinSeat.TRAY -> com.vehicleworks.registry.ModSounds.TRAY.get();
+            default -> com.vehicleworks.registry.ModSounds.SEAT_MOTOR.get();
+        };
+        level().playSound(null, w.x, w.y, w.z, snd, net.minecraft.sounds.SoundSource.NEUTRAL, 0.7f, 1f);
+        Payloads.sendCabin(this, null);
+    }
     /** client-only render/interpolation data, created lazily by client code */
     public Object clientState;
 
@@ -99,6 +142,9 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         v.xo = v.getX(); v.yo = v.getY(); v.zo = v.getZ();
         v.installLayout(layout);
         v.loadCoreSettings();
+        // a new aircraft leaves the factory cold and dark
+        if (v.isAircraft()) v.controls.coldAndDark();
+        v.controls.initialized = true;
         return v;
     }
 
@@ -266,6 +312,10 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
                 if (oi < 0) continue;
                 EngineSim a = os.thrusters.get(oi).engine, b = ns.thrusters.get(e.getIntValue()).engine;
                 b.state = a.state;
+                b.phase = a.phase;
+                b.autoStart = a.autoStart;
+                b.startTimer = a.startTimer;
+                b.crankTime = a.crankTime;
                 b.spool = a.spool;
                 b.temperatureC = a.temperatureC;
                 b.damage = Math.max(b.damage, a.damage);
@@ -351,8 +401,14 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         if (!fresh) controls.keys = 0;
         controls.apply(sim.input, profile(), fresh, 0.05);
         updateElectrical(sim, 0.05);
+        // a parked aircraft may sleep, but not while its engines start or run
+        if (sim.body.sleeping && (controls.starterTicks > 0 || sim.thrusters.stream().anyMatch(t -> t.engine.state != com.vehicleworks.physics.propulsion.EngineSim.State.OFF
+                && t.engine.state != com.vehicleworks.physics.propulsion.EngineSim.State.FAILED))) sim.body.wake();
         tickRefuel(sim);
         sim.fuelScale = Config.SERVER.fuelConsumptionScale.get();
+        sim.fbwSensitivity = Config.SERVER.sidestickSensitivity.get();
+        sim.fbwDeadZone = Config.SERVER.sidestickDeadZone.get();
+        controls.sensitivity = Config.SERVER.controlSensitivity.get();
         if (!Config.SERVER.requireFuel.get()) {
             for (TankUnit t : sim.tanks) if (t.kind == TankUnit.Kind.FUEL) t.amount = t.capacity;
             if (sim.tanks.stream().noneMatch(t -> t.kind == TankUnit.Kind.FUEL)) {
@@ -484,14 +540,26 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
      * Electrical bus: battery (drains with the load) and engine generators (power the bus and
      * recharge the battery). Systems without power stop working; ignition and fuel pumps gate the engines.
      */
+    /** an aircraft (wings or rotors): has the full cockpit electrical / start procedure */
+    public boolean isAircraft() {
+        return layout != null && (layout.wingArea > 0 || !layout.sim.rotors.isEmpty());
+    }
+
     private void updateElectrical(VehicleSimulation sim, double dt) {
         VehicleControls c = controls;
+        boolean aircraft = isAircraft();
+        if (!c.initialized) {
+            // a new aircraft leaves the factory cold and dark
+            if (aircraft) c.coldAndDark();
+            c.initialized = true;
+        }
         boolean gen = false, cranking = false;
         for (ThrusterUnit t : sim.thrusters) {
             if (t.engine.type == com.vehicleworks.physics.propulsion.EngineType.ELECTRIC) continue;
-            if (t.engine.isRunning() && t.engine.spool > 0.18) gen = true;
-            if (t.engine.state == com.vehicleworks.physics.propulsion.EngineSim.State.STARTING) cranking = true;
+            if (t.engine.isRunning() && t.engine.spool > t.engine.type.idleFraction * 0.8) gen = true;
+            if (t.engine.state == com.vehicleworks.physics.propulsion.EngineSim.State.STARTING && t.engine.starterCmd) cranking = true;
         }
+        gen &= c.generatorSw && c.masterElec;
         double load = 0;
         if (c.avionics) load += 280;
         if (c.fuelPump) load += 90 * Math.max(1, sim.fuelPumps);
@@ -501,50 +569,97 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         if (c.landingLights) load += 250;
         if (c.taxiLights) load += 150;
         if (c.turnoffLights) load += 120;
-        load += c.cabinLight * 40 + c.panelLight * 20;
+        load += c.cabinLight * 40 + c.panelLight * 20 + (c.consoleLight ? 25 : 0);
         if (cranking) load += 2500;
         if (c.autopilot) load += 60;
+        if (!c.masterElec) load = 0;
         double genW = gen ? 3500 : 0;
         if (c.battery) c.batteryCharge = Math.max(0, Math.min(1, c.batteryCharge + (genW - load) / BATTERY_J * dt));
         c.generator = gen;
-        c.busPowered = c.battery && (c.batteryCharge > 0.001 || gen);
+        boolean was = c.busPowered;
+        c.busPowered = c.masterElec && ((c.battery && c.batteryCharge > 0.001) || gen);
+        if (c.busPowered && !was) c.powerOnTick = level().getGameTime();
         boolean avionicsOn = c.busPowered && c.avionics;
         if (!avionicsOn && c.autopilot) c.autopilot = false;
         sim.boostPumps = c.busPowered && c.fuelPump;
         sim.fuelSelector = c.fuelSelector;
-        // ignition (magnetos / igniters) keeps combustion going; off = engines shut down
-        boolean aircraft = layout != null && layout.wingArea > 0 || !sim.rotors.isEmpty();
-        if (aircraft && !c.ignition) {
-            for (ThrusterUnit t : sim.thrusters) {
-                var st = t.engine.state;
-                if (t.engine.type != com.vehicleworks.physics.propulsion.EngineType.ELECTRIC
-                        && (st == com.vehicleworks.physics.propulsion.EngineSim.State.RUNNING || st == com.vehicleworks.physics.propulsion.EngineSim.State.STARTING)) t.engine.requestStop();
-            }
+        if (!aircraft) {
+            c.starterTicks = 0;
+            return;
         }
+        // cockpit start procedure: starter, ignition (magnetos / igniters) and fuel come from the switches
+        if (c.starterTicks > 0) c.starterTicks--;
+        if (!c.busPowered) c.starterTicks = 0;
+        boolean starter = c.starterTicks > 0;
+        boolean anyCranking = false;
+        for (ThrusterUnit t : sim.thrusters) {
+            com.vehicleworks.physics.propulsion.EngineSim e = t.engine;
+            if (e.type == com.vehicleworks.physics.propulsion.EngineType.ELECTRIC) {
+                e.ignitionCmd = e.fuelCmd = true;
+                continue;
+            }
+            boolean piston = e.type == com.vehicleworks.physics.propulsion.EngineType.PISTON;
+            e.starterPower = c.busPowered;
+            e.starterCmd = starter;
+            // piston magnetos make their own spark; turbine igniters need the bus
+            e.ignitionCmd = c.ignition && (piston || c.busPowered);
+            e.fuelCmd = c.engineMaster && c.fuelSelector != 3;
+            if (e.state == com.vehicleworks.physics.propulsion.EngineSim.State.STARTING && !(e.type.isTurbine() && e.spool >= e.starterCutout() && e.phase == com.vehicleworks.physics.propulsion.EngineSim.Phase.ACCEL))
+                anyCranking = true;
+        }
+        // turbine starters cut out at self-sustaining speed; a piston starter is released once it runs
+        if (starter && !anyCranking) c.starterTicks = 0;
     }
 
-    /** Engine start through the panel: power, fuel, ignition, then starter. Returns a message key if refused. */
+    /** Engine start. Quick start (I key) runs the whole checklist; the cockpit starter only engages the starter. */
     public String startEngines(boolean automatic) {
         if (layout == null) return "vehicleworks.msg.no_engines";
         VehicleControls c = controls;
         VehicleSimulation sim = layout.sim;
         if (automatic) {
-            // quick start (I key): runs the whole checklist
             c.battery = true;
+            c.masterElec = true;
             c.avionics = true;
             c.fuelPump = true;
             c.ignition = true;
+            c.engineMaster = true;
+            c.generatorSw = true;
             if (c.fuelSelector == 3) c.fuelSelector = 0;
+            c.parkingBrake = false; // quick start = whole checklist, ready to taxi
             c.busPowered = c.batteryCharge > 0.001;
+            if (!c.busPowered) return "vehicleworks.start.no_power";
+            sim.boostPumps = true;
+            boolean any = false;
+            for (ThrusterUnit t : sim.thrusters) if (t.engine.enabled) { t.engine.requestStart(true); any = true; }
+            return any ? null : "vehicleworks.msg.no_engines";
         }
-        if (!c.battery || !c.busPowered) return "vehicleworks.start.no_power";
-        if (!c.fuelPump && sim.fuelPumps > 0) return "vehicleworks.start.no_pump";
-        if (!c.ignition) return "vehicleworks.start.no_ignition";
-        if (c.fuelSelector == 3) return "vehicleworks.start.fuel_off";
-        sim.boostPumps = true;
-        boolean any = false;
-        for (ThrusterUnit t : sim.thrusters) if (t.engine.enabled) { t.engine.requestStart(); any = true; }
-        return any ? null : "vehicleworks.msg.no_engines";
+        return engageStarter();
+    }
+
+    /** Cockpit starter switch: engage (or release) the starter. The engines then follow the real procedure. */
+    public String engageStarter() {
+        if (layout == null) return "vehicleworks.msg.no_engines";
+        VehicleControls c = controls;
+        VehicleSimulation sim = layout.sim;
+        if (!c.battery && !c.generator) return "vehicleworks.start.no_power";
+        if (!c.masterElec || !c.busPowered) return "vehicleworks.start.no_bus";
+        if (c.starterTicks > 0) { c.starterTicks = 0; return "vehicleworks.start.released"; }
+        boolean any = false, turbine = false;
+        for (ThrusterUnit t : sim.thrusters) {
+            if (!t.engine.enabled || t.engine.type == com.vehicleworks.physics.propulsion.EngineType.ELECTRIC) continue;
+            if (t.engine.type.needsStarter && !sim.hasStarter) return "vehicleworks.msg.need_starter";
+            if (t.engine.state == com.vehicleworks.physics.propulsion.EngineSim.State.OFF || t.engine.state == com.vehicleworks.physics.propulsion.EngineSim.State.STOPPING)
+                t.engine.requestStart(false);
+            turbine |= t.engine.type.isTurbine();
+            any = true;
+        }
+        if (!any) {
+            for (ThrusterUnit t : sim.thrusters) if (t.engine.enabled) { t.engine.requestStart(true); any = true; }
+            return any ? null : "vehicleworks.msg.no_engines";
+        }
+        // piston: the key is held in START for up to 6 s; turbine: the start valve stays open until cut-out (max 60 s)
+        c.starterTicks = turbine ? 1200 : 120;
+        return null;
     }
 
     /** Called by the physics manager after the world step. */
@@ -869,6 +984,12 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         return seats.get(e.getUUID());
     }
 
+    @Override
+    public void startSeenByPlayer(ServerPlayer player) {
+        super.startSeenByPlayer(player);
+        if (!cabin.isEmpty()) Payloads.sendCabin(this, player);
+    }
+
     public void syncSeats() {
         if (level().isClientSide) return;
         Payloads.sendSeats(this);
@@ -1018,13 +1139,18 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         t.battery = controls.battery;
         t.vne = layout.wingArea > 0 ? (float) Math.max(110, s.rotateSpeed * 4.2) : 0;
         t.hydraulics = (float) s.hydraulicAuthority;
-        t.stickPitch = (float) s.effPitch;
-        t.stickRoll = (float) s.effRoll;
+        // a yoke is linked to the surfaces; a side stick shows the pilot's own (spring-centred) input
+        t.stickPitch = (float) (s.fbw ? s.stickPitchIn : s.effPitch);
+        t.stickRoll = (float) (s.fbw ? s.stickRollIn : s.effRoll);
         t.batteryCharge = (float) controls.batteryCharge;
         t.switches = controls.switchBits();
         t.fuelSelector = controls.fuelSelector;
         t.cabinLight = controls.cabinLight;
         t.panelLight = controls.panelLight;
+        t.dimmer = controls.dimmer;
+        t.displayBrt = controls.displayBrt;
+        t.powerAge = controls.busPowered ? (int) Math.min(100000, level().getGameTime() - controls.powerOnTick) : 0;
+        t.fbw = layout != null && layout.types.contains(ComponentType.SIDESTICK);
         t.busPowered = controls.busPowered;
         t.generator = controls.generator;
         t.wrongFuel = s.wrongFuel;
@@ -1054,7 +1180,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         }
         int ne = s.thrusters.size();
         if (t.engineSpool.length != ne) {
-            t.engineState = new byte[ne]; t.engineType = new byte[ne];
+            t.engineState = new byte[ne]; t.engineType = new byte[ne]; t.enginePhase = new byte[ne];
             t.engineSpool = new float[ne]; t.engineTemp = new float[ne]; t.engineDamage = new float[ne];
             t.engineThrust = new float[ne]; t.propOmega = new float[ne]; t.engineAb = new boolean[ne];
         }
@@ -1062,6 +1188,11 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
             ThrusterUnit u = s.thrusters.get(i);
             t.engineState[i] = (byte) u.engine.state.ordinal();
             t.engineType[i] = (byte) u.engine.type.ordinal();
+            var ph = u.engine.phase;
+            boolean lit = u.engine.isRunning() || (u.engine.state == com.vehicleworks.physics.propulsion.EngineSim.State.STARTING
+                    && (ph == com.vehicleworks.physics.propulsion.EngineSim.Phase.LIGHT_OFF || ph == com.vehicleworks.physics.propulsion.EngineSim.Phase.ACCEL));
+            boolean turning = u.engine.state == com.vehicleworks.physics.propulsion.EngineSim.State.STARTING && u.engine.starterCmd || u.engine.autoStart && u.engine.state == com.vehicleworks.physics.propulsion.EngineSim.State.STARTING;
+            t.enginePhase[i] = (byte) (ph.ordinal() | (u.device == ThrusterUnit.Device.ROTOR ? 8 : 0) | (lit ? 16 : 0) | (turning ? 32 : 0));
             t.engineSpool[i] = (float) u.engine.spool;
             t.engineTemp[i] = (float) u.engine.temperatureC;
             t.engineDamage[i] = (float) u.engine.damage;
@@ -1186,6 +1317,10 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
+        cabin.clear();
+        long[] ck = tag.getLongArray("CabinKeys");
+        int[] cs = tag.getIntArray("CabinStates");
+        for (int i = 0; i < ck.length && i < cs.length; i++) cabin.put(ck[i], cs[i]);
         structure.load(tag.getCompound("Structure"), level());
         CompoundTag p = tag.getCompound("Pose");
         orientation.set(p.getDouble("qx"), p.getDouble("qy"), p.getDouble("qz"), p.contains("qw") ? p.getDouble("qw") : 1).normalize();
@@ -1200,6 +1335,8 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
+        tag.putLongArray("CabinKeys", cabin.keySet().toLongArray());
+        tag.putIntArray("CabinStates", cabin.values().toIntArray());
         writeRuntimeToStructure();
         tag.put("Structure", structure.save());
         CompoundTag p = new CompoundTag();

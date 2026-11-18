@@ -52,6 +52,7 @@ public final class ClientProxy extends CommonProxy {
         }
         s.lastYaw = yaw;
         VehicleEffects.tick(v, s);
+        Avionics.tick(v);
     }
 
     @Override
@@ -114,6 +115,14 @@ public final class ClientProxy extends CommonProxy {
             Entity e = level != null ? level.getEntity(p.passengers()[i]) : null;
             if (e != null && p.seats()[i] != Long.MIN_VALUE) v.seats.put(e.getUUID(), p.seats()[i]);
         }
+    }
+
+    @Override
+    public void onCabin(Payloads.Cabin p) {
+        VehicleEntity v = vehicle(p.id());
+        if (v == null) return;
+        v.cabin.clear();
+        for (int i = 0; i < p.keys().length && i < p.states().length; i++) v.cabin.put(p.keys()[i], p.states()[i]);
     }
 
     @Override

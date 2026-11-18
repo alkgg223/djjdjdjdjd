@@ -57,7 +57,11 @@ public final class VehicleLayout {
         tankIndex.defaultReturnValue(-1);
     }
 
-    public record Seat(long pos, Direction facing, boolean pilot, boolean gunner) {}
+    /**
+     * @param crew  flight crew (pilot, first officer, gunner): cockpit access and HUD
+     * @param cls   passenger cabin class 1..5 (interactive seat), 0 otherwise
+     */
+    public record Seat(long pos, Direction facing, boolean pilot, boolean gunner, boolean crew, int cls) {}
 
     public static final class WeaponSlot {
         public final long pos;

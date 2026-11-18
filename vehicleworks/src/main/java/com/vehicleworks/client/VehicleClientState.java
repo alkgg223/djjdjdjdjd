@@ -41,6 +41,11 @@ public final class VehicleClientState {
     public float yokePitch, yokeRoll;
     public float lastVs;
     public Object sounds;
+    /** staged electrical power-up shown by this client */
+    public Avionics.State avionics;
+    /** sound transitions */
+    public byte[] lastEngineState, lastEnginePhase;
+    public float lastFlaps;
 
     public void addSnapshot(long tick, double x, double y, double z, float qx, float qy, float qz, float qw,
                             float vx, float vy, float vz, float wx, float wy, float wz) {

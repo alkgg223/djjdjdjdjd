@@ -245,6 +245,7 @@ public final class ServerActions {
         VehicleSimulation sim = v.simulation();
         VehicleControls c = v.controls;
         boolean isPilot = v.pilot() == sp || sp.getVehicle() == v;
+        if (Boolean.getBoolean("vehicleworks.autotest")) com.vehicleworks.VehicleWorks.LOGGER.info("[autotest] server action {} arg {} by {}", p.action(), p.arg(), sp.getName().getString());
         switch (p.action()) {
             case Payloads.ACT_ENGINES_START -> {
                 if (!isPilot && p.arg() != Payloads.ARG_PANEL) return;
@@ -272,7 +273,8 @@ public final class ServerActions {
             case Payloads.ACT_GEAR -> {
                 if (!isPilot && p.arg() != Payloads.ARG_PANEL) return;
                 c.gearDown = !c.gearDown;
-                v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.GEAR_MOTOR.get(), SoundSource.NEUTRAL, 1f, 1f);
+                v.level().playSound(null, v.getX(), v.getY(), v.getZ(), c.gearDown ? ModSounds.GEAR_EXTEND.get() : ModSounds.GEAR_RETRACT.get(), SoundSource.NEUTRAL, 1.2f, 1f);
+                v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.HYDRAULIC.get(), SoundSource.NEUTRAL, 0.6f, 1f);
                 msg(sp, c.gearDown ? "vehicleworks.msg.gear_down" : "vehicleworks.msg.gear_up");
             }
             case Payloads.ACT_FLAPS -> {
@@ -282,39 +284,53 @@ public final class ServerActions {
             }
             case Payloads.ACT_SWITCH -> {
                 int id = p.arg();
+                // passengers have no access to the cockpit
+                if (v.isPassengerSeated(sp)) { msg(sp, "vehicleworks.msg.passenger_no_controls"); return; }
+                net.minecraft.sounds.SoundEvent click = ModSounds.TOGGLE.get();
+                float clickPitch = 1f;
                 switch (id) {
-                    case VehicleControls.SW_BATTERY -> c.battery = !c.battery;
+                    case VehicleControls.SW_BATTERY -> { c.battery = !c.battery; click = ModSounds.RELAY.get(); }
+                    case VehicleControls.SW_MASTER -> { c.masterElec = !c.masterElec; click = ModSounds.RELAY.get(); }
+                    case VehicleControls.SW_GENERATOR -> c.generatorSw = !c.generatorSw;
+                    case VehicleControls.SW_ENG_MASTER -> { c.engineMaster = !c.engineMaster; click = ModSounds.GUARD.get(); }
+                    case VehicleControls.SW_DIMMER -> { c.dimmer = (c.dimmer + 1) % 5; click = ModSounds.KNOB.get(); }
+                    case VehicleControls.SW_DISPLAY_BRT -> { c.displayBrt = c.displayBrt % 5 + 1; click = ModSounds.KNOB.get(); }
+                    case VehicleControls.SW_NIGHT -> c.nightMode = !c.nightMode;
+                    case VehicleControls.SW_CONSOLE -> c.consoleLight = !c.consoleLight;
+                    case VehicleControls.SW_MASTER_CAUTION -> click = ModSounds.BUTTON.get(); // acknowledged on the client (silences the chime)
                     case VehicleControls.SW_AVIONICS -> c.avionics = !c.avionics;
                     case VehicleControls.SW_FUEL_PUMP -> c.fuelPump = !c.fuelPump;
                     case VehicleControls.SW_IGNITION -> c.ignition = !c.ignition;
                     case VehicleControls.SW_STARTER -> {
-                        String err = v.startEngines(false);
+                        click = ModSounds.GUARD.get();
+                        String err = v.engageStarter();
                         if (err != null) msg(sp, err);
-                        else {
-                            v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.ENGINE_START.get(), SoundSource.NEUTRAL, 1.5f, 1f);
-                            msg(sp, "vehicleworks.start.ok");
-                        }
+                        else msg(sp, "vehicleworks.start.cranking");
                     }
-                    case VehicleControls.SW_FUEL_SEL -> c.fuelSelector = (c.fuelSelector + 1) % 4;
+                    case VehicleControls.SW_FUEL_SEL -> { c.fuelSelector = (c.fuelSelector + 1) % 4; click = ModSounds.KNOB.get(); }
                     case VehicleControls.SW_NAV -> c.lights = !c.lights;
                     case VehicleControls.SW_BEACON -> c.beacon = !c.beacon;
                     case VehicleControls.SW_STROBE -> c.strobe = !c.strobe;
                     case VehicleControls.SW_LANDING -> c.landingLights = !c.landingLights;
                     case VehicleControls.SW_TAXI -> c.taxiLights = !c.taxiLights;
                     case VehicleControls.SW_TURNOFF -> c.turnoffLights = !c.turnoffLights;
-                    case VehicleControls.SW_CABIN -> c.cabinLight = (c.cabinLight + 1) % 3;
-                    case VehicleControls.SW_PANEL -> c.panelLight = (c.panelLight + 1) % 3;
+                    case VehicleControls.SW_CABIN -> { c.cabinLight = (c.cabinLight + 1) % 3; click = ModSounds.KNOB.get(); }
+                    case VehicleControls.SW_PANEL -> { c.panelLight = (c.panelLight + 1) % 3; click = ModSounds.KNOB.get(); }
                     case VehicleControls.SW_GEAR -> {
                         c.gearDown = !c.gearDown;
-                        v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.GEAR_MOTOR.get(), SoundSource.NEUTRAL, 1f, 1f);
+                        click = ModSounds.LEVER.get();
+                        v.level().playSound(null, v.getX(), v.getY(), v.getZ(), c.gearDown ? ModSounds.GEAR_EXTEND.get() : ModSounds.GEAR_RETRACT.get(), SoundSource.NEUTRAL, 1f, 1f);
                     }
-                    case VehicleControls.SW_TEST -> emergencyTest(sp, v);
-                    case VehicleControls.SW_AUTOPILOT -> { if (c.autopilot) c.autopilot = false; }
+                    case VehicleControls.SW_TEST -> { emergencyTest(sp, v); click = ModSounds.BUTTON.get(); }
+                    case VehicleControls.SW_AUTOPILOT -> {
+                        click = ModSounds.BUTTON.get();
+                        if (c.autopilot) c.autopilot = false; // the disconnect tone plays in the cockpit (client)
+                    }
                     case VehicleControls.SW_PARKING -> c.parkingBrake = !c.parkingBrake;
                     default -> { return; }
                 }
-                if (id != VehicleControls.SW_TEST && id != VehicleControls.SW_STARTER)
-                    v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.CLICK.get(), SoundSource.NEUTRAL, 0.9f, 1.25f);
+                // the pressing player hears it at once from its own client (cockpit volume setting); everyone else from here
+                v.level().playSound(sp, v.getX(), v.getY(), v.getZ(), click, SoundSource.NEUTRAL, 0.8f, clickPitch);
             }
             case Payloads.ACT_REFUEL_START -> {
                 int grade = p.arg() & 3;
@@ -323,6 +339,7 @@ public final class ServerActions {
                 v.startRefuel(sp, grade, kg);
             }
             case Payloads.ACT_REFUEL_STOP -> v.stopRefuel(sp, true);
+            case Payloads.ACT_CABIN -> v.cabinControl(sp, p.arg());
             case Payloads.ACT_BATTERY -> {
                 c.battery = !c.battery;
                 v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.CLICK.get(), SoundSource.NEUTRAL, 1f, c.battery ? 1.3f : 0.8f);

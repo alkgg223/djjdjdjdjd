@@ -174,24 +174,8 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
                 ps.popPose();
             }
         }
-        // yokes: every yoke follows the same control command (captain and first officer move together)
-        if (!v.structure.blockEntities().isEmpty()) {
-            float sp = s.yokePitch += (t.stickPitch - s.yokePitch) * 0.25f, sr = s.yokeRoll += (t.stickRoll - s.yokeRoll) * 0.25f;
-            for (long k : v.structure.blockEntities().keySet()) {
-                BlockState st = v.structure.get(k);
-                if (VehicleBuilder.typeOf(st) != ComponentType.YOKE) continue;
-                Direction f = VehicleBuilder.facing(st);
-                float dx = f.getStepX(), dz = f.getStepZ();
-                // hub of the yoke wheel, toward the pilot (the facing side) and at hand height
-                float hx = 0.5f + 0.19f * dx, hy = 0.64f, hz = 0.5f + 0.19f * dz;
-                ps.pushPose();
-                ps.translate(BlockPos.getX(k) + hx + dx * 0.12f * sp, BlockPos.getY(k) + hy, BlockPos.getZ(k) + hz + dz * 0.12f * sp);
-                ps.mulPose(new Quaternionf().rotationAxis((float) Math.toRadians(-55 * sr), dx, 0, dz));
-                ps.translate(-hx, -hy, -hz);
-                brd.renderSingleBlock(st, ps, buffers, light, OverlayTexture.NO_OVERLAY);
-                ps.popPose();
-            }
-        }
+        // yokes and side sticks follow the flight controls (captain and first officer move together)
+        if (!v.structure.blockEntities().isEmpty()) ControlsRenderer.render(v, ps, buffers, light, s);
         // turret-mounted weapons
         for (int i = 0; i < t.weaponKeys.length; i++) {
             if (i >= t.weaponFlags.length || (t.weaponFlags[i] & com.vehicleworks.weapon.WeaponSystem.FLAG_TURRET) == 0) continue;
@@ -212,6 +196,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         CockpitRenderer.renderLights(v, ps, buffers, light, true);
         CockpitRenderer.renderPanels(v, ps, buffers, light);
         InstrumentRenderer.render(v, ps, buffers, light, dist);
+        CabinRenderer.render(v, ps, buffers, light, dist);
         if (Config.CLIENT.renderBlockEntities.get()) renderBlockEntities(v, ps, buffers, partial, light);
         // centre-of-mass marker
         long core = BlockPos.asLong(0, 0, 0);

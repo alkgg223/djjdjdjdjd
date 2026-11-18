@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/sidestick"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/sidestick",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/sidestick",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/sidestick",
+      "y": 270
+    }
+  }
+}

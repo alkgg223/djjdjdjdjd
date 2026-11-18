@@ -241,5 +241,284 @@
       }
     ],
     "subtitle": "subtitles.vehicleworks.vehicle.tire_screech"
+  },
+  "engine.turboprop": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/turboprop",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.turboprop"
+  },
+  "engine.turbofan": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/turbofan",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.turbofan"
+  },
+  "engine.heli_turbine": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/heli_turbine",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.heli_turbine"
+  },
+  "engine.rough": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/rough",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.rough"
+  },
+  "engine.light_off": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/light_off",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.light_off"
+  },
+  "engine.piston_catch": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/piston_catch",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.piston_catch"
+  },
+  "engine.starter_piston": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/starter_piston",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.starter_piston"
+  },
+  "engine.starter_turbine": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/starter_turbine",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.starter_turbine"
+  },
+  "engine.ignition": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/ignition",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.ignition"
+  },
+  "engine.spool_down": {
+    "sounds": [
+      {
+        "name": "vehicleworks:engine/spool_down",
+        "attenuation_distance": 64
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.engine.spool_down"
+  },
+  "cockpit.toggle": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cockpit/toggle",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cockpit.toggle"
+  },
+  "cockpit.relay": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cockpit/relay",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cockpit.relay"
+  },
+  "cockpit.button": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cockpit/button",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cockpit.button"
+  },
+  "cockpit.knob": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cockpit/knob",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cockpit.knob"
+  },
+  "cockpit.guard": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cockpit/guard",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cockpit.guard"
+  },
+  "cockpit.lever": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cockpit/lever",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cockpit.lever"
+  },
+  "cockpit.avionics": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cockpit/avionics",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cockpit.avionics"
+  },
+  "cockpit.ap_disconnect": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cockpit/ap_disconnect",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cockpit.ap_disconnect"
+  },
+  "cockpit.gear_horn": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cockpit/gear_horn",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cockpit.gear_horn"
+  },
+  "cockpit.hydraulic": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cockpit/hydraulic",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cockpit.hydraulic"
+  },
+  "cockpit.ambient": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cockpit/ambient",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cockpit.ambient"
+  },
+  "cabin.door": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cabin/door",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cabin.door"
+  },
+  "cabin.seat_motor": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cabin/seat_motor",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cabin.seat_motor"
+  },
+  "cabin.tray": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cabin/tray",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cabin.tray"
+  },
+  "cabin.ife": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cabin/ife",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cabin.ife"
+  },
+  "vehicle.airflow": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/airflow",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.airflow"
+  },
+  "vehicle.gear_extend": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/gear_extend",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.gear_extend"
+  },
+  "vehicle.gear_retract": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/gear_retract",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.gear_retract"
+  },
+  "vehicle.flaps": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/flaps",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.flaps"
+  },
+  "vehicle.spoiler": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/spoiler",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.spoiler"
+  },
+  "vehicle.brake": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/brake",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.brake"
   }
 }

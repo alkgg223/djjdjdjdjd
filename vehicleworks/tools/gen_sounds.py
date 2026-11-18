@@ -173,6 +173,131 @@ for k in range(18):
     if i0 + n < len(tt): rattle[i0:i0 + n] += bp_fast(noise(n), 2000, 7000) * np.exp(-np.arange(n) / SR * 90) * (1 - k / 18)
 write('vehicle/hard_landing', norm(boom + crunch + 0.7 * rattle, 0.26, 0.98))
 
+
+# =============================================================== 1.2 sound overhaul (all synthesised here: original sounds)
+def tone(f, tt, ph=0): return np.sin(2 * np.pi * f * tt + ph)
+def sweep(f0, f1, tt, curve=1.0):
+    d = tt[-1] if len(tt) else 1; f = f0 + (f1 - f0) * (tt / d) ** curve
+    return np.sin(2 * np.pi * np.cumsum(f) / SR)
+def click(n_ms, f_hi=6000, decay=200):
+    n = int(n_ms / 1000 * SR); tk = np.arange(n) / SR
+    return lp_fast(noise(n), f_hi) * np.exp(-tk * decay)
+def place(x, y, at):
+    i = int(at * SR); n = min(len(y), len(x) - i)
+    if n > 0: x[i:i + n] += y[:n]
+    return x
+# ---- engines
+d = 2.25; tt = t(d)
+bpf = 88.0  # propeller blade pass
+prop = sum(np.sign(tone(bpf * k, tt)) * (0.5 / k) for k in (1, 2, 3)) * 0.4 + sum(tone(bpf * k, tt, k) / k for k in range(1, 6))
+whine = 0.25 * tone(1240, tt) + 0.12 * tone(2480, tt) + 0.35 * bp_fast(noise(len(tt)), 600, 5000)
+x = 0.7 * lp_fast(prop, 1800) + whine + 0.25 * lp_fast(noise(len(tt)), 250)
+write('engine/turboprop', norm(loopify(x), 0.18))
+# turbofan: fan "buzz-saw" (many shaft-order tones), high whine, smooth roar
+fan = 0
+for k in range(1, 18): fan = fan + tone(53.3 * k, tt, k * 0.7) * (0.6 / (1 + 0.15 * k)) * (1 + 0.3 * rng.random())
+x = 0.35 * lp_fast(fan, 3000) + 0.22 * tone(2900, tt) + 0.1 * tone(5800, tt) + 1.0 * lp_fast(noise(len(tt)), 700) + 0.45 * bp_fast(noise(len(tt)), 1500, 7000)
+write('engine/turbofan', norm(loopify(x), 0.19))
+# helicopter turboshaft: high whine + gearbox hum (blade slap is the rotor sound)
+x = 0.3 * tone(3150, tt) + 0.15 * tone(4720, tt) + 0.3 * tone(196, tt) + 0.15 * tone(392, tt) + 0.5 * bp_fast(noise(len(tt)), 2500, 9000) + 0.3 * lp_fast(noise(len(tt)), 300)
+write('engine/heli_turbine', norm(loopify(x), 0.15))
+# rough running overlay (misfires / damaged engine): random coughs and rattles
+x = np.zeros(len(tt))
+for k in range(26):
+    at = rng.random() * (d - 0.2); n = int((0.03 + 0.06 * rng.random()) * SR); tk = np.arange(n) / SR
+    x = place(x, lp_fast(noise(n), 900 + 1500 * rng.random()) * np.exp(-tk * 30) * (0.5 + rng.random()), at)
+x += 0.25 * bp_fast(noise(len(tt)), 2000, 6000) * (rng.random(len(tt)) > 0.97)
+write('engine/rough', norm(loopify(x, 0.2), 0.16))
+# light-off: whoomp + roar building up
+tt = t(1.6)
+x = tone(38 + 30 * np.exp(-tt * 6), tt) * np.exp(-tt * 3) * 1.4 + lp_fast(noise(len(tt)), 500) * env(len(tt), 0.05, 0.6) * (1 - np.exp(-tt * 4)) + 0.3 * bp_fast(noise(len(tt)), 800, 4000) * np.exp(-tt * 2)
+write('engine/light_off', norm(x, 0.2))
+# piston catch: coughs, a backfire, then the engine firing faster and faster
+tt = t(2.0); x = np.zeros(len(tt))
+for at in (0.0, 0.25, 0.42): x = place(x, lp_fast(noise(int(0.08 * SR)), 700) * np.exp(-np.arange(int(0.08 * SR)) / SR * 30) * 1.4, at)
+x = place(x, (lp_fast(noise(int(0.12 * SR)), 2500) + tone(70, t(0.12))) * np.exp(-np.arange(int(0.12 * SR)) / SR * 25) * 2.2, 0.55)
+tf = t(1.3); fr = 12 + 33 * (tf / 1.3) ** 0.7
+pulses = (np.sin(2 * np.pi * np.cumsum(fr) / SR) > 0.55).astype(float)
+x = place(x, lp_fast(noise(len(tf)) * pulses, 900) * 1.2 + 0.4 * np.sin(2 * np.pi * np.cumsum(fr) / SR), 0.7)
+write('engine/piston_catch', norm(x * env(len(tt), 0.005, 0.2), 0.2))
+# piston starter: electric starter whine modulated by compression strokes (rur-rur-rur)
+d = 2.0; tt = t(d)
+comp = 0.55 + 0.45 * np.sin(2 * np.pi * 4.5 * tt) ** 2
+x = (0.45 * tone(310, tt) + 0.25 * tone(620, tt) + 0.5 * bp_fast(noise(len(tt)), 200, 1800)) * comp + 0.4 * lp_fast(noise(len(tt)), 150) * comp
+write('engine/starter_piston', norm(loopify(x), 0.16))
+# turbine air / electric starter: steady whine with hiss (pitch follows N2 in game)
+x = 0.35 * tone(1760, tt) + 0.18 * tone(2640, tt) + 0.5 * bp_fast(noise(len(tt)), 900, 6000) + 0.15 * lp_fast(noise(len(tt)), 300)
+write('engine/starter_turbine', norm(loopify(x), 0.15))
+# igniters: sharp snaps ~2 per second
+x = np.zeros(len(tt))
+for k in range(4): x = place(x, click(12, 9000, 380) * 1.5 + 0.3 * tone(3200, t(0.012)) * np.exp(-np.arange(int(0.012 * SR)) / SR * 300), 0.1 + k * 0.5)
+write('engine/ignition', norm(x, 0.12, 0.98))
+# spool down: whine falling, roar fading
+tt = t(4.0)
+x = (0.3 * sweep(2600, 300, tt, 0.6) + 0.4 * bp_fast(noise(len(tt)), 400, 4000)) * np.exp(-tt * 0.8) + 0.4 * lp_fast(noise(len(tt)), 400) * np.exp(-tt * 1.4)
+write('engine/spool_down', norm(x * env(len(tt), 0.02, 0.5), 0.15))
+# ---- cockpit
+tt = t(0.12); x = np.zeros(len(tt)); x = place(x, click(6, 9000, 500), 0); x = place(x, click(8, 6000, 350) * 0.8, 0.012)
+write('cockpit/toggle', norm(x, 0.16, 0.98))
+tt = t(0.35); x = tone(85, tt) * np.exp(-tt * 28) * 1.6 + lp_fast(noise(len(tt)), 900) * np.exp(-tt * 40); x = place(x, click(10, 7000, 300) * 0.9, 0.005)
+write('cockpit/relay', norm(x, 0.2, 0.98))
+tt = t(0.12); x = lp_fast(noise(len(tt)), 3000) * np.exp(-tt * 120) + 0.3 * tone(900, tt) * np.exp(-tt * 90); x = place(x, click(5, 5000, 400) * 0.6, 0.05)
+write('cockpit/button', norm(x, 0.15, 0.98))
+tt = t(0.08); x = place(0.25 * tone(2400, tt) * np.exp(-tt * 200), click(5, 8000, 600), 0)
+write('cockpit/knob', norm(x, 0.13, 0.98))
+tt = t(0.3); x = np.zeros(len(tt)); x = place(x, lp_fast(noise(int(0.04 * SR)), 2500) * np.exp(-np.arange(int(0.04 * SR)) / SR * 90), 0); x = place(x, click(8, 9000, 450), 0.15)
+write('cockpit/guard', norm(x, 0.15, 0.98))
+tt = t(0.5); x = np.zeros(len(tt))
+for k in range(5): x = place(x, click(6, 6000, 400) * 0.6, 0.02 + k * 0.045)
+x = place(x, tone(120, t(0.2)) * np.exp(-np.arange(int(0.2 * SR)) / SR * 22) * 1.2, 0.27)
+x = place(x, click(20, 3000, 120), 0.27)
+write('cockpit/lever', norm(x, 0.17, 0.98))
+tt = t(3.2)
+fanup = bp_fast(noise(len(tt)), 300, 3000) * (1 - np.exp(-tt * 1.2)) * 0.6 + 0.2 * sweep(150, 900, tt, 0.5) * (1 - np.exp(-tt * 2))
+for at, f in ((1.0, 1500), (1.25, 1500), (2.4, 1200), (2.7, 1800)): fanup = place(fanup, 0.4 * tone(f, t(0.09)) * env(int(0.09 * SR), 0.003, 0.03), at)
+write('cockpit/avionics', norm(fanup * env(len(tt), 0.3, 0.6), 0.12))
+# autopilot disconnect: an original descending three-tone warble, repeated
+tt = t(1.6); x = np.zeros(len(tt))
+for rep in range(3):
+    for k, f in enumerate((1180, 980, 820)): x = place(x, np.sign(tone(f, t(0.1))) * 0.35 * env(int(0.1 * SR), 0.004, 0.02), rep * 0.5 + k * 0.12)
+write('cockpit/ap_disconnect', norm(lp_fast(x, 5000), 0.2))
+tt = t(0.9); x = (np.sign(tone(560, tt)) * 0.4 + tone(1120, tt) * 0.2) * env(len(tt), 0.01, 0.05)
+write('cockpit/gear_horn', norm(lp_fast(x, 4000), 0.2))
+tt = t(1.8); x = (0.4 * sweep(400, 1450, tt, 0.4) + 0.3 * bp_fast(noise(len(tt)), 800, 4000)) * env(len(tt), 0.1, 0.4)
+write('cockpit/hydraulic', norm(x, 0.12))
+d = 3.0; tt = t(d)
+x = 0.6 * lp_fast(noise(len(tt)), 600) + 0.15 * tone(120, tt) + 0.08 * tone(240, tt) + 0.2 * bp_fast(noise(len(tt)), 2000, 5000)
+write('cockpit/ambient', norm(loopify(x, 0.5), 0.1))
+# ---- cabin
+tt = t(1.3); x = lp_fast(noise(len(tt)), 500) * env(len(tt), 0.05, 0.3) * 0.8 + 0.2 * bp_fast(noise(len(tt)), 1500, 4000) * env(len(tt), 0.05, 0.3)
+x = place(x, click(15, 5000, 200) * 1.5 + 0.4 * tone(160, t(0.015)), 1.15)
+write('cabin/door', norm(x, 0.16))
+tt = t(0.9); x = (0.4 * tone(780 + 60 * np.sin(2 * np.pi * 3 * tt), tt) + 0.3 * bp_fast(noise(len(tt)), 400, 3000)) * env(len(tt), 0.05, 0.15)
+write('cabin/seat_motor', norm(x, 0.1))
+tt = t(0.4); x = lp_fast(noise(len(tt)), 2000) * np.exp(-tt * 25) * 0.6; x = place(x, click(10, 6000, 250), 0.25)
+write('cabin/tray', norm(x, 0.14, 0.98))
+tt = t(1.2); x = place(np.zeros(len(tt)), (tone(880, t(0.6)) + 0.4 * tone(1760, t(0.6))) * np.exp(-np.arange(int(0.6 * SR)) / SR * 5), 0)
+x = place(x, (tone(660, t(0.6)) + 0.4 * tone(1320, t(0.6))) * np.exp(-np.arange(int(0.6 * SR)) / SR * 5), 0.35)
+write('cabin/ife', norm(x, 0.14))
+# ---- environment
+d = 2.5; tt = t(d)
+x = bp_fast(noise(len(tt)), 1500, 9000) * (0.85 + 0.15 * np.sin(2 * np.pi * 0.8 * tt)) + 0.5 * bp_fast(noise(len(tt)), 300, 1200)
+write('vehicle/airflow', norm(loopify(x, 0.5), 0.14))
+for name, rev in (('vehicle/gear_extend', False), ('vehicle/gear_retract', True)):
+    tt = t(3.2)
+    motor = (0.35 * tone(260 + 40 * np.sin(2 * np.pi * 2 * tt), tt) + 0.3 * bp_fast(noise(len(tt)), 300, 2500)) * env(len(tt), 0.15, 0.4)
+    x = motor + 0.25 * lp_fast(noise(len(tt)), 300) * env(len(tt), 0.2, 0.5)
+    x = place(x, lp_fast(noise(int(0.25 * SR)), 500) * np.exp(-np.arange(int(0.25 * SR)) / SR * 14) * (1.6 if not rev else 1.2) + 0.8 * tone(65, t(0.25)) * np.exp(-np.arange(int(0.25 * SR)) / SR * 12), 2.75 if not rev else 2.9)
+    if not rev: x = place(x, bp_fast(noise(int(0.9 * SR)), 400, 2500) * env(int(0.9 * SR), 0.2, 0.4) * 0.6, 0.6)   # airflow as the doors open
+    write(name, norm(x, 0.17))
+d = 2.0; tt = t(d)
+x = (0.35 * tone(520, tt) + 0.2 * tone(1040, tt) + 0.35 * bp_fast(noise(len(tt)), 300, 2500)) * (0.9 + 0.1 * np.sin(2 * np.pi * 6 * tt))
+write('vehicle/flaps', norm(loopify(x), 0.1))
+tt = t(1.1); x = tone(70, tt) * np.exp(-tt * 10) + lp_fast(noise(len(tt)), 600) * env(len(tt), 0.02, 0.8) * 0.8
+write('vehicle/spoiler', norm(x, 0.17))
+d = 1.5; tt = t(d)
+x = bp_fast(noise(len(tt)), 900, 5000) * 0.7 + 0.3 * tone(1350 + 80 * np.sin(2 * np.pi * 9 * tt), tt) + 0.4 * lp_fast(noise(len(tt)), 300)
+write('vehicle/brake', norm(loopify(x, 0.3), 0.15))
 names = {'engine.piston': 'engine/piston', 'engine.turbine': 'engine/turbine', 'engine.jet': 'engine/jet', 'engine.rotor': 'engine/rotor',
          'engine.electric': 'engine/electric', 'engine.start': 'engine/start', 'vehicle.wind': 'vehicle/wind', 'vehicle.stall_warning': 'vehicle/stall_warning',
          'vehicle.gear': 'vehicle/gear', 'vehicle.assemble': 'vehicle/assemble', 'weapon.machine_gun': 'weapon/machine_gun', 'weapon.cannon': 'weapon/cannon',
@@ -180,6 +305,11 @@ names = {'engine.piston': 'engine/piston', 'engine.turbine': 'engine/turbine', '
          'alarm.stall': 'alarm/stall', 'alarm.overspeed': 'alarm/overspeed', 'alarm.caution': 'alarm/caution', 'alarm.fire': 'alarm/fire',
          'alarm.whoop': 'alarm/whoop', 'alarm.warning': 'alarm/warning',
          'vehicle.rumble': 'vehicle/rumble', 'vehicle.touchdown': 'vehicle/touchdown', 'vehicle.hard_landing': 'vehicle/hard_landing', 'vehicle.tire_screech': 'vehicle/tire_screech'}
+for k in ('engine.turboprop', 'engine.turbofan', 'engine.heli_turbine', 'engine.rough', 'engine.light_off', 'engine.piston_catch', 'engine.starter_piston',
+          'engine.starter_turbine', 'engine.ignition', 'engine.spool_down', 'cockpit.toggle', 'cockpit.relay', 'cockpit.button', 'cockpit.knob', 'cockpit.guard',
+          'cockpit.lever', 'cockpit.avionics', 'cockpit.ap_disconnect', 'cockpit.gear_horn', 'cockpit.hydraulic', 'cockpit.ambient', 'cabin.door', 'cabin.seat_motor',
+          'cabin.tray', 'cabin.ife', 'vehicle.airflow', 'vehicle.gear_extend', 'vehicle.gear_retract', 'vehicle.flaps', 'vehicle.spoiler', 'vehicle.brake'):
+    names[k] = k.replace('.', '/')
 sj = {k: {"sounds": [{"name": "vehicleworks:" + v, "attenuation_distance": 64 if k.startswith('engine') or k.startswith('weapon') else 16}],
           "subtitle": "subtitles.vehicleworks." + k} for k, v in names.items()}
 with open(os.path.join(OUT, 'sounds.json'), 'w') as f: json.dump(sj, f, indent=2)

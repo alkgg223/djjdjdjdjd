@@ -18,6 +18,10 @@ public final class VehicleTelemetry {
     public boolean navActive, autopilot, battery = true, lights, emergencyTest;
     public float apHeading, apAltitude, vne, hydraulics = 1, stickPitch, stickRoll, batteryCharge = 1;
     public int switches, fuelSelector, cabinLight, panelLight;
+    /** dimmer 0..4, display brightness 1..5, ticks since the bus got power (0 = unpowered) */
+    public int dimmer = 3, displayBrt = 4, powerAge = 100000;
+    /** fly-by-wire (side stick) control law */
+    public boolean fbw;
     public boolean busPowered = true, generator, wrongFuel, refueling;
     public float refuelRemaining;
     /** per fuel tank: fill 0..1, grade, side */
@@ -31,6 +35,8 @@ public final class VehicleTelemetry {
     // per engine
     public byte[] engineState = new byte[0];
     public byte[] engineType = new byte[0];
+    /** per engine: start phase (bits 0-2), drives a rotor (8), combustion lit (16), starter turning (32) */
+    public byte[] enginePhase = new byte[0];
     public float[] engineSpool = new float[0], engineTemp = new float[0], engineDamage = new float[0], engineThrust = new float[0], propOmega = new float[0];
     public boolean[] engineAb = new boolean[0];
     // rotors
@@ -62,12 +68,13 @@ public final class VehicleTelemetry {
         b.writeFloat(batteryCharge); b.writeVarInt(switches); b.writeByte(fuelSelector); b.writeByte(cabinLight); b.writeByte(panelLight);
         b.writeByte((busPowered ? 1 : 0) | (generator ? 2 : 0) | (wrongFuel ? 4 : 0) | (refueling ? 8 : 0));
         b.writeFloat(refuelRemaining);
+        b.writeByte(dimmer); b.writeByte(displayBrt); b.writeVarInt(powerAge); b.writeBoolean(fbw);
         b.writeVarInt(tankFill.length);
         for (int i = 0; i < tankFill.length; i++) { b.writeFloat(tankFill[i]); b.writeByte(tankGrade[i]); b.writeByte(tankSide[i]); }
         int ne = engineSpool.length;
         b.writeVarInt(ne);
         for (int i = 0; i < ne; i++) {
-            b.writeByte(engineState[i]); b.writeByte(engineType[i]);
+            b.writeByte(engineState[i]); b.writeByte(engineType[i]); b.writeByte(enginePhase[i]);
             b.writeFloat(engineSpool[i]); b.writeFloat(engineTemp[i]); b.writeFloat(engineDamage[i]); b.writeFloat(engineThrust[i]); b.writeFloat(propOmega[i]);
             b.writeBoolean(engineAb[i]);
         }
@@ -105,15 +112,16 @@ public final class VehicleTelemetry {
         batteryCharge = b.readFloat(); switches = b.readVarInt(); fuelSelector = b.readByte(); cabinLight = b.readByte(); panelLight = b.readByte();
         int ef = b.readByte(); busPowered = (ef & 1) != 0; generator = (ef & 2) != 0; wrongFuel = (ef & 4) != 0; refueling = (ef & 8) != 0;
         refuelRemaining = b.readFloat();
+        dimmer = b.readByte(); displayBrt = b.readByte(); powerAge = b.readVarInt(); fbw = b.readBoolean();
         int nt = b.readVarInt();
         if (tankFill.length != nt) { tankFill = new float[nt]; tankGrade = new byte[nt]; tankSide = new byte[nt]; }
         for (int i = 0; i < nt; i++) { tankFill[i] = b.readFloat(); tankGrade[i] = b.readByte(); tankSide[i] = b.readByte(); }
         int ne = b.readVarInt();
-        engineState = new byte[ne]; engineType = new byte[ne];
+        engineState = new byte[ne]; engineType = new byte[ne]; enginePhase = new byte[ne];
         engineSpool = new float[ne]; engineTemp = new float[ne]; engineDamage = new float[ne]; engineThrust = new float[ne]; propOmega = new float[ne];
         engineAb = new boolean[ne];
         for (int i = 0; i < ne; i++) {
-            engineState[i] = b.readByte(); engineType[i] = b.readByte();
+            engineState[i] = b.readByte(); engineType[i] = b.readByte(); enginePhase[i] = b.readByte();
             engineSpool[i] = b.readFloat(); engineTemp[i] = b.readFloat(); engineDamage[i] = b.readFloat(); engineThrust[i] = b.readFloat(); propOmega[i] = b.readFloat();
             engineAb[i] = b.readBoolean();
         }

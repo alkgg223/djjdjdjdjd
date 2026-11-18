@@ -25,6 +25,15 @@ public enum ComponentType {
     PILOT_SEAT("pilot_seat", ComponentCategory.CONTROL, 40, Facing.HORIZONTAL, Shape.SEAT),
     PASSENGER_SEAT("passenger_seat", ComponentCategory.CONTROL, 30, Facing.HORIZONTAL, Shape.SEAT,
             PropertyDef.bool("gunner", false)),
+    /** first officer: flight crew (cockpit access and HUD), not the pilot in command */
+    COPILOT_SEAT("copilot_seat", ComponentCategory.CONTROL, 40, Facing.HORIZONTAL, Shape.SEAT),
+    // five passenger cabin classes: animated, interactive seats (recline, leg rest, tray, screen, light; suite door)
+    SEAT_ECONOMY("seat_economy", ComponentCategory.CONTROL, 22, Facing.HORIZONTAL, Shape.SEAT),
+    SEAT_ECONOMY_PLUS("seat_economy_plus", ComponentCategory.CONTROL, 26, Facing.HORIZONTAL, Shape.SEAT),
+    SEAT_PREMIUM("seat_premium", ComponentCategory.CONTROL, 34, Facing.HORIZONTAL, Shape.SEAT),
+    SEAT_BUSINESS("seat_business", ComponentCategory.CONTROL, 55, Facing.HORIZONTAL, Shape.SEAT),
+    /** first class suite: 2 x 2 blocks (the seat block plus the suite to its right and behind), private door */
+    SEAT_FIRST("seat_first", ComponentCategory.CONTROL, 120, Facing.HORIZONTAL, Shape.SEAT),
 
     PISTON_ENGINE("piston_engine", ComponentCategory.PROPULSION, EngineType.PISTON.massKg, Facing.ALL, Shape.FULL, engineProps(false)),
     TURBOPROP_ENGINE("turboprop_engine", ComponentCategory.PROPULSION, EngineType.TURBOPROP.massKg, Facing.ALL, Shape.FULL, engineProps(false)),
@@ -92,6 +101,9 @@ public enum ComponentType {
     AIRCRAFT_LIGHT("aircraft_light", ComponentCategory.SYSTEMS, 3, Facing.HORIZONTAL, Shape.DYNAMIC,
             PropertyDef.choice("light_type", 0, "auto_nav", "nav_red", "nav_green", "nav_white", "beacon", "strobe", "landing", "taxi", "turnoff", "cockpit")),
     YOKE("yoke", ComponentCategory.CONTROL, 12, Facing.HORIZONTAL, Shape.DYNAMIC),
+    /** Airbus-style side stick (fly-by-wire): stick deflection commands pitch rate and roll rate */
+    SIDESTICK("sidestick", ComponentCategory.CONTROL, 6, Facing.HORIZONTAL, Shape.DYNAMIC,
+            PropertyDef.choice("side", 0, "left", "right")),
     INSTRUMENT_PANEL_A("instrument_panel_a", ComponentCategory.INSTRUMENT, 18, Facing.HORIZONTAL, Shape.FULL,
             slot("slot_1", 1, true), slot("slot_2", 2, true), slot("slot_3", 3, true), slot("slot_4", 4, true), slot("slot_5", 5, true), slot("slot_6", 9, true)),
     INSTRUMENT_PANEL_B("instrument_panel_b", ComponentCategory.INSTRUMENT, 20, Facing.HORIZONTAL, Shape.FULL,
@@ -170,12 +182,28 @@ public enum ComponentType {
 
     /** Blocks without rigid collision (handled by their own physics, e.g. suspension). */
     public boolean excludedFromCollision() {
-        return isAircraftGear() || this == WHEEL || this == YOKE || this == AIRCRAFT_LIGHT || this == PROPELLER || this == MAIN_ROTOR || this == TAIL_ROTOR || this == MARINE_PROPELLER;
+        return isAircraftGear() || this == WHEEL || this == YOKE || this == SIDESTICK || this == AIRCRAFT_LIGHT || this == PROPELLER || this == MAIN_ROTOR || this == TAIL_ROTOR || this == MARINE_PROPELLER;
     }
 
     /** Rendered dynamically (spinning / animated) instead of in the cached static mesh. */
     public boolean isDynamicRender() {
-        return shape == Shape.DYNAMIC;
+        return shape == Shape.DYNAMIC || seatClass() > 0;
+    }
+
+    /** passenger cabin class 1 (economy) .. 5 (first class suite), 0 = not a cabin seat */
+    public int seatClass() {
+        return switch (this) {
+            case SEAT_ECONOMY -> 1;
+            case SEAT_ECONOMY_PLUS -> 2;
+            case SEAT_PREMIUM -> 3;
+            case SEAT_BUSINESS -> 4;
+            case SEAT_FIRST -> 5;
+            default -> 0;
+        };
+    }
+
+    public boolean isSeat() {
+        return this == PILOT_SEAT || this == COPILOT_SEAT || this == PASSENGER_SEAT || seatClass() > 0;
     }
 
     public static ComponentType byId(String id) {

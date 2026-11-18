@@ -27,7 +27,7 @@ public final class VoiceCallouts {
     private static long nextAlarm;
 
     public static boolean blink() {
-        return warning && (System.currentTimeMillis() / 350) % 2 == 0;
+        return warning && unacknowledged() && (System.currentTimeMillis() / 350) % 2 == 0;
     }
 
     /** Currently active warnings (shown on the HUD). */
@@ -44,7 +44,10 @@ public final class VoiceCallouts {
             // emergency test: show every warning and play each alarm sound in turn
             if (!testWas) { testStart = now; nextAlarm = 0; }
             active = java.util.EnumSet.allOf(Warnings.W.class);
-            sound = Warnings.Sound.values()[(int) Math.min(5, (now - testStart) / 820)];
+            sound = Warnings.Sound.values()[(int) Math.min(Warnings.Sound.values().length - 1, (now - testStart) / 820)];
+        } else if (!t.busPowered) {
+            // no electrical power: no annunciators, no aural warnings
+            active = java.util.EnumSet.noneOf(Warnings.W.class);
         } else {
             active = Warnings.compute(t);
             for (Warnings.W w : Warnings.W.values()) if (active.contains(w)) { sound = w.sound; break; }
@@ -53,11 +56,28 @@ public final class VoiceCallouts {
             spoken = java.util.EnumSet.copyOf(active.isEmpty() ? java.util.EnumSet.noneOf(Warnings.W.class) : active);
         }
         testWas = t.emergencyTest;
+        acknowledged.retainAll(active);
         warning = !active.isEmpty();
         if (sound != null && now > nextAlarm) {
             nextAlarm = now + (t.emergencyTest ? 820 : sound.periodMs);
-            Minecraft.getInstance().getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(sound.event.get(), 1f, 0.9f));
+            float vol = 0.9f * Config.CLIENT.warningVolume.get().floatValue();
+            boolean silenced = !t.emergencyTest && acknowledged.containsAll(active);
+            if (vol > 0 && !silenced)
+                Minecraft.getInstance().getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(sound.event.get(), 1f, vol));
         }
+    }
+
+    /** warnings acknowledged with the MASTER WARN / CAUTION button (silenced until a new one appears) */
+    public static java.util.EnumSet<Warnings.W> acknowledged = java.util.EnumSet.noneOf(Warnings.W.class);
+
+    public static void acknowledge() {
+        acknowledged = active.isEmpty() ? java.util.EnumSet.noneOf(Warnings.W.class) : java.util.EnumSet.copyOf(active);
+    }
+
+    /** master lamp flashes for unacknowledged warnings, steady once acknowledged */
+    public static boolean unacknowledged() {
+        for (Warnings.W w : active) if (!acknowledged.contains(w)) return true;
+        return false;
     }
 
     public static void reset() {
@@ -98,9 +118,19 @@ public final class VoiceCallouts {
         return false;
     }
 
+    private static boolean apWas;
+    private static int apVehicle = -1;
+
     public static void tick(VehicleEntity v) {
         VehicleTelemetry t = v.telemetry;
         master(t);
+        // autopilot disconnect tone (pilot or automatic disconnect)
+        if (apVehicle == v.getId() && apWas && !t.autopilot) {
+            float vol = Config.CLIENT.warningVolume.get().floatValue();
+            if (vol > 0) Minecraft.getInstance().getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(com.vehicleworks.registry.ModSounds.AP_DISCONNECT.get(), 1f, 0.9f * vol));
+        }
+        apWas = t.autopilot;
+        apVehicle = v.getId();
         boolean fuelLow = t.fuelCapacity > 0 && t.fuel < 0.1f * t.fuelCapacity;
         boolean dmg = t.integrity < 0.5f;
         if (v.getId() != vehicleId) {

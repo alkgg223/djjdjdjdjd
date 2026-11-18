@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Component;
  * plus the electrical and fuel state. Every switch drives the real system on the server.
  */
 public class PanelScreen extends Screen {
-    private static final int W = 74, H = 34, GAP = 6;
+    private static final int W = 50, H = 32, GAP = 4;
     private final VehicleEntity vehicle;
     private final Button[] buttons = new Button[VehicleControls.SWITCH_COUNT];
 
@@ -29,10 +29,10 @@ public class PanelScreen extends Screen {
 
     @Override
     protected void init() {
-        for (int i = 0; i < VehicleControls.SWITCH_COUNT; i++) {
-            int col = i % CockpitRenderer.COLS, row = i / CockpitRenderer.COLS, id = i;
-            buttons[i] = addRenderableWidget(Button.builder(state(i), b -> pressSwitch(vehicle, id))
-                    .bounds(x0() + col * (W + GAP), y0() + row * (H + GAP) + 13, W, H - 13).build());
+        for (CockpitRenderer.Ctl c : CockpitRenderer.CONTROLS) {
+            int id = c.id(), w = c.kind() == CockpitRenderer.LEVER ? 2 * W + GAP : W;
+            buttons[id] = addRenderableWidget(Button.builder(state(id), b -> pressSwitch(vehicle, id))
+                    .bounds(x0() + c.col() * (W + GAP), y0() + c.row() * (H + GAP) + 13, w, H - 13).build());
         }
         addRenderableWidget(Button.builder(voiceLabel(), b -> { VoiceCallouts.toggle(); b.setMessage(voiceLabel()); })
                 .bounds(width / 2 - 80, y0() + CockpitRenderer.ROWS * (H + GAP) + 52, 160, 18).build());
@@ -42,8 +42,9 @@ public class PanelScreen extends Screen {
         return Component.translatable("vehicleworks.voice.button", Component.translatable(VoiceCallouts.enabled() ? "vehicleworks.panel.on" : "vehicleworks.panel.off"));
     }
 
-    /** Operate switch id (0..17) exactly like the 3D panel. */
+    /** Operate a switch exactly like the 3D panel. */
     public static void pressSwitch(VehicleEntity v, int id) {
+        CockpitRenderer.pressed(v, id);
         if (id == VehicleControls.SW_AUTOPILOT && !v.telemetry.autopilot) { Minecraft.getInstance().setScreen(new AutopilotScreen(v)); return; }
         Payloads.toServer(new Payloads.Action(v.getId(), Payloads.ACT_SWITCH, id));
     }
@@ -53,8 +54,11 @@ public class PanelScreen extends Screen {
         String k = switch (id) {
             case VehicleControls.SW_FUEL_SEL -> new String[]{"both", "left", "right", "off"}[Math.max(0, Math.min(3, t.fuelSelector))];
             case VehicleControls.SW_CABIN -> new String[]{"off", "dim", "bright"}[Math.max(0, Math.min(2, t.cabinLight))];
+            case VehicleControls.SW_DIMMER -> "level" + t.dimmer;
+            case VehicleControls.SW_DISPLAY_BRT -> "level" + t.displayBrt;
+            case VehicleControls.SW_MASTER_CAUTION -> VoiceCallouts.warning ? "ack" : "press";
             case VehicleControls.SW_PANEL -> new String[]{"off", "dim", "bright"}[Math.max(0, Math.min(2, t.panelLight))];
-            case VehicleControls.SW_STARTER -> CockpitRenderer.starting(t) ? "cranking" : (CockpitRenderer.running(t) ? "running" : "press");
+            case VehicleControls.SW_STARTER -> t.sw(VehicleControls.BIT_STARTER) ? "cranking" : (CockpitRenderer.running(t) ? "running" : "press");
             case VehicleControls.SW_TEST -> t.emergencyTest ? "testing" : "press";
             case VehicleControls.SW_GEAR -> t.sw(id) ? "down" : "up";
             case VehicleControls.SW_AUTOPILOT -> t.autopilot ? "on" : "open";
@@ -66,7 +70,7 @@ public class PanelScreen extends Screen {
     @Override
     public void tick() {
         if (vehicle.isRemoved()) { onClose(); return; }
-        for (int i = 0; i < buttons.length; i++) buttons[i].setMessage(state(i));
+        for (int i = 0; i < buttons.length; i++) if (buttons[i] != null) buttons[i].setMessage(state(i));
     }
 
     @Override
@@ -78,12 +82,29 @@ public class PanelScreen extends Screen {
         super.render(g, mx, my, partial);
         VehicleTelemetry t = vehicle.telemetry;
         g.drawCenteredString(font, title, width / 2, y - 22, 0xFFFFFF);
-        for (int i = 0; i < VehicleControls.SWITCH_COUNT; i++) {
-            int bx = x + (i % CockpitRenderer.COLS) * (W + GAP), by = y + (i / CockpitRenderer.COLS) * (H + GAP);
+        for (CockpitRenderer.Ctl ct : CockpitRenderer.CONTROLS) {
+            int i = ct.id();
+            int bx = x + ct.col() * (W + GAP), by = y + ct.row() * (H + GAP);
             int c = CockpitRenderer.lamp(t, i);
-            g.fill(bx + 1, by + 2, bx + 9, by + 10, 0xFF000000);
-            g.fill(bx + 2, by + 3, bx + 8, by + 9, c != 0 ? c : 0xFF30302C);
-            g.drawString(font, Component.translatable("vehicleworks.switch." + i), bx + 12, by + 2, i == VehicleControls.SW_TEST ? 0xFFFF7060 : 0xFFE8EDF2);
+            g.fill(bx + 1, by + 2, bx + 7, by + 8, 0xFF000000);
+            g.fill(bx + 2, by + 3, bx + 6, by + 7, c != 0 ? c : 0xFF30302C);
+            g.pose().pushPose();
+            g.pose().translate(bx + 9, by + 2, 0);
+            g.pose().scale(0.75f, 0.75f, 1);
+            g.drawString(font, Component.translatable("vehicleworks.switch." + i), 0, 0, i == VehicleControls.SW_TEST ? 0xFFFF7060 : 0xFFE8EDF2);
+            g.pose().popPose();
+        }
+        // annunciators in the first row
+        for (int i = 0; i < CockpitRenderer.ANN.length; i++) {
+            int bx = x + (i + 1) * (W + GAP), by = y + 13;
+            boolean on = CockpitRenderer.annunciator(vehicle, t, i);
+            int col = CockpitRenderer.ANN_COLOR[i];
+            g.fill(bx, by, bx + W, by + H - 13, on ? (col & 0x00FFFFFF) | 0xC0000000 : 0xFF1A1C1F);
+            g.pose().pushPose();
+            g.pose().translate(bx + W / 2f, by + 6, 0);
+            g.pose().scale(0.6f, 0.6f, 1);
+            g.drawCenteredString(font, CockpitRenderer.ANN[i], 0, 0, on ? 0xFFFFFFFF : 0xFF707478);
+            g.pose().popPose();
         }
         // electrical + fuel summary
         int sy = y + CockpitRenderer.ROWS * (H + GAP) + 2;

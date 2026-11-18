@@ -103,6 +103,13 @@ public final class VehicleSimulation {
     private double tailTrim = 0.0;
     private double holdPitch;
     private boolean holdingPitch;
+    /** fly-by-wire side stick control law (Airbus-style "normal law") */
+    public boolean fbw;
+    public double fbwSensitivity = 1, fbwDeadZone = 0.08;
+    private double holdBank, fbwPitchI;
+    private boolean holdingBank;
+    /** pilot stick deflection after the dead zone (what the side stick shows) */
+    public double stickPitchIn, stickRollIn;
     private double holdHeading;
     private double collectiveTrim = 0;
     private boolean holdingHeading;
@@ -181,7 +188,72 @@ public final class VehicleSimulation {
             roll = Math.abs(input.roll) > 0.05 ? input.roll : aimOut[1];
             yaw = clamp(aimOut[2] * 0.5 + input.yaw, -1, 1);
         }
-        if ((input.assist || input.autopilot) && !input.mouseAim && rotors.isEmpty() && !wings.isEmpty()) {
+        stickPitchIn = input.pitch;
+        stickRollIn = input.roll;
+        if (fbw && !input.autopilot && !input.mouseAim && rotors.isEmpty() && !wings.isEmpty()) {
+            // FLY-BY-WIRE: side stick deflection commands a pitch rate and a roll rate. Stick released:
+            // the computers hold the pitch attitude and the bank angle (auto-trim). Protections: pitch
+            // +30 / -15 deg, bank 67 deg (back to 33 when released), high angle of attack.
+            body.localDirToWorld(forward.x, forward.y, forward.z, tmp);
+            body.localDirToWorld(right.x, right.y, right.z, tmp2);
+            body.localDirToWorld(up.x, up.y, up.z, tmp3);
+            double p = body.angularVelocity.dot(tmp), q = body.angularVelocity.dot(tmp2), r = -body.angularVelocity.dot(tmp3);
+            double pitchAngle = Math.asin(clamp(tmp.y, -1, 1));
+            double bank = Math.atan2(-tmp2.y, tmp3.y);
+            double dz = clamp(fbwDeadZone, 0, 0.5);
+            double sp = Math.abs(input.pitch) <= dz ? 0 : Math.signum(input.pitch) * (Math.abs(input.pitch) - dz) / (1 - dz);
+            double sr = Math.abs(input.roll) <= dz ? 0 : Math.signum(input.roll) * (Math.abs(input.roll) - dz) / (1 - dz);
+            stickPitchIn = sp;
+            stickRollIn = sr;
+            double sens = clamp(fbwSensitivity, 0.2, 3);
+            double gs = clamp(Math.pow(60.0 / Math.max(60.0, airspeed), 1.5), 0.3, 1.0);
+            if (onGround) {
+                // ground: direct law (stick = elevator), rotate with the stick
+                holdingPitch = false;
+                holdingBank = false;
+                fbwPitchI = 0;
+                pitch = clamp(sp + (sp > 0.2 && airspeed > rotateSpeed * 0.85 ? 0.3 : 0), -1, 1);
+                roll = clamp(sr * 0.6, -1, 1);
+                yaw = clamp(input.yaw + input.roll, -1, 1);
+                // nose wheel steering holds the heading when the pilot does not steer (no weathervaning in the wind)
+                if (Math.abs(input.yaw) < 0.05 && Math.abs(input.roll) < 0.05) {
+                    double hdg = Math.atan2(tmp.x, -tmp.z);
+                    if (!holdingHeading) { holdHeading = hdg; holdingHeading = true; }
+                    double herr = hdg - holdHeading;
+                    while (herr > Math.PI) herr -= 2 * Math.PI;
+                    while (herr < -Math.PI) herr += 2 * Math.PI;
+                    yaw = clamp(yaw - 3.0 * herr - 0.8 * r, -1, 1);
+                } else holdingHeading = false;
+            } else {
+                double maxUp = Math.toRadians(30), maxDn = Math.toRadians(-15);
+                double qCmd;
+                if (Math.abs(sp) > 1e-3) {
+                    qCmd = sp * Math.toRadians(9) * sens;
+                    holdingPitch = false;
+                } else {
+                    if (!holdingPitch) { holdPitch = clamp(pitchAngle, maxDn, maxUp); holdingPitch = true; }
+                    qCmd = clamp(1.2 * (holdPitch - pitchAngle), -Math.toRadians(6), Math.toRadians(6));
+                }
+                if (pitchAngle > maxUp && qCmd > 0) qCmd = Math.min(qCmd, (maxUp - pitchAngle) * 1.5);
+                if (pitchAngle < maxDn && qCmd < 0) qCmd = Math.max(qCmd, (maxDn - pitchAngle) * 1.5);
+                if (stallWarning) { qCmd = Math.min(qCmd, -Math.toRadians(3)); holdingPitch = false; } // alpha protection
+                double bankComp = 0.35 * (1 / Math.max(0.45, Math.cos(bank)) - 1);
+                fbwPitchI = clamp(fbwPitchI + 0.8 * (qCmd - q) * dt, -0.6, 0.6);
+                pitch = clamp(gs * 3.0 * (qCmd - q) + fbwPitchI + bankComp, -1, 1);
+                double pCmd;
+                double maxBank = Math.toRadians(67), neutralBank = Math.toRadians(33);
+                if (Math.abs(sr) > 1e-3) {
+                    pCmd = sr * Math.toRadians(15) * sens;
+                    holdingBank = false;
+                    if (Math.abs(bank) > maxBank && Math.signum(pCmd) == Math.signum(bank)) pCmd = 0;
+                } else {
+                    if (!holdingBank) { holdBank = clamp(bank, -neutralBank, neutralBank); holdingBank = true; }
+                    pCmd = clamp(1.5 * (holdBank - bank), -Math.toRadians(10), Math.toRadians(10));
+                }
+                roll = clamp(gs * 2.2 * (pCmd - p), -1, 1);
+                yaw = clamp(input.yaw + 0.5 * roll - 0.3 * r, -1, 1);
+            }
+        } else if ((input.assist || input.autopilot) && !input.mouseAim && rotors.isEmpty() && !wings.isEmpty()) {
             // EASY FLIGHT: W/S move a pitch-attitude target, A/D set a bank angle, release = wings level.
             body.localDirToWorld(forward.x, forward.y, forward.z, tmp);
             body.localDirToWorld(right.x, right.y, right.z, tmp2);

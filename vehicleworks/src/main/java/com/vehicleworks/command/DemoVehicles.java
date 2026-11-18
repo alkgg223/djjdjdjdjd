@@ -264,10 +264,10 @@ public final class DemoVehicles {
         }
         b.block(-2, 1, -13, skin); b.block(2, 1, -13, skin);
         b.c(-1, 1, -11, ComponentType.PILOT_SEAT, Direction.NORTH);
-        b.c(1, 1, -11, ComponentType.PASSENGER_SEAT, Direction.NORTH);
-        // captain and first-officer yokes (linked: both move together)
-        b.c(-1, 1, -12, ComponentType.YOKE, Direction.SOUTH);
-        b.c(1, 1, -12, ComponentType.YOKE, Direction.SOUTH);
+        b.c(1, 1, -11, ComponentType.COPILOT_SEAT, Direction.NORTH);
+        // Airbus-style side sticks on the outboard consoles (fly-by-wire), no yokes
+        b.c(-1, 1, -12, ComponentType.SIDESTICK, Direction.NORTH, c -> c.putInt("side", 0));
+        b.c(1, 1, -12, ComponentType.SIDESTICK, Direction.NORTH, c -> c.putInt("side", 1));
         b.c(-1, -1, -8, ComponentType.FLIGHT_INSTRUMENTS, Direction.SOUTH);
         b.c(1, -1, -8, ComponentType.NAVIGATION_COMPUTER, Direction.SOUTH);
         // glass cockpit: PFD + standby gauges, navigation display, engine display
@@ -284,9 +284,11 @@ public final class DemoVehicles {
         b.light(1, 3, -12, 9, Direction.SOUTH);
         b.c(5, -1, 1, ComponentType.REFUEL_PORT, Direction.EAST);
         b.c(0, 3, -11, ComponentType.COCKPIT_PANEL, Direction.SOUTH); // overhead panel
+        // cabin: business, premium economy, economy plus, economy
         for (int z = -7; z <= 13; z += 2) {
-            b.c(-1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH);
-            b.c(1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH);
+            ComponentType cls = z <= -5 ? ComponentType.SEAT_BUSINESS : (z == -3 ? ComponentType.SEAT_PREMIUM : (z == -1 ? ComponentType.SEAT_ECONOMY_PLUS : ComponentType.SEAT_ECONOMY));
+            b.c(-1, 1, z, cls, Direction.NORTH);
+            b.c(1, 1, z, cls, Direction.NORTH);
         }
         for (int x = -1; x <= 1; x++) for (int y = 1; y <= 3; y++) b.block(x, y, 15, skin);
         for (int z = -3; z <= 4; z++) if (z != 0) { b.fuel(-1, -1, z); b.fuel(1, -1, z); }
@@ -349,7 +351,7 @@ public final class DemoVehicles {
         b.block(-2, 2, -16, Blocks.GLASS); b.block(2, 2, -16, Blocks.GLASS);
         b.block(-2, 3, -16, Blocks.GLASS); b.block(2, 3, -16, Blocks.GLASS);
         b.c(-1, 1, -14, ComponentType.PILOT_SEAT, Direction.NORTH);
-        b.c(1, 1, -14, ComponentType.PASSENGER_SEAT, Direction.NORTH);
+        b.c(1, 1, -14, ComponentType.COPILOT_SEAT, Direction.NORTH);
         // captain and first-officer yokes (linked: both move together)
         b.c(-1, 1, -15, ComponentType.YOKE, Direction.SOUTH);
         b.c(1, 1, -15, ComponentType.YOKE, Direction.SOUTH);
@@ -368,10 +370,14 @@ public final class DemoVehicles {
         b.light(1, 3, -15, 9, Direction.SOUTH);
         b.c(4, -1, 0, ComponentType.REFUEL_PORT, Direction.EAST);
         b.c(0, 3, -14, ComponentType.COCKPIT_PANEL, Direction.SOUTH); // overhead panel
-        // two-aisle style cabin: seats left and right of the centre aisle
-        for (int z = -10; z <= 17; z += 2) {
-            b.c(-1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH);
-            b.c(1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH);
+        // first class: two private 2 x 2 suites on the left (doors toward the aisle on the right)
+        b.c(-1, 1, -10, ComponentType.SEAT_FIRST, Direction.NORTH);
+        b.c(-1, 1, -8, ComponentType.SEAT_FIRST, Direction.NORTH);
+        // then business, premium economy, economy plus and economy left and right of the centre aisle
+        for (int z = -5; z <= 17; z += 2) {
+            ComponentType cls = z <= -3 ? ComponentType.SEAT_BUSINESS : (z <= 1 ? ComponentType.SEAT_PREMIUM : (z <= 5 ? ComponentType.SEAT_ECONOMY_PLUS : ComponentType.SEAT_ECONOMY));
+            b.c(-1, 1, z, cls, Direction.NORTH);
+            b.c(1, 1, z, cls, Direction.NORTH);
         }
         // tail cone
         for (int x = -1; x <= 1; x++) for (int y = 1; y <= 3; y++) b.block(x, y, 20, skin);
@@ -432,7 +438,7 @@ public final class DemoVehicles {
         b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH);
         // cockpit seats sit low (in the floor) so the overhead switch panel is above the pilots' heads
         b.c(-1, 0, -3, ComponentType.PILOT_SEAT, Direction.NORTH);
-        b.c(1, 0, -3, ComponentType.PASSENGER_SEAT, Direction.NORTH);
+        b.c(1, 0, -3, ComponentType.COPILOT_SEAT, Direction.NORTH);
         // captain and first-officer yokes (linked: both move together)
         b.c(-1, 0, -4, ComponentType.YOKE, Direction.SOUTH);
         b.c(1, 0, -4, ComponentType.YOKE, Direction.SOUTH);
@@ -453,7 +459,10 @@ public final class DemoVehicles {
         b.light(-3, 3, 0, 8, Direction.WEST); b.light(3, 3, 0, 8, Direction.EAST);
         b.light(1, 2, -4, 9, Direction.SOUTH);
         b.c(-3, 0, 2, ComponentType.REFUEL_PORT, Direction.WEST);
-        for (int z = -1; z <= 3; z += 2) { b.c(-1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH); b.c(1, 1, z, ComponentType.PASSENGER_SEAT, Direction.NORTH); }
+        for (int z = -1; z <= 3; z += 2) {
+            ComponentType cls = z == -1 ? ComponentType.SEAT_PREMIUM : ComponentType.SEAT_ECONOMY;
+            b.c(-1, 1, z, cls, Direction.NORTH); b.c(1, 1, z, cls, Direction.NORTH);
+        }
         for (int z = -2; z <= 3; z++) if (z != 0) b.fuel(0, -1, z);
         b.c(-1, -1, 0, ComponentType.FUEL_PUMP, Direction.NORTH);
         b.c(1, -1, 0, ComponentType.ENGINE_STARTER, Direction.NORTH);

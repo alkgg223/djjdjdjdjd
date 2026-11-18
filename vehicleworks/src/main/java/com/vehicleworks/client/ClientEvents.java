@@ -59,6 +59,19 @@ public final class ClientEvents {
         var o = mc.options;
         int keys = 0;
         boolean ui = mc.screen != null;
+        boolean passenger = v.isPassengerSeated(mc.player);
+        if (passenger) {
+            // a passenger flies nothing: no flight inputs, no cockpit keys; X adjusts the seat
+            Payloads.toServer(new Payloads.Input(v.getId(), 0, mc.player.getYRot(), mc.player.getXRot()));
+            while (Keybinds.PANEL.consumeClick()) {
+                if (v.seatClassOf(mc.player) > 0) mc.setScreen(new SeatScreen(v));
+                else mc.player.displayClientMessage(net.minecraft.network.chat.Component.translatable("vehicleworks.msg.passenger_no_controls"), true);
+            }
+            for (var k : new net.minecraft.client.KeyMapping[]{Keybinds.ENGINES, Keybinds.GEAR, Keybinds.FLAPS, Keybinds.ARM, Keybinds.ASSIST, Keybinds.MOUSE_AIM,
+                    Keybinds.PARKING, Keybinds.MENU, Keybinds.AUTOPILOT, Keybinds.HUD_MODE, Keybinds.HUD_TOGGLE}) while (k.consumeClick()) {}
+            while (Keybinds.VOICE.consumeClick()) VoiceCallouts.toggle();
+            return;
+        }
         if (!ui) {
             if (o.keyUp.isDown()) keys |= VehicleControls.FORWARD;
             if (o.keyDown.isDown()) keys |= VehicleControls.BACK;
@@ -153,15 +166,51 @@ public final class ClientEvents {
                 default -> { mx = rx; mz = rz; }
             }
             if (mx < -1.5 || mx > 1.5 || mz < -1.0 || mz > 1.0) continue;
-            double px = (mx + 0.5) * 16, pz = (mz + 0.5) * 16; // model pixels: x -16..32, z -8..24
-            int col = Math.max(0, Math.min(CockpitRenderer.COLS - 1, (int) Math.floor((32 - px) / 8)));
-            int row = Math.max(0, Math.min(CockpitRenderer.ROWS - 1, (int) Math.floor((pz + 8) / (32.0 / CockpitRenderer.ROWS))));
+            int col = Math.max(0, Math.min(CockpitRenderer.COLS - 1, (int) Math.floor((1.5 - mx) / CockpitRenderer.CW)));
+            int row = Math.max(0, Math.min(CockpitRenderer.ROWS - 1, (int) Math.floor((mz + 1.0) / CockpitRenderer.CD)));
+            CockpitRenderer.Ctl c = CockpitRenderer.at(col, row);
+            if (c == null) continue;
             best = t;
-            button = row * CockpitRenderer.COLS + col;
+            button = c.id();
         }
         if (button < 0) return false;
         PanelScreen.pressSwitch(v, button);
-        mc.player.playSound(com.vehicleworks.registry.ModSounds.CLICK.get(), 0.6f, 1.4f);
+        return true;
+    }
+
+    /** A passenger right-clicks one of the buttons on its seat's arm rest. */
+    static boolean clickSeatButton(VehicleEntity v) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return false;
+        Long seat = v.seats.get(mc.player.getUUID());
+        if (seat == null) return false;
+        var st = v.structure.get(seat);
+        var ct = com.vehicleworks.vehicle.VehicleBuilder.typeOf(st);
+        if (ct == null || ct.seatClass() == 0) return false;
+        int cls = ct.seatClass();
+        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition(1f), look = mc.player.getViewVector(1f);
+        org.joml.Vector3d a = v.worldToLocal(eye.x, eye.y, eye.z, new org.joml.Vector3d());
+        org.joml.Vector3d d = v.worldDirToLocal(look.x, look.y, look.z, new org.joml.Vector3d());
+        // into the seat frame (the renderer turns the seat by -facing about its floor centre)
+        double rot = Math.toRadians(CockpitRenderer.facingRot(com.vehicleworks.vehicle.VehicleBuilder.facing(st)));
+        a.sub(net.minecraft.core.BlockPos.getX(seat) + 0.5, net.minecraft.core.BlockPos.getY(seat), net.minecraft.core.BlockPos.getZ(seat) + 0.5).rotateY(rot);
+        d.rotateY(rot);
+        a.z -= CabinRenderer.slideOffset(v.cabin.get((long) seat));
+        if (Math.abs(d.y) < 1e-4) return false;
+        java.util.List<Integer> btns = CabinRenderer.buttons(cls);
+        int best = -1;
+        double bestD = 0.024;
+        for (int i = 0; i < btns.size(); i++) {
+            float[] p = CabinRenderer.buttonPos(cls, i);
+            double t = (p[1] - a.y) / d.y;
+            if (t <= 0 || t > 3) continue;
+            double hx = a.x + d.x * t - p[0], hz = a.z + d.z * t - p[2];
+            double dist = Math.max(Math.abs(hx), Math.abs(hz));
+            if (dist < bestD) { bestD = dist; best = btns.get(i); }
+        }
+        if (best < 0) return false;
+        CabinRenderer.pressed(v, seat, best);
+        Payloads.toServer(new Payloads.Action(v.getId(), Payloads.ACT_CABIN, best));
         return true;
     }
 
@@ -173,7 +222,12 @@ public final class ClientEvents {
     public static void onInteraction(InputEvent.InteractionKeyMappingTriggered e) {
         Minecraft mc = Minecraft.getInstance();
         if (ridden() != null) {
-            if (e.isUseItem() && clickPanel(ridden())) {
+            if (e.isUseItem() && ridden().isPassengerSeated(mc.player) && clickSeatButton(ridden())) {
+                e.setCanceled(true);
+                e.setSwingHand(false);
+                return;
+            }
+            if (e.isUseItem() && !ridden().isPassengerSeated(mc.player) && clickPanel(ridden())) {
                 e.setCanceled(true);
                 e.setSwingHand(false);
                 panelClickMask = 6;

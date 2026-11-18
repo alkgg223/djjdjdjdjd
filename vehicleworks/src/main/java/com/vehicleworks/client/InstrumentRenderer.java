@@ -71,7 +71,10 @@ public final class InstrumentRenderer {
             tr.last = now;
         }
         tr.compass += wrap(t.heading - tr.compass) * 0.08f;
-        int lit = t.busPowered && t.panelLight > 0 ? FULL : light;
+        // analog gauges stay readable by daylight; their backlight follows the bus, the panel light switch and the dimmer
+        float bl = Avionics.backlight(v) * Avionics.dimmer(t) * Math.min(1, t.panelLight / 1.5f);
+        int lit = net.minecraft.client.renderer.LightTexture.pack(Math.max(net.minecraft.client.renderer.LightTexture.block(light), Math.min(15, Math.round(15 * bl))),
+                net.minecraft.client.renderer.LightTexture.sky(light));
         for (long k : v.structure.blockEntities().keySet()) {
             BlockState st = v.structure.get(k);
             ComponentType ct = VehicleBuilder.typeOf(st);
@@ -115,10 +118,14 @@ public final class InstrumentRenderer {
         ps.popPose();
     }
 
+    /** display brightness (additive drawing: scales the emitted light) and top-down data reveal line */
+    static float BRIGHT = 1, REVEAL_Y = -10;
+
     static void rect(PoseStack ps, MultiBufferSource buf, float x0, float y0, float x1, float y1, float z, int argb) {
+        if ((y0 + y1) * 0.5f < REVEAL_Y) return;
         VertexConsumer vc = buf.getBuffer(RenderType.lightning());
         Matrix4f m = ps.last().pose();
-        float a = (argb >>> 24) / 255f, r = ((argb >> 16) & 255) / 255f, g = ((argb >> 8) & 255) / 255f, b = (argb & 255) / 255f;
+        float a = (argb >>> 24) / 255f, r = ((argb >> 16) & 255) / 255f * BRIGHT, g = ((argb >> 8) & 255) / 255f * BRIGHT, b = (argb & 255) / 255f * BRIGHT;
         vc.addVertex(m, x0, y0, z).setColor(r, g, b, a);
         vc.addVertex(m, x1, y0, z).setColor(r, g, b, a);
         vc.addVertex(m, x1, y1, z).setColor(r, g, b, a);
@@ -127,9 +134,14 @@ public final class InstrumentRenderer {
 
     static void poly(PoseStack ps, MultiBufferSource buf, float[][] pts, int n, float z, int argb) {
         if (n < 3) return;
+        if (REVEAL_Y > -10) {
+            float cy = 0;
+            for (int i = 0; i < n; i++) cy += pts[i][1];
+            if (cy / n < REVEAL_Y) return;
+        }
         VertexConsumer vc = buf.getBuffer(RenderType.lightning());
         Matrix4f m = ps.last().pose();
-        float a = (argb >>> 24) / 255f, r = ((argb >> 16) & 255) / 255f, g = ((argb >> 8) & 255) / 255f, b = (argb & 255) / 255f;
+        float a = (argb >>> 24) / 255f, r = ((argb >> 16) & 255) / 255f * BRIGHT, g = ((argb >> 8) & 255) / 255f * BRIGHT, b = (argb & 255) / 255f * BRIGHT;
         for (int i = 1; i < n - 1; i++) {
             vc.addVertex(m, pts[0][0], pts[0][1], z).setColor(r, g, b, a);
             vc.addVertex(m, pts[i][0], pts[i][1], z).setColor(r, g, b, a);
@@ -155,6 +167,12 @@ public final class InstrumentRenderer {
     }
 
     static void text(PoseStack ps, MultiBufferSource buf, String s, float x, float y, float size, int color, boolean center) {
+        if (y < REVEAL_Y) return;
+        if (BRIGHT < 0.999f) {
+            float k = Math.max(0, Math.min(1, BRIGHT));
+            color = (color & 0xFF000000) | ((int) (((color >> 16) & 255) * k) << 16) | ((int) (((color >> 8) & 255) * k) << 8) | (int) ((color & 255) * k);
+            if (k < 0.04f) return;
+        }
         Font f = Minecraft.getInstance().font;
         ps.pushPose();
         ps.translate(x, y, Z * 4);
@@ -308,8 +326,67 @@ public final class InstrumentRenderer {
 
     static void digital(String id, VehicleEntity v, VehicleTelemetry t, Turn tr, PoseStack ps, MultiBufferSource buf, int light) {
         tex(ps, buf, "inst_screen_bezel", 1.0f, Z * 6, 0, light);
-        rect(ps, buf, -0.95f, -0.95f, 0.95f, 0.95f, Z * 0.3f, 0xFF02040A);
-        if (!t.avionicsPowered()) return;
+        float env = Avionics.display(v) * Avionics.displayBrightness(t);
+        int stage = Avionics.stage(v);
+        boolean fading = Avionics.fadingOut(v);
+        if (env <= 0.004f || (stage == Avionics.OFF && !fading)) return; // dark glass: no power
+        try {
+            BRIGHT = env;
+            rect(ps, buf, -0.95f, -0.95f, 0.95f, 0.95f, Z * 0.3f, 0xFF04070E);
+            if (!fading && stage < Avionics.DATA) {
+                bootScreen(id, stage, Avionics.progress(v), ps, buf);
+                return;
+            }
+            // data appears from the top down during the last part of the boot
+            if (!fading && stage == Avionics.DATA) REVEAL_Y = 1.0f - 2.1f * Avionics.reveal(v);
+            digitalContent(id, v, t, tr, ps, buf, light);
+        } finally {
+            BRIGHT = 1;
+            REVEAL_Y = -10;
+        }
+    }
+
+    static String displayName(String id) {
+        return switch (id) {
+            case "nav_display" -> "ND";
+            case "radar" -> "RADAR";
+            case "flight_director" -> "FD";
+            case "attitude_display" -> "PFD";
+            case "engine_display" -> "EICAS";
+            default -> "DU";
+        };
+    }
+
+    /** glow -> logo -> self test, like a real display unit booting */
+    static void bootScreen(String id, int stage, float f, PoseStack ps, MultiBufferSource buf) {
+        final int W = 0xFFFFFFFF, C = 0xFF38D3FF, G = 0xFF40FF70;
+        if (stage == Avionics.GLOW) {
+            float k = (f - 0.18f) / 0.12f;
+            rect(ps, buf, -0.95f, -0.95f, 0.95f, 0.95f, Z * 0.5f, ((int) (0x30 * k) << 16) | ((int) (0x38 * k) << 8) | (int) (0x48 * k) | 0xFF000000);
+            return;
+        }
+        if (stage == Avionics.LOGO) {
+            rect(ps, buf, -0.95f, -0.95f, 0.95f, 0.95f, Z * 0.5f, 0xFF0A1020);
+            poly(ps, buf, new float[][]{{-0.18f, 0.32f}, {0, 0.02f}, {0.18f, 0.32f}, {0.1f, 0.32f}, {0, 0.15f}, {-0.1f, 0.32f}}, 6, Z, C);
+            text(ps, buf, "VEHICLEWORKS", 0, -0.12f, 0.15f, W, true);
+            text(ps, buf, "AVIONICS  " + displayName(id), 0, -0.3f, 0.1f, C, true);
+            text(ps, buf, "v1.2", 0, -0.75f, 0.08f, 0xFF8090A0, true);
+            return;
+        }
+        // self test: colour bars, all segments, progress
+        float k = Math.max(0, Math.min(1, (f - 0.48f) / 0.2f));
+        int[] bars = {0xFFFF3030, 0xFFFFB020, 0xFF40FF70, 0xFF38D3FF, 0xFFFF55FF, 0xFFFFFFFF};
+        for (int i = 0; i < bars.length; i++) {
+            float x0 = -0.85f + i * 0.283f;
+            rect(ps, buf, x0, 0.05f, x0 + 0.26f, 0.7f, Z, bars[i]);
+        }
+        text(ps, buf, "SELF TEST", 0, -0.12f, 0.13f, W, true);
+        rect(ps, buf, -0.7f, -0.42f, 0.7f, -0.32f, Z, 0xFF1A2030);
+        rect(ps, buf, -0.7f, -0.42f, -0.7f + 1.4f * k, -0.32f, Z * 1.5f, G);
+        text(ps, buf, k < 1 ? String.format("%.0f %%", k * 100) : "PASS", 0, -0.62f, 0.1f, k < 1 ? C : G, true);
+    }
+
+    static void digitalContent(String id, VehicleEntity v, VehicleTelemetry t, Turn tr, PoseStack ps, MultiBufferSource buf, int light) {
         final int G = 0xFF40FF70, W = 0xFFFFFFFF, C = 0xFF38D3FF, M = 0xFFFF55FF, A = 0xFFFFB020, R = 0xFFFF4040;
         switch (id) {
             case "nav_display" -> {

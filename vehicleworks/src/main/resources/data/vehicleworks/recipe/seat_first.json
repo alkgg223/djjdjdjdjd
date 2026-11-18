@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "LGL",
+    "LDL",
+    "PRP"
+  ],
+  "key": {
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "D": {
+      "tag": "minecraft:doors"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "P": {
+      "tag": "minecraft:planks"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:seat_first",
+    "count": 1
+  }
+}

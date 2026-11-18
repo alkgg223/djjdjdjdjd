@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/seat_economy_plus"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/seat_economy_plus",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/seat_economy_plus",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/seat_economy_plus",
+      "y": 270
+    }
+  }
+}

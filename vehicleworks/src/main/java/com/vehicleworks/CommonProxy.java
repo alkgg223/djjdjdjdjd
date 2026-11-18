@@ -12,6 +12,8 @@ public class CommonProxy {
     public void onTelemetry(Payloads.Telemetry p) {}
     public void onBlocks(Payloads.Blocks p) {}
     public void onSeats(Payloads.Seats p) {}
+
+    public void onCabin(Payloads.Cabin p) {}
     public void onOpenScreen(Payloads.OpenScreen p) {}
     public void onInfo(Payloads.Info p) {}
 }

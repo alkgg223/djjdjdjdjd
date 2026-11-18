@@ -131,9 +131,14 @@ public final class VehicleBuilder {
                 switch (t) {
                     case BALLOON_ENVELOPE -> f |= StructureAnalysis.FLAG_ENVELOPE | StructureAnalysis.FLAG_SOLID;
                     case GAS_CELL -> gasCells.add(key);
-                    case PILOT_SEAT -> layout.seats.add(new VehicleLayout.Seat(key, facing(st), true, false));
-                    case PASSENGER_SEAT -> layout.seats.add(new VehicleLayout.Seat(key, facing(st), false,
-                            t.property("gunner").getBool(config(s, key))));
+                    case PILOT_SEAT -> layout.seats.add(new VehicleLayout.Seat(key, facing(st), true, false, true, 0));
+                    case COPILOT_SEAT -> layout.seats.add(new VehicleLayout.Seat(key, facing(st), false, false, true, 0));
+                    case PASSENGER_SEAT -> {
+                        boolean gunner = t.property("gunner").getBool(config(s, key));
+                        layout.seats.add(new VehicleLayout.Seat(key, facing(st), false, gunner, gunner, 0));
+                    }
+                    case SEAT_ECONOMY, SEAT_ECONOMY_PLUS, SEAT_PREMIUM, SEAT_BUSINESS, SEAT_FIRST ->
+                            layout.seats.add(new VehicleLayout.Seat(key, facing(st), false, false, false, t.seatClass()));
                     case FUEL_PUMP -> pumps++;
                     case ENGINE_STARTER -> starters++;
                     case HYDRAULIC_PUMP -> hydraulics++;
@@ -216,6 +221,7 @@ public final class VehicleBuilder {
         sim.gasLiftScale = Config.SERVER.gasLiftScale.get();
         sim.fuelPumps = pumps;
         sim.hasStarter = starters > 0;
+        sim.fbw = layout.types.contains(ComponentType.SIDESTICK);
         sim.hydraulicPumps = hydraulics;
 
         // ---- engines (thrusters); mass must exist first for COM-relative decisions later

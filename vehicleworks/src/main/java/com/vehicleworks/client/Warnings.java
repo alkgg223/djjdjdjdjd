@@ -12,7 +12,8 @@ import java.util.function.Supplier;
 public final class Warnings {
     public enum Sound {
         SHAKER(ModSounds.ALARM_STALL::get, 800), CLACKER(ModSounds.ALARM_OVERSPEED::get, 1000), CHIME(ModSounds.ALARM_CAUTION::get, 2500),
-        BELL(ModSounds.ALARM_FIRE::get, 1000), WHOOP(ModSounds.ALARM_WHOOP::get, 950), TRIPLE(ModSounds.ALARM_WARNING::get, 1800);
+        BELL(ModSounds.ALARM_FIRE::get, 1000), WHOOP(ModSounds.ALARM_WHOOP::get, 950), TRIPLE(ModSounds.ALARM_WARNING::get, 1800),
+        HORN(ModSounds.GEAR_HORN::get, 1000);
         public final Supplier<SoundEvent> event;
         public final long periodMs;
         Sound(Supplier<SoundEvent> e, long p) { event = e; periodMs = p; }
@@ -21,7 +22,7 @@ public final class Warnings {
     /** In priority order (first = most urgent). red = warning, otherwise amber caution. */
     public enum W {
         ENGINE_FIRE(Sound.BELL, true), PULL_UP(Sound.WHOOP, true), TERRAIN(Sound.WHOOP, true), STALL(Sound.SHAKER, true),
-        ENGINE_FAILURE(Sound.BELL, true), OVERSPEED(Sound.CLACKER, true), GEAR(Sound.WHOOP, true), LOW_ALTITUDE(Sound.WHOOP, false),
+        ENGINE_FAILURE(Sound.BELL, true), OVERSPEED(Sound.CLACKER, true), GEAR(Sound.HORN, true), LOW_ALTITUDE(Sound.WHOOP, false),
         HYDRAULIC(Sound.TRIPLE, true), ELECTRICAL(Sound.TRIPLE, true), LOW_FUEL(Sound.CHIME, false), LOW_OIL(Sound.CHIME, false);
         public final Sound sound;
         public final boolean red;

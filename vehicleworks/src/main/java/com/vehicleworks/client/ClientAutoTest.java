@@ -101,6 +101,7 @@ public final class ClientAutoTest {
         }
         ticks++;
         VehicleEntity cv;
+        if (ticks >= 2000) { cockpitAndCabin(mc, ticks - 2000); return; }
         switch (ticks) {
             case 40 -> {
                 cmd("gamerule doDaylightCycle false");
@@ -108,7 +109,10 @@ public final class ClientAutoTest {
                 cmd("weather clear");
                 cmd("tp @s 0 -60 0 180 0");
             }
-            case 60 -> { if (Boolean.getBoolean("vehicleworks.autotest.quick")) ticks = 1079; else cmd("vehicleworks spawn pelican"); }
+            case 60 -> {
+                if (Boolean.getBoolean("vehicleworks.autotest.cabin")) ticks = 2000;
+                else if (Boolean.getBoolean("vehicleworks.autotest.quick")) ticks = 1079; else cmd("vehicleworks spawn pelican");
+            }
             case 120 -> { mc.options.setCameraType(CameraType.FIRST_PERSON); cmd("tp @s 15 -55 -4 facing 0 -58 -18"); }
             case 160 -> screenshot("pelican_day");
             case 170 -> {
@@ -316,6 +320,197 @@ public final class ClientAutoTest {
         if (((ticks > 760 && ticks <= 780) || (ticks > 880 && ticks <= 900) || (ticks > 785 && ticks < 795) || (ticks >= 1500 && ticks < 1510)) && mc.player != null)
             log("t{} onGround={} hColl={} vColl={} dm={} {}", ticks, mc.player.onGround(), mc.player.horizontalCollision, mc.player.verticalCollision,
                     mc.player.getDeltaMovement(), com.vehicleworks.vehicle.EntityVehicleCollision.DEBUG);
+    }
+
+    // ================================================================== 1.2: cockpit power-up, engine start, side stick, cabin
+
+    private static void press(int id) {
+        VehicleEntity v = ClientEvents.ridden();
+        if (v == null) v = clientVehicle();
+        if (v != null) PanelScreen.pressSwitch(v, id);
+    }
+
+    private static void cabin(int control) {
+        VehicleEntity v = clientVehicle();
+        if (v != null) com.vehicleworks.network.Payloads.toServer(new com.vehicleworks.network.Payloads.Action(v.getId(), com.vehicleworks.network.Payloads.ACT_CABIN, control));
+    }
+
+    private static void sit(double x, double y, double z) {
+        onServer(sp -> {
+            VehicleEntity v = serverVehicle(sp);
+            if (v == null) { log("sit: no vehicle"); return; }
+            sp.stopRiding();
+            long k = net.minecraft.core.BlockPos.asLong((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
+            boolean ok = v.trySit(sp, k);
+            if (!ok) log("sit at {} {} {} failed: block {} seats {}", x, y, z, v.structure.get(k), v.layout() == null ? -1 : v.layout().seats.size());
+        });
+    }
+
+    private static long suiteKey = Long.MIN_VALUE;
+    private static float suiteRot;
+
+    /** seat-frame offset (x right, y up, z backward) of the suite seat, in the vehicle's local frame */
+    private static double[] suite(double ox, double oy, double oz) {
+        Vector3d o = new Vector3d(ox, oy, oz).rotateY(-Math.toRadians(suiteRot));
+        return new double[]{net.minecraft.core.BlockPos.getX(suiteKey) + 0.5 + o.x, net.minecraft.core.BlockPos.getY(suiteKey) + o.y, net.minecraft.core.BlockPos.getZ(suiteKey) + 0.5 + o.z};
+    }
+
+    private static void findSuite() {
+        onServer(sp -> {
+            VehicleEntity v = serverVehicle(sp);
+            if (v == null) return;
+            for (long k : v.structure.blockEntities().keySet()) {
+                var st = v.structure.get(k);
+                if (com.vehicleworks.vehicle.VehicleBuilder.typeOf(st) != com.vehicleworks.component.ComponentType.SEAT_FIRST) continue;
+                suiteKey = k;
+                suiteRot = CockpitRenderer.facingRot(com.vehicleworks.vehicle.VehicleBuilder.facing(st));
+                sp.stopRiding();
+                log("first suite at {} facing {} sat={}", net.minecraft.core.BlockPos.of(k), suiteRot, v.trySit(sp, k));
+                return;
+            }
+        });
+    }
+
+    private static void state(String what) {
+        VehicleEntity v = clientVehicle();
+        if (v == null) return;
+        var t = v.telemetry;
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < t.engineState.length; i++) b.append(String.format(" [st=%d ph=%d N=%.2f egt=%.0f]", t.engineState[i], i < t.enginePhase.length ? t.enginePhase[i] : -1, t.engineSpool[i], t.engineTemp[i]));
+        log("{}: hdg={} bank={} pitch={} gs={}", what, String.format("%.0f", t.heading), String.format("%.0f", t.bank), String.format("%.0f", t.pitch), String.format("%.1f", t.groundSpeed));
+        log("{}: bus={} av={} stage={} hud={} backlight={} batt={} gen={} starter={} switches={}{}", what, t.busPowered, t.avionicsPowered(), Avionics.stage(v),
+                String.format("%.2f", Avionics.hud(v)), String.format("%.2f", Avionics.backlight(v)), String.format("%.3f", t.batteryCharge), t.generator,
+                t.sw(VehicleControls.BIT_STARTER), Integer.toBinaryString(t.switches), b);
+    }
+
+    private static void cockpitAndCabin(Minecraft mc, int t) {
+        VehicleEntity cv;
+        switch (t) {
+            case 0 -> { cmd("tp @s 0.5 -60 200.5 180 0"); cmd("time set 6000"); if (Boolean.getBoolean("vehicleworks.autotest.suite")) ticks = 2000 + 1119; }
+            case 10 -> cmd("vehicleworks spawn a320");
+            case 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 55, 60, 65, 69, 75, 80, 85 -> onServer(sp -> { VehicleEntity v = serverVehicle(sp); if (v != null) {
+                var up = v.localDirToWorld(0, 1, 0, new Vector3d()); log("pose t{}: up=({},{},{}) y={} v={} ground={}", t, String.format("%.2f", up.x), String.format("%.2f", up.y), String.format("%.2f", up.z),
+                        String.format("%.2f", v.getY()), String.format("%.2f", v.linearVelocity.length()), v.simulation() != null && v.simulation().onGround); } });
+            case 70 -> sit(-1, 1, -11);
+            case 90 -> { mc.options.setCameraType(CameraType.FIRST_PERSON); lookAlong(14); state("cold and dark"); }
+            case 100 -> screenshot("c01_cold_dark_cockpit");
+            case 105 -> { lookAlong(-62); }
+            case 112 -> screenshot("c02_overhead_cold_dark");
+            case 115 -> { press(VehicleControls.SW_BATTERY); }
+            case 122 -> { press(VehicleControls.SW_MASTER); }
+            case 132 -> { state("battery + master"); press(VehicleControls.SW_AVIONICS); }
+            case 140 -> screenshot("c03_overhead_bus_on");
+            case 150, 160, 170, 180, 190, 200, 210 -> onServer(sp -> { VehicleEntity v = serverVehicle(sp); if (v != null) log("server t{}: batt={} master={} av={} bus={} charge={}", t, v.controls.battery, v.controls.masterElec, v.controls.avionics, v.controls.busPowered, v.controls.batteryCharge); });
+            case 145 -> lookAlong(14);
+            case 165 -> { state("boot glow"); screenshot("c04_boot_glow"); }
+            case 195 -> { state("boot logo"); screenshot("c05_boot_logo"); }
+            case 222 -> { state("boot self test"); screenshot("c06_boot_selftest"); }
+            case 252 -> { state("data appearing"); screenshot("c07_boot_data"); }
+            case 300 -> { state("ready"); screenshot("c08_avionics_ready_hud"); }
+            // manual turbofan start: fuel pump, engine master, ignition, starter
+            case 310 -> press(VehicleControls.SW_FUEL_PUMP);
+            case 315 -> press(VehicleControls.SW_ENG_MASTER);
+            case 320 -> press(VehicleControls.SW_IGNITION);
+            case 325 -> { press(VehicleControls.SW_STARTER); lookAlong(-62); }
+            case 345 -> { state("starter engaged"); screenshot("c09_overhead_starting"); }
+            case 400, 450, 500, 550, 600, 650, 799, 899, 999, 1099 -> state("start t" + t);
+            case 660 -> screenshot("c10_overhead_engines_running");
+            case 665 -> { cmd("time set 18000"); press(VehicleControls.SW_PANEL); }
+            case 668 -> press(VehicleControls.SW_CONSOLE);
+            case 690 -> screenshot("c11_overhead_night_backlit");
+            case 692 -> { press(VehicleControls.SW_NIGHT); press(VehicleControls.SW_DIMMER); }
+            case 710 -> screenshot("c12_overhead_night_mode");
+            case 712 -> lookAlong(14);
+            case 725 -> screenshot("c13_cockpit_night");
+            case 730 -> { press(VehicleControls.SW_NIGHT); cmd("time set 6000"); }
+            // side stick: hold pitch up + roll right on the server and look at the captain's stick
+            case 740 -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }
+            case 745 -> onServer(sp -> { VehicleEntity v = serverVehicle(sp); if (v != null) { v.controls.parkingBrake = true; } });
+            case 750 -> { mc.options.setCameraType(CameraType.FIRST_PERSON); aimAt(-0.8, 1.55, -11.25); }
+            case 760 -> screenshot("c14_sidestick_neutral");
+            case 762 -> { mc.options.keyDown.setDown(true); mc.options.keyRight.setDown(true); }
+            case 796 -> { mc.options.keyDown.setDown(false); mc.options.keyRight.setDown(false); }
+            case 790 -> { cv = clientVehicle(); if (cv != null) log("side stick deflection: pitch {} roll {} fbw={}", cv.telemetry.stickPitch, cv.telemetry.stickRoll, cv.telemetry.fbw); screenshot("c15_sidestick_deflected"); }
+            // passenger: sit in a business seat, no flight HUD / controls
+            case 800 -> sit(-1, 1, -7);
+            case 820 -> {
+                cv = clientVehicle();
+                if (cv != null) log("business seat: passenger={} class={} ridden={}", cv.isPassengerSeated(mc.player), cv.seatClassOf(mc.player), ClientEvents.ridden() != null);
+                aimAt(-1 + 0.5 - 0.47, 1.56, -7 + 0.5 - 0.15);
+            }
+            case 830 -> screenshot("c16_passenger_view_buttons");
+            // press the arm-rest buttons: aim at the TV button and right-click it
+            case 832 -> {
+                cv = clientVehicle();
+                if (cv != null) {
+                    java.util.List<Integer> l = CabinRenderer.buttons(4);
+                    int i = l.indexOf(com.vehicleworks.vehicle.CabinSeat.SCREEN);
+                    float[] p = CabinRenderer.buttonPos(4, i);
+                    // seat (-1,1,-7) faces north: seat frame = vehicle frame around the block centre
+                    aimAt(-1 + 0.5 + p[0], 1 + p[1], -7 + 0.5 + p[2]);
+                }
+            }
+            case 836 -> net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
+            case 850 -> {
+                cv = clientVehicle();
+                Long k = cv == null ? null : cv.seats.get(mc.player.getUUID());
+                if (k != null) log("after TV button: screen={} state={}", com.vehicleworks.vehicle.CabinSeat.screen(cv.cabin.get((long) k)), cv.cabin.get((long) k));
+                cabin(com.vehicleworks.vehicle.CabinSeat.TRAY);
+                cabin(com.vehicleworks.vehicle.CabinSeat.LIGHT);
+            }
+            case 860 -> aimAt(-0.5, 1.82, -7.05); // the business seat's own screen
+            case 900 -> screenshot("c17_business_seat_screen_tray");
+            case 905 -> { cabin(com.vehicleworks.vehicle.CabinSeat.FLAT); }
+            case 955 -> onServer(ServerPlayer::stopRiding);
+            case 962 -> { placeInVehicle(0.5, 1.05, -5.6); aimAt(-0.5, 1.2, -7.2); }
+            case 975 -> screenshot("c18_business_lie_flat");
+            case 980 -> { mc.options.setCameraType(CameraType.FIRST_PERSON); sit(-1, 1, -3); }
+            case 990 -> { cabin(com.vehicleworks.vehicle.CabinSeat.SCREEN); cabin(com.vehicleworks.vehicle.CabinSeat.RECLINE_DOWN); cabin(com.vehicleworks.vehicle.CabinSeat.RECLINE_DOWN); cabin(com.vehicleworks.vehicle.CabinSeat.LEG_UP); }
+            case 994 -> { cabin(com.vehicleworks.vehicle.CabinSeat.PAGE); }
+            case 1000 -> sit(1, 1, -1);
+            case 1010 -> { cabin(com.vehicleworks.vehicle.CabinSeat.RECLINE_DOWN); cabin(com.vehicleworks.vehicle.CabinSeat.LEG_UP); cabin(com.vehicleworks.vehicle.CabinSeat.SLIDE_FWD); }
+            case 1020 -> sit(-1, 1, 1);
+            case 1030 -> { cabin(com.vehicleworks.vehicle.CabinSeat.TRAY); cabin(com.vehicleworks.vehicle.CabinSeat.LIGHT); }
+            case 1040 -> sit(1, 1, 3);
+            // overview of the cabin classes from the aisle (standing, looking forward)
+            case 1050 -> onServer(ServerPlayer::stopRiding);
+            case 1056 -> { placeInVehicle(0.5, 1.05, 6.5); }
+            case 1060 -> aimAt(0.5, 1.2, -8);
+            case 1075 -> screenshot("c19_cabin_classes_forward");
+            case 1078 -> { placeInVehicle(0.5, 1.05, -9.5); }
+            case 1080 -> aimAt(0.0, 1.2, 4);
+            case 1095 -> screenshot("c20_cabin_classes_aft");
+            case 1100 -> { placeInVehicle(-0.5, 1.15, -1.9); aimAt(-0.87, 1.78, -3.0); }
+            case 1115 -> screenshot("c21_premium_screen_map");
+            // 787: first class suite with its door, bed, big screen and private lights
+            case 1120 -> { onServer(sp -> { VehicleEntity v = serverVehicle(sp); if (v != null) v.discard(); }); cmd("tp @s 0.5 -60 400.5 180 0"); }
+            case 1130 -> cmd("vehicleworks spawn b787");
+            case 1200 -> findSuite();
+            case 1215 -> { cabin(com.vehicleworks.vehicle.CabinSeat.SCREEN); cabin(com.vehicleworks.vehicle.CabinSeat.LIGHT); cabin(com.vehicleworks.vehicle.CabinSeat.LIGHT); }
+            case 1220 -> onServer(sp -> { VehicleEntity v = serverVehicle(sp); if (v != null) { v.controls.battery = v.controls.masterElec = v.controls.avionics = true; } });
+            case 1260 -> { double[] a = suite(0.5, 1.12, -1.43); aimAt(a[0], a[1], a[2]); }
+            case 1300 -> { cv = clientVehicle(); if (cv != null) log("first suite passenger={} class={}", cv.isPassengerSeated(mc.player), cv.seatClassOf(mc.player)); screenshot("c22_first_suite_screen"); }
+            case 1305 -> onServer(ServerPlayer::stopRiding);
+            case 1310 -> { double[] c = suite(2.1, 0.05, 0.6), a = suite(1.45, 0.7, -0.5); placeInVehicle(c[0], c[1], c[2]); aimAt(a[0], a[1], a[2]); }
+            case 1325 -> screenshot("c23_first_suite_door_closed");
+            case 1327 -> findSuite();
+            case 1330 -> { cabin(com.vehicleworks.vehicle.CabinSeat.DOOR); cabin(com.vehicleworks.vehicle.CabinSeat.FLAT); }
+            case 1335 -> onServer(ServerPlayer::stopRiding);
+            case 1345 -> { double[] c = suite(2.1, 0.05, 0.6), a = suite(0.6, 0.5, -0.5); placeInVehicle(c[0], c[1], c[2]); aimAt(a[0], a[1], a[2]); }
+            case 1385 -> screenshot("c24_first_suite_door_open_bed");
+            case 1388 -> { double[] c = suite(0.5, 1.15, -0.5), a = suite(0.5, 0, -0.45); placeInVehicle(c[0], c[1], c[2]); aimAt(a[0], a[1], a[2]); }
+            case 1394 -> screenshot("c24b_first_suite_top_down");
+            case 1395 -> cmd("time set 18000");
+            case 1399 -> screenshot("c24c_first_suite_top_down_night");
+            case 1400 -> { placeInVehicle(0.5, 1.05, -4.5); aimAt(-0.5, 1.2, -6.8); }
+            case 1412 -> screenshot("c25_787_business_night");
+            case 1420 -> mc.stop();
+            default -> {}
+        }
+    }
+
+    private static void look(VehicleEntity v, float pitch) {
+        look(v != null ? v.telemetry.heading + 180 : 180, pitch);
     }
 
     /** look along the ridden vehicle's nose (yaw from its heading) */

@@ -42,9 +42,39 @@ public final class VehicleControls {
     public double batteryCharge = 1;
     /** electrical bus powered this tick (battery on and charged, or generator) */
     public boolean busPowered = true, generator;
+    /** master electrical (bus) switch, generator / alternator switch, engine master (fuel to the engines) */
+    public boolean masterElec = true, generatorSw = true, engineMaster = true;
+    /** instrument / label dimmer 0..4, display brightness 1..5, night lighting mode, console lights */
+    public int dimmer = 3, displayBrt = 4;
+    public boolean nightMode, consoleLight;
+    /** starter engaged (server ticks left; turbines cut out on their own) */
+    public int starterTicks;
+    /** set once the vehicle got its first switch configuration (new aircraft start cold and dark) */
+    public boolean initialized;
+    /** last time the bus went from unpowered to powered (game tick), for the staged power-up */
+    public long powerOnTick = -100000;
     public static final int SW_BATTERY = 0, SW_AVIONICS = 1, SW_FUEL_PUMP = 2, SW_IGNITION = 3, SW_STARTER = 4, SW_FUEL_SEL = 5,
             SW_NAV = 6, SW_BEACON = 7, SW_STROBE = 8, SW_LANDING = 9, SW_TAXI = 10, SW_TURNOFF = 11,
-            SW_CABIN = 12, SW_PANEL = 13, SW_GEAR = 14, SW_TEST = 15, SW_AUTOPILOT = 16, SW_PARKING = 17, SWITCH_COUNT = 18;
+            SW_CABIN = 12, SW_PANEL = 13, SW_GEAR = 14, SW_TEST = 15, SW_AUTOPILOT = 16, SW_PARKING = 17,
+            SW_MASTER = 18, SW_GENERATOR = 19, SW_ENG_MASTER = 20, SW_DIMMER = 21, SW_DISPLAY_BRT = 22, SW_NIGHT = 23,
+            SW_MASTER_CAUTION = 24, SW_CONSOLE = 25, SWITCH_COUNT = 26;
+    /** telemetry-only bit: starter engaged */
+    public static final int BIT_STARTER = 26;
+
+    /** Aircraft leave the factory cold and dark: every switch off, parking brake set. */
+    public void coldAndDark() {
+        battery = masterElec = avionics = fuelPump = ignition = engineMaster = false;
+        lights = beacon = strobe = landingLights = taxiLights = turnoffLights = autopilot = false;
+        nightMode = consoleLight = false;
+        generatorSw = true;
+        cabinLight = 0;
+        panelLight = 1;
+        fuelSelector = 0;
+        parkingBrake = true;
+        throttle = 0;
+        busPowered = false;
+        starterTicks = 0;
+    }
 
     /** Bit field of the on/off switches for telemetry (bit = switch id). */
     public int switchBits() {
@@ -62,6 +92,12 @@ public final class VehicleControls {
         if (gearDown) b |= 1 << SW_GEAR;
         if (autopilot) b |= 1 << SW_AUTOPILOT;
         if (parkingBrake) b |= 1 << SW_PARKING;
+        if (masterElec) b |= 1 << SW_MASTER;
+        if (generatorSw) b |= 1 << SW_GENERATOR;
+        if (engineMaster) b |= 1 << SW_ENG_MASTER;
+        if (nightMode) b |= 1 << SW_NIGHT;
+        if (consoleLight) b |= 1 << SW_CONSOLE;
+        if (starterTicks > 0) b |= 1 << BIT_STARTER;
         return b;
     }
     public long emergencyUntil;
@@ -71,6 +107,8 @@ public final class VehicleControls {
     public boolean testPilot;
     /** smoothed stick axes (keyboard inputs ramp instead of jumping to full deflection) */
     public double axPitch, axRoll, axYaw;
+    /** flight control sensitivity (config): deflection rate of the keyboard axes */
+    public double sensitivity = 1;
 
     public boolean down(int bit) {
         return (keys & bit) != 0;
@@ -190,8 +228,9 @@ public final class VehicleControls {
         prevKeys = keys;
     }
 
-    private static double smooth(double v, double target, double dt) {
-        double rate = (Math.abs(target) < 1e-3 ? 4.0 : 2.2) * dt;
+    private double smooth(double v, double target, double dt) {
+        // released: the centring spring brings the yoke / stick back faster than it deflects
+        double rate = (Math.abs(target) < 1e-3 ? 4.0 : 2.2 * sensitivity) * dt;
         return v < target ? Math.min(target, v + rate) : Math.max(target, v - rate);
     }
 
@@ -212,6 +251,9 @@ public final class VehicleControls {
         t.putBoolean("Taxi", taxiLights); t.putBoolean("Turnoff", turnoffLights);
         t.putInt("FuelSel", fuelSelector); t.putInt("Cabin", cabinLight); t.putInt("PanelLight", panelLight);
         t.putDouble("Charge", batteryCharge);
+        t.putBoolean("Master", masterElec); t.putBoolean("GenSw", generatorSw); t.putBoolean("EngMaster", engineMaster);
+        t.putInt("Dimmer", dimmer); t.putInt("DispBrt", displayBrt); t.putBoolean("Night", nightMode); t.putBoolean("Console", consoleLight);
+        t.putBoolean("Init", initialized);
         t.putBoolean("Lights", lights);
         t.putDouble("ApHdg", apHeading);
         t.putDouble("ApAlt", apAltitude);
@@ -236,6 +278,14 @@ public final class VehicleControls {
         fuelSelector = t.getInt("FuelSel"); cabinLight = t.getInt("Cabin");
         panelLight = t.contains("PanelLight") ? t.getInt("PanelLight") : 1;
         batteryCharge = t.contains("Charge") ? t.getDouble("Charge") : 1;
+        masterElec = !t.contains("Master") || t.getBoolean("Master");
+        generatorSw = !t.contains("GenSw") || t.getBoolean("GenSw");
+        engineMaster = !t.contains("EngMaster") || t.getBoolean("EngMaster");
+        dimmer = t.contains("Dimmer") ? t.getInt("Dimmer") : 3;
+        displayBrt = t.contains("DispBrt") ? t.getInt("DispBrt") : 4;
+        nightMode = t.getBoolean("Night"); consoleLight = t.getBoolean("Console");
+        // vehicles saved before cold-and-dark existed keep their switches
+        initialized = !t.contains("Init") || t.getBoolean("Init");
         lights = t.getBoolean("Lights");
         apHeading = t.getDouble("ApHdg");
         apAltitude = t.contains("ApAlt") ? t.getDouble("ApAlt") : 100;

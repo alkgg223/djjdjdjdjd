@@ -563,3 +563,85 @@ pax = [el([2, 0, 3], [3.5, 4.5, 4.5], SF('f')), el([12.5, 0, 3], [14, 4.5, 4.5],
 model('pilot_seat', {"parent": "minecraft:block/block", "textures": {"c": b('seat_pilot2'), "f": b('seat_frame'), "h": b('seat_harness'), "particle": b('seat_pilot2')}, "elements": pilot})
 model('passenger_seat', {"parent": "minecraft:block/block", "textures": {"c": b('seat_pax2'), "f": b('seat_frame'), "r": b('seat_headrest'), "particle": b('seat_pax2')}, "elements": pax})
 print('seats v2 ok')
+
+# ------------------------------------------------------------------ 1.2: cockpit hardware materials (neutral, tinted by the renderer)
+import random as _rnd
+def _noise_im(col, amp, seed, size=32):
+    r = _rnd.Random(seed); im = _I.new('RGBA', (size, size)); px = im.load(); c = rgb(col)
+    for y in range(size):
+        for x in range(size):
+            n = r.randint(-amp, amp); px[x, y] = tuple(max(0, min(255, v + n)) for v in c) + (255,)
+    return im
+im = _noise_im('#d6dade', 4, 901); d = _ID.Draw(im)
+for y in range(0, 32, 2): d.line([(0, y), (31, y)], fill=rgb('#e6e9ec') + (255,))        # brushed streaks
+tex('ck_metal', im)
+tex('ck_black', _noise_im('#c4c4c4', 6, 902))
+im = _noise_im('#b8b8b8', 3, 903); d = _ID.Draw(im)
+for x in range(0, 32, 4): d.line([(x, 0), (x, 31)], fill=rgb('#f0f0f0') + (255,)); d.line([(x + 1, 0), (x + 1, 31)], fill=rgb('#8a8a8a') + (255,))
+tex('ck_knob', im)
+im = _I.new('RGBA', (32, 32)); px = im.load()
+for y in range(32):
+    for x in range(32):
+        v = int(205 + 50 * (1 - (x + y) / 62.0)); px[x, y] = (v, v, v, 255)
+d = _ID.Draw(im); d.line([(3, 4), (12, 4)], fill=(255, 255, 255, 255)); d.line([(3, 5), (8, 5)], fill=(255, 255, 255, 255))
+tex('ck_glass', im)
+im = _noise_im('#e8e8e8', 3, 904); d = _ID.Draw(im)
+for k in range(-32, 32, 8): d.line([(k, 31), (k + 31, 0)], fill=rgb('#c8c8c8') + (255,), width=3)
+tex('ck_guard', im)
+im = _noise_im('#9a9a9a', 4, 905); d = _ID.Draw(im); d.rectangle([0, 0, 31, 31], outline=rgb('#c8c8c8') + (255,))
+tex('ck_bezel', im)
+tex('ck_white', _I.new('RGBA', (16, 16), (255, 255, 255, 255)))
+# overhead panel plate: matte dark grey aluminium with corner screws (no painted squares: the hardware is 3D)
+def _plate(seed):
+    im = _noise_im('#2b2f34', 3, 910 + seed); d = _ID.Draw(im)
+    d.rectangle([0, 0, 31, 31], outline=rgb('#363b41') + (255,))
+    for (x, y) in ((2, 2), (29, 2), (2, 29), (29, 29)):
+        d.ellipse([x - 1, y - 1, x + 1, y + 1], fill=rgb('#6d737a') + (255,)); d.point((x, y), fill=rgb('#2a2d31') + (255,))
+    return im
+for i in range(6): tex('ovh_plate%d' % i, _plate(i))
+els = []
+for row in (0, 1):
+    for ci, (x0, x1) in enumerate([(16, 32), (0, 16), (-16, 0)]):
+        z0 = -8 + row * 16; n = 'p%d' % (row * 3 + ci)
+        els.append(el([x0, 14.5, z0], [x1, 16, z0 + 16], {"down": pface(n), "up": pface('s'), "north": pface('s'), "south": pface('s'), "east": pface('s'), "west": pface('s')}))
+model('cockpit_panel', {"parent": "minecraft:block/block",
+                        "textures": dict({"particle": b('device_side'), "s": b('device_side')}, **{'p%d' % i: b('ovh_plate%d' % i) for i in range(6)}),
+                        "display": {"gui": {"rotation": [-60, 160, 0], "translation": [0, 0, 0], "scale": [0.4, 0.4, 0.4]}},
+                        "elements": els})
+print('cockpit hardware ok')
+
+# ------------------------------------------------------------------ 1.2: copilot seat, side stick, five cabin classes (static models; animated in a vehicle)
+model('copilot_seat', {"parent": "minecraft:block/block", "textures": {"c": b('seat_pilot2'), "f": b('seat_frame'), "h": b('seat_harness'), "particle": b('seat_pilot2')}, "elements": pilot})
+bs_facing('copilot_seat', 'copilot_seat', FACE4); item_block('copilot_seat')
+tex('stick_grip', _noise_im('#2a2c30', 5, 920))
+stick = [el([5, 0, 5], [11, 2, 11], six('b')), el([6, 2, 6], [10, 3, 10], six('k')),        # base + rubber boot
+         el([7, 3, 7], [9, 9, 9], six('g')), el([6.5, 9, 6.5], [9.5, 13, 10], six('g')),     # handle
+         el([7.2, 9.5, 6], [8.8, 11, 6.5], six('r')), el([7, 13, 7.5], [9, 13.6, 9.5], six('r'))]   # trigger + priority button
+tex('stick_red', _noise_im('#c8281e', 4, 921))
+model('sidestick', {"parent": "minecraft:block/block", "textures": {"b": b('seat_frame'), "k": b('stick_grip'), "g": b('stick_grip'), "r": b('stick_red'), "particle": b('stick_grip')},
+                    "display": {"gui": {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.9, 0.9, 0.9]}}, "elements": stick})
+bs_facing('sidestick', 'sidestick', FACE4); item_block('sidestick')
+CABIN = {'seat_economy': ('#2a4f8f', '#5a78b8'), 'seat_economy_plus': ('#1f6f78', '#5fb0b8'), 'seat_premium': ('#3b4a5e', '#8a9ab0'),
+         'seat_business': ('#4a3a2e', '#a08870'), 'seat_first': ('#d9cdb4', '#8a7a60')}
+for i, (n, (c, s)) in enumerate(CABIN.items()):
+    tex(n + '_fabric', _leather(c, 930 + i, s))
+tex('cabin_wood', _noise_im('#6b4528', 7, 940)); tex('cabin_shell', _noise_im('#e8e4da', 3, 941)); tex('cabin_screen', _noise_im('#101418', 2, 942))
+def cabin_model(n, wide, back_h, legrest, console, shell):
+    x0, x1 = (1, 15) if not wide else (0, 16)
+    e = [el([x0 + 1, 0, 3], [x0 + 2.5, 4.5, 4.5], SF('f')), el([x1 - 2.5, 0, 3], [x1 - 1, 4.5, 4.5], SF('f')),
+         el([x0 + 1, 0, 10], [x0 + 2.5, 4.5, 11.5], SF('f')), el([x1 - 2.5, 0, 10], [x1 - 1, 4.5, 11.5], SF('f')),
+         el([x0, 4.5, 1], [x1, 8, 13], SF('c')), el([x0, 8, 12], [x1, back_h, 15], SF('c')),
+         el([x0 + 1, back_h - 4, 11.6], [x1 - 1, back_h + 1, 15.3], SF('c')),
+         el([x0 - 1 if x0 > 0 else 0, 9, 3], [x0 + 0.5, 10.5, 13], SF('f')), el([x1 - 0.5, 9, 3], [x1 + 1 if x1 < 16 else 16, 10.5, 13], SF('f'))]
+    if legrest: e.append(el([x0 + 1, 3, -1], [x1 - 1, 7, 1], SF('c')))
+    if console: e.append(el([12.5, 0, 0], [16, 10, 15], SF('w')))
+    if shell: e += [el([0, 0, 15], [16, 26, 16], SF('s')), el([15, 0, 0], [16, 22, 15], SF('w'))]
+    model(n, {"parent": "minecraft:block/block", "textures": {"c": b(n + '_fabric'), "f": b('seat_frame'), "w": b('cabin_wood'), "s": b('cabin_shell'), "particle": b(n + '_fabric')},
+              "elements": e})
+    bs_facing(n, n, FACE4); item_block(n)
+cabin_model('seat_economy', False, 20, False, False, False)
+cabin_model('seat_economy_plus', True, 21, True, False, False)
+cabin_model('seat_premium', True, 23, True, False, False)
+cabin_model('seat_business', True, 24, True, True, False)
+cabin_model('seat_first', True, 25, True, True, True)
+print('cabin seats ok')

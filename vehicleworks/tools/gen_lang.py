@@ -49,6 +49,15 @@ blocks = {
  'ammo_box': ('Ammunition Box', 'صندوق الذخيرة', 'Stores ammunition that weapons reload from.', 'يخزن الذخيرة التي تعيد الأسلحة التعبئة منها.'),
  'remote_control_unit': ('Remote Control Unit', 'وحدة التحكم عن بعد', 'Link weapons (sneak+wrench) and assign each a fire key.', 'اربط الأسلحة (انحناء+مفتاح) وخصص لكل منها زر إطلاق.'),
 }
+blocks.update({
+ 'copilot_seat': ('First Officer Seat', 'مقعد مساعد الطيار', 'Flight crew seat: cockpit access and HUD, the captain flies.', 'مقعد طاقم القيادة: يصل إلى القمرة وHUD، والقائد هو من يطير.'),
+ 'sidestick': ('Side Stick (fly-by-wire)', 'عصا التحكم الجانبية (Fly-by-wire)', 'Airbus-style side stick. Stick deflection commands pitch and roll rate; centred = attitude hold.', 'عصا تحكم جانبية بأسلوب إيرباص. الإمالة تطلب معدل الانحدار والدوران، والوسط = تثبيت الوضعية.'),
+ 'seat_economy': ('Economy Seat', 'مقعد الدرجة الاقتصادية', 'Headrest, armrests, seat belt, fold-down tray, slight recline.', 'مسند رأس ومساند ذراعين وحزام أمان وطاولة قابلة للطي وإمالة بسيطة.'),
+ 'seat_economy_plus': ('Economy Plus Seat', 'مقعد الاقتصادية الممتازة', 'Wider seat, more legroom, foot rest, adjustable position.', 'مقعد أعرض ومساحة أرجل أكبر ومسند قدم ووضعية قابلة للتعديل.'),
+ 'seat_premium': ('Premium Economy Seat', 'مقعد البريميوم الاقتصادي', 'Leg rest, adjustable headrest, personal entertainment screen, seat controls.', 'مسند أرجل ومسند رأس قابل للتعديل وشاشة ترفيه شخصية وأزرار تحكم.'),
+ 'seat_business': ('Business Class Seat', 'مقعد درجة الأعمال', 'Lie-flat seat, large screen, leg rest, work table, side console.', 'مقعد يتحول إلى سرير وشاشة كبيرة ومسند أرجل وطاولة عمل ووحدة جانبية.'),
+ 'seat_first': ('First Class Suite', 'جناح الدرجة الأولى', 'Private 2 x 2 suite: bed, sliding door, large screen, table and private lighting.', 'جناح خاص 2×2: سرير وباب منزلق وشاشة كبيرة وطاولة وإضاءة خاصة.'),
+})
 for k, (en, ar, ten, tar) in blocks.items():
     t('block.vehicleworks.' + k, en, ar); t('vehicleworks.tooltip.' + k, ten, tar)
 items = {'engineering_wrench': ('Engineering Wrench', 'مفتاح هندسي'), 'fuel_canister': ('Fuel Canister', 'علبة وقود'), 'ammo_belt': ('Ammunition Belt', 'حزام ذخيرة'),
@@ -331,14 +340,20 @@ SW = ['Battery', 'Avionics', 'Fuel pump', 'Ignition', 'Starter', 'Fuel selector'
       'Cockpit light', 'Panel light', 'Landing gear', 'Emergency test', 'Autopilot', 'Parking brake']
 SWA = ['البطارية', 'الإلكترونيات', 'مضخة الوقود', 'الإشعال', 'المشغّل', 'محدد الوقود', 'أضواء الملاحة', 'المنارة', 'الوميض', 'أضواء الهبوط', 'أضواء التدرج', 'أضواء الانعطاف',
        'ضوء المقصورة', 'إضاءة اللوحة', 'عجلات الهبوط', 'اختبار الطوارئ', 'الطيار الآلي', 'فرامل الوقوف']
-for i in range(18): t(f'vehicleworks.switch.{i}', SW[i], SWA[i])
+SW += ['Master electrical', 'Generator', 'Engine master', 'Instrument dimmer', 'Display brightness', 'Night lighting', 'Master warning / caution', 'Console lights']
+SWA += ['الكهرباء الرئيسية', 'المولّد', 'المحرك الرئيسي (الوقود)', 'مخفّت الإضاءة', 'سطوع الشاشات', 'الإضاءة الليلية', 'التحذير / التنبيه الرئيسي', 'إضاءة الكونسول']
+for i in range(len(SW)): t(f'vehicleworks.switch.{i}', SW[i], SWA[i])
 for k, en, ar in (('both', 'BOTH', 'الكل'), ('left', 'LEFT', 'يسار'), ('right', 'RIGHT', 'يمين'), ('dim', 'DIM', 'خافت'), ('bright', 'BRIGHT', 'ساطع'),
                   ('cranking', 'CRANKING', 'يدور'), ('elec', 'Battery %s%%  Bus: %s', 'البطارية %s%%  الطاقة: %s'), ('fuel', 'Fuel %s / %s kg', 'الوقود %s / %s كغ'),
-                  ('wrong_fuel', 'WRONG FUEL GRADE!', 'نوع وقود خاطئ!')):
+                  ('wrong_fuel', 'WRONG FUEL GRADE!', 'نوع وقود خاطئ!'), ('ack', 'ACK', 'تأكيد'),
+                  ('level0', 'OFF', 'إيقاف'), ('level1', '1', '1'), ('level2', '2', '2'), ('level3', '3', '3'), ('level4', '4', '4'), ('level5', '5', '5')):
     t('vehicleworks.panel.' + k, en, ar)
 for k, en, ar in (('ok', 'Starter engaged - engines spooling up', 'تم تشغيل المشغّل - المحركات تدور'), ('no_power', 'No electrical power: turn the BATTERY on', 'لا توجد طاقة كهربائية: شغّل البطارية'),
                   ('no_pump', 'Turn the FUEL PUMP on first', 'شغّل مضخة الوقود أولاً'), ('no_ignition', 'Turn the IGNITION on first', 'شغّل الإشعال أولاً'),
-                  ('fuel_off', 'Fuel selector is OFF', 'محدد الوقود على OFF'), ('no_avionics', 'Autopilot needs AVIONICS power', 'الطيار الآلي يحتاج طاقة الإلكترونيات')):
+                  ('fuel_off', 'Fuel selector is OFF', 'محدد الوقود على OFF'), ('no_avionics', 'Autopilot needs AVIONICS power', 'الطيار الآلي يحتاج طاقة الإلكترونيات'),
+                  ('no_bus', 'Battery on, but the MASTER switch is off: no power on the bus', 'البطارية تعمل لكن مفتاح MASTER مطفأ: لا طاقة على الناقل'),
+                  ('cranking', 'Starter engaged: ignition + fuel (ENG MASTER) to light the engine', 'المشغّل يعمل: الإشعال + الوقود (ENG MASTER) لإشعال المحرك'),
+                  ('released', 'Starter released', 'تم تحرير المشغّل')):
     t('vehicleworks.start.' + k, en, ar)
 for k, en, ar in (('title', 'Refuelling', 'تعبئة الوقود'), ('grade', 'Fuel: %s', 'الوقود: %s'), ('amount', 'Amount: %s kg', 'الكمية: %s كغ'), ('start', 'Start pump', 'تشغيل المضخة'),
                   ('stop', 'Stop pump', 'إيقاف المضخة'), ('needs', 'Engines need: %s', 'المحركات تحتاج: %s'), ('canisters', 'Fuel canisters in inventory: %s', 'علب الوقود في المخزون: %s'),
@@ -346,6 +361,22 @@ for k, en, ar in (('title', 'Refuelling', 'تعبئة الوقود'), ('grade', 
                   ('stopped', 'Refuelling stopped (%s kg on board)', 'توقفت التعبئة (%s كغ في الخزانات)'), ('done', 'Refuelling complete (%s kg on board)', 'اكتملت التعبئة (%s كغ في الخزانات)'),
                   ('no_canisters', 'Out of fuel canisters', 'نفدت علب الوقود')):
     t('vehicleworks.refuel.' + k, en, ar)
+t('vehicleworks.msg.passenger_no_controls', 'Passengers have no access to the aircraft controls', 'الركاب لا يمكنهم الوصول إلى أدوات التحكم بالطائرة')
+for k, en, ar in (('title', 'Seat controls', 'التحكم بالمقعد'), ('passenger', 'Passenger seat', 'مقعد راكب'),
+                  ('hint', 'Right-click the buttons on your arm rest, or press %s', 'اضغط بالزر الأيمن على أزرار مسند الذراع، أو اضغط %s'), ('hint_plain', 'You are a passenger', 'أنت راكب'),
+                  ('passenger_only', 'Passenger seat: only your seat can be adjusted', 'مقعد راكب: يمكنك تعديل مقعدك فقط'),
+                  ('status', 'Recline %s%%   Leg rest %s%%   Position %s', 'الإمالة %s%%   مسند الأرجل %s%%   الموضع %s'),
+                  ('open', 'open', 'مفتوح'), ('closed', 'closed', 'مغلق'),
+                  ('light.0', 'off', 'مطفأ'), ('light.1', 'reading light', 'ضوء القراءة'), ('light.2', 'ambient', 'إضاءة محيطة'),
+                  ('class.1', 'Economy', 'الدرجة الاقتصادية'), ('class.2', 'Economy Plus', 'الاقتصادية الممتازة'), ('class.3', 'Premium Economy', 'البريميوم الاقتصادي'),
+                  ('class.4', 'Business Class', 'درجة الأعمال'), ('class.5', 'First Class Suite', 'جناح الدرجة الأولى'),
+                  ('ctl.0', 'Move seat forward', 'تقديم المقعد'), ('ctl.1', 'Move seat back', 'إرجاع المقعد'), ('ctl.2', 'Raise backrest', 'رفع مسند الظهر'),
+                  ('ctl.3', 'Recline backrest', 'خفض مسند الظهر'), ('ctl.4', 'Raise leg rest', 'رفع مسند الأرجل'), ('ctl.5', 'Lower leg rest', 'خفض مسند الأرجل'),
+                  ('ctl.6', 'Lie flat / bed: %s', 'وضع الاستلقاء / السرير: %s'), ('ctl.7', 'Screen: %s', 'الشاشة: %s'), ('ctl.8', 'Table: %s', 'الطاولة: %s'),
+                  ('ctl.9', 'Seat light: %s', 'إضاءة المقعد: %s'), ('ctl.10', 'Suite door: %s', 'باب الجناح: %s'), ('ctl.11', 'Screen page: %s', 'صفحة الشاشة: %s')):
+    t('vehicleworks.cabin.' + k, en, ar)
+for k, en, ar in (('0', 'Flight info', 'معلومات الرحلة'), ('1', 'Moving map', 'الخريطة'), ('2', 'Entertainment', 'الترفيه')):
+    t('vehicleworks.ife.page.' + k, en, ar)
 t('vehicleworks.fuel.avgas', 'AVGAS 100LL (piston)', 'AVGAS 100LL (مكبسي)')
 t('vehicleworks.fuel.jet', 'JET-A (turbine)', 'JET-A (توربيني)')
 # 1.1.2 configuration screen
@@ -366,11 +397,35 @@ CFG = {
  'hudMode': ('HUD style (0-3)', 'نمط HUD (0-3)'), 'hudVisible': ('Show HUD', 'إظهار HUD'), 'voiceCallouts': ('Voice callouts', 'التنبيهات الصوتية'),
  'cameraRoll': ('Camera rolls with the aircraft', 'الكاميرا تميل مع الطائرة'), 'hudScale': ('HUD scale', 'حجم HUD'), 'mouseAimDefault': ('Mouse-aim by default', 'التصويب بالفأرة افتراضياً'),
  'engineVolume': ('Engine volume', 'صوت المحركات')}
+CFG.update({'controls': ('Controls', 'التحكم'),
+ 'passengerSeatInteraction': ('Passenger seat interaction', 'تفاعل الركاب مع المقاعد'), 'controlSensitivity': ('Flight control sensitivity', 'حساسية أدوات التحكم'),
+ 'sidestickSensitivity': ('Side stick sensitivity', 'حساسية عصا التحكم الجانبية'), 'sidestickDeadZone': ('Side stick dead zone', 'المنطقة الميتة لعصا التحكم'),
+ 'cockpitBrightness': ('Cockpit lighting brightness', 'سطوع إضاءة القمرة'), 'instrumentBrightness': ('Instrument brightness', 'سطوع أجهزة القياس'),
+ 'hudBrightness': ('HUD brightness', 'سطوع HUD'), 'startupAnimationSeconds': ('Start-up animation duration (s)', 'مدة حركة التشغيل (ثانية)'),
+ 'cockpitVolume': ('Cockpit sound volume', 'صوت القمرة'), 'warningVolume': ('Warning sound volume', 'صوت التحذيرات'),
+ 'passengerScreenBrightness': ('Passenger screen brightness', 'سطوع شاشات الركاب')})
 for k, (en, ar) in CFG.items():
     t('vehicleworks.configuration.' + k, en, ar)
 t('vehicleworks.configuration.title', 'VehicleWorks settings', 'إعدادات VehicleWorks')
 t('vehicleworks.cmd.damage_now', 'Aircraft damage multiplier: %s  (crash destruction strength: %s)', 'مضاعف ضرر الطائرات: %s  (قوة التدمير عند الاصطدام: %s)')
 t('vehicleworks.cmd.damage_set', 'Aircraft damage multiplier set to %s', 'تم ضبط مضاعف ضرر الطائرات على %s')
+t('vehicleworks.prop.side', 'Side', 'الجهة')
+t('vehicleworks.opt.left', 'Left (captain)', 'يسار (القائد)')
+t('vehicleworks.opt.right', 'Right (first officer)', 'يمين (المساعد)')
+for k, en, ar in (('engine.turboprop', 'Turboprop runs', 'محرك توربيني مروحي يعمل'), ('engine.turbofan', 'Turbofan roars', 'محرك توربوفان يهدر'),
+                  ('engine.heli_turbine', 'Turboshaft whines', 'توربين المروحية يصفر'), ('engine.rough', 'Engine runs rough', 'المحرك يعمل بخشونة'),
+                  ('engine.light_off', 'Engine lights off', 'اشتعال المحرك'), ('engine.piston_catch', 'Engine catches', 'المحرك يدور'),
+                  ('engine.starter_piston', 'Starter cranks', 'المشغّل يدير المحرك'), ('engine.starter_turbine', 'Starter whines', 'صفير المشغّل'),
+                  ('engine.ignition', 'Igniters snap', 'طقطقة الإشعال'), ('engine.spool_down', 'Engine spools down', 'المحرك يتباطأ'),
+                  ('cockpit.toggle', 'Switch clicks', 'نقرة مفتاح'), ('cockpit.relay', 'Relay clunks', 'صوت المرحّل'), ('cockpit.button', 'Button pressed', 'ضغط زر'),
+                  ('cockpit.knob', 'Knob turns', 'تدوير مقبض'), ('cockpit.guard', 'Guard flips', 'فتح الغطاء'), ('cockpit.lever', 'Lever moves', 'تحريك الذراع'),
+                  ('cockpit.avionics', 'Avionics power up', 'تشغيل الإلكترونيات'), ('cockpit.ap_disconnect', 'Autopilot disconnects', 'فصل الطيار الآلي'),
+                  ('cockpit.gear_horn', 'Gear horn', 'إنذار العجلات'), ('cockpit.hydraulic', 'Hydraulic pump', 'المضخة الهيدروليكية'),
+                  ('cockpit.ambient', 'Cockpit hum', 'همهمة القمرة'), ('cabin.door', 'Suite door slides', 'باب الجناح ينزلق'), ('cabin.seat_motor', 'Seat motor', 'محرك المقعد'),
+                  ('cabin.tray', 'Tray table', 'الطاولة'), ('cabin.ife', 'Cabin chime', 'رنين المقصورة'), ('vehicle.airflow', 'Airflow', 'تدفق الهواء'),
+                  ('vehicle.gear_extend', 'Gear extends', 'نزول العجلات'), ('vehicle.gear_retract', 'Gear retracts', 'رفع العجلات'), ('vehicle.flaps', 'Flaps move', 'حركة القلابات'),
+                  ('vehicle.spoiler', 'Spoilers deploy', 'فتح المفسدات'), ('vehicle.brake', 'Brakes squeal', 'صرير الفرامل')):
+    t('subtitles.vehicleworks.' + k, en, ar)
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):
