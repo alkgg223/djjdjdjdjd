@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/skin_window"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/skin_window",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/skin_window",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/skin_window",
+      "y": 270
+    }
+  }
+}

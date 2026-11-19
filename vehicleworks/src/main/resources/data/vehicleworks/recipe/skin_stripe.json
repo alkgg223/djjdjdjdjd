@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PPP",
+    "BBB"
+  ],
+  "key": {
+    "P": {
+      "item": "vehicleworks:skin_panel"
+    },
+    "B": {
+      "item": "minecraft:blue_dye"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:skin_stripe",
+    "count": 3
+  }
+}

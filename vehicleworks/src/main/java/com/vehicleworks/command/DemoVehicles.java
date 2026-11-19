@@ -36,6 +36,16 @@ public final class DemoVehicles {
             return this;
         }
 
+        /** aircraft skin block; f = the side facing out of the aircraft, top = roof edge (false = belly edge) */
+        public B skin(int x, int y, int z, com.vehicleworks.block.SkinBlock.Kind k, Direction f, boolean top) {
+            return put(x, y, z, com.vehicleworks.registry.ModBlocks.skin(k).setValue(com.vehicleworks.block.SkinBlock.FACING, f)
+                    .setValue(com.vehicleworks.block.SkinBlock.HALF, top ? net.minecraft.world.level.block.state.properties.Half.TOP : net.minecraft.world.level.block.state.properties.Half.BOTTOM));
+        }
+
+        public B skin(int x, int y, int z, com.vehicleworks.block.SkinBlock.Kind k) {
+            return skin(x, y, z, k, Direction.NORTH, true);
+        }
+
         public B block(int x, int y, int z, net.minecraft.world.level.block.Block b) {
             return put(x, y, z, b.defaultBlockState());
         }
@@ -244,37 +254,48 @@ public final class DemoVehicles {
 
     /** Narrow-body twin (A320-style), built like the 787: glazed cockpit, two-row cabin, big gear. */
     private static void airliner(B b) {
-        // Airbus A320 style: 9 wide cabin (3 + 3 seats, centre aisle), cockpit z -15..-11, cabin z -10..15
-        var floor = Blocks.BIRCH_PLANKS;
-        var skin = Blocks.WHITE_WOOL;
-        var stripe = Blocks.LIGHT_BLUE_WOOL;
-        var belly = Blocks.LIGHT_GRAY_WOOL;
+        // Airbus A320 style: 9 wide cabin (3 + 3 seats, centre aisle), cockpit z -15..-11, cabin z -10..15.
+        // The shell is built from aircraft skin blocks: rounded roof and belly corners, bevels, cheatline, window panels.
         for (int z = -15; z <= 16; z++) {
             boolean cockpit = z <= -11;
-            int hw = cockpit ? 3 : 4;
-            for (int x = -hw; x <= hw; x++) if (!(x == 0 && z == 0)) b.block(x, 0, z, floor);
+            int hw = 4; // the cockpit is as wide as the cabin, like the real aircraft
+            for (int x = -hw + 1; x <= hw - 1; x++) if (!(x == 0 && z == 0)) b.skin(x, 0, z, com.vehicleworks.block.SkinBlock.Kind.FLOOR);
+            for (int x = -hw + 2; x <= hw - 2; x++) { b.skin(x, 4, z, com.vehicleworks.block.SkinBlock.Kind.PANEL); b.skin(x, -1, z, com.vehicleworks.block.SkinBlock.Kind.BELLY); }
             for (int side = -1; side <= 1; side += 2) {
+                Direction out = side < 0 ? Direction.WEST : Direction.EAST;
+                int wx = side * hw;
+                // belly corner, lower wall, cheatline, windows, upper wall, roof corner
+                b.skin(wx, -1, z, com.vehicleworks.block.SkinBlock.Kind.CURVE, out, false);
+                b.skin(wx - side, -1, z, com.vehicleworks.block.SkinBlock.Kind.BEVEL_ROOF, out, false);
+                b.skin(wx, 0, z, com.vehicleworks.block.SkinBlock.Kind.BEVEL_WALL, out, false);
                 boolean door = z == -9 || z == 13;
                 if (!door) {
-                    b.block(side * hw, 1, z, cockpit ? skin : stripe);
-                    boolean window = cockpit || (z >= -8 && z <= 12);
-                    b.block(side * hw, 2, z, window ? Blocks.GLASS : skin);
+                    b.skin(wx, 1, z, com.vehicleworks.block.SkinBlock.Kind.STRIPE);
+                    if (cockpit) b.skin(wx, 2, z, com.vehicleworks.block.SkinBlock.Kind.COCKPIT_GLASS, out, true);
+                    else if (z >= -8 && z <= 12) b.skin(wx, 2, z, com.vehicleworks.block.SkinBlock.Kind.WINDOW, out, true);
+                    else b.skin(wx, 2, z, com.vehicleworks.block.SkinBlock.Kind.PANEL);
                 }
-                b.block(side * hw, 3, z, skin);
+                b.skin(wx, 3, z, com.vehicleworks.block.SkinBlock.Kind.BEVEL_WALL, out, true);
+                b.skin(wx, 4, z, com.vehicleworks.block.SkinBlock.Kind.CURVE, out, true);
+                b.skin(wx - side, 4, z, com.vehicleworks.block.SkinBlock.Kind.BEVEL_ROOF, out, true);
             }
-            for (int x = -hw; x <= hw; x++) b.block(x, 4, z, skin);
-            for (int x = -hw + 1; x <= hw - 1; x++) b.block(x, -1, z, belly);
+        }
+        // front bulkhead beside the windshield
+        for (int side = -1; side <= 1; side += 2) {
+            for (int y = 1; y <= 3; y++) b.skin(side * 3, y, -15, y == 1 ? com.vehicleworks.block.SkinBlock.Kind.STRIPE : com.vehicleworks.block.SkinBlock.Kind.COCKPIT_GLASS, Direction.NORTH, true);
+            b.skin(side * 3, 4, -15, com.vehicleworks.block.SkinBlock.Kind.CURVE, Direction.NORTH, true);
         }
         b.c(0, 0, 0, ComponentType.VEHICLE_CORE, Direction.NORTH, c -> c.putInt("handling", 1));
         // nose and windshield
         // windshield: nothing in front of the glass, the nose slopes down below the eye line
         for (int x = -2; x <= 2; x++) {
-            b.block(x, 2, -15, Blocks.GLASS);
-            b.block(x, 3, -15, Blocks.GLASS);
+            b.skin(x, 2, -15, com.vehicleworks.block.SkinBlock.Kind.COCKPIT_GLASS, Direction.NORTH, true);
+            b.skin(x, 3, -15, com.vehicleworks.block.SkinBlock.Kind.COCKPIT_GLASS, Direction.NORTH, true);
+            b.skin(x, 4, -15, com.vehicleworks.block.SkinBlock.Kind.CURVE, Direction.NORTH, true); // rounded crown above the windshield
         }
         // smooth nose (radome) below the windshield
-        b.c(0, -1, -15, ComponentType.FAIRING_CONE, Direction.NORTH, c -> { c.putDouble("width", 7); c.putDouble("height", 3); c.putDouble("length", 4);
-            c.putDouble("center_y", 1.0); c.putDouble("tip_offset", -0.35); c.putInt("style", 0); });
+        b.c(0, -1, -15, ComponentType.FAIRING_CONE, Direction.NORTH, c -> { c.putDouble("width", 9); c.putDouble("height", 3.2); c.putDouble("length", 4.5);
+            c.putDouble("center_y", 1.05); c.putDouble("tip_offset", -0.35); c.putInt("style", 0); });
         // ---- cockpit: six displays (PFD + ND per pilot, ECAM upper / lower in the centre), standby gauges, FCU, overhead, pedestal
         b.panel(-2, 1, -15, ComponentType.INSTRUMENT_PANEL_A, Direction.SOUTH, 2, 1, 4, 3, 6, 9);
         b.panel(-1, 1, -15, ComponentType.INSTRUMENT_PANEL_D, Direction.SOUTH, 4, 1);
@@ -322,12 +343,12 @@ public final class DemoVehicles {
         b.c(2, 1, 14, ComponentType.GALLEY, Direction.NORTH);
         b.c(3, 1, 14, ComponentType.GALLEY, Direction.NORTH);
         // aft pressure bulkhead and the upswept tail cone
-        for (int x = -3; x <= 3; x++) for (int y = 1; y <= 3; y++) b.block(x, y, 16, skin);
+        for (int x = -3; x <= 3; x++) for (int y = 1; y <= 3; y++) b.skin(x, y, 16, com.vehicleworks.block.SkinBlock.Kind.PANEL);
         b.c(0, 1, 16, ComponentType.FAIRING_CONE, Direction.SOUTH, c -> { c.putDouble("width", 8.6); c.putDouble("height", 5.6); c.putDouble("length", 6);
             c.putDouble("center_y", 0.4); c.putDouble("tip_offset", 0.4); c.putInt("style", 1); });
         // cargo doors in the lower lobe (forward and aft hold)
-        b.c(3, -1, -6, ComponentType.AIRCRAFT_DOOR, Direction.EAST, c -> c.putInt("door_kind", 1));
-        b.c(3, -1, 7, ComponentType.AIRCRAFT_DOOR, Direction.EAST, c -> c.putInt("door_kind", 1));
+        b.c(4, 0, -6, ComponentType.AIRCRAFT_DOOR, Direction.EAST, c -> c.putInt("door_kind", 1));
+        b.c(4, 0, 7, ComponentType.AIRCRAFT_DOOR, Direction.EAST, c -> c.putInt("door_kind", 1));
         // ---- systems in the belly
         for (int z = -3; z <= 4; z++) if (z != 0) { b.fuel(-2, -1, z); b.fuel(2, -1, z); b.fuel(-1, -1, z); b.fuel(1, -1, z); }
         b.c(0, -1, -2, ComponentType.FUEL_PUMP, Direction.NORTH);

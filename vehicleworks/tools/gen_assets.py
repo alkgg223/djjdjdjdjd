@@ -708,3 +708,70 @@ _simple('fairing_cone', {"w": b('door_skin')}, [el([1, 1, 8], [15, 15, 16], six(
 _simple('airliner_engine', {"w": b('door_skin'), "k": b('ped_black'), "e": b('galley_steel')},
         [el([2, 0, 1], [14, 12, 15], six('w')), el([4, 2, 0.5], [12, 10, 1], six('k')), el([6.5, 12, 4], [9.5, 16, 12], six('e'))], [0.6, 0.6, 0.6])
 print('1.4 exterior blocks ok')
+
+# ------------------------------------------------------------------ 1.5: aircraft skin blocks (fuselage panels, windows, rounded corners, bevels, slopes)
+import math as _m
+def _skin_base(col, seed):
+    im = _noise_im(col, 2, seed); d = _ID.Draw(im)
+    seam = tuple(max(0, c - 22) for c in rgb(col)) + (255,)
+    d.line([(0, 31), (31, 31)], fill=seam); d.line([(0, 0), (0, 31)], fill=seam)
+    for i in range(2, 32, 4):
+        d.point((i, 29), fill=tuple(max(0, c - 30) for c in rgb(col)) + (255,)); d.point((2, i), fill=tuple(max(0, c - 30) for c in rgb(col)) + (255,))
+    return im
+SKIN_W = '#eceef0'
+tex('skin_panel', _skin_base(SKIN_W, 970))
+im = _skin_base(SKIN_W, 971); d = _ID.Draw(im); d.rectangle([0, 9, 31, 19], fill=rgb('#2a5fb4') + (255,)); d.rectangle([0, 20, 31, 21], fill=rgb('#8fb6e8') + (255,)); tex('skin_stripe', im)
+tex('skin_belly', _skin_base('#cdd2d7', 972))
+im = _skin_base(SKIN_W, 973); d = _ID.Draw(im)
+d.ellipse([9, 5, 22, 24], fill=rgb('#b8bec4') + (255,)); d.ellipse([10, 6, 21, 23], fill=rgb('#8a9096') + (255,)); d.ellipse([11, 7, 20, 22], fill=(0, 0, 0, 0))
+tex('skin_window', im)
+im = _noise_im('#3b4a66', 4, 974); d = _ID.Draw(im)
+for y in range(2, 32, 6):
+    for x in range((y // 6) % 2 * 3, 32, 6): d.point((x, y), fill=rgb('#56698e') + (255,))
+tex('cabin_floor', im)
+im = _I.new('RGBA', (32, 32), (150, 185, 210, 70)); d = _ID.Draw(im); d.rectangle([0, 0, 31, 31], outline=rgb('#1e2226') + (255,)); d.rectangle([1, 1, 30, 30], outline=rgb('#2c3136') + (255,))
+d.line([(4, 26), (12, 18)], fill=(230, 240, 250, 90)); tex('cockpit_glass', im)
+
+def _rot(axis_origin, angle):
+    return {"origin": axis_origin, "axis": "x", "angle": angle}
+def _mirror_y(elements):
+    out = []
+    for e in elements:
+        f, t = e["from"], e["to"]
+        ne = {"from": [f[0], 16 - t[1], f[2]], "to": [t[0], 16 - f[1], t[2]], "faces": dict(e["faces"])}
+        fu, fd = ne["faces"].get("up"), ne["faces"].get("down")
+        if fu is not None: ne["faces"]["down"] = fu
+        if fd is not None: ne["faces"]["up"] = fd
+        if "rotation" in e:
+            r = e["rotation"]; ne["rotation"] = {"origin": [r["origin"][0], 16 - r["origin"][1], r["origin"][2]], "axis": r["axis"], "angle": -r["angle"]}
+        out.append(ne)
+    return out
+S6 = six('s')
+T = 16 * _m.tan(_m.radians(11.25))
+curve = [el([0, 8, 16 - T], [16, 16, 16], S6),                                                     # top facet
+         el([0, 8, 16 - T], [16, 16, 16 + T], S6, _rot([8, 0, 16], -22.5)),                       # 22.5 deg facet
+         el([0, 8, 16 - T], [16, 16, 16 + T], S6, _rot([8, 0, 16], -45)),                         # 45 deg facet
+         el([0, -T, 0], [16, T, 8], S6, _rot([8, 0, 16], 22.5)),                                  # 67.5 deg facet
+         el([0, 0, 0], [16, T, 8], S6),                                                           # front facet
+         el([0, 0, 2.2], [16, 8, 16], S6), el([0, 8, 8], [16, 13.8, 16], S6)]                    # filling
+bevel_wall = [el([0, 0, 0], [16, 10, 16], S6), el([0, 10, 2.5], [16, 16, 16], S6), el([0, 10, 0], [16, 16.5, 2], S6, _rot([8, 10, 0], 22.5))]
+bevel_roof = [el([0, 0, 0], [16, 13.5, 16], S6), el([0, 13.5, 6], [16, 16, 16], S6), el([0, 14, 0], [16, 16, 6], S6, _rot([8, 16, 6], -22.5))]
+slope = [el([0, 0, 0], [16, 0.5, 22.627], S6, _rot([8, 0, 0], -45))] + [el([0, 0, 2 * i], [16, max(0.01, 2 * i), 2 * i + 2], S6) for i in range(1, 8)]
+for nm, els in (('skin_curve', curve), ('skin_bevel_wall', bevel_wall), ('skin_bevel_roof', bevel_roof), ('skin_slope', slope)):
+    for half, e in (('top', els), ('bottom', _mirror_y(els))):
+        model(nm + '_' + half, {"parent": "minecraft:block/block", "textures": {"s": b('skin_panel'), "particle": b('skin_panel')}, "elements": e})
+    blockstate(nm, {"variants": {f"facing={fk},half={h}": dict({"model": b(nm + '_' + h)}, **fv) for fk, fv in FACE4.items() for h in ('top', 'bottom')}})
+    item_block(nm, f"{MOD}:block/{nm}_top")
+for nm in ('skin_panel', 'skin_stripe', 'skin_belly'):
+    model(nm, {"parent": "minecraft:block/cube_all", "textures": {"all": b(nm)}}); blockstate(nm, {"variants": {"": {"model": b(nm)}}}); item_block(nm)
+model('cabin_floor', {"parent": "minecraft:block/cube_bottom_top", "textures": {"top": b('cabin_floor'), "bottom": b('skin_belly'), "side": b('skin_belly')}})
+blockstate('cabin_floor', {"variants": {"": {"model": b('cabin_floor')}}}); item_block('cabin_floor')
+# window and cockpit glass: see-through along the facing axis (north / south faces), no side faces
+for nm, rt, t_side in (('skin_window', 'minecraft:cutout', 'skin_window'), ('cockpit_glass', 'minecraft:translucent', 'cockpit_glass')):
+    faces = {"north": face('w'), "south": face('w'), "up": face('p', cull='up'), "down": face('p', cull='down')}
+    if nm == 'cockpit_glass': faces = {"north": face('w'), "south": face('w')}
+    model(nm, {"parent": "minecraft:block/block", "render_type": rt, "textures": {"w": b(t_side), "p": b('skin_panel'), "particle": b('skin_panel')},
+               "elements": [el([0, 0, 0], [16, 16, 16], faces)]})
+    blockstate(nm, {"variants": {f"facing={fk}": dict({"model": b(nm)}, **fv) for fk, fv in FACE4.items()}})
+    item_block(nm)
+print('skin blocks ok')

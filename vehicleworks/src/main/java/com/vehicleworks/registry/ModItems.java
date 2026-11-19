@@ -17,13 +17,17 @@ import java.util.Map;
 public final class ModItems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(VehicleWorks.MODID);
     public static final Map<ComponentType, DeferredItem<BlockItem>> COMPONENT_ITEMS = new EnumMap<>(ComponentType.class);
+    public static final Map<com.vehicleworks.block.SkinBlock.Kind, DeferredItem<BlockItem>> SKIN_ITEMS = new EnumMap<>(com.vehicleworks.block.SkinBlock.Kind.class);
 
     static {
         for (ComponentType t : ComponentType.values()) {
             COMPONENT_ITEMS.put(t, ITEMS.registerSimpleBlockItem(t.id, ModBlocks.COMPONENTS.get(t),
                     new Item.Properties().rarity(t == ComponentType.VEHICLE_CORE ? Rarity.UNCOMMON : Rarity.COMMON)));
         }
+        for (var k : com.vehicleworks.block.SkinBlock.Kind.values())
+            SKIN_ITEMS.put(k, ITEMS.registerSimpleBlockItem(ModBlocks.skinId(k), ModBlocks.SKINS.get(k), new Item.Properties()));
     }
+
 
     public static final DeferredItem<EngineeringWrenchItem> WRENCH = ITEMS.register("engineering_wrench",
             () -> new EngineeringWrenchItem(new Item.Properties().stacksTo(1)));

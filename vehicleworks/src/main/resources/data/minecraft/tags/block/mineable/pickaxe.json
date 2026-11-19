@@ -72,6 +72,15 @@
     "vehicleworks:missile_launcher",
     "vehicleworks:bomb_bay",
     "vehicleworks:ammo_box",
-    "vehicleworks:remote_control_unit"
+    "vehicleworks:remote_control_unit",
+    "vehicleworks:skin_panel",
+    "vehicleworks:skin_stripe",
+    "vehicleworks:skin_belly",
+    "vehicleworks:skin_window",
+    "vehicleworks:cockpit_glass",
+    "vehicleworks:skin_curve",
+    "vehicleworks:skin_bevel_wall",
+    "vehicleworks:skin_bevel_roof",
+    "vehicleworks:skin_slope"
   ]
 }

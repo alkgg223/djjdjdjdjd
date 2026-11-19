@@ -18,6 +18,7 @@ public final class ModTabs {
             .displayItems((params, out) -> {
                 out.accept(ModItems.WRENCH.get());
                 for (ComponentType t : ComponentType.values()) out.accept(ModItems.COMPONENT_ITEMS.get(t).get());
+                for (var d : ModItems.SKIN_ITEMS.values()) out.accept(d.get());
                 out.accept(ModItems.FUEL_CANISTER.get());
                 out.accept(ModItems.AMMO_BELT.get());
                 out.accept(ModItems.CANNON_SHELL.get());

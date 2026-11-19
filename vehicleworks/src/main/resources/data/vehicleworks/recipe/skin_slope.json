@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "P  ",
+    "PP ",
+    "PPP"
+  ],
+  "key": {
+    "P": {
+      "item": "vehicleworks:skin_panel"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:skin_slope",
+    "count": 6
+  }
+}

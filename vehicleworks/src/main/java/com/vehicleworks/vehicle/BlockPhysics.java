@@ -31,6 +31,7 @@ public final class BlockPhysics {
     private static double computeMass(BlockState s) {
         Block b = s.getBlock();
         if (b instanceof ComponentBlock cb) return cb.type.massKg;
+        if (b instanceof com.vehicleworks.block.SkinBlock sk) return sk.kind.massKg; // aluminium skin panels and frames
         double base;
         SoundType snd = s.getSoundType();
         String path = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(b).getPath();

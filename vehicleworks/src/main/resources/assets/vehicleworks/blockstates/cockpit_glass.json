@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/cockpit_glass"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/cockpit_glass",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/cockpit_glass",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/cockpit_glass",
+      "y": 270
+    }
+  }
+}

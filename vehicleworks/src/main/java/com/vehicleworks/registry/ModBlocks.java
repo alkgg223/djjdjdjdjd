@@ -17,10 +17,34 @@ public final class ModBlocks {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(VehicleWorks.MODID);
     public static final Map<ComponentType, DeferredBlock<ComponentBlock>> COMPONENTS = new EnumMap<>(ComponentType.class);
 
+    /** aircraft skin blocks (fuselage panels, windows, rounded corners, slopes, cabin floor, cockpit glass) */
+    public static final Map<com.vehicleworks.block.SkinBlock.Kind, DeferredBlock<com.vehicleworks.block.SkinBlock>> SKINS =
+            new EnumMap<>(com.vehicleworks.block.SkinBlock.Kind.class);
+
     static {
         for (ComponentType t : ComponentType.values()) {
             COMPONENTS.put(t, BLOCKS.register(t.id, () -> create(t)));
         }
+        for (com.vehicleworks.block.SkinBlock.Kind k : com.vehicleworks.block.SkinBlock.Kind.values()) {
+            SKINS.put(k, BLOCKS.register(skinId(k), () -> {
+                BlockBehaviour.Properties p = BlockBehaviour.Properties.of().strength(2.0f, 5.0f).mapColor(k == com.vehicleworks.block.SkinBlock.Kind.FLOOR ? MapColor.COLOR_BLUE : MapColor.SNOW)
+                        .sound(k == com.vehicleworks.block.SkinBlock.Kind.FLOOR ? SoundType.WOOL : (k == com.vehicleworks.block.SkinBlock.Kind.COCKPIT_GLASS ? SoundType.GLASS : SoundType.COPPER));
+                if (k.shaped || k == com.vehicleworks.block.SkinBlock.Kind.WINDOW || k == com.vehicleworks.block.SkinBlock.Kind.COCKPIT_GLASS) p = p.noOcclusion();
+                return new com.vehicleworks.block.SkinBlock(k, p);
+            }));
+        }
+    }
+
+    public static String skinId(com.vehicleworks.block.SkinBlock.Kind k) {
+        return switch (k) {
+            case FLOOR -> "cabin_floor";
+            case COCKPIT_GLASS -> "cockpit_glass";
+            default -> "skin_" + k.name().toLowerCase(java.util.Locale.ROOT);
+        };
+    }
+
+    public static net.minecraft.world.level.block.state.BlockState skin(com.vehicleworks.block.SkinBlock.Kind k) {
+        return SKINS.get(k).get().defaultBlockState();
     }
 
     private ModBlocks() {}

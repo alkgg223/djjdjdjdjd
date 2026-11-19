@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "vehicleworks:block/cabin_floor",
+    "bottom": "vehicleworks:block/skin_belly",
+    "side": "vehicleworks:block/skin_belly"
+  }
+}

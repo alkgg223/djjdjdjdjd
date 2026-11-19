@@ -122,4 +122,19 @@ for c in components:
 soft = {'balloon_envelope', 'gas_cell', 'pilot_seat', 'passenger_seat', 'copilot_seat', 'seat_economy', 'seat_economy_plus', 'seat_premium', 'seat_business', 'seat_first', 'jumpseat'}
 w(os.path.join(ROOT, 'minecraft', 'tags', 'block', 'mineable', 'pickaxe.json'), {"replace": False, "values": [f"{M}:{c}" for c in components if c not in soft]})
 w(os.path.join(ROOT, M, 'tags', 'block', 'assembly_excluded.json'), {"replace": False, "values": []})
+SKINS = ['skin_panel', 'skin_stripe', 'skin_belly', 'skin_window', 'cabin_floor', 'cockpit_glass', 'skin_curve', 'skin_bevel_wall', 'skin_bevel_roof', 'skin_slope']
+shaped('skin_panel', ["III", "WWW"], {"I": "iron_nugget", "W": "white_concrete"}, 8)
+shaped('skin_stripe', ["PPP", "BBB"], {"P": V('skin_panel'), "B": "blue_dye"}, 3)
+shaped('skin_belly', ["PPP", "GGG"], {"P": V('skin_panel'), "G": "light_gray_dye"}, 3)
+shaped('skin_window', [" P ", "PGP", " P "], {"P": V('skin_panel'), "G": "glass_pane"}, 4)
+shaped('cabin_floor', ["CCC", "PPP"], {"C": "blue_carpet", "P": V('skin_panel')}, 3)
+shaped('cockpit_glass', ["GBG"], {"G": "glass", "B": "black_dye"}, 3)
+shaped('skin_curve', ["P  ", "PP "], {"P": V('skin_panel')}, 3)
+shaped('skin_bevel_wall', ["P", "P"], {"P": V('skin_panel')}, 2)
+shaped('skin_bevel_roof', ["PP"], {"P": V('skin_panel')}, 2)
+shaped('skin_slope', ["P  ", "PP ", "PPP"], {"P": V('skin_panel')}, 6)
+for c in SKINS:
+    w(os.path.join(ROOT, M, 'loot_table', 'blocks', c + '.json'), {"type": "minecraft:block", "pools": [{"rolls": 1, "bonus_rolls": 0,
+        "entries": [{"type": "minecraft:item", "name": f"{M}:{c}"}], "conditions": [{"condition": "minecraft:survives_explosion"}]}]})
+w(os.path.join(ROOT, 'minecraft', 'tags', 'block', 'mineable', 'pickaxe.json'), {"replace": False, "values": [f"{M}:{c}" for c in components if c not in soft] + [f"{M}:{c}" for c in SKINS if c != 'cabin_floor']})
 print('data ok:', len(components), 'components')

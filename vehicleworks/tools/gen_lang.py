@@ -514,6 +514,13 @@ for k, en, ar in (('none', 'None', 'بدون'), ('sharklet', 'Sharklet', 'شار
                   ('white', 'White', 'أبيض'), ('gray', 'Grey', 'رمادي'), ('blue', 'Blue', 'أزرق')):
     t('vehicleworks.opt.' + k, en, ar)
 t('vehicleworks.configuration.announcementVoice', 'Spoken cabin announcements', 'نطق إعلانات المقصورة بالصوت')
+# ---- 1.5: aircraft skin blocks
+for k, en, ar in (('skin_panel', 'Fuselage Skin Panel', 'لوح هيكل الطائرة'), ('skin_stripe', 'Fuselage Skin (cheatline)', 'لوح هيكل بخط ملون'),
+                  ('skin_belly', 'Belly Skin Panel', 'لوح بطن الطائرة'), ('skin_window', 'Cabin Window Panel', 'لوح نافذة المقصورة'),
+                  ('cabin_floor', 'Cabin Floor', 'أرضية المقصورة'), ('cockpit_glass', 'Cockpit Glass', 'زجاج القمرة'),
+                  ('skin_curve', 'Fuselage Curve (rounded corner)', 'زاوية هيكل منحنية'), ('skin_bevel_wall', 'Fuselage Bevel (wall)', 'حافة مائلة للجدار'),
+                  ('skin_bevel_roof', 'Fuselage Bevel (roof / belly)', 'حافة مائلة للسقف والبطن'), ('skin_slope', 'Fuselage Slope (45°)', 'منحدر الهيكل (45°)')):
+    t('block.vehicleworks.' + k, en, ar)
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):

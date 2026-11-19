@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " P ",
+    "PGP",
+    " P "
+  ],
+  "key": {
+    "P": {
+      "item": "vehicleworks:skin_panel"
+    },
+    "G": {
+      "item": "minecraft:glass_pane"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:skin_window",
+    "count": 4
+  }
+}

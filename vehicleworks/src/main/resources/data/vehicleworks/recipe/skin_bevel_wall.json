@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "P",
+    "P"
+  ],
+  "key": {
+    "P": {
+      "item": "vehicleworks:skin_panel"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:skin_bevel_wall",
+    "count": 2
+  }
+}
