@@ -246,7 +246,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
                 float yaw = (float) Math.toDegrees(Math.atan2(p[3], p[5]));
                 ps.mulPose(Axis.YP.rotationDegrees(yaw + 180));
                 float sc = p[7] * 0.0105f;
-                ps.scale(-sc, -sc, sc);
+                ps.scale(-sc, -sc, -sc);
                 String t = v.getPlate();
                 int w = font.width(t);
                 ps.translate(-w / 2f + 3, -4, 0);

@@ -1,0 +1,1264 @@
+[
+ {
+  "id": "asphalt",
+  "kind": "cube",
+  "material": "stone",
+  "sound": "stone",
+  "hardness": 1.5
+ },
+ {
+  "id": "asphalt_dark",
+  "kind": "cube",
+  "material": "stone",
+  "sound": "stone",
+  "hardness": 1.5
+ },
+ {
+  "id": "asphalt_slab",
+  "kind": "slab",
+  "material": "stone",
+  "sound": "stone",
+  "hardness": 1.5
+ },
+ {
+  "id": "sidewalk_slab",
+  "kind": "slab",
+  "material": "stone",
+  "sound": "stone",
+  "hardness": 1.5
+ },
+ {
+  "id": "sidewalk",
+  "kind": "cube",
+  "material": "stone",
+  "sound": "stone",
+  "hardness": 1.5
+ },
+ {
+  "id": "concrete_block",
+  "kind": "cube",
+  "material": "stone",
+  "sound": "stone",
+  "hardness": 2
+ },
+ {
+  "id": "curb",
+  "kind": "facing_shape",
+  "shape": [
+   [
+    0,
+    0,
+    0,
+    16,
+    8,
+    16
+   ]
+  ],
+  "material": "stone",
+  "sound": "stone",
+  "hardness": 1.5
+ },
+ {
+  "id": "drain_cover",
+  "kind": "shape",
+  "shape": [
+   [
+    1,
+    0,
+    1,
+    15,
+    0.5,
+    15
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "nocollide": true
+ },
+ {
+  "id": "sign_stop",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "stop"
+ },
+ {
+  "id": "sign_give_way",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "give_way"
+ },
+ {
+  "id": "sign_speed_30",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "speed_30"
+ },
+ {
+  "id": "sign_speed_40",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "speed_40"
+ },
+ {
+  "id": "sign_speed_50",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "speed_50"
+ },
+ {
+  "id": "sign_speed_60",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "speed_60"
+ },
+ {
+  "id": "sign_speed_70",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "speed_70"
+ },
+ {
+  "id": "sign_speed_80",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "speed_80"
+ },
+ {
+  "id": "sign_speed_100",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "speed_100"
+ },
+ {
+  "id": "sign_speed_120",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "speed_120"
+ },
+ {
+  "id": "sign_no_entry",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "no_entry"
+ },
+ {
+  "id": "sign_no_parking",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "no_parking"
+ },
+ {
+  "id": "sign_no_stopping",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "no_stopping"
+ },
+ {
+  "id": "sign_roundabout",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "roundabout"
+ },
+ {
+  "id": "sign_turn_left",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "turn_left"
+ },
+ {
+  "id": "sign_turn_right",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "turn_right"
+ },
+ {
+  "id": "sign_ahead_only",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "ahead_only"
+ },
+ {
+  "id": "sign_keep_right",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "keep_right"
+ },
+ {
+  "id": "sign_pedestrians",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "pedestrians"
+ },
+ {
+  "id": "sign_roadworks",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "roadworks"
+ },
+ {
+  "id": "sign_traffic_lights",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "traffic_lights"
+ },
+ {
+  "id": "sign_danger",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "danger"
+ },
+ {
+  "id": "sign_children",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "children"
+ },
+ {
+  "id": "sign_parking",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "parking"
+ },
+ {
+  "id": "sign_disabled_parking",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "disabled_parking"
+ },
+ {
+  "id": "sign_one_way",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "one_way"
+ },
+ {
+  "id": "sign_crossing",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "crossing"
+ },
+ {
+  "id": "sign_highway",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "highway"
+ },
+ {
+  "id": "sign_fuel",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "fuel"
+ },
+ {
+  "id": "sign_border",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "border"
+ },
+ {
+  "id": "sign_hospital",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "hospital"
+ },
+ {
+  "id": "sign_bus_stop",
+  "kind": "sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "sign": "bus_stop"
+ },
+ {
+  "id": "direction_sign",
+  "kind": "text_sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1
+ },
+ {
+  "id": "road_name_sign",
+  "kind": "text_sign",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1
+ },
+ {
+  "id": "concrete_barrier",
+  "kind": "facing_shape",
+  "shape": [
+   [
+    0,
+    0,
+    2,
+    16,
+    14,
+    14
+   ]
+  ],
+  "material": "stone",
+  "sound": "stone",
+  "hardness": 2
+ },
+ {
+  "id": "concrete_divider",
+  "kind": "facing_shape",
+  "shape": [
+   [
+    0,
+    0,
+    2,
+    16,
+    16,
+    14
+   ]
+  ],
+  "material": "stone",
+  "sound": "stone",
+  "hardness": 2
+ },
+ {
+  "id": "guardrail",
+  "kind": "facing_shape",
+  "shape": [
+   [
+    0,
+    0,
+    7,
+    16,
+    18,
+    11
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 2
+ },
+ {
+  "id": "road_barrier",
+  "kind": "facing_shape",
+  "shape": [
+   [
+    0,
+    0,
+    7,
+    16,
+    18,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "light": 6
+ },
+ {
+  "id": "road_cone",
+  "kind": "shape",
+  "shape": [
+   [
+    3,
+    0,
+    3,
+    13,
+    14,
+    13
+   ]
+  ],
+  "material": "wool",
+  "sound": "wool",
+  "hardness": 0.3
+ },
+ {
+  "id": "construction_sign",
+  "kind": "facing_shape",
+  "shape": [
+   [
+    1,
+    0,
+    6,
+    15,
+    18,
+    8
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1
+ },
+ {
+  "id": "roadworks_light",
+  "kind": "shape",
+  "shape": [
+   [
+    4,
+    0,
+    4,
+    12,
+    16,
+    12
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "light": 10
+ },
+ {
+  "id": "bollard",
+  "kind": "shape",
+  "shape": [
+   [
+    6,
+    0,
+    6,
+    10,
+    16,
+    10
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 2
+ },
+ {
+  "id": "bench",
+  "kind": "seat",
+  "shape": [
+   [
+    0,
+    0,
+    4,
+    16,
+    7,
+    13
+   ]
+  ],
+  "material": "wood",
+  "sound": "wood",
+  "hardness": 1.5
+ },
+ {
+  "id": "trash_bin",
+  "kind": "shape",
+  "shape": [
+   [
+    4,
+    0,
+    4,
+    12,
+    14,
+    12
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1
+ },
+ {
+  "id": "parking_meter",
+  "kind": "facing_shape",
+  "shape": [
+   [
+    5,
+    0,
+    6,
+    11,
+    18,
+    10
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1.5
+ },
+ {
+  "id": "emergency_call_box",
+  "kind": "facing_shape",
+  "shape": [
+   [
+    4,
+    0,
+    5,
+    12,
+    20,
+    10
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1.5
+ },
+ {
+  "id": "bus_stop_sign",
+  "kind": "facing_shape",
+  "shape": [
+   [
+    7,
+    0,
+    7,
+    9,
+    16,
+    9
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1
+ },
+ {
+  "id": "bus_shelter",
+  "kind": "facing_shape",
+  "shape": [
+   [
+    0,
+    0,
+    1,
+    16,
+    16,
+    15
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 2,
+  "translucent": true
+ },
+ {
+  "id": "flower_planter",
+  "kind": "shape",
+  "shape": [
+   [
+    1,
+    0,
+    1,
+    15,
+    15,
+    15
+   ]
+  ],
+  "material": "stone",
+  "sound": "stone",
+  "hardness": 1.5
+ },
+ {
+  "id": "roadside_tree",
+  "kind": "shape",
+  "shape": [
+   [
+    6,
+    0,
+    6,
+    10,
+    16,
+    10
+   ]
+  ],
+  "material": "wood",
+  "sound": "grass",
+  "hardness": 1,
+  "translucent": true
+ },
+ {
+  "id": "street_lamp",
+  "kind": "street_lamp",
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 2
+ },
+ {
+  "id": "security_camera",
+  "kind": "camera",
+  "shape": [
+   [
+    5,
+    6,
+    4,
+    11,
+    14,
+    16
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1
+ },
+ {
+  "id": "fuel_pump",
+  "kind": "fuel_pump",
+  "shape": [
+   [
+    2,
+    0,
+    3,
+    14,
+    16,
+    13
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 2
+ },
+ {
+  "id": "ev_charger",
+  "kind": "fuel_pump",
+  "shape": [
+   [
+    4,
+    0,
+    5,
+    12,
+    16,
+    11
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 2,
+  "electric": true
+ },
+ {
+  "id": "payment_terminal",
+  "kind": "terminal",
+  "shape": [
+   [
+    4,
+    0,
+    6,
+    12,
+    16,
+    10
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1.5
+ },
+ {
+  "id": "fuel_tank",
+  "kind": "fuel_tank",
+  "shape": [
+   [
+    0,
+    0,
+    0,
+    16,
+    8,
+    16
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 3
+ },
+ {
+  "id": "canopy_light",
+  "kind": "shape",
+  "shape": [
+   [
+    0,
+    13,
+    0,
+    16,
+    16,
+    16
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "light": 15
+ },
+ {
+  "id": "canopy_roof",
+  "kind": "cube",
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1.5
+ },
+ {
+  "id": "ceiling_light",
+  "kind": "shape",
+  "shape": [
+   [
+    2,
+    14,
+    2,
+    14,
+    16,
+    14
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "light": 15,
+  "nocollide": true
+ },
+ {
+  "id": "cashier_counter",
+  "kind": "workplace",
+  "shape": [
+   [
+    0,
+    0,
+    0,
+    16,
+    16,
+    16
+   ]
+  ],
+  "material": "wood",
+  "sound": "wood",
+  "hardness": 2,
+  "workplace": "cashier"
+ },
+ {
+  "id": "store_shelf",
+  "kind": "facing_shape",
+  "shape": [
+   [
+    0,
+    0,
+    4,
+    16,
+    16,
+    12
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 2
+ },
+ {
+  "id": "shop_sign_block",
+  "kind": "cube",
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "light": 12
+ },
+ {
+  "id": "booth_wall",
+  "kind": "cube",
+  "material": "stone",
+  "sound": "stone",
+  "hardness": 2
+ },
+ {
+  "id": "booth_desk",
+  "kind": "workplace",
+  "shape": [
+   [
+    0,
+    0,
+    0,
+    16,
+    14,
+    16
+   ]
+  ],
+  "material": "wood",
+  "sound": "wood",
+  "hardness": 2,
+  "workplace": "officer"
+ },
+ {
+  "id": "warning_light",
+  "kind": "shape",
+  "shape": [
+   [
+    5,
+    0,
+    5,
+    11,
+    9,
+    11
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 1,
+  "light": 9
+ },
+ {
+  "id": "traffic_light",
+  "kind": "traffic_light",
+  "shape": [
+   [
+    6,
+    0,
+    6,
+    10,
+    16,
+    10
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 2
+ },
+ {
+  "id": "pedestrian_signal",
+  "kind": "ped_signal",
+  "shape": [
+   [
+    6,
+    0,
+    6,
+    10,
+    16,
+    10
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 2
+ },
+ {
+  "id": "barrier_gate",
+  "kind": "barrier_gate",
+  "shape": [
+   [
+    3,
+    0,
+    3,
+    13,
+    16,
+    13
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 3
+ },
+ {
+  "id": "barrier_arm",
+  "kind": "barrier_arm",
+  "material": "metal",
+  "sound": "metal",
+  "hardness": -1,
+  "noitem": true
+ },
+ {
+  "id": "traffic_control_panel",
+  "kind": "control_panel",
+  "shape": [
+   [
+    1,
+    0,
+    1,
+    15,
+    16,
+    15
+   ]
+  ],
+  "material": "metal",
+  "sound": "metal",
+  "hardness": 2
+ }
+]

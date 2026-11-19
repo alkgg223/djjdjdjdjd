@@ -349,7 +349,7 @@ def allf(tex, uv=None, cull=None):
 
 
 def model(name, elements, textures, parent='block/block', ao=True, particle=None, display=None):
-    m = {'parent': parent, 'textures': dict(textures), 'elements': elements}
+    m = {'parent': parent, 'textures': dict(textures), 'elements': elements, 'render_type': 'minecraft:translucent' if name in ('bus_shelter',) else 'minecraft:cutout'}
     m['textures']['particle'] = particle or list(textures.values())[0]
     if not ao:
         m['ambientocclusion'] = False

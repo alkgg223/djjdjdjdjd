@@ -28,12 +28,16 @@ public final class ClientSetup {
         VehicleEntity.CLIENT_INPUT = DriverInput::read;
         VehicleEntity.CLIENT_SEND = DriverInput::sendState;
         VehicleEntity.CLIENT_EVENT = com.trafficcraft.client.sound.VehicleSounds::event;
+        com.trafficcraft.net.OpenEditorPayload.CLIENT_HANDLER = com.trafficcraft.client.gui.Editors::open;
         ModList.get().getModContainerById(TrafficCraft.MODID).ifPresent(c -> c.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new));
     }
 
     @SubscribeEvent
     public static void renderers(EntityRenderersEvent.RegisterRenderers e) {
         e.registerEntityRenderer(TCRegistry.VEHICLE.get(), VehicleRenderer::new);
+        e.registerBlockEntityRenderer(com.trafficcraft.registry.TCBlocks.TRAFFIC_LIGHT_BE.get(), com.trafficcraft.client.render.BlockRenderers.TrafficLightRenderer::new);
+        e.registerBlockEntityRenderer(com.trafficcraft.registry.TCBlocks.BARRIER_GATE_BE.get(), com.trafficcraft.client.render.BlockRenderers.BarrierRenderer::new);
+        e.registerBlockEntityRenderer(com.trafficcraft.registry.TCBlocks.GENERIC_BE.get(), com.trafficcraft.client.render.BlockRenderers.GenericRenderer::new);
     }
 
     @SubscribeEvent

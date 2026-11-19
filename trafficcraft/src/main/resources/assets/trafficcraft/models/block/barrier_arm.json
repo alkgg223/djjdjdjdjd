@@ -1,1 +1,1 @@
-{"parent": "block/block", "textures": {"p": "trafficcraft:block/stripes_red", "particle": "trafficcraft:block/stripes_red"}, "elements": []}
+{"parent": "block/block", "textures": {"p": "trafficcraft:block/stripes_red", "particle": "trafficcraft:block/stripes_red"}, "elements": [], "render_type": "minecraft:cutout"}

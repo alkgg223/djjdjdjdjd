@@ -361,6 +361,10 @@ public class VehicleEntity extends Entity {
             }
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
+        if (stack.getItem() instanceof com.trafficcraft.station.FuelNozzleItem) {
+            if (!level().isClientSide) com.trafficcraft.station.FuelStations.startRefuel(player, this, stack);
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
         if (stack.getItem() instanceof DyeItem dye) {
             if (!level().isClientSide) {
                 int c = dye.getDyeColor().getTextureDiffuseColor() & 0xFFFFFF;
