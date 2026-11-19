@@ -294,7 +294,11 @@ public class VehicleEntity extends Entity {
         super.addPassenger(p);
         int idx = getPassengers().indexOf(p);
         boolean left = spec().seats.get(Math.min(Math.max(idx, 0), spec().seats.size() - 1)).x > 0;
+        p.setYRot(getYRot());
+        p.yRotO = getYRot();
+        p.setYHeadRot(getYRot());
         if (p instanceof LivingEntity le) {
+            le.setYBodyRot(getYRot());
             var inst = le.getAttribute(Attributes.SCALE);
             if (inst != null) inst.addOrUpdateTransientModifier(new AttributeModifier(SEATED_SCALE_ID, TCConfig.SEATED_SCALE.get() - 1.0,
                     AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));

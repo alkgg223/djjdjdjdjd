@@ -1,0 +1,1 @@
+{"variants": {"facing=north": {"model": "trafficcraft:block/bus_shelter", "y": 0}, "facing=east": {"model": "trafficcraft:block/bus_shelter", "y": 90}, "facing=south": {"model": "trafficcraft:block/bus_shelter", "y": 180}, "facing=west": {"model": "trafficcraft:block/bus_shelter", "y": 270}}}

@@ -1,0 +1,1 @@
+{"parent": "block/block", "textures": {"p": "trafficcraft:block/metal_dark", "particle": "trafficcraft:block/metal_dark"}, "elements": [{"from": [7, 0, 7], "to": [9, 16, 9], "faces": {"north": {"texture": "#p"}, "south": {"texture": "#p"}, "east": {"texture": "#p"}, "west": {"texture": "#p"}, "up": {"texture": "#p"}, "down": {"texture": "#p"}}}]}

@@ -346,14 +346,16 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         VertexConsumer vc = buf.getBuffer(RenderType.lightning());
         PoseStack.Pose p = ps.last();
         if (lamps.on(VehicleMesh.HEAD)) {
-            float len = lamps.on(VehicleMesh.HIGH) ? 16f : 9f;
-            float spread = lamps.on(VehicleMesh.HIGH) ? 0.22f : 0.3f;
+            boolean high = lamps.on(VehicleMesh.HIGH);
+            float len = high ? 18f : 11f;
             for (var b : s.beams) {
                 float x = (float) b.x, y = (float) b.y, z = (float) b.z + 0.05f;
-                int a0 = (int) (60 * vis), a1 = 0;
-                cone(vc, p, x, y, z, len, spread, -0.06f, 0xFFF4E8, a0, a1);
-                glow(vc, p, ps, x, y, z + 0.02f, 0.35f, 0xFFF2DC, (int) (150 * vis));
+                cone(vc, p, x, y, z, 3.2f, 0.32f, -0.05f, 0xFFF4E8, (int) (26 * vis), 0);
+                glow(vc, p, ps, x, y, z + 0.02f, 0.32f, 0xFFF2DC, (int) (150 * vis));
             }
+            // light pool on the road surface ahead
+            float z0 = s.length / 2 + 0.6f;
+            pool(vc, p, 0, 0.04f, z0 + len * 0.45f, s.width * 1.4f, len * 0.55f, 0xFFF0D8, (int) (70 * vis));
         }
         // brake / indicator / reverse / beacon glows (small halos)
         float hl = s.length / 2;
@@ -372,6 +374,17 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             boolean ph = (v.tickCount / 3) % 2 == 0;
             glow(vc, p, ps, 0.35f, s.height + 0.15f, 0.0f, 0.6f, ph ? 0xFF2020 : 0x2040FF, 170);
             glow(vc, p, ps, -0.35f, s.height + 0.15f, 0.0f, 0.6f, ph ? 0x2040FF : 0xFF2020, 170);
+        }
+    }
+
+    private static void pool(VertexConsumer vc, PoseStack.Pose p, float cx, float y, float cz, float rx, float rz, int rgb, int a) {
+        int n = 18;
+        for (int i = 0; i < n; i++) {
+            double t0 = 2 * Math.PI * i / n, t1 = 2 * Math.PI * (i + 1) / n;
+            vert(vc, p, cx, y, cz, rgb, a);
+            vert(vc, p, cx + (float) Math.cos(t0) * rx, y, cz + (float) Math.sin(t0) * rz, rgb, 0);
+            vert(vc, p, cx + (float) Math.cos(t1) * rx, y, cz + (float) Math.sin(t1) * rz, rgb, 0);
+            vert(vc, p, cx, y, cz, rgb, a);
         }
     }
 

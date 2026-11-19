@@ -1,0 +1,1 @@
+{"variants": {"facing=north": {"model": "trafficcraft:block/concrete_divider", "y": 0}, "facing=east": {"model": "trafficcraft:block/concrete_divider", "y": 90}, "facing=south": {"model": "trafficcraft:block/concrete_divider", "y": 180}, "facing=west": {"model": "trafficcraft:block/concrete_divider", "y": 270}}}

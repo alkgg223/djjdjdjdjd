@@ -77,12 +77,12 @@ public final class AutoTest {
             case 140 -> shot(mc, "01_lineup_day.png");
             case 150 -> server.execute(() -> {
                 ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
-                sp.teleportTo(sp.serverLevel(), 4.2, groundY + 1.6, 3.2, 145, 12);
+                sp.teleportTo(sp.serverLevel(), 4.6, groundY + 1.7, 12.6, 135, 12);
             });
             case 190 -> shot(mc, "02_sedan_front34.png");
             case 200 -> server.execute(() -> {
                 ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
-                sp.teleportTo(sp.serverLevel(), -3.2, groundY + 1.7, 15.5, -150, 14);
+                sp.teleportTo(sp.serverLevel(), -4.2, groundY + 1.7, 2.6, -45, 12);
             });
             case 240 -> shot(mc, "03_sedan_rear34.png");
             case 250 -> server.execute(() -> {

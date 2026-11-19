@@ -1,0 +1,1 @@
+{"parent": "block/block", "textures": {"t": "trafficcraft:block/drain", "particle": "trafficcraft:block/drain"}, "elements": [{"from": [1, 0, 1], "to": [15, 0.5, 15], "faces": {"north": {"texture": "#t"}, "south": {"texture": "#t"}, "east": {"texture": "#t"}, "west": {"texture": "#t"}, "up": {"texture": "#t"}, "down": {"texture": "#t"}}}]}

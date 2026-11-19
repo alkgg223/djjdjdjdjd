@@ -41,7 +41,7 @@ public final class VehicleHud {
         g.pose().scale(2.6f, 2.6f, 1);
         g.drawString(font, sp, 0, 0, 0xFFFFFFFF, true);
         g.pose().popPose();
-        g.drawString(font, "km/h", x + 12 + (int) (font.width(sp) * 2.6f), y + 22, 0xFF9AA4B0, false);
+        g.drawString(font, "km/h", x + 14 + (int) (font.width(sp) * 2.6f), y + 16, 0xFF9AA4B0, false);
         // gear
         int gear = v.visGear();
         boolean manual = v.has(VehicleEntity.F_MANUAL);
@@ -82,11 +82,15 @@ public final class VehicleHud {
         tt(g, font, x + 78, ty, "(P)", v.has(VehicleEntity.F_HANDBRAKE), 0xFFFF4040);
         tt(g, font, x + 98, ty, "⌂", v.has(VehicleEntity.F_INTERIOR), 0xFFFFE090);
         if (v.spec().siren) tt(g, font, x + 110, ty, "★", v.has(VehicleEntity.F_SIREN) || v.has(VehicleEntity.F_BEACONS), 0xFF4080FF);
-        if (v.has(VehicleEntity.F_STARTING)) g.drawString(font, Component.translatable("hud.trafficcraft.starting"), x + 10, y - 11, 0xFFFFD060, true);
-        else if (!v.has(VehicleEntity.F_ENGINE) && driver)
-            g.drawString(font, Component.translatable("hud.trafficcraft.engine_off", VehicleKeys.ENGINE.getTranslatedKeyMessage()), x + 10, y - 11, 0xFFFFD060, true);
-        if (fuel <= 0.001f) g.drawString(font, Component.translatable("hud.trafficcraft.empty"), x + 10, y - 22, 0xFFFF5040, true);
-        g.drawString(font, v.spec().name, x + 10, y + 28, 0xFF6C7684, false);
+        Component msg = null;
+        if (v.has(VehicleEntity.F_STARTING)) msg = Component.translatable("hud.trafficcraft.starting");
+        else if (!v.has(VehicleEntity.F_ENGINE) && driver) msg = Component.translatable("hud.trafficcraft.engine_off", VehicleKeys.ENGINE.getTranslatedKeyMessage());
+        if (msg != null) g.drawString(font, msg, x + pw - font.width(msg), y - 11, 0xFFFFD060, true);
+        if (fuel <= 0.001f) {
+            Component m2 = Component.translatable("hud.trafficcraft.empty");
+            g.drawString(font, m2, x + pw - font.width(m2), y - 22, 0xFFFF5040, true);
+        }
+        g.drawString(font, v.spec().name, x + pw - 8 - font.width(v.spec().name), y + 28, 0xFF6C7684, false);
         // first seconds: control hints
         if (driver && mc.player.tickCount - enteredTick < 200) {
             String[] lines = {

@@ -1,0 +1,1 @@
+{"variants": {"facing=north": {"model": "trafficcraft:block/road_name_sign", "y": 0}, "facing=east": {"model": "trafficcraft:block/road_name_sign", "y": 90}, "facing=south": {"model": "trafficcraft:block/road_name_sign", "y": 180}, "facing=west": {"model": "trafficcraft:block/road_name_sign", "y": 270}}}

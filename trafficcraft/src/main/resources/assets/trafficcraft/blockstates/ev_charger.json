@@ -1,0 +1,1 @@
+{"variants": {"facing=north": {"model": "trafficcraft:block/ev_charger", "y": 0}, "facing=east": {"model": "trafficcraft:block/ev_charger", "y": 90}, "facing=south": {"model": "trafficcraft:block/ev_charger", "y": 180}, "facing=west": {"model": "trafficcraft:block/ev_charger", "y": 270}}}

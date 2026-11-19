@@ -1,0 +1,1 @@
+{"variants": {"facing=north": {"model": "trafficcraft:block/sign_no_entry", "y": 0}, "facing=east": {"model": "trafficcraft:block/sign_no_entry", "y": 90}, "facing=south": {"model": "trafficcraft:block/sign_no_entry", "y": 180}, "facing=west": {"model": "trafficcraft:block/sign_no_entry", "y": 270}}}

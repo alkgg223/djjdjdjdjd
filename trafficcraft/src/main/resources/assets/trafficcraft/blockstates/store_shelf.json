@@ -1,0 +1,1 @@
+{"variants": {"facing=north": {"model": "trafficcraft:block/store_shelf", "y": 0}, "facing=east": {"model": "trafficcraft:block/store_shelf", "y": 90}, "facing=south": {"model": "trafficcraft:block/store_shelf", "y": 180}, "facing=west": {"model": "trafficcraft:block/store_shelf", "y": 270}}}
