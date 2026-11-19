@@ -20,6 +20,8 @@ public class TrafficCraft {
         VehicleSpecs.load();
         TCRegistry.register(modBus);
         modBus.addListener(TCNetwork::register);
+        modBus.addListener((net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent e) ->
+                e.put(TCRegistry.PEDESTRIAN.get(), com.trafficcraft.npc.PedestrianEntity.attributes().build()));
         container.registerConfig(ModConfig.Type.COMMON, TCConfig.SPEC);
     }
 

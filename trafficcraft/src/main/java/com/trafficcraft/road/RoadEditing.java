@@ -209,6 +209,10 @@ public final class RoadEditing {
             if (st.getItem() instanceof RoadToolItem) RoadToolItem.setSettings(st, d);
             return;
         }
+        if (op.equals("workplace")) {
+            com.trafficcraft.npc.Workplaces.action(p, d);
+            return;
+        }
         if (!canEdit(p)) {
             msg(p, "msg.trafficcraft.no_permission");
             return;

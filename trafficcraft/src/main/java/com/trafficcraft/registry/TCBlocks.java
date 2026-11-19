@@ -107,6 +107,7 @@ public final class TCBlocks {
                 .icon(() -> new ItemStack(MAP.get("sign_stop").get())).withTabsBefore(TrafficCraft.id("vehicles"))
                 .displayItems((params, out) -> {
                     out.accept(TCRegistry.ROAD_TOOL.get());
+                    for (var kit : TCRegistry.KITS.values()) out.accept(kit.get());
                     for (var en : MAP.entrySet()) {
                         if (en.getKey().equals("barrier_arm")) continue;
                         out.accept(en.getValue().get());

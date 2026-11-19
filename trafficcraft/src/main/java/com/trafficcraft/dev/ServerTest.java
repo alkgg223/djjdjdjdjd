@@ -50,6 +50,10 @@ public final class ServerTest {
         for (int cx = -6; cx <= 8; cx++) for (int cz = -5; cz <= 5; cz++) l.setChunkForced(cx, cz, true);
         long t0 = System.nanoTime();
         DemoTown.build(l, origin);
+        // location kits next to the avenue (gas station and parking lot facing north, a bus stop)
+        com.trafficcraft.world.Kits.place(l, origin.offset(-52, -1, -16), net.minecraft.core.Direction.NORTH, "gas_station", null);
+        com.trafficcraft.world.Kits.place(l, origin.offset(-22, -1, -16), net.minecraft.core.Direction.NORTH, "parking", null);
+        com.trafficcraft.world.Kits.place(l, origin.offset(60, -1, -9), net.minecraft.core.Direction.NORTH, "bus_stop", null);
         log(String.format("demo town built in %.0f ms: %d nodes, %d edges", (System.nanoTime() - t0) / 1e6, RoadData.get(l).nodes.size(), RoadData.get(l).edges.size()));
         TrafficManager.observer = Vec3.atCenterOf(origin).add(20, 0, 0);
         l.setDayTime(1000);
@@ -88,6 +92,9 @@ public final class ServerTest {
                 if (v.driver != null) log(String.format("   %s #%d %s v=%.1f pos=(%.1f,%.1f,%.1f) yaw=%.0f", v.getModel(), v.getId(), v.driver.debug(), v.speed * 3.6,
                         v.getX() - origin.getX(), v.getY() - origin.getY(), v.getZ() - origin.getZ(), v.getYRot()));
             }
+            Map<String, Integer> peds = new java.util.TreeMap<>();
+            for (Entity en : l.getAllEntities()) if (en instanceof com.trafficcraft.npc.PedestrianEntity p) peds.merge(p.kind() + ":" + p.anim(), 1, Integer::sum);
+            log("   pedestrians (kind:anim)=" + peds);
             TrafficManager tm = TrafficManager.get(l);
             log(String.format("t=%ds active=%d spawned=%d despawned=%d states=%s headlights=%d indicating=%d braking=%d mspt=%.2f", t / 20, vs.size(), tm.spawnedTotal,
                     tm.despawnedTotal, st, lightsOn, indicators, brakes, e.getServer().getCurrentSmoothedTickTime()));

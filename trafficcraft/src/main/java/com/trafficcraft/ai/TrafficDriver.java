@@ -175,6 +175,13 @@ public final class TrafficDriver {
                 honkCooldown = 60 + v.getRandom().nextInt(120);
             }
             if (blockedTicks > 20 * 4 && c.leader instanceof VehicleEntity lv && isStalled(lv)) tryOvertake(v, net, tm, c, true);
+        } else if (Math.abs(vel) < 0.3f && c.why.equals("pedestrian")) {
+            // somebody standing in the way: a short toot after a few seconds makes them step aside
+            if (++blockedTicks > 60 && honkCooldown == 0 && TCConfig.HORNS.get()) {
+                v.honk();
+                TrafficStats.inc("honks_ped");
+                honkCooldown = 80;
+            }
         } else if (vel > 1) blockedTicks = 0;
         if (!overtaking && c.leader instanceof VehicleEntity lv && c.gap < 25 && lv.speed < vDesired * 0.55f && vel > 3) tryOvertake(v, net, tm, c, false);
         if (overtaking) checkReturn(v, net, tm);
@@ -457,7 +464,7 @@ public final class TrafficDriver {
 
     VehicleInput fueling(VehicleEntity v, ServerLevel level, RoadNetwork net, TrafficManager tm) {
         v.setFlag(VehicleEntity.F_ENGINE, false);
-        boolean done = tm.fuel.serviceDone(level, v) || stateTicks > 20 * 45;
+        boolean done = tm.fuel.serviceDone(level, v) || stateTicks > 20 * 75;
         if (done) {
             tm.fuel.finishService(level, v, net.nodes.get(goal));
             TrafficStats.inc("refuel_done");

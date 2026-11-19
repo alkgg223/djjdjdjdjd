@@ -181,6 +181,25 @@ public final class RoadNetwork {
         return e;
     }
 
+    /** Inserts a node into a road at arc length sv; both halves keep the lanes, width, speed and restrictions. */
+    public RoadNode splitEdge(RoadEdge e, double sv, NodeType type) {
+        Vec3 p = geom(e).point(sv, 0);
+        RoadNode n = addNode(p.x, p.y, p.z, type);
+        removeEdge(e.id);
+        for (int[] ab : new int[][]{{e.a, n.id}, {n.id, e.b}}) {
+            RoadEdge h = connect(ab[0], ab[1], e.ped);
+            h.lanes.clear();
+            h.lanes.addAll(e.lanes);
+            h.width = e.width;
+            h.speed = e.speed;
+            h.overtake = e.overtake;
+            h.restrict = e.restrict;
+            h.name = e.name;
+        }
+        invalidateGeometry();
+        return n;
+    }
+
     public void removeEdge(int id) {
         RoadEdge e = edges.remove(id);
         if (e == null) return;

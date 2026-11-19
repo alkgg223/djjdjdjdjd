@@ -57,7 +57,7 @@ public final class AutoTest {
             sp.onUpdateAbilities();
             mc.options.hideGui = true;
         });
-        int[] at = {700, 760, 820, 880, 940, 1000, 1060, 1120, 1180, 1300, 1360};
+        int[] at = {700, 760, 820, 880, 940, 1000, 1060, 1120, 1460, 1580, 1640};
         if (tt == 640) view(mc, -14, 26, 24, 150, 50);
         if (tt == at[0]) shot(mc, "t01_crossroads.png");
         if (tt == at[0] + 5) view(mc, -26, 18, 18, -150, 40);
@@ -74,7 +74,17 @@ public final class AutoTest {
         if (tt == at[6]) shot(mc, "t07_street_level.png");
         if (tt == at[6] + 5) view(mc, 60, 22, 14, 160, 45);
         if (tt == at[7]) shot(mc, "t08_east_road.png");
-        if (tt == at[7] + 5) server.execute(() -> server.overworld().setDayTime(18000));
+        if (tt == at[7] + 5) view(mc, -14, 3.2, -14, -40, 14);
+        if (tt == 1180) shot(mc, "t10_ped_crossing.png");
+        if (tt == 1185) view(mc, 30, 2.3, -42.6, 180, 16);
+        if (tt == 1240) shot(mc, "t11_cashier.png");
+        if (tt == 1245) view(mc, 32.5, 3.2, -23.5, 140, 22);
+        if (tt == 1300) shot(mc, "t12_attendant.png");
+        if (tt == 1305) view(mc, 7, 3.5, 45, 127, 18);
+        if (tt == 1360) shot(mc, "t13_officer.png");
+        if (tt == 1365) view(mc, -36, 22, 6, 160, 40);
+        if (tt == 1400) shot(mc, "t14_kits.png");
+        if (tt == 1405) server.execute(() -> server.overworld().setDayTime(18000));
         if (tt == at[8] - 20) view(mc, -14, 22, 24, 150, 40);
         if (tt == at[8]) shot(mc, "t09_night_crossroads.png");
         if (tt == at[9]) {

@@ -63,6 +63,14 @@ public final class FuelService {
         if (p != null && level.getBlockEntity(p) instanceof GenericBE be) {
             be.data.putInt("serviceVehicle", v.getId());
             be.data.putFloat("litres", 0);
+            // with an attendant on duty (NPC or player) the car waits to be served; otherwise the driver fills up himself
+            RoadNode st = com.trafficcraft.npc.Workplaces.station(level, p, com.trafficcraft.road.NodeType.GAS_STATION);
+            boolean attendants = st == null || !st.cfg.contains("attendants") || st.cfg.getBoolean("attendants");
+            boolean playerOnDuty = st != null && !st.cfg.getString("player_attendant").isEmpty();
+            boolean npc = !level.getEntitiesOfClass(com.trafficcraft.npc.PedestrianEntity.class, new net.minecraft.world.phys.AABB(p).inflate(24),
+                    e -> e.kind().equals("attendant")).isEmpty();
+            be.data.putBoolean("attended", !(attendants && (playerOnDuty || npc)));
+            be.data.putBoolean("playerService", attendants && playerOnDuty);
             be.sync();
         }
     }
@@ -79,7 +87,17 @@ public final class FuelService {
                 float litres = v.getFuel() - startFuel.getOrDefault(v.getId(), v.getFuel());
                 float price = station != null && station.cfg.contains("price") ? station.cfg.getFloat("price") : FuelStations.price(be.data);
                 be.data.putInt("serviceVehicle", 0);
+                be.data.putBoolean("attended", false);
                 be.data.putFloat("lastLitres", litres);
+                if (be.data.getBoolean("playerService") && station != null && litres > 1) {
+                    java.util.UUID u = com.trafficcraft.npc.Workplaces.uuid(station.cfg.getString("player_attendant"));
+                    var pl = u == null ? null : level.getPlayerByUUID(u);
+                    if (pl != null) {
+                        pl.getInventory().placeItemBackInInventory(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.EMERALD, 1));
+                        pl.displayClientMessage(net.minecraft.network.chat.Component.translatable("msg.trafficcraft.tip"), true);
+                    }
+                }
+                be.data.putBoolean("playerService", false);
                 be.data.putInt("till", be.data.getInt("till") + Math.max(1, Math.round(litres * price)));
                 be.sync();
             }

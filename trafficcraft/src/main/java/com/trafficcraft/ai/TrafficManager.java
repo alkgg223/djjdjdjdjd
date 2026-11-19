@@ -35,6 +35,7 @@ public final class TrafficManager {
     public final ParkingManager parking = new ParkingManager();
     public final FuelService fuel = new FuelService();
     public final BorderControl border = new BorderControl();
+    public final com.trafficcraft.npc.PedSpawner peds = new com.trafficcraft.npc.PedSpawner();
     final Map<Integer, Set<Integer>> bySpawner = new HashMap<>();
     final Map<Integer, Long> lastSpawn = new HashMap<>();
     final Set<Integer> aiVehicles = new HashSet<>();
@@ -60,11 +61,15 @@ public final class TrafficManager {
             } else if (e instanceof net.minecraft.world.entity.LivingEntity && !e.isPassenger()) grid.add(e);
         }
         if (now % 100 == 0) junctions.expire(now);
-        if (now % 5 == 0) gates(level, net);
+        if (now % 5 == 0) {
+            gates(level, net);
+            border.playerTick(level, net);
+        }
         if (now % 20 == 0) {
             spawn(level, net, now);
             despawn(level, net);
         }
+        if (now % 20 == 10) peds.tick(level, net, now);
     }
 
     /** Called by the vehicle each tick; runs the AI at the LOD interval and reuses the last input otherwise. */

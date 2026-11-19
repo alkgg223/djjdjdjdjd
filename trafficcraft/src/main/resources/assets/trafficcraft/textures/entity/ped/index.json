@@ -1,0 +1,92 @@
+[
+ {
+  "skin": "adult_1",
+  "kind": "adult",
+  "slim": false
+ },
+ {
+  "skin": "adult_2",
+  "kind": "adult",
+  "slim": true
+ },
+ {
+  "skin": "adult_3",
+  "kind": "adult",
+  "slim": false
+ },
+ {
+  "skin": "adult_4",
+  "kind": "adult",
+  "slim": true
+ },
+ {
+  "skin": "adult_5",
+  "kind": "adult",
+  "slim": true
+ },
+ {
+  "skin": "adult_6",
+  "kind": "adult",
+  "slim": false
+ },
+ {
+  "skin": "adult_7",
+  "kind": "adult",
+  "slim": true
+ },
+ {
+  "skin": "business_1",
+  "kind": "business",
+  "slim": false
+ },
+ {
+  "skin": "business_2",
+  "kind": "business",
+  "slim": true
+ },
+ {
+  "skin": "elderly_1",
+  "kind": "elderly",
+  "slim": false
+ },
+ {
+  "skin": "elderly_2",
+  "kind": "elderly",
+  "slim": true
+ },
+ {
+  "skin": "child_1",
+  "kind": "child",
+  "slim": false
+ },
+ {
+  "skin": "child_2",
+  "kind": "child",
+  "slim": true
+ },
+ {
+  "skin": "worker_1",
+  "kind": "worker",
+  "slim": false
+ },
+ {
+  "skin": "worker_2",
+  "kind": "worker",
+  "slim": false
+ },
+ {
+  "skin": "officer",
+  "kind": "officer",
+  "slim": false
+ },
+ {
+  "skin": "cashier",
+  "kind": "cashier",
+  "slim": true
+ },
+ {
+  "skin": "attendant",
+  "kind": "attendant",
+  "slim": false
+ }
+]

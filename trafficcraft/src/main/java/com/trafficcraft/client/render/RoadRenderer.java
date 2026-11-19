@@ -56,7 +56,9 @@ public final class RoadRenderer {
             cachedTime = now;
         }
         Vec3 cam = e.getCamera().getPosition();
-        PoseStack ps = e.getPoseStack();
+        // this stage runs before the level renderer applies the view matrix to RenderSystem's model-view stack
+        PoseStack ps = new PoseStack();
+        ps.mulPose(e.getModelViewMatrix());
         ps.pushPose();
         ps.translate(-cam.x, -cam.y, -cam.z);
         MultiBufferSource.BufferSource buf = mc.renderBuffers().bufferSource();

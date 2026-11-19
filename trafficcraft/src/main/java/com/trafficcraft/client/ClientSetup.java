@@ -35,6 +35,7 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void renderers(EntityRenderersEvent.RegisterRenderers e) {
         e.registerEntityRenderer(TCRegistry.VEHICLE.get(), VehicleRenderer::new);
+        e.registerEntityRenderer(TCRegistry.PEDESTRIAN.get(), com.trafficcraft.client.render.PedRenderer::new);
         e.registerBlockEntityRenderer(com.trafficcraft.registry.TCBlocks.TRAFFIC_LIGHT_BE.get(), com.trafficcraft.client.render.BlockRenderers.TrafficLightRenderer::new);
         e.registerBlockEntityRenderer(com.trafficcraft.registry.TCBlocks.BARRIER_GATE_BE.get(), com.trafficcraft.client.render.BlockRenderers.BarrierRenderer::new);
         e.registerBlockEntityRenderer(com.trafficcraft.registry.TCBlocks.GENERIC_BE.get(), com.trafficcraft.client.render.BlockRenderers.GenericRenderer::new);

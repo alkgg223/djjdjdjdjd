@@ -113,3 +113,6 @@ for s in specs.SPECS:
 for lang, d in (('en_us', EN), ('ar_sa', AR), ('ar_iq', AR)):
     json.dump(d, open(f"{A}/lang/{lang}.json", 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print('assets ok:', ids)
+
+import subprocess, sys
+subprocess.run([sys.executable, __file__.replace('build_assets.py', 'langgen.py')], check=True)

@@ -36,12 +36,21 @@ public final class TCRegistry {
             () -> EntityType.Builder.<VehicleEntity>of(VehicleEntity::new, MobCategory.MISC).sized(1.9f, 1.5f).clientTrackingRange(10)
                     .updateInterval(1).fireImmune().build("vehicle"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.trafficcraft.npc.PedestrianEntity>> PEDESTRIAN = ENTITIES.register("pedestrian",
+            () -> EntityType.Builder.<com.trafficcraft.npc.PedestrianEntity>of(com.trafficcraft.npc.PedestrianEntity::new, MobCategory.CREATURE)
+                    .sized(0.6f, 1.8f).eyeHeight(1.62f).clientTrackingRange(8).build("pedestrian"));
+
     public static final Map<String, DeferredItem<VehicleItem>> VEHICLE_ITEMS = new LinkedHashMap<>();
     public static final DeferredItem<FuelCanItem> FUEL_CAN = ITEMS.register("fuel_canister", () -> new FuelCanItem(new Item.Properties().stacksTo(16)));
     public static final DeferredItem<com.trafficcraft.road.RoadToolItem> ROAD_TOOL = ITEMS.register("road_planner",
             () -> new com.trafficcraft.road.RoadToolItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<com.trafficcraft.station.FuelNozzleItem> FUEL_NOZZLE = ITEMS.register("fuel_nozzle",
             () -> new com.trafficcraft.station.FuelNozzleItem(new Item.Properties().stacksTo(1)));
+    public static final Map<String, DeferredItem<com.trafficcraft.world.KitItem>> KITS = new LinkedHashMap<>();
+    static {
+        for (String k : com.trafficcraft.world.Kits.KINDS)
+            KITS.put(k, ITEMS.register("kit_" + k, () -> new com.trafficcraft.world.KitItem(new Item.Properties().stacksTo(16), k)));
+    }
     public static final DeferredItem<Item> PASSPORT = ITEMS.registerSimpleItem("passport", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> INSPECTION_STAMP = ITEMS.registerSimpleItem("inspection_stamp", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> CAR_KEY = ITEMS.registerSimpleItem("car_key", new Item.Properties().stacksTo(1));

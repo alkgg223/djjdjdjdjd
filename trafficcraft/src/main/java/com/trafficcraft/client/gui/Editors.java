@@ -29,6 +29,7 @@ public final class Editors {
             case "edge" -> mc.setScreen(new EdgeScreen(d));
             case "sign" -> mc.setScreen(new SignScreen(d));
             case "lights" -> mc.setScreen(new LightsScreen(d));
+            case "workplace" -> mc.setScreen(new WorkplaceScreen(d));
             default -> { }
         }
     }
@@ -239,6 +240,66 @@ public final class Editors {
                 y += 22;
             }
             if (nodes.isEmpty()) g.drawCenteredString(font, Component.translatable("gui.trafficcraft.no_lights"), width / 2, 60, 0xA0A0A0);
+        }
+
+        @Override
+        public boolean isPauseScreen() {
+            return false;
+        }
+    }
+
+    /** Job menu at a cashier counter or border booth: take a role, and (owner) prices, till and fuel deliveries. */
+    static class WorkplaceScreen extends Screen {
+        final CompoundTag d;
+
+        WorkplaceScreen(CompoundTag d) {
+            super(Component.translatable("gui.trafficcraft.workplace." + d.getString("role")));
+            this.d = d;
+        }
+
+        void send(String action) {
+            CompoundTag t = new CompoundTag();
+            t.putLong("pos", d.getLong("pos"));
+            t.putString("role", d.getString("role"));
+            t.putString("action", action);
+            PacketDistributor.sendToServer(new RoadEditPayload("workplace", t));
+            onClose();
+        }
+
+        @Override
+        protected void init() {
+            int x = width / 2 - 100, y = height / 2 - 50;
+            boolean officer = d.getString("role").equals("officer");
+            if (officer) {
+                addRenderableWidget(Button.builder(Component.translatable("gui.trafficcraft.work_as", Component.translatable("role.trafficcraft.officer")), b -> send("officer")).bounds(x, y, 200, 20).build());
+            } else {
+                addRenderableWidget(Button.builder(Component.translatable("gui.trafficcraft.claim"), b -> send("claim")).bounds(x, y, 200, 20).build());
+                addRenderableWidget(Button.builder(Component.translatable("gui.trafficcraft.work_as", Component.translatable("role.trafficcraft.cashier")), b -> send("cashier")).bounds(x, y + 24, 98, 20).build());
+                addRenderableWidget(Button.builder(Component.translatable("gui.trafficcraft.work_as", Component.translatable("role.trafficcraft.attendant")), b -> send("attendant")).bounds(x + 102, y + 24, 98, 20).build());
+                addRenderableWidget(Button.builder(Component.literal("- ").append(Component.translatable("gui.trafficcraft.price")), b -> send("price_down")).bounds(x, y + 48, 64, 20).build());
+                addRenderableWidget(Button.builder(Component.literal("+ ").append(Component.translatable("gui.trafficcraft.price")), b -> send("price_up")).bounds(x + 68, y + 48, 64, 20).build());
+                addRenderableWidget(Button.builder(Component.translatable("gui.trafficcraft.collect"), b -> send("collect")).bounds(x + 136, y + 48, 64, 20).build());
+                addRenderableWidget(Button.builder(Component.translatable("gui.trafficcraft.order_fuel"), b -> send("order_fuel")).bounds(x, y + 72, 200, 20).build());
+            }
+            addRenderableWidget(Button.builder(Component.translatable("gui.trafficcraft.stop_work"), b -> send("stop")).bounds(x, y + 96, 98, 20).build());
+            addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose()).bounds(x + 102, y + 96, 98, 20).build());
+        }
+
+        @Override
+        public void render(GuiGraphics g, int mx, int my, float pt) {
+            super.render(g, mx, my, pt);
+            int cx = width / 2, y = height / 2 - 100;
+            g.drawCenteredString(font, title, cx, y, 0xFFFFFF);
+            if (!d.getString("role").equals("officer")) {
+                String owner = d.getString("owner");
+                g.drawCenteredString(font, Component.translatable("gui.trafficcraft.owner", owner.isEmpty() ? "-" : owner), cx, y + 14, 0xC0C0C0);
+                g.drawCenteredString(font, Component.translatable("gui.trafficcraft.station_info", String.format("%.2f", d.getFloat("price")),
+                        d.getInt("till"), Math.round(d.getFloat("stock"))), cx, y + 26, 0xC0C0C0);
+            } else {
+                g.drawCenteredString(font, Component.translatable("gui.trafficcraft.officer_help"), cx, y + 14, 0xC0C0C0);
+            }
+            String w = d.getString("worker");
+            if (!w.isEmpty()) g.drawCenteredString(font, Component.translatable("gui.trafficcraft.your_role", Component.translatable("role.trafficcraft." + w)), cx, y + 38, 0x80FF80);
         }
 
         @Override

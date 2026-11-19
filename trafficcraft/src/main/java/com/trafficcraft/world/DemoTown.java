@@ -231,7 +231,80 @@ public final class DemoTown {
         place("road_cone", -52, 4, Direction.NORTH);
         place("roadworks_light", -49, 4, Direction.NORTH);
         place("construction_sign", -52, 8, Direction.WEST);
+        pedestrians();
         net.changed();
+    }
+
+    void ped(String name, double x, double z, NodeType t) {
+        node(name, x, z, t);
+    }
+
+    void walk(String... chain) {
+        for (int i = 0; i + 1 < chain.length; i++) net.connect(ids.get(chain[i]), ids.get(chain[i + 1]), true);
+    }
+
+    /** Pedestrian network: sidewalks, the four signalised crossings at C, an unsignalised crossing of the side street, spawns, destinations, workers. */
+    void pedestrians() {
+        double sw = 7.35, sn = 4.85, cx = 8.6;
+        ped("pNWa", -cx, -sw, NodeType.PED);
+        ped("pSWa", -cx, sw, NodeType.PED);
+        ped("pNEa", cx, -sw, NodeType.PED);
+        ped("pSEa", cx, sw, NodeType.PED);
+        ped("pNWn", -sn, -cx, NodeType.PED);
+        ped("pNEn", sn, -cx, NodeType.PED);
+        ped("pSWs", -sn, cx, NodeType.PED);
+        ped("pSEs", sn, cx, NodeType.PED);
+        for (String k : new String[]{"pNWa", "pSWa", "pNEa", "pSEa", "pNWn", "pNEn", "pSWs", "pSEs"}) net.nodes.get(ids.get(k)).cfg.putBoolean("wait", true);
+        walk("pNWa", "pSWa");   // crossing west arm
+        walk("pNEa", "pSEa");   // crossing east arm
+        walk("pNWn", "pNEn");   // crossing north arm
+        walk("pSWs", "pSEs");   // crossing south arm
+        walk("pNWa", "pNWn");
+        walk("pNEa", "pNEn");
+        walk("pSWa", "pSWs");
+        walk("pSEa", "pSEs");
+        // west
+        ped("pW1", -30, -sw, NodeType.PED);
+        ped("spawnW", -60, -sw, NodeType.PED_SPAWN);
+        walk("pNWa", "pW1", "spawnW");
+        ped("pW2", -24, sw, NodeType.PED);
+        ped("pW3", -36, sw, NodeType.PED);
+        ped("busStop", -40, sw + 0.5, NodeType.PED_DEST);
+        ped("spawnSW", -60, sw, NodeType.PED_SPAWN);
+        walk("pSWa", "pW2", "pW3", "busStop", "spawnSW");
+        net.nodes.get(ids.get("busStop")).cfg.putString("name", "Bus stop");
+        net.nodes.get(ids.get("pW2")).cfg.putBoolean("wait", true);
+        net.nodes.get(ids.get("pW3")).cfg.putBoolean("wait", true);
+        // north
+        ped("pN1", -sn, -30, NodeType.PED);
+        ped("spawnN", -sn, -50, NodeType.PED_SPAWN);
+        walk("pNWn", "pN1", "spawnN");
+        ped("parkN", sn, -45, NodeType.PED_DEST);
+        walk("pNEn", "parkN");
+        // east: along the avenue then up the west side of the forecourt to the shop door
+        ped("pE1", 20.5, -sw, NodeType.PED);
+        ped("pE2", 20.5, -39, NodeType.PED);
+        ped("shop", 32, -39.5, NodeType.PED_DEST);
+        walk("pNEa", "pE1", "pE2", "shop");
+        net.nodes.get(ids.get("shop")).cfg.putString("name", "Fuel shop");
+        ped("shelter", 14, sw, NodeType.PED);
+        net.nodes.get(ids.get("shelter")).cfg.putBoolean("dest", true);
+        ped("eastEnd", 40, sw, NodeType.PED_DEST);
+        walk("pSEa", "shelter", "eastEnd");
+        // south towards the border
+        ped("southW", -sn, 25, NodeType.PED_DEST);
+        ped("southE", sn, 25, NodeType.PED_DEST);
+        walk("pSWs", "southW");
+        walk("pSEs", "southE");
+        for (String k : new String[]{"spawnW", "spawnSW", "spawnN"}) {
+            RoadNode n = net.nodes.get(ids.get(k));
+            n.cfg.putInt("max", 6);
+            n.cfg.putInt("interval", 7);
+        }
+        // workers
+        com.trafficcraft.npc.Workplaces.ensureWorker(level, at(30, 0, -46), "cashier");
+        com.trafficcraft.npc.Workplaces.ensureWorker(level, at(26, 0, -30), "attendant");
+        com.trafficcraft.npc.Workplaces.ensureWorker(level, at(-8, 0, 38), "officer");
     }
 
     BlockPos at(int x, int y, int z) {

@@ -367,6 +367,10 @@ public class VehicleEntity extends Entity {
             if (!level().isClientSide) com.trafficcraft.station.FuelStations.startRefuel(player, this, stack);
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
+        if (stack.is(TCRegistry.INSPECTION_STAMP.get())) {
+            if (!level().isClientSide) com.trafficcraft.npc.Workplaces.stamp(player, this);
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
         if (stack.getItem() instanceof DyeItem dye) {
             if (!level().isClientSide) {
                 int c = dye.getDyeColor().getTextureDiffuseColor() & 0xFFFFFF;
@@ -625,6 +629,7 @@ public class VehicleEntity extends Entity {
         setFlag(F_HORN, true);
         level().playSound(null, getX(), getY() + 0.8, getZ(), TCRegistry.sound("horn." + spec().horn, () -> "horn.car"), SoundSource.NEUTRAL,
                 spec().isHeavy() ? 3.0f : 2.2f, 0.97f + random.nextFloat() * 0.06f);
+        if (!level().isClientSide) for (var p : level().getEntitiesOfClass(com.trafficcraft.npc.PedestrianEntity.class, getBoundingBox().inflate(12))) p.brain.horn(this);
     }
 
     // ================================================================= client visuals
