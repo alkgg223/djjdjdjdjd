@@ -68,7 +68,7 @@ public class SkinBlock extends Block {
             // see-through along the direction the player looks (the window faces in and out of the fuselage)
             return defaultBlockState().setValue(FACING, ctx.getHorizontalDirection());
         }
-        if (!kind.shaped) return defaultBlockState();
+        if (kind == null || !kind.shaped) return defaultBlockState();
         Direction face = ctx.getClickedFace();
         boolean top = face == Direction.DOWN || (face != Direction.UP && ctx.getClickLocation().y - ctx.getClickedPos().getY() > 0.5);
         // the shaped side faces away from the player (the outside of the fuselage when building from inside)
@@ -77,7 +77,7 @@ public class SkinBlock extends Block {
 
     @Override
     protected VoxelShape getShape(BlockState s, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-        if (!kind.shaped) return Shapes.block();
+        if (kind == null || !kind.shaped) return Shapes.block();
         return shapes.get(s.getValue(FACING))[s.getValue(HALF) == Half.BOTTOM ? 1 : 0];
     }
 
@@ -93,7 +93,7 @@ public class SkinBlock extends Block {
 
     @Override
     protected boolean useShapeForLightOcclusion(BlockState s) {
-        return kind.shaped;
+        return kind != null && kind.shaped;
     }
 
     /** collision / outline boxes in the NORTH frame (outside = north = -z), pixels, rotated to the facing */
