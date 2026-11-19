@@ -755,7 +755,7 @@ public final class ClientAutoTest {
             case 905 -> { cmd("time set 18000"); server(v -> { v.controls.flaps = 0; v.controls.speedBrake = 0; v.controls.lights = v.controls.strobe = v.controls.beacon = v.controls.landingLights = true; });
                 free(-24, 5, -22, 0.5, 0, -2); }
             case 930 -> screenshot("a22_night_wing_lights");
-            case 933 -> { cmd("gamemode creative"); cmd("time set 6000"); mc.options.hideGui = false; }
+            case 933 -> { cmd("gamemode creative"); cmd("time set 6000"); cmd("vehicleworks passengers deplane"); mc.options.hideGui = false; }
             case 937 -> sit(-2, 1, -5);
             case 955 -> { cv = clientVehicle(); if (cv != null) mc.setScreen(new SeatScreen(cv)); }
             case 970 -> screenshot("a23_seat_video_ui");
