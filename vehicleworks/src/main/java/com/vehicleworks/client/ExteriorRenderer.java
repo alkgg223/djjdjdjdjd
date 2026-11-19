@@ -277,6 +277,14 @@ public final class ExteriorRenderer {
                 int col = !tail && r >= rings - 2 ? CockpitParts.scale(color, 0.92f) : color;
                 quad(vc(buf), pose, sp, P(k, f, pts[r][i]), P(k, f, pts[r][j]), P(k, f, pts[r + 1][j]), P(k, f, pts[r + 1][i]), col, light);
             }
+        if (tail && v.telemetry.busPowered) {
+            // white tail navigation light and strobe at the tip of the tail cone
+            float[] tip = P(k, f, new double[]{0, cy + tipOff * h * 0.5, -0.5 - len + 0.05});
+            LightFx.begin(ps);
+            double time = System.currentTimeMillis() / 1000.0;
+            CockpitRenderer.lamp(ps, buf, v.telemetry, 3, tip[0], tip[1], tip[2], 0, 0, time);
+            CockpitRenderer.lamp(ps, buf, v.telemetry, 5, tip[0], tip[1] + 0.05f, tip[2], 0, 0, time);
+        }
     }
 
     // ================================================================== airliner engine
@@ -324,13 +332,13 @@ public final class ExteriorRenderer {
         // pylon up to the wing
         if (py > 0.05) {
             double top = 0.5, bot = ay + 0.8 * R, w = Math.max(0.12, 0.11 * R);
-            double za = -0.3 * L, zb = 0.3 * L, zat = za + 0.25 * L;
+            double za = -0.3 * L, zb = 0.3 * L, zat = -0.08 * L, zbt = 0.5 * L; // top runs back under the wing box
             for (int side = -1; side <= 1; side += 2) {
                 double x = side * w;
-                quad(vc(buf), pose, sp, P(k, f, new double[]{x, bot, za}), P(k, f, new double[]{x, bot, zb}), P(k, f, new double[]{x, top, zb}), P(k, f, new double[]{x, top, zat}), 0xFFDDE0E4, light);
+                quad(vc(buf), pose, sp, P(k, f, new double[]{x, bot, za}), P(k, f, new double[]{x, bot, zb}), P(k, f, new double[]{x, top, zbt}), P(k, f, new double[]{x, top, zat}), 0xFFDDE0E4, light);
             }
             quad(vc(buf), pose, sp, P(k, f, new double[]{-w, bot, za}), P(k, f, new double[]{w, bot, za}), P(k, f, new double[]{w, top, zat}), P(k, f, new double[]{-w, top, zat}), EDGE, light);
-            quad(vc(buf), pose, sp, P(k, f, new double[]{-w, bot, zb}), P(k, f, new double[]{w, bot, zb}), P(k, f, new double[]{w, top, zb}), P(k, f, new double[]{-w, top, zb}), EDGE, light);
+            quad(vc(buf), pose, sp, P(k, f, new double[]{-w, bot, zb}), P(k, f, new double[]{w, bot, zb}), P(k, f, new double[]{w, top, zbt}), P(k, f, new double[]{-w, top, zbt}), EDGE, light);
         }
     }
 

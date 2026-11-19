@@ -35,10 +35,12 @@ public final class Keybinds {
     public static final KeyMapping ANNOUNCE = key("announce", GLFW.GLFW_KEY_K);
     /** AI first officer: seat him, switch his help off, dismiss him */
     public static final KeyMapping COPILOT = key("copilot", GLFW.GLFW_KEY_APOSTROPHE);
+    /** lock the camera to the aircraft: it looks along the nose and follows pitch, heading and bank */
+    public static final KeyMapping CAMERA_LOCK = key("camera_lock", GLFW.GLFW_KEY_COMMA);
     public static final KeyMapping FIRE_5 = key("fire_5", GLFW.GLFW_KEY_U);
     public static final KeyMapping FIRE_6 = key("fire_6", GLFW.GLFW_KEY_Y);
     public static final KeyMapping[] ALL = {YAW_LEFT, YAW_RIGHT, THROTTLE_UP, THROTTLE_DOWN, PITCH_UP, PITCH_DOWN, ENGINES, GEAR, FLAPS,
-            ARM, ASSIST, MOUSE_AIM, MENU, PARKING, BRAKE, AUTOPILOT, PANEL, VOICE, HUD_TOGGLE, HUD_MODE, FIRE_3, FIRE_4, FIRE_5, FIRE_6, ANNOUNCE, COPILOT};
+            ARM, ASSIST, MOUSE_AIM, MENU, PARKING, BRAKE, AUTOPILOT, PANEL, VOICE, HUD_TOGGLE, HUD_MODE, FIRE_3, FIRE_4, FIRE_5, FIRE_6, ANNOUNCE, COPILOT, CAMERA_LOCK};
 
     private Keybinds() {}
 

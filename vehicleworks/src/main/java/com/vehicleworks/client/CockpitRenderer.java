@@ -102,9 +102,11 @@ public final class CockpitRenderer {
             BlockState st = v.structure.get(k);
             if (VehicleBuilder.typeOf(st) != ComponentType.AIRCRAFT_LIGHT) continue;
             int bx = BlockPos.getX(k), by = BlockPos.getY(k), bz = BlockPos.getZ(k);
+            // mount the lamp on the neighbouring block it is attached to (below, above, then the sides)
+            float[] m = mount(v, k);
             if (housings) {
                 ps.pushPose();
-                ps.translate(bx, by, bz);
+                ps.translate(bx + m[0], by + m[1], bz + m[2]);
                 brd.renderSingleBlock(st, ps, buffers, light, OverlayTexture.NO_OVERLAY);
                 ps.popPose();
             }
@@ -113,8 +115,22 @@ public final class CockpitRenderer {
             if (type == 0) type = bx < 0 ? 1 : (bx > 0 ? 2 : 3);
             if (!begun) { LightFx.begin(ps); begun = true; }
             Direction lf = VehicleBuilder.facing(st);
-            lamp(ps, buffers, t, type, bx + 0.5f, by + 0.5f, bz + 0.5f, lf.getStepX(), lf.getStepZ(), time);
+            lamp(ps, buffers, t, type, bx + 0.5f + m[0], by + 0.5f + m[1], bz + 0.5f + m[2], lf.getStepX(), lf.getStepZ(), time);
         }
+    }
+
+    private static final Direction[] MOUNT_ORDER = {Direction.DOWN, Direction.UP, Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
+
+    /** offset that moves a lamp housing (5 px across, in the block centre) onto the face of the block it is attached to */
+    static float[] mount(VehicleEntity v, long k) {
+        for (Direction d : MOUNT_ORDER) {
+            long n = BlockPos.offset(k, d);
+            if (!v.structure.contains(n) || v.structure.get(n).isAir()) continue;
+            if (VehicleBuilder.typeOf(v.structure.get(n)) == ComponentType.AIRCRAFT_LIGHT) continue;
+            float o = d.getAxis() == Direction.Axis.Y ? 5.5f / 16f : 5.5f / 16f;
+            return new float[]{d.getStepX() * o, d.getStepY() * o, d.getStepZ() * o};
+        }
+        return new float[3];
     }
 
     /** one exterior lamp: 1 red / 2 green / 3 white navigation, 4 beacon, 5 strobe, 6 landing, 7 taxi, 8 runway turn-off, else cabin flood */

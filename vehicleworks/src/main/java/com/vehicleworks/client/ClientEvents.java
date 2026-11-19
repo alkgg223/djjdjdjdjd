@@ -60,6 +60,10 @@ public final class ClientEvents {
         int keys = 0;
         boolean ui = mc.screen != null;
         boolean passenger = v.isPassengerSeated(mc.player);
+        while (Keybinds.CAMERA_LOCK.consumeClick()) {
+            cameraLock = !cameraLock;
+            mc.player.displayClientMessage(net.minecraft.network.chat.Component.translatable(cameraLock ? "vehicleworks.msg.camera_lock_on" : "vehicleworks.msg.camera_lock_off"), true);
+        }
         if (v.isAttendantSeated(mc.player)) {
             // cabin crew: no flight controls; crew panel (X) and announcements (K)
             Payloads.toServer(new Payloads.Input(v.getId(), 0, mc.player.getYRot(), mc.player.getXRot()));
@@ -315,10 +319,34 @@ public final class ClientEvents {
         e.setSwingHand(action != 2);
     }
 
+    /** camera locked to the vehicle (toggled with the camera lock key while riding) */
+    public static boolean cameraLock;
+
     /** Roll the first-person camera with the aircraft. */
     public static void onCameraAngles(ViewportEvent.ComputeCameraAngles e) {
         VehicleEntity v = ridden();
         if (v == null) return;
+        if (cameraLock) {
+            // locked: look along the vehicle (seat direction) and follow its pitch, heading and bank; the mouse does not move the view
+            float partial = (float) e.getPartialTick();
+            var q = v.renderOrientation(partial, new org.joml.Quaterniond());
+            Long seat = v.seats.get(Minecraft.getInstance().player.getUUID());
+            net.minecraft.core.Direction sf = seat != null ? com.vehicleworks.vehicle.VehicleBuilder.facing(v.structure.get(seat)) : net.minecraft.core.Direction.NORTH;
+            if (sf.getAxis() == net.minecraft.core.Direction.Axis.Y) sf = net.minecraft.core.Direction.NORTH;
+            var fw = q.transform(new org.joml.Vector3d(sf.getStepX(), 0, sf.getStepZ()));
+            var up = q.transform(new org.joml.Vector3d(0, 1, 0));
+            float yaw = (float) Math.toDegrees(Math.atan2(-fw.x, fw.z));
+            float pitch = (float) -Math.toDegrees(Math.asin(Math.max(-1, Math.min(1, fw.y))));
+            net.minecraft.core.Direction sr = sf.getClockWise();
+            var right = q.transform(new org.joml.Vector3d(sr.getStepX(), 0, sr.getStepZ()));
+            double roll = Math.toDegrees(Math.atan2(-right.y, up.y));
+            var p = Minecraft.getInstance().player;
+            p.setYRot(yaw); p.yRotO = yaw; p.setXRot(pitch); p.xRotO = pitch; p.setYHeadRot(yaw);
+            e.setYaw(yaw);
+            e.setPitch(pitch);
+            if (Minecraft.getInstance().options.getCameraType() == CameraType.FIRST_PERSON) e.setRoll((float) roll);
+            return;
+        }
         float[] sh = GroundFx.offsets(v);
         if (sh[0] != 0 || sh[1] != 0 || sh[2] != 0) {
             e.setPitch(e.getPitch() + sh[0]);

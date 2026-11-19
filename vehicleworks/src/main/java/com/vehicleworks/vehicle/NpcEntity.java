@@ -21,6 +21,12 @@ public class NpcEntity extends PathfinderMob {
     private static final EntityDataAccessor<Integer> ROLE = SynchedEntityData.defineId(NpcEntity.class, EntityDataSerializers.INT);
     private int unseated;
 
+    /** sit in a seat at the same height as a player (vanilla players ride 0.6 m lower than mobs) */
+    @Override
+    public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
+        return new net.minecraft.world.phys.Vec3(0, 0.6, 0);
+    }
+
     public NpcEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
         setNoAi(true);

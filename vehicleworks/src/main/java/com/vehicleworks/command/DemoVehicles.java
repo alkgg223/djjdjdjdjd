@@ -355,14 +355,14 @@ public final class DemoVehicles {
         b.c(0, -1, 2, ComponentType.FUEL_PUMP, Direction.NORTH);
         b.c(0, -1, 4, ComponentType.HYDRAULIC_PUMP, Direction.NORTH);
         b.c(0, -1, 6, ComponentType.ENGINE_STARTER, Direction.NORTH);
-        b.c(6, -1, 1, ComponentType.REFUEL_PORT, Direction.EAST);
+        b.c(4, 0, 3, ComponentType.REFUEL_PORT, Direction.EAST); // refuel panel in the lower fuselage under the right wing root
         // ---- one-block wings: each wing half is a single Wing Assembly (flaps, ailerons, slats, spoilers, sharklet and lights built in)
         for (int side = 0; side <= 1; side++) {
             int sd = side;
             b.c(sd == 0 ? -5 : 5, 0, -1, ComponentType.WING_ASSEMBLY, Direction.NORTH, c -> { c.putInt("side", sd); c.putDouble("span", 13); c.putDouble("root_chord", 7);
                 c.putDouble("tip_chord", 2); c.putDouble("sweep", 25); c.putDouble("dihedral", 5); c.putDouble("incidence", 3); c.putInt("airfoil", 4); c.putInt("winglet", 1); });
             // under-wing engine with nacelle, fan and pylon
-            b.c(sd == 0 ? -9 : 9, 0, -2, ComponentType.AIRLINER_ENGINE, Direction.NORTH, c -> { c.putDouble("power_scale", 4.5); c.putDouble("diameter", 2.4);
+            b.c(sd == 0 ? -9 : 9, 0, -1, ComponentType.AIRLINER_ENGINE, Direction.NORTH, c -> { c.putDouble("power_scale", 4.5); c.putDouble("diameter", 2.4);
                 c.putDouble("length", 4.2); c.putDouble("pylon", 1.9); });
             // horizontal stabiliser with elevator
             b.c(sd == 0 ? -5 : 5, 2, 15, ComponentType.WING_ASSEMBLY, Direction.NORTH, c -> { c.putInt("side", sd); c.putInt("kind", 1); c.putDouble("span", 5.5);
@@ -375,8 +375,7 @@ public final class DemoVehicles {
         // ---- lights on the fuselage: beacon, tail navigation / strobe, taxi light on the nose gear
         b.light(0, 5, 0, 4, Direction.NORTH);
         b.light(0, -2, 6, 4, Direction.NORTH);
-        b.light(0, 3, 22, 3, Direction.SOUTH);
-        b.light(0, -1, -13, 7, Direction.NORTH);
+        b.light(0, -2, -13, 7, Direction.NORTH); // taxi light on the nose gear, under the belly
         // ---- landing gear
         b.c(0, -2, -12, ComponentType.HEAVY_LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 1.6));
         b.c(-3, -2, 2, ComponentType.HEAVY_LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 1.6));

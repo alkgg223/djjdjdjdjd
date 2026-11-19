@@ -521,6 +521,9 @@ for k, en, ar in (('skin_panel', 'Fuselage Skin Panel', 'لوح هيكل الط�
                   ('skin_curve', 'Fuselage Curve (rounded corner)', 'زاوية هيكل منحنية'), ('skin_bevel_wall', 'Fuselage Bevel (wall)', 'حافة مائلة للجدار'),
                   ('skin_bevel_roof', 'Fuselage Bevel (roof / belly)', 'حافة مائلة للسقف والبطن'), ('skin_slope', 'Fuselage Slope (45°)', 'منحدر الهيكل (45°)')):
     t('block.vehicleworks.' + k, en, ar)
+t('key.vehicleworks.camera_lock', 'Lock camera to the aircraft', 'قفل الكاميرا على الطائرة')
+t('vehicleworks.msg.camera_lock_on', 'Camera locked to the aircraft', 'الكاميرا مقفولة على الطائرة')
+t('vehicleworks.msg.camera_lock_off', 'Camera free', 'الكاميرا حرة')
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):
