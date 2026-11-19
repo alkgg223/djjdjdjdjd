@@ -183,31 +183,36 @@ public final class CabinRenderer {
         int top = 2;
         for (int dy = 1; dy <= 4; dy++) { long up = BlockPos.offset(k, 0, dy, 0); if (v.structure.contains(up) && !v.structure.get(up).isAir()) { top = dy; break; } }
         if (top < 2) return;
-        float y1 = top - 0.02f, y0 = y1 - 0.62f;
-        Box.cuboid(ps, S(buf), shell, -0.5f, y0, -0.5f, 0.5f, y1, 0.5f, light, 0xFFEDEAE2);
-        // which side is the aisle / the window
-        boolean[] aisle = new boolean[2], window = new boolean[2];
+        float y1 = top - 0.02f;
+        // which side is the aisle / the window / the fuselage wall
+        boolean[] aisle = new boolean[2], window = new boolean[2], wall = new boolean[2];
         for (int i = 0; i < 2; i++) {
             int sd = i == 0 ? -1 : 1;
             long n = BlockPos.offset(k, right.getStepX() * sd, 0, right.getStepZ() * sd);
             aisle[i] = !v.structure.contains(n) || v.structure.get(n).isAir();
+            wall[i] = !aisle[i] && VehicleBuilder.typeOf(v.structure.get(n)) == null;
             long w = BlockPos.offset(k, right.getStepX() * sd, 1, right.getStepZ() * sd);
             window[i] = v.structure.contains(w) && v.structure.get(w).getBlock() instanceof net.minecraft.world.level.block.TransparentBlock;
         }
-        for (int i = 0; i < 2; i++) {
-            if (!aisle[i]) continue;
-            float x = i == 0 ? -0.5f : 0.5f, sx = i == 0 ? -1 : 1;
-            Box.cuboid(ps, S(buf), shell, x - sx * 0.02f, y0 + 0.05f, -0.48f, x + sx * 0.005f, y1 - 0.04f, 0.48f, light, 0xFFE2DED4);         // bin door
-            Box.cuboid(ps, S(buf), metal, x + sx * 0.005f, y0 + 0.08f, -0.08f, x + sx * 0.02f, y0 + 0.14f, 0.08f, light, 0xFFB8BCC0);        // latch
-            // ceiling light line between the bin and the ceiling, toward the aisle
+        // overhead bins run along the fuselage walls only (above the window seats), never over the middle of the cabin
+        int wi = wall[0] ? 0 : (wall[1] ? 1 : -1);
+        float y0 = y1;
+        if (wi >= 0) {
+            float sx = wi == 0 ? -1 : 1, outer = sx * 0.5f, inner = sx * -0.38f, bh = 0.5f;
+            y0 = y1 - bh;
+            float lo = Math.min(outer, inner), hi = Math.max(outer, inner);
+            Box.cuboid(ps, S(buf), shell, lo, y0, -0.5f, hi, y1, 0.5f, light, 0xFFEDEAE2);                                                   // bin body against the wall
+            Box.cuboid(ps, S(buf), shell, inner - sx * 0.02f, y0 + 0.04f, -0.48f, inner + sx * 0.005f, y1 - 0.04f, 0.48f, light, 0xFFE2DED4); // bin door toward the aisle
+            Box.cuboid(ps, S(buf), metal, inner - sx * 0.03f, y0 + 0.06f, -0.08f, inner - sx * 0.015f, y0 + 0.12f, 0.08f, light, 0xFFB8BCC0); // latch
+            // ceiling light line along the top edge of the bin, lighting the cabin ceiling
             if (cabinLights > 0 && power) {
                 int col = cabinLights == 3 ? 0xFF3050C0 : (cabinLights == 1 ? 0xFFA08060 : 0xFFFFF2E0);
-                Box.cuboid(ps, S(buf), white, x + sx * 0.005f, y1 - 0.03f, -0.5f, x + sx * 0.06f, y1 - 0.01f, 0.5f, FULL, col);
+                Box.cuboid(ps, S(buf), white, inner - sx * 0.06f, y1 - 0.03f, -0.5f, inner - sx * 0.005f, y1 - 0.01f, 0.5f, FULL, col);
                 LightFx.begin(ps);
-                LightFx.sprite(ps, buf, LightFx.GLOW, x + sx * 0.06f, y1 - 0.04f, 0, 0.35f, col & 0xFFFFFF, cabinLights == 2 ? 0.12f : 0.07f);
+                LightFx.sprite(ps, buf, LightFx.GLOW, inner - sx * 0.06f, y1 - 0.04f, 0, 0.35f, col & 0xFFFFFF, cabinLights == 2 ? 0.12f : 0.07f);
             }
         }
-        // passenger service unit under the bin
+        // passenger service unit: under the bin at the window, in the ceiling panel elsewhere
         float py = y0 - 0.005f;
         Box.cuboid(ps, S(buf), shell, -0.45f, py - 0.03f, -0.2f, 0.45f, y0, 0.2f, light, 0xFFD8D4CA);
         int lvl = power ? CabinSeat.light(s) : 0;
