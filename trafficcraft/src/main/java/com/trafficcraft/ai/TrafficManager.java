@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -84,7 +85,19 @@ public final class TrafficManager {
         if ((v.tickCount + v.getId()) % interval != 0) return d.last;
         try {
             VehicleInput in = d.compute(v, level, net, tm);
-            if (d.state == TrafficDriver.State.DESPAWN) remove(v, tm);
+            if (d.state == TrafficDriver.State.DESPAWN) {
+                if (!v.getPassengers().isEmpty()) {
+                    // end of the route with someone on board: pull over and let them out
+                    v.setFlag(VehicleEntity.F_HAZARD, true);
+                    if (!d.lastStopTold) {
+                        d.lastStopTold = true;
+                        for (var p : v.getPassengers()) if (p instanceof net.minecraft.world.entity.player.Player pl)
+                            pl.displayClientMessage(Component.translatable("msg.trafficcraft.last_stop"), true);
+                    }
+                    return VehicleInput.PARK;
+                }
+                remove(v, tm);
+            }
             return in;
         } catch (RuntimeException ex) {
             TrafficCraft.LOG.warn("AI error for vehicle {}: {}", v.getId(), ex.toString());

@@ -20,8 +20,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 /** Server-side road editing: Road Planner clicks and editor screen operations. */
 public final class RoadEditing {
-    public static final int M_ROAD = 0, M_PATH = 1, M_EDIT = 2, M_DELETE = 3, M_CURVE = 4, M_ROUNDABOUT = 5, M_LIGHTS = 6, M_NODE = 7;
-    public static final String[] MODE_NAMES = {"road", "path", "edit", "delete", "curve", "roundabout", "lights", "node"};
+    public static final int M_ROAD = 0, M_PATH = 1, M_EDIT = 2, M_DELETE = 3, M_CURVE = 4, M_ROUNDABOUT = 5, M_LIGHTS = 6, M_NODE = 7, M_TURN_L = 8, M_TURN_R = 9, M_T = 10, M_CROSS = 11;
+    public static final String[] MODE_NAMES = {"road", "path", "edit", "delete", "curve", "roundabout", "lights", "node", "turn_left", "turn_right", "t_junction", "crossroads"};
     private static final Map<UUID, Integer> SELECTED = new HashMap<>();
     private static final Map<UUID, Integer> CURVE_EDGE = new HashMap<>();
 
@@ -117,6 +117,13 @@ public final class RoadEditing {
                     CURVE_EDGE.remove(p.getUUID());
                     if (tool.getBoolean("pave") || !tool.contains("pave")) RoadPaver.paveEdge(level, net, e, tool);
                     msg(p, "msg.trafficcraft.curve_set");
+                }
+            }
+            case M_TURN_L, M_TURN_R, M_T, M_CROSS -> {
+                int kind = mode - M_TURN_L;
+                if (RoadPieces.build(p, pos, kind, tool)) {
+                    SELECTED.remove(p.getUUID());
+                    msg(p, "msg.trafficcraft.piece_created", Component.translatable("mode.trafficcraft." + MODE_NAMES[mode]));
                 }
             }
             case M_ROUNDABOUT -> {

@@ -53,6 +53,16 @@ public final class ServerTest {
         // location kits next to the avenue (gas station and parking lot facing north, a bus stop)
         com.trafficcraft.world.Kits.place(l, origin.offset(-52, -1, -16), net.minecraft.core.Direction.NORTH, "gas_station", null);
         com.trafficcraft.world.Kits.place(l, origin.offset(-22, -1, -16), net.minecraft.core.Direction.NORTH, "parking", null);
+        // road pieces south-east of the centre: a crossroads joined to the avenue, then a sharp turn from its west arm
+        net.minecraft.nbt.CompoundTag tool = com.trafficcraft.road.RoadToolItem.settings(net.minecraft.world.item.ItemStack.EMPTY);
+        tool.putFloat("width", 7);
+        tool.putInt("sidewalk", 2);
+        tool.putInt("armLength", 35);
+        com.trafficcraft.road.RoadPieces.build(l, Vec3.atBottomCenterOf(origin).add(45, 0, 35), net.minecraft.core.Direction.NORTH, com.trafficcraft.road.RoadPieces.CROSSROADS, tool);
+        tool.putInt("armLength", 16);
+        com.trafficcraft.road.RoadPieces.build(l, Vec3.atBottomCenterOf(origin).add(45, 0, 70), net.minecraft.core.Direction.SOUTH, com.trafficcraft.road.RoadPieces.TURN_RIGHT, tool);
+        com.trafficcraft.road.RoadPieces.build(l, Vec3.atBottomCenterOf(origin).add(80, 0, 35), net.minecraft.core.Direction.EAST, com.trafficcraft.road.RoadPieces.TURN_RIGHT, tool);
+        com.trafficcraft.road.RoadPieces.build(l, Vec3.atBottomCenterOf(origin).add(10, 0, 35), net.minecraft.core.Direction.WEST, com.trafficcraft.road.RoadPieces.T_JUNCTION, tool);
         com.trafficcraft.world.Kits.place(l, origin.offset(60, -1, -9), net.minecraft.core.Direction.NORTH, "bus_stop", null);
         log(String.format("demo town built in %.0f ms: %d nodes, %d edges", (System.nanoTime() - t0) / 1e6, RoadData.get(l).nodes.size(), RoadData.get(l).edges.size()));
         TrafficManager.observer = Vec3.atCenterOf(origin).add(20, 0, 0);

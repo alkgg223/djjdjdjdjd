@@ -403,5 +403,17 @@
  "trafficcraft.configuration.aiTickNear": "فترة تحديث الذكاء القريب",
  "trafficcraft.configuration.aiTickFar": "فترة تحديث الذكاء البعيد",
  "trafficcraft.configuration.section.trafficcraft.common.toml": "إعدادات ترافيك كرافت",
- "trafficcraft.configuration.section.trafficcraft.common.toml.title": "إعدادات ترافيك كرافت"
+ "trafficcraft.configuration.section.trafficcraft.common.toml.title": "إعدادات ترافيك كرافت",
+ "msg.trafficcraft.piece_created": "تم بناء %s",
+ "msg.trafficcraft.passenger": "أنت راكب - السائق يأخذك معه. انحنِ للنزول.",
+ "msg.trafficcraft.last_stop": "المحطة الأخيرة - انزل من فضلك (انحناء)",
+ "mode.trafficcraft.turn_left": "لفّة حادة لليسار",
+ "mode.trafficcraft.turn_right": "لفّة حادة لليمين",
+ "mode.trafficcraft.t_junction": "تقاطع ثلاثي (T)",
+ "mode.trafficcraft.crossroads": "تقاطع رباعي",
+ "opt.trafficcraft.turn_left": "لفّة حادة لليسار",
+ "opt.trafficcraft.turn_right": "لفّة حادة لليمين",
+ "opt.trafficcraft.t_junction": "تقاطع ثلاثي (T)",
+ "opt.trafficcraft.crossroads": "تقاطع رباعي",
+ "prop.trafficcraft.armLength": "طول الأذرع (اللفّات والتقاطعات)"
 }

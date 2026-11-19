@@ -30,8 +30,13 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
     private static final float[] MATCAP = {64 / 256f, 128 / 256f, 128 / 256f, 192 / 256f};
     private static final float WHITE_U = 2 / 256f, WHITE_V = 2 / 256f;
 
+    private final net.minecraft.client.model.PlayerModel<net.minecraft.world.entity.LivingEntity> driverWide, driverSlim;
+    private static final ResourceLocation OFFICER_SKIN = TrafficCraft.id("textures/entity/ped/officer.png");
+
     public VehicleRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
+        driverWide = new net.minecraft.client.model.PlayerModel<>(ctx.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER), false);
+        driverSlim = new net.minecraft.client.model.PlayerModel<>(ctx.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER_SLIM), true);
         this.shadowRadius = 1.1f;
         this.shadowStrength = 0.6f;
     }
@@ -77,10 +82,63 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             drawGpu(v, mesh, sh, base, bodyPose, light, lamps, lod, inside, ps);
         }
         if (dist < 40 || inside) overlays(v, s, ps, buffers, light, lamps, dist, inside);
+        if (v.hasAiDriver() && (dist < 64 || inside) && !s.seats.isEmpty()) drawDriver(v, s, ps, buffers, light);
         ps.popPose();
         if (TCConfig.HEADLIGHT_BEAMS.get() && dist < 96) beams(v, s, ps, buffers, lamps);
         ps.popPose();
         super.render(v, yaw, pt, ps, buffers, light);
+    }
+
+    // ---------------------------------------------------------------------------------------- AI chauffeur
+    /** The AI driver: a seated player-shaped NPC with a vanilla default skin (police cars: an officer), hands following the wheel. */
+    private void drawDriver(VehicleEntity v, VehicleSpec s, PoseStack ps, MultiBufferSource buf, int light) {
+        ResourceLocation tex;
+        boolean slim;
+        if (s.siren) {
+            tex = OFFICER_SKIN;
+            slim = false;
+        } else {
+            net.minecraft.client.resources.PlayerSkin skin = net.minecraft.client.resources.DefaultPlayerSkin.get(v.getUUID());
+            tex = skin.texture();
+            slim = skin.model() == net.minecraft.client.resources.PlayerSkin.Model.SLIM;
+        }
+        var m = slim ? driverSlim : driverWide;
+        for (var part : new net.minecraft.client.model.geom.ModelPart[]{m.head, m.body, m.rightArm, m.leftArm, m.rightLeg, m.leftLeg}) part.resetPose();
+        float k = Mth.clamp(v.steerVis / 30f, -1, 1);
+        float t = v.tickCount * 0.05f + v.getId();
+        // hands on the wheel, turning with it
+        m.rightArm.xRot = -1.22f - k * 0.38f;
+        m.leftArm.xRot = -1.22f + k * 0.38f;
+        m.rightArm.yRot = -0.32f;
+        m.leftArm.yRot = 0.32f;
+        m.rightArm.zRot = 0.05f;
+        m.leftArm.zRot = -0.05f;
+        // seated legs
+        m.rightLeg.xRot = -1.4137f;
+        m.rightLeg.yRot = 0.12f;
+        m.leftLeg.xRot = -1.4137f;
+        m.leftLeg.yRot = -0.12f;
+        // looks into the turn, glances around now and then
+        m.head.yRot = -k * 0.45f + Mth.sin(t * 0.37f) * Mth.sin(t * 0.11f) * 0.25f;
+        m.head.xRot = 0.05f;
+        m.hat.copyFrom(m.head);
+        m.jacket.copyFrom(m.body);
+        m.rightSleeve.copyFrom(m.rightArm);
+        m.leftSleeve.copyFrom(m.leftArm);
+        m.rightPants.copyFrom(m.rightLeg);
+        m.leftPants.copyFrom(m.leftLeg);
+        m.young = false;
+        m.riding = true;
+        var seat = s.seats.get(0);
+        float sc = TCConfig.SEATED_SCALE.get().floatValue();
+        ps.pushPose();
+        ps.translate(seat.x, seat.y - 0.6f * sc, seat.z);
+        ps.scale(sc, sc, sc);
+        ps.mulPose(Axis.YP.rotationDegrees(180));
+        ps.scale(-1, -1, 1);
+        ps.translate(0, -1.501f, 0);
+        m.renderToBuffer(ps, buf.getBuffer(RenderType.entityCutoutNoCull(tex)), light, OverlayTexture.NO_OVERLAY);
+        ps.popPose();
     }
 
     // ---------------------------------------------------------------------------------------- GPU path
@@ -189,7 +247,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
                     b = (c & 255) / 255f;
                     gloss = 0.32f + 0.25f * (1 - Math.max(r, Math.max(gg, b)));
                 }
-                case VehicleMesh.GLASS -> gloss = 0.55f;
+                case VehicleMesh.GLASS -> gloss = 0.18f;
                 case VehicleMesh.SOLID -> gloss = 0.0f;
                 case VehicleMesh.SCREEN -> {
                     RenderSystem.setShaderTexture(0, DASH);

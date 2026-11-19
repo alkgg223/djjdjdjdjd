@@ -57,7 +57,7 @@ public final class AutoTest {
             sp.onUpdateAbilities();
             mc.options.hideGui = true;
         });
-        int[] at = {700, 760, 820, 880, 940, 1000, 1060, 1120, 1460, 1580, 1640};
+        int[] at = {700, 760, 820, 880, 940, 1000, 1060, 1120, 1700, 1820, 1880};
         if (tt == 640) view(mc, -14, 26, 24, 150, 50);
         if (tt == at[0]) shot(mc, "t01_crossroads.png");
         if (tt == at[0] + 5) view(mc, -26, 18, 18, -150, 40);
@@ -84,7 +84,32 @@ public final class AutoTest {
         if (tt == 1360) shot(mc, "t13_officer.png");
         if (tt == 1365) view(mc, -36, 22, 6, 160, 40);
         if (tt == 1400) shot(mc, "t14_kits.png");
-        if (tt == 1405) server.execute(() -> server.overworld().setDayTime(18000));
+        if (tt == 1405) view(mc, 55, 45, 100, 170, 50);
+        if (tt == 1440) shot(mc, "t15_road_pieces.png");
+        if (tt == 1445) server.execute(() -> closeUp(server, false));
+        if (tt == 1470) shot(mc, "t16_ai_driver.png");
+        if (tt == 1475) server.execute(() -> closeUp(server, true));
+        if (tt == 1500) mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+        if (tt == 1530) {
+            if (mc.player.getVehicle() instanceof VehicleEntity rv) {
+                mc.player.setYRot(rv.getYRot() - 55);
+                mc.player.setXRot(12);
+                log("riding " + rv.getModel() + " seat=" + rv.seatOf(mc.player) + " mode=" + rv.getMode());
+            } else log("not riding");
+        }
+        if (tt == 1540) shot(mc, "t17_passenger_view.png");
+        if (tt == 1545) mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+        if (tt == 1590) shot(mc, "t18_riding_third_person.png");
+        if (tt == 1600) {
+            if (mc.player.getVehicle() instanceof VehicleEntity rv) log(String.format("after 100 ticks riding: speed=%.1f km/h state=%s", rv.visSpeed() * 3.6, rv.getMode()));
+            mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            server.execute(() -> {
+                ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+                sp.stopRiding();
+                sp.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+            });
+        }
+        if (tt == 1640) server.execute(() -> server.overworld().setDayTime(18000));
         if (tt == at[8] - 20) view(mc, -14, 22, 24, 150, 40);
         if (tt == at[8]) shot(mc, "t09_night_crossroads.png");
         if (tt == at[9]) {
@@ -99,6 +124,44 @@ public final class AutoTest {
         }
         if (tt == at[10]) mc.stop();
     }
+    /** Camera beside a waiting AI car (or, with ride, put the player into it as a passenger). */
+    static void closeUp(net.minecraft.server.MinecraftServer server, boolean ride) {
+        ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+        VehicleEntity best = null;
+        double bd = 1e9;
+        for (var en : server.overworld().getAllEntities()) {
+            if (!(en instanceof VehicleEntity v) || v.getMode() != VehicleEntity.MODE_AI || v.spec().seats.size() < 2) continue;
+            double d = v.position().distanceTo(new net.minecraft.world.phys.Vec3(-10, gy, 0)) + (Math.abs(v.speed) < 0.5f ? 0 : 40) + (v.driver != null && v.driver.state == com.trafficcraft.ai.TrafficDriver.State.DRIVE ? 0 : 200);
+            if (d < bd) {
+                bd = d;
+                best = v;
+            }
+        }
+        if (best == null) {
+            log("closeUp: no AI vehicle");
+            return;
+        }
+        if (ride) {
+            sp.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            sp.getAbilities().flying = false;
+            sp.onUpdateAbilities();
+            // stand at the right front door so the nearest free seat is the front passenger seat
+            var seat = best.spec().seats.get(1);
+            var w = best.position().add(VehicleEntity.toWorldOffset(seat.x * 1.8, 0, seat.z, best.getYRot()));
+            sp.teleportTo(sp.serverLevel(), w.x, best.getY(), w.z, best.getYRot(), 0);
+            boolean ok = sp.startRiding(best);
+            log("ride " + best.getModel() + " ok=" + ok);
+            return;
+        }
+        var side = VehicleEntity.toWorldOffset(Math.signum(best.spec().seats.get(0).x) * 2.4, 0, best.spec().seats.get(0).z + 0.9, best.getYRot());
+        var cam = best.position().add(side).add(0, 1.55, 0);
+        var to = best.position().add(VehicleEntity.toWorldOffset(best.spec().seats.get(0).x, 0, best.spec().seats.get(0).z, best.getYRot())).add(0, 0.9, 0).subtract(cam);
+        float yaw = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
+        float pitch = (float) -Math.toDegrees(Math.atan2(to.y, Math.hypot(to.x, to.z)));
+        sp.teleportTo(sp.serverLevel(), cam.x, cam.y, cam.z, yaw, pitch);
+        log("closeUp " + best.getModel() + " " + best.driver.debug());
+    }
+
     static int t = -1;
     static VehicleInput input;
     static final List<String> log = new ArrayList<>();

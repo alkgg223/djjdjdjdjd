@@ -70,6 +70,8 @@ public class VehicleEntity extends Entity {
     private static final EntityDataAccessor<Integer> DOOR_R = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<String> PLATE = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> MODE = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);
+    /** passenger entity id -> seat index */
+    private static final EntityDataAccessor<net.minecraft.nbt.CompoundTag> SEATS = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.COMPOUND_TAG);
 
     private static final ResourceLocation SEATED_SCALE_ID = TrafficCraft.id("seated_scale");
 
@@ -132,6 +134,7 @@ public class VehicleEntity extends Entity {
         b.define(DOOR_R, -1000);
         b.define(PLATE, "TC 0000");
         b.define(MODE, MODE_FREE);
+        b.define(SEATS, new net.minecraft.nbt.CompoundTag());
     }
 
     @Override
@@ -241,19 +244,54 @@ public class VehicleEntity extends Entity {
     @Override
     public LivingEntity getControllingPassenger() {
         if (getMode() == MODE_AI) return null;
-        Entity e = getFirstPassenger();
-        return e instanceof Player p ? p : null;
+        for (Entity e : getPassengers()) if (e instanceof Player p && seatOf(p) == 0) return p;
+        return null;
     }
 
     @Override
     protected boolean canAddPassenger(Entity e) {
-        return getPassengers().size() < spec().seats.size();
+        return freeSeat(e) >= 0;
+    }
+
+    /** True when an AI chauffeur sits in seat 0 (players ride in the other seats). */
+    public boolean hasAiDriver() {
+        return getMode() == MODE_AI;
+    }
+
+    /** Seat used by a passenger (synced map, falling back to boarding order). */
+    public int seatOf(Entity p) {
+        net.minecraft.nbt.CompoundTag m = entityData.get(SEATS);
+        String k = Integer.toString(p.getId());
+        if (m.contains(k)) return Math.min(m.getInt(k), spec().seats.size() - 1);
+        int idx = Math.max(0, getPassengers().indexOf(p)) + (hasAiDriver() ? 1 : 0);
+        return Math.min(idx, spec().seats.size() - 1);
+    }
+
+    /** Free seat for a boarding entity: the driver seat first (unless an AI drives), otherwise the free seat nearest to it. */
+    int freeSeat(Entity e) {
+        int n = spec().seats.size();
+        boolean[] used = new boolean[n];
+        if (hasAiDriver()) used[0] = true;
+        for (Entity p : getPassengers()) if (p != e) used[seatOf(p)] = true;
+        if (!used[0]) return 0;
+        int best = -1;
+        double bd = Double.MAX_VALUE;
+        for (int i = 0; i < n; i++) {
+            if (used[i]) continue;
+            Vec3 sp = spec().seats.get(i);
+            Vec3 w = position().add(toWorldOffset(sp.x, sp.y, sp.z, getYRot()));
+            double d = w.distanceToSqr(e.position());
+            if (d < bd) {
+                bd = d;
+                best = i;
+            }
+        }
+        return best;
     }
 
     @Override
     protected Vec3 getPassengerAttachmentPoint(Entity passenger, EntityDimensions dims, float partial) {
-        int idx = Math.max(0, getPassengers().indexOf(passenger));
-        Vec3 s = spec().seats.get(Math.min(idx, spec().seats.size() - 1));
+        Vec3 s = spec().seats.get(seatOf(passenger));
         return toWorldOffset(s.x, s.y, s.z, getYRot());
     }
 
@@ -293,8 +331,14 @@ public class VehicleEntity extends Entity {
 
     @Override
     protected void addPassenger(Entity p) {
+        int seat = freeSeat(p);
         super.addPassenger(p);
-        int idx = getPassengers().indexOf(p);
+        if (!level().isClientSide) {
+            net.minecraft.nbt.CompoundTag m = entityData.get(SEATS).copy();
+            m.putInt(Integer.toString(p.getId()), Math.max(0, seat));
+            entityData.set(SEATS, m);
+        }
+        int idx = seatOf(p);
         boolean left = spec().seats.get(Math.min(Math.max(idx, 0), spec().seats.size() - 1)).x > 0;
         p.setYRot(getYRot());
         p.yRotO = getYRot();
@@ -309,13 +353,19 @@ public class VehicleEntity extends Entity {
             entityData.set(left ? DOOR_L : DOOR_R, tickCount);
             level().playSound(null, getX(), getY(), getZ(), TCRegistry.snd("misc.door_open"), SoundSource.NEUTRAL, 0.8f, 1.0f);
             if (p instanceof Player && idx == 0 && getMode() != MODE_AI) setMode(MODE_PLAYER);
+            if (p instanceof Player pl && getMode() == MODE_AI) pl.displayClientMessage(Component.translatable("msg.trafficcraft.passenger"), true);
         }
     }
 
     @Override
     protected void removePassenger(Entity p) {
-        int idx = getPassengers().indexOf(p);
+        int idx = seatOf(p);
         super.removePassenger(p);
+        if (!level().isClientSide) {
+            net.minecraft.nbt.CompoundTag m = entityData.get(SEATS).copy();
+            m.remove(Integer.toString(p.getId()));
+            entityData.set(SEATS, m);
+        }
         if (p instanceof LivingEntity le) {
             var inst = le.getAttribute(Attributes.SCALE);
             if (inst != null) inst.removeModifier(SEATED_SCALE_ID);
@@ -334,8 +384,7 @@ public class VehicleEntity extends Entity {
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
-        int idx = Math.max(0, getPassengers().indexOf(passenger));
-        Vec3 seat = spec().seats.get(Math.min(idx, spec().seats.size() - 1));
+        Vec3 seat = spec().seats.get(seatOf(passenger));
         for (int attempt = 0; attempt < 2; attempt++) {
             double side = (seat.x > 0) == (attempt == 0) ? 1 : -1;
             Vec3 off = toWorldOffset(side * (spec().width / 2 + 0.55), 0, seat.z, getYRot());
@@ -389,12 +438,14 @@ public class VehicleEntity extends Entity {
         }
         if (getMode() == MODE_AI) {
             if (!level().isClientSide) {
-                if (driver != null && driver.state == com.trafficcraft.ai.TrafficDriver.State.PARKED && level() instanceof ServerLevel sl) {
+                if (driver != null && driver.state == com.trafficcraft.ai.TrafficDriver.State.PARKED && getPassengers().isEmpty() && level() instanceof ServerLevel sl) {
                     com.trafficcraft.ai.TrafficManager.get(sl).parking.releaseVehicle(getId());
                     driver = null;
                     setMode(MODE_FREE);
                     return player.startRiding(this) ? InteractionResult.CONSUME : InteractionResult.PASS;
                 }
+                // ride along: the AI keeps driving, the player takes a free passenger seat
+                if (canAddPassenger(player)) return player.startRiding(this) ? InteractionResult.CONSUME : InteractionResult.PASS;
                 player.displayClientMessage(Component.translatable("msg.trafficcraft.occupied"), true);
             }
             return InteractionResult.SUCCESS;

@@ -49,6 +49,7 @@ public class RoadToolItem extends Item {
             t.putFloat("pathWidth", 2);
             t.putString("nodeType", "SPAWN");
         }
+        if (!t.contains("armLength")) t.putInt("armLength", 16);
         return t;
     }
 

@@ -403,5 +403,17 @@
  "trafficcraft.configuration.aiTickNear": "AI update interval near",
  "trafficcraft.configuration.aiTickFar": "AI update interval far",
  "trafficcraft.configuration.section.trafficcraft.common.toml": "TrafficCraft settings",
- "trafficcraft.configuration.section.trafficcraft.common.toml.title": "TrafficCraft settings"
+ "trafficcraft.configuration.section.trafficcraft.common.toml.title": "TrafficCraft settings",
+ "msg.trafficcraft.piece_created": "%s built",
+ "msg.trafficcraft.passenger": "You are a passenger - the driver takes you along. Sneak to get out.",
+ "msg.trafficcraft.last_stop": "Last stop - please get out (sneak)",
+ "mode.trafficcraft.turn_left": "Sharp left turn",
+ "mode.trafficcraft.turn_right": "Sharp right turn",
+ "mode.trafficcraft.t_junction": "T-junction",
+ "mode.trafficcraft.crossroads": "Crossroads",
+ "opt.trafficcraft.turn_left": "Sharp left turn",
+ "opt.trafficcraft.turn_right": "Sharp right turn",
+ "opt.trafficcraft.t_junction": "T-junction",
+ "opt.trafficcraft.crossroads": "Crossroads",
+ "prop.trafficcraft.armLength": "Arm length (turns / junctions)"
 }

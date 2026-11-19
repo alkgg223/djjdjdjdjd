@@ -78,12 +78,17 @@ for k, (en, ar, den, dar) in {
     t(f'tooltip.trafficcraft.kit_{k}', den, dar)
 t('tooltip.trafficcraft.kit', 'Right-click the ground; it is built facing where you look and connected to the nearest road',
   'انقر يميناً على الأرض؛ يُبنى باتجاه نظرك ويتصل بأقرب طريق')
+t('msg.trafficcraft.piece_created', '%s built', 'تم بناء %s')
+t('msg.trafficcraft.passenger', 'You are a passenger - the driver takes you along. Sneak to get out.', 'أنت راكب - السائق يأخذك معه. انحنِ للنزول.')
+t('msg.trafficcraft.last_stop', 'Last stop - please get out (sneak)', 'المحطة الأخيرة - انزل من فضلك (انحناء)')
 t('msg.trafficcraft.kit_placed', '%s placed', 'تم وضع %s')
 t('msg.trafficcraft.kit_needs_road', 'Use the border kit on an existing road', 'استخدم عدة الحدود على طريق موجود')
 
 # ------------------------------------------------------------------ tool modes
 MODES = {'road': ('Road', 'طريق'), 'path': ('Footpath', 'ممر مشاة'), 'edit': ('Edit', 'تعديل'), 'delete': ('Delete', 'حذف'),
-         'curve': ('Curve', 'منحنى'), 'roundabout': ('Roundabout', 'دوّار'), 'lights': ('Traffic lights', 'إشارات ضوئية'), 'node': ('Node', 'عقدة')}
+         'curve': ('Curve', 'منحنى'), 'roundabout': ('Roundabout', 'دوّار'), 'lights': ('Traffic lights', 'إشارات ضوئية'), 'node': ('Node', 'عقدة'),
+         'turn_left': ('Sharp left turn', 'لفّة حادة لليسار'), 'turn_right': ('Sharp right turn', 'لفّة حادة لليمين'),
+         't_junction': ('T-junction', 'تقاطع ثلاثي (T)'), 'crossroads': ('Crossroads', 'تقاطع رباعي')}
 for k, (en, ar) in MODES.items():
     t(f'mode.trafficcraft.{k}', en, ar)
 
@@ -133,7 +138,7 @@ PROPS = {
     'patient': ('Patient drivers %', 'سائقون صبورون %'), 'radius': ('Radius', 'نصف القطر'), 'reserved': ('Reserved spaces', 'مواقف محجوزة'),
     'serviceTime': ('Service time (s)', 'مدة الخدمة (ث)'), 'sidewalk': ('Sidewalk width', 'عرض الرصيف'), 'spaces': ('Parking spaces', 'عدد المواقف'),
     'stayMax': ('Max stay (s)', 'أقصى مدة بقاء (ث)'), 'stayMin': ('Min stay (s)', 'أقل مدة بقاء (ث)'), 'yellow': ('Yellow (s)', 'الأصفر (ث)'),
-    'name': ('Name', 'الاسم'), 'model': ('Count: %s', 'العدد: %s'), 'no_trucks': ('No trucks', 'ممنوع الشاحنات'),
+    'name': ('Name', 'الاسم'), 'armLength': ('Arm length (turns / junctions)', 'طول الأذرع (اللفّات والتقاطعات)'), 'model': ('Count: %s', 'العدد: %s'), 'no_trucks': ('No trucks', 'ممنوع الشاحنات'),
 }
 for k, (en, ar) in PROPS.items():
     t(f'prop.trafficcraft.{k}', en, ar)

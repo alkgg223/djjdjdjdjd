@@ -25,6 +25,9 @@ public final class VehicleMesh {
     public static final int PAINT = 0, SOLID = 1, GLASS = 2, HEAD = 3, HIGH = 4, DRL = 5, TAIL = 6, BRAKE = 7, IND_L = 8, IND_R = 9, REVERSE = 10,
             INTERIOR_LIGHT = 11, PLATE_LIGHT = 12, BEACON_A = 13, BEACON_B = 14, TAXI_SIGN = 15, MARKER = 16, PAINT2 = 17, SCREEN = 18;
 
+    /** ARGB of window glass: neutral (slightly warm to cancel the cool reflection texture), ~15 % opaque. */
+    public static final int CLEAR_GLASS = (38 << 24) | (255 << 16) | (250 << 8) | 240;
+
     public static final class Group {
         public final String part;
         public final int mat;
@@ -82,6 +85,8 @@ public final class VehicleMesh {
                     d[o + 6] = in.readUnsignedShort() / 65535f;
                     d[o + 7] = in.readUnsignedShort() / 65535f;
                     c[i] = in.readInt();
+                    // clear, colourless glazing (the generator bakes a tinted glass colour)
+                    if (mat == GLASS) c[i] = CLEAR_GLASS;
                 }
                 m.parts.computeIfAbsent(part, k -> new ArrayList<>()).add(new Group(part, mat, n, d, c));
             }

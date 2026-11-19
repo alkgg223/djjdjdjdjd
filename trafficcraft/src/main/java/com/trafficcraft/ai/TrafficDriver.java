@@ -44,6 +44,7 @@ public final class TrafficDriver {
     boolean stopSignDone;
     int reservedNode = -1;
     double stopTargetGap = 99;
+    public boolean lastStopTold;
     VehicleInput last = VehicleInput.NONE;
     boolean overtaking;
     float laneOffsetNow;
