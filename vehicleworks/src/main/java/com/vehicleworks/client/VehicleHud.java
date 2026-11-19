@@ -29,7 +29,8 @@ public final class VehicleHud {
     public static void render(GuiGraphics g, DeltaTracker delta) {
         Minecraft mc = Minecraft.getInstance();
         VehicleEntity v = ClientEvents.ridden();
-        if (v == null || mc.options.hideGui) return;
+        if (mc.options.hideGui) return;
+        if (v == null) { announcement(g, mc.font, g.guiWidth(), g.guiHeight()); return; } // standing in the cabin hears the PA too
         VehicleTelemetry t = v.telemetry;
         Font font = mc.font;
         int w = g.guiWidth(), h = g.guiHeight();
@@ -40,6 +41,12 @@ public final class VehicleHud {
         h = (int) (h / scale);
         ControlProfile p = ControlProfile.byIndex(t.profile);
         boolean pilot = v.seats.getOrDefault(mc.player.getUUID(), Long.MIN_VALUE) != Long.MIN_VALUE;
+        announcement(g, font, w, h);
+        if (v.isAttendantSeated(mc.player)) {
+            attendant(g, font, v, w, h);
+            g.pose().popPose();
+            return;
+        }
         if (v.isPassengerSeated(mc.player)) {
             // passengers: no flight HUD, instruments or controls; only their seat
             passenger(g, font, v, w, h);
@@ -96,6 +103,39 @@ public final class VehicleHud {
             g.drawCenteredString(font, m, w / 2, 15, 0xFFFFFFFF);
         }
         g.pose().popPose();
+    }
+
+    private static int paId = -1;
+    private static long paUntil;
+
+    /** a cabin announcement: shown as a caption for everyone on board (and spoken when voice is on) */
+    public static void announce(int id) {
+        paId = id;
+        paUntil = System.currentTimeMillis() + 9000;
+        if (VoiceCallouts.enabled()) VoiceCallouts.say("vehicleworks.pa.text." + id, true);
+    }
+
+    static void announcement(GuiGraphics g, Font f, int w, int h) {
+        if (paId < 0 || System.currentTimeMillis() > paUntil) return;
+        String head = net.minecraft.network.chat.Component.translatable("vehicleworks.pa.name." + paId).getString();
+        String body = net.minecraft.network.chat.Component.translatable("vehicleworks.pa.text." + paId).getString();
+        java.util.List<net.minecraft.util.FormattedCharSequence> lines = f.split(net.minecraft.network.chat.Component.literal(body), 300);
+        int y = h / 4, bh = 16 + lines.size() * 10;
+        g.fill(w / 2 - 160, y - 4, w / 2 + 160, y + bh, 0xB0101418);
+        g.drawCenteredString(f, "\u266A  " + head, w / 2, y, 0xFFE8C878);
+        for (int i = 0; i < lines.size(); i++) g.drawCenteredString(f, lines.get(i), w / 2, y + 13 + i * 10, 0xFFE8EDF2);
+    }
+
+    /** cabin crew seat: calls, doors, signs and how to reach the crew panel / announcements */
+    private static void attendant(GuiGraphics g, Font f, VehicleEntity v, int w, int h) {
+        VehicleTelemetry t = v.telemetry;
+        int calls = 0;
+        for (var e : v.cabin.long2IntEntrySet()) if (com.vehicleworks.vehicle.CabinSeat.call(e.getIntValue())) calls++;
+        int y = h - 58;
+        g.fill(w / 2 - 130, y - 4, w / 2 + 130, y + 34, 0x90101418);
+        g.drawCenteredString(f, net.minecraft.network.chat.Component.translatable("vehicleworks.crew.seat"), w / 2, y, 0xFFE8C878);
+        g.drawCenteredString(f, net.minecraft.network.chat.Component.translatable("vehicleworks.crew.hud", calls, t.doors != 0 ? "OPEN" : "CLOSED", t.seatbelt ? "ON" : "OFF"), w / 2, y + 11, calls > 0 ? 0xFF38D3FF : 0xFFB8C2CC);
+        g.drawCenteredString(f, net.minecraft.network.chat.Component.translatable("vehicleworks.crew.hint", Keybinds.PANEL.getTranslatedKeyMessage(), Keybinds.ANNOUNCE.getTranslatedKeyMessage()), w / 2, y + 22, 0xFF9AA4AE);
     }
 
     /** Passenger seat: just the seat and how to adjust it. */

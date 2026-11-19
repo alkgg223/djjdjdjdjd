@@ -45,6 +45,10 @@ public final class Config {
         public final ModConfigSpec.BooleanValue weaponsEnabled;
         public final ModConfigSpec.IntValue syncRangeBlocks;
         public final ModConfigSpec.BooleanValue passengerSeatInteraction;
+        public final ModConfigSpec.BooleanValue emergenciesEnabled;
+        @SuppressWarnings("unchecked")
+        public final ModConfigSpec.BooleanValue[] emergencyEnabled = new ModConfigSpec.BooleanValue[com.vehicleworks.vehicle.VehicleEntity.EMERGENCIES.length];
+        public final ModConfigSpec.DoubleValue[] emergencyChance = new ModConfigSpec.DoubleValue[com.vehicleworks.vehicle.VehicleEntity.EMERGENCIES.length];
         public final ModConfigSpec.DoubleValue controlSensitivity;
         public final ModConfigSpec.DoubleValue sidestickSensitivity;
         public final ModConfigSpec.DoubleValue sidestickDeadZone;
@@ -90,6 +94,17 @@ public final class Config {
             b.pop();
             b.push("network");
             syncRangeBlocks = b.comment("Distance within which full-rate state sync is sent").defineInRange("syncRangeBlocks", 160, 16, 1024);
+            b.pop();
+            b.push("emergencies");
+            emergenciesEnabled = b.comment("Random in-flight emergencies (each one below can be switched off and given its own chance)").define("emergenciesEnabled", true);
+            double[] def = {1.0, 0.3, 1.5, 0.8, 0.8, 0.6, 0.4, 0.8, 0.3};
+            for (int i = 0; i < com.vehicleworks.vehicle.VehicleEntity.EMERGENCIES.length; i++) {
+                String n = com.vehicleworks.vehicle.VehicleEntity.EMERGENCIES[i];
+                b.push(n);
+                emergencyEnabled[i] = b.comment("Enable " + n).define("enabled", true);
+                emergencyChance[i] = b.comment("Chance per flight hour, in percent (0 = never, 100 = about once per hour)").defineInRange("chancePercent", def[i], 0.0, 100.0);
+                b.pop();
+            }
             b.pop();
             b.push("controls");
             passengerSeatInteraction = b.comment("Passengers can adjust their seat (recline, leg rest, tray, screen, light, suite door)").define("passengerSeatInteraction", true);

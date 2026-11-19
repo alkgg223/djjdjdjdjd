@@ -298,6 +298,22 @@ write('vehicle/spoiler', norm(x, 0.17))
 d = 1.5; tt = t(d)
 x = bp_fast(noise(len(tt)), 900, 5000) * 0.7 + 0.3 * tone(1350 + 80 * np.sin(2 * np.pi * 9 * tt), tt) + 0.4 * lp_fast(noise(len(tt)), 300)
 write('vehicle/brake', norm(loopify(x, 0.3), 0.15))
+# ---- 1.3: PA chime (two-tone high-low), call chime (single high ding), gear rattle loop, tyre bump
+def _ding(f, d, decay):
+    tt_ = t(d); return (tone(f, tt_) + 0.35 * tone(2 * f, tt_) + 0.12 * tone(3.01 * f, tt_)) * np.exp(-tt_ * decay) * np.clip(tt_ / 0.004, 0, 1)
+x = place(np.zeros(int(1.8 * SR)), _ding(1175, 1.2, 3.2), 0); x = place(x, _ding(932, 1.3, 3.0), 0.55)
+write('cabin/pa_chime', norm(x, 0.15))
+x = place(np.zeros(int(1.4 * SR)), _ding(1397, 1.3, 3.5), 0)
+write('cabin/call_chime', norm(x, 0.13))
+d = 2.0; tt = t(d); n_ = len(tt)
+x = 0.5 * lp_fast(noise(n_), 220)
+for k_ in range(26):
+    at = rng.uniform(0, d - 0.08); m = int(0.06 * SR)
+    hit = (bp_fast(noise(m), 300, 2600) * 0.8 + 0.6 * tone(rng.uniform(90, 160), t(0.06))) * np.exp(-np.arange(m) / SR * rng.uniform(40, 90))
+    x = place(x, hit * rng.uniform(0.4, 1.0), at)
+write('vehicle/gear_rattle', norm(loopify(x, 0.2), 0.14))
+tt = t(0.45); x = 1.0 * tone(55, tt) * np.exp(-tt * 14) + 0.7 * lp_fast(noise(len(tt)), 700) * np.exp(-tt * 18) + 0.25 * bp_fast(noise(len(tt)), 900, 3000) * np.exp(-tt * 30)
+write('vehicle/tire_bump', norm(x, 0.2, 0.98))
 names = {'engine.piston': 'engine/piston', 'engine.turbine': 'engine/turbine', 'engine.jet': 'engine/jet', 'engine.rotor': 'engine/rotor',
          'engine.electric': 'engine/electric', 'engine.start': 'engine/start', 'vehicle.wind': 'vehicle/wind', 'vehicle.stall_warning': 'vehicle/stall_warning',
          'vehicle.gear': 'vehicle/gear', 'vehicle.assemble': 'vehicle/assemble', 'weapon.machine_gun': 'weapon/machine_gun', 'weapon.cannon': 'weapon/cannon',
@@ -308,7 +324,7 @@ names = {'engine.piston': 'engine/piston', 'engine.turbine': 'engine/turbine', '
 for k in ('engine.turboprop', 'engine.turbofan', 'engine.heli_turbine', 'engine.rough', 'engine.light_off', 'engine.piston_catch', 'engine.starter_piston',
           'engine.starter_turbine', 'engine.ignition', 'engine.spool_down', 'cockpit.toggle', 'cockpit.relay', 'cockpit.button', 'cockpit.knob', 'cockpit.guard',
           'cockpit.lever', 'cockpit.avionics', 'cockpit.ap_disconnect', 'cockpit.gear_horn', 'cockpit.hydraulic', 'cockpit.ambient', 'cabin.door', 'cabin.seat_motor',
-          'cabin.tray', 'cabin.ife', 'vehicle.airflow', 'vehicle.gear_extend', 'vehicle.gear_retract', 'vehicle.flaps', 'vehicle.spoiler', 'vehicle.brake'):
+          'cabin.tray', 'cabin.ife', 'vehicle.airflow', 'vehicle.gear_extend', 'vehicle.gear_retract', 'vehicle.flaps', 'vehicle.spoiler', 'vehicle.brake', 'cabin.pa_chime', 'cabin.call_chime', 'vehicle.gear_rattle', 'vehicle.tire_bump'):
     names[k] = k.replace('.', '/')
 sj = {k: {"sounds": [{"name": "vehicleworks:" + v, "attenuation_distance": 64 if k.startswith('engine') or k.startswith('weapon') else 16}],
           "subtitle": "subtitles.vehicleworks." + k} for k, v in names.items()}

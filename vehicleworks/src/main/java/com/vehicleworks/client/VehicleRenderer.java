@@ -197,6 +197,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         CockpitRenderer.renderPanels(v, ps, buffers, light);
         InstrumentRenderer.render(v, ps, buffers, light, dist);
         CabinRenderer.render(v, ps, buffers, light, dist);
+        FixtureRenderer.render(v, ps, buffers, light, dist);
         if (Config.CLIENT.renderBlockEntities.get()) renderBlockEntities(v, ps, buffers, partial, light);
         // centre-of-mass marker
         long core = BlockPos.asLong(0, 0, 0);

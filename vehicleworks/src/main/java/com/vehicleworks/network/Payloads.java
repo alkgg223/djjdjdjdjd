@@ -95,6 +95,16 @@ public final class Payloads {
         public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
+    /** A cabin announcement is played (chime on the speakers, text / voice on the client). */
+    public record Announce(int id, int pa) implements CustomPacketPayload {
+        public static final Type<Announce> TYPE = new Type<>(Payloads.rl("announce"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Announce> CODEC = StreamCodec.ofMember(
+                (p, b) -> { b.writeVarInt(p.id); b.writeVarInt(p.pa); }, b -> new Announce(b.readVarInt(), b.readVarInt()));
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
     /** Opens a client screen. screen: 0 component config, 1 engineering, 2 remote control unit. */
     public record OpenScreen(int screen, int vehicleId, long pos, CompoundTag data) implements CustomPacketPayload {
         public static final Type<OpenScreen> TYPE = new Type<>(Payloads.rl("open_screen"));
@@ -178,6 +188,7 @@ public final class Payloads {
         r.playToClient(Blocks.TYPE, Blocks.CODEC, (p, ctx) -> VehicleWorks.PROXY.onBlocks(p));
         r.playToClient(Seats.TYPE, Seats.CODEC, (p, ctx) -> VehicleWorks.PROXY.onSeats(p));
         r.playToClient(Cabin.TYPE, Cabin.CODEC, (p, ctx) -> VehicleWorks.PROXY.onCabin(p));
+        r.playToClient(Announce.TYPE, Announce.CODEC, (p, ctx) -> VehicleWorks.PROXY.onAnnounce(p));
         r.playToClient(OpenScreen.TYPE, OpenScreen.CODEC, (p, ctx) -> VehicleWorks.PROXY.onOpenScreen(p));
         r.playToClient(Info.TYPE, Info.CODEC, (p, ctx) -> VehicleWorks.PROXY.onInfo(p));
         r.playToServer(Input.TYPE, Input.CODEC, (p, ctx) -> ServerActions.onInput((ServerPlayer) ctx.player(), p));
@@ -262,7 +273,7 @@ public final class Payloads {
     public static final int ACT_ENGINES_START = 1, ACT_ENGINES_STOP = 2, ACT_ENGINE_TOGGLE = 3, ACT_GEAR = 4, ACT_FLAPS = 5,
             ACT_ARM = 6, ACT_ASSIST = 7, ACT_MOUSE_AIM = 8, ACT_PARKING = 9, ACT_DISASSEMBLE = 10, ACT_REPAIR = 11,
             ACT_PROFILE = 12, ACT_OPEN_ENGINEERING = 13, ACT_REQUEST_INFO = 14, ACT_THROTTLE_SET = 15, ACT_AFTERBURNER = 16,
-            ACT_FLAPS_SET = 17, ACT_REFUEL = 18, ACT_AUTOPILOT = 19, ACT_BATTERY = 20, ACT_LIGHTS = 21, ACT_EMERGENCY_TEST = 22, ACT_SWITCH = 23, ACT_REFUEL_START = 24, ACT_REFUEL_STOP = 25, ACT_CABIN = 26;
+            ACT_FLAPS_SET = 17, ACT_REFUEL = 18, ACT_AUTOPILOT = 19, ACT_BATTERY = 20, ACT_LIGHTS = 21, ACT_EMERGENCY_TEST = 22, ACT_SWITCH = 23, ACT_REFUEL_START = 24, ACT_REFUEL_STOP = 25, ACT_CABIN = 26, ACT_PEDESTAL = 27, ACT_FCU = 28, ACT_CREW = 29, ACT_ANNOUNCE = 30, ACT_COPILOT = 31;
     /** Action arg marking a press on the cockpit panel (allowed from outside the pilot seat) */
     public static final int ARG_PANEL = 7777;
     public static final int WACT_ASSEMBLE = 1, WACT_ROTATE_WING = 2;

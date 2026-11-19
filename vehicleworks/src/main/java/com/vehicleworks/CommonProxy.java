@@ -14,6 +14,8 @@ public class CommonProxy {
     public void onSeats(Payloads.Seats p) {}
 
     public void onCabin(Payloads.Cabin p) {}
+
+    public void onAnnounce(Payloads.Announce p) {}
     public void onOpenScreen(Payloads.OpenScreen p) {}
     public void onInfo(Payloads.Info p) {}
 }

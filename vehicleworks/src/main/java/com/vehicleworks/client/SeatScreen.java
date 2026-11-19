@@ -36,7 +36,7 @@ public class SeatScreen extends Screen {
     }
 
     static final int[] ORDER = {CabinSeat.RECLINE_DOWN, CabinSeat.RECLINE_UP, CabinSeat.SLIDE_FWD, CabinSeat.SLIDE_BACK, CabinSeat.LEG_UP, CabinSeat.LEG_DOWN,
-            CabinSeat.FLAT, CabinSeat.TRAY, CabinSeat.SCREEN, CabinSeat.PAGE, CabinSeat.LIGHT, CabinSeat.DOOR};
+            CabinSeat.FLAT, CabinSeat.TRAY, CabinSeat.SCREEN, CabinSeat.PAGE, CabinSeat.LIGHT, CabinSeat.DOOR, CabinSeat.CALL, CabinSeat.SHADE};
 
     @Override
     protected void init() {
@@ -70,6 +70,8 @@ public class SeatScreen extends Screen {
             case CabinSeat.PAGE -> Component.translatable("vehicleworks.cabin.ctl." + c, Component.translatable("vehicleworks.ife.page." + CabinSeat.page(s)));
             case CabinSeat.LIGHT -> Component.translatable("vehicleworks.cabin.ctl." + c, Component.translatable("vehicleworks.cabin.light." + CabinSeat.light(s)));
             case CabinSeat.DOOR -> Component.translatable("vehicleworks.cabin.ctl." + c, Component.translatable(CabinSeat.door(s) ? "vehicleworks.cabin.open" : "vehicleworks.cabin.closed"));
+            case CabinSeat.CALL -> Component.translatable("vehicleworks.cabin.ctl." + c, CabinSeat.call(s) ? on : off);
+            case CabinSeat.SHADE -> Component.translatable("vehicleworks.cabin.ctl." + c, Component.translatable(CabinSeat.shade(s) ? "vehicleworks.cabin.closed" : "vehicleworks.cabin.open"));
             default -> Component.translatable("vehicleworks.cabin.ctl." + c);
         };
     }

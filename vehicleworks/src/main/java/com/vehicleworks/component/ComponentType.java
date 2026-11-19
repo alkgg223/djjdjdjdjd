@@ -33,7 +33,21 @@ public enum ComponentType {
     SEAT_PREMIUM("seat_premium", ComponentCategory.CONTROL, 34, Facing.HORIZONTAL, Shape.SEAT),
     SEAT_BUSINESS("seat_business", ComponentCategory.CONTROL, 55, Facing.HORIZONTAL, Shape.SEAT),
     /** first class suite: 2 x 2 blocks (the seat block plus the suite to its right and behind), private door */
-    SEAT_FIRST("seat_first", ComponentCategory.CONTROL, 120, Facing.HORIZONTAL, Shape.SEAT),
+    SEAT_FIRST("seat_first", ComponentCategory.CONTROL, 120, Facing.HORIZONTAL, Shape.SEAT,
+            PropertyDef.bool("mirror", false)),
+    /** folding cabin crew seat: unfolds when someone sits; attendant tools, not flight controls */
+    JUMPSEAT("jumpseat", ComponentCategory.CONTROL, 12, Facing.HORIZONTAL, Shape.SEAT),
+    /** attendant panel: cabin lights, announcements, interphone, door status, passenger calls, boarding */
+    CREW_PANEL("crew_panel", ComponentCategory.INSTRUMENT, 20, Facing.HORIZONTAL, Shape.FULL),
+    /** galley unit: cabinets, ovens, coffee makers, storage */
+    GALLEY("galley", ComponentCategory.SYSTEMS, 140, Facing.HORIZONTAL, Shape.FULL),
+    /** food / drink trolley: pushed along the aisle */
+    TROLLEY("trolley", ComponentCategory.SYSTEMS, 40, Facing.HORIZONTAL, Shape.DYNAMIC),
+    /** lavatory: toilet, basin, mirror, soap, light, door with an occupied sign (walk in through the door) */
+    LAVATORY("lavatory", ComponentCategory.SYSTEMS, 90, Facing.HORIZONTAL, Shape.ROOM),
+    /** passenger / cargo door (2 blocks tall), opens and closes */
+    AIRCRAFT_DOOR("aircraft_door", ComponentCategory.STRUCTURE, 60, Facing.HORIZONTAL, Shape.DOOR,
+            PropertyDef.choice("door_kind", 0, "passenger", "cargo")),
 
     PISTON_ENGINE("piston_engine", ComponentCategory.PROPULSION, EngineType.PISTON.massKg, Facing.ALL, Shape.FULL, engineProps(false)),
     TURBOPROP_ENGINE("turboprop_engine", ComponentCategory.PROPULSION, EngineType.TURBOPROP.massKg, Facing.ALL, Shape.FULL, engineProps(false)),
@@ -111,6 +125,16 @@ public enum ComponentType {
     INSTRUMENT_PANEL_C("instrument_panel_c", ComponentCategory.INSTRUMENT, 22, Facing.HORIZONTAL, Shape.FULL,
             slot("large_slot", 1, false)),
     COCKPIT_PANEL("cockpit_panel", ComponentCategory.INSTRUMENT, 30, Facing.HORIZONTAL, Shape.PANEL),
+    /** two large displays side by side (PFD + ND) */
+    INSTRUMENT_PANEL_D("instrument_panel_d", ComponentCategory.INSTRUMENT, 20, Facing.HORIZONTAL, Shape.FULL,
+            slot("left_slot", 4, false), slot("right_slot", 1, false)),
+    /** two large displays stacked (ECAM upper E/WD + lower SD) */
+    INSTRUMENT_PANEL_E("instrument_panel_e", ComponentCategory.INSTRUMENT, 20, Facing.HORIZONTAL, Shape.FULL,
+            slot("upper_slot", 6, false), slot("lower_slot", 7, false)),
+    /** Airbus-style flight control unit on the glareshield: SPD / HDG / ALT / V/S windows, knobs, AP and A/THR */
+    FCU_PANEL("fcu_panel", ComponentCategory.INSTRUMENT, 8, Facing.HORIZONTAL, Shape.DYNAMIC),
+    /** centre pedestal: thrust levers, engine masters, flaps, speed brake, gear lever, parking brake, two MCDUs */
+    CENTER_PEDESTAL("center_pedestal", ComponentCategory.CONTROL, 45, Facing.HORIZONTAL, Shape.PEDESTAL),
     NAVIGATION_COMPUTER("navigation_computer", ComponentCategory.INSTRUMENT, 15, Facing.HORIZONTAL, Shape.FULL,
             PropertyDef.integer("waypoint_x", -30000000, 30000000, 0),
             PropertyDef.integer("waypoint_z", -30000000, 30000000, 0),
@@ -130,7 +154,7 @@ public enum ComponentType {
 
     public enum Facing { NONE, HORIZONTAL, ALL, WING }
 
-    public enum Shape { FULL, SEAT, WING, DYNAMIC, PANEL }
+    public enum Shape { FULL, SEAT, WING, DYNAMIC, PANEL, ROOM, DOOR, PEDESTAL }
 
     public final String id;
     public final ComponentCategory category;
@@ -182,12 +206,13 @@ public enum ComponentType {
 
     /** Blocks without rigid collision (handled by their own physics, e.g. suspension). */
     public boolean excludedFromCollision() {
-        return isAircraftGear() || this == WHEEL || this == YOKE || this == SIDESTICK || this == AIRCRAFT_LIGHT || this == PROPELLER || this == MAIN_ROTOR || this == TAIL_ROTOR || this == MARINE_PROPELLER;
+        return isAircraftGear() || this == WHEEL || this == YOKE || this == SIDESTICK || this == FCU_PANEL || this == TROLLEY || this == AIRCRAFT_LIGHT || this == PROPELLER || this == MAIN_ROTOR || this == TAIL_ROTOR || this == MARINE_PROPELLER;
     }
 
     /** Rendered dynamically (spinning / animated) instead of in the cached static mesh. */
     public boolean isDynamicRender() {
-        return shape == Shape.DYNAMIC || seatClass() > 0;
+        return shape == Shape.DYNAMIC || seatClass() > 0 || this == JUMPSEAT || this == CENTER_PEDESTAL || this == GALLEY || this == LAVATORY
+                || this == AIRCRAFT_DOOR || this == CREW_PANEL;
     }
 
     /** passenger cabin class 1 (economy) .. 5 (first class suite), 0 = not a cabin seat */
@@ -203,7 +228,7 @@ public enum ComponentType {
     }
 
     public boolean isSeat() {
-        return this == PILOT_SEAT || this == COPILOT_SEAT || this == PASSENGER_SEAT || seatClass() > 0;
+        return this == PILOT_SEAT || this == COPILOT_SEAT || this == PASSENGER_SEAT || this == JUMPSEAT || seatClass() > 0;
     }
 
     public static ComponentType byId(String id) {
@@ -240,7 +265,7 @@ public enum ComponentType {
         /** Small (analog) instruments that fit a small slot; index 0 = empty. */
         public static final String[] SMALL = {"none", "altimeter", "airspeed", "vsi", "horizon", "heading", "compass", "turn", "tachometer", "fuel_gauge", "engine_pressure"};
         /** Large (digital) instruments that need a large slot; index 0 = empty. */
-        public static final String[] LARGE = {"none", "nav_display", "radar", "flight_director", "attitude_display", "engine_display"};
+        public static final String[] LARGE = {"none", "nav_display", "radar", "flight_director", "attitude_display", "engine_display", "ecam_ewd", "ecam_sd"};
         private Instruments() {}
     }
 
@@ -249,7 +274,7 @@ public enum ComponentType {
     }
 
     public boolean isInstrumentPanel() {
-        return this == INSTRUMENT_PANEL_A || this == INSTRUMENT_PANEL_B || this == INSTRUMENT_PANEL_C;
+        return this == INSTRUMENT_PANEL_A || this == INSTRUMENT_PANEL_B || this == INSTRUMENT_PANEL_C || this == INSTRUMENT_PANEL_D || this == INSTRUMENT_PANEL_E;
     }
 
     /** All aircraft landing-gear types (retractable, aircraft physics). */

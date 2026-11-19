@@ -434,11 +434,11 @@ public final class VehicleGameTests {
     }
 
     /** Passengers adjust only their own seat; the cockpit switches answer the flight crew only. */
-    @GameTest(template = "platform", timeoutTicks = 200, batch = "systems")
+    @GameTest(template = "platform", timeoutTicks = 200, batch = "a320_pax")
     public static void passengersHaveNoCockpitAccess(GameTestHelper h) {
         VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.AIRLINER, new BlockPos(12, 3, 12));
         var sp = h.makeMockServerPlayerInLevel();
-        long business = BlockPos.asLong(-1, 1, -7), pilot = BlockPos.asLong(-1, 1, -11);
+        long business = BlockPos.asLong(-2, 1, -5), pilot = BlockPos.asLong(-1, 1, -13);
         h.runAfterDelay(20, () -> {
             sp.teleportTo(v.getX(), v.getY(), v.getZ());
             h.assertTrue(v.trySit(sp, business), "sits in business class");
@@ -457,6 +457,49 @@ public final class VehicleGameTests {
             com.vehicleworks.network.ServerActions.onAction(sp, new com.vehicleworks.network.Payloads.Action(v.getId(), com.vehicleworks.network.Payloads.ACT_SWITCH, VehicleControls.SW_BATTERY));
             h.assertTrue(v.controls.battery != before, "the pilot switches the battery (seat " + v.seatOf(sp) + ", vehicle " + sp.getVehicle() + ", passenger " + v.isPassengerSeated(sp) + ")");
             h.assertTrue(v.simulation().fbw, "A320 flies with side sticks (fly-by-wire)");
+            h.succeed();
+        });
+    }
+
+    /** A320 cabin: crew seat, boarding NPC passengers, battery powers the seat screens, pedestal flaps, doors, emergencies, first officer. */
+    @GameTest(template = "platform", timeoutTicks = 400, batch = "a320_cabin")
+    public static void a320CabinCrewAndPedestal(GameTestHelper h) {
+        VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.AIRLINER, new BlockPos(12, 3, 12));
+        var sp = h.makeMockServerPlayerInLevel();
+        long jump = BlockPos.asLong(-2, 1, -10), pilot = BlockPos.asLong(-1, 1, -13), business = BlockPos.asLong(-2, 1, -5), door = BlockPos.asLong(-4, 1, -9);
+        h.runAfterDelay(20, () -> {
+            sp.teleportTo(v.getX(), v.getY(), v.getZ());
+            h.assertTrue(v.trySit(sp, jump), "sits on the jump seat");
+            h.assertTrue(v.isAttendantSeated(sp) && !v.isPassengerSeated(sp), "jump seat = cabin crew");
+            boolean before = v.controls.battery;
+            com.vehicleworks.network.ServerActions.onAction(sp, new com.vehicleworks.network.Payloads.Action(v.getId(), com.vehicleworks.network.Payloads.ACT_SWITCH, VehicleControls.SW_BATTERY));
+            h.assertTrue(v.controls.battery == before, "cabin crew cannot use the cockpit switches");
+            int n = v.boardPassengers(20);
+            long npcs = v.getPassengers().stream().filter(e -> e instanceof com.vehicleworks.vehicle.NpcEntity).count();
+            h.assertTrue(n >= 20 && npcs >= 20, "passengers boarded: " + n + " / " + npcs);
+            v.controls.battery = false; v.controls.masterElec = false;
+        });
+        h.runAfterDelay(40, () -> {
+            h.assertTrue(!com.vehicleworks.vehicle.CabinSeat.screen(v.cabin.get(business)), "seat screen dark without power");
+            v.controls.battery = true; v.controls.masterElec = true;
+        });
+        h.runAfterDelay(80, () -> {
+            h.assertTrue(v.telemetry.busPowered, "bus powered");
+            h.assertTrue(com.vehicleworks.vehicle.CabinSeat.screen(v.cabin.get(business)), "battery on: seat screens on (" + v.cabin.get(business) + ")");
+            sp.stopRiding();
+            h.assertTrue(v.useCabinFixture(sp, door, com.vehicleworks.component.ComponentType.AIRCRAFT_DOOR) && (v.cabin.get(door) & 1) != 0, "door opens on the ground");
+            h.assertTrue(v.isPassable(door), "open door can be walked through");
+            v.useCabinFixture(sp, door, com.vehicleworks.component.ComponentType.AIRCRAFT_DOOR);
+            h.assertTrue(v.trySit(sp, pilot), "sits in the captain seat");
+            double f0 = v.controls.flaps;
+            com.vehicleworks.network.ServerActions.onAction(sp, new com.vehicleworks.network.Payloads.Action(v.getId(), com.vehicleworks.network.Payloads.ACT_PEDESTAL, com.vehicleworks.vehicle.CockpitLayout.P_FLAPS));
+            h.assertTrue(v.controls.flaps > f0, "pedestal flap lever: " + f0 + " -> " + v.controls.flaps);
+            h.assertTrue(v.triggerEmergency("gearJam") && v.controls.gearJammed, "gear jam emergency");
+            v.clearEmergencies();
+            h.assertTrue(!v.controls.gearJammed, "emergencies cleared");
+            String r = v.copilotKey();
+            h.assertTrue(v.firstOfficer() != null, "first officer seated: " + r);
+            v.deplanePassengers();
             h.succeed();
         });
     }

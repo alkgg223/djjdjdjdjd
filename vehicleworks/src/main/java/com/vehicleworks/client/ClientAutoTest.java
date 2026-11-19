@@ -101,6 +101,7 @@ public final class ClientAutoTest {
         }
         ticks++;
         VehicleEntity cv;
+        if (ticks >= 7000) { a320Test(mc, ticks - 7000); return; }
         if (ticks >= 6000) { lightTest(mc, ticks - 6000); return; }
         if (ticks >= 5000) { sitTest(mc, ticks - 5000); return; }
         if (ticks >= 2000) { cockpitAndCabin(mc, ticks - 2000); return; }
@@ -112,7 +113,8 @@ public final class ClientAutoTest {
                 cmd("tp @s 0 -60 0 180 0");
             }
             case 60 -> {
-                if (Boolean.getBoolean("vehicleworks.autotest.lights")) ticks = 6000;
+                if (Boolean.getBoolean("vehicleworks.autotest.a320")) ticks = 7000;
+                else if (Boolean.getBoolean("vehicleworks.autotest.lights")) ticks = 6000;
                 else if (Boolean.getBoolean("vehicleworks.autotest.sit")) ticks = 5000;
                 else if (Boolean.getBoolean("vehicleworks.autotest.cabin")) ticks = 2000;
                 else if (Boolean.getBoolean("vehicleworks.autotest.quick")) ticks = 1079; else cmd("vehicleworks spawn pelican");
@@ -558,6 +560,7 @@ public final class ClientAutoTest {
         VehicleEntity v = clientVehicle();
         if (v == null) { log("cam: no vehicle"); return; }
         mc.player.getAbilities().flying = true;
+        com.vehicleworks.vehicle.EntityVehicleCollision.forget(mc.player);
         Vector3d w = v.localToWorld(x, y, z, new Vector3d());
         mc.player.setPos(w.x, w.y - 1.62, w.z);
         mc.player.setDeltaMovement(0, 0, 0);
@@ -677,5 +680,72 @@ public final class ClientAutoTest {
         VehicleEntity cv = clientVehicle();
         if (cv != null) { jumpBaseY = cv.worldToLocal(mc.player.getX(), mc.player.getY(), mc.player.getZ(), new Vector3d()).y; jumpMaxY = jumpBaseY; }
         mc.player.jumpFromGround();
+    }
+
+    private static void server(java.util.function.Consumer<VehicleEntity> a) {
+        onServer(sp -> { VehicleEntity v = serverVehicle(sp); if (v != null) a.accept(v); });
+    }
+
+    private static void free(double x, double y, double z, double tx, double ty, double tz) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player.isPassenger()) { onServer(ServerPlayer::stopRiding); return; }
+        cam(x, y, z, tx, ty, tz);
+    }
+
+    /** A320 v2: six displays, FCU, pedestal, cabin 3 + 3 with passengers, galley, lavatory, doors, crew seat, first officer */
+    private static void a320Test(Minecraft mc, int t) {
+        VehicleEntity cv = clientVehicle();
+        switch (t) {
+            case 0 -> { cmd("tp @s 0.5 -60 200.5 180 0"); cmd("time set 6000"); }
+            case 10 -> cmd("vehicleworks spawn a320");
+            case 70 -> sit(-1, 1, -13);
+            case 90 -> { mc.options.setCameraType(CameraType.FIRST_PERSON); lookAlong(18); }
+            case 100 -> screenshot("a01_cold_dark");
+            case 105 -> server(v -> { v.controls.battery = v.controls.masterElec = v.controls.avionics = true; });
+            case 112 -> { cv = clientVehicle(); if (cv != null) log("cabin screens after battery: business={}", com.vehicleworks.vehicle.CabinSeat.screen(cv.cabin.get(net.minecraft.core.BlockPos.asLong(-2, 1, -5)))); }
+            case 300 -> { lookAlong(16); screenshot("a02_six_displays"); }
+            case 305 -> aimAt(0.5, 1.6, -12.4);
+            case 320 -> screenshot("a03_pedestal");
+            case 325 -> aimAt(0.5, 2.25, -13.6);
+            case 340 -> screenshot("a04_fcu");
+            case 345 -> aimAt(-0.9, 1.25, -13.5);
+            case 360 -> screenshot("a05_sidestick_pedals");
+            case 365 -> { cmd("time set 18000"); lookAlong(14); }
+            case 390 -> screenshot("a06_cockpit_night");
+            case 395 -> { cmd("time set 6000"); cmd("vehicleworks passengers board"); }
+            case 405 -> { onServer(ServerPlayer::stopRiding); cmd("gamemode spectator"); }
+            case 410 -> free(0.5, 2.7, 12.6, 0.5, 2.1, -6);
+            case 440 -> screenshot("a07_cabin_3x3_passengers");
+            case 445 -> free(0.6, 2.7, 7.6, -3.2, 3.3, 3);
+            case 470 -> screenshot("a08_bins_psu_windows");
+            case 475 -> { cmd("time set 18000"); free(0.5, 2.7, 12.6, 0.5, 2.1, -6); }
+            case 500 -> screenshot("a09_cabin_night_lights");
+            case 505 -> { cmd("time set 6000"); free(0.5, 2.6, -7.0, 2.6, 1.6, -9.6); }
+            case 530 -> screenshot("a10_fwd_galley_trolley");
+            case 535 -> server(v -> v.useCabinFixture(null, net.minecraft.core.BlockPos.asLong(-3, 1, -10), com.vehicleworks.component.ComponentType.LAVATORY));
+            case 540 -> free(-0.4, 2.6, -7.0, -2.4, 1.6, -9.6);
+            case 560 -> screenshot("a11_lavatory_jumpseat_fap");
+            case 565 -> server(v -> v.useCabinFixture(null, net.minecraft.core.BlockPos.asLong(-4, 1, -9), com.vehicleworks.component.ComponentType.AIRCRAFT_DOOR));
+            case 570 -> free(-10, 2.4, -13, -3.5, 1.8, -8.5);
+            case 600 -> screenshot("a12_door_L1_open");
+            case 605 -> free(-0.4, 2.6, 11.0, -2.0, 1.6, 14.6);
+            case 625 -> screenshot("a13_aft_galley_lav");
+            case 628 -> cmd("gamemode creative");
+            case 632 -> sit(-2, 1, -10);
+            case 650 -> { mc.options.setCameraType(CameraType.FIRST_PERSON); look(cv, 10); }
+            case 660 -> { screenshot("a14_crew_seat_hud"); if (cv != null) mc.setScreen(new CrewScreen(cv)); }
+            case 680 -> screenshot("a15_crew_panel_screen");
+            case 685 -> { mc.setScreen(null); sit(-1, 1, -13); }
+            case 700 -> { server(v -> log("first officer: {}", v.copilotKey())); }
+            case 720 -> { onServer(ServerPlayer::stopRiding); cmd("gamemode spectator"); }
+            case 725 -> free(0.5, 2.9, -10.4, 0.5, 1.4, -14.5);
+            case 750 -> screenshot("a16_first_officer_cockpit");
+            case 755 -> { mc.options.hideGui = true; free(-26, 6, -26, 0.5, 0, -2); }
+            case 785 -> screenshot("a17_exterior");
+            case 790 -> free(14, -1, 4, 0.5, 0, -2);
+            case 815 -> screenshot("a18_exterior_rear");
+            case 820 -> mc.stop();
+            default -> {}
+        }
     }
 }

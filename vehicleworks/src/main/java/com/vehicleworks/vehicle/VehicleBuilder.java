@@ -137,6 +137,7 @@ public final class VehicleBuilder {
                         boolean gunner = t.property("gunner").getBool(config(s, key));
                         layout.seats.add(new VehicleLayout.Seat(key, facing(st), false, gunner, gunner, 0));
                     }
+                    case JUMPSEAT -> layout.seats.add(new VehicleLayout.Seat(key, facing(st), false, false, false, 0));
                     case SEAT_ECONOMY, SEAT_ECONOMY_PLUS, SEAT_PREMIUM, SEAT_BUSINESS, SEAT_FIRST ->
                             layout.seats.add(new VehicleLayout.Seat(key, facing(st), false, false, false, t.seatClass()));
                     case FUEL_PUMP -> pumps++;

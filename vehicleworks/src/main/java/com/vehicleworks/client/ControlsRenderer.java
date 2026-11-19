@@ -45,6 +45,7 @@ public final class ControlsRenderer {
             else {
                 boolean right = ComponentType.SIDESTICK.property("side").getInt(VehicleBuilder.config(v.structure, k)) == 1;
                 sidestick(ps, vc, metal, black, knob, white, guard, sp, sr, right, light);
+                pedals(ps, vc, metal, black, t.stickYaw, right, light);
             }
             ps.popPose();
         }
@@ -97,6 +98,21 @@ public final class ControlsRenderer {
             ps.popPose();
         }
         ps.popPose();
+    }
+
+    /** rudder pedals on the floor in front of the seat (Airbus): one goes forward as the other comes back */
+    static void pedals(PoseStack ps, VertexConsumer vc, TextureAtlasSprite metal, TextureAtlasSprite black, float yaw, boolean right, int light) {
+        float cx = right ? 0.0f : 0.0f;
+        for (int i = 0; i < 2; i++) {
+            float x = cx + (i == 0 ? -0.13f : 0.13f), d = (i == 0 ? 1 : -1) * 0.07f * yaw;
+            ps.pushPose();
+            ps.translate(x, 0.02f, -0.2f + d);
+            ps.mulPose(Axis.XP.rotationDegrees(-55));
+            Box.cuboid(ps, vc, black, -0.06f, 0, -0.01f, 0.06f, 0.22f, 0.01f, light, 0xFF3A3E43);
+            for (int r = 0; r < 4; r++) Box.cuboid(ps, vc, metal, -0.055f, 0.03f + r * 0.05f, 0.01f, 0.055f, 0.045f + r * 0.05f, 0.015f, light, 0xFF9AA0A6);
+            ps.popPose();
+            Box.cuboid(ps, vc, metal, x - 0.012f, 0, -0.1f + d, x + 0.012f, 0.06f, 0.05f, light, 0xFF7A8086); // pedal arm
+        }
     }
 
     /**

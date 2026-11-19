@@ -426,6 +426,76 @@ for k, en, ar in (('engine.turboprop', 'Turboprop runs', 'محرك توربين�
                   ('vehicle.gear_extend', 'Gear extends', 'نزول العجلات'), ('vehicle.gear_retract', 'Gear retracts', 'رفع العجلات'), ('vehicle.flaps', 'Flaps move', 'حركة القلابات'),
                   ('vehicle.spoiler', 'Spoilers deploy', 'فتح المفسدات'), ('vehicle.brake', 'Brakes squeal', 'صرير الفرامل')):
     t('subtitles.vehicleworks.' + k, en, ar)
+# ---- 1.3: A320 v2 (pedestal, FCU, cabin fixtures, crew, announcements, first officer, emergencies)
+for k, (en, ar, ten, tar) in {
+    'jumpseat': ('Cabin Crew Jump Seat', 'مقعد طاقم الضيافة', 'Fold-down attendant seat with a four-point harness. Sit: crew controls (X) and announcements (K).', 'مقعد مضيف قابل للطي مع حزام رباعي. اجلس: لوحة الطاقم (X) والإعلانات (K).'),
+    'crew_panel': ('Attendant Panel (FAP)', 'لوحة المضيفين (FAP)', 'Cabin lights, seat belt sign, announcements, door status, call lights and interphone.', 'إضاءة المقصورة وإشارة الأحزمة والإعلانات وحالة الأبواب وأضواء النداء والإنتركم.'),
+    'galley': ('Galley Unit', 'وحدة المطبخ', 'Cabinets, oven and coffee maker. Right-click to open the doors / start the oven / brew coffee.', 'خزائن وفرن وماكينة قهوة. اضغط بالزر الأيمن لفتح الأبواب أو تشغيل الفرن أو تحضير القهوة.'),
+    'trolley': ('Service Trolley', 'عربة الخدمة', 'Right-click to push it along the aisle.', 'اضغط بالزر الأيمن لدفعها في الممر.'),
+    'lavatory': ('Lavatory', 'دورة المياه', 'Toilet, sink, mirror, soap and light, lockable door with an OCCUPIED sign.', 'مرحاض ومغسلة ومرآة وصابون وإضاءة، وباب يُقفل مع إشارة مشغول.'),
+    'aircraft_door': ('Aircraft Door', 'باب الطائرة', 'Passenger or cargo door, two blocks high. Opens outward and slides; locked in flight.', 'باب ركاب أو شحن بارتفاع بلوكين. يفتح للخارج وينزلق، ويُقفل أثناء الطيران.'),
+    'instrument_panel_d': ('Instrument Panel D (PFD + ND)', 'لوحة أجهزة D (PFD + ND)', 'Two large displays side by side: primary flight display and navigation display.', 'شاشتان كبيرتان جنباً إلى جنب: شاشة الطيران الرئيسية وشاشة الملاحة.'),
+    'instrument_panel_e': ('Instrument Panel E (ECAM)', 'لوحة أجهزة E (ECAM)', 'Two large displays stacked: engine / warning display and system display.', 'شاشتان كبيرتان فوق بعضهما: شاشة المحركات والتحذيرات وشاشة الأنظمة.'),
+    'fcu_panel': ('Flight Control Unit (FCU)', 'وحدة التحكم بالطيران (FCU)', 'Glareshield panel: SPD / HDG / ALT / V/S windows and knobs, AP1 and A/THR.', 'لوحة أعلى الشاشات: نوافذ وأزرار السرعة والاتجاه والارتفاع والسرعة العمودية وAP1 وA/THR.'),
+    'center_pedestal': ('Centre Pedestal', 'الكونسول الأوسط', 'Thrust levers, engine masters, speed brake, flaps, gear lever, parking brake and two MCDUs.', 'أذرع الدفع ومفاتيح المحركات والمكابح الهوائية والقلابات وذراع العجلات وفرامل الوقوف وجهازا MCDU.'),
+}.items():
+    t('block.vehicleworks.' + k, en, ar); t('vehicleworks.tooltip.' + k, ten, tar)
+t('vehicleworks.prop.mirror', 'Mirrored (right side)', 'معكوس (الجهة اليمنى)')
+t('vehicleworks.prop.door_kind', 'Door type', 'نوع الباب')
+t('vehicleworks.opt.passenger', 'Passenger', 'ركاب'); t('vehicleworks.opt.cargo', 'Cargo', 'شحن')
+t('key.vehicleworks.announce', 'Cabin announcements', 'إعلانات المقصورة')
+t('key.vehicleworks.copilot', 'First officer: seat / assist off / dismiss', 'مساعد الطيار: إجلاس / إيقاف المساعدة / صرف')
+for i, (en, ar) in enumerate((('Thrust: IDLE', 'الدفع: خامل'), ('Thrust: CL (climb)', 'الدفع: CL (صعود)'), ('Thrust: FLX / MCT', 'الدفع: FLX / MCT'), ('Thrust: TOGA', 'الدفع: TOGA'))):
+    t('vehicleworks.ped.thrust.%d' % i, en, ar)
+for i, (en, ar) in enumerate((('Flaps 0', 'القلابات 0'), ('Flaps 1', 'القلابات 1'), ('Flaps 2', 'القلابات 2'), ('Flaps 3', 'القلابات 3'), ('Flaps FULL', 'القلابات FULL'))):
+    t('vehicleworks.ped.flaps.%d' % i, en, ar)
+t('vehicleworks.ped.speedbrake', 'Speed brake %s%%', 'المكابح الهوائية %s%%')
+t('vehicleworks.ped.master_on', 'Engine masters ON', 'مفاتيح المحركات تشغيل'); t('vehicleworks.ped.master_off', 'Engine masters OFF', 'مفاتيح المحركات إيقاف')
+t('vehicleworks.fcu.athr_on', 'A/THR engaged', 'الدفع الآلي A/THR مفعل'); t('vehicleworks.fcu.athr_off', 'A/THR off', 'الدفع الآلي A/THR مطفأ')
+for k, en, ar in (('title', 'Cabin crew panel', 'لوحة طاقم المقصورة'), ('lights', 'Cabin lights: %s', 'إضاءة المقصورة: %s'),
+                  ('lights.0', 'off', 'مطفأة'), ('lights.1', 'night (dim)', 'ليلية (خافتة)'), ('lights.2', 'bright', 'ساطعة'), ('lights.3', 'boarding', 'صعود'),
+                  ('belts', 'Seat belt sign: %s', 'إشارة ربط الأحزمة: %s'), ('announce', 'Announcements...', 'الإعلانات...'), ('reset_calls', 'Reset call lights', 'إعادة ضبط أضواء النداء'),
+                  ('board', 'Board passengers', 'صعود الركاب'), ('deplane', 'Deplane passengers', 'نزول الركاب'), ('call_cockpit', 'Interphone: call the cockpit', 'الإنتركم: الاتصال بالقمرة'),
+                  ('doors', 'Doors', 'الأبواب'), ('calls', 'Call lights: %s', 'أضواء النداء: %s'), ('passengers', 'Passengers on board: %s', 'الركاب على متن الطائرة: %s'),
+                  ('boarded', '%s passengers boarded', 'صعد %s راكباً'), ('deplaned', '%s passengers left the aircraft', 'نزل %s راكباً من الطائرة'),
+                  ('interphone', 'Cabin calling the cockpit', 'المقصورة تتصل بالقمرة'), ('seat', 'Cabin crew seat', 'مقعد طاقم الضيافة'),
+                  ('hud', 'Calls %s   Doors %s   Belts %s', 'النداءات %s   الأبواب %s   الأحزمة %s'),
+                  ('hint', '%s: crew panel   %s: announcements', '%s: لوحة الطاقم   %s: الإعلانات')):
+    t('vehicleworks.crew.' + k, en, ar)
+t('vehicleworks.pa.title', 'Cabin announcements', 'إعلانات المقصورة')
+t('vehicleworks.pa.auto', 'Automatic by flight phase: %s', 'تلقائي حسب مرحلة الرحلة: %s')
+PA = (('Boarding', 'الصعود', 'Welcome aboard. Please find your seat and place your bags in the overhead bins.', 'أهلاً بكم على متن الطائرة. يرجى التوجه إلى مقاعدكم ووضع الحقائب في الخزائن العلوية.'),
+      ('Welcome', 'الترحيب', 'Ladies and gentlemen, the doors are closed. Please fasten your seat belts and switch your devices to flight mode.', 'سيداتي سادتي، تم إغلاق الأبواب. يرجى ربط الأحزمة وتحويل الأجهزة إلى وضع الطيران.'),
+      ('Safety', 'تعليمات السلامة', 'Please pay attention to the safety demonstration. Emergency exits are located at the front and rear of the cabin.', 'يرجى الانتباه لتعليمات السلامة. مخارج الطوارئ في مقدمة ومؤخرة المقصورة.'),
+      ('Takeoff', 'الإقلاع', 'Cabin crew, prepare for takeoff.', 'طاقم الضيافة، استعدوا للإقلاع.'),
+      ('In flight', 'أثناء الرحلة', 'We have reached our cruising altitude. You may now use the entertainment system. Please keep your seat belt fastened while seated.', 'وصلنا إلى ارتفاع الرحلة. يمكنكم الآن استخدام نظام الترفيه. يرجى إبقاء الحزام مربوطاً أثناء الجلوس.'),
+      ('Landing', 'الهبوط', 'We are starting our descent. Please return to your seats, raise your seat backs and stow your tray tables.', 'بدأنا الهبوط. يرجى العودة إلى المقاعد ورفع مساند الظهر وإغلاق الطاولات.'),
+      ('Arrival', 'الوصول', 'Welcome to your destination. Please remain seated until the seat belt sign is switched off.', 'مرحباً بكم في وجهتكم. يرجى البقاء في المقاعد حتى تنطفئ إشارة ربط الأحزمة.'),
+      ('Deplaning', 'النزول', 'You may now leave the aircraft. Thank you for flying with us.', 'يمكنكم الآن مغادرة الطائرة. شكراً لسفركم معنا.'))
+for i, (n, na, tx, ta) in enumerate(PA):
+    t('vehicleworks.pa.name.%d' % i, n, na); t('vehicleworks.pa.text.%d' % i, tx, ta)
+for k, en, ar in (('prefix', 'First officer: %s', 'مساعد الطيار: %s'), ('no_seat', 'no free co-pilot seat', 'لا يوجد مقعد مساعد طيار فارغ'),
+                  ('seated', 'seated beside you, assist on', 'جلس بجانبك، المساعدة مفعلة'), ('assist_off', 'assist off (press again to dismiss)', 'المساعدة متوقفة (اضغط مرة أخرى لصرفه)'),
+                  ('dismissed', 'left the cockpit', 'غادر القمرة'), ('gear_up', 'positive climb, gear up', 'صعود إيجابي، رفع العجلات'),
+                  ('gear_down', 'gear down', 'إنزال العجلات'), ('pull_up', 'terrain, pulling up!', 'تضاريس، أرفع المقدمة!'), ('stall', 'stall, nose down, thrust', 'انهيار، خفض المقدمة، زيادة الدفع')):
+    t('vehicleworks.fo.' + k, en, ar)
+t('vehicleworks.msg.door_locked', 'The door is locked in flight', 'الباب مقفل أثناء الطيران')
+t('vehicleworks.msg.gear_jammed', 'Landing gear jammed!', 'عجلات الهبوط عالقة!')
+t('vehicleworks.cmd.emergency', 'Emergency triggered: %s', 'تم تفعيل حالة طوارئ: %s')
+t('vehicleworks.cmd.emergency_cleared', 'All emergencies cleared', 'تم إلغاء كل حالات الطوارئ')
+t('vehicleworks.cmd.emergency_unknown', 'Unknown emergency: %s', 'حالة طوارئ غير معروفة: %s')
+t('vehicleworks.cabin.ctl.12', 'Call attendant: %s', 'نداء المضيف: %s'); t('vehicleworks.cabin.ctl.13', 'Window shade: %s', 'غطاء النافذة: %s')
+for k, en, ar in (('cabin_pressure', 'CABIN PRESSURE', 'ضغط المقصورة'), ('gear_jammed', 'GEAR JAMMED', 'العجلات عالقة'), ('fuel_leak', 'FUEL LEAK', 'تسرب وقود'), ('generator', 'GENERATOR FAULT', 'عطل المولد')):
+    t('vehicleworks.warning.' + k, en, ar)
+EMER = {'emergencies': ('Emergencies', 'حالات الطوارئ'), 'emergenciesEnabled': ('Random emergencies', 'طوارئ عشوائية'),
+        'enabled': ('Enabled', 'مفعّل'), 'chancePercent': ('Chance per flight hour (%)', 'نسبة الحدوث لكل ساعة طيران (%)'),
+        'engineFailure': ('Engine failure', 'عطل المحرك'), 'engineFire': ('Engine fire', 'حريق المحرك'), 'birdStrike': ('Bird strike', 'اصطدام طائر'),
+        'hydraulicFailure': ('Hydraulic failure', 'عطل هيدروليكي'), 'generatorFailure': ('Generator failure', 'عطل المولد'), 'fuelLeak': ('Fuel leak', 'تسرب الوقود'),
+        'gearJam': ('Landing gear jam', 'علوق العجلات'), 'instrumentFailure': ('Instrument failure', 'عطل الأجهزة'), 'depressurization': ('Cabin depressurization', 'فقدان ضغط المقصورة')}
+for k, (en, ar) in EMER.items(): t('vehicleworks.configuration.' + k, en, ar)
+for k, en, ar in (('cabin.pa_chime', 'Cabin chime', 'رنين الإعلان'), ('cabin.call_chime', 'Attendant call', 'نداء المضيف'),
+                  ('vehicle.gear_rattle', 'Gear rattles', 'اهتزاز العجلات'), ('vehicle.tire_bump', 'Tyres bump', 'ارتطام الإطارات')):
+    t('subtitles.vehicleworks.' + k, en, ar)
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):

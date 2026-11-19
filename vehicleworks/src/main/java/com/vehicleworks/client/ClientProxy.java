@@ -126,6 +126,11 @@ public final class ClientProxy extends CommonProxy {
     }
 
     @Override
+    public void onAnnounce(Payloads.Announce p) {
+        VehicleHud.announce(p.pa());
+    }
+
+    @Override
     public void onOpenScreen(Payloads.OpenScreen p) {
         Minecraft mc = Minecraft.getInstance();
         switch (p.screen()) {
@@ -134,6 +139,9 @@ public final class ClientProxy extends CommonProxy {
             case ServerActions.SCREEN_RCU -> mc.setScreen(new RemoteControlScreen(p.vehicleId(), p.pos(), p.data()));
             case ServerActions.SCREEN_REFUEL -> {
                 if (mc.level != null && mc.level.getEntity(p.vehicleId()) instanceof com.vehicleworks.vehicle.VehicleEntity v) mc.setScreen(new RefuelScreen(v, p.data()));
+            }
+            case ServerActions.SCREEN_CREW -> {
+                if (mc.level != null && mc.level.getEntity(p.vehicleId()) instanceof com.vehicleworks.vehicle.VehicleEntity v) mc.setScreen(new CrewScreen(v));
             }
             case ServerActions.SCREEN_PANEL -> {
                 if (mc.level != null && mc.level.getEntity(p.vehicleId()) instanceof com.vehicleworks.vehicle.VehicleEntity v) mc.setScreen(new PanelScreen(v));

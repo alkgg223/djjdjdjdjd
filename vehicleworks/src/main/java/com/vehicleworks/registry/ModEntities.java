@@ -20,6 +20,11 @@ public final class ModEntities {
                     .fireImmune()
                     .build("vehicle"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.vehicleworks.vehicle.NpcEntity>> NPC = ENTITIES.register("npc",
+            () -> EntityType.Builder.<com.vehicleworks.vehicle.NpcEntity>of(com.vehicleworks.vehicle.NpcEntity::new, MobCategory.MISC)
+                    .sized(0.6f, 1.8f)
+                    .clientTrackingRange(10)
+                    .build("npc"));
     public static final DeferredHolder<EntityType<?>, EntityType<ProjectileEntity>> PROJECTILE = ENTITIES.register("projectile",
             () -> EntityType.Builder.<ProjectileEntity>of(ProjectileEntity::new, MobCategory.MISC)
                     .sized(0.3f, 0.3f)

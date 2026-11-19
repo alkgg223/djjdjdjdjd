@@ -74,7 +74,8 @@ public final class VehicleMesh implements AutoCloseable {
         // interior lighting: cockpit flood lights and panel backlight light up nearby blocks
         var tel = v.telemetry;
         int cabin = tel.busPowered ? tel.cabinLight : 0, backl = tel.busPowered ? tel.panelLight : 0;
-        int lightKey = sky * 16 + blk + ((cabin * 3 + backl) << 8);
+        int cabinL = tel.busPowered ? tel.cabinLights : 0;
+        int lightKey = sky * 16 + blk + ((cabin * 3 + backl) << 8) + (cabinL << 14);
         long now = Util.getMillis();
         boolean structureChanged = v.structure.version != version;
         boolean lightChanged = Math.abs(((lightKey >> 4) & 15) - ((light >> 4) & 15)) >= 2 || Math.abs((lightKey & 15) - (light & 15)) >= 2 || (lightKey >> 8) != (light >> 8);
@@ -85,6 +86,8 @@ public final class VehicleMesh implements AutoCloseable {
             for (long k : v.structure.blockEntities().keySet()) {
                 var ct = VehicleBuilder.typeOf(v.structure.get(k));
                 if (ct == ComponentType.AIRCRAFT_LIGHT && cabin > 0 && CockpitRenderer.lightType(v, k) == 9) lamps.put(k, cabin == 2 ? 14 : 10);
+                else if (ct != null && (ct.seatClass() > 0 || ct == ComponentType.GALLEY || ct == ComponentType.CREW_PANEL) && cabinL > 0)
+                    lamps.put(k, cabinL == 2 ? 13 : (cabinL == 1 ? 9 : 6)); // cabin ceiling lights light the cabin
                 else if ((ct == ComponentType.COCKPIT_PANEL || ct == ComponentType.FLIGHT_INSTRUMENTS || (ct != null && ct.isInstrumentPanel())) && backl > 0)
                     lamps.put(k, Math.max(lamps.get(k), backl == 2 ? 8 : 5));
             }

@@ -50,6 +50,8 @@ public final class InstrumentRenderer {
             case INSTRUMENT_PANEL_A -> new float[][]{{-0.32f, 0.16f, 0.3f, 1}, {0, 0.16f, 0.3f, 1}, {0.32f, 0.16f, 0.3f, 1},
                     {-0.32f, -0.16f, 0.3f, 1}, {0, -0.16f, 0.3f, 1}, {0.32f, -0.16f, 0.3f, 1}};
             case INSTRUMENT_PANEL_B -> new float[][]{{-0.33f, 0.17f, 0.3f, 1}, {-0.33f, -0.17f, 0.3f, 1}, {0.16f, 0, 0.64f, 0}};
+            case INSTRUMENT_PANEL_D -> new float[][]{{-0.25f, 0, 0.48f, 0}, {0.25f, 0, 0.48f, 0}};
+            case INSTRUMENT_PANEL_E -> new float[][]{{0, 0.25f, 0.48f, 0}, {0, -0.25f, 0.48f, 0}};
             default -> new float[][]{{0, 0, 0.92f, 0}};
         };
     }
@@ -96,6 +98,7 @@ public final class InstrumentRenderer {
                 float h = slots[i][2] / 2;
                 ps.scale(h, h, 1);
                 if (small) analog(id, v, t, tr, ps, buffers, lit);
+                else if (t.fail(com.vehicleworks.vehicle.VehicleTelemetry.FAIL_INSTR) && BlockPos.getX(k) < 0) inop(ps, buffers, light);
                 else digital(id, v, t, tr, ps, buffers, light);
                 ps.popPose();
             }
@@ -346,6 +349,13 @@ public final class InstrumentRenderer {
         }
     }
 
+    /** failed display unit (emergency): dark glass with an INOP flag */
+    static void inop(PoseStack ps, MultiBufferSource buf, int light) {
+        tex(ps, buf, "inst_screen_bezel", 1.0f, Z * 6, 0, light);
+        rect(ps, buf, -0.95f, -0.95f, 0.95f, 0.95f, Z * 0.3f, 0xFF05060A);
+        text(ps, buf, "INOP", 0, 0, 0.2f, 0xFFFFB020, true);
+    }
+
     static String displayName(String id) {
         return switch (id) {
             case "nav_display" -> "ND";
@@ -353,6 +363,8 @@ public final class InstrumentRenderer {
             case "flight_director" -> "FD";
             case "attitude_display" -> "PFD";
             case "engine_display" -> "EICAS";
+            case "ecam_ewd" -> "E/WD";
+            case "ecam_sd" -> "SD";
             default -> "DU";
         };
     }
@@ -464,6 +476,8 @@ public final class InstrumentRenderer {
                     text(ps, buf, t.autopilot ? String.format("AP %03.0f/%.0f", t.apHeading, t.apAltitude) : "FD", 0, 0.82f, 0.11f, t.autopilot ? C : G, true);
                 } else text(ps, buf, t.autopilot ? "FD  HDG  ALT" : "FD  ATT", 0, 0.82f, 0.11f, G, true);
             }
+            case "ecam_ewd" -> ecamEwd(v, t, ps, buf);
+            case "ecam_sd" -> ecamSd(v, t, ps, buf);
             case "engine_display" -> {
                 int n = Math.min(4, t.engineSpool.length);
                 for (int i = 0; i < n; i++) {
@@ -491,5 +505,106 @@ public final class InstrumentRenderer {
             }
             default -> {}
         }
+    }
+
+    // ------------------------------------------------------------------ Airbus ECAM
+
+    /** engine dial: arc 0..110 %, needle, digital value (N1 or EGT) */
+    static void dial(PoseStack ps, MultiBufferSource buf, float cx, float cy, float r, float frac, String label, String value, int col) {
+        for (int a = -210; a <= 30; a += 8) {
+            double a0 = Math.toRadians(a), a1 = Math.toRadians(Math.min(30, a + 8));
+            int c = a > 0 ? 0xFFFF4040 : 0xFFDDDDDD;
+            line(ps, buf, cx + (float) Math.cos(a0) * r, cy + (float) Math.sin(a0) * r, cx + (float) Math.cos(a1) * r, cy + (float) Math.sin(a1) * r, 0.012f, Z, c);
+        }
+        double na = Math.toRadians(-210 + 240 * Math.max(0, Math.min(1.1f, frac)) / 1.1f);
+        line(ps, buf, cx, cy, cx + (float) Math.cos(na) * r * 0.95f, cy + (float) Math.sin(na) * r * 0.95f, 0.02f, Z * 2, col);
+        text(ps, buf, value, cx + r * 0.5f, cy - r * 0.35f, 0.1f, col, true);
+        text(ps, buf, label, cx, cy - r - 0.08f, 0.08f, 0xFF38D3FF, true);
+    }
+
+    /** upper ECAM: N1 and EGT dials per engine, fuel flow, fuel on board, flaps / slats, memo and warnings */
+    static void ecamEwd(VehicleEntity v, VehicleTelemetry t, PoseStack ps, MultiBufferSource buf) {
+        final int G = 0xFF40FF70, W = 0xFFFFFFFF, C = 0xFF38D3FF, A = 0xFFFFB020, R = 0xFFFF4040;
+        int n = Math.min(2, Math.max(1, t.engineSpool.length / 2));
+        int per = Math.max(1, t.engineSpool.length / n);
+        for (int e = 0; e < n; e++) {
+            int i = Math.min(t.engineSpool.length - 1, e * per);
+            if (i < 0) break;
+            float cx = n == 1 ? 0 : (e == 0 ? -0.45f : 0.45f);
+            float n1 = t.engineSpool[i];
+            int col = t.engineState[i] == 4 ? R : (t.engineState[i] == 1 ? A : G);
+            dial(ps, buf, cx, 0.6f, 0.24f, n1, "N1", String.format("%.1f", n1 * 100), col);
+            float egt = t.engineTemp[i];
+            dial(ps, buf, cx, 0.12f, 0.17f, Math.min(1.1f, egt / 900f), "EGT", String.format("%.0f", egt), egt > 850 ? R : (egt > 750 ? A : G));
+        }
+        text(ps, buf, String.format("FF %.2f", t.fuelFlow), -0.6f, -0.2f, 0.09f, G, true);
+        text(ps, buf, String.format("FOB %.0f KG", t.fuel), 0.45f, -0.2f, 0.09f, t.fuel < 0.1f * t.fuelCapacity ? A : G, true);
+        // flaps / slats
+        String[] fl = {"0", "1", "2", "3", "FULL"};
+        int fi = Math.round(t.flaps * 4);
+        text(ps, buf, "S   F", 0.55f, -0.36f, 0.08f, W, true);
+        text(ps, buf, fl[Math.max(0, Math.min(4, fi))], 0.55f, -0.48f, 0.11f, C, true);
+        if (t.speedBrake > 0.05f) text(ps, buf, "SPEED BRK", -0.55f, -0.36f, 0.08f, t.onGround ? G : A, true);
+        line(ps, buf, -0.95f, -0.58f, 0.95f, -0.58f, 0.008f, Z, 0xFF606870);
+        // memo / warnings (red first, then amber)
+        float y = -0.68f;
+        int shown = 0;
+        if (ClientEvents.ridden() == v) for (Warnings.W w : VoiceCallouts.active) {
+            if (shown >= 3) break;
+            text(ps, buf, net.minecraft.network.chat.Component.translatable(w.key()).getString().toUpperCase(java.util.Locale.ROOT), -0.9f, y, 0.085f, w.red ? R : A, false);
+            y -= 0.1f; shown++;
+        }
+        if (shown == 0) {
+            boolean ground = t.onGround;
+            text(ps, buf, ground ? "T.O  AUTO BRK MAX" : (t.gearDown ? "LDG  LDG GEAR DN" : "LDG  ----"), -0.9f, y, 0.085f, G, false);
+            text(ps, buf, t.seatbelt ? "SEAT BELTS ON" : "SEAT BELTS OFF", -0.9f, y - 0.1f, 0.085f, G, false);
+            text(ps, buf, ground ? (t.doors != 0 ? "CABIN DOORS OPEN" : "CABIN READY") : (t.autothrust ? "A/THR ACTIVE" : ""), -0.9f, y - 0.2f, 0.085f, t.doors != 0 ? A : G, false);
+        }
+    }
+
+    /** lower ECAM: system page chosen by the phase (DOOR on the ground, WHEEL low / gear down, ELEC on battery, else CRUISE) */
+    static void ecamSd(VehicleEntity v, VehicleTelemetry t, PoseStack ps, MultiBufferSource buf) {
+        final int G = 0xFF40FF70, W = 0xFFFFFFFF, C = 0xFF38D3FF, A = 0xFFFFB020, R = 0xFFFF4040;
+        String page = t.onGround && t.groundSpeed < 2 ? "DOOR" : (!t.generator ? "ELEC" : (t.gearDown || t.agl < 300 ? "WHEEL" : "CRUISE"));
+        text(ps, buf, page, -0.82f, 0.84f, 0.11f, W, false);
+        switch (page) {
+            case "DOOR" -> {
+                // fuselage outline and the doors
+                rect(ps, buf, -0.18f, -0.75f, 0.18f, 0.7f, Z, 0xFF203040);
+                int i = 0;
+                for (long k : v.structure.blockEntities().keySet()) {
+                    if (com.vehicleworks.vehicle.VehicleBuilder.typeOf(v.structure.get(k)) != com.vehicleworks.component.ComponentType.AIRCRAFT_DOOR) continue;
+                    boolean open = (v.cabin.get(k) & 1) != 0;
+                    float x = BlockPos.getX(k) < 0 ? -0.22f : 0.22f, y = 0.6f - (BlockPos.getZ(k) + 16) / 40f * 1.3f;
+                    rect(ps, buf, x - 0.04f, y - 0.05f, x + 0.04f, y + 0.05f, Z * 2, open ? A : G);
+                    text(ps, buf, open ? "OPEN" : "", x + (x < 0 ? -0.22f : 0.22f), y - 0.03f, 0.07f, A, true);
+                    i++;
+                }
+                text(ps, buf, String.format("CABIN %s", t.doors != 0 ? "DOORS OPEN" : "CLOSED"), 0, -0.85f, 0.08f, t.doors != 0 ? A : G, true);
+            }
+            case "WHEEL" -> {
+                float[][] gp = {{0, 0.35f}, {-0.4f, -0.2f}, {0.4f, -0.2f}};
+                boolean transit = false;
+                for (float e : t.wheelExt) if (e > 0.03f && e < 0.97f) transit = true;
+                for (float[] g : gp) {
+                    int col = transit ? R : (t.gearDown ? G : 0xFF404850);
+                    poly(ps, buf, new float[][]{{g[0], g[1] + 0.1f}, {g[0] + 0.1f, g[1] - 0.08f}, {g[0] - 0.1f, g[1] - 0.08f}}, 3, Z, col);
+                }
+                text(ps, buf, t.parkingBrake ? "PARK BRK" : "BRAKES", 0, -0.55f, 0.09f, t.parkingBrake ? A : G, true);
+                text(ps, buf, t.fail(com.vehicleworks.vehicle.VehicleTelemetry.FAIL_GEAR) ? "L/G JAMMED" : "", 0, -0.7f, 0.09f, R, true);
+            }
+            case "ELEC" -> {
+                text(ps, buf, String.format("BAT  %.0f %%", t.batteryCharge * 100), 0, 0.3f, 0.11f, t.batteryCharge < 0.2f ? A : G, true);
+                text(ps, buf, t.generator ? "GEN 1+2  ON" : "GEN  OFF", 0, 0.05f, 0.11f, t.generator ? G : A, true);
+                text(ps, buf, t.busPowered ? "AC BUS  ON" : "AC BUS  OFF", 0, -0.2f, 0.11f, t.busPowered ? G : R, true);
+            }
+            default -> {
+                text(ps, buf, String.format("FOB %.0f KG", t.fuel), 0, 0.4f, 0.11f, G, true);
+                text(ps, buf, String.format("CAB ALT %s", t.fail(com.vehicleworks.vehicle.VehicleTelemetry.FAIL_PRESS) ? "HI" : "800 FT"), 0, 0.15f, 0.1f, t.fail(com.vehicleworks.vehicle.VehicleTelemetry.FAIL_PRESS) ? R : G, true);
+                text(ps, buf, String.format("HYD %s", t.hydraulics < 0.75f ? "LO PR" : "3000"), 0, -0.1f, 0.1f, t.hydraulics < 0.75f ? A : G, true);
+                text(ps, buf, String.format("GW %.1f T", t.mass / 1000f), 0, -0.35f, 0.1f, C, true);
+            }
+        }
+        text(ps, buf, String.format("TAT %+.0f   GW %.0f", 15 - t.altitude * 0.0065f, t.mass / 1000f), 0, -0.93f, 0.07f, 0xFF9AA4AE, true);
     }
 }

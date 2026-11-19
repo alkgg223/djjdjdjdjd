@@ -22,7 +22,7 @@ public final class VehicleSounds {
 
     // loop families
     private static final int PISTON = 0, TURBOPROP = 1, JET = 2, ROTOR = 3, ELECTRIC = 4, WIND = 5, RUMBLE = 6, TURBOFAN = 7, HELI = 8,
-            AIRFLOW = 9, STARTER_P = 10, STARTER_T = 11, IGNITION = 12, ROUGH = 13, FLAPS = 14, BRAKE = 15, AMBIENT = 16, N = 17;
+            AIRFLOW = 9, STARTER_P = 10, STARTER_T = 11, IGNITION = 12, ROUGH = 13, FLAPS = 14, BRAKE = 15, AMBIENT = 16, RATTLE = 17, N = 18;
 
     private static final class Loop extends AbstractTickableSoundInstance {
         private final VehicleEntity v;
@@ -58,6 +58,13 @@ public final class VehicleSounds {
                     for (float c : t.wheelComp) if (c > 0) grounded++;
                     level = t.onGround || grounded > 0 ? Mth.clamp((s - 1.5f) / 45f, 0, 1) : 0;
                     p = 0.55f + Mth.clamp(s / 90f, 0, 0.9f);
+                }
+                case RATTLE -> {
+                    // gear and cabin fittings rattling on a rough surface or a shaking airframe
+                    VehicleClientState cs = (VehicleClientState) v.clientState;
+                    float b = cs == null ? 0 : cs.bumpiness;
+                    level = Mth.clamp(b * 9f, 0, 1) * Mth.clamp(t.groundSpeed / 6f, 0.3f, 1f);
+                    p = 0.85f + Mth.clamp(t.groundSpeed / 120f, 0, 0.4f);
                 }
                 case WIND -> {
                     float s = t.airspeed;
@@ -142,7 +149,7 @@ public final class VehicleSounds {
                     level *= engines();
                 }
             }
-            float gain = switch (family) { case JET, TURBOFAN -> 3.5f; case WIND, AIRFLOW -> 1.0f; case RUMBLE -> 1.6f; case STARTER_P, STARTER_T, IGNITION, AMBIENT, FLAPS -> 1.0f; case BRAKE -> 1.2f; default -> 2.2f; };
+            float gain = switch (family) { case JET, TURBOFAN -> 3.5f; case WIND, AIRFLOW -> 1.0f; case RUMBLE -> 1.6f; case STARTER_P, STARTER_T, IGNITION, AMBIENT, FLAPS -> 1.0f; case BRAKE -> 1.2f; case RATTLE -> 1.3f; default -> 2.2f; };
             boolean engineFamily = family <= ELECTRIC || family == TURBOFAN || family == HELI || family == ROUGH;
             float target = level * gain * (engineFamily && inside ? 0.7f : 1f);
             volume += (target - volume) * 0.2f;
@@ -189,6 +196,7 @@ public final class VehicleSounds {
             case FLAPS -> ModSounds.FLAPS.get();
             case BRAKE -> ModSounds.BRAKE.get();
             case AMBIENT -> ModSounds.COCKPIT_AMBIENT.get();
+            case RATTLE -> ModSounds.GEAR_RATTLE.get();
             default -> ModSounds.WIND_LOOP.get();
         };
     }
@@ -215,6 +223,7 @@ public final class VehicleSounds {
         want[RUMBLE] = t.wheelKeys.length > 0 && t.groundSpeed > 1.5f;
         want[BRAKE] = t.wheelKeys.length > 0 && t.groundSpeed > 2;
         want[FLAPS] = true;
+        want[RATTLE] = t.wheelKeys.length > 0 && s.bumpiness > 0.02f;
         want[AMBIENT] = t.busPowered && mc.player.distanceToSqr(v) < 30 * 30;
         if (loops == null) {
             loops = new ArrayList<>();
@@ -258,6 +267,21 @@ public final class VehicleSounds {
                     mc.level.playLocalSound(v.getX(), v.getY(), v.getZ(), ModSounds.TOUCHDOWN.get(), net.minecraft.sounds.SoundSource.NEUTRAL, 0.5f + impact * 0.25f, 1f, false);
                     if (inside) GroundFx.kick(0.06f + impact * 0.04f);
                 }
+            }
+            // shaking: wheel compression changing quickly (rough ground, bumps, hard braking)
+            float d = 0;
+            if (s.lastComp != null && s.lastComp.length == t.wheelComp.length)
+                for (int i = 0; i < t.wheelComp.length; i++) if (t.wheelComp[i] > 0 || s.lastComp[i] > 0) d = Math.max(d, Math.abs(t.wheelComp[i] - s.lastComp[i]));
+            s.lastComp = t.wheelComp.clone();
+            s.bumpiness += (d - s.bumpiness) * (d > s.bumpiness ? 0.5f : 0.06f);
+            if (s.bumpCooldown > 0) s.bumpCooldown--;
+            if (grounded && s.wasGround && d > 0.05f && t.groundSpeed > 1 && s.bumpCooldown == 0) {
+                // a single bump: thud of the tyre and strut
+                float k = Mth.clamp(d / 0.25f, 0.15f, 1f);
+                mc.level.playLocalSound(v.getX(), v.getY(), v.getZ(), ModSounds.TIRE_BUMP.get(), net.minecraft.sounds.SoundSource.NEUTRAL,
+                        0.4f + 1.4f * k, 0.85f + mc.level.random.nextFloat() * 0.3f, false);
+                if (mc.player.getVehicle() == v) GroundFx.kick(0.03f + 0.12f * k);
+                s.bumpCooldown = 5;
             }
             s.wasGround = grounded;
         }

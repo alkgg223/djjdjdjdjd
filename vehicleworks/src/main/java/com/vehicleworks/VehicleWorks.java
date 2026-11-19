@@ -40,6 +40,7 @@ public class VehicleWorks {
         ModSounds.SOUNDS.register(modBus);
         ModTabs.TABS.register(modBus);
         modBus.addListener(Payloads::register);
+        modBus.addListener((net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent e) -> e.put(ModEntities.NPC.get(), com.vehicleworks.vehicle.NpcEntity.attributes().build()));
         container.registerConfig(ModConfig.Type.COMMON, Config.SERVER_SPEC); // one file in config/, editable from the Mods screen
         container.registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_SPEC);
         NeoForge.EVENT_BUS.addListener(VehicleWorks::onLevelTick);

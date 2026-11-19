@@ -201,6 +201,7 @@ public final class EntityVehicleCollision {
                 for (int z = z0; z <= z1; z++) {
                     long k = BlockPos.asLong(x, y, z);
                     if (!s.contains(k)) continue;
+                    if (v.isPassable(k)) continue; // an open aircraft door / lavatory door
                     VoxelShape sh = shape(s.get(k));
                     if (!sh.isEmpty()) shapes.add(sh.move(x, y, z));
                 }

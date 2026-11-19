@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "  W",
+    " WW",
+    " I "
+  ],
+  "key": {
+    "W": {
+      "item": "minecraft:gray_wool"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:jumpseat",
+    "count": 1
+  }
+}

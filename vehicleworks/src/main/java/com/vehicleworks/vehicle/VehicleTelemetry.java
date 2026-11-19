@@ -22,6 +22,12 @@ public final class VehicleTelemetry {
     public int dimmer = 3, displayBrt = 4, powerAge = 100000;
     /** fly-by-wire (side stick) control law */
     public boolean fbw;
+    /** A320 systems: speed brake, cabin lights, signs, FCU, MCDU pages, rudder input, doors, failures, first officer */
+    public float speedBrake, apSpeed, stickYaw;
+    public int cabinLights = 2, mcdu1, mcdu2, doors, failures;
+    public boolean seatbelt, autothrust, foPresent, foAssist, autoPA;
+    public static final int FAIL_GEN = 1, FAIL_HYD = 2, FAIL_GEAR = 4, FAIL_INSTR = 8, FAIL_PRESS = 16, FAIL_FUEL = 32;
+    public boolean fail(int bit) { return (failures & bit) != 0; }
     public boolean busPowered = true, generator, wrongFuel, refueling;
     public float refuelRemaining;
     /** per fuel tank: fill 0..1, grade, side */
@@ -69,6 +75,9 @@ public final class VehicleTelemetry {
         b.writeByte((busPowered ? 1 : 0) | (generator ? 2 : 0) | (wrongFuel ? 4 : 0) | (refueling ? 8 : 0));
         b.writeFloat(refuelRemaining);
         b.writeByte(dimmer); b.writeByte(displayBrt); b.writeVarInt(powerAge); b.writeBoolean(fbw);
+        b.writeFloat(speedBrake); b.writeFloat(apSpeed); b.writeFloat(stickYaw);
+        b.writeByte(cabinLights); b.writeByte(mcdu1); b.writeByte(mcdu2); b.writeVarInt(doors); b.writeVarInt(failures);
+        b.writeByte((seatbelt ? 1 : 0) | (autothrust ? 2 : 0) | (foPresent ? 4 : 0) | (foAssist ? 8 : 0) | (autoPA ? 16 : 0));
         b.writeVarInt(tankFill.length);
         for (int i = 0; i < tankFill.length; i++) { b.writeFloat(tankFill[i]); b.writeByte(tankGrade[i]); b.writeByte(tankSide[i]); }
         int ne = engineSpool.length;
@@ -113,6 +122,9 @@ public final class VehicleTelemetry {
         int ef = b.readByte(); busPowered = (ef & 1) != 0; generator = (ef & 2) != 0; wrongFuel = (ef & 4) != 0; refueling = (ef & 8) != 0;
         refuelRemaining = b.readFloat();
         dimmer = b.readByte(); displayBrt = b.readByte(); powerAge = b.readVarInt(); fbw = b.readBoolean();
+        speedBrake = b.readFloat(); apSpeed = b.readFloat(); stickYaw = b.readFloat();
+        cabinLights = b.readByte(); mcdu1 = b.readByte(); mcdu2 = b.readByte(); doors = b.readVarInt(); failures = b.readVarInt();
+        int fl = b.readByte(); seatbelt = (fl & 1) != 0; autothrust = (fl & 2) != 0; foPresent = (fl & 4) != 0; foAssist = (fl & 8) != 0; autoPA = (fl & 16) != 0;
         int nt = b.readVarInt();
         if (tankFill.length != nt) { tankFill = new float[nt]; tankGrade = new byte[nt]; tankSide = new byte[nt]; }
         for (int i = 0; i < nt; i++) { tankFill[i] = b.readFloat(); tankGrade[i] = b.readByte(); tankSide[i] = b.readByte(); }

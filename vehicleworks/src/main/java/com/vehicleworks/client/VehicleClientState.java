@@ -40,6 +40,10 @@ public final class VehicleClientState {
     /** smoothed yoke animation */
     public float yokePitch, yokeRoll;
     public float lastVs;
+    /** wheel compression last tick and a smoothed measure of how much the gear is being shaken */
+    public float[] lastComp;
+    public float bumpiness;
+    public int bumpCooldown;
     public Object sounds;
     /** staged electrical power-up shown by this client */
     public Avionics.State avionics;

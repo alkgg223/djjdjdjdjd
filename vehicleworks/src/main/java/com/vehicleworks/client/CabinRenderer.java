@@ -35,7 +35,7 @@ public final class CabinRenderer {
     }
     /** smoothed animation per seat: slide, recline, leg, tray, door, screen power, light, screen-on time */
     static final class Anim {
-        float slide = 2, recline, leg, tray, door, screen, light;
+        float slide = 2, recline, leg, tray, door, screen, light, shade;
         long screenOn = Long.MIN_VALUE / 4, screenOff = Long.MIN_VALUE / 4;
         boolean screenWas;
         final long[] press = new long[CabinSeat.CONTROL_COUNT];
@@ -43,7 +43,7 @@ public final class CabinRenderer {
 
     // ------------------------------------------------------------------ seat control buttons (on the left arm rest)
 
-    static final String[] BTN = {"FWD", "BACK", "UP", "RECL", "LEG+", "LEG-", "BED", "TV", "TRAY", "LIGHT", "DOOR", "PAGE"};
+    static final String[] BTN = {"FWD", "BACK", "UP", "RECL", "LEG+", "LEG-", "BED", "TV", "TRAY", "LIGHT", "DOOR", "PAGE", "CALL", "SHADE"};
     static final float ARM_H = 0.55f;
 
     static float halfWidth(int cls) {
@@ -84,6 +84,8 @@ public final class CabinRenderer {
             case CabinSeat.TRAY -> CabinSeat.tray(s);
             case CabinSeat.LIGHT -> CabinSeat.light(s) > 0;
             case CabinSeat.DOOR -> CabinSeat.door(s);
+            case CabinSeat.CALL -> CabinSeat.call(s);
+            case CabinSeat.SHADE -> CabinSeat.shade(s);
             default -> false;
         };
     }
@@ -149,6 +151,7 @@ public final class CabinRenderer {
             a.tray += ((CabinSeat.tray(s) ? 1 : 0) - a.tray) * Math.min(1, dt * 6);
             a.door += ((CabinSeat.door(s) ? 1 : 0) - a.door) * Math.min(1, dt * 2.5f);
             a.light += (CabinSeat.light(s) - a.light) * Math.min(1, dt * 8);
+            a.shade += ((CabinSeat.shade(s) ? 1 : 0) - a.shade) * Math.min(1, dt * 3);
             boolean scr = CabinSeat.screen(s) && v.telemetry.busPowered;
             if (scr && !a.screenWas) a.screenOn = now;
             if (!scr && a.screenWas) a.screenOff = now;
@@ -156,8 +159,80 @@ public final class CabinRenderer {
             ps.pushPose();
             ps.translate(BlockPos.getX(k) + 0.5, BlockPos.getY(k), BlockPos.getZ(k) + 0.5);
             ps.mulPose(Axis.YP.rotationDegrees(-CockpitRenderer.facingRot(VehicleBuilder.facing(st))));
-            seat(ps, vc, buffers, cls, a, s, fabric, frame, wood, shell, metal, black, white, glass, light, v, now);
+            // the cabin ceiling lights light every seat
+            int cl = v.telemetry.busPowered ? v.telemetry.cabinLights : 0;
+            int lit = CockpitParts.boost(light, cl == 2 ? 12 : (cl == 1 ? 8 : (cl == 3 ? 5 : 0)));
+            seat(ps, vc, buffers, cls, a, s, fabric, frame, wood, shell, metal, black, white, glass, lit, v, now);
+            if (cls <= 4) overhead(ps, buffers, v, k, st, a, s, lit, cl);
             ps.popPose();
+        }
+    }
+
+    /**
+     * Above every cabin seat: the overhead bin, the passenger service unit (reading light, air
+     * outlet, attendant call button, seat belt / no smoking signs), the ceiling light line on the
+     * aisle side, and a window shade where the seat is next to a window.
+     */
+    static void overhead(PoseStack ps, MultiBufferSource buf, VehicleEntity v, long k, BlockState st, Anim a, int s, int light, int cabinLights) {
+        TextureAtlasSprite shell = CockpitParts.sprite("cabin_shell"), white = CockpitParts.sprite(CockpitParts.WHITE), metal = CockpitParts.sprite(CockpitParts.METAL),
+                glass = CockpitParts.sprite(CockpitParts.GLASS), black = CockpitParts.sprite(CockpitParts.BLACK);
+        var t = v.telemetry;
+        boolean power = t.busPowered;
+        net.minecraft.core.Direction f = VehicleBuilder.facing(st), right = f.getClockWise();
+        // the bin sits under the ceiling (the first solid block above the seat)
+        int top = 2;
+        for (int dy = 1; dy <= 4; dy++) { long up = BlockPos.offset(k, 0, dy, 0); if (v.structure.contains(up) && !v.structure.get(up).isAir()) { top = dy; break; } }
+        if (top < 2) return;
+        float y1 = top - 0.02f, y0 = y1 - 0.62f;
+        Box.cuboid(ps, S(buf), shell, -0.5f, y0, -0.5f, 0.5f, y1, 0.5f, light, 0xFFEDEAE2);
+        // which side is the aisle / the window
+        boolean[] aisle = new boolean[2], window = new boolean[2];
+        for (int i = 0; i < 2; i++) {
+            int sd = i == 0 ? -1 : 1;
+            long n = BlockPos.offset(k, right.getStepX() * sd, 0, right.getStepZ() * sd);
+            aisle[i] = !v.structure.contains(n) || v.structure.get(n).isAir();
+            long w = BlockPos.offset(k, right.getStepX() * sd, 1, right.getStepZ() * sd);
+            window[i] = v.structure.contains(w) && v.structure.get(w).getBlock() instanceof net.minecraft.world.level.block.TransparentBlock;
+        }
+        for (int i = 0; i < 2; i++) {
+            if (!aisle[i]) continue;
+            float x = i == 0 ? -0.5f : 0.5f, sx = i == 0 ? -1 : 1;
+            Box.cuboid(ps, S(buf), shell, x - sx * 0.02f, y0 + 0.05f, -0.48f, x + sx * 0.005f, y1 - 0.04f, 0.48f, light, 0xFFE2DED4);         // bin door
+            Box.cuboid(ps, S(buf), metal, x + sx * 0.005f, y0 + 0.08f, -0.08f, x + sx * 0.02f, y0 + 0.14f, 0.08f, light, 0xFFB8BCC0);        // latch
+            // ceiling light line between the bin and the ceiling, toward the aisle
+            if (cabinLights > 0 && power) {
+                int col = cabinLights == 3 ? 0xFF3050C0 : (cabinLights == 1 ? 0xFFA08060 : 0xFFFFF2E0);
+                Box.cuboid(ps, S(buf), white, x + sx * 0.005f, y1 - 0.03f, -0.5f, x + sx * 0.06f, y1 - 0.01f, 0.5f, FULL, col);
+                LightFx.begin(ps);
+                LightFx.sprite(ps, buf, LightFx.GLOW, x + sx * 0.06f, y1 - 0.04f, 0, 0.35f, col & 0xFFFFFF, cabinLights == 2 ? 0.12f : 0.07f);
+            }
+        }
+        // passenger service unit under the bin
+        float py = y0 - 0.005f;
+        Box.cuboid(ps, S(buf), shell, -0.45f, py - 0.03f, -0.2f, 0.45f, y0, 0.2f, light, 0xFFD8D4CA);
+        int lvl = power ? CabinSeat.light(s) : 0;
+        CockpitParts.plate(ps, S(buf), white, -0.06f, -0.06f, 0.06f, 0.06f, py - 0.031f, lvl == 1 ? FULL : light, lvl == 1 ? 0xFFFFF2DC : 0xFF8A8C90);   // reading light lens
+        CockpitParts.prism(ps, S(buf), metal, 0.18f, 0, 0.03f, 0.025f, py - 0.03f, py - 0.06f, 10, light, 0xFFC8CCD0, 0xFFB0B4B8, true);              // air outlet (gasper)
+        boolean call = CabinSeat.call(s);
+        Box.cuboid(ps, S(buf), white, -0.26f, py - 0.04f, -0.03f, -0.2f, py - 0.03f, 0.03f, call && power ? FULL : light, call && power ? 0xFF40A0FF : 0xFFC8C8C8); // call button
+        if (power && t.seatbelt) {
+            Box.cuboid(ps, S(buf), white, -0.08f, py - 0.04f, 0.1f, 0.08f, py - 0.03f, 0.18f, FULL, 0xFFF0E0B0); // seat belt / no smoking signs lit
+        }
+        if (power && (lvl == 1 || call)) {
+            LightFx.begin(ps);
+            if (lvl == 1) {
+                LightFx.sprite(ps, buf, LightFx.GLOW, 0, py - 0.035f, 0, 0.06f, 0xFFF2DC, 0.8f);
+                LightFx.beam(ps, buf, 0, py - 0.04f, 0, 0, -1, 0.15f, 1.6f, 0.05f, 0.4f, 0xFFF0D8, (0.08f + 0.1f * LightFx.night()));
+            }
+            if (call) LightFx.sprite(ps, buf, LightFx.GLOW, -0.23f, py - 0.045f, 0, 0.06f, 0x40A0FF, 0.6f);
+        }
+        // window shade on the window next to the seat
+        for (int i = 0; i < 2; i++) {
+            if (!window[i]) continue;
+            float sx = i == 0 ? -1 : 1, wx = sx * 0.497f; // inner face of the window block
+            float down = a.shade;
+            Box.cuboid(ps, S(buf), shell, wx - sx * 0.012f, 1.95f - 0.06f - 0.85f * down, -0.4f, wx, 1.95f, 0.4f, light, 0xFFE8E4DA);
+            Box.cuboid(ps, S(buf), metal, wx - sx * 0.02f, 1.95f - 0.07f - 0.85f * down, -0.06f, wx - sx * 0.012f, 1.95f - 0.05f - 0.85f * down, 0.06f, light, 0xFF9AA0A6);
         }
     }
 

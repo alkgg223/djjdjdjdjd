@@ -37,6 +37,7 @@ public final class ClientSetup {
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers e) {
         e.registerEntityRenderer(ModEntities.VEHICLE.get(), VehicleRenderer::new);
         e.registerEntityRenderer(ModEntities.PROJECTILE.get(), ProjectileRenderer::new);
+        e.registerEntityRenderer(ModEntities.NPC.get(), NpcRenderer::new);
     }
 
     @SubscribeEvent

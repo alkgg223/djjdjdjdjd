@@ -87,6 +87,79 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         return ct == ComponentType.PASSENGER_SEAT && !ComponentType.PASSENGER_SEAT.property("gunner").getBool(VehicleBuilder.config(structure, k));
     }
 
+    /** seated in a cabin crew jump seat */
+    public boolean isAttendantSeated(Entity e) {
+        Long k = seats.get(e.getUUID());
+        return k != null && VehicleBuilder.typeOf(structure.get(k)) == ComponentType.JUMPSEAT;
+    }
+
+    /** an open aircraft door: players walk through it */
+    public boolean isPassable(long k) {
+        ComponentType ct = VehicleBuilder.typeOf(structure.get(k));
+        return ct == ComponentType.AIRCRAFT_DOOR && (cabin.get(k) & 1) != 0;
+    }
+
+    /** Right-click on a cabin fixture: doors open / close, lavatory door, galley ovens, trolley is pushed. */
+    public boolean useCabinFixture(ServerPlayer sp, long k, ComponentType ct) {
+        Vector3d w = localToWorld(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + 0.5, BlockPos.getZ(k) + 0.5, new Vector3d());
+        int st = cabin.containsKey(k) ? cabin.get(k) : 0;
+        net.minecraft.sounds.SoundEvent snd;
+        switch (ct) {
+            case AIRCRAFT_DOOR -> {
+                if ((st & 1) == 0 && linearVelocity.length() > 3 && !onGroundNow()) { msg(sp, "vehicleworks.msg.door_locked"); return true; }
+                st ^= 1;
+                snd = com.vehicleworks.registry.ModSounds.CABIN_DOOR.get();
+            }
+            case LAVATORY -> { st ^= 1; snd = com.vehicleworks.registry.ModSounds.CABIN_DOOR.get(); }
+            case GALLEY -> { st = (st + 1) % 4; snd = com.vehicleworks.registry.ModSounds.TRAY.get(); } // 0 closed, 1 oven, 2 coffee, 3 cabinets
+            case TROLLEY -> {
+                // push the trolley one step along the aisle (forward / back), up to 12 blocks from its stowage
+                int off = (byte) (st & 255), dir = (st & 256) != 0 ? -1 : 1;
+                int next = off + dir;
+                if (Math.abs(next) > 12 || blockedForTrolley(k, next)) { st ^= 256; next = off - dir; }
+                st = (st & ~255) | (next & 255);
+                snd = com.vehicleworks.registry.ModSounds.SEAT_MOTOR.get();
+            }
+            default -> { return false; }
+        }
+        cabin.put(k, st);
+        level().playSound(null, w.x, w.y, w.z, snd, net.minecraft.sounds.SoundSource.NEUTRAL, 0.8f, ct == ComponentType.TROLLEY ? 0.6f : 1f);
+        Payloads.sendCabin(this, null);
+        return true;
+    }
+
+    private boolean blockedForTrolley(long home, int off) {
+        Direction f = VehicleBuilder.facing(structure.get(home));
+        long p = BlockPos.offset(home, f.getStepX() * off, 0, f.getStepZ() * off);
+        return structure.contains(p) && !structure.get(p).isAir() && VehicleBuilder.typeOf(structure.get(p)) != ComponentType.TROLLEY;
+    }
+
+    public boolean onGroundNow() {
+        return layout != null && layout.sim.onGround;
+    }
+
+    private static void msg(ServerPlayer sp, String key) {
+        sp.displayClientMessage(net.minecraft.network.chat.Component.translatable(key), true);
+    }
+
+    /** passenger service: the bus coming on lights every personal screen; calls are cleared by the crew */
+    private void cabinPowerChanged(boolean powered) {
+        boolean changed = false;
+        for (long k : structure.blockEntities().keySet()) {
+            ComponentType ct = VehicleBuilder.typeOf(structure.get(k));
+            if (ct == null || ct.seatClass() < 3) continue;
+            int s0 = cabin.get(k), s1 = CabinSeat.withScreen(s0, powered);
+            if (s0 != s1) { cabin.put(k, s1); changed = true; }
+        }
+        if (changed) Payloads.sendCabin(this, null);
+    }
+
+    public void clearCalls() {
+        boolean changed = false;
+        for (var e : cabin.long2IntEntrySet()) if (CabinSeat.call(e.getIntValue())) { e.setValue(CabinSeat.withCall(e.getIntValue(), false)); changed = true; }
+        if (changed) Payloads.sendCabin(this, null);
+    }
+
     /** a passenger operates its own seat (recline, leg rest, screen, tray, light, suite door) */
     public void cabinControl(ServerPlayer sp, int control) {
         Long k = seats.get(sp.getUUID());
@@ -98,6 +171,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         cabin.put((long) k, after);
         Vector3d w = localToWorld(BlockPos.getX(k) + 0.5, BlockPos.getY(k) + 0.5, BlockPos.getZ(k) + 0.5, new Vector3d());
         var snd = switch (control) {
+            case CabinSeat.CALL -> com.vehicleworks.registry.ModSounds.IFE_CHIME.get();
             case CabinSeat.DOOR -> com.vehicleworks.registry.ModSounds.CABIN_DOOR.get();
             case CabinSeat.SCREEN, CabinSeat.PAGE, CabinSeat.LIGHT -> com.vehicleworks.registry.ModSounds.BUTTON.get();
             case CabinSeat.TRAY -> com.vehicleworks.registry.ModSounds.TRAY.get();
@@ -401,6 +475,14 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         if (!fresh) controls.keys = 0;
         controls.apply(sim.input, profile(), fresh, 0.05);
         updateElectrical(sim, 0.05);
+        firstOfficerAssist(sim);
+        rollEmergencies(sim);
+        autoAnnouncements(sim);
+        sim.hydraulicFailure = controls.hydFailed;
+        if (controls.fuelLeakKgS > 0) for (TankUnit t : sim.tanks) if (t.kind == TankUnit.Kind.FUEL) t.amount = Math.max(0, t.amount - controls.fuelLeakKgS * 0.05 / Math.max(1, sim.tanks.size()));
+        if (controls.depressurized && sim.altitude < 3000 && sim.onGround) controls.depressurized = false;
+        // A/THR: hold the FCU speed with the thrust levers
+        if (controls.autothrust && !sim.onGround) controls.throttle = Math.max(0.05, Math.min(1, controls.throttle + Math.max(-0.02, Math.min(0.02, (controls.apSpeed - sim.airspeed) * 0.01))));
         // a parked aircraft may sleep, but not while its engines start or run
         if (sim.body.sleeping && (controls.starterTicks > 0 || sim.thrusters.stream().anyMatch(t -> t.engine.state != com.vehicleworks.physics.propulsion.EngineSim.State.OFF
                 && t.engine.state != com.vehicleworks.physics.propulsion.EngineSim.State.FAILED))) sim.body.wake();
@@ -559,7 +641,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
             if (t.engine.isRunning() && t.engine.spool > t.engine.type.idleFraction * 0.8) gen = true;
             if (t.engine.state == com.vehicleworks.physics.propulsion.EngineSim.State.STARTING && t.engine.starterCmd) cranking = true;
         }
-        gen &= c.generatorSw && c.masterElec;
+        gen &= c.generatorSw && c.masterElec && !c.genFailed;
         double load = 0;
         if (c.avionics) load += 280;
         if (c.fuelPump) load += 90 * Math.max(1, sim.fuelPumps);
@@ -579,6 +661,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         boolean was = c.busPowered;
         c.busPowered = c.masterElec && ((c.battery && c.batteryCharge > 0.001) || gen);
         if (c.busPowered && !was) c.powerOnTick = level().getGameTime();
+        if (c.busPowered != was) cabinPowerChanged(c.busPowered);
         boolean avionicsOn = c.busPowered && c.avionics;
         if (!avionicsOn && c.autopilot) c.autopilot = false;
         sim.boostPumps = c.busPowered && c.fuelPump;
@@ -965,7 +1048,7 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         return false;
     }
 
-    public boolean trySit(ServerPlayer player, long seatPos) {
+    public boolean trySit(net.minecraft.world.entity.LivingEntity player, long seatPos) {
         if (layout == null || player.isPassenger()) return false;
         VehicleLayout.Seat seat = null;
         for (VehicleLayout.Seat s : layout.seats) if (s.pos() == seatPos) seat = s;
@@ -978,6 +1061,214 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         }
         syncSeats();
         return true;
+    }
+
+    // ================================================================== people on board: passengers, first officer
+
+    /** passenger seats (cabin classes and plain passenger seats that are not gunner stations) */
+    private boolean isPassengerSeatKey(long k) {
+        ComponentType ct = VehicleBuilder.typeOf(structure.get(k));
+        if (ct == null) return false;
+        if (ct.seatClass() > 0) return true;
+        return ct == ComponentType.PASSENGER_SEAT && !ComponentType.PASSENGER_SEAT.property("gunner").getBool(VehicleBuilder.config(structure, k));
+    }
+
+    /** Fill every free passenger seat with a passenger (boarding). Returns how many boarded. */
+    public int boardPassengers(int max) {
+        if (layout == null || level().isClientSide) return 0;
+        int n = 0;
+        for (VehicleLayout.Seat s : layout.seats) {
+            if (n >= max) break;
+            if (!isPassengerSeatKey(s.pos()) || seats.containsValue(s.pos())) continue;
+            NpcEntity p = com.vehicleworks.registry.ModEntities.NPC.get().create(level());
+            if (p == null) continue;
+            Vector3d w = localToWorld(BlockPos.getX(s.pos()) + 0.5, BlockPos.getY(s.pos()) + 0.5, BlockPos.getZ(s.pos()) + 0.5, new Vector3d());
+            p.moveTo(w.x, w.y, w.z, getYRot(), 0);
+            p.setRole(NpcEntity.PASSENGER);
+            level().addFreshEntity(p);
+            if (trySit(p, s.pos())) n++;
+            else p.discard();
+        }
+        return n;
+    }
+
+    public int deplanePassengers() {
+        int n = 0;
+        for (Entity e : new java.util.ArrayList<>(getPassengers())) {
+            if (e instanceof NpcEntity npc && npc.role() == NpcEntity.PASSENGER) { npc.stopRiding(); npc.discard(); n++; }
+        }
+        return n;
+    }
+
+    public NpcEntity firstOfficer() {
+        for (Entity e : getPassengers()) if (e instanceof NpcEntity npc && npc.role() == NpcEntity.FIRST_OFFICER) return npc;
+        return null;
+    }
+
+    /** J key: seat the AI first officer, then switch its help off, then dismiss it. */
+    public String copilotKey() {
+        if (layout == null) return null;
+        NpcEntity fo = firstOfficer();
+        if (fo == null) {
+            Long seat = null;
+            for (VehicleLayout.Seat s : layout.seats)
+                if (VehicleBuilder.typeOf(structure.get(s.pos())) == ComponentType.COPILOT_SEAT && !seats.containsValue(s.pos())) seat = s.pos();
+            if (seat == null) return "vehicleworks.fo.no_seat";
+            NpcEntity p = com.vehicleworks.registry.ModEntities.NPC.get().create(level());
+            if (p == null) return null;
+            Vector3d w = localToWorld(BlockPos.getX(seat) + 0.5, BlockPos.getY(seat) + 0.5, BlockPos.getZ(seat) + 0.5, new Vector3d());
+            p.moveTo(w.x, w.y, w.z, getYRot(), 0);
+            p.setRole(NpcEntity.FIRST_OFFICER);
+            level().addFreshEntity(p);
+            if (!trySit(p, seat)) { p.discard(); return "vehicleworks.fo.no_seat"; }
+            controls.copilotAssist = true;
+            return "vehicleworks.fo.seated";
+        }
+        if (controls.copilotAssist) { controls.copilotAssist = false; return "vehicleworks.fo.assist_off"; }
+        fo.stopRiding();
+        fo.discard();
+        return "vehicleworks.fo.dismissed";
+    }
+
+    private long foGearCall = -1000, foPullUp = -1000;
+
+    /** The AI first officer: gear up after a positive climb, gear down on approach, terrain / stall recovery, lights. */
+    private void firstOfficerAssist(VehicleSimulation sim) {
+        NpcEntity fo = firstOfficer();
+        if (fo == null || !controls.copilotAssist || !isAircraft() || !sim.rotors.isEmpty()) return;
+        long now = level().getGameTime();
+        double agl = sim.heightAboveGround, vs = sim.verticalSpeed, ias = sim.airspeed;
+        boolean air = !sim.onGround;
+        if (air && controls.gearDown && vs > 2 && agl > 15 && !controls.gearJammed && now - foGearCall > 60) {
+            controls.gearDown = false;
+            foGearCall = now;
+            foSay("vehicleworks.fo.gear_up");
+            level().playSound(null, getX(), getY(), getZ(), com.vehicleworks.registry.ModSounds.GEAR_RETRACT.get(), net.minecraft.sounds.SoundSource.NEUTRAL, 1.2f, 1f);
+        }
+        if (air && !controls.gearDown && vs < -1 && agl < 120 && ias < 95 && !controls.gearJammed && now - foGearCall > 60) {
+            controls.gearDown = true;
+            foGearCall = now;
+            foSay("vehicleworks.fo.gear_down");
+            level().playSound(null, getX(), getY(), getZ(), com.vehicleworks.registry.ModSounds.GEAR_EXTEND.get(), net.minecraft.sounds.SoundSource.NEUTRAL, 1.2f, 1f);
+        }
+        // terrain: sinking fast close to the ground without landing gear (not a landing) -> pull up, full power
+        double tti = vs < -0.5 ? agl / -vs : 99;
+        boolean landing = controls.gearDown && vs > -6;
+        if (air && !landing && agl < 90 && (tti < 6 || vs < -15)) {
+            sim.input.pitch = Math.min(1, sim.input.pitch + 0.8);
+            sim.input.roll *= 0.3;
+            controls.throttle = 1;
+            if (now - foPullUp > 80) { foPullUp = now; foSay("vehicleworks.fo.pull_up"); }
+        }
+        if (air && sim.stallWarning) {
+            sim.input.pitch = Math.min(sim.input.pitch, -0.4);
+            controls.throttle = 1;
+            if (now - foPullUp > 80) { foPullUp = now; foSay("vehicleworks.fo.stall"); }
+        }
+        // landing lights below 300 m with the gear down, off when climbing through 3000 m
+        if (air && controls.gearDown && agl < 300 && !controls.landingLights) controls.landingLights = true;
+        if (air && agl > 3000 && controls.landingLights) controls.landingLights = false;
+    }
+
+    private void foSay(String key) {
+        for (Entity e : getPassengers()) if (e instanceof ServerPlayer sp && seats.get(sp.getUUID()) != null)
+            sp.displayClientMessage(net.minecraft.network.chat.Component.translatable("vehicleworks.fo.prefix", net.minecraft.network.chat.Component.translatable(key)), true);
+    }
+
+    // ================================================================== cabin announcements
+
+    public static final int PA_BOARDING = 0, PA_WELCOME = 1, PA_SAFETY = 2, PA_TAKEOFF = 3, PA_CRUISE = 4, PA_LANDING = 5, PA_ARRIVAL = 6, PA_DEPLANING = 7, PA_COUNT = 8;
+    private int paLast = -1;
+    private boolean paFlown;
+
+    /** Play an announcement on the cabin speakers: chime + text (and the voice when enabled) for everyone on board. */
+    public void announce(int id) {
+        if (id < 0 || id >= PA_COUNT || level().isClientSide) return;
+        level().playSound(null, getX(), getY(), getZ(), com.vehicleworks.registry.ModSounds.PA_CHIME.get(), net.minecraft.sounds.SoundSource.NEUTRAL, 1.4f, 1f);
+        AABB box = getBoundingBox().inflate(3);
+        for (ServerPlayer sp : ((net.minecraft.server.level.ServerLevel) level()).players())
+            if (sp.getVehicle() == this || box.contains(sp.position())) Payloads.toPlayer(sp, new Payloads.Announce(getId(), id));
+        paLast = id;
+    }
+
+    /** automatic announcements by flight phase */
+    private void autoAnnouncements(VehicleSimulation sim) {
+        if (!controls.autoAnnouncements || !isAircraft() || !controls.busPowered || layout.seats.size() < 6) return;
+        boolean running = sim.thrusters.stream().anyMatch(t -> t.engine.isRunning());
+        boolean air = !sim.onGround;
+        double gs = sim.body.linearVelocity.length();
+        int next = -1;
+        if (paLast < PA_BOARDING && !running && !air) next = PA_BOARDING;
+        else if (paLast == PA_BOARDING && allDoorsClosed()) next = PA_WELCOME;
+        else if ((paLast == PA_WELCOME || paLast == PA_BOARDING) && running) next = PA_SAFETY;
+        else if (paLast == PA_SAFETY && !air && gs > 4) next = PA_TAKEOFF;
+        else if (paLast == PA_TAKEOFF && air && sim.heightAboveGround > 250) next = PA_CRUISE;
+        else if (paLast == PA_CRUISE && air && sim.verticalSpeed < -1.5 && sim.heightAboveGround < 300 && controls.gearDown) next = PA_LANDING;
+        else if ((paLast == PA_LANDING || paLast == PA_CRUISE) && !air && gs < 10 && paFlown) next = PA_ARRIVAL;
+        else if (paLast == PA_ARRIVAL && !running) next = PA_DEPLANING;
+        if (air) paFlown = true;
+        if (next >= 0) {
+            announce(next);
+            if (next == PA_DEPLANING) { paFlown = false; paLast = -1; }
+        }
+    }
+
+    public boolean allDoorsClosed() {
+        for (long k : structure.blockEntities().keySet())
+            if (VehicleBuilder.typeOf(structure.get(k)) == ComponentType.AIRCRAFT_DOOR && (cabin.get(k) & 1) != 0) return false;
+        return true;
+    }
+
+    /** doors bit field for the crew panel / ECAM (bit set = open), in structure order */
+    public int doorBits() {
+        int b = 0, i = 0;
+        for (long k : structure.blockEntities().keySet()) {
+            if (VehicleBuilder.typeOf(structure.get(k)) != ComponentType.AIRCRAFT_DOOR) continue;
+            if ((cabin.get(k) & 1) != 0) b |= 1 << Math.min(i, 30);
+            i++;
+        }
+        return b;
+    }
+
+    // ================================================================== emergencies (config: enable / chance per flight hour)
+
+    public static final String[] EMERGENCIES = {"engineFailure", "engineFire", "birdStrike", "hydraulicFailure", "generatorFailure", "fuelLeak", "gearJam", "instrumentFailure", "depressurization"};
+
+    private void rollEmergencies(VehicleSimulation sim) {
+        if (!Config.SERVER.emergenciesEnabled.get() || !isAircraft() || sim.onGround || sim.heightAboveGround < 30) return;
+        if (tickCount % 20 != 0) return;
+        for (int i = 0; i < EMERGENCIES.length; i++) {
+            if (!Config.SERVER.emergencyEnabled[i].get()) continue;
+            double perHour = Config.SERVER.emergencyChance[i].get() / 100.0;
+            if (random.nextDouble() < perHour / 3600.0) triggerEmergency(EMERGENCIES[i]);
+        }
+    }
+
+    /** Make an emergency happen now (also /vehicleworks emergency <name>). */
+    public boolean triggerEmergency(String name) {
+        if (layout == null) return false;
+        VehicleSimulation sim = layout.sim;
+        java.util.List<ThrusterUnit> eng = sim.thrusters.stream().filter(t -> t.engine.type != com.vehicleworks.physics.propulsion.EngineType.ELECTRIC).toList();
+        ThrusterUnit e = eng.isEmpty() ? null : eng.get(random.nextInt(eng.size()));
+        switch (name) {
+            case "engineFailure" -> { if (e == null) return false; e.engine.fail("engine_failure"); }
+            case "engineFire" -> { if (e == null) return false; e.engine.damage = Math.max(e.engine.damage, 0.85); e.engine.fail("fire"); }
+            case "birdStrike" -> { if (e == null) return false; e.engine.damage = Math.min(1, e.engine.damage + 0.35); }
+            case "hydraulicFailure" -> controls.hydFailed = true;
+            case "generatorFailure" -> controls.genFailed = true;
+            case "fuelLeak" -> controls.fuelLeakKgS = 1.5;
+            case "gearJam" -> controls.gearJammed = true;
+            case "instrumentFailure" -> controls.instrumentFailed = true;
+            case "depressurization" -> controls.depressurized = true;
+            default -> { return false; }
+        }
+        com.vehicleworks.VehicleWorks.LOGGER.info("Vehicle {} emergency: {}", getId(), name);
+        return true;
+    }
+
+    public void clearEmergencies() {
+        controls.hydFailed = controls.genFailed = controls.gearJammed = controls.instrumentFailed = controls.depressurized = false;
+        controls.fuelLeakKgS = 0;
     }
 
     public Long seatOf(Entity e) {
@@ -1151,6 +1442,20 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         t.displayBrt = controls.displayBrt;
         t.powerAge = controls.busPowered ? (int) Math.min(100000, level().getGameTime() - controls.powerOnTick) : 0;
         t.fbw = layout != null && layout.types.contains(ComponentType.SIDESTICK);
+        t.speedBrake = (float) controls.speedBrake;
+        t.apSpeed = (float) controls.apSpeed;
+        t.stickYaw = (float) s.input.yaw;
+        t.cabinLights = controls.cabinLights;
+        t.mcdu1 = controls.mcdu1;
+        t.mcdu2 = controls.mcdu2;
+        t.doors = doorBits();
+        t.failures = (controls.genFailed ? VehicleTelemetry.FAIL_GEN : 0) | (controls.hydFailed ? VehicleTelemetry.FAIL_HYD : 0) | (controls.gearJammed ? VehicleTelemetry.FAIL_GEAR : 0)
+                | (controls.instrumentFailed ? VehicleTelemetry.FAIL_INSTR : 0) | (controls.depressurized ? VehicleTelemetry.FAIL_PRESS : 0) | (controls.fuelLeakKgS > 0 ? VehicleTelemetry.FAIL_FUEL : 0);
+        t.seatbelt = controls.seatbeltSign;
+        t.autothrust = controls.autothrust;
+        t.foPresent = firstOfficer() != null;
+        t.foAssist = controls.copilotAssist;
+        t.autoPA = controls.autoAnnouncements;
         t.busPowered = controls.busPowered;
         t.generator = controls.generator;
         t.wrongFuel = s.wrongFuel;

@@ -23,7 +23,8 @@ public final class Warnings {
     public enum W {
         ENGINE_FIRE(Sound.BELL, true), PULL_UP(Sound.WHOOP, true), TERRAIN(Sound.WHOOP, true), STALL(Sound.SHAKER, true),
         ENGINE_FAILURE(Sound.BELL, true), OVERSPEED(Sound.CLACKER, true), GEAR(Sound.HORN, true), LOW_ALTITUDE(Sound.WHOOP, false),
-        HYDRAULIC(Sound.TRIPLE, true), ELECTRICAL(Sound.TRIPLE, true), LOW_FUEL(Sound.CHIME, false), LOW_OIL(Sound.CHIME, false);
+        HYDRAULIC(Sound.TRIPLE, true), ELECTRICAL(Sound.TRIPLE, true), CABIN_PRESSURE(Sound.TRIPLE, true), GEAR_JAMMED(Sound.CHIME, false),
+        FUEL_LEAK(Sound.CHIME, false), GENERATOR(Sound.CHIME, false), LOW_FUEL(Sound.CHIME, false), LOW_OIL(Sound.CHIME, false);
         public final Sound sound;
         public final boolean red;
         W(Sound s, boolean red) { sound = s; this.red = red; }
@@ -46,6 +47,10 @@ public final class Warnings {
             else if (st == 2 && dmg > 0.3f) s.add(W.LOW_OIL);
         }
         if (t.fuelCapacity > 0 && t.fuel < 0.1f * t.fuelCapacity && t.engineState.length > 0) s.add(W.LOW_FUEL);
+        if (t.fail(com.vehicleworks.vehicle.VehicleTelemetry.FAIL_FUEL)) s.add(W.FUEL_LEAK);
+        if (t.fail(com.vehicleworks.vehicle.VehicleTelemetry.FAIL_GEN) && running) s.add(W.GENERATOR);
+        if (t.fail(com.vehicleworks.vehicle.VehicleTelemetry.FAIL_GEAR)) s.add(W.GEAR_JAMMED);
+        if (t.fail(com.vehicleworks.vehicle.VehicleTelemetry.FAIL_PRESS) && t.altitude > 3000) s.add(W.CABIN_PRESSURE);
         if (!air) return s;
         boolean flying = !t.onGround && t.agl > 8 && t.airspeed > 12;
         if (!flying) return s;

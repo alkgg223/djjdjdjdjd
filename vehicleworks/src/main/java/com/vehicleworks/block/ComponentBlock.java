@@ -47,6 +47,22 @@ public class ComponentBlock extends BaseEntityBlock {
     private static final VoxelShape WING_X = Block.box(6.5, 0, 0, 9.5, 16, 16);
     private static final VoxelShape WING_Z = Block.box(0, 0, 6.5, 16, 16, 9.5);
     private static final VoxelShape SMALL = Block.box(2, 2, 2, 14, 14, 14);
+    private static final VoxelShape PEDESTAL = Block.box(2.5, 0, 0, 13.5, 13, 16);
+    // room (lavatory, north = door side): back and side walls 1.5 blocks high, so it cannot be jumped over
+    private static final java.util.Map<net.minecraft.core.Direction, VoxelShape> ROOM = new java.util.EnumMap<>(net.minecraft.core.Direction.class), DOOR = new java.util.EnumMap<>(net.minecraft.core.Direction.class);
+    static {
+        for (net.minecraft.core.Direction d : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+            VoxelShape back, left, right, door;
+            switch (d) {
+                case SOUTH -> { back = Block.box(0, 0, 0, 16, 24, 1); left = Block.box(15, 0, 0, 16, 24, 16); right = Block.box(0, 0, 0, 1, 24, 16); door = Block.box(0, 0, 0, 16, 32, 3); }
+                case EAST -> { back = Block.box(0, 0, 0, 1, 24, 16); left = Block.box(0, 0, 0, 16, 24, 1); right = Block.box(0, 0, 15, 16, 24, 16); door = Block.box(0, 0, 0, 3, 32, 16); }
+                case WEST -> { back = Block.box(15, 0, 0, 16, 24, 16); left = Block.box(0, 0, 15, 16, 24, 16); right = Block.box(0, 0, 0, 16, 24, 1); door = Block.box(13, 0, 0, 16, 32, 16); }
+                default -> { back = Block.box(0, 0, 15, 16, 24, 16); left = Block.box(0, 0, 0, 1, 24, 16); right = Block.box(15, 0, 0, 16, 24, 16); door = Block.box(0, 0, 13, 16, 32, 16); }
+            }
+            ROOM.put(d, Shapes.or(back, left, right));
+            DOOR.put(d, Block.box(0, 0, 0, 16, 32, 16)); // closed door: two blocks tall (open: passable, see EntityVehicleCollision)
+        }
+    }
 
     public final ComponentType type;
 
@@ -81,6 +97,9 @@ public class ComponentBlock extends BaseEntityBlock {
                 default -> WING_Y;
             };
             case DYNAMIC -> SMALL;
+            case PEDESTAL -> PEDESTAL;
+            case ROOM -> ROOM.get(state.hasProperty(HORIZONTAL_FACING) ? state.getValue(HORIZONTAL_FACING) : net.minecraft.core.Direction.NORTH);
+            case DOOR -> DOOR.get(state.hasProperty(HORIZONTAL_FACING) ? state.getValue(HORIZONTAL_FACING) : net.minecraft.core.Direction.NORTH);
             default -> Shapes.block();
         };
     }

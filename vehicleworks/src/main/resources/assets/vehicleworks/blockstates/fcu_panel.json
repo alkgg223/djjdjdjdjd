@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/fcu_panel"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/fcu_panel",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/fcu_panel",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/fcu_panel",
+      "y": 270
+    }
+  }
+}

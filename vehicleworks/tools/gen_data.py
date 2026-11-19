@@ -101,12 +101,22 @@ shaped('cannon_shell', ["I", "T", "G"], {"I": "iron_ingot", "T": "tnt", "G": "go
 shaped('missile', [" I ", "IFI", "ITI"], {"I": "iron_ingot", "F": "firework_rocket", "T": "tnt"})
 shaped('aerial_bomb', [" I ", "ITI", " I "], {"I": "iron_ingot", "T": "tnt"})
 
+shaped('jumpseat', ["  W", " WW", " I "], {"W": "gray_wool", "I": "iron_ingot"})
+shaped('crew_panel', ["GGG", "IRI"], {"G": "glass_pane", "I": "iron_ingot", "R": "redstone"})
+shaped('galley', ["III", "IFI", "IBI"], {"I": "iron_ingot", "F": "furnace", "B": "bucket"})
+shaped('trolley', ["III", "I I", "N N"], {"I": "iron_ingot", "N": "iron_nugget"})
+shaped('lavatory', ["QDQ", "QCQ", "QQQ"], {"Q": "quartz_block", "D": "#minecraft:doors", "C": "cauldron"})
+shaped('aircraft_door', ["IG", "II", "II"], {"I": "iron_ingot", "G": "glass_pane"})
+shaped('instrument_panel_d', ["GG", "NN"], {"G": "glass_pane", "N": V('navigation_computer')})
+shaped('instrument_panel_e', ["G", "G", "F"], {"G": "glass_pane", "F": V('flight_instruments')})
+shaped('fcu_panel', ["BBB", "III"], {"B": "stone_button", "I": "iron_ingot"})
+shaped('center_pedestal', ["LGL", "IRI", "III"], {"L": "lever", "G": "glass_pane", "I": "iron_ingot", "R": "redstone"})
 components = [l.split('"')[1] for l in open(os.path.join(os.path.dirname(__file__), '..', 'src', 'main', 'java', 'com', 'vehicleworks', 'component', 'ComponentType.java'))
               if l.startswith('    ') and '("' in l and l.strip()[0].isupper() and l.strip().split('(')[0].isupper()]
 for c in components:
     w(os.path.join(ROOT, M, 'loot_table', 'blocks', c + '.json'), {"type": "minecraft:block", "pools": [{"rolls": 1, "bonus_rolls": 0,
         "entries": [{"type": "minecraft:item", "name": f"{M}:{c}"}], "conditions": [{"condition": "minecraft:survives_explosion"}]}]})
-soft = {'balloon_envelope', 'gas_cell', 'pilot_seat', 'passenger_seat', 'copilot_seat', 'seat_economy', 'seat_economy_plus', 'seat_premium', 'seat_business', 'seat_first'}
+soft = {'balloon_envelope', 'gas_cell', 'pilot_seat', 'passenger_seat', 'copilot_seat', 'seat_economy', 'seat_economy_plus', 'seat_premium', 'seat_business', 'seat_first', 'jumpseat'}
 w(os.path.join(ROOT, 'minecraft', 'tags', 'block', 'mineable', 'pickaxe.json'), {"replace": False, "values": [f"{M}:{c}" for c in components if c not in soft]})
 w(os.path.join(ROOT, M, 'tags', 'block', 'assembly_excluded.json'), {"replace": False, "values": []})
 print('data ok:', len(components), 'components')

@@ -60,6 +60,16 @@ public final class ClientEvents {
         int keys = 0;
         boolean ui = mc.screen != null;
         boolean passenger = v.isPassengerSeated(mc.player);
+        if (v.isAttendantSeated(mc.player)) {
+            // cabin crew: no flight controls; crew panel (X) and announcements (K)
+            Payloads.toServer(new Payloads.Input(v.getId(), 0, mc.player.getYRot(), mc.player.getXRot()));
+            while (Keybinds.PANEL.consumeClick()) mc.setScreen(new CrewScreen(v));
+            while (Keybinds.ANNOUNCE.consumeClick()) mc.setScreen(new AnnouncementScreen(v));
+            for (var k : new net.minecraft.client.KeyMapping[]{Keybinds.ENGINES, Keybinds.GEAR, Keybinds.FLAPS, Keybinds.ARM, Keybinds.ASSIST, Keybinds.MOUSE_AIM,
+                    Keybinds.PARKING, Keybinds.MENU, Keybinds.AUTOPILOT, Keybinds.HUD_MODE, Keybinds.HUD_TOGGLE, Keybinds.COPILOT}) while (k.consumeClick()) {}
+            while (Keybinds.VOICE.consumeClick()) VoiceCallouts.toggle();
+            return;
+        }
         if (passenger) {
             // a passenger flies nothing: no flight inputs, no cockpit keys; X adjusts the seat
             Payloads.toServer(new Payloads.Input(v.getId(), 0, mc.player.getYRot(), mc.player.getXRot()));
@@ -68,10 +78,12 @@ public final class ClientEvents {
                 else mc.player.displayClientMessage(net.minecraft.network.chat.Component.translatable("vehicleworks.msg.passenger_no_controls"), true);
             }
             for (var k : new net.minecraft.client.KeyMapping[]{Keybinds.ENGINES, Keybinds.GEAR, Keybinds.FLAPS, Keybinds.ARM, Keybinds.ASSIST, Keybinds.MOUSE_AIM,
-                    Keybinds.PARKING, Keybinds.MENU, Keybinds.AUTOPILOT, Keybinds.HUD_MODE, Keybinds.HUD_TOGGLE}) while (k.consumeClick()) {}
+                    Keybinds.PARKING, Keybinds.MENU, Keybinds.AUTOPILOT, Keybinds.HUD_MODE, Keybinds.HUD_TOGGLE, Keybinds.ANNOUNCE, Keybinds.COPILOT}) while (k.consumeClick()) {}
             while (Keybinds.VOICE.consumeClick()) VoiceCallouts.toggle();
             return;
         }
+        while (Keybinds.ANNOUNCE.consumeClick()) mc.setScreen(new AnnouncementScreen(v));
+        while (Keybinds.COPILOT.consumeClick()) action(v, Payloads.ACT_COPILOT);
         if (!ui) {
             if (o.keyUp.isDown()) keys |= VehicleControls.FORWARD;
             if (o.keyDown.isDown()) keys |= VehicleControls.BACK;
@@ -178,6 +190,47 @@ public final class ClientEvents {
         return true;
     }
 
+    /**
+     * Seated pilot: right-click on the centre pedestal (top surface) or the FCU (front face).
+     * Standing players reach the pedestal through the normal block interaction and the FCU here.
+     */
+    static boolean clickCockpit(VehicleEntity v) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return false;
+        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition(1f), look = mc.player.getViewVector(1f);
+        org.joml.Vector3d a0 = v.worldToLocal(eye.x, eye.y, eye.z, new org.joml.Vector3d());
+        org.joml.Vector3d d0 = v.worldDirToLocal(look.x, look.y, look.z, new org.joml.Vector3d());
+        double best = 4.0;
+        int action = -1, arg = -1;
+        for (long k : v.structure.blockEntities().keySet()) {
+            var st = v.structure.get(k);
+            var ct = com.vehicleworks.vehicle.VehicleBuilder.typeOf(st);
+            if (ct != com.vehicleworks.component.ComponentType.CENTER_PEDESTAL && ct != com.vehicleworks.component.ComponentType.FCU_PANEL) continue;
+            double rot = Math.toRadians(CockpitRenderer.facingRot(com.vehicleworks.vehicle.VehicleBuilder.facing(st)));
+            org.joml.Vector3d a = new org.joml.Vector3d(a0).sub(net.minecraft.core.BlockPos.getX(k) + 0.5, net.minecraft.core.BlockPos.getY(k), net.minecraft.core.BlockPos.getZ(k) + 0.5).rotateY(rot);
+            org.joml.Vector3d d = new org.joml.Vector3d(d0).rotateY(rot);
+            if (ct == com.vehicleworks.component.ComponentType.CENTER_PEDESTAL) {
+                if (Math.abs(d.y) < 1e-4) continue;
+                double t = (com.vehicleworks.vehicle.CockpitLayout.PED_TOP - a.y) / d.y;
+                if (t <= 0 || t > best) continue;
+                int c = com.vehicleworks.vehicle.CockpitLayout.pedestalAt(a.x + d.x * t, a.z + d.z * t);
+                if (c < 0) continue;
+                best = t; action = Payloads.ACT_PEDESTAL; arg = c;
+            } else {
+                if (Math.abs(d.z) < 1e-4) continue;
+                double t = (com.vehicleworks.vehicle.CockpitLayout.FCU_FACE_Z - a.z) / d.z;
+                if (t <= 0 || t > best) continue;
+                int c = com.vehicleworks.vehicle.CockpitLayout.fcuAt(a.x + d.x * t, a.y + d.y * t);
+                if (c < 0) continue;
+                best = t; action = Payloads.ACT_FCU; arg = c;
+            }
+        }
+        if (action < 0) return false;
+        Payloads.toServer(new Payloads.Action(v.getId(), action, arg));
+        CockpitRenderer.pressed(v, -1);
+        return true;
+    }
+
     /** A passenger right-clicks one of the buttons on its seat's arm rest. */
     static boolean clickSeatButton(VehicleEntity v) {
         Minecraft mc = Minecraft.getInstance();
@@ -229,6 +282,12 @@ public final class ClientEvents {
                 e.setSwingHand(false);
                 return;
             }
+            if (e.isUseItem() && !ridden().isPassengerSeated(mc.player) && !ridden().isAttendantSeated(mc.player) && clickCockpit(ridden())) {
+                e.setCanceled(true);
+                e.setSwingHand(false);
+                panelClickMask = 6;
+                return;
+            }
             if (e.isUseItem() && !ridden().isPassengerSeated(mc.player) && clickPanel(ridden())) {
                 e.setCanceled(true);
                 e.setSwingHand(false);
@@ -240,6 +299,12 @@ public final class ClientEvents {
                 e.setSwingHand(false);
             }
             return;
+        }
+        if (e.isUseItem()) {
+            VehicleEntity near = null;
+            double bd = 36;
+            for (VehicleEntity ov : com.vehicleworks.vehicle.VehicleRegistry.all(mc.level)) { double d = ov.distanceToSqr(mc.player); if (d < bd * bd) { bd = Math.sqrt(d); near = ov; } }
+            if (near != null && clickCockpit(near)) { e.setCanceled(true); e.setSwingHand(false); return; }
         }
         if (!(mc.hitResult instanceof VehicleHitResult hit)) return;
         int action = e.isAttack() ? 1 : (e.isUseItem() ? 0 : 2);

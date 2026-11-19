@@ -520,5 +520,41 @@
       }
     ],
     "subtitle": "subtitles.vehicleworks.vehicle.brake"
+  },
+  "cabin.pa_chime": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cabin/pa_chime",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cabin.pa_chime"
+  },
+  "cabin.call_chime": {
+    "sounds": [
+      {
+        "name": "vehicleworks:cabin/call_chime",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.cabin.call_chime"
+  },
+  "vehicle.gear_rattle": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/gear_rattle",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.gear_rattle"
+  },
+  "vehicle.tire_bump": {
+    "sounds": [
+      {
+        "name": "vehicleworks:vehicle/tire_bump",
+        "attenuation_distance": 16
+      }
+    ],
+    "subtitle": "subtitles.vehicleworks.vehicle.tire_bump"
   }
 }

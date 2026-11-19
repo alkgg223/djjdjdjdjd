@@ -662,7 +662,41 @@ f = _np.exp(-(dy / 0.025) ** 2) * _np.exp(-(_np.abs(dx) / 0.55) ** 1.5) + 0.6 * 
 f += 0.08 * _np.exp(-((r - 0.55) / 0.04) ** 2) + 0.5 * _np.exp(-(r / 0.08) ** 2)
 f *= _np.clip((1 - r) / 0.1, 0, 1); _save_gray('flare', f)
 # beam: across (u) a soft gaussian, along (v) bright at the lamp and fading out with distance
-w, h = 64, 256; v_, u_ = _np.mgrid[0:h, 0:w]; uu = (u_ - (w - 1) / 2) / (w / 2); vv = v_ / (h - 1)
-b = _np.exp(-(uu / 0.5) ** 2) * (1 - vv) ** 1.1 * (0.75 + 0.25 * _np.exp(-(uu / 0.25) ** 2)) * _np.clip(vv / 0.04, 0.35, 1)
-b *= _np.clip((1 - _np.abs(uu)) / 0.2, 0, 1); _save_gray('beam', b)
+_bw, _bh = 64, 256; v_, u_ = _np.mgrid[0:_bh, 0:_bw]; uu = (u_ - (_bw - 1) / 2) / (_bw / 2); vv = v_ / (_bh - 1)
+_bm = _np.exp(-(uu / 0.5) ** 2) * (1 - vv) ** 1.1 * (0.75 + 0.25 * _np.exp(-(uu / 0.25) ** 2)) * _np.clip(vv / 0.04, 0.35, 1)
+_bm *= _np.clip((1 - _np.abs(uu)) / 0.2, 0, 1); _save_gray('beam', _bm)
 print('light fx textures ok')
+
+# ------------------------------------------------------------------ 1.3: A320 v2 blocks (static models; animated by the renderer inside a vehicle)
+
+tex('galley_steel', _noise_im('#b9bec4', 4, 960)); tex('lav_white', _noise_im('#ecebe6', 3, 961)); tex('door_skin', _noise_im('#e6e8ea', 3, 962))
+tex('ped_black', _noise_im('#25282c', 3, 963)); tex('crew_screen', _noise_im('#123048', 3, 964))
+def _tex_face(name, draw):
+    im = _I.new('RGBA', (32, 32), (0, 0, 0, 255)); d = _ID.Draw(im); draw(d); im.save(os.path.join(A, 'textures', 'block', name + '.png'))
+def _dual(d, vertical):
+    d.rectangle([0, 0, 31, 31], fill='#1d2024')
+    if vertical: d.rectangle([5, 2, 26, 14], fill='#0b1622'); d.rectangle([5, 17, 26, 29], fill='#0b1622')
+    else: d.rectangle([1, 6, 14, 25], fill='#0b1622'); d.rectangle([17, 6, 30, 25], fill='#0b1622')
+_tex_face('panel_d_face', lambda d: _dual(d, False)); _tex_face('panel_e_face', lambda d: _dual(d, True))
+for nm, f in (('instrument_panel_d', 'panel_d_face'), ('instrument_panel_e', 'panel_e_face')):
+    model(nm, {"parent": "minecraft:block/cube", "textures": {"north": b(f), "south": b('device_side'), "east": b('device_side'), "west": b('device_side'),
+                                                             "up": b('device_side'), "down": b('device_side'), "particle": b('device_side')}})
+    bs_facing(nm, nm, FACE4); item_block(nm)
+def _simple(name, tx, elements, gui=None):
+    m = {"parent": "minecraft:block/block", "textures": dict(tx, particle=list(tx.values())[0]), "elements": elements}
+    if gui: m["display"] = {"gui": {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": gui}}
+    model(name, m); bs_facing(name, name, FACE4); item_block(name)
+_simple("fcu_panel", {"k": b("ped_black"), "s": b("device_side")}, [el([0, 0, 0], [16, 2.4, 4], six("k")), el([0, 2.4, 0], [16, 2.8, 4.4], six("s"))])
+_simple('center_pedestal', {"k": b('ped_black'), "s": b('device_side'), "g": b('stick_grip')},
+        [el([2.5, 0, 0], [13.5, 13, 16], six('k')), el([4, 13, 2], [12, 14, 6], six('s')), el([6, 13, 7], [7, 18, 8], six('g')), el([9, 13, 7], [10, 18, 8], six('g'))])
+_simple('jumpseat', {"f": b('seat_frame'), "c": b('seat_pilot2'), "h": b('seat_harness')},
+        [el([1, 0, 14], [15, 24, 16], six('f')), el([2, 9, 7], [14, 11, 14], six('c')), el([2, 11, 13], [14, 22, 14], six('c')), el([4, 14, 12.5], [6, 21, 13], six('h')), el([10, 14, 12.5], [12, 21, 13], six('h'))])
+_simple('crew_panel', {"s": b('cabin_shell'), "c": b('crew_screen')}, [el([0, 0, 12], [16, 16, 16], six('s')), el([2, 7, 11.5], [14, 14, 12], six('c'))])
+_simple('galley', {"s": b('galley_steel'), "k": b('ped_black')},
+        [el([0, 0, 2], [16, 24, 16], six('s')), el([1, 18, 1.5], [15, 23, 2], six('k')), el([1, 1, 1.5], [7.5, 9, 2], six('k')), el([8.5, 1, 1.5], [15, 9, 2], six('k'))], [0.5, 0.5, 0.5])
+_simple('trolley', {"s": b('galley_steel'), "k": b('ped_black')}, [el([3, 1.5, 1], [13, 15, 15], six('s')), el([3.5, 0, 2], [5, 1.5, 3.5], six('k')), el([11, 0, 12.5], [12.5, 1.5, 14], six('k'))])
+_simple('lavatory', {"w": b('lav_white'), "s": b('galley_steel')},
+        [el([0, 0, 0], [16, 24, 1], six('w')), el([0, 0, 15], [16, 24, 16], six('w')), el([0, 0, 1], [1, 24, 15], six('w')), el([5, 0, 8], [11, 6, 15], six('w')), el([4, 12, 1], [12, 13, 6], six('s'))], [0.5, 0.5, 0.5])
+_simple('aircraft_door', {"d": b('door_skin'), "k": b('ped_black')},
+        [el([0, 0, 6], [16, 32, 10], six('d')), el([2, 20, 5.5], [8, 26, 6], six('k')), el([11, 14, 5], [14, 16, 6], six('k'))], [0.45, 0.45, 0.45])
+print('a320 v2 blocks ok')

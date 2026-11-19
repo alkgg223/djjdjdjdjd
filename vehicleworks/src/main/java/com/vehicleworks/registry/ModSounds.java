@@ -62,6 +62,10 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> SEAT_MOTOR = reg("cabin.seat_motor");
     public static final DeferredHolder<SoundEvent, SoundEvent> TRAY = reg("cabin.tray");
     public static final DeferredHolder<SoundEvent, SoundEvent> IFE_CHIME = reg("cabin.ife");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PA_CHIME = reg("cabin.pa_chime");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CALL_CHIME = reg("cabin.call_chime");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GEAR_RATTLE = reg("vehicle.gear_rattle");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TIRE_BUMP = reg("vehicle.tire_bump");
     public static final DeferredHolder<SoundEvent, SoundEvent> AIRFLOW = reg("vehicle.airflow");
     public static final DeferredHolder<SoundEvent, SoundEvent> GEAR_EXTEND = reg("vehicle.gear_extend");
     public static final DeferredHolder<SoundEvent, SoundEvent> GEAR_RETRACT = reg("vehicle.gear_retract");

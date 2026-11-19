@@ -51,6 +51,20 @@ public final class VehicleControls {
     public int starterTicks;
     /** set once the vehicle got its first switch configuration (new aircraft start cold and dark) */
     public boolean initialized;
+    /** speed brake / ground spoilers 0..1 (centre pedestal lever) */
+    public double speedBrake;
+    /** FCU: auto-thrust and its target speed (m/s), MCDU page per unit */
+    public boolean autothrust;
+    public double apSpeed = 70;
+    public int mcdu1, mcdu2;
+    /** cabin: ceiling lights 0 off, 1 dim, 2 bright, 3 night (blue); seat belt signs; automatic announcements */
+    public int cabinLights = 2;
+    public boolean seatbeltSign = true, autoAnnouncements = true;
+    /** AI first officer helps (gear, terrain, stall, lights) */
+    public boolean copilotAssist = true;
+    /** failures from the emergency system */
+    public boolean genFailed, hydFailed, gearJammed, instrumentFailed, depressurized;
+    public double fuelLeakKgS;
     /** last time the bus went from unpowered to powered (game tick), for the staged power-up */
     public long powerOnTick = -100000;
     public static final int SW_BATTERY = 0, SW_AVIONICS = 1, SW_FUEL_PUMP = 2, SW_IGNITION = 3, SW_STARTER = 4, SW_FUEL_SEL = 5,
@@ -140,6 +154,7 @@ public final class VehicleControls {
         in.flaps = flaps;
         in.afterburner = afterburner;
         in.brake = parkingBrake;
+        in.spoilers = speedBrake;
         switch (profile) {
             case AIRCRAFT, AUTO -> {
                 double tp, tr, ty;
@@ -254,6 +269,8 @@ public final class VehicleControls {
         t.putBoolean("Master", masterElec); t.putBoolean("GenSw", generatorSw); t.putBoolean("EngMaster", engineMaster);
         t.putInt("Dimmer", dimmer); t.putInt("DispBrt", displayBrt); t.putBoolean("Night", nightMode); t.putBoolean("Console", consoleLight);
         t.putBoolean("Init", initialized);
+        t.putDouble("SpeedBrake", speedBrake); t.putInt("CabinLights", cabinLights); t.putBoolean("Belts", seatbeltSign);
+        t.putBoolean("AutoPA", autoAnnouncements); t.putBoolean("CopilotAssist", copilotAssist);
         t.putBoolean("Lights", lights);
         t.putDouble("ApHdg", apHeading);
         t.putDouble("ApAlt", apAltitude);
@@ -284,6 +301,11 @@ public final class VehicleControls {
         dimmer = t.contains("Dimmer") ? t.getInt("Dimmer") : 3;
         displayBrt = t.contains("DispBrt") ? t.getInt("DispBrt") : 4;
         nightMode = t.getBoolean("Night"); consoleLight = t.getBoolean("Console");
+        speedBrake = t.getDouble("SpeedBrake");
+        cabinLights = t.contains("CabinLights") ? t.getInt("CabinLights") : 2;
+        seatbeltSign = !t.contains("Belts") || t.getBoolean("Belts");
+        autoAnnouncements = !t.contains("AutoPA") || t.getBoolean("AutoPA");
+        copilotAssist = !t.contains("CopilotAssist") || t.getBoolean("CopilotAssist");
         // vehicles saved before cold-and-dark existed keep their switches
         initialized = !t.contains("Init") || t.getBoolean("Init");
         lights = t.getBoolean("Lights");

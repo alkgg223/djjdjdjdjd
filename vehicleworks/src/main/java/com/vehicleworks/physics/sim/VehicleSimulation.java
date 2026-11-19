@@ -97,6 +97,8 @@ public final class VehicleSimulation {
     public boolean wrongFuel;
     public double ballastFill, carEngineRpmFraction;
     public double hydraulicAuthority = 1;
+    /** hydraulic system failure (emergency): little authority left */
+    public boolean hydraulicFailure;
     public double effPitch, effRoll, effYaw;
     public int tickCount;
     private final double[] aimOut = new double[3];
@@ -365,6 +367,7 @@ public final class VehicleSimulation {
         boolean anyRunning = false;
         for (ThrusterUnit t : thrusters) if (t.engine.isRunning()) { anyRunning = true; break; }
         hydraulicAuthority = hydraulicPumps > 0 ? (anyRunning ? 1.0 : 0.55) : (anyRunning ? 0.7 : 0.45);
+        if (hydraulicFailure) hydraulicAuthority *= 0.4;
 
         // ---- fuel system
         fuelAmount = 0;

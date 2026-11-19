@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/lavatory"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/lavatory",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/lavatory",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/lavatory",
+      "y": 270
+    }
+  }
+}

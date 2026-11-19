@@ -50,6 +50,34 @@ public final class VehicleCommands {
                             c.getSource().sendSuccess(() -> Component.translatable("vehicleworks.cmd.damage_set", m), true);
                             return 1;
                         })))
+                .then(Commands.literal("emergency")
+                        .then(Commands.argument("name", StringArgumentType.word())
+                                .suggests((c, sb) -> { for (String n : VehicleEntity.EMERGENCIES) sb.suggest(n); sb.suggest("clear"); return sb.buildFuture(); })
+                                .executes(c -> {
+                                    VehicleEntity v = nearest(c.getSource());
+                                    if (v == null) { c.getSource().sendFailure(Component.translatable("vehicleworks.cmd.no_vehicle")); return 0; }
+                                    String n = StringArgumentType.getString(c, "name");
+                                    if (n.equals("clear")) { v.clearEmergencies(); c.getSource().sendSuccess(() -> Component.translatable("vehicleworks.cmd.emergency_cleared"), true); return 1; }
+                                    boolean ok = v.triggerEmergency(n);
+                                    if (ok) c.getSource().sendSuccess(() -> Component.translatable("vehicleworks.cmd.emergency", n), true);
+                                    else c.getSource().sendFailure(Component.translatable("vehicleworks.cmd.emergency_unknown", n));
+                                    return ok ? 1 : 0;
+                                })))
+                .then(Commands.literal("passengers")
+                        .then(Commands.literal("board").executes(c -> {
+                            VehicleEntity v = nearest(c.getSource());
+                            if (v == null) return 0;
+                            int n = v.boardPassengers(500);
+                            c.getSource().sendSuccess(() -> Component.translatable("vehicleworks.crew.boarded", n), true);
+                            return n;
+                        }))
+                        .then(Commands.literal("deplane").executes(c -> {
+                            VehicleEntity v = nearest(c.getSource());
+                            if (v == null) return 0;
+                            int n = v.deplanePassengers();
+                            c.getSource().sendSuccess(() -> Component.translatable("vehicleworks.crew.deplaned", n), true);
+                            return n;
+                        })))
                 .then(Commands.literal("explode_engine").executes(c -> explodeEngine(c, -1))
                         .then(Commands.argument("engine", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 64))
                                 .executes(c -> explodeEngine(c, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "engine") - 1)))));

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GG",
+    "NN"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "N": {
+      "item": "vehicleworks:navigation_computer"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:instrument_panel_d",
+    "count": 1
+  }
+}

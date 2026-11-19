@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/trolley"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/trolley",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/trolley",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/trolley",
+      "y": 270
+    }
+  }
+}

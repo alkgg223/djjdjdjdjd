@@ -49,7 +49,9 @@ import org.joml.Vector3d;
 public final class ServerActions {
     private ServerActions() {}
 
-    public static final int SCREEN_CONFIG = 0, SCREEN_ENGINEERING = 1, SCREEN_RCU = 2, SCREEN_PANEL = 3, SCREEN_REFUEL = 4;
+    public static final int SCREEN_CONFIG = 0, SCREEN_ENGINEERING = 1, SCREEN_RCU = 2, SCREEN_PANEL = 3, SCREEN_REFUEL = 4, SCREEN_CREW = 5;
+    /** local hit point of the interaction being handled (used by the pedestal) */
+    private static double[] lastHit;
 
     private static void msg(ServerPlayer p, String key, Object... args) {
         p.displayClientMessage(Component.translatable(key, args), true);
@@ -272,6 +274,7 @@ public final class ServerActions {
             }
             case Payloads.ACT_GEAR -> {
                 if (!isPilot && p.arg() != Payloads.ARG_PANEL) return;
+                if (c.gearJammed) { msg(sp, "vehicleworks.msg.gear_jammed"); return; }
                 c.gearDown = !c.gearDown;
                 v.level().playSound(null, v.getX(), v.getY(), v.getZ(), c.gearDown ? ModSounds.GEAR_EXTEND.get() : ModSounds.GEAR_RETRACT.get(), SoundSource.NEUTRAL, 1.2f, 1f);
                 v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.HYDRAULIC.get(), SoundSource.NEUTRAL, 0.6f, 1f);
@@ -285,7 +288,7 @@ public final class ServerActions {
             case Payloads.ACT_SWITCH -> {
                 int id = p.arg();
                 // passengers have no access to the cockpit
-                if (v.isPassengerSeated(sp)) { msg(sp, "vehicleworks.msg.passenger_no_controls"); return; }
+                if (v.isPassengerSeated(sp) || v.isAttendantSeated(sp)) { msg(sp, "vehicleworks.msg.passenger_no_controls"); return; }
                 net.minecraft.sounds.SoundEvent click = ModSounds.TOGGLE.get();
                 float clickPitch = 1f;
                 switch (id) {
@@ -317,6 +320,7 @@ public final class ServerActions {
                     case VehicleControls.SW_CABIN -> { c.cabinLight = (c.cabinLight + 1) % 3; click = ModSounds.KNOB.get(); }
                     case VehicleControls.SW_PANEL -> { c.panelLight = (c.panelLight + 1) % 3; click = ModSounds.KNOB.get(); }
                     case VehicleControls.SW_GEAR -> {
+                        if (c.gearJammed) { msg(sp, "vehicleworks.msg.gear_jammed"); return; }
                         c.gearDown = !c.gearDown;
                         click = ModSounds.LEVER.get();
                         v.level().playSound(null, v.getX(), v.getY(), v.getZ(), c.gearDown ? ModSounds.GEAR_EXTEND.get() : ModSounds.GEAR_RETRACT.get(), SoundSource.NEUTRAL, 1f, 1f);
@@ -340,6 +344,27 @@ public final class ServerActions {
             }
             case Payloads.ACT_REFUEL_STOP -> v.stopRefuel(sp, true);
             case Payloads.ACT_CABIN -> v.cabinControl(sp, p.arg());
+            case Payloads.ACT_PEDESTAL -> {
+                if (v.isPassengerSeated(sp) || v.isAttendantSeated(sp)) { msg(sp, "vehicleworks.msg.passenger_no_controls"); return; }
+                pedestal(sp, v, p.arg());
+            }
+            case Payloads.ACT_FCU -> {
+                if (v.isPassengerSeated(sp) || v.isAttendantSeated(sp)) { msg(sp, "vehicleworks.msg.passenger_no_controls"); return; }
+                fcu(sp, v, p.arg());
+            }
+            case Payloads.ACT_CREW -> {
+                if (v.isPassengerSeated(sp)) { msg(sp, "vehicleworks.msg.passenger_no_controls"); return; }
+                crew(sp, v, p.arg() & 255, p.arg() >> 8);
+            }
+            case Payloads.ACT_ANNOUNCE -> {
+                if (v.isPassengerSeated(sp)) return;
+                v.announce(p.arg());
+            }
+            case Payloads.ACT_COPILOT -> {
+                if (v.isPassengerSeated(sp) || v.isAttendantSeated(sp)) return;
+                String m = v.copilotKey();
+                if (m != null) msg(sp, m);
+            }
             case Payloads.ACT_BATTERY -> {
                 c.battery = !c.battery;
                 v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.CLICK.get(), SoundSource.NEUTRAL, 1f, c.battery ? 1.3f : 0.8f);
@@ -420,7 +445,101 @@ public final class ServerActions {
         }
     }
 
+    private static void pedestal(ServerPlayer sp, VehicleEntity v, int control) {
+        VehicleControls c = v.controls;
+        var snd = ModSounds.LEVER.get();
+        switch (control) {
+            case CockpitLayout.P_THRUST_UP, CockpitLayout.P_THRUST_DOWN -> {
+                double[] d = CockpitLayout.THRUST_DETENTS;
+                int i = 0;
+                while (i < d.length - 1 && c.throttle > d[i] + 0.02) i++;
+                if (control == CockpitLayout.P_THRUST_UP) { if (c.throttle >= d[i] - 0.02) i = Math.min(d.length - 1, i + 1); }
+                else i = Math.max(0, c.throttle <= d[i] + 0.02 ? i - 1 : i);
+                c.throttle = d[i];
+                c.autothrust = false;
+                msg(sp, "vehicleworks.ped.thrust." + i);
+            }
+            case CockpitLayout.P_SPEEDBRAKE -> {
+                c.speedBrake = c.speedBrake < 0.25 ? 0.5 : (c.speedBrake < 0.75 ? 1.0 : 0);
+                msg(sp, "vehicleworks.ped.speedbrake", Math.round(c.speedBrake * 100));
+            }
+            case CockpitLayout.P_FLAPS -> {
+                double[] d = CockpitLayout.FLAP_DETENTS;
+                int i = 0;
+                while (i < d.length - 1 && c.flaps > d[i] + 0.02) i++;
+                i = (i + 1) % d.length;
+                c.flaps = d[i];
+                msg(sp, "vehicleworks.ped.flaps." + i);
+                v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.HYDRAULIC.get(), SoundSource.NEUTRAL, 0.5f, 1.1f);
+            }
+            case CockpitLayout.P_ENG_MASTER -> { c.engineMaster = !c.engineMaster; snd = ModSounds.GUARD.get(); msg(sp, c.engineMaster ? "vehicleworks.ped.master_on" : "vehicleworks.ped.master_off"); }
+            case CockpitLayout.P_ENG_START -> {
+                snd = ModSounds.KNOB.get();
+                String err = v.engageStarter();
+                msg(sp, err != null ? err : "vehicleworks.start.cranking");
+            }
+            case CockpitLayout.P_GEAR -> {
+                if (c.gearJammed) { msg(sp, "vehicleworks.msg.gear_jammed"); return; }
+                c.gearDown = !c.gearDown;
+                v.level().playSound(null, v.getX(), v.getY(), v.getZ(), c.gearDown ? ModSounds.GEAR_EXTEND.get() : ModSounds.GEAR_RETRACT.get(), SoundSource.NEUTRAL, 1.2f, 1f);
+                msg(sp, c.gearDown ? "vehicleworks.msg.gear_down" : "vehicleworks.msg.gear_up");
+            }
+            case CockpitLayout.P_PARKING -> { c.parkingBrake = !c.parkingBrake; snd = ModSounds.KNOB.get(); msg(sp, c.parkingBrake ? "vehicleworks.msg.parking_on" : "vehicleworks.msg.parking_off"); }
+            case CockpitLayout.P_MCDU1 -> { c.mcdu1 = (c.mcdu1 + 1) % 4; snd = ModSounds.BUTTON.get(); }
+            case CockpitLayout.P_MCDU2 -> { c.mcdu2 = (c.mcdu2 + 1) % 4; snd = ModSounds.BUTTON.get(); }
+            default -> { return; }
+        }
+        v.level().playSound(sp, v.getX(), v.getY(), v.getZ(), snd, SoundSource.NEUTRAL, 0.8f, 1f);
+    }
+
+    private static void fcu(ServerPlayer sp, VehicleEntity v, int control) {
+        VehicleControls c = v.controls;
+        if (!c.busPowered) { msg(sp, "vehicleworks.start.no_power"); return; }
+        switch (control) {
+            case CockpitLayout.F_SPD_DN -> c.apSpeed = Math.max(40 / 1.944, c.apSpeed - 5 / 1.944);
+            case CockpitLayout.F_SPD_UP -> c.apSpeed = Math.min(350 / 1.944, c.apSpeed + 5 / 1.944);
+            case CockpitLayout.F_HDG_DN -> c.apHeading = Math.floorMod((int) Math.round(c.apHeading) - 5, 360);
+            case CockpitLayout.F_HDG_UP -> c.apHeading = Math.floorMod((int) Math.round(c.apHeading) + 5, 360);
+            case CockpitLayout.F_ALT_DN -> c.apAltitude = Math.max(-60, c.apAltitude - 25);
+            case CockpitLayout.F_ALT_UP -> c.apAltitude = Math.min(2000, c.apAltitude + 25);
+            case CockpitLayout.F_AP -> {
+                if (!c.autopilot && !c.avionics) { msg(sp, "vehicleworks.start.no_avionics"); return; }
+                c.autopilot = !c.autopilot;
+                if (c.autopilot) c.mouseAim = false;
+                msg(sp, c.autopilot ? "vehicleworks.msg.autopilot_on" : "vehicleworks.msg.autopilot_off", (int) c.apHeading, (int) c.apAltitude);
+            }
+            case CockpitLayout.F_ATHR -> { c.autothrust = !c.autothrust; msg(sp, c.autothrust ? "vehicleworks.fcu.athr_on" : "vehicleworks.fcu.athr_off"); }
+            default -> { return; }
+        }
+        v.level().playSound(sp, v.getX(), v.getY(), v.getZ(), control == CockpitLayout.F_AP || control == CockpitLayout.F_ATHR ? ModSounds.BUTTON.get() : ModSounds.KNOB.get(), SoundSource.NEUTRAL, 0.7f, 1f);
+    }
+
+    /** attendant panel: 0 cabin lights, 1 seat belt signs, 2 announce (param), 3 auto announcements, 4 reset calls, 5 board, 6 deplane, 7 interphone */
+    private static void crew(ServerPlayer sp, VehicleEntity v, int action, int param) {
+        VehicleControls c = v.controls;
+        switch (action) {
+            case 0 -> c.cabinLights = (c.cabinLights + 1) % 4;
+            case 1 -> {
+                c.seatbeltSign = !c.seatbeltSign;
+                v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.CALL_CHIME.get(), SoundSource.NEUTRAL, 1f, 0.9f);
+            }
+            case 2 -> v.announce(param);
+            case 3 -> c.autoAnnouncements = !c.autoAnnouncements;
+            case 4 -> v.clearCalls();
+            case 5 -> msg(sp, "vehicleworks.crew.boarded", v.boardPassengers(200));
+            case 6 -> msg(sp, "vehicleworks.crew.deplaned", v.deplanePassengers());
+            case 7 -> {
+                v.level().playSound(null, v.getX(), v.getY(), v.getZ(), ModSounds.CALL_CHIME.get(), SoundSource.NEUTRAL, 1.2f, 1.3f);
+                for (var e : v.getPassengers()) if (e instanceof ServerPlayer p && v.seatOf(p) != null && !v.isPassengerSeated(p) && !v.isAttendantSeated(p))
+                    p.displayClientMessage(Component.translatable("vehicleworks.crew.interphone"), true);
+            }
+            default -> {}
+        }
+        v.level().playSound(sp, v.getX(), v.getY(), v.getZ(), ModSounds.BUTTON.get(), SoundSource.NEUTRAL, 0.6f, 1.1f);
+    }
+
     private static void repair(ServerPlayer sp, VehicleEntity v) {
+        v.clearEmergencies();
         var dm = v.structure.damageMap();
         if (dm.isEmpty() && v.simulation().thrusters.stream().allMatch(t -> t.engine.damage <= 0)) { msg(sp, "vehicleworks.msg.no_damage"); return; }
         int needed = Math.max(1, (int) Math.ceil(dm.values().doubleStream().sum() / 60.0));
@@ -607,6 +726,7 @@ public final class ServerActions {
         }
         ComponentType type = VehicleBuilder.typeOf(st);
         boolean sneaking = sp.isShiftKeyDown();
+        lastHit = new double[]{p.hx(), p.hy(), p.hz()};
         // items applied to components
         if (type != null) {
             CompoundTag be = v.structure.blockEntity(key);
@@ -632,7 +752,8 @@ public final class ServerActions {
     }
 
     private static boolean isInteractive(ComponentType t) {
-        return t.isSeat() || t == ComponentType.VEHICLE_CORE
+        return t.isSeat() || t == ComponentType.VEHICLE_CORE || t == ComponentType.AIRCRAFT_DOOR || t == ComponentType.LAVATORY || t == ComponentType.GALLEY
+                || t == ComponentType.TROLLEY || t == ComponentType.CREW_PANEL || t == ComponentType.CENTER_PEDESTAL
                 || t == ComponentType.REMOTE_CONTROL_UNIT || t.isConfigurable() || t == ComponentType.FUEL_TANK || t == ComponentType.AMMO_BOX;
     }
 
@@ -640,6 +761,19 @@ public final class ServerActions {
         // every seat type (pilot, first officer, passenger, the five cabin classes) can be sat in
         if (t.isSeat()) {
             if (!v.trySit(sp, key)) msg(sp, "vehicleworks.msg.seat_taken");
+            return true;
+        }
+        if (t == ComponentType.AIRCRAFT_DOOR || t == ComponentType.LAVATORY || t == ComponentType.GALLEY || t == ComponentType.TROLLEY)
+            return v.useCabinFixture(sp, key, t);
+        if (t == ComponentType.CREW_PANEL) {
+            Payloads.toPlayer(sp, new Payloads.OpenScreen(SCREEN_CREW, v.getId(), key, new CompoundTag()));
+            return true;
+        }
+        if (t == ComponentType.CENTER_PEDESTAL && lastHit != null) {
+            // the hit point on the pedestal top picks the lever / switch
+            double[] n = CockpitLayout.toNorth(VehicleBuilder.facing(st), lastHit[0] - BlockPos.getX(key) - 0.5, lastHit[2] - BlockPos.getZ(key) - 0.5);
+            int ctl = CockpitLayout.pedestalAt(n[0], n[1]);
+            if (ctl >= 0) pedestal(sp, v, ctl);
             return true;
         }
         switch (t) {
