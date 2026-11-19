@@ -1,0 +1,8 @@
+build/
+.gradle/
+run/
+run-server/
+*.log
+tools/vehgen/__pycache__/
+tools/vehgen/render_old.py
+tools/vehgen/dbg*.py

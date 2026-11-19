@@ -1,0 +1,371 @@
+{
+ "engine.sedan.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/sedan_idle",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.sedan.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/sedan_drive",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.sedan.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/sedan_start",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.hatchback.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/hatchback_idle",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.hatchback.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/hatchback_drive",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.hatchback.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/hatchback_start",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.suv.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/suv_idle",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.suv.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/suv_drive",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.suv.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/suv_start",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.pickup_double.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/pickup_double_idle",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.pickup_double.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/pickup_double_drive",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.pickup_double.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/pickup_double_start",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.sports.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/sports_idle",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.sports.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/sports_drive",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.sports.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/sports_start",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.police.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/police_idle",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.police.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/police_drive",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.police.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/police_start",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.taxi.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/taxi_idle",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.taxi.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/taxi_drive",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.taxi.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/taxi_start",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.delivery_van.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/delivery_van_idle",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.delivery_van.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/delivery_van_drive",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.delivery_van.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/delivery_van_start",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.box_truck.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/box_truck_idle",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.box_truck.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/box_truck_drive",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "engine.box_truck.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/box_truck_start",
+    "stream": false,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "horn.car": {
+  "sounds": [
+   {
+    "name": "trafficcraft:horn/car",
+    "stream": false,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "horn.high": {
+  "sounds": [
+   {
+    "name": "trafficcraft:horn/high",
+    "stream": false,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "horn.low": {
+  "sounds": [
+   {
+    "name": "trafficcraft:horn/low",
+    "stream": false,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "horn.truck": {
+  "sounds": [
+   {
+    "name": "trafficcraft:horn/truck",
+    "stream": false,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "siren.wail": {
+  "sounds": [
+   {
+    "name": "trafficcraft:siren/wail",
+    "stream": false,
+    "attenuation_distance": 112
+   }
+  ]
+ },
+ "misc.indicator_on": {
+  "sounds": [
+   {
+    "name": "trafficcraft:misc/indicator_on",
+    "stream": false,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "misc.indicator_off": {
+  "sounds": [
+   {
+    "name": "trafficcraft:misc/indicator_off",
+    "stream": false,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "misc.door_close": {
+  "sounds": [
+   {
+    "name": "trafficcraft:misc/door_close",
+    "stream": false,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "misc.door_open": {
+  "sounds": [
+   {
+    "name": "trafficcraft:misc/door_open",
+    "stream": false,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "misc.barrier_motor": {
+  "sounds": [
+   {
+    "name": "trafficcraft:misc/barrier_motor",
+    "stream": false,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "misc.fuel_pump": {
+  "sounds": [
+   {
+    "name": "trafficcraft:misc/fuel_pump",
+    "stream": false,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "misc.crash": {
+  "sounds": [
+   {
+    "name": "trafficcraft:misc/crash",
+    "stream": false,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "misc.reverse_beep": {
+  "sounds": [
+   {
+    "name": "trafficcraft:misc/reverse_beep",
+    "stream": false,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "misc.gear_shift": {
+  "sounds": [
+   {
+    "name": "trafficcraft:misc/gear_shift",
+    "stream": false,
+    "attenuation_distance": 16
+   }
+  ]
+ }
+}

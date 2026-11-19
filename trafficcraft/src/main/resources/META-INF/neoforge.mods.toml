@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="All Rights Reserved"
+
+[[mods]]
+modId="trafficcraft"
+version="${version}"
+displayName="TrafficCraft - Traffic, Vehicles & Roads"
+authors="TrafficCraft"
+description='''
+Advanced traffic simulation: detailed drivable vehicles with working lights, indicators, dashboards and engine sounds,
+road networks, traffic lights, AI traffic and pedestrians, parking, gas stations and border checkpoints.
+'''
+
+[[dependencies.trafficcraft]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.0,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.trafficcraft]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.22)"
+ordering="NONE"
+side="BOTH"
