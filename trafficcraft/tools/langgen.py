@@ -214,11 +214,28 @@ for k, (en, ar) in MSG.items():
 
 # ------------------------------------------------------------------ config screen
 CFG = {
+    'vehicles': ('Vehicles', 'المركبات'), 'client': ('Graphics & sound', 'الرسوميات والصوت'), 'traffic': ('Traffic & AI', 'المرور والذكاء الاصطناعي'),
+    'stepHeight': ('Step height', 'ارتفاع الصعود'), 'fuelConsumption': ('Fuel consumption', 'استهلاك الوقود'), 'requireFuel': ('Require fuel', 'يتطلب وقوداً'),
+    'damageEntities': ('Vehicles hurt entities', 'المركبات تؤذي الكائنات'), 'dynamicHeadlights': ('Dynamic headlight lighting', 'إضاءة ديناميكية للمصابيح'),
+    'seatedScale': ('Seated player scale', 'حجم اللاعب الجالس'), 'showHud': ('Show driving HUD', 'إظهار واجهة القيادة'),
+    'engineVolume': ('Engine volume', 'صوت المحرك'), 'renderDistance': ('Vehicle render distance', 'مسافة عرض المركبات'),
+    'detailDistance': ('Detail / interior distance', 'مسافة التفاصيل والمقصورة'), 'headlightBeams': ('Headlight beams', 'أشعة المصابيح'),
     'maxAiVehicles': ('Max AI vehicles', 'أقصى عدد للمركبات الذكية'), 'maxPedestrians': ('Max pedestrians', 'أقصى عدد للمشاة'),
-    'pedestrianDensity': ('Pedestrian density', 'كثافة المشاة'), 'pedestrianSpawnInterval': ('Pedestrian spawn interval', 'فترة ظهور المشاة'),
+    'trafficDensity': ('Traffic density', 'كثافة المرور'), 'pedestrianDensity': ('Pedestrian density', 'كثافة المشاة'),
+    'vehicleSpawnInterval': ('Vehicle spawn interval (s)', 'فترة ظهور المركبات (ث)'), 'pedestrianSpawnInterval': ('Pedestrian spawn interval (s)', 'فترة ظهور المشاة (ث)'),
+    'simulationDistance': ('AI simulation distance', 'مسافة محاكاة الذكاء الاصطناعي'), 'despawnDistance': ('Despawn distance', 'مسافة الإزالة'),
+    'aggression': ('Driver aggression', 'عدوانية السائقين'), 'horns': ('AI horns', 'أبواق السائقين'), 'hornPatience': ('Horn patience (s)', 'صبر البوق (ث)'),
+    'overtakeChance': ('Overtake chance', 'احتمال التجاوز'), 'breakdownChance': ('Breakdown chance', 'احتمال العطل'),
+    'aiFuel': ('AI uses fuel', 'المركبات الذكية تستهلك الوقود'), 'parkChance': ('Parking chance', 'احتمال الوقوف'),
+    'lightGreenSeconds': ('Default green time (s)', 'زمن الأخضر الافتراضي (ث)'), 'borderInspectionSeconds': ('Border inspection time (s)', 'مدة تفتيش الحدود (ث)'),
+    'borderDenyChance': ('Secondary inspection chance', 'احتمال التفتيش الثانوي'), 'defaultRoadWidth': ('Default road width', 'عرض الطريق الافتراضي'),
+    'defaultSpeedLimit': ('Default speed limit', 'حد السرعة الافتراضي'), 'streetLampsAuto': ('Automatic street lamps', 'إنارة شوارع تلقائية'),
+    'aiTickNear': ('AI update interval near', 'فترة تحديث الذكاء القريب'), 'aiTickFar': ('AI update interval far', 'فترة تحديث الذكاء البعيد'),
 }
 for k, (en, ar) in CFG.items():
     t(f'trafficcraft.configuration.{k}', en, ar)
+t('trafficcraft.configuration.section.trafficcraft.common.toml', 'TrafficCraft settings', 'إعدادات ترافيك كرافت')
+t('trafficcraft.configuration.section.trafficcraft.common.toml.title', 'TrafficCraft settings', 'إعدادات ترافيك كرافت')
 
 for lang, d in (('en_us', EN), ('ar_sa', AR), ('ar_iq', AR)):
     p = f"{A}/lang/{lang}.json"

@@ -289,7 +289,9 @@ public final class Workplaces {
                     float[] fl = target.spec().filler;
                     Vec3 cap = target.position().add(VehicleEntity.toWorldOffset(fl[0] * 1.35, 0, fl[2], target.getYRot()));
                     var pump = TrafficManager.get(level).fuel.pumpFor(target.getId());
-                    if (b.walkTo(cap, 0.6)) {
+                    boolean near = e.position().distanceTo(cap) < 2.6;
+                    if (near) e.getNavigation().stop();
+                    if (near || b.walkTo(cap, 0.6)) {
                         e.setAnim(PedestrianEntity.A_REFUEL);
                         e.getLookControl().setLookAt(target);
                         if (pump != null && level.getBlockEntity(pump) instanceof GenericBE pb && !pb.data.getBoolean("attended")) {

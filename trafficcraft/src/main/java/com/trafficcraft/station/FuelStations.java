@@ -112,7 +112,13 @@ public final class FuelStations {
             // AI / attendant service
             int vid = d.getInt("serviceVehicle");
             if (vid > 0 && level.getEntity(vid) instanceof VehicleEntity v) {
-                if (!d.getBoolean("attended")) return; // waiting for the attendant
+                if (!d.getBoolean("attended")) {
+                    // waiting for the attendant; after 20 s the driver gets out and does it himself
+                    d.putInt("waitTicks", d.getInt("waitTicks") + 1);
+                    if (d.getInt("waitTicks") < 400) return;
+                    d.putBoolean("attended", true);
+                }
+                d.putInt("waitTicks", 0);
                 if (v.getFuel() < v.spec().fuelCapacity - 0.5f) transfer(level, be, v);
                 else d.putInt("serviceVehicle", 0);
             }

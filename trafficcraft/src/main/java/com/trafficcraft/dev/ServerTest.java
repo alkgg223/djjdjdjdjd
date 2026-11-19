@@ -79,6 +79,12 @@ public final class ServerTest {
             for (int j = i + 1; j < vs.size(); j++) if (a.overlaps(vs.get(j), a.position(), a.getYRot())) overlaps++;
         }
         if (overlaps > 0) overlapTicks++;
+        // exercise the gas stations: some cars run low on fuel
+        if (t % 300 == 100) {
+            int k = 0;
+            for (VehicleEntity v : vs) if (v.driver != null && v.driver.state == TrafficDriver.State.DRIVE && v.getFuel() > v.spec().fuelCapacity * 0.3f && k++ < 2)
+                v.setFuel(v.spec().fuelCapacity * 0.08f);
+        }
         if (t % 400 == 0) {
             Map<TrafficDriver.State, Integer> st = new EnumMap<>(TrafficDriver.State.class);
             int lightsOn = 0, indicators = 0, brakes = 0;

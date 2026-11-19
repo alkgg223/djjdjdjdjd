@@ -43,6 +43,7 @@ public final class TrafficDriver {
     int waitTicks, blockedTicks, honkCooldown, stateTicks, stopSignTicks;
     boolean stopSignDone;
     int reservedNode = -1;
+    double stopTargetGap = 99;
     VehicleInput last = VehicleInput.NONE;
     boolean overtaking;
     float laneOffsetNow;
@@ -50,6 +51,8 @@ public final class TrafficDriver {
     Vec3 lastPos;
     String reason = "";
     double lastGap = 999;
+    Entity lastLeader;
+    int specialStuck;
 
     public TrafficDriver(Personality p, int spawner, float cruise, float maxSpeed) {
         this.pers = p;
@@ -59,7 +62,8 @@ public final class TrafficDriver {
     }
 
     public String debug() {
-        return state + " " + reason + String.format(" gap=%.1f", lastGap);
+        String who = lastLeader instanceof com.trafficcraft.npc.PedestrianEntity pe ? String.format("[%s %.1f,%.1f]", pe.kind(), pe.getX(), pe.getZ()) : "";
+        return state + " " + reason + who + String.format(" gap=%.1f", lastGap);
     }
 
     // =================================================================================== setup
@@ -87,6 +91,7 @@ public final class TrafficDriver {
             }
             return VehicleInput.PARK;
         }
+        if ((state == State.TO_PUMP && stateTicks > 20 * 40 || state == State.PARK_IN && stateTicks > 20 * 50) && Math.abs(v.speed) < 0.3f) abandon(v, net, tm);
         if (path.isEmpty()) {
             state = State.DESPAWN;
             return VehicleInput.PARK;
@@ -96,7 +101,18 @@ public final class TrafficDriver {
         // ---------- progress along the path
         Piece cur = path.peekFirst();
         s = cur.project(pos, s);
-        while ((s >= cur.length - 0.35 || (cur.node <= -2 && cur.length - s < 1.8 && Math.abs(v.speed) < 0.5f)) && path.size() > 0) {
+        if (cur.node <= -2 && Math.abs(v.speed) < 0.3f && !reason.equals("vehicle") && !reason.equals("pedestrian")) specialStuck++;
+        else specialStuck = 0;
+        boolean stuckThere = specialStuck > 60 && stopTargetGap < 6 || specialStuck > 200;
+        while ((s >= cur.length - 0.35 || (cur.node <= -2 && (cur.length - s < 1.8 || stopTargetGap < 2.6 || stuckThere) && Math.abs(v.speed) < 0.5f)) && path.size() > 0) {
+            if (stuckThere && cur.node <= -2) {
+                // could not complete the manoeuvre: settle onto the final point of the piece
+                Vec3 end = cur.at(cur.length);
+                Vec3 dir = cur.tangent(cur.length);
+                v.moveTo(end.x, v.getY(), end.z, (float) Math.toDegrees(Math.atan2(-dir.x, dir.z)), 0);
+                specialStuck = 0;
+                TrafficStats.inc("manoeuvre_assist");
+            }
             Piece done = path.pollFirst();
             if (done.connector) {
                 tm.junctions.release(done.node, v.getId());
@@ -110,6 +126,10 @@ public final class TrafficDriver {
                 }
             }
             if (!done.connector && done.node >= 0) onArrive(v, level, net, tm, done);
+            if (!done.connector && done.node <= -2) {
+                stopTargetGap = 99;
+                if (arriveSpecial(v, level, tm, done)) return VehicleInput.PARK;
+            }
             if (state != State.DRIVE && state != State.PARK_IN && state != State.TO_PUMP && state != State.PARK_OUT) return VehicleInput.PARK;
             if (path.isEmpty()) {
                 state = State.DESPAWN;
@@ -145,7 +165,9 @@ public final class TrafficDriver {
         // ---------- longitudinal control
         float vDesired = desiredSpeed(v, net);
         Constraint c = constraints(v, level, net, tm, vel);
+        stopTargetGap = c.why.equals("stop-target") ? c.gap : 99;
         lastGap = c.gap;
+        lastLeader = c.leader;
         float b = pers.brakeComfort;
         float aMax = spec.accel * pers.accelUse;
         float v0 = Math.max(0.5f, vDesired);
@@ -339,7 +361,7 @@ public final class TrafficDriver {
             }
         }
         // parking: occasionally drive to a nearby parking node with free spaces
-        if (v.getRandom().nextFloat() < 0.25f) {
+        if (v.getRandom().nextFloat() < 0.25f && !v.spec().isHeavy() && v.spec().length < 5.6f) {
             for (RoadNode n : net.nodesOfType(NodeType.PARKING)) {
                 if (n.pos().distanceToSqr(net.nodes.get(node).pos()) > 80 * 80) continue;
                 int chance = n.cfg.contains("parkChance") ? n.cfg.getInt("parkChance") : (int) (TCConfig.PARK_CHANCE.get() * 100);
@@ -356,6 +378,44 @@ public final class TrafficDriver {
     }
 
     // =================================================================================== arrivals at special nodes
+    /** Gives up reaching a pump / parking space (blocked): free it and rejoin the road at the goal node. */
+    void abandon(VehicleEntity v, RoadNetwork net, TrafficManager tm) {
+        TrafficStats.inc("manoeuvre_abandoned");
+        tm.fuel.forget(v.getId());
+        tm.parking.releaseVehicle(v.getId());
+        RoadNode n = net.nodes.get(goal);
+        goal = -1;
+        parkingSpace = -1;
+        state = State.DRIVE;
+        stateTicks = 0;
+        path.clear();
+        if (n == null) return;
+        List<Vec3> pts = new ArrayList<>();
+        Vec3 start = v.position();
+        for (int i = 0; i <= 8; i++) pts.add(start.add(n.pos().subtract(start).scale(i / 8.0)));
+        path.add(new Piece(pts, -1, 1, 0, n.id, false, 3f));
+        s = 0;
+        leaveNode(v, net, n, null);
+    }
+
+    /** Reached a parking space (-2) or a pump (-3). True when the vehicle now stands still in its new state. */
+    boolean arriveSpecial(VehicleEntity v, ServerLevel level, TrafficManager tm, Piece done) {
+        if (done.node == -2 && state == State.PARK_IN) {
+            TrafficStats.inc("parked");
+            state = State.PARKED;
+            stateTicks = 0;
+            return true;
+        }
+        if (done.node == -3 && state == State.TO_PUMP) {
+            state = State.FUELING;
+            stateTicks = 0;
+            tm.fuel.startService(level, v);
+            TrafficStats.inc("refuel_started");
+            return true;
+        }
+        return false;
+    }
+
     void onArrive(VehicleEntity v, ServerLevel level, RoadNetwork net, TrafficManager tm, Piece done) {
         RoadNode n = net.nodes.get(done.node);
         if (n == null) return;
@@ -591,6 +651,9 @@ public final class TrafficDriver {
             double r = Math.toRadians(oyaw);
             double ofx = -Math.sin(r), ofz = Math.cos(r);
             double margin = isVeh ? halfW * 0.85 : halfW + 0.6;
+            // manoeuvring in a car park: cars standing in their own bays only matter if really in the way
+            if (isVeh && (state == State.PARK_IN || state == State.PARK_OUT) && ((VehicleEntity) o).driver != null
+                    && ((VehicleEntity) o).driver.state == State.PARKED) margin = halfW * 0.3;
             for (double[] sm : samples) {
                 double dx = sm[0] - o.getX(), dz = sm[1] - o.getZ();
                 double along = dx * ofx + dz * ofz, lat = dx * ofz - dz * ofx;
