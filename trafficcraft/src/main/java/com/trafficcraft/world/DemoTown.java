@@ -159,7 +159,8 @@ public final class DemoTown {
         CompoundTag pave = new CompoundTag();
         pave.putBoolean("clear", true);
         pave.putInt("sidewalk", 2);
-        for (RoadEdge e : net.edges.values()) if (!e.ped) RoadPaver.paveEdge(level, net, e, pave);
+        for (RoadEdge e : net.edges.values()) if (!e.ped) RoadPaver.paveEdge(level, net, e, pave, RoadPaver.WALKS);
+        for (RoadEdge e : net.edges.values()) if (!e.ped) RoadPaver.paveEdge(level, net, e, pave, RoadPaver.ROAD);
         // parking lot surface
         paveRect(-48, 34, -12, 58);
         // gas station forecourt
@@ -225,8 +226,10 @@ public final class DemoTown {
         place("emergency_call_box", 50, 9, Direction.NORTH);
         place("traffic_control_panel", 10, 12, Direction.NORTH);
         for (int x = -60; x <= 50; x += 22) place("roadside_tree", x, -12, Direction.NORTH);
-        place("road_cone", -55, 4, Direction.NORTH);
-        place("roadworks_light", -55, 3, Direction.NORTH);
+        // roadworks closing the kerb lane of the eastbound avenue: traffic must change lane
+        place("road_cone", -55, 5, Direction.NORTH);
+        place("road_cone", -52, 4, Direction.NORTH);
+        place("roadworks_light", -49, 4, Direction.NORTH);
         place("construction_sign", -52, 8, Direction.WEST);
         net.changed();
     }
@@ -257,7 +260,22 @@ public final class DemoTown {
         place(id, x, 0, f, z);
     }
 
+    /** True if (x,z) lies on a carriageway (keeps decoration off the roads). */
+    boolean onRoad(int x, int z) {
+        Vec3 p = new Vec3(ox + x, oy, oz + z);
+        for (RoadEdge e : net.edges.values()) {
+            if (e.ped) continue;
+            var g = net.geom(e);
+            double[] out = new double[2];
+            g.project(p, out);
+            if (out[1] < e.width / 2 + 0.6) return true;
+        }
+        for (RoadNode n : net.nodes.values()) if (net.isJunction(n.id) && n.pos().distanceTo(p) < net.junctionRadius(n.id) + 0.6) return true;
+        return false;
+    }
+
     void place(String id, int x, int y, Direction f, int z) {
+        if (y == 0 && !id.equals("road_cone") && !id.equals("roadworks_light") && onRoad(x, z)) return;
         Block b = TCBlocks.get(id);
         BlockState st = b.defaultBlockState();
         if (st.hasProperty(FacingBlock.FACING)) st = st.setValue(FacingBlock.FACING, f);
@@ -285,6 +303,7 @@ public final class DemoTown {
     }
 
     void lamp(int x, int z, Direction f) {
+        if (onRoad(x, z)) return;
         BlockState base = TCBlocks.get("street_lamp").defaultBlockState().setValue(StreetLampBlock.FACING, f);
         for (int i = 0; i < StreetLampBlock.HEIGHT; i++) {
             StreetLampBlock.Part part = i == 0 ? StreetLampBlock.Part.BASE : i == StreetLampBlock.HEIGHT - 1 ? StreetLampBlock.Part.HEAD : StreetLampBlock.Part.POLE;

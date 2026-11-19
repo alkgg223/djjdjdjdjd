@@ -21,9 +21,9 @@ public class TrafficSignBlock extends FacingBlock {
     }
 
     @Override
-    protected void onPlace(BlockState s, Level level, BlockPos pos, BlockState old, boolean moving) {
-        super.onPlace(s, level, pos, old, moving);
-        if (level instanceof ServerLevel sl && !old.is(this)) apply(sl, pos);
+    public void setPlacedBy(Level level, BlockPos pos, BlockState s, net.minecraft.world.entity.LivingEntity by, net.minecraft.world.item.ItemStack stack) {
+        super.setPlacedBy(level, pos, s, by, stack);
+        if (level instanceof ServerLevel sl) apply(sl, pos);
     }
 
     void apply(ServerLevel level, BlockPos pos) {
@@ -42,7 +42,6 @@ public class TrafficSignBlock extends FacingBlock {
             case "stop" -> addEdge(n, "stopEdges", e.id);
             case "give_way" -> addEdge(n, "yieldEdges", e.id);
             case "no_entry" -> e.restrict |= n.id == e.a ? RoadEdge.R_NO_ENTRY_AB : RoadEdge.R_NO_ENTRY_BA;
-            case "traffic_lights" -> n.flags |= RoadNode.F_LIGHTS | RoadNode.F_CROSSWALK;
             case "crossing", "pedestrians" -> n.flags |= RoadNode.F_CROSSWALK;
             default -> {
                 return;

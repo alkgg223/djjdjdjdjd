@@ -28,6 +28,10 @@ public final class BlockRenderers {
     static final float WU = 2 / 256f, WV = 2 / 256f;
     static final int FULL = 0xF000F0;
 
+    static VertexConsumer glow(MultiBufferSource b) {
+        return b.getBuffer(RenderType.entityTranslucentEmissive(VehicleRenderer.ATLAS));
+    }
+
     static VertexConsumer solid(MultiBufferSource b) {
         return b.getBuffer(RenderType.entityCutoutNoCull(VehicleRenderer.ATLAS));
     }
@@ -113,15 +117,15 @@ public final class BlockRenderers {
             rotateToFacing(ps, f);
             VertexConsumer vc = solid(buf);
             int pole = 0xFF2A2C30;
-            box(vc, ps, 0.44f, 1f, 0.44f, 0.56f, be.ped ? 2.0f : 2.6f, 0.56f, pole, light);
+            box(solid(buf), ps, 0.44f, 1f, 0.44f, 0.56f, be.ped ? 2.0f : 2.6f, 0.56f, pole, light);
             if (be.ped) {
                 ps.translate(0.5, 2.0, 0.36);
-                box(vc, ps, -0.17f, 0f, -0.08f, 0.17f, 0.7f, 0.1f, 0xFF1A1B1D, light);
+                box(solid(buf), ps, -0.17f, 0f, -0.08f, 0.17f, 0.7f, 0.1f, 0xFF1A1B1D, light);
                 boolean walk = ped == TrafficLights.GREEN || (ped == TrafficLights.YELLOW && blink);
                 boolean stop = ped == TrafficLights.RED || (ped == TrafficLights.FLASH && blink);
                 VertexConsumer lit = buf.getBuffer(RenderType.entityTranslucentEmissive(VehicleRenderer.ATLAS));
-                box(stop ? lit : vc, ps, -0.12f, 0.38f, -0.1f, 0.12f, 0.64f, -0.085f, stop ? 0xFFFF2A1A : 0xFF3A1210, stop ? FULL : light);
-                box(walk ? lit : vc, ps, -0.12f, 0.06f, -0.1f, 0.12f, 0.32f, -0.085f, walk ? 0xFF30FF60 : 0xFF0F2A14, walk ? FULL : light);
+                box(stop ? glow(buf) : solid(buf), ps, -0.12f, 0.38f, -0.1f, 0.12f, 0.64f, -0.085f, stop ? 0xFFFF2A1A : 0xFF3A1210, stop ? FULL : light);
+                box(walk ? glow(buf) : solid(buf), ps, -0.12f, 0.06f, -0.1f, 0.12f, 0.32f, -0.085f, walk ? 0xFF30FF60 : 0xFF0F2A14, walk ? FULL : light);
                 if (cd > 0 && walk) text(ps, buf, String.valueOf(cd), 0, 0.2f, -0.105f, 0xFFFFFFFF);
                 ps.popPose();
                 return;
@@ -138,12 +142,12 @@ public final class BlockRenderers {
             // right filter arrow (green while the main signal is green)
             ps.pushPose();
             ps.translate(-0.33, 0.05, 0);
-            box(vc, ps, -0.12f, 0f, -0.08f, 0.12f, 0.3f, 0.1f, 0xFF1A1B1D, light);
+            box(solid(buf), ps, -0.12f, 0f, -0.08f, 0.12f, 0.3f, 0.1f, 0xFF1A1B1D, light);
             boolean rOn = main == TrafficLights.GREEN;
             arrowLamp(buf, vc, ps, 0, 0.15f, -0.1f, rOn ? 0xFF30FF60 : 0xFF0F2A14, rOn ? FULL : light, -1, rOn);
             ps.popPose();
             // countdown display
-            box(vc, ps, -0.16f, -0.28f, -0.08f, 0.16f, -0.04f, 0.1f, 0xFF0A0A0B, light);
+            box(solid(buf), ps, -0.16f, -0.28f, -0.08f, 0.16f, -0.04f, 0.1f, 0xFF0A0A0B, light);
             if (cd > 0 && main != TrafficLights.FLASH && main != TrafficLights.OFF) text(ps, buf, String.valueOf(Math.min(99, cd)), 0, -0.16f, -0.085f,
                     main == TrafficLights.GREEN ? 0xFF40FF70 : main == TrafficLights.YELLOW ? 0xFFFFD040 : 0xFFFF4030);
             ps.popPose();
@@ -151,8 +155,8 @@ public final class BlockRenderers {
 
         /** 3-lamp head; kind 0 = round lamps, 1 = left arrows. */
         void head(VertexConsumer vc, MultiBufferSource buf, PoseStack ps, int light, int sig, boolean blink, int kind, boolean visors) {
-            box(vc, ps, -0.15f, 0f, -0.08f, 0.15f, 0.92f, 0.12f, 0xFF1A1B1D, light);
-            box(vc, ps, -0.2f, -0.02f, 0.06f, 0.2f, 0.94f, 0.08f, 0xFF101112, light);
+            box(solid(buf), ps, -0.15f, 0f, -0.08f, 0.15f, 0.92f, 0.12f, 0xFF1A1B1D, light);
+            box(solid(buf), ps, -0.2f, -0.02f, 0.06f, 0.2f, 0.94f, 0.08f, 0xFF101112, light);
             boolean red = sig == TrafficLights.RED || sig == TrafficLights.RED_YELLOW;
             boolean yel = sig == TrafficLights.YELLOW || sig == TrafficLights.RED_YELLOW || (sig == TrafficLights.FLASH && blink);
             boolean grn = sig == TrafficLights.GREEN;
@@ -162,17 +166,16 @@ public final class BlockRenderers {
             VertexConsumer lit = buf.getBuffer(RenderType.entityTranslucentEmissive(VehicleRenderer.ATLAS));
             for (int i = 0; i < 3; i++) {
                 if (kind == 1) arrowLamp(buf, vc, ps, 0, ys[i], -0.085f, st[i] ? on[i] : off[i], st[i] ? FULL : light, 1, st[i]);
-                else disc(st[i] ? lit : vc, ps, 0, ys[i], -0.085f, 0.1f, st[i] ? on[i] : off[i], st[i] ? FULL : light);
-                if (visors) box(vc, ps, -0.12f, ys[i] + 0.1f, -0.2f, 0.12f, ys[i] + 0.12f, -0.08f, 0xFF101112, light);
+                else disc(st[i] ? glow(buf) : solid(buf), ps, 0, ys[i], -0.085f, 0.1f, st[i] ? on[i] : off[i], st[i] ? FULL : light);
+                if (visors) box(solid(buf), ps, -0.12f, ys[i] + 0.1f, -0.2f, 0.12f, ys[i] + 0.12f, -0.08f, 0xFF101112, light);
             }
         }
 
         /** Arrow shaped lamp (dir +1 = left, -1 = right, seen by the approaching driver). */
         void arrowLamp(MultiBufferSource buf, VertexConsumer vc, PoseStack ps, float cx, float cy, float z, int col, int light, int dir, boolean on) {
-            VertexConsumer v = on ? buf.getBuffer(RenderType.entityTranslucentEmissive(VehicleRenderer.ATLAS)) : vc;
             float d = dir;
-            box(v, ps, cx - 0.06f, cy - 0.02f, z, cx + 0.06f, cy + 0.02f, z + 0.005f, col, light);
-            box(v, ps, cx + d * 0.03f, cy - 0.07f, z, cx + d * 0.07f, cy + 0.07f, z + 0.005f, col, light);
+            box(on ? glow(buf) : solid(buf), ps, cx - 0.06f, cy - 0.02f, z, cx + 0.06f, cy + 0.02f, z + 0.005f, col, light);
+            box(on ? glow(buf) : solid(buf), ps, cx + d * 0.03f, cy - 0.07f, z, cx + d * 0.07f, cy + 0.07f, z + 0.005f, col, light);
         }
 
         void text(PoseStack ps, MultiBufferSource buf, String s, float x, float y, float z, int col) {
@@ -210,13 +213,13 @@ public final class BlockRenderers {
             ps.mulPose(Axis.ZP.rotationDegrees(a * 84f));
             VertexConsumer vc = solid(buf);
             float len = be.length + 0.4f;
-            box(vc, ps, -0.25f, -0.09f, -0.09f, 0.3f, 0.09f, 0.09f, 0xFF2A2C30, light);
+            box(solid(buf), ps, -0.25f, -0.09f, -0.09f, 0.3f, 0.09f, 0.09f, 0xFF2A2C30, light);
             int seg = Math.max(2, Math.round(len / 0.5f));
             for (int i = 0; i < seg; i++) {
                 float x0 = 0.3f + i * (len - 0.3f) / seg, x1 = 0.3f + (i + 1) * (len - 0.3f) / seg;
-                box(vc, ps, x0, -0.055f, -0.04f, x1, 0.055f, 0.04f, i % 2 == 0 ? 0xFFE02020 : 0xFFF2F2F2, light);
+                box(solid(buf), ps, x0, -0.055f, -0.04f, x1, 0.055f, 0.04f, i % 2 == 0 ? 0xFFE02020 : 0xFFF2F2F2, light);
             }
-            box(vc, ps, len - 0.1f, -0.25f, -0.03f, len, 0.06f, 0.03f, 0xFFF2F2F2, light);
+            box(solid(buf), ps, len - 0.1f, -0.25f, -0.03f, len, 0.06f, 0.03f, 0xFFF2F2F2, light);
             ps.popPose();
             // warning lamp on the post (blinks while moving or open)
             boolean moving = Math.abs(be.anim - be.animO) > 0.002f || be.open;
@@ -224,7 +227,7 @@ public final class BlockRenderers {
             boolean on = moving && mc.level != null && (mc.level.getGameTime() / 6) % 2 == 0;
             ps.pushPose();
             VertexConsumer v2 = on ? buf.getBuffer(RenderType.entityTranslucentEmissive(VehicleRenderer.ATLAS)) : vc;
-            box(v2, ps, 0.38f, 1.25f, 0.38f, 0.62f, 1.4f, 0.62f, on ? 0xFFFF9010 : 0xFF6A4010, on ? FULL : light);
+            box(on ? glow(buf) : solid(buf), ps, 0.38f, 1.25f, 0.38f, 0.62f, 1.4f, 0.62f, on ? 0xFFFF9010 : 0xFF6A4010, on ? FULL : light);
             ps.popPose();
         }
     }
@@ -280,11 +283,11 @@ public final class BlockRenderers {
                     ps.mulPose(Axis.YP.rotationDegrees((float) Math.sin(t) * 40f));
                     ps.mulPose(Axis.XP.rotationDegrees(18));
                     VertexConsumer vc = solid(buf);
-                    box(vc, ps, -0.09f, -0.08f, -0.32f, 0.09f, 0.08f, 0.05f, 0xFFE8E8E4, light);
-                    box(vc, ps, -0.11f, 0.08f, -0.36f, 0.11f, 0.1f, 0.06f, 0xFFD0D0CC, light);
-                    disc(vc, ps, 0, 0, -0.321f, 0.055f, 0xFF101418, light);
+                    box(solid(buf), ps, -0.09f, -0.08f, -0.32f, 0.09f, 0.08f, 0.05f, 0xFFE8E8E4, light);
+                    box(solid(buf), ps, -0.11f, 0.08f, -0.36f, 0.11f, 0.1f, 0.06f, 0xFFD0D0CC, light);
+                    disc(solid(buf), ps, 0, 0, -0.321f, 0.055f, 0xFF101418, light);
                     boolean rec = (mc.level.getGameTime() / 15) % 2 == 0;
-                    box(rec ? buf.getBuffer(RenderType.entityTranslucentEmissive(VehicleRenderer.ATLAS)) : vc, ps, 0.05f, 0.03f, -0.325f, 0.07f, 0.05f, -0.32f,
+                    box(rec ? glow(buf) : solid(buf), ps, 0.05f, 0.03f, -0.325f, 0.07f, 0.05f, -0.32f,
                             rec ? 0xFFFF2020 : 0xFF401010, rec ? FULL : light);
                     ps.popPose();
                 }
@@ -337,14 +340,14 @@ public final class BlockRenderers {
             for (int i = 1; i <= n; i++) {
                 double tt = (double) i / n;
                 Vec3 p = outlet.add(end.subtract(outlet).scale(tt)).add(0, -Math.sin(Math.PI * tt) * sag, 0);
-                segment(vc, ps, prev, p, 0.025f, 0xFF161616, light);
+                segment(buf, ps, prev, p, 0.025f, 0xFF161616, light);
                 prev = p;
             }
             ps.pushPose();
             ps.translate(end.x, end.y, end.z);
-            box(vc, ps, -0.04f, -0.05f, -0.04f, 0.04f, 0.05f, 0.04f, 0xFF1C1C1C, light);
-            box(vc, ps, -0.025f, -0.02f, 0.04f, 0.025f, 0.02f, 0.18f, 0xFFB0B4B8, light);
-            box(vc, ps, -0.03f, -0.12f, -0.02f, 0.03f, -0.05f, 0.03f, 0xFFD02020, light);
+            box(solid(buf), ps, -0.04f, -0.05f, -0.04f, 0.04f, 0.05f, 0.04f, 0xFF1C1C1C, light);
+            box(solid(buf), ps, -0.025f, -0.02f, 0.04f, 0.025f, 0.02f, 0.18f, 0xFFB0B4B8, light);
+            box(solid(buf), ps, -0.03f, -0.12f, -0.02f, 0.03f, -0.05f, 0.03f, 0xFFD02020, light);
             ps.popPose();
         }
 
@@ -359,7 +362,7 @@ public final class BlockRenderers {
             return new Vec3(0.5, y, 0.5).add(l.scale(out * 0.5));
         }
 
-        static void segment(VertexConsumer vc, PoseStack ps, Vec3 a, Vec3 b, float r, int col, int light) {
+        static void segment(MultiBufferSource buf, PoseStack ps, Vec3 a, Vec3 b, float r, int col, int light) {
             ps.pushPose();
             Vec3 m = a.add(b).scale(0.5);
             ps.translate(m.x, m.y, m.z);
@@ -369,7 +372,7 @@ public final class BlockRenderers {
             float pitch = (float) Math.atan2(-d.y, Math.hypot(d.x, d.z));
             ps.mulPose(Axis.YP.rotation(yaw));
             ps.mulPose(Axis.XP.rotation(pitch));
-            box(vc, ps, -r, -r, -len / 2 - 0.01f, r, r, len / 2 + 0.01f, col, light);
+            box(solid(buf), ps, -r, -r, -len / 2 - 0.01f, r, r, len / 2 + 0.01f, col, light);
             ps.popPose();
         }
     }

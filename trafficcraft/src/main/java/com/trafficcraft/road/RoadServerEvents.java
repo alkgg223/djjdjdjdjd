@@ -22,6 +22,7 @@ public final class RoadServerEvents {
             RoadSyncPayload p = new RoadSyncPayload(level.dimension().location().toString(), net.save());
             for (ServerPlayer sp : level.players()) PacketDistributor.sendToPlayer(sp, p);
         }
+        for (ServerPlayer sp : level.players()) if (sp.tickCount == 20 || sp.tickCount == 100) send(sp); // late re-sync after join
         com.trafficcraft.ai.TrafficManager.tick(level, net);
     }
 

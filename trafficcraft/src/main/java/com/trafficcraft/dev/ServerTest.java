@@ -84,6 +84,10 @@ public final class ServerTest {
                 if (v.has(VehicleEntity.F_IND_L) || v.has(VehicleEntity.F_IND_R)) indicators++;
                 if (v.has(VehicleEntity.F_BRAKE)) brakes++;
             }
+            for (VehicleEntity v : vs.subList(0, Math.min(16, vs.size()))) {
+                if (v.driver != null) log(String.format("   %s #%d %s v=%.1f pos=(%.1f,%.1f,%.1f) yaw=%.0f", v.getModel(), v.getId(), v.driver.debug(), v.speed * 3.6,
+                        v.getX() - origin.getX(), v.getY() - origin.getY(), v.getZ() - origin.getZ(), v.getYRot()));
+            }
             TrafficManager tm = TrafficManager.get(l);
             log(String.format("t=%ds active=%d spawned=%d despawned=%d states=%s headlights=%d indicating=%d braking=%d mspt=%.2f", t / 20, vs.size(), tm.spawnedTotal,
                     tm.despawnedTotal, st, lightsOn, indicators, brakes, e.getServer().getCurrentSmoothedTickTime()));

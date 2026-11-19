@@ -20,7 +20,8 @@ neoForge {
             gameDirectory = project.file('run')
             if (project.hasProperty('autotest')) {
                 systemProperty 'trafficcraft.autotest', 'true'
-                programArguments.addAll('--quickPlaySingleplayer', 'test', '--width', '1280', '--height', '720')
+                systemProperty 'trafficcraft.autotest.mode', project.property('autotest').toString()
+                programArguments.addAll('--quickPlaySingleplayer', project.property('autotest').toString() == 'town' ? 'town' : 'test', '--width', '1280', '--height', '720')
             }
         }
         server {

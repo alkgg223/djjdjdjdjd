@@ -60,6 +60,7 @@ public final class TrafficManager {
             } else if (e instanceof net.minecraft.world.entity.LivingEntity && !e.isPassenger()) grid.add(e);
         }
         if (now % 100 == 0) junctions.expire(now);
+        if (now % 5 == 0) gates(level, net);
         if (now % 20 == 0) {
             spawn(level, net, now);
             despawn(level, net);
@@ -231,6 +232,28 @@ public final class TrafficManager {
             double near = nearestPlayerDist(level, v.position());
             boolean stuck = v.driver.stateTicks > 20 * 180 && Math.abs(v.speed) < 0.1f && v.driver.state == TrafficDriver.State.DRIVE && near > 32;
             if (near > dd || stuck) remove(v, this);
+        }
+    }
+
+    /** Automatic barriers near parking nodes rise for vehicles coming toward them (border gates are opened by inspections). */
+    void gates(ServerLevel level, RoadNetwork net) {
+        for (RoadNode n : net.nodesOfType(NodeType.PARKING)) {
+            if (nearestPlayerDist(level, n.pos()) > 96) continue;
+            BlockPos c = BlockPos.containing(n.pos());
+            for (BlockPos q : BlockPos.betweenClosed(c.offset(-12, -2, -12), c.offset(12, 2, 12))) {
+                if (!(level.getBlockEntity(q) instanceof com.trafficcraft.block.BarrierGateBE g) || g.manual) continue;
+                List<Entity> near = new ArrayList<>();
+                grid.near(q.getX() + 0.5, q.getZ() + 0.5, 12, near);
+                for (Entity e : near) {
+                    if (!(e instanceof VehicleEntity v)) continue;
+                    Vec3 to = Vec3.atCenterOf(q).subtract(v.position());
+                    double d = to.length();
+                    if (d < 11 && (d < 4 || v.forward().dot(to.normalize()) > 0.3)) {
+                        g.setOpen(true, 60);
+                        break;
+                    }
+                }
+            }
         }
     }
 

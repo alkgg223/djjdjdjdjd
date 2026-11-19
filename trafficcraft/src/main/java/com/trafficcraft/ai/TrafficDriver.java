@@ -96,7 +96,7 @@ public final class TrafficDriver {
         // ---------- progress along the path
         Piece cur = path.peekFirst();
         s = cur.project(pos, s);
-        while (s >= cur.length - 0.35 && path.size() > 0) {
+        while ((s >= cur.length - 0.35 || (cur.node <= -2 && cur.length - s < 1.8 && Math.abs(v.speed) < 0.5f)) && path.size() > 0) {
             Piece done = path.pollFirst();
             if (done.connector) {
                 tm.junctions.release(done.node, v.getId());
@@ -122,7 +122,8 @@ public final class TrafficDriver {
         // ---------- lateral control (pure pursuit)
         float vel = v.speed;
         boolean reverse = state == State.PARK_OUT && stateTicks < 50;
-        double look = Math.max(2.2, 2.0 + Math.abs(vel) * 0.38);
+        boolean inTurn = path.peekFirst().connector && path.peekFirst().movement != TrafficLights.MOVE_STRAIGHT;
+        double look = inTurn ? Math.max(1.4, 1.2 + Math.abs(vel) * 0.22) : Math.max(2.2, 2.0 + Math.abs(vel) * 0.38);
         Vec3 target = pointAhead(look);
         Vec3 f = v.forward();
         Vec3 rear = pos.subtract(f.scale(spec.wheelbase / 2));
@@ -132,6 +133,13 @@ public final class TrafficDriver {
         double ld = Math.max(1.0, Math.hypot(d.x, d.z));
         double steerRad = Math.atan(2 * spec.wheelbase * Math.sin(alpha) / ld);
         float maxSteer = 36f / (1f + Math.abs(vel) / 9f);
+        // cross-track correction at the front axle (keeps long vehicles from cutting corners)
+        Vec3 front = pos.add(f.scale(spec.wheelbase / 2));
+        Piece cp = path.peekFirst();
+        double sf = cp.project(front, s);
+        Vec3 onPath = cp.at(sf);
+        double cte = front.subtract(onPath).dot(left); // + = we are left of the path
+        steerRad -= Math.atan(0.6 * cte / Math.max(1.5, Math.abs(vel)));
         float steerIn = (float) Mth.clamp(Math.toDegrees(steerRad) / maxSteer, -1, 1);
         if (reverse) steerIn = 0;
         // ---------- longitudinal control
@@ -142,7 +150,8 @@ public final class TrafficDriver {
         float aMax = spec.accel * pers.accelUse;
         float v0 = Math.max(0.5f, vDesired);
         float vv = Math.max(0, vel);
-        double sStar = 2.0 + vv * pers.headway() + vv * (vv - c.speed) / (2 * Math.sqrt(aMax * b));
+        double s0 = c.byRule ? 0.25 : 2.0;
+        double sStar = s0 + vv * (c.byRule ? 0.4f : pers.headway()) + vv * (vv - c.speed) / (2 * Math.sqrt(aMax * b));
         double acc = aMax * (1 - Math.pow(vv / v0, 4) - Math.pow(Math.max(0, sStar) / Math.max(0.1, c.gap), 2));
         if (c.gap < 0.6) acc = -spec.brake;
         float fwd;
@@ -153,7 +162,11 @@ public final class TrafficDriver {
             fwd = vel < -1.8f ? 0 : -0.45f;
         }
         // ---------- blocked / horn / stuck handling
-        if (Math.abs(vel) < 0.3f && c.byVehicle && !c.byRule) {
+        if (Math.abs(vel) < 0.3f && c.why.equals("blocked")) {
+            blockedTicks++;
+            if (blockedTicks > 50 && blockedTicks % 20 == 0) tryOvertake(v, net, tm, c, true);
+            if (blockedTicks > 20 * 30) v.setFlag(VehicleEntity.F_HAZARD, true);
+        } else if (Math.abs(vel) < 0.3f && c.byVehicle && !c.byRule) {
             blockedTicks++;
             int patience = (int) (TCConfig.HORN_PATIENCE.get() * 20 * pers.patience);
             if (blockedTicks > patience && honkCooldown == 0 && TCConfig.HORNS.get()) {
@@ -254,7 +267,11 @@ public final class TrafficDriver {
             }
             Piece con = RoutePlanner.connector(net, in, lastP.lane, node, out, outLane);
             if (con != null) path.add(con);
-            else path.add(RoutePlanner.edgePiece(net, out, node, outLane, null, lastP.endOffset, 8));
+            else {
+                int dirOut = out.a == node ? 1 : -1;
+                float travelOff = lastP.endOffset * lastP.dir;
+                path.add(RoutePlanner.edgePiece(net, out, node, outLane, null, travelOff * dirOut, 8));
+            }
         }
     }
 
@@ -369,10 +386,13 @@ public final class TrafficDriver {
                 return;
             }
             Vec3 stop = tm.fuel.stopPoint(level, pump);
+            Vec3 along = tm.fuel.pumpDir(level, pump);
+            Vec3 pre = stop.subtract(along.scale(6));
             path.clear();
             List<Vec3> pts = new ArrayList<>();
             Vec3 start = v.position();
-            for (int i = 0; i <= 10; i++) pts.add(start.add(stop.subtract(start).scale(i / 10.0)));
+            for (int i = 0; i <= 8; i++) pts.add(start.add(pre.subtract(start).scale(i / 8.0)));
+            for (int i = 1; i <= 6; i++) pts.add(pre.add(stop.subtract(pre).scale(i / 6.0)));
             Piece in = new Piece(pts, -1, 1, 0, -3, false, 3f);
             in.stopS = in.length - 0.2;
             path.add(in);
@@ -760,7 +780,7 @@ public final class TrafficDriver {
         if (e == null) return;
         if (v.getRandom().nextFloat() > pers.overtake * TCConfig.OVERTAKE_CHANCE.get() * 2 && !stalled) return;
         double remaining = cur.length - s;
-        if (remaining < 40) return;
+        if (remaining < (stalled ? 10 : 40)) return;
         int from = e.other(cur.node);
         // 1) same-direction neighbour lane
         List<Integer> same = e.lanesFrom(from);

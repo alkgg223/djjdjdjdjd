@@ -23,7 +23,72 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 /** Development-only automated in-game test (enabled with -Dtrafficcraft.autotest=true). */
 @EventBusSubscriber(modid = TrafficCraft.MODID, value = Dist.CLIENT)
 public final class AutoTest {
-    static final boolean ENABLED = Boolean.getBoolean("trafficcraft.autotest");
+    static final boolean ENABLED = Boolean.getBoolean("trafficcraft.autotest") && !"town".equals(System.getProperty("trafficcraft.autotest.mode"));
+    static final boolean TOWN = "town".equals(System.getProperty("trafficcraft.autotest.mode"));
+    static int tt = -1;
+    static double gy;
+
+    static void view(Minecraft mc, double x, double y, double z, float yaw, float pitch) {
+        var server = mc.getSingleplayerServer();
+        server.execute(() -> {
+            ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+            sp.teleportTo(sp.serverLevel(), x, gy + y, z, yaw, pitch);
+        });
+    }
+
+    @SubscribeEvent
+    public static void townTick(ClientTickEvent.Post e) {
+        if (!TOWN) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null || mc.getSingleplayerServer() == null) return;
+        tt++;
+        var server = mc.getSingleplayerServer();
+        if (tt == 60) server.execute(() -> {
+            ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+            ServerLevel lvl = sp.serverLevel();
+            var rn = com.trafficcraft.road.RoadData.get(lvl);
+            gy = rn.nodes.isEmpty() ? lvl.getHeight(Heightmap.Types.MOTION_BLOCKING, 0, 0) : rn.nodes.values().iterator().next().y;
+            if (rn.nodes.isEmpty()) com.trafficcraft.world.DemoTown.build(lvl, new net.minecraft.core.BlockPos(0, (int) gy, 0));
+            lvl.setDayTime(3000);
+            lvl.setWeatherParameters(6000, 0, false, false);
+            sp.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+            sp.getAbilities().flying = true;
+            sp.getAbilities().mayfly = true;
+            sp.onUpdateAbilities();
+            mc.options.hideGui = true;
+        });
+        int[] at = {700, 760, 820, 880, 940, 1000, 1060, 1120, 1180, 1300, 1360};
+        if (tt == 640) view(mc, -14, 26, 24, 150, 50);
+        if (tt == at[0]) shot(mc, "t01_crossroads.png");
+        if (tt == at[0] + 5) view(mc, -26, 18, 18, -150, 40);
+        if (tt == at[1]) shot(mc, "t02_avenue_west.png");
+        if (tt == at[1] + 5) view(mc, 78, 34, 22, 180, 60);
+        if (tt == at[2]) shot(mc, "t03_roundabout.png");
+        if (tt == at[2] + 5) view(mc, -14, 16, 46, 120, 40);
+        if (tt == at[3]) shot(mc, "t04_parking.png");
+        if (tt == at[3] + 5) view(mc, 44, 14, -12, 135, 32);
+        if (tt == at[4]) shot(mc, "t05_gas_station.png");
+        if (tt == at[4] + 5) view(mc, 10, 10, 28, 140, 30);
+        if (tt == at[5]) shot(mc, "t06_border.png");
+        if (tt == at[5] + 5) view(mc, 9, 3.5, 11, 135, 12);
+        if (tt == at[6]) shot(mc, "t07_street_level.png");
+        if (tt == at[6] + 5) view(mc, 60, 22, 14, 160, 45);
+        if (tt == at[7]) shot(mc, "t08_east_road.png");
+        if (tt == at[7] + 5) server.execute(() -> server.overworld().setDayTime(18000));
+        if (tt == at[8] - 20) view(mc, -14, 22, 24, 150, 40);
+        if (tt == at[8]) shot(mc, "t09_night_crossroads.png");
+        if (tt == at[9]) {
+            StringBuilder sb = new StringBuilder();
+            for (var en : server.overworld().getAllEntities()) if (en instanceof VehicleEntity v && v.driver != null)
+                sb.append(String.format("%s %s v=%.1f (%.1f,%.1f,%.1f)%n", v.getModel(), v.driver.debug(), v.speed * 3.6, v.getX(), v.getY() - gy, v.getZ()));
+            log(sb.toString());
+            try (java.io.FileWriter w = new java.io.FileWriter(mc.gameDirectory.toPath().resolve("autotest_report.txt").toFile())) {
+                for (String s2 : log) w.write(s2 + "\n");
+            } catch (Exception ex) {
+            }
+        }
+        if (tt == at[10]) mc.stop();
+    }
     static int t = -1;
     static VehicleInput input;
     static final List<String> log = new ArrayList<>();

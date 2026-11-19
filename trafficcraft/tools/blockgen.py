@@ -545,7 +545,7 @@ def build_models():
     reg('bus_stop_sign', 'facing_shape', shape=[[7, 0, 7, 9, 16, 9]], material='metal', sound='metal', hardness=1)
     # bus shelter: 2 blocks wide visual (the block is the left half; model extends +X to 32)
     shelter = [el([0, 0, 14], [1, 30, 15], allf('#p')), el([31, 0, 14], [32, 30, 15], allf('#p')), el([0, 0, 1], [1, 30, 2], allf('#p')),
-               el([31, 0, 1], [32, 30, 2], allf('#p')), el([-1, 30, 0], [33, 32, 16], allf('#r')),
+               el([31, 0, 1], [32, 30, 2], allf('#p')), el([-1, 30, 0], [32, 32, 16], allf('#r')),
                el([1, 2, 14.2], [31, 28, 14.6], allf('#g')), el([0.2, 2, 2], [0.6, 28, 14], allf('#g')), el([31.4, 2, 2], [31.8, 28, 14], allf('#g')),
                el([4, 6, 10], [28, 7, 14], allf('#w')), el([4, 0, 12], [6, 6, 13], allf('#p')), el([26, 0, 12], [28, 6, 13], allf('#p')),
                el([20, 10, 14.6], [30, 26, 15], {'north': {'texture': '#t'}, 'south': {'texture': '#t'}})]

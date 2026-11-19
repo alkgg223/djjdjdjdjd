@@ -51,6 +51,12 @@ public final class FuelService {
         return Vec3.atBottomCenterOf(pump).add(side.getStepX() * 2.1, 0, side.getStepZ() * 2.1);
     }
 
+    /** Direction cars drive when pulling up to the pump (toward the pump's front). */
+    public Vec3 pumpDir(ServerLevel level, BlockPos pump) {
+        Direction f = level.getBlockState(pump).getValue(FacingBlock.FACING);
+        return new Vec3(f.getStepX(), 0, f.getStepZ());
+    }
+
     public void startService(ServerLevel level, VehicleEntity v) {
         BlockPos p = pumpOf.get(v.getId());
         startFuel.put(v.getId(), v.getFuel());
