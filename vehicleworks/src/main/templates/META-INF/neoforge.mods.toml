@@ -30,3 +30,11 @@ type="required"
 versionRange="[1.21.1,1.21.2)"
 ordering="NONE"
 side="BOTH"
+
+# optional: plays YouTube / video links on the passenger seat screens
+[[dependencies.${mod_id}]]
+modId="watermedia"
+type="optional"
+versionRange="*"
+ordering="NONE"
+side="CLIENT"

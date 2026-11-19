@@ -20,6 +20,8 @@ public class SeatScreen extends Screen {
     private final VehicleEntity vehicle;
     private final List<Button> buttons = new ArrayList<>();
     private final List<Integer> ids = new ArrayList<>();
+    private net.minecraft.client.gui.components.EditBox link;
+    private int videoY = -1;
 
     public SeatScreen(VehicleEntity v) {
         super(Component.translatable("vehicleworks.cabin.title"));
@@ -54,6 +56,27 @@ public class SeatScreen extends Screen {
             buttons.add(b);
             ids.add(c);
         }
+        // personal video (YouTube or any link) on the seat screen, through the WATERMeDIA mod
+        videoY = -1;
+        if (CabinSeat.has(cls, CabinSeat.SCREEN)) {
+            videoY = y0 + ((avail.size() + 1) / 2) * (bh + gap) + 8;
+            link = new net.minecraft.client.gui.components.EditBox(font, x0, videoY + 12, cols * bw + gap - 128, 20, Component.translatable("vehicleworks.video.link"));
+            link.setMaxLength(512);
+            link.setHint(Component.translatable("vehicleworks.video.hint"));
+            link.setValue(SeatVideo.url());
+            addRenderableWidget(link);
+            addRenderableWidget(Button.builder(Component.translatable("vehicleworks.video.play"), b -> playVideo())
+                    .bounds(x0 + cols * bw + gap - 124, videoY + 12, 60, 20).build());
+            addRenderableWidget(Button.builder(Component.translatable("vehicleworks.video.stop"), b -> SeatVideo.stop())
+                    .bounds(x0 + cols * bw + gap - 60, videoY + 12, 60, 20).build());
+        }
+    }
+
+    private void playVideo() {
+        Long k = Minecraft.getInstance().player == null ? null : vehicle.seats.get(Minecraft.getInstance().player.getUUID());
+        if (k == null || link == null) return;
+        if (!CabinSeat.screen(state())) press(CabinSeat.SCREEN); // the screen switches on for the video
+        SeatVideo.play(vehicle, k, link.getValue());
     }
 
     private void press(int control) {
@@ -93,6 +116,14 @@ public class SeatScreen extends Screen {
         g.drawCenteredString(font, Component.translatable("vehicleworks.cabin.status", CabinSeat.recline(s) * 100 / Math.max(1, CabinSeat.maxRecline(cls)),
                 CabinSeat.maxLeg(cls) > 0 ? CabinSeat.leg(s) * 100 / CabinSeat.maxLeg(cls) : 0, CabinSeat.slide(s) - 2), width / 2, top - 28, 0xFFB8C2CC);
         g.drawCenteredString(font, Component.translatable("vehicleworks.cabin.passenger_only"), width / 2, top - 16, 0xFF7E8892);
+        if (videoY >= 0) {
+            g.fill(width / 2 - 170, videoY - 2, width / 2 + 170, videoY + 38, 0xD0181C22);
+            g.renderOutline(width / 2 - 170, videoY - 2, 340, 40, 0xFF59626D);
+            String st = SeatVideo.available() ? SeatVideo.status() : SeatVideo.status();
+            g.drawString(font, Component.translatable("vehicleworks.video.title").getString()
+                    + (st.isEmpty() ? "" : "  -  " + Component.translatable(st).getString()), width / 2 - 164, videoY + 1, SeatVideo.available() ? 0xFFE8C878 : 0xFFFF8060);
+            link.render(g, mx, my, partial);
+        }
     }
 
     @Override

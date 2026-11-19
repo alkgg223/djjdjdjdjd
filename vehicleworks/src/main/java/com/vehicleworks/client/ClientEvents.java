@@ -29,6 +29,7 @@ public final class ClientEvents {
     private static Long lastSeat;
 
     public static void onClientTick(ClientTickEvent.Post e) {
+        SeatVideo.tick();
         Minecraft mc = Minecraft.getInstance();
         // stepping out of a seat: stand next to the seat on the vehicle as this client shows it
         VehicleEntity riding = ridden();

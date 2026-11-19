@@ -524,6 +524,11 @@ for k, en, ar in (('skin_panel', 'Fuselage Skin Panel', 'لوح هيكل الط�
 t('key.vehicleworks.camera_lock', 'Lock camera to the aircraft', 'قفل الكاميرا على الطائرة')
 t('vehicleworks.msg.camera_lock_on', 'Camera locked to the aircraft', 'الكاميرا مقفولة على الطائرة')
 t('vehicleworks.msg.camera_lock_off', 'Camera free', 'الكاميرا حرة')
+for k, en, ar in (('title', 'Video (YouTube or a link)', 'فيديو (يوتيوب أو رابط)'), ('link', 'Video link', 'رابط الفيديو'), ('hint', 'Paste a YouTube link...', 'الصق رابط يوتيوب...'),
+                  ('play', 'Play', 'تشغيل'), ('stop', 'Stop', 'إيقاف'), ('missing', 'install the WATERMeDIA mod to play videos', 'ثبّت مود WATERMeDIA لتشغيل الفيديو'),
+                  ('api', 'this WATERMeDIA version is not supported', 'نسخة WATERMeDIA هذه غير مدعومة'), ('loading', 'loading...', 'جاري التحميل...'),
+                  ('playing', 'playing', 'يعمل'), ('error', 'could not play this link (see the log)', 'تعذر تشغيل هذا الرابط (راجع السجل)')):
+    t('vehicleworks.video.' + k, en, ar)
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):

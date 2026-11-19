@@ -143,6 +143,7 @@ public final class CabinRenderer {
             }
             TextureAtlasSprite fabric = CockpitParts.sprite(ct.id + "_fabric");
             int s = v.cabin.get(k);
+            currentSeat = k;
             Anim a = anims.computeIfAbsent(k, kk -> new Anim());
             float kf = Math.min(1, dt * 3.5f); // seat motors move slowly
             a.slide += (CabinSeat.slide(s) - a.slide) * kf;
@@ -416,6 +417,30 @@ public final class CabinRenderer {
      * Entertainment screen facing the passenger (+z): bezel, boot animation, then the chosen page:
      * flight information, moving map or entertainment. Dark without power or when switched off.
      */
+    /** the seat being drawn (the personal video shows on the local passenger's own seat) */
+    static long currentSeat;
+
+    /** the passenger's video, letterboxed into the screen; true when it took the screen */
+    static boolean video(PoseStack ps, MultiBufferSource buf, float ar) {
+        int id = SeatVideo.frame();
+        if (id < 0) {
+            InstrumentRenderer.rect(ps, buf, -ar, -1, ar, 1, 0.0008f, 0xFF000000);
+            InstrumentRenderer.text(ps, buf, "LOADING...", 0, -0.05f, 0.16f, 0xFFB8C2CC, true);
+            return true;
+        }
+        InstrumentRenderer.rect(ps, buf, -ar, -1, ar, 1, 0.0008f, 0xFF000000);
+        float va = SeatVideo.aspect(), w = ar, h = 1;
+        if (va > ar) h = ar / va; else w = va;
+        com.mojang.blaze3d.vertex.VertexConsumer vc = buf.getBuffer(RenderType.text(SeatVideo.TEXTURE));
+        var m = ps.last().pose();
+        int full = 0xF000F0;
+        vc.addVertex(m, -w, -h, 0.0015f).setColor(0xFFFFFFFF).setUv(0, 1).setLight(full);
+        vc.addVertex(m, w, -h, 0.0015f).setColor(0xFFFFFFFF).setUv(1, 1).setLight(full);
+        vc.addVertex(m, w, h, 0.0015f).setColor(0xFFFFFFFF).setUv(1, 0).setLight(full);
+        vc.addVertex(m, -w, h, 0.0015f).setColor(0xFFFFFFFF).setUv(0, 0).setLight(full);
+        return true;
+    }
+
     static void screen(PoseStack ps, MultiBufferSource buf, TextureAtlasSprite black, TextureAtlasSprite glass, float cx, float cy, float cz, float hw, float hh,
                        Anim a, int s, int light, VehicleEntity v, long now) {
         VertexConsumer vc = buf.getBuffer(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
@@ -443,6 +468,8 @@ public final class CabinRenderer {
                 float k = Mth.clamp((tOn - 0.6f) / 1.4f, 0, 1);
                 InstrumentRenderer.rect(ps, buf, -ar * 0.6f, -0.72f, ar * 0.6f, -0.62f, 0.001f, 0xFF1A2A40);
                 InstrumentRenderer.rect(ps, buf, -ar * 0.6f, -0.72f, -ar * 0.6f + 1.2f * ar * k, -0.62f, 0.0012f, 0xFF38D3FF);
+            } else if (on && SeatVideo.playingFor(v, currentSeat) && video(ps, buf, ar)) {
+                // personal video
             } else switch (CabinSeat.page(s)) {
                 case 1 -> map(ps, buf, ar, t, v);
                 case 2 -> entertainment(ps, buf, ar, now);

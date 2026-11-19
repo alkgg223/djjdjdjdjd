@@ -44,7 +44,9 @@ public final class ExteriorRenderer {
         for (long k : v.structure.blockEntities().keySet()) {
             BlockState st = v.structure.get(k);
             if (VehicleBuilder.typeOf(st) != ComponentType.WING_ASSEMBLY) continue;
-            WingGeometry g = new WingGeometry(VehicleBuilder.config(v.structure, k));
+            Cache cc = cache(v, k);
+            if (cc.g == null) cc.g = new WingGeometry(VehicleBuilder.config(v.structure, k));
+            WingGeometry g = cc.g;
             wingLights(v, ps, buf, v.telemetry, g, k, VehicleBuilder.facing(st), time);
         }
     }
@@ -62,11 +64,62 @@ public final class ExteriorRenderer {
         Vector3f n = e1.cross(e2);
         if (n.lengthSquared() < 1e-12f) { e1.set(c[0] - b[0], c[1] - b[1], c[2] - b[2]); e2.set(a[0] - b[0], a[1] - b[1], a[2] - b[2]); n = e1.cross(e2); }
         if (n.lengthSquared() < 1e-12f) n.set(0, 1, 0); else n.normalize();
+        if (REC != null) {
+            // recording into a cache: positions + normal per vertex, one colour per quad
+            for (float[] q : new float[][]{a, b, c, d}) { REC.add(q[0]); REC.add(q[1]); REC.add(q[2]); REC.add(n.x); REC.add(n.y); REC.add(n.z); }
+            RECC.add(color);
+            return;
+        }
         float u0 = sp.getU0(), u1 = sp.getU1(), v0 = sp.getV0(), v1 = sp.getV1();
         CockpitParts.vtx(vc, pose, a[0], a[1], a[2], u0, v0, color, light, n.x, n.y, n.z);
         CockpitParts.vtx(vc, pose, b[0], b[1], b[2], u1, v0, color, light, n.x, n.y, n.z);
         CockpitParts.vtx(vc, pose, c[0], c[1], c[2], u1, v1, color, light, n.x, n.y, n.z);
         CockpitParts.vtx(vc, pose, d[0], d[1], d[2], u0, v1, color, light, n.x, n.y, n.z);
+    }
+
+    // ---- geometry cache: the shapes are built once (and again only when a surface moves or the structure changes)
+    private static it.unimi.dsi.fastutil.floats.FloatArrayList REC;
+    private static it.unimi.dsi.fastutil.ints.IntArrayList RECC;
+
+    static final class Cache {
+        int version = Integer.MIN_VALUE;
+        long dyn = Long.MIN_VALUE;
+        float[] data;
+        int[] colors;
+        WingGeometry g;
+    }
+
+    private static final java.util.Map<VehicleEntity, it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<Cache>> CACHES = new java.util.WeakHashMap<>();
+
+    static Cache cache(VehicleEntity v, long k) {
+        var m = CACHES.computeIfAbsent(v, x -> new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>());
+        Cache c = m.get(k);
+        if (c == null) { c = new Cache(); m.put(k, c); }
+        if (c.version != v.structure.version) { c.version = v.structure.version; c.data = null; c.g = null; c.dyn = Long.MIN_VALUE; }
+        return c;
+    }
+
+    private static void record() {
+        REC = new it.unimi.dsi.fastutil.floats.FloatArrayList(8192);
+        RECC = new it.unimi.dsi.fastutil.ints.IntArrayList(512);
+    }
+
+    private static void finish(Cache c) {
+        c.data = REC.toFloatArray();
+        c.colors = RECC.toIntArray();
+        REC = null;
+        RECC = null;
+    }
+
+    private static void replay(VertexConsumer vc, PoseStack.Pose pose, TextureAtlasSprite sp, Cache c, int light) {
+        if (c.data == null) return;
+        float u0 = sp.getU0(), u1 = sp.getU1(), v0 = sp.getV0(), v1 = sp.getV1();
+        float[] d = c.data;
+        for (int q = 0, i = 0; q < c.colors.length; q++) {
+            int col = c.colors[q];
+            for (int vi = 0; vi < 4; vi++, i += 6)
+                CockpitParts.vtx(vc, pose, d[i], d[i + 1], d[i + 2], vi == 1 || vi == 2 ? u1 : u0, vi >= 2 ? v1 : v0, col, light, d[i + 3], d[i + 4], d[i + 5]);
+        }
     }
 
     private static VertexConsumer vc(MultiBufferSource b) {
@@ -82,7 +135,9 @@ public final class ExteriorRenderer {
     // ================================================================== wing assembly
 
     static void wing(VehicleEntity v, PoseStack ps, MultiBufferSource buf, VehicleTelemetry t, long k, BlockState st, int light, double time) {
-        WingGeometry g = new WingGeometry(VehicleBuilder.config(v.structure, k));
+        Cache cc = cache(v, k);
+        if (cc.g == null) cc.g = new WingGeometry(VehicleBuilder.config(v.structure, k));
+        WingGeometry g = cc.g;
         Direction f = VehicleBuilder.facing(st);
         TextureAtlasSprite sp = CockpitParts.sprite(CockpitParts.WHITE);
         PoseStack.Pose pose = ps.last();
@@ -94,37 +149,46 @@ public final class ExteriorRenderer {
         double rud = Math.toRadians(25) * Math.max(-1, Math.min(1, t.stickYaw));
         double spoil = Math.toRadians(45) * Math.max(t.speedBrake, t.onGround && t.speedBrake > 0.05f ? 1 : 0);
         double slat = g.slats ? Math.min(1, flaps * 2.5) : 0;
-        // span stations at every boundary of a moving part
-        double[] fr = g.kind == 0 ? new double[]{-1, 0, WingGeometry.SLAT_START, WingGeometry.SPOIL_START, WingGeometry.SPOIL_END, WingGeometry.FLAP_END,
-                WingGeometry.AIL_START, WingGeometry.AIL_END, 1} : (g.kind == 1 ? new double[]{-1, 0, 0.97, 1} : new double[]{-1, 0, 0.92, 1});
-        for (int i = 0; i + 1 < fr.length; i++) {
-            double s0 = fr[i] < 0 ? -1 : fr[i] * g.span, s1 = fr[i + 1] * g.span;
-            double fm = (Math.max(0, s0) + s1) / 2 / g.span;
-            var role = s0 < 0 ? null : g.controlAt(fm);
-            double delta = 0, aft = 0;
-            if (role != null) switch (role) {
-                case FLAP -> { delta = flapDelta; aft = fowler; }
-                case AILERON -> delta = ail;
-                case ELEVATOR -> delta = -elev;
-                case RUDDER -> delta = rud;
-                default -> {}
+        // rebuild only when a surface has moved (0.15 degree steps)
+        long dyn = Math.round(flapDelta * 400);
+        for (double x : new double[]{ail, elev, rud, spoil, slat}) dyn = dyn * 1009 + Math.round(x * 400);
+        if (cc.data == null || cc.dyn != dyn) {
+            cc.dyn = dyn;
+            record();
+            // span stations at every boundary of a moving part
+            double[] fr = g.kind == 0 ? new double[]{-1, 0, WingGeometry.SLAT_START, WingGeometry.SPOIL_START, WingGeometry.SPOIL_END, WingGeometry.FLAP_END,
+                    WingGeometry.AIL_START, WingGeometry.AIL_END, 1} : (g.kind == 1 ? new double[]{-1, 0, 0.97, 1} : new double[]{-1, 0, 0.92, 1});
+            for (int i = 0; i + 1 < fr.length; i++) {
+                double s0 = fr[i] < 0 ? -1 : fr[i] * g.span, s1 = fr[i + 1] * g.span;
+                double fm = (Math.max(0, s0) + s1) / 2 / g.span;
+                var role = s0 < 0 ? null : g.controlAt(fm);
+                double delta = 0, aft = 0;
+                if (role != null) switch (role) {
+                    case FLAP -> { delta = flapDelta; aft = fowler; }
+                    case AILERON -> delta = ail;
+                    case ELEVATOR -> delta = -elev;
+                    case RUDDER -> delta = rud;
+                    default -> {}
+                }
+                boolean hasSlat = g.kind == 0 && g.slats && fm > WingGeometry.SLAT_START && fm < 0.97 && s0 >= 0;
+                boolean hasSpoiler = g.kind == 0 && g.spoilers && fm > WingGeometry.SPOIL_START && fm < WingGeometry.SPOIL_END && s0 >= 0;
+                int skin = g.kind == 2 ? SKIN : SKIN;
+                section(vc(buf), pose, sp, g, k, f, s0, s1, delta, aft, hasSlat ? slat : -1, hasSpoiler ? spoil : -1, skin, light);
             }
-            boolean hasSlat = g.kind == 0 && g.slats && fm > WingGeometry.SLAT_START && fm < 0.97 && s0 >= 0;
-            boolean hasSpoiler = g.kind == 0 && g.spoilers && fm > WingGeometry.SPOIL_START && fm < WingGeometry.SPOIL_END && s0 >= 0;
-            int skin = g.kind == 2 ? SKIN : SKIN;
-            section(vc(buf), pose, sp, g, k, f, s0, s1, delta, aft, hasSlat ? slat : -1, hasSpoiler ? spoil : -1, skin, light);
-        }
-        tipCap(vc(buf), pose, sp, g, k, f, light);
-        if (g.kind == 0 && g.winglet > 0) winglet(vc(buf), pose, sp, g, k, f, light);
-        if (g.kind == 2) {
-            // livery band on the fin
-            double s0 = g.span * 0.35, s1 = g.span * 0.75;
-            for (int side = -1; side <= 1; side += 2) {
-                double n0 = side * (g.thickness(s0) * 0.5 + 0.01), n1 = side * (g.thickness(s1) * 0.5 + 0.01);
-                quad(vc(buf), pose, sp, P(k, f, g.point(s0, g.leZ(s0) + 0.1 * g.chord(s0), n0)), P(k, f, g.point(s1, g.leZ(s1) + 0.1 * g.chord(s1), n1)),
-                        P(k, f, g.point(s1, g.leZ(s1) + 0.68 * g.chord(s1), n1)), P(k, f, g.point(s0, g.leZ(s0) + 0.68 * g.chord(s0), n0)), LIVERY, light);
+            tipCap(vc(buf), pose, sp, g, k, f, light);
+            if (g.kind == 0 && g.winglet > 0) winglet(vc(buf), pose, sp, g, k, f, light);
+            if (g.kind == 2) {
+                // livery band on the fin
+                double s0 = g.span * 0.35, s1 = g.span * 0.75;
+                for (int side = -1; side <= 1; side += 2) {
+                    double n0 = side * (g.thickness(s0) * 0.5 + 0.01), n1 = side * (g.thickness(s1) * 0.5 + 0.01);
+                    quad(vc(buf), pose, sp, P(k, f, g.point(s0, g.leZ(s0) + 0.1 * g.chord(s0), n0)), P(k, f, g.point(s1, g.leZ(s1) + 0.1 * g.chord(s1), n1)),
+                            P(k, f, g.point(s1, g.leZ(s1) + 0.68 * g.chord(s1), n1)), P(k, f, g.point(s0, g.leZ(s0) + 0.68 * g.chord(s0), n0)), LIVERY, light);
+                }
             }
+            finish(cc);
         }
+        replay(vc(buf), pose, sp, cc, light);
         if (g.lights && t.busPowered) wingLights(v, ps, buf, t, g, k, f, time);
     }
 
@@ -256,27 +320,33 @@ public final class ExteriorRenderer {
         int color = switch (ct.property("color").getInt(c)) { case 1 -> 0xFFB8BEC4; case 2 -> 0xFF3A78C8; default -> SKIN; };
         TextureAtlasSprite sp = CockpitParts.sprite(CockpitParts.WHITE);
         PoseStack.Pose pose = ps.last();
-        int rings = 14, seg = 28;
-        double[][][] pts = new double[rings + 1][seg][];
-        for (int r = 0; r <= rings; r++) {
-            double u = len * r / rings, q = u / len;
-            double kk = tail ? Math.pow(Math.max(0, 1 - q), 0.85) * (1 - 0.1 * q) : Math.sqrt(Math.max(0, 1 - q * q));
-            kk = Math.max(r == rings ? 0 : 0.04, kk);
-            double yc = cy + tipOff * h * 0.5 * Math.pow(q, 1.5);
-            double pexp = 4.0 - 2.0 * Math.min(1, q * 1.6); // squarish at the fuselage, round toward the tip
-            for (int i = 0; i < seg; i++) {
-                double a = 2 * Math.PI * i / seg, ca = Math.cos(a), sa = Math.sin(a);
-                double x = w / 2 * kk * Math.signum(ca) * Math.pow(Math.abs(ca), 2 / pexp);
-                double y = h / 2 * kk * Math.signum(sa) * Math.pow(Math.abs(sa), 2 / pexp);
-                pts[r][i] = new double[]{x, yc + y, -0.5 - u};
+        Cache cc = cache(v, k);
+        if (cc.data == null) {
+            record();
+            int rings = 14, seg = 28;
+            double[][][] pts = new double[rings + 1][seg][];
+            for (int r = 0; r <= rings; r++) {
+                double u = len * r / rings, q = u / len;
+                double kk = tail ? Math.pow(Math.max(0, 1 - q), 0.85) * (1 - 0.1 * q) : Math.sqrt(Math.max(0, 1 - q * q));
+                kk = Math.max(r == rings ? 0 : 0.04, kk);
+                double yc = cy + tipOff * h * 0.5 * Math.pow(q, 1.5);
+                double pexp = 4.0 - 2.0 * Math.min(1, q * 1.6); // squarish at the fuselage, round toward the tip
+                for (int i = 0; i < seg; i++) {
+                    double a = 2 * Math.PI * i / seg, ca = Math.cos(a), sa = Math.sin(a);
+                    double x = w / 2 * kk * Math.signum(ca) * Math.pow(Math.abs(ca), 2 / pexp);
+                    double y = h / 2 * kk * Math.signum(sa) * Math.pow(Math.abs(sa), 2 / pexp);
+                    pts[r][i] = new double[]{x, yc + y, -0.5 - u};
+                }
             }
+            for (int r = 0; r < rings; r++)
+                for (int i = 0; i < seg; i++) {
+                    int j = (i + 1) % seg;
+                    int col = !tail && r >= rings - 2 ? CockpitParts.scale(color, 0.92f) : color;
+                    quad(vc(buf), pose, sp, P(k, f, pts[r][i]), P(k, f, pts[r][j]), P(k, f, pts[r + 1][j]), P(k, f, pts[r + 1][i]), col, light);
+                }
+            finish(cc);
         }
-        for (int r = 0; r < rings; r++)
-            for (int i = 0; i < seg; i++) {
-                int j = (i + 1) % seg;
-                int col = !tail && r >= rings - 2 ? CockpitParts.scale(color, 0.92f) : color;
-                quad(vc(buf), pose, sp, P(k, f, pts[r][i]), P(k, f, pts[r][j]), P(k, f, pts[r + 1][j]), P(k, f, pts[r + 1][i]), col, light);
-            }
+        replay(vc(buf), pose, sp, cc, light);
         if (tail && v.telemetry.busPowered) {
             // white tail navigation light and strobe at the tip of the tail cone
             float[] tip = P(k, f, new double[]{0, cy + tipOff * h * 0.5, -0.5 - len + 0.05});
@@ -308,19 +378,37 @@ public final class ExteriorRenderer {
         TextureAtlasSprite sp = CockpitParts.sprite(CockpitParts.WHITE);
         PoseStack.Pose pose = ps.last();
         double ay = -py, zf = -0.6 * L, zr = 0.25 * L;
-        // outer cowl, fan exhaust, core cowl and exhaust plug as surfaces of revolution {z, r, color}
-        double[][] outer = {{zf, 0.9 * R}, {zf + 0.03 * L, R * 0.99}, {zf + 0.3 * L, R}, {zf + 0.62 * L, 0.95 * R}, {zr, 0.84 * R}};
-        revolve(buf, pose, sp, k, f, ay, outer, 0xFFE4E7EA, light, true);
-        revolve(buf, pose, sp, k, f, ay, new double[][]{{zf, 0.9 * R}, {zf - 0.005, 0.88 * R}, {zf, 0.84 * R}}, 0xFFBCC2C8, light, true);    // inlet lip
-        revolve(buf, pose, sp, k, f, ay, new double[][]{{zf, 0.84 * R}, {zf + 0.16 * L, 0.82 * R}}, 0xFF3C4046, light, false);             // inlet duct
-        revolve(buf, pose, sp, k, f, ay, new double[][]{{zr, 0.84 * R}, {zr - 0.02 * L, 0.6 * R}, {zr, 0.56 * R}}, 0xFF2E3236, light, false); // fan nozzle
-        revolve(buf, pose, sp, k, f, ay, new double[][]{{zr - 0.05 * L, 0.56 * R}, {zr + 0.2 * L, 0.46 * R}}, 0xFF8C9298, light, true);      // core cowl
-        revolve(buf, pose, sp, k, f, ay, new double[][]{{zr + 0.2 * L, 0.34 * R}, {zr + 0.36 * L, 0.03 * R}}, 0xFF4E5258, light, true);      // exhaust plug
-        revolve(buf, pose, sp, k, f, ay, new double[][]{{zr + 0.2 * L, 0.46 * R}, {zr + 0.2 * L, 0.34 * R}}, 0xFF303438, light, true);
-        // fan: dark disc, spinner and blades
+        Cache cc = cache(v, k);
         double zfan = zf + 0.16 * L;
-        revolve(buf, pose, sp, k, f, ay, new double[][]{{zfan + 0.02, 0.83 * R}, {zfan + 0.02, 0.26 * R}}, 0xFF1A1C1F, light, true);
-        revolve(buf, pose, sp, k, f, ay, new double[][]{{zfan, 0.27 * R}, {zfan - 0.08 * L, 0.16 * R}, {zfan - 0.14 * L, 0.01}}, 0xFFA8AEB4, light, true);
+        if (cc.data == null) {
+            record();
+            // outer cowl, fan exhaust, core cowl and exhaust plug as surfaces of revolution {z, r, color}
+            double[][] outer = {{zf, 0.9 * R}, {zf + 0.03 * L, R * 0.99}, {zf + 0.3 * L, R}, {zf + 0.62 * L, 0.95 * R}, {zr, 0.84 * R}};
+            revolve(buf, pose, sp, k, f, ay, outer, 0xFFE4E7EA, light, true);
+            revolve(buf, pose, sp, k, f, ay, new double[][]{{zf, 0.9 * R}, {zf - 0.005, 0.88 * R}, {zf, 0.84 * R}}, 0xFFBCC2C8, light, true);    // inlet lip
+            revolve(buf, pose, sp, k, f, ay, new double[][]{{zf, 0.84 * R}, {zf + 0.16 * L, 0.82 * R}}, 0xFF3C4046, light, false);             // inlet duct
+            revolve(buf, pose, sp, k, f, ay, new double[][]{{zr, 0.84 * R}, {zr - 0.02 * L, 0.6 * R}, {zr, 0.56 * R}}, 0xFF2E3236, light, false); // fan nozzle
+            revolve(buf, pose, sp, k, f, ay, new double[][]{{zr - 0.05 * L, 0.56 * R}, {zr + 0.2 * L, 0.46 * R}}, 0xFF8C9298, light, true);      // core cowl
+            revolve(buf, pose, sp, k, f, ay, new double[][]{{zr + 0.2 * L, 0.34 * R}, {zr + 0.36 * L, 0.03 * R}}, 0xFF4E5258, light, true);      // exhaust plug
+            revolve(buf, pose, sp, k, f, ay, new double[][]{{zr + 0.2 * L, 0.46 * R}, {zr + 0.2 * L, 0.34 * R}}, 0xFF303438, light, true);
+            // fan: dark disc, spinner and blades
+            revolve(buf, pose, sp, k, f, ay, new double[][]{{zfan + 0.02, 0.83 * R}, {zfan + 0.02, 0.26 * R}}, 0xFF1A1C1F, light, true);
+            revolve(buf, pose, sp, k, f, ay, new double[][]{{zfan, 0.27 * R}, {zfan - 0.08 * L, 0.16 * R}, {zfan - 0.14 * L, 0.01}}, 0xFFA8AEB4, light, true);
+            // pylon up to the wing
+            if (py > 0.05) {
+                double top = 0.5, bot = ay + 0.8 * R, w = Math.max(0.12, 0.11 * R);
+                double za = -0.3 * L, zb = 0.3 * L, zat = -0.08 * L, zbt = 0.5 * L; // top runs back under the wing box
+                for (int side = -1; side <= 1; side += 2) {
+                    double x = side * w;
+                    quad(vc(buf), pose, sp, P(k, f, new double[]{x, bot, za}), P(k, f, new double[]{x, bot, zb}), P(k, f, new double[]{x, top, zbt}), P(k, f, new double[]{x, top, zat}), 0xFFDDE0E4, light);
+                }
+                quad(vc(buf), pose, sp, P(k, f, new double[]{-w, bot, za}), P(k, f, new double[]{w, bot, za}), P(k, f, new double[]{w, top, zat}), P(k, f, new double[]{-w, top, zat}), EDGE, light);
+                quad(vc(buf), pose, sp, P(k, f, new double[]{-w, bot, zb}), P(k, f, new double[]{w, bot, zb}), P(k, f, new double[]{w, top, zbt}), P(k, f, new double[]{-w, top, zbt}), EDGE, light);
+            }
+    
+            finish(cc);
+        }
+        replay(vc(buf), pose, sp, cc, light);
         int blades = 22;
         for (int i = 0; i < blades; i++) {
             double a = ph[0] + 2 * Math.PI * i / blades, a2 = a + 0.16;
@@ -328,17 +416,6 @@ public final class ExteriorRenderer {
             double[] p0 = {r0 * Math.cos(a), ay + r0 * Math.sin(a), zfan - 0.03}, p1 = {r1 * Math.cos(a + 0.05), ay + r1 * Math.sin(a + 0.05), zfan - 0.01};
             double[] p2 = {r1 * Math.cos(a2 + 0.08), ay + r1 * Math.sin(a2 + 0.08), zfan + 0.03}, p3 = {r0 * Math.cos(a2), ay + r0 * Math.sin(a2), zfan + 0.03};
             quad(vc(buf), pose, sp, P(k, f, p0), P(k, f, p1), P(k, f, p2), P(k, f, p3), (i & 1) == 0 ? 0xFF9AA0A8 : 0xFF8A9098, light);
-        }
-        // pylon up to the wing
-        if (py > 0.05) {
-            double top = 0.5, bot = ay + 0.8 * R, w = Math.max(0.12, 0.11 * R);
-            double za = -0.3 * L, zb = 0.3 * L, zat = -0.08 * L, zbt = 0.5 * L; // top runs back under the wing box
-            for (int side = -1; side <= 1; side += 2) {
-                double x = side * w;
-                quad(vc(buf), pose, sp, P(k, f, new double[]{x, bot, za}), P(k, f, new double[]{x, bot, zb}), P(k, f, new double[]{x, top, zbt}), P(k, f, new double[]{x, top, zat}), 0xFFDDE0E4, light);
-            }
-            quad(vc(buf), pose, sp, P(k, f, new double[]{-w, bot, za}), P(k, f, new double[]{w, bot, za}), P(k, f, new double[]{w, top, zat}), P(k, f, new double[]{-w, top, zat}), EDGE, light);
-            quad(vc(buf), pose, sp, P(k, f, new double[]{-w, bot, zb}), P(k, f, new double[]{w, bot, zb}), P(k, f, new double[]{w, top, zbt}), P(k, f, new double[]{-w, top, zbt}), EDGE, light);
         }
     }
 
