@@ -26,6 +26,10 @@ neoForge {
         server {
             server()
             programArgument '--nogui'
+            if (project.hasProperty('servertest')) {
+                systemProperty 'trafficcraft.servertest', 'true'
+                systemProperty 'trafficcraft.servertest.ticks', project.property('servertest').toString()
+            }
             gameDirectory = project.file('run-server')
         }
     }

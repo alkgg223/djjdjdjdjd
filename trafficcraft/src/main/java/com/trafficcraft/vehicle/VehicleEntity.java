@@ -80,6 +80,8 @@ public class VehicleEntity extends Entity {
     public static java.util.function.BiConsumer<VehicleEntity, String> CLIENT_EVENT = (v, e) -> {};
 
     private VehicleSpec spec;
+    /** Server-side AI driver (MODE_AI vehicles). */
+    public com.trafficcraft.ai.TrafficDriver driver;
 
     // ---------------------------------------------------------------- physics state (authoritative where simulated)
     public float speed;           // m/s along heading (negative = reverse)
@@ -382,7 +384,15 @@ public class VehicleEntity extends Entity {
             return InteractionResult.PASS;
         }
         if (getMode() == MODE_AI) {
-            if (!level().isClientSide) player.displayClientMessage(Component.translatable("msg.trafficcraft.occupied"), true);
+            if (!level().isClientSide) {
+                if (driver != null && driver.state == com.trafficcraft.ai.TrafficDriver.State.PARKED && level() instanceof ServerLevel sl) {
+                    com.trafficcraft.ai.TrafficManager.get(sl).parking.releaseVehicle(getId());
+                    driver = null;
+                    setMode(MODE_FREE);
+                    return player.startRiding(this) ? InteractionResult.CONSUME : InteractionResult.PASS;
+                }
+                player.displayClientMessage(Component.translatable("msg.trafficcraft.occupied"), true);
+            }
             return InteractionResult.SUCCESS;
         }
         if (!canAddPassenger(player)) return InteractionResult.PASS;
@@ -468,7 +478,13 @@ public class VehicleEntity extends Entity {
 
     /** AI / driverless input; overridden by the traffic AI. */
     protected VehicleInput aiInput() {
+        if (driver != null && getMode() == MODE_AI) return com.trafficcraft.ai.TrafficManager.input(this);
         return VehicleInput.PARK;
+    }
+
+    @Override
+    public boolean shouldBeSaved() {
+        return getMode() != MODE_AI && super.shouldBeSaved();
     }
 
     private void publishState() {
