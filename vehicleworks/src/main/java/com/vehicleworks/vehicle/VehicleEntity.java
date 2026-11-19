@@ -327,15 +327,55 @@ public class VehicleEntity extends Entity implements IEntityWithComplexSpawn {
         double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
         double maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
         Vector3d p = new Vector3d();
+        double[] ext = outerExtents();
         for (int c = 0; c < 8; c++) {
-            double x = (c & 1) == 0 ? structure.minX() : structure.maxX() + 1;
-            double y = (c & 2) == 0 ? structure.minY() : structure.maxY() + 1;
-            double z = (c & 4) == 0 ? structure.minZ() : structure.maxZ() + 1;
+            double x = (c & 1) == 0 ? ext[0] : ext[3];
+            double y = (c & 2) == 0 ? ext[1] : ext[4];
+            double z = (c & 4) == 0 ? ext[2] : ext[5];
             localToWorld(x, y, z, p);
             minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); minZ = Math.min(minZ, p.z);
             maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); maxZ = Math.max(maxZ, p.z);
         }
         return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    private Object extentsFor;
+    private int extentsSize = -1;
+    private double[] extents;
+
+    /** local bounds of the structure, including parts that reach beyond their block (wing assemblies, cones, nacelles) */
+    public double[] outerExtents() {
+        if (extents != null && extentsFor == structure && extentsSize == structure.size()) return extents;
+        double[] e = {structure.minX(), structure.minY(), structure.minZ(), structure.maxX() + 1, structure.maxY() + 1, structure.maxZ() + 1};
+        for (long k : structure.blockEntities().keySet()) {
+            ComponentType ct = VehicleBuilder.typeOf(structure.get(k));
+            if (ct != ComponentType.WING_ASSEMBLY && ct != ComponentType.FAIRING_CONE && ct != ComponentType.AIRLINER_ENGINE) continue;
+            net.minecraft.nbt.CompoundTag cfg = VehicleBuilder.config(structure, k);
+            Direction f = VehicleBuilder.facing(structure.get(k));
+            java.util.List<double[]> pts = new java.util.ArrayList<>(); // NORTH-frame corner points
+            if (ct == ComponentType.WING_ASSEMBLY) {
+                WingGeometry g = new WingGeometry(cfg);
+                for (double sp : new double[]{-1, g.span})
+                    for (double zz : new double[]{g.leZ(sp) - 0.3, g.leZ(sp) + g.chord(sp) + 0.3})
+                        for (double nn : new double[]{-0.6, 0.6 + (g.winglet > 0 && sp > 0 ? 1.4 * g.tip : 0)}) pts.add(g.point(sp, zz, nn));
+            } else if (ct == ComponentType.FAIRING_CONE) {
+                double w = ct.property("width").get(cfg) / 2, h = ct.property("height").get(cfg) / 2, len = ct.property("length").get(cfg), cy = ct.property("center_y").get(cfg);
+                for (double xx : new double[]{-w, w}) for (double yy : new double[]{cy - h - 0.5 * h, cy + h + 0.5 * h}) for (double zz : new double[]{-0.5, -0.5 - len}) pts.add(new double[]{xx, yy, zz});
+            } else {
+                double R = ct.property("diameter").get(cfg) / 2, L = ct.property("length").get(cfg), py = ct.property("pylon").get(cfg);
+                for (double xx : new double[]{-R, R}) for (double yy : new double[]{-py - R, 0.5}) for (double zz : new double[]{-0.62 * L, 0.65 * L}) pts.add(new double[]{xx, yy, zz});
+            }
+            double cx = BlockPos.getX(k) + 0.5, cy = BlockPos.getY(k) + 0.5, cz = BlockPos.getZ(k) + 0.5;
+            for (double[] q : pts) {
+                double[] l = WingGeometry.toLocal(f, q[0], q[2]);
+                e[0] = Math.min(e[0], cx + l[0]); e[1] = Math.min(e[1], cy + q[1]); e[2] = Math.min(e[2], cz + l[1]);
+                e[3] = Math.max(e[3], cx + l[0]); e[4] = Math.max(e[4], cy + q[1]); e[5] = Math.max(e[5], cz + l[1]);
+            }
+        }
+        extents = e;
+        extentsFor = structure;
+        extentsSize = structure.size();
+        return e;
     }
 
     @Override

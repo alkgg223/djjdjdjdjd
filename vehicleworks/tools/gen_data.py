@@ -111,6 +111,9 @@ shaped('instrument_panel_d', ["GG", "NN"], {"G": "glass_pane", "N": V('navigatio
 shaped('instrument_panel_e', ["G", "G", "F"], {"G": "glass_pane", "F": V('flight_instruments')})
 shaped('fcu_panel', ["BBB", "III"], {"B": "stone_button", "I": "iron_ingot"})
 shaped('center_pedestal', ["LGL", "IRI", "III"], {"L": "lever", "G": "glass_pane", "I": "iron_ingot", "R": "redstone"})
+shaped('wing_assembly', ["  W", " WF", "WWA"], {"W": V('swept_wing'), "F": V('flap'), "A": V('aileron')})
+shaped('fairing_cone', [" I ", "IWI", "WWW"], {"I": "iron_ingot", "W": "white_wool"})
+shaped('airliner_engine', ["III", "GTG", "III"], {"I": "iron_ingot", "G": "glass_pane", "T": V('turbofan_engine')})
 components = [l.split('"')[1] for l in open(os.path.join(os.path.dirname(__file__), '..', 'src', 'main', 'java', 'com', 'vehicleworks', 'component', 'ComponentType.java'))
               if l.startswith('    ') and '("' in l and l.strip()[0].isupper() and l.strip().split('(')[0].isupper()]
 for c in components:

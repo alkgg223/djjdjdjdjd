@@ -740,11 +740,22 @@ public final class ClientAutoTest {
             case 720 -> { onServer(ServerPlayer::stopRiding); cmd("gamemode spectator"); }
             case 725 -> free(0.5, 2.9, -10.4, 0.5, 1.4, -14.5);
             case 750 -> screenshot("a16_first_officer_cockpit");
-            case 755 -> { mc.options.hideGui = true; free(-26, 6, -26, 0.5, 0, -2); }
-            case 785 -> screenshot("a17_exterior");
-            case 790 -> free(14, -1, 4, 0.5, 0, -2);
-            case 815 -> screenshot("a18_exterior_rear");
-            case 820 -> mc.stop();
+            case 755 -> { mc.options.hideGui = true; server(v -> { v.controls.flaps = 1; v.controls.speedBrake = 1; v.startEngines(true); }); }
+            case 760 -> free(-15, 7, -9, -11, 0, 3);
+            case 790 -> screenshot("a17_wing_flaps_slats_spoilers");
+            case 795 -> free(-12.5, -1.0, -10, -9.5, -0.9, -3);
+            case 815 -> screenshot("a18_engine_fan");
+            case 820 -> free(-30, 8, -30, 0.5, 0, -2);
+            case 845 -> screenshot("a19_exterior");
+            case 850 -> { server(v -> v.useCabinFixture(null, net.minecraft.core.BlockPos.asLong(3, -1, 7), com.vehicleworks.component.ComponentType.AIRCRAFT_DOOR));
+                free(16, 0, 18, 0.5, 1, 10); }
+            case 875 -> screenshot("a20_tail_cone_cargo_door");
+            case 880 -> free(-7, -2.2, -20, 0.5, -0.5, -14);
+            case 900 -> screenshot("a21_nose_gear_doors");
+            case 905 -> { cmd("time set 18000"); server(v -> { v.controls.flaps = 0; v.controls.speedBrake = 0; v.controls.lights = v.controls.strobe = v.controls.beacon = v.controls.landingLights = true; });
+                free(-24, 5, -22, 0.5, 0, -2); }
+            case 930 -> screenshot("a22_night_wing_lights");
+            case 935 -> mc.stop();
             default -> {}
         }
     }

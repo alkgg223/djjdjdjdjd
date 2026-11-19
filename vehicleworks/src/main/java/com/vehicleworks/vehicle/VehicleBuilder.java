@@ -12,6 +12,8 @@ import com.vehicleworks.physics.aero.AeroModel;
 import com.vehicleworks.physics.aero.ControlRole;
 import com.vehicleworks.physics.aero.WingParams;
 import com.vehicleworks.physics.aero.WingStrip;
+import com.vehicleworks.physics.aero.AirfoilProfile;
+import com.vehicleworks.physics.aero.WingType;
 import com.vehicleworks.physics.fluid.FluidElements;
 import com.vehicleworks.physics.fluid.StructureAnalysis;
 import com.vehicleworks.physics.ground.WheelParams;
@@ -97,6 +99,7 @@ public final class VehicleBuilder {
         List<Long> rotors = new ArrayList<>();
         List<Long> wheels = new ArrayList<>();
         List<Long> gasCells = new ArrayList<>();
+        List<Long> assemblies = new ArrayList<>();
         int pumps = 0, starters = 0, hydraulics = 0, burners = 0;
         double burnerScale = 0;
         double mass = 0;
@@ -179,6 +182,18 @@ public final class VehicleBuilder {
                     }
                 }
                 if (t.isEngine()) engines.add(key);
+                if (t == ComponentType.WING_ASSEMBLY) {
+                    assemblies.add(key);
+                    mass += addWingBody(sim, cb, new WingGeometry(config(s, key)), facing(st), x, y, z, mu);
+                } else if (t == ComponentType.FAIRING_CONE) {
+                    addConeBody(cb, t, config(s, key), facing(st), x, y, z, mu);
+                } else if (t == ComponentType.AIRLINER_ENGINE) {
+                    CompoundTag ec = config(s, key);
+                    double dia = t.property("diameter").get(ec), len = t.property("length").get(ec), py = t.property("pylon").get(ec);
+                    double[] a0 = WingGeometry.toLocal(facing(st), -dia / 2, -len * 0.6), a1 = WingGeometry.toLocal(facing(st), dia / 2, len * 0.4);
+                    cb.addPartialBox(x, y, z, x + 0.5 + Math.min(a0[0], a1[0]), y + 0.5 - py - dia / 2, z + 0.5 + Math.min(a0[1], a1[1]),
+                            x + 0.5 + Math.max(a0[0], a1[0]), y + 0.5 - py + dia / 2, z + 0.5 + Math.max(a0[1], a1[1]), mu);
+                }
                 if (t.isDynamicRender()) {
                     layout.dynamicBlocks.add(key);
                     f |= StructureAnalysis.FLAG_NO_BODY_DRAG;
@@ -381,6 +396,67 @@ public final class VehicleBuilder {
                 chordCount++;
             }
         }
+        // ---- one-block wing assemblies: a strip per span station, flaps inboard, ailerons outboard, spoilers on top
+        for (long key : assemblies) {
+            WingGeometry g = new WingGeometry(config(s, key));
+            Direction wf = facing(s.get(key));
+            int bx = BlockPos.getX(key), by = BlockPos.getY(key), bz = BlockPos.getZ(key);
+            WingParams base = new WingParams();
+            base.type = WingType.SWEPT;
+            base.profile = AirfoilProfile.byIndex(g.airfoil);
+            base.incidenceDeg = g.incidence;
+            base.sweepDeg = Math.toDegrees(g.sweep);
+            base.flapMaxDeg = 35;
+            base.controlMaxDeg = 20;
+            base.sanitize();
+            int n = g.strips();
+            double fullSpan = 2 * g.span + 1;
+            double ar = Math.max(2, fullSpan * fullSpan / (2 * g.area()));
+            double[] nrm = g.kind == 2 ? WingGeometry.toLocal(wf, 1, 0) : null;
+            boolean firstStrip = true;
+            for (int i = 0; i < n; i++) {
+                double s0 = g.span * i / n, s1 = g.span * (i + 1) / n, sm = (s0 + s1) / 2, fr = sm / g.span, c = g.chord(sm);
+                ControlRole role = g.controlAt(fr);
+                // a fixed main section and, behind the hinge, the moving surface (like separate wing + flap blocks)
+                double ctlFrac = role == null ? 0 : g.ctlChord();
+                for (int part = 0; part < (role == null ? 1 : 2); part++) {
+                    double cc = part == 0 ? c * (1 - ctlFrac) : c * ctlFrac;
+                    double zc = g.leZ(sm) + (part == 0 ? cc / 2 : c * (1 - ctlFrac) + cc / 2);
+                    WingParams p = base.copy();
+                    p.role = part == 1 ? role : ControlRole.NONE;
+                    if (part == 1 && (role == ControlRole.ELEVATOR || role == ControlRole.RUDDER)) { p.controlMaxDeg = role == ControlRole.RUDDER ? 25 : 25; p.profile = AirfoilProfile.SYMMETRIC; }
+                    if (g.kind != 0) { p.profile = g.kind == 2 ? AirfoilProfile.SYMMETRIC : p.profile; p.incidenceDeg = g.kind == 2 ? 0 : g.incidence; }
+                    if (part == 0 && g.kind == 0 && g.spoilers && fr > WingGeometry.SPOIL_START && fr < WingGeometry.SPOIL_END) p.spoilerMax = 0.8;
+                    if (g.slats && g.kind == 0) p.stallDeg = p.profile.stallDeg + 3.5;
+                    p.sanitize();
+                    p.chord = cc;
+                    WingStrip strip = new WingStrip(p);
+                    double[] pt = g.point(sm, zc, 0);
+                    double[] ctr = WingGeometry.toLocal(wf, pt[0], pt[2]);
+                    strip.localCenter.set(bx + 0.5 + ctr[0], by + 0.5 + pt[1], bz + 0.5 + ctr[1]);
+                    strip.forward.set(fwd);
+                    if (nrm != null) strip.normal.set(nrm[0], 0, nrm[1]);
+                    else strip.normal.set(0, 1, 0);
+                    strip.area = cc * (s1 - s0);
+                    strip.blocks = 1;
+                    strip.voxels = new long[]{key};
+                    strip.span = g.kind == 2 ? g.span : fullSpan;
+                    strip.aspectRatio = g.kind == 2 ? Math.max(1, 1.6 * g.span * g.span / g.area()) : ar;
+                    int idx = sim.wings.size();
+                    if (firstStrip) { layout.wingStripOfBlock.put(key, idx); firstStrip = false; }
+                    sim.wings.add(strip);
+                    if (g.kind == 2) continue;
+                    layout.wingArea += strip.area;
+                    probe.compute(p, Math.toRadians(2), 0, 0, 0, ar, Math.toRadians(p.sweepDeg), 0.2, 99);
+                    double cl2 = probe.cl;
+                    probe.compute(p, Math.toRadians(-2), 0, 0, 0, ar, Math.toRadians(p.sweepDeg), 0.2, 99);
+                    double w = (cl2 - probe.cl) / Math.toRadians(4) * strip.area;
+                    npNum += w * (strip.localCenter.dot(fwd) + 0.25 * cc);
+                    npDen += w;
+                    if (g.kind == 0) { chordSum += c; chordCount++; }
+                }
+            }
+        }
         if (npDen > 0) {
             layout.neutralPointFwd = npNum / npDen;
             layout.meanChord = chordCount > 0 ? chordSum / chordCount : 1;
@@ -506,6 +582,44 @@ public final class VehicleBuilder {
     }
 
     /** Distinguishes control roles for statistics. */
+    /** collision boxes and structural mass of a wing assembly; returns the added mass */
+    private static double addWingBody(VehicleSimulation sim, CollisionShape.Builder cb, WingGeometry g, Direction wf, int x, int y, int z, float mu) {
+        int n = g.strips();
+        double added = 0;
+        for (int i = 0; i < n; i++) {
+            double s0 = g.span * i / n, s1 = g.span * (i + 1) / n, sm = (s0 + s1) / 2, c = g.chord(sm), th = g.thickness(sm), yy = g.y(sm);
+            double mnx = Double.MAX_VALUE, mnz = Double.MAX_VALUE, mxx = -Double.MAX_VALUE, mxz = -Double.MAX_VALUE;
+            double mny = Double.MAX_VALUE, mxy = -Double.MAX_VALUE;
+            for (double[] q : new double[][]{{s0, g.leZ(s0)}, {s1, g.leZ(s1)}, {s0, g.leZ(s0) + g.chord(s0)}, {s1, g.leZ(s1) + g.chord(s1)}})
+                for (double nn : new double[]{-th / 2, th / 2}) {
+                    double[] pt = g.point(q[0], q[1], nn);
+                    double[] l = WingGeometry.toLocal(wf, pt[0], pt[2]);
+                    mnx = Math.min(mnx, l[0]); mxx = Math.max(mxx, l[0]); mnz = Math.min(mnz, l[1]); mxz = Math.max(mxz, l[1]);
+                    mny = Math.min(mny, pt[1]); mxy = Math.max(mxy, pt[1]);
+                }
+            cb.addPartialBox(x, y, z, x + 0.5 + mnx, y + 0.5 + mny, z + 0.5 + mnz, x + 0.5 + mxx, y + 0.5 + mxy, z + 0.5 + mxz, mu);
+            double m = 30 * c * (s1 - s0); // skin, spars, systems per square metre
+            double[] cp = g.point(sm, g.leZ(sm) + c / 2, 0);
+            double[] ctr = WingGeometry.toLocal(wf, cp[0], cp[2]);
+            sim.baseMass.addBox(m, x + 0.5 + ctr[0], y + 0.5 + cp[1], z + 0.5 + ctr[1], Math.max(0.3, mxx - mnx), Math.max(0.1, mxy - mny), Math.max(0.3, mxz - mnz));
+            added += m;
+        }
+        // the root part inside the fuselage block
+        cb.addPartialBox(x, y, z, x, y + 0.5 - 0.3, z, x + 1, y + 0.5 + 0.3, z + 1, mu);
+        return added;
+    }
+
+    /** a nose / tail cone collides as a few stacked boxes that shrink toward the tip */
+    private static void addConeBody(CollisionShape.Builder cb, ComponentType t, CompoundTag c, Direction f, int x, int y, int z, float mu) {
+        double w = t.property("width").get(c), h = t.property("height").get(c), len = t.property("length").get(c), cy = t.property("center_y").get(c);
+        for (int i = 0; i < 3; i++) {
+            double u0 = len * i / 3, u1 = len * (i + 1) / 3, k = Math.sqrt(Math.max(0, 1 - Math.pow((u0 + u1) / 2 / len, 2)));
+            double[] a = WingGeometry.toLocal(f, -w / 2 * k * 0.9, -0.5 - u1), b = WingGeometry.toLocal(f, w / 2 * k * 0.9, -0.5 - u0);
+            cb.addPartialBox(x, y, z, x + 0.5 + Math.min(a[0], b[0]), y + 0.5 + cy - h / 2 * k * 0.9, z + 0.5 + Math.min(a[1], b[1]),
+                    x + 0.5 + Math.max(a[0], b[0]), y + 0.5 + cy + h / 2 * k * 0.9, z + 0.5 + Math.max(a[1], b[1]), mu);
+        }
+    }
+
     public static boolean isControlSurface(WingStrip s) {
         return s.params.role != ControlRole.NONE;
     }

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "  W",
+    " WF",
+    "WWA"
+  ],
+  "key": {
+    "W": {
+      "item": "vehicleworks:swept_wing"
+    },
+    "F": {
+      "item": "vehicleworks:flap"
+    },
+    "A": {
+      "item": "vehicleworks:aileron"
+    }
+  },
+  "result": {
+    "id": "vehicleworks:wing_assembly",
+    "count": 1
+  }
+}

@@ -496,6 +496,24 @@ for k, (en, ar) in EMER.items(): t('vehicleworks.configuration.' + k, en, ar)
 for k, en, ar in (('cabin.pa_chime', 'Cabin chime', 'رنين الإعلان'), ('cabin.call_chime', 'Attendant call', 'نداء المضيف'),
                   ('vehicle.gear_rattle', 'Gear rattles', 'اهتزاز العجلات'), ('vehicle.tire_bump', 'Tyres bump', 'ارتطام الإطارات')):
     t('subtitles.vehicleworks.' + k, en, ar)
+# ---- 1.4: one-block wing, fairing cones, airliner engine
+for k, (en, ar, ten, tar) in {
+    'wing_assembly': ('Wing Assembly (one block)', 'جناح كامل (بلوكة واحدة)', 'A whole wing half in one block, sized by its settings: taper, sweep, dihedral, moving flaps, ailerons, slats and spoilers, sharklet and built-in navigation, strobe and landing lights. Can also be a horizontal stabiliser or a vertical fin.', 'نصف جناح كامل في بلوكة واحدة بحجم تحدده الإعدادات: تدبب وميلان وزاوية رفع، وقلابات وجنيحات وشرائح أمامية ومفسدات متحركة، وجنيح طرفي، وأضواء ملاحة ووميض وهبوط مدمجة. ويمكن جعله مثبتاً أفقياً أو ذيلاً عمودياً.'),
+    'fairing_cone': ('Fairing Cone (nose / tail)', 'مخروط انسيابي (مقدمة / ذيل)', 'Smooth nose radome or upswept tail cone in front of / behind the block, sized by its settings.', 'مقدمة رادار ناعمة أو مخروط ذيل مرفوع أمام البلوكة أو خلفها، بحجم تحدده الإعدادات.'),
+    'airliner_engine': ('Airliner Engine (nacelle)', 'محرك طائرة ركاب (ناسيل)', 'Under-wing turbofan: nacelle, spinning fan and spinner, exhaust cone and pylon, all in one block.', 'محرك توربوفان تحت الجناح: غلاف ومروحة دوارة ومخروط أمامي ومخروط عادم وحامل، في بلوكة واحدة.'),
+}.items():
+    t('block.vehicleworks.' + k, en, ar); t('vehicleworks.tooltip.' + k, ten, tar)
+for k, en, ar in (('span', 'Span', 'طول الجناح'), ('root_chord', 'Root chord', 'عرض الجذر'), ('tip_chord', 'Tip chord', 'عرض الطرف'), ('dihedral', 'Dihedral', 'زاوية الرفع الجانبية'),
+                  ('flaps', 'Flaps', 'القلابات'), ('ailerons', 'Ailerons', 'الجنيحات'), ('slats', 'Slats', 'الشرائح الأمامية'), ('spoilers', 'Spoilers', 'المفسدات'),
+                  ('lights', 'Built-in lights', 'أضواء مدمجة'), ('winglet', 'Wing tip', 'طرف الجناح'), ('kind', 'Surface', 'نوع السطح'),
+                  ('width', 'Width', 'العرض'), ('height', 'Height', 'الارتفاع'), ('length', 'Length', 'الطول'), ('tip_offset', 'Tip height', 'ارتفاع الطرف'),
+                  ('center_y', 'Vertical offset', 'الإزاحة العمودية'), ('style', 'Style', 'النمط'), ('color', 'Colour', 'اللون'), ('diameter', 'Diameter', 'القطر'), ('pylon', 'Pylon height', 'ارتفاع الحامل')):
+    t('vehicleworks.prop.' + k, en, ar)
+for k, en, ar in (('none', 'None', 'بدون'), ('sharklet', 'Sharklet', 'شاركلت'), ('blended', 'Blended winglet', 'جنيح طرفي منحني'), ('main_wing', 'Main wing', 'جناح رئيسي'),
+                  ('stabilizer', 'Horizontal stabiliser', 'مثبت أفقي'), ('fin', 'Vertical fin', 'ذيل عمودي'), ('nose', 'Nose', 'مقدمة'), ('tail', 'Tail cone', 'مخروط الذيل'),
+                  ('white', 'White', 'أبيض'), ('gray', 'Grey', 'رمادي'), ('blue', 'Blue', 'أزرق')):
+    t('vehicleworks.opt.' + k, en, ar)
+t('vehicleworks.configuration.announcementVoice', 'Spoken cabin announcements', 'نطق إعلانات المقصورة بالصوت')
 en = {k: v[0] for k, v in sorted(L.items())}
 ar = {k: v[1] for k, v in sorted(L.items())}
 for name, d in (('en_us', en), ('ar_sa', ar), ('ar_iq', ar)):

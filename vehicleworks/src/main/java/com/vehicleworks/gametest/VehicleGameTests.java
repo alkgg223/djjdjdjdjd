@@ -398,7 +398,7 @@ public final class VehicleGameTests {
     }
 
     /** Turbofan: starter spools N2, fuel + igniters light it, it accelerates, the starter cuts out; igniters off do not stop it. */
-    @GameTest(template = "platform", timeoutTicks = 1400, batch = "systems")
+    @GameTest(template = "platform", timeoutTicks = 1400, batch = "jet_start")
     public static void jetStartFollowsTheProcedure(GameTestHelper h) {
         VehicleEntity v = spawnDemo(h, DemoVehicles.Demo.AIRLINER, new BlockPos(12, 3, 12));
         v.controls.testPilot = true;
@@ -408,6 +408,7 @@ public final class VehicleGameTests {
         h.runAfterDelay(25, () -> h.assertTrue(v.engageStarter() == null, "starter engages"));
         h.runAfterDelay(200, () -> {
             log(v, "turbofan dry crank:");
+            debug("jetstart", v);
             for (var t : v.simulation().thrusters) {
                 h.assertTrue(t.engine.phase == com.vehicleworks.physics.propulsion.EngineSim.Phase.CRANK, "still cranking without fuel");
                 h.assertTrue(t.engine.spool > t.engine.type.idleFraction * 0.3, "starter spools N2: " + t.engine.spool);
@@ -417,6 +418,7 @@ public final class VehicleGameTests {
         });
         h.runAfterDelay(240, () -> {
             log(v, "turbofan light-off:");
+            debug("jetstart", v);
             for (var t : v.simulation().thrusters)
                 h.assertTrue(t.engine.phase != com.vehicleworks.physics.propulsion.EngineSim.Phase.CRANK, "light-off after fuel + igniters");
         });

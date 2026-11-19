@@ -112,10 +112,18 @@ public final class VehicleHud {
     public static void announce(int id) {
         paId = id;
         paUntil = System.currentTimeMillis() + 9000;
-        if (VoiceCallouts.enabled()) VoiceCallouts.say("vehicleworks.pa.text." + id, true);
+        // spoken after the chime
+        paSpeakAt = com.vehicleworks.Config.CLIENT.announcementVoice.get() || VoiceCallouts.enabled() ? System.currentTimeMillis() + 1300 : 0;
     }
 
+    private static long paSpeakAt;
+
     static void announcement(GuiGraphics g, Font f, int w, int h) {
+        if (paSpeakAt > 0 && System.currentTimeMillis() >= paSpeakAt && paId >= 0) {
+            paSpeakAt = 0;
+            VoiceCallouts.say("vehicleworks.pa.name." + paId, true);
+            VoiceCallouts.say("vehicleworks.pa.text." + paId, false);
+        }
         if (paId < 0 || System.currentTimeMillis() > paUntil) return;
         String head = net.minecraft.network.chat.Component.translatable("vehicleworks.pa.name." + paId).getString();
         String body = net.minecraft.network.chat.Component.translatable("vehicleworks.pa.text." + paId).getString();

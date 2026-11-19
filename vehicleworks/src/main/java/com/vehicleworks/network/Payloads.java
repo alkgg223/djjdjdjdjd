@@ -261,6 +261,8 @@ public final class Payloads {
     }
 
     public static void toPlayer(ServerPlayer p, CustomPacketPayload payload) {
+        // players without the mod's channels (vanilla clients, test players) simply do not get it
+        if (p.connection == null || !p.connection.hasChannel(payload.type())) return;
         PacketDistributor.sendToPlayer(p, payload);
     }
 

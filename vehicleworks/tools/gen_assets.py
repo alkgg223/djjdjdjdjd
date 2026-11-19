@@ -700,3 +700,11 @@ _simple('lavatory', {"w": b('lav_white'), "s": b('galley_steel')},
 _simple('aircraft_door', {"d": b('door_skin'), "k": b('ped_black')},
         [el([0, 0, 6], [16, 32, 10], six('d')), el([2, 20, 5.5], [8, 26, 6], six('k')), el([11, 14, 5], [14, 16, 6], six('k'))], [0.45, 0.45, 0.45])
 print('a320 v2 blocks ok')
+
+# ------------------------------------------------------------------ 1.4: wing assembly, fairing cone, airliner engine (item / world models; the full shape is drawn in a vehicle)
+_simple('wing_assembly', {"w": b('door_skin'), "e": b('galley_steel'), "l": b('stick_red')},
+        [el([0, 6, 0], [16, 9, 16], six('w')), el([0, 6.5, -0.01], [16, 8.5, 2], six('e')), el([0, 6.5, 12], [16, 8, 16], six('e')), el([15, 9, 2], [16, 15, 8], six('l'))], [0.6, 0.6, 0.6])
+_simple('fairing_cone', {"w": b('door_skin')}, [el([1, 1, 8], [15, 15, 16], six('w')), el([3, 3, 3], [13, 13, 8], six('w')), el([5, 5, 0], [11, 11, 3], six('w'))])
+_simple('airliner_engine', {"w": b('door_skin'), "k": b('ped_black'), "e": b('galley_steel')},
+        [el([2, 0, 1], [14, 12, 15], six('w')), el([4, 2, 0.5], [12, 10, 1], six('k')), el([6.5, 12, 4], [9.5, 16, 12], six('e'))], [0.6, 0.6, 0.6])
+print('1.4 exterior blocks ok')

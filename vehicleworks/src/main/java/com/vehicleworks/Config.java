@@ -133,6 +133,7 @@ public final class Config {
         public final ModConfigSpec.DoubleValue cockpitVolume;
         public final ModConfigSpec.DoubleValue warningVolume;
         public final ModConfigSpec.DoubleValue passengerScreenBrightness;
+        public final ModConfigSpec.BooleanValue announcementVoice;
 
         Client(ModConfigSpec.Builder b) {
             lodDistance = b.comment("Beyond this distance animated parts and block entities are skipped").defineInRange("lodDistance", 128, 16, 1024);
@@ -152,6 +153,7 @@ public final class Config {
             cockpitVolume = b.comment("Cockpit sounds: switches, relays, avionics, starter").defineInRange("cockpitVolume", 1.0, 0.0, 2.0);
             warningVolume = b.comment("Warning chimes and alarms").defineInRange("warningVolume", 1.0, 0.0, 2.0);
             passengerScreenBrightness = b.comment("Passenger entertainment screen brightness").defineInRange("passengerScreenBrightness", 1.0, 0.1, 2.0);
+            announcementVoice = b.comment("Speak cabin announcements with the system voice (text-to-speech), independent of the cockpit voice callouts").define("announcementVoice", true);
         }
     }
 

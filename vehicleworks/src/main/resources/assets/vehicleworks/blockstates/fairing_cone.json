@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/fairing_cone"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/fairing_cone",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/fairing_cone",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/fairing_cone",
+      "y": 270
+    }
+  }
+}

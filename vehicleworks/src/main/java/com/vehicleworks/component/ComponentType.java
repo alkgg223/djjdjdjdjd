@@ -52,6 +52,8 @@ public enum ComponentType {
     PISTON_ENGINE("piston_engine", ComponentCategory.PROPULSION, EngineType.PISTON.massKg, Facing.ALL, Shape.FULL, engineProps(false)),
     TURBOPROP_ENGINE("turboprop_engine", ComponentCategory.PROPULSION, EngineType.TURBOPROP.massKg, Facing.ALL, Shape.FULL, engineProps(false)),
     TURBOFAN_ENGINE("turbofan_engine", ComponentCategory.PROPULSION, EngineType.TURBOFAN.massKg, Facing.ALL, Shape.FULL, engineProps(false)),
+    /** under-wing airliner engine: nacelle, spinning fan, spinner, exhaust cone and pylon (one block) */
+    AIRLINER_ENGINE("airliner_engine", ComponentCategory.PROPULSION, EngineType.TURBOFAN.massKg * 2, Facing.HORIZONTAL, Shape.DYNAMIC, airlinerEngineProps()),
     JET_ENGINE("jet_engine", ComponentCategory.PROPULSION, EngineType.TURBOJET.massKg, Facing.ALL, Shape.FULL, engineProps(true)),
     ELECTRIC_MOTOR("electric_motor", ComponentCategory.PROPULSION, EngineType.ELECTRIC.massKg, Facing.ALL, Shape.FULL, engineProps(false)),
     PROPELLER("propeller", ComponentCategory.PROPULSION, 60, Facing.ALL, Shape.DYNAMIC,
@@ -95,6 +97,29 @@ public enum ComponentType {
     RUDDER("rudder", ComponentCategory.AERODYNAMICS, 25, Facing.WING, Shape.WING, wingProps(WingType.STANDARD, ControlRole.RUDDER)),
     FLAP("flap", ComponentCategory.AERODYNAMICS, 28, Facing.WING, Shape.WING, wingProps(WingType.STANDARD, ControlRole.FLAP)),
     SPOILER("spoiler", ComponentCategory.AERODYNAMICS, 22, Facing.WING, Shape.WING, wingProps(WingType.STANDARD, ControlRole.SPOILER)),
+    /** a whole wing half in one block: tapered, swept, dihedral, flaps, ailerons, slats, spoilers, wing tip device and lights */
+    WING_ASSEMBLY("wing_assembly", ComponentCategory.AERODYNAMICS, 400, Facing.HORIZONTAL, Shape.DYNAMIC,
+            PropertyDef.choice("side", 0, "left", "right"),
+            PropertyDef.number("span", 2, 40, 0.5, 12, "m"),
+            PropertyDef.number("root_chord", 0.5, 12, 0.25, 4.5, "m"),
+            PropertyDef.number("tip_chord", 0.3, 8, 0.25, 1.5, "m"),
+            PropertyDef.number("sweep", 0, 45, 1, 25, "deg"),
+            PropertyDef.number("dihedral", -5, 12, 0.5, 5, "deg"),
+            PropertyDef.number("incidence", -5, 8, 0.25, 3, "deg"),
+            PropertyDef.choice("airfoil", AirfoilProfile.CAMBERED.ordinal(), Arrays.stream(AirfoilProfile.values()).map(p -> p.id).toArray(String[]::new)),
+            PropertyDef.bool("flaps", true), PropertyDef.bool("ailerons", true), PropertyDef.bool("slats", true),
+            PropertyDef.bool("spoilers", true), PropertyDef.bool("lights", true),
+            PropertyDef.choice("winglet", 1, "none", "sharklet", "blended"),
+            PropertyDef.choice("kind", 0, "main_wing", "stabilizer", "fin")),
+    /** smooth nose or tail cone (fuselage fairing) */
+    FAIRING_CONE("fairing_cone", ComponentCategory.STRUCTURE, 120, Facing.HORIZONTAL, Shape.DYNAMIC,
+            PropertyDef.number("width", 1, 14, 0.25, 7, "m"),
+            PropertyDef.number("height", 1, 12, 0.25, 4, "m"),
+            PropertyDef.number("length", 1, 16, 0.25, 4, "m"),
+            PropertyDef.number("tip_offset", -1, 1, 0.05, -0.25, ""),
+            PropertyDef.number("center_y", -4, 4, 0.05, 0, "m"),
+            PropertyDef.choice("style", 0, "nose", "tail"),
+            PropertyDef.choice("color", 0, "white", "gray", "blue")),
 
     WHEEL("wheel", ComponentCategory.GROUND, 45, Facing.HORIZONTAL, Shape.DYNAMIC, wheelProps(false)),
     LANDING_GEAR("landing_gear", ComponentCategory.GROUND, 80, Facing.HORIZONTAL, Shape.DYNAMIC, wheelProps(true)),
@@ -193,7 +218,7 @@ public enum ComponentType {
         return switch (this) {
             case PISTON_ENGINE -> EngineType.PISTON;
             case TURBOPROP_ENGINE -> EngineType.TURBOPROP;
-            case TURBOFAN_ENGINE -> EngineType.TURBOFAN;
+            case TURBOFAN_ENGINE, AIRLINER_ENGINE -> EngineType.TURBOFAN;
             case JET_ENGINE -> EngineType.TURBOJET;
             case ELECTRIC_MOTOR -> EngineType.ELECTRIC;
             default -> null;
@@ -206,7 +231,7 @@ public enum ComponentType {
 
     /** Blocks without rigid collision (handled by their own physics, e.g. suspension). */
     public boolean excludedFromCollision() {
-        return isAircraftGear() || this == WHEEL || this == YOKE || this == SIDESTICK || this == FCU_PANEL || this == TROLLEY || this == AIRCRAFT_LIGHT || this == PROPELLER || this == MAIN_ROTOR || this == TAIL_ROTOR || this == MARINE_PROPELLER;
+        return isAircraftGear() || this == WHEEL || this == YOKE || this == SIDESTICK || this == FCU_PANEL || this == TROLLEY || this == AIRCRAFT_LIGHT || this == WING_ASSEMBLY || this == FAIRING_CONE || this == AIRLINER_ENGINE || this == PROPELLER || this == MAIN_ROTOR || this == TAIL_ROTOR || this == MARINE_PROPELLER;
     }
 
     /** Rendered dynamically (spinning / animated) instead of in the cached static mesh. */
@@ -243,6 +268,16 @@ public enum ComponentType {
                 PropertyDef.bool("enabled", true)));
         if (afterburner) l.add(PropertyDef.bool("afterburner", true));
         return l.toArray(new PropertyDef[0]);
+    }
+
+    private static PropertyDef[] airlinerEngineProps() {
+        return new PropertyDef[]{
+                PropertyDef.number("power_scale", 0.5, 6, 0.1, 3.0, "x"),
+                PropertyDef.choice("throttle_group", 0, "all", "group_a", "group_b"),
+                PropertyDef.bool("enabled", true),
+                PropertyDef.number("diameter", 1, 4, 0.1, 2.2, "m"),
+                PropertyDef.number("length", 2, 7, 0.25, 4.2, "m"),
+                PropertyDef.number("pylon", 0, 3, 0.05, 0.9, "m")};
     }
 
     private static PropertyDef[] wheelProps(boolean gear) {

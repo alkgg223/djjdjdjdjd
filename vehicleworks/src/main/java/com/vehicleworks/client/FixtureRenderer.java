@@ -266,9 +266,33 @@ public final class FixtureRenderer {
     static void door(PoseStack ps, MultiBufferSource buf, VehicleEntity v, VehicleTelemetry t, long k, float open, int light) {
         boolean cargo = ComponentType.AIRCRAFT_DOOR.property("door_kind").getInt(VehicleBuilder.config(v.structure, k)) == 1;
         float h = cargo ? 1f : 2f;
+        TextureAtlasSprite shell = sp("cabin_shell"), glass = sp(CockpitParts.GLASS), metal = sp(CockpitParts.METAL);
+        if (cargo) {
+            // cargo door: hinged at the top, swings outward and up; frame, sill and door actuator
+            Box.cuboid(ps, S(buf), metal, -0.5f, 0, 0.06f, 0.5f, 0.05f, 0.5f, light, 0xFF8C9298);            // sill plate
+            Box.cuboid(ps, S(buf), metal, -0.5f, 0.95f, 0.06f, 0.5f, 1f, 0.5f, light, 0xFF8C9298);           // top frame
+            Box.cuboid(ps, S(buf), metal, -0.5f, 0, 0.06f, -0.45f, 1f, 0.5f, light, 0xFF8C9298);
+            Box.cuboid(ps, S(buf), metal, 0.45f, 0, 0.06f, 0.5f, 1f, 0.5f, light, 0xFF8C9298);
+            ps.pushPose();
+            ps.translate(0, 0.98f, -0.08f);
+            ps.mulPose(Axis.XP.rotationDegrees(-100 * open));
+            ps.translate(0, -0.98f, 0.08f);
+            Box.cuboid(ps, S(buf), shell, -0.48f, 0.02f, -0.1f, 0.48f, 0.97f, 0.0f, light, 0xFFF0F1F2);     // skin
+            Box.cuboid(ps, S(buf), metal, -0.42f, 0.08f, 0.0f, 0.42f, 0.9f, 0.05f, light, 0xFFB0B6BC);      // inner structure
+            for (int i = 0; i < 3; i++)
+                Box.cuboid(ps, S(buf), metal, -0.42f, 0.2f + i * 0.25f, 0.05f, 0.42f, 0.23f + i * 0.25f, 0.08f, light, 0xFF8C9298); // frames
+            Box.cuboid(ps, S(buf), metal, -0.1f, 0.12f, -0.11f, 0.1f, 0.17f, -0.1f, light, 0xFF5A6068);    // handle
+            ps.popPose();
+            if (open > 0.05f) {
+                // actuator strut from the frame to the door
+                float a = (float) Math.toRadians(100 * open);
+                float ey = 0.98f - 0.6f * (float) Math.cos(a), ez = -0.08f - 0.6f * (float) Math.sin(a);
+                Box.cuboid(ps, S(buf), metal, 0.3f, Math.min(0.5f, ey), Math.min(0.1f, ez), 0.34f, Math.max(0.5f, ey), Math.max(0.1f, ez), light, 0xFF6A7078);
+            }
+            return;
+        }
         ps.pushPose();
         ps.translate(-0.95f * open, 0, -0.42f * Math.min(1, open * 2));
-        TextureAtlasSprite shell = sp("cabin_shell"), glass = sp(CockpitParts.GLASS), metal = sp(CockpitParts.METAL);
         Box.cuboid(ps, S(buf), shell, -0.48f, 0.02f, -0.08f, 0.48f, h - 0.02f, 0.08f, light, 0xFFF2F2EE);       // door panel
         Box.cuboid(ps, S(buf), shell, -0.4f, 0.1f, 0.08f, 0.4f, h - 0.1f, 0.1f, light, 0xFFE4E0D6);            // inner lining
         if (!cargo) {

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vehicleworks:block/airliner_engine"
+    },
+    "facing=east": {
+      "model": "vehicleworks:block/airliner_engine",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "vehicleworks:block/airliner_engine",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "vehicleworks:block/airliner_engine",
+      "y": 270
+    }
+  }
+}

@@ -112,61 +112,65 @@ public final class CockpitRenderer {
             int type = lightType(v, k);
             if (type == 0) type = bx < 0 ? 1 : (bx > 0 ? 2 : 3);
             if (!begun) { LightFx.begin(ps); begun = true; }
-            float night = LightFx.night();
-            float cx = bx + 0.5f, cy = by + 0.5f, cz = bz + 0.5f;
-            float dist = LightFx.distance(cx, cy, cz);
-            // a real lamp stays a visible point far away: the core never shrinks below ~1.5 px
-            float minCore = dist * 0.0035f;
-            switch (type) {
-                case 1, 2, 3 -> {
-                    if (!t.sw(VehicleControls.SW_NAV)) continue;
-                    int c = type == 1 ? 0xFF2418 : (type == 2 ? 0x18FF50 : 0xFFF4E8);
-                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, Math.max(0.14f, minCore), c, 1.2f);                 // lens
-                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 0.55f + 0.6f * night, c, 0.25f + 0.55f * night);    // halo
-                    if (night > 0.3f) LightFx.sprite(ps, buffers, LightFx.FLARE, cx, cy, cz, 0.9f, c, 0.25f * night);
-                }
-                case 4 -> {
-                    if (!t.sw(VehicleControls.SW_BEACON)) continue;
-                    // rotating beacon: a smooth red pulse about once per second
-                    double ph = time % 1.0;
-                    float e = (float) Math.exp(-Math.pow((ph - 0.1) / 0.06, 2));
-                    int c = 0xFF1C10;
-                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, Math.max(0.16f, minCore), c, 0.25f + 1.1f * e);
-                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 1.0f + 1.2f * night, c, e * (0.35f + 0.7f * night));
-                    LightFx.sprite(ps, buffers, LightFx.FLARE, cx, cy, cz, 1.4f + 1.4f * night, c, e * (0.2f + 0.5f * night));
-                }
-                case 5 -> {
-                    if (!t.sw(VehicleControls.SW_STROBE)) continue;
-                    // double white flash every 1.3 s, very short and very bright
-                    double p = time % 1.3;
-                    float e = (float) (Math.exp(-Math.pow((p - 0.025) / 0.022, 2)) + Math.exp(-Math.pow((p - 0.165) / 0.022, 2)));
-                    if (e < 0.01f) continue;
-                    int c = 0xF4F8FF;
-                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, Math.max(0.2f, minCore * 1.5f), c, 1.4f * e);
-                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 1.6f + 2.4f * night, c, e * (0.4f + 0.8f * night));
-                    LightFx.sprite(ps, buffers, LightFx.FLARE, cx, cy, cz, 2.6f + 2.4f * night, c, e * (0.35f + 0.6f * night));
-                }
-                case 6, 7, 8 -> {
-                    boolean on = type == 6 ? t.sw(VehicleControls.SW_LANDING) : (type == 7 ? t.sw(VehicleControls.SW_TAXI) : t.sw(VehicleControls.SW_TURNOFF));
-                    if (!on) continue;
-                    int c = type == 6 ? 0xFFF2DC : 0xFFEAD0;
-                    Direction f = VehicleBuilder.facing(st);
-                    float dx = f.getStepX(), dz = f.getStepZ(), dy = type == 6 ? -0.1f : -0.22f;
-                    float l = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
-                    float lx = cx + dx * 0.32f, lz = cz + dz * 0.32f;
-                    LightFx.sprite(ps, buffers, LightFx.GLOW, lx, cy, lz, Math.max(type == 6 ? 0.3f : 0.22f, minCore * 1.4f), c, 1.3f);
-                    LightFx.sprite(ps, buffers, LightFx.GLOW, lx, cy, lz, 0.9f + 0.9f * night, c, 0.25f + 0.5f * night);
-                    if (night > 0.3f) LightFx.sprite(ps, buffers, LightFx.FLARE, lx, cy, lz, 1.6f, c, 0.25f * night);
-                    float len = type == 6 ? 30 : 16, r1 = type == 6 ? 3.4f : 2.6f;
-                    // soft volumetric shaft (visible in the night air, faint by day)
-                    LightFx.beam(ps, buffers, lx, cy, lz, dx / l, dy / l, dz / l, len, 0.35f, r1, c, 0.03f + 0.4f * night);
-                }
-                default -> {
-                    if (t.cabinLight <= 0) continue;
-                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 0.07f, 0xFFD8A0, 0.7f + 0.3f * t.cabinLight);
-                    LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 0.3f, 0xFFD8A0, 0.12f * t.cabinLight);
-                    LightFx.beam(ps, buffers, cx, cy - 0.05f, cz, 0, -1, 0, 2.2f, 0.06f, 0.7f, 0xFFD8A0, 0.05f + 0.06f * t.cabinLight);
-                }
+            Direction lf = VehicleBuilder.facing(st);
+            lamp(ps, buffers, t, type, bx + 0.5f, by + 0.5f, bz + 0.5f, lf.getStepX(), lf.getStepZ(), time);
+        }
+    }
+
+    /** one exterior lamp: 1 red / 2 green / 3 white navigation, 4 beacon, 5 strobe, 6 landing, 7 taxi, 8 runway turn-off, else cabin flood */
+    public static void lamp(PoseStack ps, MultiBufferSource buffers, VehicleTelemetry t, int type, float cx, float cy, float cz, float dx, float dz, double time) {
+        float night = LightFx.night();
+        float dist = LightFx.distance(cx, cy, cz);
+        // a real lamp stays a visible point far away: the core never shrinks below ~1.5 px
+        float minCore = dist * 0.0035f;
+        switch (type) {
+            case 1, 2, 3 -> {
+                if (!t.sw(VehicleControls.SW_NAV)) return;
+                int c = type == 1 ? 0xFF2418 : (type == 2 ? 0x18FF50 : 0xFFF4E8);
+                LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, Math.max(0.14f, minCore), c, 1.2f);                 // lens
+                LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 0.55f + 0.6f * night, c, 0.25f + 0.55f * night);    // halo
+                if (night > 0.3f) LightFx.sprite(ps, buffers, LightFx.FLARE, cx, cy, cz, 0.9f, c, 0.25f * night);
+            }
+            case 4 -> {
+                if (!t.sw(VehicleControls.SW_BEACON)) return;
+                // rotating beacon: a smooth red pulse about once per second
+                double ph = time % 1.0;
+                float e = (float) Math.exp(-Math.pow((ph - 0.1) / 0.06, 2));
+                int c = 0xFF1C10;
+                LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, Math.max(0.16f, minCore), c, 0.25f + 1.1f * e);
+                LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 1.0f + 1.2f * night, c, e * (0.35f + 0.7f * night));
+                LightFx.sprite(ps, buffers, LightFx.FLARE, cx, cy, cz, 1.4f + 1.4f * night, c, e * (0.2f + 0.5f * night));
+            }
+            case 5 -> {
+                if (!t.sw(VehicleControls.SW_STROBE)) return;
+                // double white flash every 1.3 s, very short and very bright
+                double p = time % 1.3;
+                float e = (float) (Math.exp(-Math.pow((p - 0.025) / 0.022, 2)) + Math.exp(-Math.pow((p - 0.165) / 0.022, 2)));
+                if (e < 0.01f) return;
+                int c = 0xF4F8FF;
+                LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, Math.max(0.2f, minCore * 1.5f), c, 1.4f * e);
+                LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 1.6f + 2.4f * night, c, e * (0.4f + 0.8f * night));
+                LightFx.sprite(ps, buffers, LightFx.FLARE, cx, cy, cz, 2.6f + 2.4f * night, c, e * (0.35f + 0.6f * night));
+            }
+            case 6, 7, 8 -> {
+                boolean on = type == 6 ? t.sw(VehicleControls.SW_LANDING) : (type == 7 ? t.sw(VehicleControls.SW_TAXI) : t.sw(VehicleControls.SW_TURNOFF));
+                if (!on) return;
+                int c = type == 6 ? 0xFFF2DC : 0xFFEAD0;
+                float dy = type == 6 ? -0.1f : -0.22f;
+                float l = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+                float lx = cx + dx * 0.32f, lz = cz + dz * 0.32f;
+                LightFx.sprite(ps, buffers, LightFx.GLOW, lx, cy, lz, Math.max(type == 6 ? 0.3f : 0.22f, minCore * 1.4f), c, 1.3f);
+                LightFx.sprite(ps, buffers, LightFx.GLOW, lx, cy, lz, 0.9f + 0.9f * night, c, 0.25f + 0.5f * night);
+                if (night > 0.3f) LightFx.sprite(ps, buffers, LightFx.FLARE, lx, cy, lz, 1.6f, c, 0.25f * night);
+                float len = type == 6 ? 30 : 16, r1 = type == 6 ? 3.4f : 2.6f;
+                // soft volumetric shaft (visible in the night air, faint by day)
+                LightFx.beam(ps, buffers, lx, cy, lz, dx / l, dy / l, dz / l, len, 0.35f, r1, c, 0.03f + 0.4f * night);
+            }
+            default -> {
+                if (t.cabinLight <= 0) return;
+                LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 0.07f, 0xFFD8A0, 0.7f + 0.3f * t.cabinLight);
+                LightFx.sprite(ps, buffers, LightFx.GLOW, cx, cy, cz, 0.3f, 0xFFD8A0, 0.12f * t.cabinLight);
+                LightFx.beam(ps, buffers, cx, cy - 0.05f, cz, 0, -1, 0, 2.2f, 0.06f, 0.7f, 0xFFD8A0, 0.05f + 0.06f * t.cabinLight);
             }
         }
     }

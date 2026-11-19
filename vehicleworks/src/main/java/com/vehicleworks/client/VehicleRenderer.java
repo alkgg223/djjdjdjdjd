@@ -68,6 +68,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             ps.mulPose(qf);
             ps.translate(-v.comLocal.x, -v.comLocal.y, -v.comLocal.z);
             CockpitRenderer.renderLights(v, ps, buffers, light, false);
+            ExteriorRenderer.lights(v, ps, buffers);
             ps.popPose();
             return;
         }
@@ -123,6 +124,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             Direction f = VehicleBuilder.facing(st);
             Direction axle = f.getClockWise();
             float scale = (float) (ct.property("radius").get(cfg) / 0.5);
+            if (ct.isAircraftGear()) ExteriorRenderer.gearDoors(ps, buffers, k, f, scale, ext, light);
             if (ext < 0.02 && ct.isAircraftGear()) continue; // fully retracted into the gear bay
             // a bogie has two axles one behind the other; each tyre pair spins about its own axle
             float[] axleOffsets = ct == ComponentType.BOGIE_GEAR ? new float[]{-0.55f * scale, 0.55f * scale} : new float[]{0};
@@ -198,6 +200,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         InstrumentRenderer.render(v, ps, buffers, light, dist);
         CabinRenderer.render(v, ps, buffers, light, dist);
         FixtureRenderer.render(v, ps, buffers, light, dist);
+        ExteriorRenderer.render(v, ps, buffers, light);
         if (Config.CLIENT.renderBlockEntities.get()) renderBlockEntities(v, ps, buffers, partial, light);
         // centre-of-mass marker
         long core = BlockPos.asLong(0, 0, 0);

@@ -271,10 +271,10 @@ public final class DemoVehicles {
         for (int x = -2; x <= 2; x++) {
             b.block(x, 2, -15, Blocks.GLASS);
             b.block(x, 3, -15, Blocks.GLASS);
-            b.block(x, 0, -16, belly);
-            if (Math.abs(x) <= 1) b.block(x, 1, -16, skin);
         }
-        for (int x = -1; x <= 1; x++) b.block(x, 0, -17, belly);
+        // smooth nose (radome) below the windshield
+        b.c(0, -1, -15, ComponentType.FAIRING_CONE, Direction.NORTH, c -> { c.putDouble("width", 7); c.putDouble("height", 3); c.putDouble("length", 4);
+            c.putDouble("center_y", 1.0); c.putDouble("tip_offset", -0.35); c.putInt("style", 0); });
         // ---- cockpit: six displays (PFD + ND per pilot, ECAM upper / lower in the centre), standby gauges, FCU, overhead, pedestal
         b.panel(-2, 1, -15, ComponentType.INSTRUMENT_PANEL_A, Direction.SOUTH, 2, 1, 4, 3, 6, 9);
         b.panel(-1, 1, -15, ComponentType.INSTRUMENT_PANEL_D, Direction.SOUTH, 4, 1);
@@ -321,10 +321,13 @@ public final class DemoVehicles {
         b.c(1, 1, 14, ComponentType.JUMPSEAT, Direction.NORTH);
         b.c(2, 1, 14, ComponentType.GALLEY, Direction.NORTH);
         b.c(3, 1, 14, ComponentType.GALLEY, Direction.NORTH);
-        // tail cone
-        for (int x = -4; x <= 4; x++) for (int y = 1; y <= 3; y++) b.block(x, y, 17, skin);
-        for (int x = -3; x <= 3; x++) { b.block(x, 0, 17, belly); b.block(x, 4, 17, skin); }
-        for (int x = -2; x <= 2; x++) for (int y = 1; y <= 3; y++) b.block(x, y, 18, skin);
+        // aft pressure bulkhead and the upswept tail cone
+        for (int x = -3; x <= 3; x++) for (int y = 1; y <= 3; y++) b.block(x, y, 16, skin);
+        b.c(0, 1, 16, ComponentType.FAIRING_CONE, Direction.SOUTH, c -> { c.putDouble("width", 8.6); c.putDouble("height", 5.6); c.putDouble("length", 6);
+            c.putDouble("center_y", 0.4); c.putDouble("tip_offset", 0.4); c.putInt("style", 1); });
+        // cargo doors in the lower lobe (forward and aft hold)
+        b.c(3, -1, -6, ComponentType.AIRCRAFT_DOOR, Direction.EAST, c -> c.putInt("door_kind", 1));
+        b.c(3, -1, 7, ComponentType.AIRCRAFT_DOOR, Direction.EAST, c -> c.putInt("door_kind", 1));
         // ---- systems in the belly
         for (int z = -3; z <= 4; z++) if (z != 0) { b.fuel(-2, -1, z); b.fuel(2, -1, z); b.fuel(-1, -1, z); b.fuel(1, -1, z); }
         b.c(0, -1, -2, ComponentType.FUEL_PUMP, Direction.NORTH);
@@ -332,35 +335,27 @@ public final class DemoVehicles {
         b.c(0, -1, 4, ComponentType.HYDRAULIC_PUMP, Direction.NORTH);
         b.c(0, -1, 6, ComponentType.ENGINE_STARTER, Direction.NORTH);
         b.c(6, -1, 1, ComponentType.REFUEL_PORT, Direction.EAST);
-        // ---- swept wing with flaps (inboard) and ailerons (outboard), two engines under the wing
-        for (int side = -1; side <= 1; side += 2) {
-            for (int i = 5; i <= 17; i++) {
-                int rows = i <= 8 ? 4 : (i <= 13 ? 3 : 2);
-                int zLead = -1 + (i - 5) / 4;
-                for (int r = 0; r < rows; r++) {
-                    boolean trailing = r == rows - 1;
-                    ComponentType t = trailing ? (i <= 10 ? ComponentType.FLAP : (i >= 14 ? ComponentType.AILERON : ComponentType.SWEPT_WING)) : ComponentType.SWEPT_WING;
-                    b.wing(side * i, 0, zLead + r, t, WingOrientation.HORIZONTAL, c -> { c.putDouble("sweep", 25); c.putDouble("chord", 1.25); c.putDouble("incidence", 3); c.putInt("airfoil", 4); });
-                }
-            }
-            for (int z = -3; z <= -1; z++) b.c(side * 8, -1, z, ComponentType.TURBOFAN_ENGINE, Direction.NORTH, c -> c.putDouble("power_scale", 1.5));
-            for (int i = 5; i <= 9; i++) {
-                b.wing(side * i, 2, 15, ComponentType.WING, WingOrientation.HORIZONTAL, c -> { c.putInt("airfoil", 1); c.putDouble("incidence", -1.5); c.putDouble("chord", 1.3); });
-                b.wing(side * i, 2, 16, ComponentType.ELEVATOR, WingOrientation.HORIZONTAL, c -> { c.putDouble("chord", 1.2); c.putDouble("control_max", 25); });
-            }
+        // ---- one-block wings: each wing half is a single Wing Assembly (flaps, ailerons, slats, spoilers, sharklet and lights built in)
+        for (int side = 0; side <= 1; side++) {
+            int sd = side;
+            b.c(sd == 0 ? -5 : 5, 0, -1, ComponentType.WING_ASSEMBLY, Direction.NORTH, c -> { c.putInt("side", sd); c.putDouble("span", 13); c.putDouble("root_chord", 7);
+                c.putDouble("tip_chord", 2); c.putDouble("sweep", 25); c.putDouble("dihedral", 5); c.putDouble("incidence", 3); c.putInt("airfoil", 4); c.putInt("winglet", 1); });
+            // under-wing engine with nacelle, fan and pylon
+            b.c(sd == 0 ? -9 : 9, 0, -2, ComponentType.AIRLINER_ENGINE, Direction.NORTH, c -> { c.putDouble("power_scale", 4.5); c.putDouble("diameter", 2.4);
+                c.putDouble("length", 4.2); c.putDouble("pylon", 1.9); });
+            // horizontal stabiliser with elevator
+            b.c(sd == 0 ? -5 : 5, 2, 15, ComponentType.WING_ASSEMBLY, Direction.NORTH, c -> { c.putInt("side", sd); c.putInt("kind", 1); c.putDouble("span", 5.5);
+                c.putDouble("root_chord", 3.2); c.putDouble("tip_chord", 1.4); c.putDouble("sweep", 30); c.putDouble("dihedral", 6); c.putDouble("incidence", -1.5);
+                c.putInt("airfoil", 1); c.putBoolean("lights", false); c.putInt("winglet", 0); c.putBoolean("slats", false); c.putBoolean("spoilers", false); });
         }
-        for (int y = 5; y <= 10; y++) {
-            b.wing(0, y, 15, ComponentType.WING, WingOrientation.VERTICAL_X, c -> { c.putInt("airfoil", 1); c.putDouble("incidence", 0); c.putDouble("chord", 1.3); });
-            b.wing(0, y, 16, ComponentType.RUDDER, WingOrientation.VERTICAL_X, c -> c.putDouble("chord", 1.2));
-        }
-        // ---- lights: navigation (wing tips, tail), strobes, beacon, landing / taxi / turn-off
-        b.light(-18, 0, 2, 1, Direction.NORTH); b.light(18, 0, 2, 2, Direction.NORTH);
-        b.light(-18, 0, 3, 5, Direction.NORTH); b.light(18, 0, 3, 5, Direction.NORTH);
-        b.light(0, 2, 19, 3, Direction.SOUTH);
+        // vertical fin with rudder
+        b.c(0, 4, 15, ComponentType.WING_ASSEMBLY, Direction.NORTH, c -> { c.putInt("kind", 2); c.putDouble("span", 6); c.putDouble("root_chord", 4.2);
+            c.putDouble("tip_chord", 1.6); c.putDouble("sweep", 35); c.putDouble("incidence", 0); c.putInt("airfoil", 1); c.putBoolean("lights", false); c.putInt("winglet", 0); });
+        // ---- lights on the fuselage: beacon, tail navigation / strobe, taxi light on the nose gear
         b.light(0, 5, 0, 4, Direction.NORTH);
-        b.light(-5, -1, -2, 6, Direction.NORTH); b.light(5, -1, -2, 6, Direction.NORTH);
+        b.light(0, -2, 6, 4, Direction.NORTH);
+        b.light(0, 3, 22, 3, Direction.SOUTH);
         b.light(0, -1, -13, 7, Direction.NORTH);
-        b.light(-5, -1, 0, 8, Direction.WEST); b.light(5, -1, 0, 8, Direction.EAST);
         // ---- landing gear
         b.c(0, -2, -12, ComponentType.HEAVY_LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 1.6));
         b.c(-3, -2, 2, ComponentType.HEAVY_LANDING_GEAR, Direction.NORTH, c -> c.putDouble("radius", 1.6));
