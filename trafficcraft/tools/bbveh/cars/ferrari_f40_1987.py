@@ -42,7 +42,7 @@ SPEC = dict(
     crown=[(0, 0.02), (1.5, 0.03), (3.0, 0.03), (3.8, 0.04), (L, 0.01)],
     ws=(2.45, 2.96), rear_glass=(1.6, 1.75), windows=[(1.8, 3.0)], doors=[('f', 1.85, 2.9)],
     FB_Z=L - 0.32, RB_Z=0.3, hood=(3.02, L - 0.14, 0.7), fuel=('l', 1.9, 0.82),
-    popups=[dict(x0=0.46, x1=0.72, z0=3.78, z1=4.02, h=0.09, angle=-62)],
+    popups=[dict(x0=0.46, x1=0.72, z0=3.78, z1=4.02, h=0.1, angle=0, front_lamp=True)],
     head=[dict(view='F', outline=rr(0.5, 0.38, 0.78, 0.46, 0.01), lamps=[(0.56, 0.42, 0.028, 'head'), (0.64, 0.42, 0.028, 'high')],
                rects=[(0.69, 0.395, 0.77, 0.445, 'ind')], smooth=0, bezel='trim', house='head_house_black')],
     mouth=[dict(w=0.9, h=0.07, r=0.03, cx=0.0, cy=0.29, pattern='bars', pitch=0.02)],

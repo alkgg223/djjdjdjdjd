@@ -52,3 +52,18 @@ def slim(x0, y0, x1, y1, rise=0.02, proj=2, drl='below', ind=True, house='head_h
         strip = [(x0 + W * 0.15, y0 + h * 0.85 + Y(0.15)), (x0 + W * 0.55, y1 + Y(0.55) - h * 0.02), (x1 - W * 0.08, y1 + Y(0.95))]
     rects = [(x1 - W * 0.11, y0 + Y(0.9) + h * 0.25, x1 - W * 0.02, y1 + Y(1.0) - h * 0.05, 'ind')] if ind else []
     return dict(view='F', outline=out, lamps=lamps, strips=[(strip, 0.012, 'drl')], rects=rects, smooth=smooth, bezel=bezel, house=house)
+
+
+def big(hd, sy=2.2, sx=1.08, dy=0.03, dir=(-0.3, -0.5, -1.0), cy=None):
+    """Enlarge a front lamp to real proportions and wrap it over the nose corner (oblique projection)."""
+    ys = [p[1] for p in hd['outline']]
+    c = cy if cy is not None else (min(ys) + max(ys)) / 2
+    T = lambda x, y: (x * sx, c + (y - c) * sy + dy)
+    hd = dict(hd)
+    hd['outline'] = [T(*p) for p in hd['outline']]
+    hd['lamps'] = [(T(x, y)[0], T(x, y)[1], r * 1.7, k) for x, y, r, k in hd.get('lamps', [])]
+    hd['strips'] = [([T(*p) for p in poly], w * 1.6, k) for poly, w, k in hd.get('strips', [])]
+    hd['rects'] = [T(u0, v0) + T(u1, v1) + (k,) for u0, v0, u1, v1, k in hd.get('rects', [])]
+    hd['dir'] = dir
+    hd['lens_off'] = 0.014
+    return hd

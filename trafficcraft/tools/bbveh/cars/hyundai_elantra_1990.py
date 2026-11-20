@@ -37,3 +37,6 @@ SPEC['mouth'][1].update(w=1.2, h=0.16, cy=0.45, pattern='honeycomb')
 
 # model-specific lamp design
 SPEC['head'] = [dict(view='F', outline=[(0.32, 0.6), (0.5, 0.64), (0.74, 0.67), (0.74, 0.64), (0.6, 0.61), (0.42, 0.59)], lamps=[(0.56, 0.632, 0.018, 'head'), (0.65, 0.645, 0.018, 'high')], strips=[([(0.34, 0.602), (0.5, 0.637), (0.73, 0.665), (0.6, 0.615)], 0.009, 'drl')], rects=[(0.69, 0.645, 0.735, 0.66, 'ind')], smooth=0, house='head_house_black', bezel='trim')]
+
+# real-size lamp wrapping over the nose corner
+SPEC['head'] = [big(SPEC['head'][0])]

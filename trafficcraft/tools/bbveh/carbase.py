@@ -255,7 +255,11 @@ class Car:
     def hits(self, points2d, view, tris, normals=False):
         pts = np.array(points2d, float)
         Lz = self.L
-        if view == 'T':
+        if isinstance(view, tuple):
+            # oblique projection: 2D points in the z = L plane, rays along view[1] (wraps lamps round the nose corner)
+            d = unit(V(view[1]))
+            O = np.c_[pts[:, 0], pts[:, 1], np.full(len(pts), Lz)] - d * 2.5
+        elif view == 'T':
             O, d = np.c_[pts[:, 0], np.full(len(pts), 3.0), pts[:, 1]], V(0, -1, 0)
         elif view == 'F':
             O, d = np.c_[pts[:, 0], pts[:, 1], np.full(len(pts), Lz + 2)], V(0, 0, -1)
@@ -461,6 +465,9 @@ class Car:
             for sx in (1, -1):
                 side = 'l' if sx > 0 else 'r'
                 view = hd.get('view', 'T')
+                if 'dir' in hd:
+                    dx, dy, dz = hd['dir']
+                    view = ('D', (sx * dx, dy, dz))
                 out = chaikin(mirror2(hd['outline'], sx), hd.get('smooth', 1)) if hd.get('smooth', 1) else mirror2(hd['outline'], sx)
                 hs = hd.get('house', 'head_house')
                 proj = self.conform(out, view, self.TRIS, [(hd.get('house_off', 0.005), self.el('body', 'solid', hs), hs),
@@ -522,6 +529,23 @@ class Car:
                 r = min(x1 - x0, z1 - z0) * 0.4
                 m.element('popup_lamp', 'head', g, p.get('style', 'sealed'))
                 m.cylinder(c, V(0, -1, 0), r, 0.006, 12, p.get('style', 'sealed'))
+                if p.get('front_lamp'):
+                    # twin lamps on the front face of the pod (visible all the time, lit with the low / high beams)
+                    zf = z1 + 0.003
+                    self.el(g, 'solid', 'head_house_black')
+                    m.face([V(x0 + 0.01, yt - h + 0.012, zf), V(x1 - 0.01, yt - h + 0.012, zf), V(x1 - 0.01, yt - 0.012, zf), V(x0 + 0.01, yt - 0.012, zf)],
+                           'head_house_black', outward=V(0, 0, 1), dens=200)
+                    rr_ = min(h * 0.36, (x1 - x0) * 0.2)
+                    for i, kind in enumerate(('head', 'high')):
+                        cx = x0 + (x1 - x0) * (0.3 + 0.4 * i)
+                        cc = V(cx, yt - h / 2, zf)
+                        m.element('pod_bowl', 'solid', g, 'chrome')
+                        m.cylinder(cc, V(0, 0, 1), rr_, 0.006, 12, 'chrome', r1=rr_ * 0.92, caps=(False, False))
+                        m.element('pod_lamp_' + kind, kind, g, 'proj_' + kind)
+                        m.cylinder(cc + V(0, 0, 0.006), V(0, 0, 1), rr_ * 0.92, 0.002, 12, 'proj_' + kind, r1=rr_ * 0.6, caps=(False, True))
+                    self.el(g, 'glass', 'lens')
+                    m.face([V(x0 + 0.008, yt - h + 0.008, zf + 0.012), V(x1 - 0.008, yt - h + 0.008, zf + 0.012), V(x1 - 0.008, yt - 0.008, zf + 0.012),
+                            V(x0 + 0.008, yt - 0.008, zf + 0.012)], 'lens', outward=V(0, 0, 1), dens=120)
                 pops[g] = dict(pivot=[round(yt - h * 0.5, 4), round(z0 - self.L / 2, 4)], angle=p.get('angle', -62))
         self.meta_extra['popups'] = pops
 

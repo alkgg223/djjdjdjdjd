@@ -48,3 +48,6 @@ SPEC = dict(
 
 # model-specific lamp design
 SPEC['head'] = [dict(view='F', outline=[(0.36, 0.6), (0.46, 0.64), (0.8, 0.68), (0.82, 0.655), (0.72, 0.62), (0.56, 0.6), (0.42, 0.585)], lamps=[(0.6, 0.632, 0.02, 'head'), (0.7, 0.648, 0.02, 'high')], strips=[([(0.46, 0.627), (0.53, 0.612), (0.56, 0.626)], 0.009, 'drl'), ([(0.63, 0.645), (0.69, 0.633), (0.72, 0.65)], 0.009, 'drl')], rects=[(0.76, 0.655, 0.81, 0.672, 'ind')], smooth=0, house='head_house_black', bezel='trim')]
+
+# real-size lamp wrapping over the nose corner
+SPEC['head'] = [big(SPEC['head'][0])]
