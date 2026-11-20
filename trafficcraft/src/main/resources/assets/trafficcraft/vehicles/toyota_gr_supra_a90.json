@@ -537,9 +537,9 @@
   ],
   "aspect": 0.4234,
   "layout": "tiles",
-  "bg": "#111214",
-  "accent": "#3a8ee6",
-  "fg": "#e8e8ea",
+  "bg": "#0e1116",
+  "accent": "#e50012",
+  "fg": "#eef0f3",
   "brand": {
    "shape": "oval",
    "text": "T",

@@ -162,6 +162,7 @@ class Car:
     tumble = 0.05
     glass_drop = 0.075
     crease_fn = None
+    bed = None
     fr_fn = None
     pinch_fn = None
     roof_dip = 0.0
@@ -181,6 +182,8 @@ class Car:
             zs += [a, b]
         if self.rear_glass:
             zs += list(self.rear_glass)
+        if self.bed:
+            zs += list(self.bed)
         zs += list(np.arange(0.2, self.L, 0.25))
         for za in (self.YR, self.YF):
             for d in (-self.RA - 0.004, -self.RA, -0.8 * self.RA, -0.45 * self.RA, 0.0, 0.45 * self.RA, 0.8 * self.RA, self.RA, self.RA + 0.004):
@@ -350,7 +353,11 @@ class Car:
     def build_body(self):
         self.ZS = self.stations()
         ZS = self.ZS
-        self.loft(ZS, self.section, self.only(['body', 'door_fl', 'door_fr', 'door_rl', 'door_rr'], self.lower_route()), down_bands=(0, 2))
+        route = self.only(['body', 'door_fl', 'door_fr', 'door_rl', 'door_rr'], self.lower_route())
+        if self.bed:
+            r0 = route
+            route = lambda j, zm, sx: None if (self.bed[0] < zm < self.bed[1] and j >= 7) else r0(j, zm, sx)   # open load bed
+        self.loft(ZS, self.section, route, down_bands=(0, 2))
         if self.open_top:
             self.ZG = [z for z in ZS if self.WS0 <= z <= self.CABIN1]
             route = lambda j, zm, sx: (('body', 'glass', 'glass') if j == 2 else ('body', 'solid', 'trim_gloss') if j == 1 else ('body', 'paint', 'paint'))
@@ -726,6 +733,35 @@ class Car:
             gdef = T['garnish']
             self.conform(gdef['outline'], 'B', self.TRIS, [(gdef.get('off', 0.008), self.el('body', 'solid', 'garnish'), 'garnish')],
                          self.el('body', 'solid', 'tail_bezel'), 'tail_bezel', dens=320)
+
+    def pickup_bed(self):
+        """Load bed of a pickup: liner floor, inner side walls, cab-back wall, inside of the tailgate and top rails."""
+        m = self.m
+        z0, z1 = self.bed
+        self.m.painters.setdefault('bedliner', S.flat((34, 35, 38), 8))
+        e = self.el('body', 'solid', 'bedliner')
+        zs = [z for z in self.ZS if z0 - 1e-6 <= z <= z1 + 1e-6]
+        top = lambda z: self.fender_t(z) - 0.005
+        fl = lambda z: top(z) - 0.46
+        for sx in (1, -1):
+            for za, zb in zip(zs[:-1], zs[1:]):
+                xa, xb = sx * (self.hw(za) - 0.1), sx * (self.hw(zb) - 0.1)
+                m.face([V(xa, fl(za), za), V(xb, fl(zb), zb), V(xb, top(zb), zb), V(xa, top(za), za)], 'bedliner', el=e, outward=V(-sx, 0, 0))
+        for za, zb in zip(zs[:-1], zs[1:]):
+            wa, wb = self.hw(za) - 0.1, self.hw(zb) - 0.1
+            m.face([V(-wa, fl(za), za), V(-wb, fl(zb), zb), V(wb, fl(zb), zb), V(wa, fl(za), za)], 'bedliner', el=e, outward=V(0, 1, 0))
+            for k in range(1, 5):                                   # floor ribs
+                x = -wa + 2 * wa * k / 5
+                m.box(V(x, fl(za) + 0.008, (za + zb) / 2), (0.05, 0.016, zb - za), 'bedliner')
+        for z, d in ((z1 - 0.005, -1), (z0 + 0.005, 1)):
+            w = self.hw(z) - 0.1
+            m.face([V(-w, fl(z), z), V(w, fl(z), z), V(w, top(z), z), V(-w, top(z), z)], 'bedliner', el=e, outward=V(0, 0, d))
+        self.el('body', 'paint', 'paint')
+        for sx in (1, -1):
+            for za, zb in zip(zs[:-1], zs[1:]):
+                xa, xb = sx * (self.hw(za) - 0.05), sx * (self.hw(zb) - 0.05)
+                m.face([V(xa - sx * 0.055, top(za) + 0.004, za), V(xb - sx * 0.055, top(zb) + 0.004, zb), V(xb + sx * 0.05, top(zb) + 0.004, zb),
+                        V(xa + sx * 0.05, top(za) + 0.004, za)], 'paint', el=self.el('body', 'paint', 'paint'), outward=V(0, 1, 0))
 
     def vents(self):
         """Black vent / intake inserts with fins, fitted to the body (front intakes, bonnet vents, door and bumper scoops)."""
@@ -1492,6 +1528,8 @@ class Car:
         self.taillamps()
         self.emblems()
         self.vents()
+        if self.bed:
+            self.pickup_bed()
         if self.handles3d:
             self.door_handles()
         if self.frames and not self.open_top:
@@ -1552,7 +1590,17 @@ class Car:
             shape, txt, col = B.get(self.make, ('rect', self.make[:1], (200, 200, 200)))
             UI = {'Nissan': ('list', '#101418', '#c8102e', '#e8e8ea'), 'Tesla': ('dock', '#eef0f2', '#3e6ae1', '#202226'),
                   'Kia': ('tiles', '#05141f', '#27c3b5', '#e6f2f4'), 'Lamborghini': ('hex', '#0b0b0b', '#f2a900', '#f4f0e0'),
-                  'BMW': ('cards', '#0d1a2b', '#1c69d4', '#e8eef6')}
+                  'BMW': ('cards', '#0d1a2b', '#1c69d4', '#e8eef6'),
+                  # every other maker its own look too
+                  'Toyota': ('tiles', '#0e1116', '#e50012', '#eef0f3'), 'Hyundai': ('cards', '#0a1a2e', '#00aad2', '#e6eef6'),
+                  'Chevrolet': ('list', '#121212', '#d9a521', '#f0f0f0'), 'Ford': ('dock', '#0b1626', '#2e7de1', '#e8eef8'),
+                  'Ram': ('list', '#141414', '#b7b9bd', '#f2f2f2'), 'Dodge': ('hex', '#0c0c0c', '#d01c2a', '#f0f0f0'),
+                  'Mercedes-Benz': ('cards', '#05070b', '#00adef', '#f2f4f8'), 'Audi': ('list', '#0a0a0a', '#bb0a30', '#efefef'),
+                  'Porsche': ('cards', '#0f0f10', '#d5001c', '#f4f4f4'), 'McLaren': ('hex', '#101010', '#ff7a00', '#f2f2f2'),
+                  'Ferrari': ('hex', '#0d0d0d', '#ffcc00', '#f6f6f6'), 'Mazda': ('tiles', '#0d0e10', '#9b1b30', '#eeeeee'),
+                  'Honda': ('list', '#0e1014', '#cc0000', '#eeeeee'), 'Mitsubishi': ('tiles', '#0e0e10', '#e60012', '#eeeeee'),
+                  'Subaru': ('cards', '#08142a', '#2e6fd8', '#eef2f8'), 'Volkswagen': ('dock', '#0b1320', '#4a9fe0', '#eef2f8'),
+                  'Jeep': ('tiles', '#151612', '#d4a017', '#eeeeea'), 'Land Rover': ('list', '#0f1412', '#2e7d4f', '#eef0ee')}
             lay, bg, acc, fg = UI.get(self.make, ('tiles', '#111214', '#3a8ee6', '#e8e8ea'))
             mx = max(self.hw(z) for z in np.linspace(0, self.L, 40))
             plan = [[round(float(z / self.L), 4), round(float(self.hw(z) / mx), 4)] for z in np.linspace(0, self.L, 22)]
