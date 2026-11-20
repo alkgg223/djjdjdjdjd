@@ -322,7 +322,8 @@ def read_bbmodel(path):
             part_of[node] = part
             return
         name = node['name']
-        p = name if (name in ('body', 'steer', 'wheel', 'caliper') or name.startswith('door_') or SLOT_RE.match(name)) else part
+        p = name if (name in ('body', 'steer', 'wheel', 'caliper', 'shifter') or name.startswith('door_') or name.startswith('popup_')
+                     or SLOT_RE.match(name)) else part
         m = SLOT_RE.match(p)
         for ch in node.get('children', []):
             walk(ch, p)
@@ -336,7 +337,7 @@ def read_bbmodel(path):
         part = part_of.get(e['uuid'], 'body')
         m = SLOT_RE.match(part)
         if m:
-            part = '%s:%s' % (m.group(1), m.group(2))
+            part = ('wheel:%s' % m.group(2)) if m.group(1) == 'wh' else '%s:%s' % (m.group(1), m.group(2))
         origin = np.array(e.get('origin', [0, 0, 0]), float)
         R = _rot_matrix(e.get('rotation', [0, 0, 0]))
         if e.get('type') == 'mesh':

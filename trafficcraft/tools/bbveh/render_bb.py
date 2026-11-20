@@ -97,7 +97,7 @@ def build(config, lit=()):
         part = t[0]
         if ':' in part:
             slot, idx = part.split(':')
-            if slot == 'wh':
+            if slot == 'wheel':
                 if int(idx) == config.get('wh', 0):
                     wheel_tris.append(t)
                 continue
