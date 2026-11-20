@@ -4,6 +4,7 @@ import com.trafficcraft.TCConfig;
 import com.trafficcraft.road.EdgeGeom;
 import com.trafficcraft.road.NodeType;
 import com.trafficcraft.road.ParkingLayout;
+import com.trafficcraft.road.RoadData;
 import com.trafficcraft.road.RoadEdge;
 import com.trafficcraft.road.RoadNetwork;
 import com.trafficcraft.road.RoadNode;
@@ -45,6 +46,11 @@ public final class TrafficDriver {
     int reservedNode = -1;
     double stopTargetGap = 99;
     public boolean lastStopTold;
+    int lastApproach = -1;
+    int reverseTicks, unstickCooldown;
+    boolean spotMode;
+    final java.util.Set<Integer> consideredSpots = new java.util.HashSet<>();
+    com.trafficcraft.road.RoadsideSpot pendingSpot;
     VehicleInput last = VehicleInput.NONE;
     boolean overtaking;
     float laneOffsetNow;
@@ -115,6 +121,7 @@ public final class TrafficDriver {
                 TrafficStats.inc("manoeuvre_assist");
             }
             Piece done = path.pollFirst();
+            if (!done.connector) lastApproach = done.edge;
             if (done.connector) {
                 tm.junctions.release(done.node, v.getId());
                 TrafficStats.inc("junctions_crossed");
@@ -127,6 +134,10 @@ public final class TrafficDriver {
                 }
             }
             if (!done.connector && done.node >= 0) onArrive(v, level, net, tm, done);
+            if (state == State.PARK_OUT && stateTicks > 30) {
+                state = State.DRIVE;
+                spotMode = false;
+            }
             if (!done.connector && done.node <= -2) {
                 stopTargetGap = 99;
                 if (arriveSpecial(v, level, tm, done)) return VehicleInput.PARK;
@@ -142,7 +153,12 @@ public final class TrafficDriver {
         extend(v, net, tm);
         // ---------- lateral control (pure pursuit)
         float vel = v.speed;
-        boolean reverse = state == State.PARK_OUT && stateTicks < 50;
+        if (state == State.PARK_OUT && spotMode && stateTicks > 70) {
+            state = State.DRIVE;
+            spotMode = false;
+        }
+        if (state == State.DRIVE && goal < 0 && !overtaking && ((v.tickCount + v.getId()) % 10 == 0 || pendingSpot != null)) roadsideParking(v, net, tm);
+        boolean reverse = state == State.PARK_OUT && stateTicks < (spotMode ? 22 : 50);
         boolean inTurn = path.peekFirst().connector && path.peekFirst().movement != TrafficLights.MOVE_STRAIGHT;
         double look = inTurn ? Math.max(1.4, 1.2 + Math.abs(vel) * 0.22) : Math.max(2.2, 2.0 + Math.abs(vel) * 0.38);
         Vec3 target = pointAhead(look);
@@ -184,6 +200,22 @@ public final class TrafficDriver {
         if (reverse) {
             fwd = vel < -1.8f ? 0 : -0.45f;
         }
+        // ---------- un-sticking: back up a few metres, then go round
+        if (reverseTicks > 0) {
+            reverseTicks--;
+            fwd = vel < -1.5f ? 0 : -0.5f;
+            steerIn = 0;
+            if (reverseTicks == 0) {
+                tryOvertake(v, net, tm, c, true);
+                blockedTicks = 0;
+            }
+        } else if (state == State.DRIVE && Math.abs(vel) < 0.3f && !c.byRule && c.gap < 4 && unstickCooldown == 0 && wantsUnstick(c)
+                && behindFree(v, level, tm)) {
+            reverseTicks = 30 + v.getRandom().nextInt(15);
+            unstickCooldown = 20 * 20;
+            TrafficStats.inc("reversed_out");
+        }
+        if (unstickCooldown > 0) unstickCooldown--;
         // ---------- blocked / horn / stuck handling
         if (Math.abs(vel) < 0.3f && c.why.equals("blocked")) {
             blockedTicks++;
@@ -221,6 +253,40 @@ public final class TrafficDriver {
         last = new VehicleInput(fwd, steerIn, hb);
         reason = c.why;
         return last;
+    }
+
+    /** Stuck behind something that is not going to move: a broken-down/parked car, a block, or a gridlock that has lasted long. */
+    boolean wantsUnstick(Constraint c) {
+        if (c.why.equals("blocked")) return blockedTicks > 20 * 6;
+        if (c.leader instanceof VehicleEntity lv) {
+            if (isStalled(lv)) return blockedTicks > 20 * 6;
+            if (lv.driver != null) {
+                String r = lv.driver.reason;
+                if (r.contains("light") || r.contains("junction") || r.contains("stop") || r.contains("give way") || r.contains("border")) return false;
+            }
+            return blockedTicks > 20 * 40;
+        }
+        return false;
+    }
+
+    /** Nothing within a car length or two behind us (vehicles, people, solid blocks). */
+    boolean behindFree(VehicleEntity v, ServerLevel level, TrafficManager tm) {
+        Vec3 f = v.forward();
+        double halfL = v.spec().length / 2;
+        List<Entity> near = new ArrayList<>();
+        tm.grid.near(v.getX(), v.getZ(), 12, near);
+        for (Entity o : near) {
+            if (o == v || o.isPassenger()) continue;
+            Vec3 to = o.position().subtract(v.position());
+            double along = -(to.x * f.x + to.z * f.z), lat = Math.abs(to.x * f.z - to.z * f.x);
+            double oh = o instanceof VehicleEntity ov ? ov.spec().length / 2 : 0.4;
+            if (along > 0 && along - oh < halfL + 6 && lat < v.spec().width / 2 + 1.0) return false;
+        }
+        for (double d = halfL + 0.5; d < halfL + 4.5; d += 1) {
+            BlockPos bp = BlockPos.containing(v.getX() - f.x * d, v.getY() + 0.6, v.getZ() - f.z * d);
+            if (!level.getBlockState(bp).getCollisionShape(level, bp).isEmpty()) return false;
+        }
+        return true;
     }
 
     boolean isStalled(VehicleEntity o) {
@@ -330,7 +396,7 @@ public final class TrafficDriver {
             Integer hop = RoutePlanner.nextHop(net, node, goal);
             if (hop != null) {
                 RoadEdge e = net.edgeBetween(node, hop);
-                if (e != null && e.allows(node)) return e;
+                if (e != null && e.allows(node) && RoutePlanner.turnAllowed(net, node, in, e)) return e;
             }
             goal = -1;
             parkingSpace = -1;
@@ -401,6 +467,15 @@ public final class TrafficDriver {
 
     /** Reached a parking space (-2) or a pump (-3). True when the vehicle now stands still in its new state. */
     boolean arriveSpecial(VehicleEntity v, ServerLevel level, TrafficManager tm, Piece done) {
+        if (done.node == -2 && state == State.PARK_IN && spotMode) {
+            // settle neatly into the kerbside spot (parallel to the kerb, centred)
+            RoadNode sn = RoadData.get(level).nodes.get(goal);
+            com.trafficcraft.road.RoadsideSpot sp = sn == null ? null : com.trafficcraft.road.RoadsideSpot.of(RoadData.get(level), sn);
+            if (sp != null && v.position().distanceTo(sp.center()) < 3.5) {
+                float yaw = (float) Math.toDegrees(Math.atan2(-sp.facing().x, sp.facing().z));
+                v.moveTo(sp.center().x, v.getY(), sp.center().z, yaw, 0);
+            }
+        }
         if (done.node == -2 && state == State.PARK_IN) {
             TrafficStats.inc("parked");
             state = State.PARKED;
@@ -486,6 +561,7 @@ public final class TrafficDriver {
         v.setFlag(VehicleEntity.F_LOW | VehicleEntity.F_IND_L | VehicleEntity.F_IND_R, false);
         if (v.getMode() != VehicleEntity.MODE_AI) return VehicleInput.PARK;
         RoadNode n = net.nodes.get(goal);
+        if (spotMode) return leaveSpot(v, net, tm, n);
         int min = n != null && n.cfg.contains("stayMin") ? n.cfg.getInt("stayMin") : 30, max = n != null && n.cfg.contains("stayMax") ? n.cfg.getInt("stayMax") : 180;
         if (stateTicks > 20 * (min + (spawner * 7919L + v.getId()) % Math.max(1, max - min + 1))) {
             TrafficStats.inc("left_parking");
@@ -520,6 +596,116 @@ public final class TrafficDriver {
             parkingSpace = -1;
             leaveNode(v, net, net.nodes.get(keep), null);
         }
+        return VehicleInput.PARK;
+    }
+
+    // =================================================================================== kerbside spots
+    /** Passing a free roadside spot on our side: maybe pull straight in. */
+    void roadsideParking(VehicleEntity v, RoadNetwork net, TrafficManager tm) {
+        Piece cur = path.peekFirst();
+        if (cur == null || v.spec().isHeavy() || v.spec().length > 5.6f) return;
+        // 1) a spot chosen earlier on the edge we have just entered
+        if (pendingSpot != null && !cur.connector && cur.edge == pendingSpot.edge()) {
+            com.trafficcraft.road.RoadsideSpot sp = pendingSpot;
+            pendingSpot = null;
+            RoadEdge e = net.edges.get(cur.edge);
+            EdgeGeom g = e == null ? null : net.geom(e);
+            if (g != null && (sp.sv() - g.project(v.position(), null)) * sp.dir() > 2.5) {
+                enterSpot(v, e, g, cur, sp);
+                return;
+            }
+            tm.parking.releaseSpot(sp.node());
+        }
+        if (pendingSpot != null) return;
+        // 2) look for spots on the current edge and the next edge of the route
+        double dist = 0;
+        boolean first = true;
+        for (Piece p : path) {
+            double from = first ? s : 0;
+            if (!p.connector && p.edge >= 0) {
+                List<com.trafficcraft.road.RoadsideSpot> spots = com.trafficcraft.road.RoadsideSpot.onEdge(net, p.edge);
+                RoadEdge e = net.edges.get(p.edge);
+                EdgeGeom g = e == null ? null : net.geom(e);
+                if (g != null && !spots.isEmpty()) {
+                    double psv = g.project(first ? v.position() : p.at(0), null);
+                    for (com.trafficcraft.road.RoadsideSpot sp : spots) {
+                        if (sp.dir() != p.dir || consideredSpots.contains(sp.node())) continue;
+                        double ahead = dist + (sp.sv() - psv) * sp.dir();
+                        if (ahead < 6 || ahead > 45) continue;
+                        consideredSpots.add(sp.node());
+                        RoadNode n = net.nodes.get(sp.node());
+                        int chance = n.cfg.contains("parkChance") ? n.cfg.getInt("parkChance") : 30;
+                        if (v.getRandom().nextInt(100) >= chance || !tm.parking.claimSpot(sp, v)) continue;
+                        if (first) enterSpot(v, e, g, p, sp);
+                        else pendingSpot = sp;
+                        return;
+                    }
+                }
+                if (!first) return; // only the current and the next edge
+            }
+            dist += p.length - from;
+            first = false;
+            if (dist > 45) return;
+        }
+    }
+
+    /** Ease over from our lane to the kerb and stop with the car centred on the spot. */
+    void enterSpot(VehicleEntity v, RoadEdge e, EdgeGeom g, Piece cur, com.trafficcraft.road.RoadsideSpot sp) {
+        double vsv = g.project(v.position(), null);
+        double halfL = v.spec().length / 2;
+        double laneOff = e.laneOffset(Math.max(0, Math.min(e.lanes.size() - 1, cur.lane)));
+        double endSv = sp.sv() + sp.dir() * (halfL - 0.3);
+        double total = Math.abs(endSv - vsv), blend = Math.max(2, Math.min(11, total - 1));
+        List<Vec3> pts = new ArrayList<>();
+        int steps = Math.max(2, (int) Math.ceil(total));
+        for (int i = 0; i <= steps; i++) {
+            double t = (double) i / steps, d = t * total;
+            double k = Math.max(0, Math.min(1, (d - (total - blend)) / blend));
+            k = k * k * (3 - 2 * k);
+            pts.add(g.point(vsv + sp.dir() * d, laneOff + (sp.offset() - laneOff) * k));
+        }
+        Piece in = new Piece(pts, -1, 1, 0, -2, false, 4f);
+        in.stopS = in.length - 0.2;
+        path.clear();
+        path.add(in);
+        s = 0;
+        goal = sp.node();
+        spotMode = true;
+        state = State.PARK_IN;
+        stateTicks = 0;
+        TrafficStats.inc("roadside_park");
+    }
+
+    /** Leave a kerbside spot: back up a little, pull out into the lane and continue along the road. */
+    VehicleInput leaveSpot(VehicleEntity v, RoadNetwork net, TrafficManager tm, RoadNode n) {
+        int min = n != null && n.cfg.contains("stayMin") ? n.cfg.getInt("stayMin") : 15, max = n != null && n.cfg.contains("stayMax") ? n.cfg.getInt("stayMax") : 60;
+        if (stateTicks <= 20 * (min + (v.getId() * 31L) % Math.max(1, max - min + 1))) return VehicleInput.PARK;
+        com.trafficcraft.road.RoadsideSpot sp = n == null ? null : com.trafficcraft.road.RoadsideSpot.of(net, n);
+        tm.parking.releaseSpot(goal);
+        goal = -1;
+        if (sp == null) {
+            state = State.DESPAWN;
+            spotMode = false;
+            return VehicleInput.PARK;
+        }
+        RoadEdge e = net.edges.get(sp.edge());
+        EdgeGeom g = net.geom(e);
+        int from = sp.dir() > 0 ? e.a : e.b;
+        List<Integer> lanes = e.lanesFrom(from);
+        if (lanes.isEmpty()) {
+            state = State.DESPAWN;
+            return VehicleInput.PARK;
+        }
+        double vsv = g.project(v.position(), null);
+        double start = vsv - sp.dir() * 1.5; // where we are after backing up
+        float offStart = (float) sp.offset();
+        path.clear();
+        path.add(RoutePlanner.edgePiece(net, e, from, lanes.get(0), start, offStart, 12));
+        s = 0;
+        v.setFlag(VehicleEntity.F_ENGINE, true);
+        state = State.PARK_OUT;
+        stateTicks = 0;
+        TrafficStats.inc("left_roadside");
         return VehicleInput.PARK;
     }
 
@@ -589,7 +775,8 @@ public final class TrafficDriver {
             double radius = 6 / ang;
             vd = (float) Math.min(vd, Math.sqrt(3.8 * radius) + 1);
         }
-        if (state == State.PARK_IN || state == State.TO_PUMP) vd = Math.min(vd, 2.6f);
+        if (state == State.PARK_IN && spotMode && !path.isEmpty()) vd = Math.min(vd, (float) Math.max(2.6, (path.peekFirst().length - s) * 0.45));
+        else if (state == State.PARK_IN || state == State.TO_PUMP) vd = Math.min(vd, 2.6f);
         if (state == State.PARK_OUT) vd = Math.min(vd, 3f);
         return vd;
     }
@@ -745,6 +932,10 @@ public final class TrafficDriver {
                 mayGo = false;
                 why = "give way";
             }
+            if (mayGo && yieldsByPriority(v, net, tm, n, approach.edge)) {
+                mayGo = false;
+                why = "give way (priority)";
+            }
         }
         // only try to reserve when close to the line
         if (mayGo && dist < Math.max(7, Math.abs(vel) * 1.6 + 5)) {
@@ -800,6 +991,45 @@ public final class TrafficDriver {
             return true;
         }
         return false;
+    }
+
+    /** Priority set with the Road Planner: traffic from road A goes first, road B waits while A traffic is near or in the junction. */
+    boolean yieldsByPriority(VehicleEntity v, RoadNetwork net, TrafficManager tm, RoadNode n, int myEdge) {
+        int[] pr = n.cfg.getIntArray("prio");
+        if (pr.length == 0) return false;
+        java.util.Set<Integer> major = new java.util.HashSet<>();
+        for (int k : pr) if ((k & 0xFFFF) == myEdge) major.add(k >>> 16);
+        if (major.isEmpty()) return false;
+        float jr = net.junctionRadius(n.id);
+        List<Entity> near = new ArrayList<>();
+        tm.grid.near(n.x, n.z, 30, near);
+        for (Entity o : near) {
+            if (!(o instanceof VehicleEntity ov) || ov == v) continue;
+            double d = ov.position().distanceTo(n.pos());
+            if (d > 28) continue;
+            int app = ov.driver != null ? ov.driver.currentApproach() : approachByPosition(net, n, ov);
+            boolean inJunction = d < jr + 0.5 && ov.driver != null && tm.junctions.holds(n.id, ov.getId());
+            if (inJunction && ov.driver.lastApproach >= 0 && major.contains(ov.driver.lastApproach)) return true;
+            if (!major.contains(app)) continue;
+            if (d < jr + 1) return true;
+            Vec3 toNode = n.pos().subtract(ov.position()).normalize();
+            double closing = ov.visSpeed() * (ov.forward().x * toNode.x + ov.forward().z * toNode.z);
+            if (closing > 0.5 && d / closing < 5.5) return true;
+            if (Math.abs(ov.visSpeed()) < 0.5f && d < jr + 9) return true; // queued right at the line
+        }
+        return false;
+    }
+
+    /** For vehicles without an AI driver: the junction road they are on (or -1). */
+    static int approachByPosition(RoadNetwork net, RoadNode n, VehicleEntity ov) {
+        double[] out = new double[2];
+        for (RoadEdge e : net.roadEdgesOf(n.id)) {
+            EdgeGeom g = net.geom(e);
+            if (g == null) continue;
+            g.project(ov.position(), out);
+            if (out[1] < e.width / 2 + 0.5) return e.id;
+        }
+        return -1;
     }
 
     int currentApproach() {

@@ -13,6 +13,26 @@ import net.minecraft.world.phys.Vec3;
 final class ParkingMarkings {
     static void build(RoadNetwork net, BiConsumer<Vec3, List<float[]>> add) {
         for (RoadNode n : net.nodes.values()) {
+            if (n.type == NodeType.PARK_SPOT) {
+                if (n.cfg.contains("visible") && !n.cfg.getBoolean("visible")) continue;
+                var sp = com.trafficcraft.road.RoadsideSpot.of(net, n);
+                if (sp == null) continue;
+                List<float[]> quads = new ArrayList<>();
+                Vec3 f = sp.facing(), l = new Vec3(f.z, 0, -f.x);
+                double hl = sp.length() / 2, hw = 1.2, y = sp.center().y + 0.02;
+                int col = 0xFFEDEDE6;
+                bar(quads, sp.center().add(l.scale(hw)), f, hl, 0.06, y, col);
+                bar(quads, sp.center().add(l.scale(-hw)), f, hl, 0.06, y, col);
+                bar(quads, sp.center().add(f.scale(hl)), l, hw, 0.06, y, col);
+                bar(quads, sp.center().add(f.scale(-hl)), l, hw, 0.06, y, col);
+                // "P"
+                bar(quads, sp.center().add(l.scale(0.25)), f, 0.55, 0.07, y, col);
+                bar(quads, sp.center().add(f.scale(0.5)), l, 0.25, 0.07, y, col);
+                bar(quads, sp.center().add(f.scale(0.05)), l, 0.25, 0.07, y, col);
+                bar(quads, sp.center().add(f.scale(0.28)).add(l.scale(-0.25)), f, 0.25, 0.07, y, col);
+                add.accept(sp.center(), quads);
+                continue;
+            }
             if (n.type != NodeType.PARKING) continue;
             List<float[]> quads = new ArrayList<>();
             for (ParkingLayout.Space s : ParkingLayout.spaces(net, n)) {

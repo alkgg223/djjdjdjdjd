@@ -65,6 +65,15 @@ public final class ServerTest {
         com.trafficcraft.road.RoadPieces.build(l, Vec3.atBottomCenterOf(origin).add(10, 0, 35), net.minecraft.core.Direction.WEST, com.trafficcraft.road.RoadPieces.T_JUNCTION, tool);
         com.trafficcraft.world.Kits.place(l, origin.offset(60, -1, -9), net.minecraft.core.Direction.NORTH, "bus_stop", null);
         log(String.format("demo town built in %.0f ms: %d nodes, %d edges", (System.nanoTime() - t0) / 1e6, RoadData.get(l).nodes.size(), RoadData.get(l).edges.size()));
+        {
+            var sn = RoadData.get(l).addNode(origin.getX() - 40.5, origin.getY(), origin.getZ() + 6.5, com.trafficcraft.road.NodeType.PARK_SPOT);
+            com.trafficcraft.road.Props.defaults(com.trafficcraft.road.NodeType.PARK_SPOT, sn.cfg);
+            sn.cfg.putInt("parkChance", 100);
+            sn.cfg.putInt("stayMin", 10);
+            sn.cfg.putInt("stayMax", 20);
+            RoadData.get(l).changed();
+        }
+        for (var n : RoadData.get(l).nodesOfType(com.trafficcraft.road.NodeType.PARK_SPOT)) log("spot " + n.id + " -> " + com.trafficcraft.road.RoadsideSpot.of(RoadData.get(l), n));
         TrafficManager.observer = Vec3.atCenterOf(origin).add(20, 0, 0);
         l.setDayTime(1000);
         t = 0;

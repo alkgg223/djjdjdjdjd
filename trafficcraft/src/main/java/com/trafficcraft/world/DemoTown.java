@@ -231,6 +231,11 @@ public final class DemoTown {
         place("road_cone", -52, 4, Direction.NORTH);
         place("roadworks_light", -49, 4, Direction.NORTH);
         place("construction_sign", -52, 8, Direction.WEST);
+        // kerbside parking spots in the side street towards the car park (west kerb serves southbound traffic)
+        for (int z : new int[]{16, 23}) {
+            RoadNode sp = node("spot" + z, -34, z, NodeType.PARK_SPOT);
+            sp.cfg.putInt("parkChance", 60);
+        }
         pedestrians();
         net.changed();
     }

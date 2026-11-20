@@ -27,6 +27,7 @@ public final class Props {
                 l.add(Prop.flag("stop", RoadNode.F_STOP));
                 l.add(Prop.flag("yield", RoadNode.F_YIELD));
                 l.add(Prop.flag("priority", RoadNode.F_PRIORITY));
+                l.add(Prop.b("sharpTurns"));
                 l.add(Prop.e("mode", "auto", "manual", "flash", "off"));
                 l.add(Prop.i("green", 3, 120, 1));
                 l.add(Prop.i("yellow", 1, 10, 1));
@@ -59,6 +60,13 @@ public final class Props {
                 l.add(Prop.i("stayMax", 5, 3600, 5));
                 l.add(Prop.i("parkChance", 0, 100, 5));
                 l.add(Prop.b("gate"));
+            }
+            case PARK_SPOT -> {
+                l.add(Prop.b("visible"));
+                l.add(Prop.i("parkChance", 0, 100, 5));
+                l.add(Prop.i("stayMin", 5, 3600, 5));
+                l.add(Prop.i("stayMax", 5, 3600, 5));
+                l.add(Prop.f("length", 4.5, 12, 0.5));
             }
             case BORDER -> {
                 l.add(Prop.i("inspection", 1, 120, 1));
@@ -141,6 +149,13 @@ public final class Props {
                 put(c, "stayMin", 30);
                 put(c, "stayMax", 180);
                 put(c, "parkChance", 35);
+            }
+            case PARK_SPOT -> {
+                put(c, "visible", true);
+                put(c, "parkChance", 30);
+                put(c, "stayMin", 15);
+                put(c, "stayMax", 60);
+                if (!c.contains("length")) c.putFloat("length", 6f);
             }
             case BORDER -> {
                 put(c, "inspection", com.trafficcraft.TCConfig.BORDER_INSPECTION.get());

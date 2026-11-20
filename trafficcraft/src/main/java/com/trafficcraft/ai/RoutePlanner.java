@@ -124,6 +124,7 @@ public final class RoutePlanner {
         List<RoadEdge> out = new ArrayList<>();
         for (RoadEdge e : net.roadEdgesOf(node)) {
             if (e == in || !e.allows(node)) continue;
+            if (!turnAllowed(net, node, in, e)) continue;
             if ((e.restrict & RoadEdge.R_NO_TRUCKS) != 0 && spec.isHeavy()) continue;
             if ((e.restrict & RoadEdge.R_BUS_ONLY) != 0 && !spec.category.equals("bus")) continue;
             if ((e.restrict & (e.a == node ? RoadEdge.R_NO_ENTRY_AB : RoadEdge.R_NO_ENTRY_BA)) != 0) continue;
@@ -134,6 +135,31 @@ public final class RoutePlanner {
         }
         if (out.isEmpty() && in != null && in.allows(node)) out.add(in);
         return out;
+    }
+
+    public static int turnKey(int in, int out) {
+        return (in << 16) | (out & 0xFFFF);
+    }
+
+    /**
+     * Whether a vehicle arriving on 'in' may leave on 'out'. Near-reversals (e.g. from one branch of a Y split into the
+     * other) are not allowed unless the node allows sharp turns; single movements can be banned/allowed with the Road Planner.
+     */
+    public static boolean turnAllowed(RoadNetwork net, int node, RoadEdge in, RoadEdge out) {
+        if (in == null || out == null || in == out) return true;
+        RoadNode n = net.nodes.get(node);
+        if (n == null) return true;
+        int k = turnKey(in.id, out.id);
+        for (int x : n.cfg.getIntArray("turnBan")) if (x == k) return false;
+        for (int x : n.cfg.getIntArray("turnAllow")) if (x == k) return true;
+        if (n.cfg.getBoolean("sharpTurns")) return true;
+        return !sharpTurn(net, node, in, out);
+    }
+
+    public static boolean sharpTurn(RoadNetwork net, int node, RoadEdge in, RoadEdge out) {
+        var a = TrafficLights.arrivalDir(net, in, node);
+        var d = TrafficLights.departDir(net, out, node);
+        return a.x * d.x + a.z * d.z < -0.4;
     }
 
     public static int movement(RoadNetwork net, RoadEdge in, int node, RoadEdge out) {

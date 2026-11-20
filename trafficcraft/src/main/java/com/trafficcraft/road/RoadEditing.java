@@ -20,8 +20,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 /** Server-side road editing: Road Planner clicks and editor screen operations. */
 public final class RoadEditing {
-    public static final int M_ROAD = 0, M_PATH = 1, M_EDIT = 2, M_DELETE = 3, M_CURVE = 4, M_ROUNDABOUT = 5, M_LIGHTS = 6, M_NODE = 7, M_TURN_L = 8, M_TURN_R = 9, M_T = 10, M_CROSS = 11;
-    public static final String[] MODE_NAMES = {"road", "path", "edit", "delete", "curve", "roundabout", "lights", "node", "turn_left", "turn_right", "t_junction", "crossroads"};
+    public static final int M_ROAD = 0, M_PATH = 1, M_EDIT = 2, M_DELETE = 3, M_CURVE = 4, M_ROUNDABOUT = 5, M_LIGHTS = 6, M_NODE = 7, M_TURN_L = 8, M_TURN_R = 9, M_T = 10, M_CROSS = 11, M_TURNS = 12, M_PRIORITY = 13;
+    private static final Map<UUID, int[]> FIRST_EDGE = new HashMap<>();
+    public static final String[] MODE_NAMES = {"road", "path", "edit", "delete", "curve", "roundabout", "lights", "node", "turn_left", "turn_right", "t_junction", "crossroads", "turns", "priority"};
     private static final Map<UUID, Integer> SELECTED = new HashMap<>();
     private static final Map<UUID, Integer> CURVE_EDGE = new HashMap<>();
 
@@ -118,6 +119,46 @@ public final class RoadEditing {
                     if (tool.getBoolean("pave") || !tool.contains("pave")) RoadPaver.paveEdge(level, net, e, tool);
                     msg(p, "msg.trafficcraft.curve_set");
                 }
+            }
+            case M_TURNS, M_PRIORITY -> {
+                // pick a road end at a junction: first click = from / priority road, second click = to / road that gives way
+                RoadEdge e = net.nearestEdge(pos, 1.0, false);
+                if (e == null) {
+                    msg(p, "msg.trafficcraft.nothing_here");
+                    return;
+                }
+                RoadNode na = net.nodes.get(e.a), nb = net.nodes.get(e.b);
+                int node = na.pos().distanceToSqr(pos) < nb.pos().distanceToSqr(pos) ? e.a : e.b;
+                int[] first = FIRST_EDGE.get(p.getUUID());
+                if (first == null || first[2] != mode || first[1] == e.id || !(e.a == first[0] || e.b == first[0])) {
+                    if (!net.isJunction(node)) {
+                        msg(p, "msg.trafficcraft.pick_junction_road");
+                        return;
+                    }
+                    FIRST_EDGE.put(p.getUUID(), new int[]{node, e.id, mode});
+                    msg(p, mode == M_TURNS ? "msg.trafficcraft.turn_from" : "msg.trafficcraft.prio_first", e.id);
+                    return;
+                }
+                FIRST_EDGE.remove(p.getUUID());
+                RoadNode n = net.nodes.get(first[0]);
+                int k = com.trafficcraft.ai.RoutePlanner.turnKey(first[1], e.id);
+                if (mode == M_TURNS) {
+                    RoadEdge in = net.edges.get(first[1]);
+                    boolean allowed = com.trafficcraft.ai.RoutePlanner.turnAllowed(net, n.id, in, e);
+                    removeKey(n, "turnBan", k);
+                    removeKey(n, "turnAllow", k);
+                    if (allowed) addKey(n, "turnBan", k);
+                    else if (!com.trafficcraft.ai.RoutePlanner.turnAllowed(net, n.id, in, e)) addKey(n, "turnAllow", k);
+                    boolean now = com.trafficcraft.ai.RoutePlanner.turnAllowed(net, n.id, in, e);
+                    msg(p, now ? "msg.trafficcraft.turn_allowed" : "msg.trafficcraft.turn_banned", first[1], e.id);
+                } else {
+                    int rev = com.trafficcraft.ai.RoutePlanner.turnKey(e.id, first[1]);
+                    removeKey(n, "prio", rev);
+                    boolean had = removeKey(n, "prio", k);
+                    if (!had) addKey(n, "prio", k);
+                    msg(p, had ? "msg.trafficcraft.prio_removed" : "msg.trafficcraft.prio_set", first[1], e.id);
+                }
+                net.changed();
             }
             case M_TURN_L, M_TURN_R, M_T, M_CROSS -> {
                 int kind = mode - M_TURN_L;
@@ -271,6 +312,22 @@ public final class RoadEditing {
             }
             default -> { }
         }
+    }
+
+    static void addKey(RoadNode n, String key, int v) {
+        int[] a = n.cfg.getIntArray(key);
+        for (int x : a) if (x == v) return;
+        int[] b = java.util.Arrays.copyOf(a, a.length + 1);
+        b[a.length] = v;
+        n.cfg.putIntArray(key, b);
+    }
+
+    static boolean removeKey(RoadNode n, String key, int v) {
+        int[] a = n.cfg.getIntArray(key);
+        int[] b = java.util.Arrays.stream(a).filter(x -> x != v).toArray();
+        if (b.length == a.length) return false;
+        n.cfg.putIntArray(key, b);
+        return true;
     }
 
     static void msg(Player p, String key, Object... args) {

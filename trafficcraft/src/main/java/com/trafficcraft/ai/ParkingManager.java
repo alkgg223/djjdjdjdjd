@@ -39,6 +39,23 @@ public final class ParkingManager {
 
     public void releaseVehicle(int vehicle) {
         for (Map<Integer, Integer> m : claims.values()) m.values().removeIf(id -> id == vehicle);
+        spots.values().removeIf(id -> id == vehicle);
+    }
+
+    private final Map<Integer, Integer> spots = new HashMap<>(); // roadside spot node -> vehicle
+
+    /** Claims a kerbside spot if nobody (AI or player) stands in it. */
+    public boolean claimSpot(com.trafficcraft.road.RoadsideSpot sp, VehicleEntity v) {
+        Integer owner = spots.get(sp.node());
+        if (owner != null && v.level().getEntity(owner) instanceof VehicleEntity) return false;
+        AABB box = new AABB(sp.center().x - 1.6, sp.center().y, sp.center().z - 1.6, sp.center().x + 1.6, sp.center().y + 2, sp.center().z + 1.6);
+        for (Entity e : v.level().getEntities(v, box)) if (e instanceof VehicleEntity) return false;
+        spots.put(sp.node(), v.getId());
+        return true;
+    }
+
+    public void releaseSpot(int node) {
+        spots.remove(node);
     }
 
     public int occupied(int node) {

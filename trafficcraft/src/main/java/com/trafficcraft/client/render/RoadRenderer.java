@@ -134,11 +134,21 @@ public final class RoadRenderer {
                 double sign = atB ? -1 : 1;
                 double cw = atB ? cwB : cwA;
                 double stop = sEnd + sign * (cw + 0.4);
+                RoadNode jn = net.nodes.get(node);
+                boolean giveWay = jn != null && !jn.has(RoadNode.F_LIGHTS) && (jn.has(RoadNode.F_YIELD) || has(jn.cfg.getIntArray("yieldEdges"), e.id) || isPrioMinor(jn, e.id));
                 for (int i = 0; i < e.lanes.size(); i++) {
                     Lane l = e.lanes.get(i);
                     if (l.dir() != dirInto) continue;
                     double off = e.laneOffset(i);
-                    transverse(qs, g, stop, off, lw * 0.96, 0.4, WHITE);
+                    if (giveWay) {
+                        // dashed line + "shark teeth" triangles pointing at the waiting driver
+                        for (double o = -lw * 0.48 + 0.3; o < lw * 0.48 - 0.2; o += 0.9) {
+                            transverse(qs, g, stop, off + o, 0.5, 0.3, WHITE);
+                            Vec3 a = g.point(stop + sign * 0.5, off + o - 0.25), b = g.point(stop + sign * 0.5, off + o + 0.25),
+                                    c = g.point(stop + sign * 1.4, off + o);
+                            qs.add(quad(a, b, c, c, WHITE));
+                        }
+                    } else transverse(qs, g, stop, off, lw * 0.96, 0.4, WHITE);
                     arrow(qs, net, e, node, i, g, stop + sign * 6.5, off, atB);
                 }
                 if (cw > 0) {
@@ -158,6 +168,16 @@ public final class RoadRenderer {
         for (float[] q : quads) qs.add(new Quad(java.util.Arrays.copyOf(q, 12), Float.floatToRawIntBits(q[12]), 0));
         CACHE.add(new EdgeCache(center.x, center.z, 24, light(Minecraft.getInstance(), qs)));
     };
+
+    static boolean has(int[] a, int v) {
+        for (int x : a) if (x == v) return true;
+        return false;
+    }
+
+    static boolean isPrioMinor(RoadNode n, int edge) {
+        for (int k : n.cfg.getIntArray("prio")) if ((k & 0xFFFF) == edge) return true;
+        return false;
+    }
 
     static List<Quad> light(Minecraft mc, List<Quad> qs) {
         List<Quad> out = new ArrayList<>(qs.size());
@@ -217,6 +237,7 @@ public final class RoadRenderer {
         boolean left = false, right = false, straight = false;
         for (RoadEdge o : net.roadEdgesOf(node)) {
             if (o == e || !o.allows(node)) continue;
+            if (!com.trafficcraft.ai.RoutePlanner.turnAllowed(net, node, e, o)) continue;
             int m = TrafficLights.movement(in, TrafficLights.departDir(net, o, node));
             if (m == TrafficLights.MOVE_LEFT) left = true;
             else if (m == TrafficLights.MOVE_RIGHT) right = true;

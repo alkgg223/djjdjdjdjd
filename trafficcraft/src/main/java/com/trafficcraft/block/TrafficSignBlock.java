@@ -23,7 +23,26 @@ public class TrafficSignBlock extends FacingBlock {
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState s, net.minecraft.world.entity.LivingEntity by, net.minecraft.world.item.ItemStack stack) {
         super.setPlacedBy(level, pos, s, by, stack);
-        if (level instanceof ServerLevel sl) apply(sl, pos);
+        if (level instanceof ServerLevel sl) {
+            if (sign.equals("one_way") && by != null) oneWay(sl, pos, by.getLookAngle());
+            else apply(sl, pos);
+        }
+    }
+
+    /** One-way sign: the nearest road becomes one-way in the direction the player looked when placing the sign. */
+    void oneWay(ServerLevel level, BlockPos pos, Vec3 look) {
+        RoadNetwork net = RoadData.get(level);
+        Vec3 p = Vec3.atCenterOf(pos);
+        RoadEdge e = net.nearestEdge(p, 6, false);
+        if (e == null) return;
+        var g = net.geom(e);
+        Vec3 t = g.tangent(g.project(p, null));
+        int dir = t.x * look.x + t.z * look.z >= 0 ? 1 : -1;
+        java.util.List<com.trafficcraft.road.Lane> nl = new java.util.ArrayList<>();
+        for (var l : e.lanes) nl.add(new com.trafficcraft.road.Lane(dir, l.type()));
+        e.lanes.clear();
+        e.lanes.addAll(nl);
+        net.changed();
     }
 
     void apply(ServerLevel level, BlockPos pos) {

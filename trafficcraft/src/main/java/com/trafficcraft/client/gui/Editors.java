@@ -98,6 +98,22 @@ public final class Editors {
                 rebuildWidgets();
             }).bounds(x + 160, y, 150, 20).build());
             y += 24;
+            // traffic direction for the whole road: two-way -> one-way A->B -> one-way B->A
+            boolean allAB = e.lanes.stream().allMatch(l -> l.dir() > 0), allBA = e.lanes.stream().allMatch(l -> l.dir() < 0);
+            String dirKey = allAB ? "gui.trafficcraft.oneway_ab" : allBA ? "gui.trafficcraft.oneway_ba" : "gui.trafficcraft.twoway";
+            addRenderableWidget(Button.builder(Component.translatable("prop.trafficcraft.oneway").append(": ").append(Component.translatable(dirKey)), b -> {
+                int n = e.lanes.size();
+                java.util.List<Lane> nl = new java.util.ArrayList<>();
+                if (allAB) for (Lane l : e.lanes) nl.add(new Lane(-1, l.type()));
+                else if (allBA) {
+                    if (n == 1) nl.add(new Lane(1, e.lanes.get(0).type()));
+                    else for (int i = 0; i < n; i++) nl.add(new Lane(i < n / 2 ? -1 : 1, e.lanes.get(i).type()));
+                } else for (Lane l : e.lanes) nl.add(new Lane(1, l.type()));
+                e.lanes.clear();
+                e.lanes.addAll(nl);
+                rebuildWidgets();
+            }).bounds(x, y, 310, 20).build());
+            y += 24;
             addRenderableWidget(Button.builder(Component.translatable("prop.trafficcraft.lanes").append(": " + e.lanes.size() + "  +"), b -> {
                 if (e.lanes.size() < 6) e.lanes.add(new Lane(1, Lane.NORMAL));
                 rebuildWidgets();
