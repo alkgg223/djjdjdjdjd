@@ -40,3 +40,9 @@ SPEC['head'] = [dict(view='F', outline=[(0.8399999999999999, 0.87), (0.837071067
 # lamp size pass
 SPEC['head'] = [big(SPEC['head'][0], sy=2.4, dir=(-0.25, -0.4, -1.0))]
 SPEC['tail_scale'] = 1.15
+
+# real-size slim wrap-around lamp (Range Rover Sport style): ~12 cm tall, 50 cm wide
+SPEC['head'] = [dict(view='F', dir=(-0.35, -0.35, -1.0), outline=[(0.42, 0.8), (0.88, 0.81), (0.93, 0.86), (0.9, 0.93), (0.46, 0.925), (0.4, 0.87)], smooth=1,
+                     lamps=[(0.56, 0.86, 0.032, 'head'), (0.66, 0.862, 0.032, 'head'), (0.76, 0.864, 0.03, 'high')],
+                     strips=[([(0.45, 0.905), (0.88, 0.912)], 0.016, 'drl')], rects=[(0.84, 0.82, 0.91, 0.88, 'ind')],
+                     house='head_house_black', bezel='trim', lens_off=0.014)]
