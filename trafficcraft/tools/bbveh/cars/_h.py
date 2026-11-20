@@ -19,3 +19,18 @@ def rect_head(x0, y0, x1, y1, lamps=(), rects=(), r=0.015, bezel='head_bezel', s
 
 def bar(x0, y0, x1, y1, kind='tail', style='red_rect', off=0.012, r=0.008):
     return (rr(x0, y0, x1, y1, r), kind, style, off)
+
+
+def slim(x0, y0, x1, y1, rise=0.02, proj=2, drl='below', ind=True, house='head_house_black', bezel='trim'):
+    """Modern slim headlamp (F view): slanted unit, small LED projectors, daytime strip, indicator at the outer end."""
+    out = [(x0, y0), (x1, y0 + rise), (x1, y1 + rise), (x0 + 0.04, y1)]
+    h = y1 - y0
+    lamps = []
+    for i in range(proj):
+        t = (i + 0.5) / proj
+        x = x0 + 0.05 + (x1 - x0 - 0.16) * t
+        lamps.append((x, y0 + h * 0.5 + rise * (x - x0) / (x1 - x0), min(0.032, h * 0.3), 'head' if i == 0 else 'high'))
+    yb = y0 + 0.012 if drl == 'below' else y1 - 0.012
+    strips = [([(x0 + 0.03, yb), (x1 - 0.02, yb + rise)], 0.012, 'drl')]
+    rects = [(x1 - 0.07, y0 + rise + 0.008, x1 - 0.012, y1 + rise - 0.008, 'ind')] if ind else []
+    return dict(view='F', outline=out, lamps=lamps, strips=strips, rects=rects, smooth=0, bezel=bezel, house=house)

@@ -42,3 +42,9 @@ SPEC = dict(
     maxSpeed=150, accel=3.0, brake=6.5, mass=1400, fuel_l=57, spawnWeight=4, engine='v6_cruiser', horn='low',
     colors=['#2f5f3a', '#b5121b', '#e8e4d8', '#1b1c1e', '#d9c27a', '#3d5a7a'],
 )
+
+# modern-style lamps (from the reference photos)
+h = round_head(0.53, 0.86, 0.07, 'head')
+ring = ngon(0.08, 14, 0.53, 0.86)
+h['strips'] = [(ring + ring[:1], 0.01, 'drl')]
+SPEC['head'] = [h]

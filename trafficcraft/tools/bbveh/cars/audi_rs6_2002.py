@@ -33,3 +33,6 @@ SPEC = dict(
     maxSpeed=280, accel=6.2, brake=10.0, mass=1840, fuel_l=82, spawnWeight=4, engine='v8_sport', horn='high', backfire=0.08,
     colors=['#7d8187', '#1b1c1e', '#e4e6e8', '#2b3f5c', '#a40f16', '#4f5d52'],
 )
+
+# modern-style lamps (from the reference photos)
+SPEC['head'][0]['strips'].append(([(0.42, 4.68), (0.62, 4.71), (0.8, 4.62)], 0.012, 'drl'))

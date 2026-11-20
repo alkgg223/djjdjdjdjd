@@ -30,3 +30,9 @@ SPEC = dict(
     maxSpeed=215, accel=5.4, brake=7.0, mass=1600, fuel_l=68, spawnWeight=4, engine='v8_sport', horn='low', backfire=0.15,
     colors=['#f26b1d', '#6a2a8a', '#f4d03f', '#1b1c1e', '#2f8f3a', '#c8c9c4'],
 )
+
+# modern-style lamps (from the reference photos)
+for h in SPEC['head']:
+    x, y, r, k = h['lamps'][0]
+    ring = ngon(r + 0.006, 14, x, y)
+    h['strips'] = [(ring + ring[:1], 0.008, 'drl')]

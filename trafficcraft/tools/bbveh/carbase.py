@@ -156,7 +156,7 @@ class Car:
             zs += [a, b]
         if self.rear_glass:
             zs += list(self.rear_glass)
-        zs += list(np.arange(0.3, self.L, 0.4))
+        zs += list(np.arange(0.2, self.L, 0.25))
         for za in (self.YR, self.YF):
             for d in (-self.RA - 0.004, -self.RA, -0.8 * self.RA, -0.45 * self.RA, 0.0, 0.45 * self.RA, 0.8 * self.RA, self.RA, self.RA + 0.004):
                 zs.append(za + d)
@@ -582,6 +582,34 @@ class Car:
             gdef = T['garnish']
             self.conform(gdef['outline'], 'B', self.TRIS, [(gdef.get('off', 0.008), self.el('body', 'solid', 'garnish'), 'garnish')],
                          self.el('body', 'solid', 'tail_bezel'), 'tail_bezel', dens=320)
+
+    def emblems(self):
+        """Generic maker badge (shape + initial) on the nose and the tail."""
+        import importlib
+        B = importlib.import_module('_brands').BRANDS
+        if self.make not in B:
+            return
+        shape, txt, col = B[self.make]
+        w, h = (0.1, 0.1) if shape in ('circle', 'diamond') else (0.13, 0.07) if shape != 'shield' else (0.08, 0.1)
+        def outline(cx, cy):
+            if shape == 'circle':
+                return ngon(w / 2, 16, cx, cy)
+            if shape == 'oval':
+                return ngon(w / 2, 16, cx, cy, ry=h / 2)
+            if shape == 'diamond':
+                return [(cx, cy + h / 2), (cx - w / 2, cy), (cx, cy - h / 2), (cx + w / 2, cy)][::-1]
+            if shape == 'shield':
+                return [(cx - w / 2, cy + h / 2), (cx + w / 2, cy + h / 2), (cx + w / 2, cy), (cx, cy - h / 2), (cx - w / 2, cy)][::-1]
+            return rrect(w, h, 0.012, 2, cx, cy)
+        fy, ry_ = getattr(self, 'emblem_y', (None, None))
+        fy = fy if fy is not None else self.belt(self.L) - 0.07
+        ry_ = ry_ if ry_ is not None else self.plate_r + 0.15
+        for view, cy, sgn in (('F', fy, 1), ('B', ry_, -1)):
+            style = 'emblem_' + view
+            self.m.painters[style] = emblem_painter(shape, txt, col, 0.0, cy, w, h, sgn)
+            tris = self.body_tris(('body', 'fb_0', 'rb_0')) if view == 'F' else self.TRIS
+            self.conform(outline(0.0, cy), view, tris, [(0.007, self.el('body', 'solid', style), style)], self.el('body', 'solid', 'chrome'), 'chrome',
+                         rings=(1.0, 0.6, 0.3), dens=420, depth=0.01)
 
     # ===================================================================================== small parts
     def mirrors(self):
@@ -1058,6 +1086,7 @@ class Car:
             self.popup_lamps()
         self.front_bumper_lamps()
         self.taillamps()
+        self.emblems()
         self.mirrors()
         self.wipers()
         self.hoods()
@@ -1149,6 +1178,20 @@ def gauge_painter(style, dx, cy):
             tick = (d > r * 0.72) & (d < r * 0.88) & (np.mod((a + math.pi) * 24 / (2 * math.pi), 1.0) < 0.25) & ((a > -math.pi * 0.25) | (a < -math.pi * 0.75))
             out[tick, :3] = (30, 30, 30) if style == 'classic' else (230, 230, 230)
             out[d < r * 0.08, :3] = (200, 60, 30)
+        return out
+    return f
+
+
+def emblem_painter(shape, txt, col, cx, cy, w, h, sgn):
+    def f(face, P, n):
+        out = fill(P, (206, 210, 216))
+        uv = np.stack([sgn * (P[..., 0] - cx), -(P[..., 1] - cy)], -1)
+        rx, ry_ = np.abs(uv[..., 0]) / (w / 2), np.abs(uv[..., 1]) / (h / 2)
+        inner = (rx < 0.78) & (ry_ < 0.78) if shape != 'circle' and shape != 'oval' else (rx ** 2 + ry_ ** 2 < 0.62)
+        out[inner, :3] = col
+        th = h * 0.55
+        tw = len(txt) * th / 7 * 6
+        out[S.text_mask(uv, txt, -tw / 2, -th / 2, th), :3] = (236, 238, 240) if sum(col) < 600 else (30, 30, 34)
         return out
     return f
 

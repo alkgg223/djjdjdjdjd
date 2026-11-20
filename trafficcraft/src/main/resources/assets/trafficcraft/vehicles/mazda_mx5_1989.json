@@ -435,21 +435,5 @@
   "cyl": 4,
   "diesel": false
  },
- "popups": {
-  "popup_l": {
-   "pivot": [
-    0.6826,
-    1.395
-   ],
-   "angle": -70
-  },
-  "popup_r": {
-   "pivot": [
-    0.6826,
-    1.395
-   ],
-   "angle": -70
-  }
- },
- "tris": 8931
+ "tris": 10123
 }

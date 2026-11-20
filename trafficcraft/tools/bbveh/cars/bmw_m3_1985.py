@@ -31,3 +31,7 @@ SPEC = dict(
     maxSpeed=235, accel=5.0, brake=8.5, mass=1200, fuel_l=55, spawnWeight=4, engine='i4_sport', horn='high', backfire=0.15,
     colors=['#f2f2f0', '#1b1c1e', '#b5121b', '#d9d9d6', '#1e3d6b', '#4b4f54'],
 )
+
+# modern-style lamps (from the reference photos)
+SPEC['head'] = [slim(0.36, 0.6, 0.74, 0.66, rise=0.02)]
+SPEC['mouth'][0].update(w=0.17, h=0.24, cy=0.5, cx=0.1)
