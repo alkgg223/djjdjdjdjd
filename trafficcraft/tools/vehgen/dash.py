@@ -190,6 +190,23 @@ def cl_bike_mini(d, W, H):
             dict(kind='fuel_bar', x=0.66, y=0.72, w=0.26, h=0.05)]
 
 
+def cl_supra_analog(d, W, H):
+    """90s Japanese GT: big central tachometer, speedometer left, boost / oil / fuel gauges right, orange needles."""
+    d.rectangle([0, 0, W, H], fill=(8, 8, 10))
+    dial(d, W * 0.5, H * 0.52, H * 0.47, 9, 1, face=(12, 12, 14), ring=(90, 92, 98), tick=(240, 240, 240), red_from=7, label='x1000r/min')
+    dial(d, W * 0.2, H * 0.55, H * 0.36, 180, 20, face=(12, 12, 14), ring=(90, 92, 98), tick=(240, 240, 240), label='km/h')
+    for i, lab in enumerate(('TURBO', 'OIL', 'FUEL')):
+        cx = W * (0.74 + (i % 2) * 0.13)
+        cy = H * (0.3 + (i // 2) * 0.42) if i < 2 else H * 0.72
+        cx = W * 0.8 if i == 2 else cx
+        dial(d, cx, cy, H * 0.16, 4, 1, face=(12, 12, 14), ring=(90, 92, 98), tick=(240, 240, 240), minor=False, fsz=1)
+        f = font(H * 0.05)
+        d.text((cx - d.textlength(lab, font=f) / 2, cy + H * 0.06), lab, fill=(200, 200, 205), font=f)
+    return [dict(kind='rpm', cx=0.5, cy=0.52, r=0.47 * H / W, a0=225, a1=-45, max=9000, color=0xFF7A1A),
+            dict(kind='speed', cx=0.2, cy=0.55, r=0.36 * H / W, a0=225, a1=-45, max=180, color=0xFF7A1A),
+            dict(kind='fuel', cx=0.8, cy=0.72, r=0.16 * H / W, a0=225, a1=-45, max=1, color=0xFF7A1A)]
+
+
 def cl_police(d, W, H):
     out = cl_digital_arcs(d, W, H)
     d.rectangle([W * 0.38, H * 0.05, W * 0.62, H * 0.2], fill=(4, 6, 10))
@@ -236,7 +253,7 @@ def cl_truck(d, W, H):
             dict(kind='fuel_bar', x=0.05, y=0.86, w=0.16, h=0.05)]
 
 
-CLUSTERS = dict(bike_round=cl_bike_round, bike_tft=cl_bike_tft, bike_mini=cl_bike_mini, analog_modern=cl_analog_modern, compact=cl_compact, digital_arcs=cl_digital_arcs, rugged=cl_rugged, sport=cl_sport,
+CLUSTERS = dict(supra_analog=cl_supra_analog, bike_round=cl_bike_round, bike_tft=cl_bike_tft, bike_mini=cl_bike_mini, analog_modern=cl_analog_modern, compact=cl_compact, digital_arcs=cl_digital_arcs, rugged=cl_rugged, sport=cl_sport,
                 police=cl_police, basic=cl_basic, commercial=cl_commercial, truck=cl_truck)
 
 
@@ -384,7 +401,22 @@ def sc_logistics(d, W, H):
     status_bar(d, W, (8, 12, 20))
 
 
-SCREENS = dict(nav_blue=sc_nav_blue, media_orange=sc_media_orange, terrain=sc_terrain, camera=sc_camera, telemetry=sc_telemetry, mdt=sc_mdt,
+def sc_radio_90s(d, W, H):
+    """No touch screen in the 90s: a double-DIN cassette head unit with an amber display."""
+    d.rectangle([0, 0, W, H], fill=(18, 18, 20))
+    d.rounded_rectangle([W * 0.04, H * 0.08, W * 0.96, H * 0.46], 8, fill=(26, 26, 28), outline=(60, 60, 64), width=2)
+    d.rounded_rectangle([W * 0.3, H * 0.14, W * 0.7, H * 0.4], 6, fill=(30, 14, 4))
+    d.text((W * 0.33, H * 0.18), 'FM1  88.7', fill=(255, 160, 40), font=font(H * 0.12, False))
+    for i in range(6):
+        x = W * 0.06 + i * W * 0.15
+        d.rounded_rectangle([x, H * 0.52, x + W * 0.12, H * 0.62], 4, fill=(40, 40, 44))
+        d.text((x + W * 0.045, H * 0.53), str(i + 1), fill=(210, 210, 215), font=font(H * 0.07, False))
+    d.rounded_rectangle([W * 0.08, H * 0.7, W * 0.92, H * 0.88], 6, fill=(10, 10, 12), outline=(70, 70, 74), width=2)
+    for i, c in enumerate(((60, 140, 255), (255, 120, 40), (60, 200, 90))):
+        d.ellipse([W * (0.2 + i * 0.3) - 14, H * 0.79 - 14, W * (0.2 + i * 0.3) + 14, H * 0.79 + 14], outline=c, width=3)
+
+
+SCREENS = dict(radio_90s=sc_radio_90s, nav_blue=sc_nav_blue, media_orange=sc_media_orange, terrain=sc_terrain, camera=sc_camera, telemetry=sc_telemetry, mdt=sc_mdt,
                taximeter=sc_taximeter, route=sc_route, logistics=sc_logistics)
 
 

@@ -32,6 +32,10 @@ ENGINES = {
     'diesel_truck': dict(cyl=6, idle=600, drive=1700, pattern=[1.0, 0.92, 0.97, 0.9, 0.98, 0.93], res=[(60, 18, 1.0), (160, 40, 0.7), (420, 100, 0.4),
                                                                                                      (1100, 220, 0.15)],
                          clatter=0.85, turbo=2100, noise=0.2, starter=120, lp=4000, gain=1.0),
+    # ---- real cars
+    'i6_twinturbo': dict(cyl=6, idle=750, drive=3600, pattern=[1.0, 0.97, 0.99, 0.96, 1.0, 0.97], res=[(120, 32, 1.0), (360, 70, 0.6), (980, 150, 0.32),
+                                                                                                    (2300, 380, 0.1)],
+                         clatter=0.0, turbo=3200, noise=0.13, starter=200, lp=7000, gain=0.95),
     # ---- motorcycles
     'vtwin_cruiser': dict(cyl=2, idle=900, drive=3000, pattern=[1.0, 0.82], fire=[0.0, 0.4375], jit=0.09,
                           res=[(52, 16, 1.0), (138, 38, 0.85), (410, 105, 0.35), (1250, 250, 0.1)],

@@ -349,3 +349,5 @@ BIKE_SCRAMBLER = spec(
     maxSpeed=150, accel=4.2, brake=8.0, mass=170, fuel=12, seats_n=2, spawnWeight=4, backfire=0.65,
     colors=['#d8a21e', '#2f5d3a', '#e8e6df', '#1b1b1d', '#b8401c'], paint2='#e8e6df', preview='#d8a21e',
 )
+
+import realcars  # noqa: E402,F401  (real-world fleet)

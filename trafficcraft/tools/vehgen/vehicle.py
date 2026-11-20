@@ -161,6 +161,17 @@ class Builder:
                 self.dec('body', BRAKE, r, scale_shape(sh, 0.94), '#d8121c', offset=0.011)
                 self.dec('body', ind_mat, self.sub(fr, sgn * w * 0.18, -h * 0.2), shp_rrect(w * 0.26, h * 0.26, 0.008), '#ffa21e', offset=0.017)
                 continue
+            if R.get('rounds'):
+                # round lamp elements (e.g. 90s sports cars): chrome bezel + lens per element
+                self.dec('body', TAIL, r, scale_shape(sh, 0.96), '#5a0a10', offset=0.009)
+                for (ua, va, rr, kind) in R['rounds']:
+                    mm = {'brake': BRAKE, 'tail': TAIL, 'ind': ind_mat, 'rev': REVERSE}[kind]
+                    cc = {'brake': '#e0101c', 'tail': '#c0101a', 'ind': '#ffa21e', 'rev': '#f4f4f4'}[kind]
+                    rs = self.sub(fr, sgn * ua * w, va * h)
+                    self.dec('body', SOLID, rs, shp_ellipse(rr * 2.3, rr * 2.3, 18), '#2a2b2e', offset=0.014)
+                    self.dec('body', mm, rs, shp_ellipse(rr * 2, rr * 2, 18), cc, offset=0.017, dome=0.008, uvr=UV['taillamp'])
+                self.dec('body', GLASS, r, scale_shape(sh, 1.0, 0.006), LENS_SMOKE, offset=0.028, dome=0.006)
+                continue
             self.dec('body', BRAKE, r, scale_shape(sh, 0.94), '#d8121c', offset=0.011, uvr=UV['taillamp'])
             # LED tail contour
             rs = self.sub(fr, 0, h * R.get('tail_v', 0.3))
@@ -175,7 +186,19 @@ class Builder:
     # ------------------------------------------------------------------ front & rear fascia
     def fascia(self):
         S = self.S
-        F = S.get('front', {})
+        cat = S.get('catalog', {})
+        F = dict(S.get('front', {}))
+        Rr0 = dict(S.get('rear', {}))
+        if cat.get('fb'):
+            for k in ('lower', 'side_intakes', 'splitter'):
+                F.pop(k, None)
+        if cat.get('rb'):
+            for k in ('diffuser', 'reflectors'):
+                Rr0.pop(k, None)
+        if cat.get('ex'):
+            Rr0.pop('tips', None)
+        if cat.get('sp'):
+            Rr0.pop('lip_spoiler', None)
         B = self.B
         if 'grille' in F:
             g = F['grille']
@@ -231,7 +254,7 @@ class Builder:
             for sx in (-1, 1):
                 self.B.strip('body', SOLID, [v3(sx * xl, self.S['H'] + 1, z + self.zoff) for z in np.linspace(z0, z1, 16)], (0, -1, 0), 0.008,
                              rgb('#0a0a0b'), offset=0.004)
-        Rr = S.get('rear', {})
+        Rr = Rr0
         if 'plate_y' in Rr:
             r = self.ray('rear', 0, Rr['plate_y'])
             self.dec('body', SOLID, r, shp_rrect(0.6, 0.18, 0.02), '#0f1012', offset=0.004, depth=0.004)
@@ -250,6 +273,12 @@ class Builder:
             y, wv = Rr['light_bar']
             self.B.strip('body', TAIL, [v3(x, y, -self.L / 2 - 1) for x in np.linspace(-wv, wv, 15)], (0, 0, 1), 0.022, rgb('#ff2a2a'),
                          offset=0.014, uvr=UV['led_tail'])
+        if S.get('badge') and 'badge_y' in Rr:
+            rb = self.ray('rear', S.get('badge_x', 0.0), Rr['badge_y'] - S.get('badge_dy', 0.075))
+            hb = self.B.project(*rb)
+            if hb is not None:
+                nb = self.B.surf_normal(hb)
+                self.meta['badge'] = {'text': S['badge'], 'pos': [float(c) for c in hb + nb * 0.006], 'normal': [float(c) for c in nb], 'h': 0.035}
         if 'badge_y' in Rr:
             r = self.ray('rear', 0, Rr['badge_y'])
             self.dec('body', SOLID, r, shp_ellipse(0.1, 0.07, 16), '#ffffff', offset=0.014, uvr=UV['logo'], depth=0.006)
@@ -278,7 +307,7 @@ class Builder:
             z, w, d = Rr['lip_spoiler']
             r = self.ray('top', 0, 0, z)
             self.dec('body', PAINT, r, shp_rrect(w, d, 0.03), (255, 255, 255, 255), offset=0.004, depth=0.018, updir=(0, 0, 1))
-        if 'third_brake' in Rr:
+        if Rr.get('third_brake'):
             z, y, w = Rr['third_brake']
             box(self.mesh, 'body', BRAKE, (0, y, z + self.zoff), (w, 0.022, 0.03), rgb('#ff1a1a'))
             box(self.mesh, 'body', SOLID, (0, y - 0.016, z + self.zoff + 0.01), (w + 0.04, 0.012, 0.08), rgb('#111214'))
@@ -631,12 +660,29 @@ class Builder:
         self.sides()
         self.interior()
         self.extras()
-        for ex in S.get('exhaust', []):
+        for ex in ([] if S.get('catalog', {}).get('ex') else S.get('exhaust', [])):
             x, y, n = ex
             for sx in ([1, -1] if n == 2 else [1]):
                 cylinder(self.mesh, 'body', SOLID, v3(sx * x, y, -self.L / 2 + 0.12), v3(sx * x, y, -self.L / 2 - 0.02), 0.035, 12, CHROME)
                 disc(self.mesh, 'body', SOLID, v3(sx * x, y, -self.L / 2 - 0.021), v3(0, 0, -1), 0.028, 12, rgb('#0a0a0a'))
         wm = self.wheels()
+        import custom
+        custom.build_variants(self)
+        wopts = S.get('catalog', {}).get('wh', [])
+        if wopts:
+            wm = Mesh()
+            for i, w in enumerate(wopts):
+                one = Mesh()
+                P.wheel(one, S['R'], S['TW'], w.get('rim', 'spoke5'), rim_ratio=w.get('rim_ratio', S.get('rim_ratio', 0.64)), rimcol=w.get('rimcol'),
+                        whitewall=w.get('whitewall', False), caliper=w.get('caliper', S.get('caliper', '#8c9096')), lod=self.lod)
+                for (part, mat), tris in one.groups.items():
+                    if part == 'wheel':
+                        wm.groups.setdefault(('wheel:%d' % i, mat), []).extend(tris)
+                    elif i == 0:
+                        wm.groups.setdefault((part, mat), []).extend(tris)
+        for k in ('make', 'model', 'year', 'description', 'category_name', 'body_style'):
+            if k in S:
+                self.meta[k] = S[k]
         meta = self.meta
         meta['beams'] = self.beams[:2] if self.beams else [[0.6, 0.6, self.L / 2], [-0.6, 0.6, self.L / 2]]
         for k in ('maxSpeed', 'accel', 'brake', 'mass', 'fuel', 'electric', 'seats_n', 'spawnWeight', 'steerMax', 'colors', 'driver_eye'):
@@ -661,7 +707,7 @@ def export(mesh, wmesh, meta, path_bin, path_json=None):
     out = bytearray()
     out += b'TCM2'
     groups = [(part, mat, tris) for (part, mat), tris in mesh.groups.items()]
-    groups += [(('wheel' if part == 'wheel' else 'caliper'), mat, tris) for (part, mat), tris in wmesh.groups.items()]
+    groups += [((part if part.startswith('wheel') else 'caliper'), mat, tris) for (part, mat), tris in wmesh.groups.items()]
     out += struct.pack('>i', len(groups))
     for part, mat, tris in groups:
         norms = compute_normals(tris, 40.0)

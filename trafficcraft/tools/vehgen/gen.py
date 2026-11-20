@@ -24,9 +24,12 @@ for S in specs.SPECS:
     meta['siren'] = S['cat'] == 'emergency'
     if 'backfire' in S:
         meta['backfire'] = S['backfire']
+    import custom
+    custom.livery_uv(mesh, S['L'], S['W'], S['H'])
     vehicle.export(mesh, wm, meta, f"{OUT}/mesh/{S['id']}.tcm", f"{OUT}/mesh/{S['id']}.json")
     if not quick:
         m1, w1, _ = B.build(S, lod=1)
+        custom.livery_uv(m1, S['L'], S['W'], S['H'])
         vehicle.export(m1, w1, meta, f"{OUT}/mesh/{S['id']}_lod1.tcm")
         print('  lod1 tris', m1.count() + w1.count() * len(meta['wheels']))
     col = tuple(int(S.get('preview', S.get('colors', ['#c0262c'])[0])[i:i + 2], 16) for i in (1, 3, 5))

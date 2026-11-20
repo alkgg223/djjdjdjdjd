@@ -33,13 +33,26 @@ def atlas():
     return ATLAS
 
 
+CONFIG = None   # slot -> option index used by previews (None = factory)
+LIVERY = None   # RGBA float tile (TH, TW, 4) applied to PAINT, or None
+
+
+def part_visible(part, config):
+    if ':' not in part:
+        return True
+    slot, idx = part.split(':')
+    slot = 'wh' if slot == 'wheel' else slot
+    want = (config or {}).get(slot, 0)
+    return int(idx) == want
+
+
 def collect(mesh, wmesh, meta, paint=(200, 30, 35), paint2=(240, 240, 240), lights=True, parts_skip=()):
     """Returns list of (P[3], N[3], UV[3], mat, rgba)."""
     out = []
 
     def add(groups, xf=None, nf=None):
         for (part, mat), ts in groups.items():
-            if part in parts_skip:
+            if part in parts_skip or not part_visible(part, CONFIG):
                 continue
             ns = compute_normals(ts, 40.0)
             for t, n3 in zip(ts, ns):
@@ -176,7 +189,19 @@ def _render(tris, eye, target, size, fov, bg, ground, dark, shadow):
         cpx = p0[:, None] * cs[0] + p1[:, None] * cs[1] + p2[:, None] * cs[2]
         uu = p0 * UVs[0][0] + p1 * UVs[1][0] + p2 * UVs[2][0]
         vv = p0 * UVs[0][1] + p1 * UVs[1][1] + p2 * UVs[2][1]
-        if mat == SCREEN:
+        if mat == PAINT and LIVERY is not None:
+            T = LIVERY
+            lv = T[np.clip((vv * T.shape[0]).astype(int), 0, T.shape[0] - 1), np.clip((uu * T.shape[1]).astype(int), 0, T.shape[1] - 1)]
+            base = np.array(col[:3], float)
+            k = (cpx.mean(axis=1) / max(1.0, base.mean()))[:, None]
+            cpx = np.clip(cpx * (1 - lv[:, 3:4]) + lv[:, :3] * 255 * k * lv[:, 3:4], 0, 255)
+            sub = img[y0:y1 + 1, x0:x1 + 1]
+            zb[m] = z[m]
+            sub[m] = cpx
+            return
+        if mat == PAINT:
+            tex = np.ones((len(uu), 3))
+        elif mat == SCREEN:
             D = dash_atlas()
             tex = D[np.clip((vv * D.shape[0]).astype(int), 0, D.shape[0] - 1), np.clip((uu * D.shape[1]).astype(int), 0, D.shape[1] - 1)]
         else:
