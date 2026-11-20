@@ -439,5 +439,11 @@
  "trafficcraft.configuration.section.trafficcraft.common.toml": "TrafficCraft settings",
  "trafficcraft.configuration.section.trafficcraft.common.toml.title": "TrafficCraft settings",
  "tooltip.trafficcraft.category.motorcycle": "Motorcycle",
- "hud.trafficcraft.hint.rev": "Space + W: rev the engine"
+ "hud.trafficcraft.hint.rev": "Space + W: rev the engine",
+ "msg.trafficcraft.pick_junction": "Click on a junction node",
+ "msg.trafficcraft.branches_on": "Junction #%s: turning between the branches ON",
+ "msg.trafficcraft.branches_off": "Junction #%s: turning between the branches OFF",
+ "mode.trafficcraft.branches": "Branch link on/off (Y junctions)",
+ "opt.trafficcraft.branches": "Branch link on/off (Y junctions)",
+ "prop.trafficcraft.branchTurns": "New junctions: turns between branches"
 }

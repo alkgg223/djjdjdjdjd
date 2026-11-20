@@ -20,9 +20,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 /** Server-side road editing: Road Planner clicks and editor screen operations. */
 public final class RoadEditing {
-    public static final int M_ROAD = 0, M_PATH = 1, M_EDIT = 2, M_DELETE = 3, M_CURVE = 4, M_ROUNDABOUT = 5, M_LIGHTS = 6, M_NODE = 7, M_TURN_L = 8, M_TURN_R = 9, M_T = 10, M_CROSS = 11, M_TURNS = 12, M_PRIORITY = 13;
+    public static final int M_ROAD = 0, M_PATH = 1, M_EDIT = 2, M_DELETE = 3, M_CURVE = 4, M_ROUNDABOUT = 5, M_LIGHTS = 6, M_NODE = 7, M_TURN_L = 8, M_TURN_R = 9, M_T = 10, M_CROSS = 11, M_TURNS = 12, M_PRIORITY = 13, M_BRANCHES = 14;
     private static final Map<UUID, int[]> FIRST_EDGE = new HashMap<>();
-    public static final String[] MODE_NAMES = {"road", "path", "edit", "delete", "curve", "roundabout", "lights", "node", "turn_left", "turn_right", "t_junction", "crossroads", "turns", "priority"};
+    public static final String[] MODE_NAMES = {"road", "path", "edit", "delete", "curve", "roundabout", "lights", "node", "turn_left", "turn_right", "t_junction", "crossroads", "turns", "priority", "branches"};
     private static final Map<UUID, Integer> SELECTED = new HashMap<>();
     private static final Map<UUID, Integer> CURVE_EDGE = new HashMap<>();
 
@@ -63,6 +63,9 @@ public final class RoadEditing {
                     if (e == null) {
                         e = net.connect(sel, n.id, ped);
                         applyToolToEdge(e, tool, ped);
+                        // a new junction takes the tool's "turns between branches" setting
+                        if (!ped) for (RoadNode jn : new RoadNode[]{net.nodes.get(sel), n})
+                            if (jn != null && net.roadDegree(jn.id) >= 3 && !jn.cfg.contains("sharpTurns")) jn.cfg.putBoolean("sharpTurns", tool.getBoolean("branchTurns"));
                         net.changed();
                         if (tool.getBoolean("pave") || !tool.contains("pave")) RoadPaver.paveEdge(level, net, e, tool);
                         msg(p, ped ? "msg.trafficcraft.path_created" : "msg.trafficcraft.road_created", Math.round(net.geom(e).length));
@@ -119,6 +122,18 @@ public final class RoadEditing {
                     if (tool.getBoolean("pave") || !tool.contains("pave")) RoadPaver.paveEdge(level, net, e, tool);
                     msg(p, "msg.trafficcraft.curve_set");
                 }
+            }
+            case M_BRANCHES -> {
+                // toggle: may traffic turn between the side branches of this junction (Y splits / merges)?
+                RoadNode n = net.nearestNode(pos, 3.0, false);
+                if (n == null || net.roadDegree(n.id) < 3) {
+                    msg(p, "msg.trafficcraft.pick_junction");
+                    return;
+                }
+                boolean on = !n.cfg.getBoolean("sharpTurns");
+                n.cfg.putBoolean("sharpTurns", on);
+                net.changed();
+                msg(p, on ? "msg.trafficcraft.branches_on" : "msg.trafficcraft.branches_off", n.id);
             }
             case M_TURNS, M_PRIORITY -> {
                 // pick a road end at a junction: first click = from / priority road, second click = to / road that gives way

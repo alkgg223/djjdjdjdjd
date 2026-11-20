@@ -304,7 +304,11 @@ public final class RoadRenderer {
             if (ClientEditor.selected != null && ClientEditor.selected == n.id) box = box.inflate(0.12);
             LevelRenderer.renderLineBox(ps, lines, box, r, gg, b, 1f);
             if (n.has(RoadNode.F_LIGHTS)) LevelRenderer.renderLineBox(ps, lines, box.inflate(0.2).move(0, 0.6, 0), 1f, 0.3f, 0.2f, 1f);
-            if (net.isJunction(n.id) && !n.type.ped) circle(lines, pose, n.pos(), net.junctionRadius(n.id), 0.9f, 0.9f, 0.3f);
+            if (net.isJunction(n.id) && !n.type.ped) {
+                // yellow = branches not linked (default), cyan = turning between branches allowed
+                if (n.cfg.getBoolean("sharpTurns")) circle(lines, pose, n.pos(), net.junctionRadius(n.id), 0.3f, 0.9f, 1.0f);
+                else circle(lines, pose, n.pos(), net.junctionRadius(n.id), 0.9f, 0.9f, 0.3f);
+            }
         }
         for (RoadEdge e : net.edges.values()) {
             EdgeGeom g = net.geom(e);

@@ -118,6 +118,7 @@ public final class Props {
         l.add(Prop.b("clear").root());
         l.add(Prop.i("radius", 6, 30, 1).root());
         l.add(Prop.i("armLength", 6, 64, 2).root());
+        l.add(Prop.b("branchTurns").root());
         l.add(Prop.f("pathWidth", 1, 6, 0.5).root());
         String[] types = new String[NodeType.values().length];
         for (int i = 0; i < types.length; i++) types[i] = NodeType.values()[i].name();

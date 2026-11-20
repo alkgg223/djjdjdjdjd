@@ -90,6 +90,9 @@ t('msg.trafficcraft.prio_set', 'Road #%s now has priority over road #%s', 'ال�
 t('msg.trafficcraft.prio_removed', 'Priority #%s over #%s removed', 'تمت إزالة أولوية %s على %s')
 t('tooltip.trafficcraft.category.motorcycle', 'Motorcycle', 'دراجة نارية')
 t('hud.trafficcraft.hint.rev', 'Space + W: rev the engine', 'المسافة + W: تدوير المحرك (ريف)')
+t('msg.trafficcraft.pick_junction', 'Click on a junction node', 'انقر على عقدة تقاطع')
+t('msg.trafficcraft.branches_on', 'Junction #%s: turning between the branches ON', 'التقاطع %s: اللف بين الفروع مُفعّل')
+t('msg.trafficcraft.branches_off', 'Junction #%s: turning between the branches OFF', 'التقاطع %s: اللف بين الفروع مُطفأ')
 t('msg.trafficcraft.piece_created', '%s built', 'تم بناء %s')
 t('msg.trafficcraft.passenger', 'You are a passenger - the driver takes you along. Sneak to get out.', 'أنت راكب - السائق يأخذك معه. انحنِ للنزول.')
 t('msg.trafficcraft.last_stop', 'Last stop - please get out (sneak)', 'المحطة الأخيرة - انزل من فضلك (انحناء)')
@@ -101,7 +104,7 @@ MODES = {'road': ('Road', 'طريق'), 'path': ('Footpath', 'ممر مشاة'), 
          'curve': ('Curve', 'منحنى'), 'roundabout': ('Roundabout', 'دوّار'), 'lights': ('Traffic lights', 'إشارات ضوئية'), 'node': ('Node', 'عقدة'),
          'turn_left': ('Sharp left turn', 'لفّة حادة لليسار'), 'turn_right': ('Sharp right turn', 'لفّة حادة لليمين'),
          't_junction': ('T-junction', 'تقاطع ثلاثي (T)'), 'crossroads': ('Crossroads', 'تقاطع رباعي'),
-         'turns': ('Turn rules (ban / allow a turn)', 'قواعد اللف (منع / سماح)'), 'priority': ('Priority (who goes first)', 'الأولوية (من يمر أولاً)')}
+         'turns': ('Turn rules (ban / allow a turn)', 'قواعد اللف (منع / سماح)'), 'branches': ('Branch link on/off (Y junctions)', 'ربط الفروع تشغيل/إطفاء (تقاطع Y)'), 'priority': ('Priority (who goes first)', 'الأولوية (من يمر أولاً)')}
 for k, (en, ar) in MODES.items():
     t(f'mode.trafficcraft.{k}', en, ar)
 
@@ -152,7 +155,8 @@ PROPS = {
     'serviceTime': ('Service time (s)', 'مدة الخدمة (ث)'), 'sidewalk': ('Sidewalk width', 'عرض الرصيف'), 'spaces': ('Parking spaces', 'عدد المواقف'),
     'stayMax': ('Max stay (s)', 'أقصى مدة بقاء (ث)'), 'stayMin': ('Min stay (s)', 'أقل مدة بقاء (ث)'), 'yellow': ('Yellow (s)', 'الأصفر (ث)'),
     'name': ('Name', 'الاسم'), 'visible': ('Show markings', 'إظهار الخطوط'), 'length': ('Spot length', 'طول الموقف'),
-    'sharpTurns': ('Allow sharp turns between branches', 'السماح باللف الحاد بين الفروع'), 'armLength': ('Arm length (turns / junctions)', 'طول الأذرع (اللفّات والتقاطعات)'), 'model': ('Count: %s', 'العدد: %s'), 'no_trucks': ('No trucks', 'ممنوع الشاحنات'),
+    'sharpTurns': ('Allow sharp turns between branches', 'السماح باللف الحاد بين الفروع'),
+    'branchTurns': ('New junctions: turns between branches', 'التقاطعات الجديدة: اللف بين الفروع'), 'armLength': ('Arm length (turns / junctions)', 'طول الأذرع (اللفّات والتقاطعات)'), 'model': ('Count: %s', 'العدد: %s'), 'no_trucks': ('No trucks', 'ممنوع الشاحنات'),
 }
 for k, (en, ar) in PROPS.items():
     t(f'prop.trafficcraft.{k}', en, ar)

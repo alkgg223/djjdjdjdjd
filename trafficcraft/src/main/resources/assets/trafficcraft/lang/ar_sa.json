@@ -439,5 +439,11 @@
  "trafficcraft.configuration.section.trafficcraft.common.toml": "إعدادات ترافيك كرافت",
  "trafficcraft.configuration.section.trafficcraft.common.toml.title": "إعدادات ترافيك كرافت",
  "tooltip.trafficcraft.category.motorcycle": "دراجة نارية",
- "hud.trafficcraft.hint.rev": "المسافة + W: تدوير المحرك (ريف)"
+ "hud.trafficcraft.hint.rev": "المسافة + W: تدوير المحرك (ريف)",
+ "msg.trafficcraft.pick_junction": "انقر على عقدة تقاطع",
+ "msg.trafficcraft.branches_on": "التقاطع %s: اللف بين الفروع مُفعّل",
+ "msg.trafficcraft.branches_off": "التقاطع %s: اللف بين الفروع مُطفأ",
+ "mode.trafficcraft.branches": "ربط الفروع تشغيل/إطفاء (تقاطع Y)",
+ "opt.trafficcraft.branches": "ربط الفروع تشغيل/إطفاء (تقاطع Y)",
+ "prop.trafficcraft.branchTurns": "التقاطعات الجديدة: اللف بين الفروع"
 }
