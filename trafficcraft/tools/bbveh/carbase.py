@@ -568,6 +568,19 @@ class Car:
     def taillamps(self):
         m = self.m
         T = self.tail
+        k = getattr(self, 'tail_scale', 1.0)
+        if k != 1.0 and not getattr(self, '_tail_scaled', False):
+            # make every rear lamp element bigger about its own centre (keeps the layout, real-size units)
+            self._tail_scaled = True
+            def sc(ol, kk=k):
+                c = np.mean(np.array(ol), axis=0)
+                return [tuple(c + (np.array(p) - c) * kk) for p in ol]
+            T = dict(T)
+            T['housings'] = [dict(h, outline=sc(h['outline'])) for h in T.get('housings', [])]
+            T['rects'] = [(sc(o), kd, st, off) for (o, kd, st, off) in T.get('rects', [])]
+            T['rounds'] = [(x, y, r * k, ring, core, cr) for (x, y, r, ring, core, cr) in T.get('rounds', [])]
+            T['strips'] = [(poly, w * k, kd, off) for (poly, w, kd, off) in T.get('strips', [])]
+            self.tail = T
         for sx in (1, -1):
             side = 'l' if sx > 0 else 'r'
             for h in T.get('housings', []):

@@ -38,3 +38,6 @@ SPEC['mouth'][0].update(w=0.17, h=0.24, cy=0.5, cx=0.1)
 
 # the E30's real twin round lamps under one flat front
 SPEC['head'] = [rect_head(0.38, 0.58, 0.76, 0.7, lamps=[(0.47, 0.64, 0.05, 'high'), (0.65, 0.64, 0.058, 'head')], bezel='trim')]
+
+# lamp size pass
+SPEC['tail_scale'] = 1.22

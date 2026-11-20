@@ -48,3 +48,7 @@ SPEC = dict(
 
 # modern-style lamps (from the reference photos)
 SPEC['head'] = [dict(view='F', outline=[(0.34, 0.6), (0.74, 0.62), (0.76, 0.68), (0.5, 0.7), (0.36, 0.66)], smooth=0, bezel='trim', lamps=[(0.46, 0.645, 0.035, 'head'), (0.6, 0.652, 0.035, 'high')], strips=[([(0.38, 0.612), (0.72, 0.628)], 0.01, 'drl')], rects=[(0.68, 0.63, 0.74, 0.67, 'ind')])]
+
+# lamp size pass
+SPEC['head'] = [big(SPEC['head'][0], sy=1.5, sx=1.05)]
+SPEC['tail_scale'] = 1.2

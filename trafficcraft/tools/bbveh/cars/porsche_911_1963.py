@@ -43,3 +43,6 @@ SPEC = dict(
 # modern-style lamps (from the reference photos)
 SPEC['head'][0]['strips'] = [([(0.49, 3.72), (0.61, 3.72)], 0.01, 'drl'), ([(0.55, 3.66), (0.55, 3.78)], 0.01, 'drl')]
 SPEC['tail']['center_strips'] = [([(-0.6, 0.67), (0.6, 0.67)], 0.018, 'tail', 0.012)]
+
+# lamp size pass
+SPEC['tail_scale'] = 1.22

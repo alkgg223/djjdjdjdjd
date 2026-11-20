@@ -30,3 +30,6 @@ SPEC = dict(
     maxSpeed=200, accel=4.8, brake=7.2, mass=1420, fuel_l=68, spawnWeight=4, engine='v8_sport', horn='low',
     colors=['#e2e0d6', '#1d3d7a', '#c8102e', '#e9b018', '#222224', '#2f6b3c'],
 )
+
+# lamp size pass
+SPEC['tail_scale'] = 1.22

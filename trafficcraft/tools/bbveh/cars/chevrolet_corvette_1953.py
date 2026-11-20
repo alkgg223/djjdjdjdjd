@@ -48,3 +48,6 @@ SPEC['head'] = [dict(view='F', outline=[(0.32, 0.56), (0.5, 0.6), (0.7, 0.63), (
 
 # real-size lamp wrapping over the nose corner
 SPEC['head'] = [big(SPEC['head'][0])]
+
+# lamp size pass
+SPEC['tail_scale'] = 1.22

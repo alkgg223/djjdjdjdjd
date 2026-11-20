@@ -48,3 +48,6 @@ h = round_head(0.53, 0.86, 0.07, 'head')
 ring = ngon(0.08, 14, 0.53, 0.86)
 h['strips'] = [(ring + ring[:1], 0.01, 'drl')]
 SPEC['head'] = [h]
+
+# lamp size pass
+SPEC['tail_scale'] = 1.22
