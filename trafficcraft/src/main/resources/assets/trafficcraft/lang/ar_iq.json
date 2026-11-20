@@ -478,5 +478,7 @@
  "item.trafficcraft.vehicle_toyota_supra_mk4": "Toyota Supra MK4",
  "item.trafficcraft.vehicle_volkswagen_golf_gti_1974": "Volkswagen Golf GTI 1974",
  "item.trafficcraft.vehicle_bmw_m3_2026": "BMW M3 2026",
- "prop.trafficcraft.pro": "سائقون محترفون %"
+ "prop.trafficcraft.pro": "سائقون محترفون %",
+ "key.trafficcraft.screen_next": "الشاشة: العنصر التالي",
+ "key.trafficcraft.screen_ok": "الشاشة: فتح / رجوع"
 }

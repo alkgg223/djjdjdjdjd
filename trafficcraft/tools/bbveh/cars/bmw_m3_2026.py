@@ -53,3 +53,6 @@ SPEC['head'] = [dict(view='F', outline=[(0.36, 0.6), (0.46, 0.64), (0.8, 0.68), 
 SPEC['head'] = [big(SPEC['head'][0])]
 
 SPEC['grip'] = 1.08
+
+# real infotainment screen size / mounting
+SPEC['cabin'].update(dict(screen_size=(0.33, 0.12), screen_mount='floating', screen_x=0.12))

@@ -24,14 +24,17 @@ public final class ParkSensor {
     // zones: 0 F, 1 FL, 2 FR, 3 L, 4 R, 5 B, 6 BL, 7 BR
     static final float[] RANGE = {2.0f, 1.4f, 1.4f, 0.9f, 0.9f, 2.0f, 1.4f, 1.4f};
     static final float[] dist = new float[8];
-    static final int[] level = new int[8];
+    public static final int[] level = new int[8];
     static boolean active;
+    /** something is within sensor range (drives the car screen's automatic park-assist view) */
+    public static boolean anyNear;
     static int beepTimer;
-    static float nearest = 99;
+    public static float nearest = 99;
 
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
         active = false;
+        anyNear = false;
         if (mc.player == null || mc.level == null) return;
         VehicleEntity v = ClientEvents.drivenVehicle();
         if (v == null || !v.spec().screenSensor || !v.has(VehicleEntity.F_ENGINE)) return;
@@ -89,6 +92,7 @@ public final class ParkSensor {
             }
         }
         active = kmh < 30 && (any || v.visGear() < 0);
+        anyNear = kmh < 30 && any;
         if (active && any) {
             int max = 0;
             for (int l : level) max = Math.max(max, l);
@@ -131,7 +135,7 @@ public final class ParkSensor {
     }
 
     // ------------------------------------------------------------------------------------------------ screen
-    static final int OFF = 0xFF23272D, GREEN = 0xFF3FD25A, YELLOW = 0xFFF2C230, RED = 0xFFF03A2E;
+    public static final int OFF = 0xFF23272D, GREEN = 0xFF3FD25A, YELLOW = 0xFFF2C230, RED = 0xFFF03A2E;
 
     public static void render(GuiGraphics g, VehicleEntity v) {
         if (!active || ClientEvents.drivenVehicle() != v) return;

@@ -110,22 +110,35 @@ public final class CarShow {
         // driver's seat (steering wheel, gear lever, gauges)
         if (t == 105) server.execute(() -> ride(server, ids.get(0)));
         if (t == 115) mc.options.setCameraType(CameraType.FIRST_PERSON);
-        if (t == 125 && mc.player.getVehicle() instanceof VehicleEntity rv) {
+        if (t == 108) server.execute(() -> {
+            if (server.overworld().getEntity(ids.get(0)) instanceof VehicleEntity sv) sv.setFlag(VehicleEntity.F_ENGINE, false);
+        });
+        if (t == 130) server.execute(() -> {
+            if (server.overworld().getEntity(ids.get(0)) instanceof VehicleEntity sv) sv.setFlag(VehicleEntity.F_ENGINE, true);
+        });
+        if (t == 112 && mc.player.getVehicle() instanceof VehicleEntity rv) {
+            mc.player.setYRot(rv.getYRot() + 24);
+            mc.player.setXRot(34);
+        }
+        if (t == 120) shot(mc, "c_screen_off.png");
+        if (t == 142) shot(mc, "c_screen_boot.png");
+        if (t == 185) shot(mc, "c_screen_menu.png");
+        if (t == 186 && mc.player.getVehicle() instanceof VehicleEntity rv) {
             mc.player.setYRot(rv.getYRot());
             mc.player.setXRot(18);
         }
-        if (t == 150) shot(mc, "c_interior.png");
+        if (t == 195) shot(mc, "c_interior.png");
         // parking sensor: drive the first car that has a screen, wall just ahead
-        if (t == 155) server.execute(() -> sensorScene(server));
-        if (t == 175) {
+        if (t == 200) server.execute(() -> sensorScene(server));
+        if (t == 215) {
             mc.options.hideGui = false;
             if (mc.player.getVehicle() instanceof VehicleEntity rv) {
-                mc.player.setYRot(rv.getYRot());
-                mc.player.setXRot(10);
+                mc.player.setYRot(rv.getYRot() + 20);
+                mc.player.setXRot(26);
             }
         }
-        if (t == 215) shot(mc, "c_park_sensor.png");
-        if (t == 220) {
+        if (t == 250) shot(mc, "c_park_sensor.png");
+        if (t == 255) {
             mc.options.hideGui = true;
             server.execute(() -> {
                 ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
@@ -135,12 +148,12 @@ public final class CarShow {
             mc.options.setCameraType(CameraType.FIRST_PERSON);
         }
         // line-up
-        if (t == 230) {
+        if (t == 260) {
             Vec3 mid = spots.get(0).add(spots.get(n - 1)).scale(0.5);
             view(mc, mid.add(-4, 9, -14), mid);
         }
-        if (t == 270) shot(mc, "c_lineup.png");
-        if (t == 280) {
+        if (t == 300) shot(mc, "c_lineup.png");
+        if (t == 310) {
             TrafficCraft.LOG.info("[carshow] done");
             mc.stop();
         }

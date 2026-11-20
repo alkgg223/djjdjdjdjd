@@ -43,6 +43,8 @@ public final class ClientEvents {
             return;
         }
         while (VehicleKeys.LIGHTS.consumeClick()) send(v, VehicleEntity.A_LIGHTS);
+        while (VehicleKeys.SCREEN_NEXT.consumeClick()) com.trafficcraft.client.gui.CarScreen.next(v);
+        while (VehicleKeys.SCREEN_OK.consumeClick()) com.trafficcraft.client.gui.CarScreen.ok(v);
         while (VehicleKeys.HIGH_BEAM.consumeClick()) send(v, VehicleEntity.A_HIGH);
         while (VehicleKeys.IND_LEFT.consumeClick()) send(v, VehicleEntity.A_IND_L);
         while (VehicleKeys.IND_RIGHT.consumeClick()) send(v, VehicleEntity.A_IND_R);

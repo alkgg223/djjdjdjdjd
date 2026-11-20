@@ -404,6 +404,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
                 ps.popPose();
             }
         }
+        if (s.screen != null && (inside || dist < 8)) com.trafficcraft.client.gui.CarScreen.render(v, s, ps, buf);
         // instrument cluster needles + digital readouts
         if (s.cluster != null && (inside || dist < 5) && (v.has(VehicleEntity.F_ENGINE) || v.has(VehicleEntity.F_STARTING))) {
             float[] c = s.cluster;

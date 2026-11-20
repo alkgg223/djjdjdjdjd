@@ -54,3 +54,6 @@ SPEC = dict(
 )
 
 SPEC['grip'] = 1.12
+
+# real infotainment screen size / mounting
+SPEC['cabin'].update(dict(screen_size=(0.155, 0.09), screen_mount='stack'))

@@ -28,7 +28,6 @@ public final class VehicleHud {
             enteredTick = mc.player.tickCount;
         }
         boolean driver = ClientEvents.drivenVehicle() == v;
-        ParkSensor.render(g, v);
         Font font = mc.font;
         int W = g.guiWidth(), H = g.guiHeight();
         int pw = 168, ph = 74;

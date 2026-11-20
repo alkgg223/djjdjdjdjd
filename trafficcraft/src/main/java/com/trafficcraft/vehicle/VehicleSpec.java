@@ -47,6 +47,14 @@ public final class VehicleSpec {
     public final java.util.Map<String, float[]> popups = new java.util.HashMap<>();
     public boolean screenSensor;
     public float grip = 0.85f;
+    /** infotainment screen: center xyz, right xyz, up xyz, w, h (null = car has no screen) */
+    public float[] screen;
+    /** top-view outline for the park-assist screen: [t 0 rear..1 nose, half-width 0..1] */
+    public final List<float[]> plan = new ArrayList<>(), cabinPlan = new ArrayList<>(), glassBands = new ArrayList<>();
+    public float[] axlesT = {0.22f, 0.78f};
+    public float planAspect = 0.4f;
+    public String uiLayout = "tiles", uiBg = "#111214", uiAccent = "#3a8ee6", uiFg = "#e8e8ea", brandShape = "rect", brandText = "", brandColor = "#c8c8c8",
+            brandName = "";
     public String make = "", modelName = "", categoryName = "", description = "";
     public int year;
 
@@ -166,6 +174,27 @@ public final class VehicleSpec {
             popups.put(en.getKey(), new float[]{pv[0], pv[1], f(pp, "angle", -62)});
         }
         grip = f(o, "grip", 0.85f);
+        if (o.has("infotainment")) {
+            JsonObject sc = o.getAsJsonObject("infotainment");
+            float[] c = vec(sc.getAsJsonArray("center")), r = vec(sc.getAsJsonArray("right")), u = vec(sc.getAsJsonArray("up"));
+            screen = new float[]{c[0], c[1], c[2], r[0], r[1], r[2], u[0], u[1], u[2], f(sc, "w", 0.2f), f(sc, "h", 0.12f)};
+            uiLayout = sc.get("layout").getAsString();
+            uiBg = sc.get("bg").getAsString();
+            uiAccent = sc.get("accent").getAsString();
+            uiFg = sc.get("fg").getAsString();
+            JsonObject b = sc.getAsJsonObject("brand");
+            brandShape = b.get("shape").getAsString();
+            brandText = b.get("text").getAsString();
+            brandColor = b.get("color").getAsString();
+            brandName = b.get("name").getAsString();
+            if (sc.has("plan")) {
+                for (JsonElement e : sc.getAsJsonArray("plan")) plan.add(vec(e.getAsJsonArray()));
+                for (JsonElement e : sc.getAsJsonArray("cabin")) cabinPlan.add(vec(e.getAsJsonArray()));
+                for (JsonElement e : sc.getAsJsonArray("glass")) glassBands.add(vec(e.getAsJsonArray()));
+                axlesT = vec(sc.getAsJsonArray("axles"));
+                planAspect = f(sc, "aspect", 0.4f);
+            }
+        }
         screenSensor = o.has("screen_sensor") && o.get("screen_sensor").getAsBoolean();
         if (o.has("make")) make = o.get("make").getAsString();
         if (o.has("model")) modelName = o.get("model").getAsString();

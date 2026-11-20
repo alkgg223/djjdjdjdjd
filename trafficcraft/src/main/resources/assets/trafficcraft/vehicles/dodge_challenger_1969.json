@@ -122,7 +122,7 @@
    0.47,
    0.04999999999999938
   ],
-  "type": "auto"
+  "type": "manual"
  },
  "beams": [
   [
@@ -406,27 +406,37 @@
   ]
  ],
  "dash": {
-  "cluster_style": "classic",
+  "cluster_style": "analog3",
   "dials": [
    {
-    "kind": "speed",
-    "cx": 0.24,
+    "kind": "rpm",
+    "cx": 0.5,
     "cy": 0.5,
-    "r": 0.24,
+    "r": 0.28,
     "a0": 225,
     "a1": -45,
-    "max": 200,
-    "color": 2105376
+    "max": 9000,
+    "color": 16734746
    },
    {
-    "kind": "rpm",
-    "cx": 0.76,
+    "kind": "speed",
+    "cx": 0.18,
     "cy": 0.5,
-    "r": 0.24,
+    "r": 0.22,
     "a0": 225,
     "a1": -45,
-    "max": 7000,
-    "color": 2105376
+    "max": 180,
+    "color": 16734746
+   },
+   {
+    "kind": "fuel",
+    "cx": 0.82,
+    "cy": 0.5,
+    "r": 0.2,
+    "a0": 200,
+    "a1": -20,
+    "max": 1,
+    "color": 16734746
    }
   ]
  },
@@ -454,5 +464,5 @@
   "cyl": 8,
   "diesel": false
  },
- "tris": 10345
+ "tris": 10365
 }

@@ -822,6 +822,8 @@ class Car:
         m = self.m
         I = dict(driver_x=0.3, rear=True, cluster='analog3', screen=False, shifter='manual', seat='sport', dash_col=(44, 44, 47))
         I.update(self.cabin)
+        I.update(__import__('_interiors').INT.get(self.id, {}))
+        self.interior_painters(I)
         dx = I['driver_x']
         wz = self.WS1                                     # bottom of the windscreen
         bt = self.belt(wz - 0.3) + 0.01
@@ -862,17 +864,42 @@ class Car:
         if I['cluster'] != 'flat':
             m.prism([(dx + a, bt - 0.02 + b) for a, b in binn][::-1], cz + 0.005, cz + 0.135, 'z', 'dash')
             m.box(V(dx, bt + 0.1, cz - 0.035), (0.46, 0.02, 0.09), 'dash')
+        cw = {'analog5': 0.46, 'digital_wide': 0.44, 'tach_center': 0.34, 'classic': 0.36}.get(I['cluster'], 0.38)
         self.el('body', 'screen', 'gauges_' + I['cluster'])
-        m.face([V(dx + 0.19, cy - 0.05, cz), V(dx - 0.19, cy - 0.05, cz), V(dx - 0.19, cy + 0.05, cz - 0.01), V(dx + 0.19, cy + 0.05, cz - 0.01)],
+        m.face([V(dx + cw / 2, cy - 0.05, cz), V(dx - cw / 2, cy - 0.05, cz), V(dx - cw / 2, cy + 0.05, cz - 0.01), V(dx + cw / 2, cy + 0.05, cz - 0.01)],
                'gauges_' + I['cluster'], outward=V(0, 0, -1), dens=256)
-        self.m.painters['gauges_' + I['cluster']] = gauge_painter(I['cluster'], dx, cy)
-        self.cluster_meta = dict(center=[dx, cy, cz - 0.006 - self.L / 2], right=[-1, 0, 0], up=[0, 0.995, 0.1], w=0.38, h=0.1)
+        self.m.painters['gauges_' + I['cluster']] = gauge_painter(I['cluster'], dx, cy, I.get('gauge'))
+        self.cluster_meta = dict(center=[dx, cy, cz - 0.006 - self.L / 2], right=[-1, 0, 0], up=[0, 0.995, 0.1], w=cw, h=0.1)
         # centre stack (+ screen on modern cars)
         Ms = ry(12 if dx > 0 else -12) @ rx(8)
         self.el('body', 'solid', 'dash')
         m.box(V(0, bt - 0.28, wz - 0.38), (0.26, 0.32, 0.06), 'dash', M=Ms)
-        self.el('body', 'screen' if I['screen'] else 'solid', 'stack_screen' if I['screen'] else 'stack_face')
-        m.box(V(0.0, bt - 0.28, wz - 0.414), (0.22, 0.28, 0.006), m._cur.style, M=Ms)
+        self.el('body', 'solid', 'stack_face')
+        m.box(V(0.0, bt - 0.28, wz - 0.414), (0.22, 0.28, 0.006), 'stack_face', M=Ms)
+        self.screen_meta = None
+        if I['screen']:
+            # infotainment display: real size and mounting per car
+            sw_, sh_ = I.get('screen_size', (0.18, 0.1))
+            mount = I.get('screen_mount', 'stack')
+            if mount == 'floating':
+                c = V(I.get('screen_x', 0.04), bt + 0.012 + sh_ / 2, wz - 0.4)
+                Mscr = ry(10 if dx > 0 else -10) @ rx(-14)
+                self.el('body', 'solid', 'dash')
+                m.box(c + V(0, -sh_ / 2 - 0.02, 0.03), (0.06, 0.05, 0.05), 'dash', M=Mscr)
+            elif mount == 'portrait':
+                c = V(0.0, bt - 0.2, wz - 0.43)
+                Mscr = rx(-28)
+            else:
+                c = V(0.0, bt - 0.16, wz - 0.42)
+                Mscr = Ms
+            self.el('body', 'solid', 'trim_gloss')
+            m.box(c, (sw_ + 0.024, sh_ + 0.024, 0.02), 'trim_gloss', M=Mscr)
+            self.el('body', 'screen', 'screen_off')
+            m.box(c + Mscr @ V(0, 0, -0.0105), (sw_, sh_, 0.002), 'screen_off', M=Mscr)
+            nrm = Mscr @ V(0, 0, -1)
+            ctr = c + nrm * 0.0125
+            self.screen_meta = dict(center=[float(ctr[0]), float(ctr[1]), float(ctr[2] - self.L / 2)], right=[float(x) for x in Mscr @ V(-1, 0, 0)],
+                                    up=[float(x) for x in Mscr @ V(0, 1, 0)], w=sw_, h=sh_)
         self.el('body', 'solid', 'grille')
         for vx in (dwid - 0.17, -dwid + 0.17):
             m.box(V(vx, bt - 0.12, wz - 0.415), (0.09, 0.045, 0.012), 'grille')
@@ -885,16 +912,28 @@ class Car:
         m.box(V(0, gy + 0.002, gz), (0.12, 0.004, 0.2), 'alu')
         self.el('body', 'solid', 'leather')
         m.box(V(0, gy + 0.015, gz), (0.09, 0.03, 0.09), 'leather')
+        kind = I['shifter']
         self.el('shifter', 'solid', 'alu')
-        if I['shifter'] == 'auto':
-            m.box(V(0, gy + 0.07, gz), (0.03, 0.11, 0.05), 'leather')
+        if kind in ('auto', 'paddle'):
+            # automatic T-handle (shorter selector on paddle-shift cars)
+            hgt = 0.11 if kind == 'auto' else 0.06
+            m.box(V(0, gy + hgt / 2 + 0.015, gz), (0.03, hgt, 0.05), 'leather')
             self.el('shifter', 'solid', 'leather')
-            m.box(V(0, gy + 0.14, gz + 0.005), (0.05, 0.06, 0.08), 'leather')
+            m.box(V(0, gy + hgt + 0.03, gz + 0.005), (0.05, 0.05, 0.08), 'leather')
+        elif kind == 'column':
+            # column-mounted selector stalk: a lever at the steering column, nothing on the console
+            pass
         else:
-            m.cylinder(V(0, gy, gz), V(0, 1, 0), 0.008, 0.12, 6, 'alu')
-            self.el('shifter', 'solid', 'leather')
-            m.box(V(0, gy + 0.14, gz), (0.042, 0.042, 0.042), 'leather')
-        self.shifter_meta = dict(pivot=[0, gy, gz - self.L / 2], type=I['shifter'])
+            stick = {'ball': 0.12, 'tall': 0.24, 'gated': 0.16}[kind]
+            m.cylinder(V(0, gy, gz), V(0, 1, 0), 0.008, stick, 6, 'alu' if kind != 'tall' else 'chrome')
+            self.el('shifter', 'solid', 'alu' if kind == 'gated' else 'leather')
+            r_ = 0.024 if kind != 'tall' else 0.028
+            m.cylinder(V(0, gy + stick - 0.01, gz), V(0, 1, 0), r_, r_ * 1.6, 8, m._cur.style)
+            if kind == 'gated':
+                # the famous open chrome gate
+                self.el('body', 'solid', 'gate')
+                m.box(V(0, gy + 0.006, gz), (0.14, 0.008, 0.16), 'gate')
+        self.shifter_meta = dict(pivot=[0, gy, gz - self.L / 2], type='auto' if kind in ('auto', 'paddle', 'column') else 'manual')
         self.el('body', 'solid', 'leather')
         m.box(V(0, gy + 0.02, fz + 0.08), (0.035, 0.03, 0.22), 'leather', M=rx(-12))
         m.box(V(0, gy + 0.05, fz - 0.15), (0.18, 0.06, 0.3), 'leather')
@@ -902,7 +941,14 @@ class Car:
         sc = V(dx, bt - 0.06, wz - 0.52)
         ax = unit(V(0, math.sin(math.radians(24)), -math.cos(math.radians(24))))
         self.steer_meta = dict(pivot=list(sc + V(0, 0, -self.L / 2)), axis=list(ax))
-        self.steering_wheel(sc, ax, I.get('wheel_r', 0.185), I.get('spokes', (0, 180, 240, 300)))
+        self.steering_wheel(sc, ax, I.get('wheel_r', 0.185), I.get('wheel', '4spoke'))
+        if I['shifter'] == 'column':
+            self.el('steer', 'solid', 'dash')
+            m.box(sc + V(-0.12 if dx > 0 else 0.12, -0.03, 0.12), (0.12, 0.012, 0.012), 'dash')
+        if I['shifter'] == 'paddle':
+            self.el('steer', 'solid', 'alu')
+            for sx_ in (1, -1):
+                m.box(sc + V(sx_ * 0.13, 0.03, 0.04), (0.05, 0.09, 0.006), 'alu')
         self.el('body', 'solid', 'dash')
         m.cylinder(sc, -ax, 0.035, 0.24, 8, 'dash')
         # pedals
@@ -932,6 +978,34 @@ class Car:
 
     def front_seat(self, x, hy, zc, sw, kind):
         m = self.m
+        if kind == 'bucket':
+            # one-piece racing shell: tall back with integrated headrest, deep side wings
+            Mb = rx(-12)
+            pivot = V(x, hy + 0.03, zc - 0.22)
+            at = lambda l: pivot + Mb @ V(l)
+            self.el('body', 'solid', 'leather')
+            m.box(V(x, hy, zc), (sw, 0.08, 0.46), 'leather')
+            for bx in (1, -1):
+                m.box(V(x + bx * (sw / 2 - 0.025), hy + 0.09, zc), (0.06, 0.14, 0.44), 'leather', M=rx(-5))
+                m.box(at((bx * (sw / 2 - 0.025), 0.32, 0.05)), (0.06, 0.56, 0.16), 'leather', M=Mb)
+            m.box(at((0, 0.42, -0.03)), (sw, 0.84, 0.08), 'leather', M=Mb)
+            self.el('body', 'solid', 'seat_fabric')
+            m.box(V(x, hy + 0.055, zc + 0.01), (sw - 0.12, 0.05, 0.4), 'seat_fabric', M=rx(-5))
+            m.box(at((0, 0.3, 0.02)), (sw - 0.14, 0.5, 0.02), 'seat_fabric', M=Mb)
+            self.el('body', 'solid', 'trim_gloss')
+            m.box(at((0, 0.72, 0.0)), (0.07, 0.05, 0.1), 'trim_gloss', M=Mb)     # harness slot
+            return
+        if kind == 'flat':
+            # period flat seat: thin cushion and a plain upright back, separate chrome-post headrest
+            Mb = rx(-10)
+            pivot = V(x, hy + 0.05, zc - 0.23)
+            at = lambda l: pivot + Mb @ V(l)
+            self.el('body', 'solid', 'seat_fabric')
+            m.box(V(x, hy + 0.02, zc), (sw, 0.1, 0.46), 'seat_fabric')
+            m.box(at((0, 0.27, -0.03)), (sw, 0.54, 0.1), 'seat_fabric', M=Mb)
+            self.el('body', 'solid', 'leather')
+            m.box(at((0, 0.27, 0.025)), (sw - 0.06, 0.46, 0.012), 'leather', M=Mb)
+            return
         self.el('body', 'solid', 'leather')
         m.box(V(x, hy, zc), (sw, 0.08, 0.46), 'leather')
         self.el('body', 'solid', 'seat_fabric')
@@ -952,14 +1026,21 @@ class Car:
                 m.box(at((bx * (sw / 2 - 0.02), 0.27, 0.02)), (0.07, 0.46, 0.12), 'leather', M=Mb)
         m.box(at((0, 0.7, -0.02)), (0.24, 0.16, 0.08), 'leather', M=Mb)
 
-    def steering_wheel(self, c, ax, Rr=0.185, spokes=(0, 180, 240, 300)):
+    def steering_wheel(self, c, ax, Rr=0.185, kind='4spoke'):
+        """Model-specific wheels: thin big-rim classics with 2/3/4 slim spokes, sport 3-spoke, flat-bottom, 4-spoke."""
         m = self.m
-        self.el('steer', 'solid', 'leather')
+        self.el('steer', 'solid', 'wheel_rim')
         u = V(1, 0, 0)
         w = np.cross(ax, u)
-        t = 0.02
-        N = 12
-        pts = [c + (u * math.cos(a) + w * math.sin(a)) * Rr for a in np.linspace(0, 2 * math.pi, N, endpoint=False)]
+        classic = kind.startswith('classic')
+        t = 0.012 if classic else 0.02
+        N = 16
+        pts = []
+        for a in np.linspace(0, 2 * math.pi, N, endpoint=False):
+            ca, sa = math.cos(a), math.sin(a)
+            if kind == '3spoke_flat' and sa < -0.72:
+                sa = -0.72
+            pts.append(c + (u * ca + w * sa) * Rr)
         for i in range(N):
             p0, p1 = pts[i], pts[(i + 1) % N]
             r0, r1 = unit(p0 - c), unit(p1 - c)
@@ -967,14 +1048,49 @@ class Car:
             A, B = sq(p0, r0), sq(p1, r1)
             for k in range(4):
                 q = [A[k], B[k], B[(k + 1) % 4], A[(k + 1) % 4]]
-                m.face(q, 'leather', outward=np.mean(q, axis=0) - (p0 + p1) / 2)
+                m.face(q, 'wheel_rim', outward=np.mean(q, axis=0) - (p0 + p1) / 2)
         Mw = np.c_[u, w, ax]
-        self.el('steer', 'solid', 'dash')
+        spokes = {'4spoke': (0, 180, 240, 300), '3spoke': (0, 180, 270), '3spoke_flat': (0, 180, 270), 'classic2': (0, 180), 'classic3': (0, 180, 270),
+                  'classic4': (35, 145, 215, 325)}.get(kind, (0, 180, 270))
+        self.el('steer', 'solid', 'chrome' if classic else 'dash')
+        sw_ = 0.012 if classic else 0.032
         for a in spokes:
             Ms = Mw @ rz(a)
-            m.box(c + Ms @ V(Rr * 0.55, 0, 0.012), (Rr * 0.8, 0.032, 0.014), 'dash', M=Ms)
-        self.el('steer', 'solid', 'leather')
-        m.box(c + ax * 0.025, (0.15, 0.12, 0.05), 'leather', M=Mw)
+            m.box(c + Ms @ V(Rr * 0.52, 0, 0.012), (Rr * 0.86, sw_, 0.008 if classic else 0.014), m._cur.style, M=Ms)
+        if classic:
+            # small centre boss + chrome horn ring
+            self.el('steer', 'solid', 'chrome')
+            m.cylinder(c - ax * 0.005, ax, 0.035, 0.03, 10, 'chrome', cap_style='trim')
+        else:
+            self.el('steer', 'solid', 'leather')
+            m.box(c + ax * 0.025, (0.15, 0.12, 0.05), 'leather', M=Mw)
+
+    def interior_painters(self, I):
+        def col(h):
+            return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
+        lc = col(I.get('leather', '#1e1e20'))
+        self.m.painters['leather'] = S.flat(lc, 5, scale=64)
+        if I.get('fabric') == 'tartan':
+            def tartan(face, P, n):
+                q = np.floor(P * 60).astype(int)
+                out = fill(P, (40, 30, 34))
+                out[(q[..., 0] % 6 == 0) | (q[..., 2] % 6 == 0), :3] = (170, 20, 30)
+                out[(q[..., 1] % 6 == 3), :3] = (24, 24, 26)
+                return out
+            self.m.painters['seat_fabric'] = tartan
+        else:
+            fc = col(I.get('fabric', '#2c2d30'))
+            def fab(face, P, n, fc=fc):
+                q = np.floor(P * 96).astype(int)
+                out = fill(P, fc)
+                out[(q[..., 0] + q[..., 1] + q[..., 2]) % 2 == 0, :3] = np.array(fc) * 0.85
+                return out
+            self.m.painters['seat_fabric'] = fab
+        dc = col(I.get('dash', '#232426'))
+        self.m.painters['dash'] = S.flat(dc, 3, scale=64)
+        self.m.painters['dash2'] = S.flat(tuple(min(255, int(v * 1.35)) for v in dc), 3, scale=64)
+        self.m.painters['wheel_rim'] = S.flat(col(I.get('wheel_col', '#1e1e20')), 4)
+        self.m.painters['gate'] = S.flat((205, 208, 214), 2)
 
     # ===================================================================================== painting
     def paint_painter(self):
@@ -1174,6 +1290,23 @@ class Car:
                     filler=[(-1 if self.fuel[0] == 'r' else 1) * (self.hw(self.fuel[1]) + 0.02), self.fuel[2], self.fuel[1] - L / 2],
                     catalog=cat, exhaust_variants=[[[p[0], p[1], p[2] - L / 2, p[3], p[4], p[5]] for p in PT.exhaust_points(k, ze, ye, xm)] for k in self.exhaust_list()],
                     screen_sensor=bool(self.I.get('screen')), texture=self.id, seats_n=len(self.seats_meta))
+        if self.screen_meta:
+            import importlib
+            B = importlib.import_module('_brands').BRANDS
+            shape, txt, col = B.get(self.make, ('rect', self.make[:1], (200, 200, 200)))
+            UI = {'Nissan': ('list', '#101418', '#c8102e', '#e8e8ea'), 'Tesla': ('dock', '#eef0f2', '#3e6ae1', '#202226'),
+                  'Kia': ('tiles', '#05141f', '#27c3b5', '#e6f2f4'), 'Lamborghini': ('hex', '#0b0b0b', '#f2a900', '#f4f0e0'),
+                  'BMW': ('cards', '#0d1a2b', '#1c69d4', '#e8eef6')}
+            lay, bg, acc, fg = UI.get(self.make, ('tiles', '#111214', '#3a8ee6', '#e8e8ea'))
+            mx = max(self.hw(z) for z in np.linspace(0, self.L, 40))
+            plan = [[round(float(z / self.L), 4), round(float(self.hw(z) / mx), 4)] for z in np.linspace(0, self.L, 22)]
+            rg = self.rear_glass or (self.CABIN0, self.CABIN0)
+            cabin_ = [[round(float(z / self.L), 4), round(float(self.roofw(min(max(z, self.CABIN0), self.CABIN1)) / mx), 4)]
+                      for z in np.linspace(self.CABIN0 + 0.05, self.CABIN1 - 0.05, 10)]
+            self.screen_meta.update(plan=plan, cabin=cabin_, glass=[[self.WS0 / self.L, self.WS1 / self.L], [rg[0] / self.L, rg[1] / self.L]],
+                                    axles=[self.YR / self.L, self.YF / self.L], aspect=round(2 * mx / self.L, 4))
+            META['infotainment'] = dict(self.screen_meta, layout=lay, bg=bg, accent=acc, fg=fg, brand=dict(shape=shape, text=txt, color='#%02x%02x%02x' % col,
+                                                                                                         name=self.make.upper()))
         META['matcap'] = [m.matcap_rect[0] / m.tex, m.matcap_rect[1] / m.tex, m.matcap_rect[2] / m.tex, m.matcap_rect[3] / m.tex]
         META['exhausts'] = META['exhaust_variants'][0] if META['exhaust_variants'] else []
         if self.no_exhaust:
@@ -1195,27 +1328,37 @@ class Car:
 
 
 # ========================================================================================= shared painters
-def gauge_painter(style, dx, cy):
-    def f(face, P, n):
+def gauge_painter(style, dx, cy, colors=None):
+    def h2c(h):
+        return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
+    face, ring, mark = [h2c(c) for c in (colors or ('#0c0c0e', '#9a9ca2', '#e6e6e6'))]
+
+    def f(face_, P, n):
         out = fill(P, (12, 12, 14))
         x, y = P[..., 0], P[..., 1]
-        if style == 'digital':
-            out[..., :3] = (8, 14, 22)
-            for i, (cx, r) in enumerate(((dx + 0.11, 0.045), (dx - 0.11, 0.045))):
+        if style in ('digital', 'digital_wide'):
+            out[..., :3] = face
+            wide = style == 'digital_wide'
+            for cx, r in (((dx + 0.15, 0.045), (dx - 0.15, 0.045)) if wide else ((dx + 0.1, 0.045), (dx - 0.1, 0.045))):
                 d = np.hypot(x - cx, y - cy)
-                out[(d > r * 0.85) & (d < r), :3] = (40, 160, 230)
-            out[(np.abs(x - dx) < 0.05) & (np.abs(y - cy) < 0.03), :3] = (30, 60, 90)
+                out[(d > r * 0.85) & (d < r), :3] = ring
+                out[(d > r * 0.6) & (d < r * 0.66), :3] = np.array(ring) * 0.5
+            out[(np.abs(x - dx) < (0.08 if wide else 0.045)) & (np.abs(y - cy) < 0.03), :3] = np.array(ring) * 0.35
+            out[(np.abs(x - dx) < 0.03) & (np.abs(y - cy + 0.035) < 0.004), :3] = mark
             return out
         dials = {'analog3': ((dx + 0.12, 0.045), (dx, 0.056), (dx - 0.12, 0.045)), 'analog2': ((dx + 0.09, 0.05), (dx - 0.09, 0.05)),
-                 'classic': ((dx + 0.1, 0.048), (dx - 0.1, 0.048)), 'flat': ((dx + 0.09, 0.045), (dx - 0.09, 0.045))}.get(style, ((dx, 0.05),))
+                 'classic': ((dx + 0.09, 0.05), (dx - 0.09, 0.05)),
+                 'analog5': ((dx + 0.18, 0.033), (dx + 0.09, 0.042), (dx, 0.05), (dx - 0.09, 0.042), (dx - 0.18, 0.033)),
+                 'tach_center': ((dx + 0.11, 0.03), (dx, 0.06), (dx - 0.11, 0.03))}.get(style, ((dx, 0.05),))
         for cx, r in dials:
             d = np.hypot(x - cx, y - cy)
             a = np.arctan2(y - cy, x - cx)
-            face_col = (236, 230, 210) if style == 'classic' else (12, 12, 14)
-            out[d < r, :3] = face_col
-            out[(d > r * 0.92) & (d < r), :3] = (150, 152, 158)
+            out[d < r, :3] = face
+            out[(d > r * 0.92) & (d < r), :3] = ring
             tick = (d > r * 0.72) & (d < r * 0.88) & (np.mod((a + math.pi) * 24 / (2 * math.pi), 1.0) < 0.25) & ((a > -math.pi * 0.25) | (a < -math.pi * 0.75))
-            out[tick, :3] = (30, 30, 30) if style == 'classic' else (230, 230, 230)
+            out[tick, :3] = mark
+            red = tick & (a > -math.pi * 0.25) & (a < 0.15)
+            out[red, :3] = (220, 40, 40)
             out[d < r * 0.08, :3] = (200, 60, 30)
         return out
     return f
@@ -1338,7 +1481,7 @@ LAMP_PAINTERS = {
     'towhook': S.flat((210, 30, 30), 3), 'seat_fabric': S.fabric, 'led_white': S.flat((250, 252, 255), 1), 'proj_head_r': S.clear_lens,
     'proj_high_r': S.clear_lens, 'proj_amber_r': S.amber, 'led_white_r': S.flat((250, 252, 255), 1), 'sealed_r': _proj('sealed'),
     'amber': S.amber, 'smoke_red': S.red_lens((70, 12, 18)), 'red_lens': S.red_lens(), 'clear_red': S.red_lens((200, 30, 40)),
-    'tail_ring_r': _red_rect, 'brake_core_r': _red_rect, 'rev_core_r': S.flat((236, 236, 236), 3),
+    'tail_ring_r': _red_rect, 'screen_off': S.flat((6, 7, 9), 1), 'brake_core_r': _red_rect, 'rev_core_r': S.flat((236, 236, 236), 3),
 }
 
 DIALS = {
@@ -1347,6 +1490,10 @@ DIALS = {
     'analog2': [dict(kind='rpm', cx=0.27, cy=0.5, r=0.24, a0=225, a1=-45, max=8000, color=0xFF3020), dict(kind='speed', cx=0.73, cy=0.5, r=0.24, a0=225, a1=-45, max=240, color=0xFF3020)],
     'classic': [dict(kind='speed', cx=0.24, cy=0.5, r=0.24, a0=225, a1=-45, max=200, color=0x202020), dict(kind='rpm', cx=0.76, cy=0.5, r=0.24, a0=225, a1=-45, max=7000, color=0x202020)],
     'digital': [dict(kind='speed', cx=0.21, cy=0.5, r=0.22, a0=225, a1=-45, max=260, color=0x30A0FF), dict(kind='rpm', cx=0.79, cy=0.5, r=0.22, a0=225, a1=-45, max=8000, color=0x30A0FF)],
+    'analog5': [dict(kind='rpm', cx=0.5, cy=0.5, r=0.24, a0=225, a1=-45, max=7000, color=0xE8E8E8), dict(kind='speed', cx=0.3, cy=0.5, r=0.2, a0=225, a1=-45, max=220, color=0xE8E8E8),
+                dict(kind='fuel', cx=0.11, cy=0.5, r=0.15, a0=200, a1=-20, max=1, color=0xE8E8E8)],
+    'tach_center': [dict(kind='rpm', cx=0.5, cy=0.5, r=0.32, a0=225, a1=-45, max=10000, color=0xFF9A40), dict(kind='speed', cx=0.18, cy=0.5, r=0.16, a0=225, a1=-45, max=360, color=0xFF9A40)],
+    'digital_wide': [dict(kind='speed', cx=0.16, cy=0.5, r=0.2, a0=225, a1=-45, max=330, color=0x8EC8FF), dict(kind='rpm', cx=0.84, cy=0.5, r=0.2, a0=225, a1=-45, max=8000, color=0x8EC8FF)],
     'flat': [dict(kind='speed', cx=0.27, cy=0.5, r=0.22, a0=225, a1=-45, max=180, color=0xFF3020), dict(kind='rpm', cx=0.73, cy=0.5, r=0.22, a0=225, a1=-45, max=7000, color=0xFF3020)],
 }
 
