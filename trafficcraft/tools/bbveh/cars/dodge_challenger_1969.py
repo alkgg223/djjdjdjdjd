@@ -36,3 +36,7 @@ for h in SPEC['head']:
     x, y, r, k = h['lamps'][0]
     ring = ngon(r + 0.006, 14, x, y)
     h['strips'] = [(ring + ring[:1], 0.008, 'drl')]
+
+# real performance: 0-100 km/h in 5.8 s, top speed 225 km/h
+SPEC['accel'] = 5.68
+SPEC['maxSpeed'] = 225

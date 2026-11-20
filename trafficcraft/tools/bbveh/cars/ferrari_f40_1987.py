@@ -57,3 +57,7 @@ SPEC = dict(
 )
 
 SPEC['grip'] = 1.12
+
+# real performance: 0-100 km/h in 3.8 s, top speed 324 km/h
+SPEC['accel'] = 8.48
+SPEC['maxSpeed'] = 324

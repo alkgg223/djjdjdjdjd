@@ -43,3 +43,7 @@ SPEC['head'] = [rect_head(0.38, 0.58, 0.76, 0.7, lamps=[(0.47, 0.64, 0.05, 'high
 SPEC['tail_scale'] = 1.22
 
 SPEC['grip'] = 0.95
+
+# real performance: 0-100 km/h in 6.7 s, top speed 235 km/h
+SPEC['accel'] = 4.96
+SPEC['maxSpeed'] = 235

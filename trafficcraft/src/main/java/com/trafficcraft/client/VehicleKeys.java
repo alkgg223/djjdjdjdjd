@@ -20,9 +20,7 @@ public final class VehicleKeys {
     public static final KeyMapping GEAR_UP = k("gear_up", GLFW.GLFW_KEY_R);
     public static final KeyMapping GEAR_DOWN = k("gear_down", GLFW.GLFW_KEY_Y);
     public static final KeyMapping MENU = k("vehicle_menu", GLFW.GLFW_KEY_U);
-    public static final KeyMapping SCREEN_NEXT = k("screen_next", GLFW.GLFW_KEY_B);
-    public static final KeyMapping SCREEN_OK = k("screen_ok", GLFW.GLFW_KEY_J);
-    public static final KeyMapping[] ALL = {HORN, LIGHTS, HIGH_BEAM, IND_LEFT, IND_RIGHT, HAZARD, ENGINE, INTERIOR, SIREN, GEAR_MODE, GEAR_UP, GEAR_DOWN, MENU, SCREEN_NEXT, SCREEN_OK};
+    public static final KeyMapping[] ALL = {HORN, LIGHTS, HIGH_BEAM, IND_LEFT, IND_RIGHT, HAZARD, ENGINE, INTERIOR, SIREN, GEAR_MODE, GEAR_UP, GEAR_DOWN, MENU};
 
     private static KeyMapping k(String name, int key) {
         return new KeyMapping("key.trafficcraft." + name, KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, key, CAT);

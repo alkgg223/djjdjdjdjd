@@ -18,6 +18,7 @@ V12 = [1.0, 0.97, 0.99, 0.96, 1.0, 0.98] * 2
 # id: (base, overrides, pitch, backfire pitch, backfire style)
 PROFILES = {
     'toyota_supra_mk4': ('i6_twinturbo', {}, 1.0, 1.0, 'turbo'),
+    'toyota_gr_supra_a90': ('i6_twinturbo', dict(turbo=3500, noise=0.15, lp=7600), 1.04, 1.08, 'turbo'),
     'nissan_gtr_r35': ('i6_twinturbo', dict(pattern=[1.0, 0.9, 0.97, 0.88, 1.0, 0.92], turbo=3700, noise=0.15), 0.94, 0.95, 'turbo'),
     'bmw_m3_2026': ('i6_twinturbo', dict(turbo=3400, noise=0.14, lp=8000), 1.06, 1.05, 'turbo'),
     'ford_mustang_1964': ('v8_sport', dict(idle=700, noise=0.22, lp=5000), 0.86, 0.85, 'v8'),

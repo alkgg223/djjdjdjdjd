@@ -43,3 +43,7 @@ SPEC['head'] = [big(SPEC['head'][0])]
 
 # lamp size pass
 SPEC['tail_scale'] = 1.22
+
+# real performance: 0-100 km/h in 9.5 s, top speed 210 km/h
+SPEC['accel'] = 3.6
+SPEC['maxSpeed'] = 210

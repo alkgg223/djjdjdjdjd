@@ -48,3 +48,7 @@ SPEC['tail']['center_strips'] = [([(-0.6, 0.67), (0.6, 0.67)], 0.018, 'tail', 0.
 SPEC['tail_scale'] = 1.22
 
 SPEC['grip'] = 0.86
+
+# real performance: 0-100 km/h in 9.0 s, top speed 210 km/h
+SPEC['accel'] = 3.78
+SPEC['maxSpeed'] = 210

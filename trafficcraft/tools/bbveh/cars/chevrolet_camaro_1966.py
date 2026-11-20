@@ -33,3 +33,7 @@ SPEC = dict(
 
 # lamp size pass
 SPEC['tail_scale'] = 1.22
+
+# real performance: 0-100 km/h in 7.5 s, top speed 190 km/h
+SPEC['accel'] = 4.47
+SPEC['maxSpeed'] = 190

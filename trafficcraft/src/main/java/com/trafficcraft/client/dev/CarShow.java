@@ -92,20 +92,43 @@ public final class CarShow {
         }
         int t = tt - 120 - n * per * 40;
         if (t == 0) server.execute(() -> server.overworld().setDayTime(18000));
-        if (t == 5) server.execute(() -> {
-            for (var en : server.overworld().getAllEntities()) if (en instanceof VehicleEntity v) {
-                v.setFlag(VehicleEntity.F_ENGINE, true);
-                v.setFlag(VehicleEntity.F_LOW, true);
-                v.setFlag(VehicleEntity.F_BRAKE, true);
-            }
-        });
-        if (t == 6) view(mc, spots.get(0).add(3, 3, 8), spots.get(0));
+        if (t < 2) return;
         VehicleEntity v0 = car(mc, 0);
         if (v0 == null) return;
-        if (t == 10) view(mc, rel(v0, 2.6, 1.6, 5.5), rel(v0, 0, 0.6, 0));
-        if (t == 50) shot(mc, "c_night_front.png");
-        if (t == 55) view(mc, rel(v0, -2.4, 1.5, -5.5), rel(v0, 0, 0.6, 0));
-        if (t == 95) shot(mc, "c_night_rear.png");
+        float L0 = v0.spec().length, W0 = v0.spec().width;
+        // night lighting sequence: DRL only, low beam (close-up, front, road), high beam on the road, brake, tail, indicators, reverse
+        if (t < 300) {
+            if (t == 5) flags(server, VehicleEntity.F_ENGINE, true);
+            if (t == 6) flags(server, VehicleEntity.F_LOW | VehicleEntity.F_HIGH | VehicleEntity.F_BRAKE, false);
+            if (t == 10) view(mc, rel(v0, W0 * 0.75, 1.05, L0 / 2 + 1.4), rel(v0, W0 * 0.28, 0.62, L0 / 2 - 0.25));
+            if (t == 40) shot(mc, "c_hl_drl_close.png");
+            if (t == 42) flags(server, VehicleEntity.F_LOW, true);
+            if (t == 70) shot(mc, "c_hl_low_close.png");
+            if (t == 72) view(mc, rel(v0, 0, 1.3, L0 / 2 + 5.0), rel(v0, 0, 0.55, L0 / 2));
+            if (t == 100) shot(mc, "c_hl_low_front.png");
+            if (t == 102) view(mc, rel(v0, 0.9, 3.4, -L0 / 2 - 2.5), rel(v0, 0, 0, L0 / 2 + 9));
+            if (t == 130) shot(mc, "c_hl_low_road.png");
+            if (t == 132) flags(server, VehicleEntity.F_HIGH, true);
+            if (t == 160) shot(mc, "c_hl_high_road.png");
+            if (t == 162) {
+                flags(server, VehicleEntity.F_HIGH, false);
+                flags(server, VehicleEntity.F_BRAKE, true);
+                view(mc, rel(v0, -2.2, 1.4, -L0 / 2 - 4.0), rel(v0, 0, 0.7, -L0 / 2));
+            }
+            if (t == 190) shot(mc, "c_night_brake.png");
+            if (t == 192) flags(server, VehicleEntity.F_BRAKE, false);
+            if (t == 215) shot(mc, "c_night_tail.png");
+            if (t == 217) flags(server, VehicleEntity.F_IND_L, true);
+            for (int k = 0; k < 12; k++) if (t == 240 + k * 3) shot(mc, "c_night_ind_" + k + ".png");
+            if (t == 278) {
+                flags(server, VehicleEntity.F_IND_L, false);
+                flags(server, VehicleEntity.F_REVERSE, true);
+            }
+            if (t == 296) shot(mc, "c_night_reverse.png");
+            if (t == 298) flags(server, VehicleEntity.F_REVERSE, false);
+            return;
+        }
+        t -= 200;
         if (t == 100) server.execute(() -> server.overworld().setDayTime(3000));
         // driver's seat (steering wheel, gear lever, gauges)
         if (t == 105) server.execute(() -> ride(server, ids.get(0)));
@@ -164,6 +187,12 @@ public final class CarShow {
             TrafficCraft.LOG.info("[carshow] done");
             mc.stop();
         }
+    }
+
+    static void flags(MinecraftServer server, int f, boolean on) {
+        server.execute(() -> {
+            for (var en : server.overworld().getAllEntities()) if (en instanceof VehicleEntity v) v.setFlag(f, on);
+        });
     }
 
     static void setup(MinecraftServer server) {

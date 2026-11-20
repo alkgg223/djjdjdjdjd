@@ -382,10 +382,10 @@
  "texture": "toyota_supra_mk4",
  "seats_n": 4,
  "matcap": [
-  0.9375,
+  0.96875,
   0.0,
   1.0,
-  0.0625
+  0.03125
  ],
  "exhausts": [
   [
@@ -433,7 +433,7 @@
   ]
  },
  "maxSpeed": 250,
- "accel": 5.2,
+ "accel": 7.06,
  "brake": 9.5,
  "mass": 1500,
  "fuel": 70,
@@ -456,5 +456,5 @@
   "cyl": 6,
   "diesel": false
  },
- "tris": 10791
+ "tris": 13289
 }

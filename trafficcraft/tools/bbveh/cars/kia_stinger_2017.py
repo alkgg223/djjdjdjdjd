@@ -46,3 +46,7 @@ SPEC['grip'] = 0.97
 
 # real infotainment screen size / mounting
 SPEC['cabin'].update(dict(screen_size=(0.18, 0.1), screen_mount='floating', screen_x=0.03))
+
+# real performance: 0-100 km/h in 4.9 s, top speed 270 km/h
+SPEC['accel'] = 6.65
+SPEC['maxSpeed'] = 270

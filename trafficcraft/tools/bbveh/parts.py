@@ -6,6 +6,7 @@ from bb import V, unit, ngon, rrect, fill, noise, NOTINT, seg_dist
 import styles as S
 
 WHEELS = ['spoke5', 'spoke6', 'mesh', 'dish', 'turbine']
+EXTRA_WHEEL_NAMES = {'dspoke': 'GR double 5-spoke'}
 WHEEL_NAMES = ['Factory 5-spoke', 'Forged 6-spoke', 'Cross mesh', 'Deep dish', 'Turbine 10-spoke']
 SPOILERS = ['hoop', 'ducktail', 'low_wing', 'gt_wing', 'ta_wing']
 SPOILER_NAMES = ['Hoop wing', 'Ducktail lip', 'Low pedestal wing', 'Swan-neck GT wing', 'Time-attack wing']
@@ -36,7 +37,7 @@ def tube(m, outline_xy, z0, z1, style_out, style_end, style_in, inner=0.78):
 # ------------------------------------------------------------------------------------------------ wheels
 def rim_painter(kind):
     """Rim face texture in wheel-local polar coordinates; spoke gaps are transparent (cut out)."""
-    col = {'spoke5': (200, 204, 210), 'spoke6': (150, 120, 70), 'mesh': (206, 208, 212), 'dish': (60, 62, 66), 'turbine': (90, 94, 100),
+    col = {'dspoke': (64, 66, 70), 'spoke5': (200, 204, 210), 'spoke6': (150, 120, 70), 'mesh': (206, 208, 212), 'dish': (60, 62, 66), 'turbine': (90, 94, 100),
            'hubcap': (214, 218, 222), 'steel': (46, 48, 52), 'fuchs': (40, 40, 42), 'wire': (210, 212, 216), 'snowflake': (196, 198, 202),
            'aero': (70, 74, 80), 'star': (190, 194, 200)}[kind]
     classic = kind in ('hubcap', 'steel', 'fuchs', 'wire', 'snowflake', 'aero', 'star')
@@ -58,6 +59,8 @@ def rim_painter(kind):
             k, w0, w1 = 5, 0.09, 0.08
         elif kind == 'turbine':
             k, w0, w1 = 10, 0.05, 0.035
+        elif kind == 'dspoke':
+            k, w0, w1 = 10, 0.04, 0.03
         else:
             k, w0, w1 = 10, 0.03, 0.03
         if kind == 'mesh':
@@ -65,7 +68,7 @@ def rim_painter(kind):
             a2 = np.mod((a - rn * 0.9) * 10 / (2 * math.pi), 1.0)
             spoke = (np.abs(a1 - 0.5) > 0.42) | (np.abs(a2 - 0.5) > 0.42)
         else:
-            ph = np.mod(a * k / (2 * math.pi) + (rn * 0.25 if kind == 'turbine' else 0), 1.0)
+            ph = np.mod(a * k / (2 * math.pi) + (rn * 0.25 if kind == 'turbine' else 0) + ((-1) ** np.floor(a * k / (2 * math.pi)) * (rn * 0.12) if kind == 'dspoke' else 0), 1.0)
             half = (w0 + (w1 - w0) * rn) * k / (2 * math.pi) / np.maximum(rn, 0.2) * 1.6
             spoke = (ph < half) | (ph > 1 - half)
         ring = rn > 0.9
@@ -128,7 +131,7 @@ def classic_rim(kind, out, P, rn, a):
     return out
 
 
-def wheel(m, group, kind, R=0.322, TW=0.245, Rr=0.216, seg=16, caliper_color=(140, 142, 148), add_caliper=True, whitewall=False):
+def wheel(m, group, kind, R=0.322, TW=0.245, Rr=0.216, seg=16, caliper_color=(140, 142, 148), add_caliper=True, whitewall=False, spokes3d=False):
     """Wheel centred at the origin, axis X, outer face +X (game convention)."""
     h = TW / 2
     if whitewall:
@@ -167,6 +170,34 @@ def wheel(m, group, kind, R=0.322, TW=0.245, Rr=0.216, seg=16, caliper_color=(14
     m.face([V(lipx - depth, *p) for p in ngon(Rr, seg, rot=rot)], 'rim_' + kind, outward=V(1, 0, 0), dens=200)
     m.element('hub', 'solid', group, 'alu')
     m.cylinder(V(lipx - depth, 0, 0), V(1, 0, 0), 0.042, 0.014, 8, 'alu', cap_style='trim')
+    spokes = {'spoke5': (5, 0.034, 0.0), 'spoke6': (6, 0.026, 0.0), 'dspoke': (5, 0.018, 0.075), 'turbine': (10, 0.014, 0.0)}.get(kind) if spokes3d else None
+    if spokes:
+        # raised spokes in front of the cut-out face, tapering to the rim, plus lug nuts round the hub
+        n, w, split = spokes
+        m.element('spokes', 'solid', group, 'rim_' + kind)
+        r0, r1 = 0.36 * Rr, 0.94 * Rr
+        for i in range(n):
+            for off in ((-split, split) if split else (0.0,)):
+                a = 2 * math.pi * i / n + off
+                d = V(0, math.cos(a), math.sin(a))
+                t = V(0, -math.sin(a), math.cos(a))
+                x0 = lipx - depth + 0.004
+                x1 = x0 + 0.022
+                pts_ = [(r0, w * 1.25), (r1, w * 0.8)]
+                for (ra, wa), (rb, wb) in zip(pts_[:-1], pts_[1:]):
+                    qa = [d * ra + t * wa, d * rb + t * wb, d * rb - t * wb, d * ra - t * wa]
+                    front = [V(x1 - 0.008 * (k in (1, 2)), q[1], q[2]) for k, q in enumerate(qa)]
+                    back = [V(x0, q[1], q[2]) for q in qa]
+                    m.face(front, 'rim_' + kind, outward=V(1, 0, 0))
+                    for k in range(4):
+                        k1 = (k + 1) % 4
+                        qq = [back[k], back[k1], front[k1], front[k]]
+                        m.face(qq, 'rim_' + kind, outward=np.mean(qq, axis=0) - V(x0, 0, 0) - d * (r0 + r1) / 2)
+        m.element('lugs', 'solid', group, 'chrome')
+        nl = 5 if n in (5, 10) else n
+        for i in range(nl):
+            a = 2 * math.pi * (i + 0.5) / nl
+            m.cylinder(V(lipx - depth + 0.012, 0.062 * math.cos(a), 0.062 * math.sin(a)), V(1, 0, 0), 0.011, 0.014, 6, 'chrome', cap_style='chrome')
     # inside of the wheel: brake disc + dark backing so nothing shows through the spokes
     m.element('rotor', 'solid', group, 'rotor')
     m.face([V(lipx - depth - 0.04, *p) for p in ngon(0.165, seg, rot=rot)], 'rotor', outward=V(1, 0, 0), dens=120)

@@ -103,6 +103,8 @@ def build(config, lit=()):
                 continue
             if int(idx) != config.get(slot, 0):
                 continue
+        if part in config.get('_hide', ()):
+            continue
         if part == 'caliper':
             wheel_tris.append(t)
             continue
@@ -296,4 +298,42 @@ if MODE in ('variants', 'all'):
             render(p, (600, 360), 16)
             tiles.append(p)
         sheet(tiles, 3, os.path.join(OUT, 'sheet_%s.png' % slot))
+if MODE in ('cabin', 'all', 'views'):
+    # cut-away views of the cabin: left door removed, a lamp inside so seats, belts, console and door panels read clearly
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    IMAGE = bpy.data.images.load(TEXPATH)
+    MATCACHE.clear()
+    studio()
+    build({'_hide': ('door_fl',)})
+    ld = bpy.data.lights.new('cabin', 'POINT')
+    ld.energy = 60
+    lo = bpy.data.objects.new('cabin', ld)
+    lo.location = (0.0, 0.0, 1.05)
+    bpy.context.scene.collection.objects.link(lo)
+    cab = []
+    for name, (loc, tgt, lens) in (('cabin_side', ((-2.3, 0.5, 1.3), (0.15, -0.05, 0.62), 32)),
+                                    ('cabin_dash', ((-0.75, -0.55, 1.05), (-0.05, 1.0, 0.7), 22)),
+                                    ('cabin_door', ((0.9, 0.15, 1.05), (-0.85, -0.05, 0.55), 26))):
+        camera(loc, tgt, lens)
+        p = os.path.join(OUT, '%s.png' % name)
+        render(p)
+        cab.append(p)
+    sheet(cab, 3, os.path.join(OUT, 'sheet_cabin.png'))
+if MODE == 'headlamps':
+    # close-ups of both front lamp units and the whole front, lights off (day) and on (night: low + high beam + DRL)
+    cams = (('left', ((-1.25, 3.05, 1.12), (-0.56, 1.95, 0.64), 62)), ('right', ((1.25, 3.05, 1.12), (0.56, 1.95, 0.64), 62)),
+            ('front', ((0.0, 5.6, 1.05), (0.0, 0.0, 0.52), 48)), ('top34', ((-1.9, 3.6, 2.0), (-0.3, 1.6, 0.6), 46)))
+    tiles = []
+    for night in (False, True):
+        bpy.ops.wm.read_factory_settings(use_empty=True)
+        IMAGE = bpy.data.images.load(TEXPATH)
+        MATCACHE.clear()
+        studio(night=night)
+        build({}, ('head', 'high', 'drl', 'tail') if night else ())
+        for name, (loc, tgt, lens) in cams:
+            camera(loc, tgt, lens)
+            pth = os.path.join(OUT, 'hl_%s_%s.png' % (name, 'on' if night else 'off'))
+            render(pth, (800, 500), 32 if night else 24)
+            tiles.append(pth)
+    sheet(tiles, 4, os.path.join(OUT, 'sheet_headlamps.png'))
 print('done')

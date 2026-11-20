@@ -69,7 +69,14 @@ class Car:
         self.__dict__.update(d)
         for k in ('bot', 'belt', 'hw', 'zsh', 'roofz', 'roofw', 'crown'):
             setattr(self, k, Curve(d[k]))
-        self.m = Model(self.id, 1024, self.density)
+        if 'crease' in d:
+            cc = Curve(d['crease'])
+            self.crease_fn = cc
+        if 'fender_rise' in d:
+            self.fr_fn = Curve(d['fender_rise'])
+        if 'nose_pinch' in d:
+            self.pinch_fn = Curve(d['nose_pinch'])
+        self.m = Model(self.id, 2048 if self.density > 48 else 1024, self.density)
         self.m.shift = V(0, 0, -self.L / 2)
         self.m.painters.update(S.COMMON)
         self.ROUTE = {}
@@ -110,8 +117,12 @@ class Car:
         s2 = min(s2, ts - 0.05)
         inner = min(0.6, w * 0.7)
         lift = ts - t                       # the bonnet follows the raised fenders, keeping only a gentle valley
-        return [(0.0, b + 0.02), (inner, b), (inner, a), (w * 0.965, max(a, b + 0.035)), (w, s2), (w - 0.02, (s2 + ts) / 2),
-                (w - 0.058, ts - 0.022), (w - 0.1, ts), (w * 0.5, t + cr * 0.72 + lift * 0.8), (0.0, t + cr + lift * 0.72)]
+        cz = self.crease_fn(z) if self.crease_fn else 0.0     # sharp character line along the side
+        fr = self.fr_fn(z) if self.fr_fn else 0.0              # wing tops rising above the bonnet
+        pn = self.pinch_fn(z) if self.pinch_fn else 0.0        # upper nose drawn in (pointed beak) while the bumper corners stay wide
+        return [(0.0, b + 0.02), (inner, b), (inner, a), (w * 0.965, max(a, b + 0.035)), (w, s2), (w - 0.02 + cz - pn * 0.35, (s2 + ts) / 2),
+                (w - 0.058 - pn, ts - 0.022 + fr), (w - 0.1 - pn, ts + fr), (w * 0.5 - pn * 0.5, t + cr * 0.72 + lift * 0.8 + fr * 0.3),
+                (0.0, t + cr + lift * 0.72)]
 
     def fender_t(self, z):
         """Top of the body side; raised over the wheels where the nose / tail is lower than the tyre top."""
@@ -129,7 +140,8 @@ class Car:
         lift = self.fender_t(z) - t
         xx = min(abs(x), w - 0.1)
         f = (xx / max(w - 0.1, 1e-3)) ** 2
-        return t + self.crown(z) * (1 - f) + lift * (0.72 + 0.28 * f)
+        fr = self.fr_fn(z) if self.fr_fn else 0.0
+        return t + self.crown(z) * (1 - f) + lift * (0.72 + 0.28 * f) + fr * f
 
     def gpts(self, z):
         w, t = self.hw(z), self.belt(z)
@@ -138,14 +150,27 @@ class Car:
         r = self.roofw(min(max(z, self.CABIN0), self.CABIN1))
         rz = t + g
         hood = [(w * 0.74, self.deck(w * 0.74, z)), (w * 0.52, self.deck(w * 0.52, z)), (0.0, self.deck(0.0, z))]
-        cab = [(r + self.tumble, rz - self.glass_drop), (r, rz - 0.022), (0.0, rz)]
-        out = [(w - 0.1, t)]
+        cab = [(r + self.tumble, rz - self.glass_drop), (r, rz - 0.022), (0.0, rz - self.roof_dip * k)]
+        if self.roof_dip:                    # double-bubble roof: two humps with a channel down the middle
+            hood.insert(2, (w * 0.26, self.deck(w * 0.26, z)))
+            cab.insert(2, (r * 0.48, rz + self.roof_dip * 0.15))
+        out = [(w - 0.1, t + (self.fr_fn(z) if self.fr_fn else 0.0))]
         for (xh, zh), (xc, zc) in zip(hood, cab):
             out.append((lerp(xh, xc, k), lerp(zh, max(zc, zh), k)))
         return out
 
     tumble = 0.05
     glass_drop = 0.075
+    crease_fn = None
+    fr_fn = None
+    pinch_fn = None
+    roof_dip = 0.0
+    seat_belts = False
+    frames = False
+    handles3d = False
+    spokes3d = False
+    rich_interior = False
+    wheel_seg = 16
 
     def stations(self):
         zs = [0.0, 0.05, 0.18, self.RB_Z, self.CABIN0, self.CABIN1, self.FB_Z, self.WS0, self.WS1, self.L - 0.31, self.L - 0.16, self.L - 0.07,
@@ -355,8 +380,8 @@ class Car:
             for z0, z1 in zip(self.ZG[:-1], self.ZG[1:]):
                 zm = (z0 + z1) / 2
                 A, B = self.gpts(z0), self.gpts(z1)
-                for j in (1, 2):
-                    if j == 2 and (self.WS0 < zm < self.WS1 or rg[0] < zm < rg[1]):
+                for j in range(1, len(A) - 1):
+                    if j >= 2 and (self.WS0 < zm < self.WS1 or rg[0] < zm < rg[1]):
                         continue
                     for sx in (1, -1):
                         q = [V(sx * A[j][0], A[j][1] - 0.012, z0), V(sx * B[j][0], B[j][1] - 0.012, z1), V(sx * B[j + 1][0], B[j + 1][1] - 0.012, z1),
@@ -462,6 +487,9 @@ class Car:
     def headlamps(self):
         m = self.m
         for hd in self.head:
+            if hd.get('assembly'):
+                self.head_assembly(hd)
+                continue
             for sx in (1, -1):
                 side = 'l' if sx > 0 else 'r'
                 view = hd.get('view', 'T')
@@ -489,6 +517,85 @@ class Car:
                 for (poly, width, kind) in hd.get('strips', []):
                     self.strip([(sx * u, v) for u, v in poly], width, view, hd.get('house_off', 0.005) + 0.004,
                                self.el('body', mat_of(kind, side), LAMP_STYLE[kind]), LAMP_STYLE[kind])
+
+    def head_assembly(self, hd):
+        """Modelled headlamp unit (design coordinates = top view (x, z) on the body surface):
+        dark housing, chrome reflector, LED projector cubes with their own lenses, separators, 3D daytime light guide,
+        amber indicator segment, black border trim and a clear outer lens; projected obliquely so it follows the nose."""
+        m = self.m
+        L = self.L
+        d0 = unit(V(hd.get('dir', (0.0, -0.55, -0.83))))
+        h0, h1, h2 = hd.get('offsets', (0.004, 0.016, 0.023))          # housing, element fronts, outer lens
+        self.m.painters.setdefault('lens_clear', lambda face, P, n: fill(P, (226, 234, 240), 64))
+        for sx in (1, -1):
+            side = 'l' if sx > 0 else 'r'
+            dv = V(sx * d0[0], d0[1], d0[2])
+            view = ('D', tuple(dv))
+
+            def surf(x, z):
+                P, N = self.hits([(sx * x, z)], 'T', self.TRIS, True)
+                return P[0], N[0]
+
+            def toD(x, z):
+                S, _ = surf(x, z)
+                t = (S[2] - L) / dv[2]
+                return (S[0] - dv[0] * t, S[1] - dv[1] * t)
+
+            def frame(a, b):
+                S, N = surf(*a)
+                S2, _ = surf(*b)
+                u = S2 - S
+                u = unit(u - N * (u @ N))
+                return S, np.c_[u, np.cross(N, u), N], N
+
+            def seg_bar(pts, w, t, off, e, style):
+                W = [surf(x, z) for x, z in pts]
+                for (A, NA), (B, NB) in zip(W[:-1], W[1:]):
+                    n_ = unit(NA + NB)
+                    ax = B - A
+                    ln = float(np.linalg.norm(ax))
+                    if ln < 1e-4:
+                        continue
+                    ax = ax / ln
+                    sd = unit(np.cross(n_, ax))
+                    self.el('body', e, style)
+                    m.box((A + B) / 2 + n_ * off, (ln + w * 0.5, w, t), style, M=np.c_[ax, sd, n_])
+
+            poly = lambda pts: [toD(x, z) for x, z in pts] if sx > 0 else [toD(x, z) for x, z in pts][::-1]
+            out = poly(hd['outline'])
+            self.conform(out, view, self.TRIS, [(h0, self.el('body', 'solid', 'head_house_black'), 'head_house_black'),
+                                                (h2, self.el('body', 'glass', 'lens_clear'), 'lens_clear')],
+                         self.el('body', 'solid', 'trim_gloss'), 'trim_gloss', depth=0.004)
+            # border trim round the unit
+            self.strip(out + [out[0]], hd.get('trim_w', 0.012), view, 0.002, self.el('body', 'solid', 'trim'), 'trim')
+            # chrome reflector panels behind the projectors
+            for rp in hd.get('reflectors', []):
+                self.conform(poly(rp), view, self.TRIS, [(h0 + 0.002, self.el('body', 'solid', 'chrome'), 'chrome')], None, None, rings=(1.0, 0.5), dens=96)
+            # LED projector cubes
+            mods = hd.get('modules', [])
+            mw, mh = hd.get('module_size', (0.05, 0.042))
+            for i, (x, z, kind) in enumerate(mods):
+                nb = mods[min(i + 1, len(mods) - 1)] if i + 1 < len(mods) else None
+                a, b = ((x, z), (nb[0], nb[1])) if nb else ((mods[i - 1][0], mods[i - 1][1]), (x, z))
+                _, M, N = frame(a, b)
+                c, _ = surf(x, z)
+                self.el('body', 'solid', 'trim_gloss')
+                m.box(c + N * (h0 + h1) / 2, (mw, mh, h1 - h0), 'trim_gloss', M=M)
+                self.el('body', 'solid', 'chrome')
+                m.box(c + N * (h1 + 0.0004), (mw * 0.9, mh * 0.86, 0.001), 'chrome', M=M)
+                st = LAMP_STYLE[kind]
+                self.el('body', mat_of(kind, side), st)
+                m.cylinder(c + N * (h1 + 0.001), N, min(mw, mh) * 0.33, 0.003, 10, st, caps=(False, True))
+            # separators between the modules
+            for (x, z), (x2, z2) in hd.get('separators', []):
+                _, M, N = frame((x, z), (x2, z2))
+                c, _ = surf(x, z)
+                self.el('body', 'solid', 'trim_gloss')
+                m.box(c + N * (h0 + h1) / 2, (0.005, mh * 1.25, h1 - h0), 'trim_gloss', M=M)
+            # 3D light guides: daytime running light and amber indicator
+            self.m.painters.setdefault('light_guide', S.flat((198, 202, 208), 3))
+            for pts, w, kind in hd.get('guides', []):
+                seg_bar(pts, w, 0.006, (h0 + h1) / 2 + 0.002, mat_of(kind, side), 'light_guide' if kind == 'drl' else LAMP_STYLE[kind])
 
     def strip(self, poly, width, view, off, e, style):
         """LED light strip along a 2D polyline projected on the body."""
@@ -619,6 +726,39 @@ class Car:
             gdef = T['garnish']
             self.conform(gdef['outline'], 'B', self.TRIS, [(gdef.get('off', 0.008), self.el('body', 'solid', 'garnish'), 'garnish')],
                          self.el('body', 'solid', 'tail_bezel'), 'tail_bezel', dens=320)
+
+    def vents(self):
+        """Black vent / intake inserts with fins, fitted to the body (front intakes, bonnet vents, door and bumper scoops)."""
+        for i, vd in enumerate(getattr(self, 'vent_list', [])):
+            for sx in ((1, -1) if vd.get('mirror', True) else (1,)):
+                view = vd['view']
+                if view in ('L', 'R'):
+                    view = 'L' if sx > 0 else 'R'
+                    out = list(vd['outline'])
+                else:
+                    out = mirror2(vd['outline'], sx) if vd.get('mirror', True) else vd['outline']
+                st = 'vent_%d_%s' % (i, vd.get('fins', 'h'))
+                self.m.painters[st] = vent_painter(vd.get('fins', 'h'), vd.get('pitch', 0.02))
+                g = vd.get('group', 'body')
+                tris = self.body_tris(('body', 'fb_0', 'rb_0', 'door_fl', 'door_fr', 'door_rl', 'door_rr'))
+                self.conform(out, view, tris, [(vd.get('lift', 0.004), self.el(g, 'solid', st), st)], self.el(g, 'solid', 'trim_gloss'), 'trim_gloss',
+                             rings=(1.0, 0.7, 0.4), dens=160, depth=0.012)
+
+    def door_handles(self):
+        """Flush door handles as small separate parts on every door (they open with the doors)."""
+        style = 'chrome' if self.chrome_handles else 'trim_gloss'
+        for name, a, b in self.doors:
+            hz = b - 0.2 if self.handle_rear else a + 0.12
+            hy = self.belt(hz) - 0.06
+            for sx in (1, -1):
+                g = 'door_%s%s' % (name, 'l' if sx > 0 else 'r')
+                p, n = self.hits([(hz, hy)], 'L' if sx > 0 else 'R', self.TRIS, True)
+                if not np.all(np.isfinite(p[0])):
+                    continue
+                c, nn = p[0] + n[0] * 0.006, n[0]
+                self.el(g, 'solid', style)
+                M = np.c_[unit(np.cross(V(0, 1, 0), nn)), V(0, 1, 0), nn]
+                self.m.box(c, (0.12, 0.022, 0.012), style, M=M)
 
     def emblems(self):
         """Generic maker badge (shape + initial) on the nose and the tail."""
@@ -814,7 +954,7 @@ class Car:
 
     def wheels(self):
         for k, kind in enumerate(self.wheel_list()):
-            PT.wheel(self.m, 'wh_%d' % k, kind, R=self.R, TW=self.TW + 0.01, Rr=self.Rr, add_caliper=(k == 0), caliper_color=self.caliper,
+            PT.wheel(self.m, 'wh_%d' % k, kind, seg=self.wheel_seg, spokes3d=self.spokes3d, R=self.R, TW=self.TW + 0.01, Rr=self.Rr, add_caliper=(k == 0), caliper_color=self.caliper,
                      whitewall=(k == 0 and getattr(self, 'whitewall', False)))
 
     # ===================================================================================== interior
@@ -850,6 +990,9 @@ class Car:
                     m.box(V(x, hy + 0.27, zc - 0.22), (wbench, 0.42, 0.1), 'seat_fabric', M=rx(-24))
             for x in (xs if len(xs) == 2 else [dx, -dx]):
                 self.seats_meta.append([x, floor + 0.15, zc - self.L / 2])
+            if self.seat_belts and kind == 'front':
+                for x in xs:
+                    self.seat_belt(x, floor + 0.06, zc)
         # dashboard
         self.el('body', 'solid', 'dash')
         prof = [(wz + 0.01, bt - 0.03), (wz - 0.26, bt + 0.01), (wz - 0.36, bt - 0.005), (wz - 0.42, bt - 0.06), (wz - 0.42, bt - 0.19), (wz - 0.34, bt - 0.33),
@@ -974,7 +1117,115 @@ class Car:
             m.box(V(0, ry_, rz), (0.2, 0.055, 0.03), 'dash', M=rx(-10))
             self.el('body', 'solid', 'mirror')
             m.box(V(0, ry_, rz - 0.017), (0.18, 0.042, 0.004), 'mirror', M=rx(-10))
+        if self.rich_interior:
+            self.interior_details(I, dx, wz, bt, floor, fz, dwid)
         self.I = I
+
+    def interior_details(self, I, dx, wz, bt, floor, fz, dwid):
+        """Extra cabin detail: dash vents and glovebox, cluster visor, console buttons / knobs / cup holders / handbrake,
+        large pedals with pads and a footrest, door panels with speaker, pull handle, window switches and map pocket."""
+        m = self.m
+        so = 1.0 if dx > 0 else -1.0
+        # dashboard: round vents at both ends and either side of the stack, glovebox lid, cluster visor lip
+        self.el('body', 'solid', 'trim_gloss')
+        for vx in (so * (dwid - 0.1), -so * (dwid - 0.1), 0.16, -0.16):
+            m.cylinder(V(vx, bt - 0.07, wz - 0.42), V(0, 0, -1), 0.04, 0.012, 10, 'trim_gloss', cap_style='grille')
+        self.el('body', 'solid', 'dash')
+        m.box(V(-so * 0.42, bt - 0.19, wz - 0.405), (0.32, 0.11, 0.012), 'dash', M=rx(10))
+        self.el('body', 'solid', 'alu')
+        m.box(V(-so * 0.3, bt - 0.16, wz - 0.415), (0.05, 0.012, 0.01), 'alu')
+        self.el('body', 'solid', 'dash')
+        m.box(V(dx, bt + 0.125, wz - 0.25), (0.48, 0.014, 0.16), 'dash', M=rx(-6))
+        # centre console: climate knobs, hazard / button row, cup holders, handbrake
+        self.el('body', 'solid', 'trim_gloss')
+        for i, kx in enumerate((-0.07, 0.0, 0.07)):
+            m.cylinder(V(kx, bt - 0.36, wz - 0.42), V(0, 0.14, -1), 0.022, 0.018, 10, 'alu' if i == 1 else 'trim_gloss', cap_style='alu')
+        self.el('body', 'solid', 'alu')
+        for i in range(5):
+            m.box(V(-0.08 + i * 0.04, bt - 0.21, wz - 0.418), (0.028, 0.016, 0.008), 'alu')
+        self.el('body', 'solid', 'trim_gloss')
+        for cx in (0.045, -0.045):
+            m.cylinder(V(cx, floor + 0.235, fz + 0.18), V(0, -1, 0), 0.032, 0.05, 10, 'trim_gloss', caps=(False, True))
+        self.el('body', 'solid', 'leather')
+        m.box(V(-so * 0.05, floor + 0.26, fz + 0.02), (0.035, 0.03, 0.2), 'leather', M=rx(-14))
+        m.box(V(0, floor + 0.245, fz - 0.12), (0.2, 0.04, 0.22), 'leather')      # armrest lid
+        # pedals: pads on arms, footrest on the left
+        self.el('body', 'solid', 'dash')
+        for px, w_ in ((0.12, 0.06), (0.02, 0.08), (-0.1, 0.09)):
+            m.box(V(dx + px * so, floor + 0.2, wz - 0.16), (0.014, 0.2, 0.014), 'dash', M=rx(-30))
+        self.el('body', 'solid', 'alu')
+        for px, w_ in ((0.12, 0.065), (0.02, 0.085), (-0.1, 0.095)):
+            m.box(V(dx + px * so, floor + 0.11, wz - 0.115), (w_, 0.085, 0.01), 'alu', M=rx(22))
+        m.box(V(dx + so * 0.19, floor + 0.09, wz - 0.16), (0.07, 0.12, 0.01), 'alu', M=rx(35))
+        # door panels
+        for name, a, b in self.doors:
+            for sx in (1, -1):
+                g = 'door_%s%s' % (name, 'l' if sx > 0 else 'r')
+                x = sx * (self.hw((a + b) / 2) - 0.095)
+                zc = (a + b) / 2
+                self.el(g, 'solid', 'grille')
+                m.cylinder(V(x, floor + 0.2, zc + (b - a) * 0.28), V(-sx, 0, 0), 0.07, 0.008, 12, 'grille', cap_style='grille')
+                self.el(g, 'solid', 'dash')
+                m.box(V(x - sx * 0.02, floor + 0.16, zc - (b - a) * 0.12), (0.03, 0.12, (b - a) * 0.45), 'dash')      # map pocket
+                m.box(V(x - sx * 0.045, floor + 0.43, zc + 0.08), (0.03, 0.03, 0.1), 'dash')                           # pull handle
+                self.el(g, 'solid', 'trim_gloss')
+                m.box(V(x - sx * 0.05, floor + 0.405, zc - 0.08), (0.04, 0.012, 0.12), 'trim_gloss')                   # switch panel
+                self.el(g, 'solid', 'alu')
+                m.box(V(x - sx * 0.025, floor + 0.5, zc + (b - a) * 0.3), (0.012, 0.02, 0.05), 'alu')                  # inner door release
+
+    def strap(self, a, b, w=0.045, t=0.006, style='belt'):
+        a, b = V(a), V(b)
+        d = b - a
+        ln = float(np.linalg.norm(d))
+        ax = d / ln
+        side = unit(np.cross(ax, V(0, 0, 1))) if abs(ax[2]) < 0.9 else V(1, 0, 0)
+        nrm = np.cross(side, ax)
+        self.m.box((a + b) / 2, (w, ln, t), style, M=np.c_[side, ax, nrm])
+
+    def seat_belt(self, x, hy, zc):
+        """Three-point belt: B-pillar anchor, diagonal sash over the seat back, lap strap and a buckle on the tunnel side."""
+        so = 1.0 if x > 0 else -1.0
+        Mb = rx(-12)
+        piv = V(x, hy + 0.04, zc - 0.22)
+        sh = piv + Mb @ V(so * 0.16, 0.56, 0.075)          # over the outer shoulder
+        hip_in = V(x - so * 0.17, hy + 0.13, zc + 0.02)
+        hip_out = V(x + so * 0.21, hy + 0.1, zc - 0.06)
+        anchor = V(so * (self.hw(zc - 0.3) - 0.13), self.belt(zc - 0.3) + 0.2, zc - 0.32)
+        self.m.painters.setdefault('belt', S.flat((34, 34, 37), 6))
+        self.el('body', 'solid', 'belt')
+        self.strap(anchor, sh)
+        self.strap(sh, hip_in)
+        self.strap(hip_out, hip_in)
+        self.el('body', 'solid', 'alu')
+        self.m.box(hip_in + V(-so * 0.03, -0.02, 0), (0.05, 0.03, 0.035), 'alu')
+        self.el('body', 'solid', 'trim_gloss')
+        self.m.box(hip_in + V(-so * 0.06, -0.05, 0), (0.04, 0.07, 0.045), 'trim_gloss')
+        self.m.box(anchor, (0.03, 0.06, 0.05), 'trim_gloss')
+
+    def window_frames(self):
+        """Black frames round every side window (belt moulding, header and the vertical edges)."""
+        m = self.m
+        e = self.el('body', 'solid', 'trim_gloss')
+        for a, b in self.windows:
+            zs = [z for z in self.ZG if a - 1e-6 <= z <= b + 1e-6]
+            if len(zs) < 2:
+                continue
+            for sx in (1, -1):
+                def edge(z, f0, f1):
+                    g = self.gpts(z)
+                    p0, p1 = np.array(g[0]), np.array(g[1])
+                    q0, q1 = p0 + (p1 - p0) * f0, p0 + (p1 - p0) * f1
+                    dv = p1 - p0
+                    nn = np.array([dv[1], -dv[0]]) / max(np.linalg.norm(dv), 1e-6) * 0.005
+                    return [V(sx * (q0[0] + nn[0]), q0[1] + nn[1], z), V(sx * (q1[0] + nn[0]), q1[1] + nn[1], z)]
+                for f0, f1 in ((0.0, 0.05), (0.93, 1.0)):
+                    for z0, z1 in zip(zs[:-1], zs[1:]):
+                        A, B = edge(z0, f0, f1), edge(z1, f0, f1)
+                        q = [A[0], B[0], B[1], A[1]]
+                        m.face(q, 'trim_gloss', el=e, outward=V(sx, 0.3, 0))
+                for z, dz in ((a, 0.025), (b, -0.025)):
+                    A, B = edge(z, 0.0, 1.0), edge(z + dz, 0.0, 1.0)
+                    m.face([A[0], B[0], B[1], A[1]], 'trim_gloss', el=e, outward=V(sx, 0.3, 0))
 
     def front_seat(self, x, hy, zc, sw, kind):
         m = self.m
@@ -1240,6 +1491,11 @@ class Car:
         self.front_bumper_lamps()
         self.taillamps()
         self.emblems()
+        self.vents()
+        if self.handles3d:
+            self.door_handles()
+        if self.frames:
+            self.window_frames()
         self.mirrors()
         self.wipers()
         self.hoods()
@@ -1271,7 +1527,7 @@ class Car:
         cat = dict(fb=[dict(name=n) for n in FB_NAMES], rb=[dict(name=n) for n in RB_NAMES],
                    ex=[dict(name=PT.EXHAUST_NAMES[PT.EXHAUSTS.index(e)]) for e in self.exhaust_list()],
                    sp=[dict(name=PT.SPOILER_NAMES[PT.SPOILERS.index(s)] if s in PT.SPOILERS else 'None') for s in self.spoiler_list()],
-                   hd=[dict(name=n) for n in HD_NAMES], wh=[dict(name=PT.WHEEL_NAMES[PT.WHEELS.index(w)] if w in PT.WHEELS else w) for w in self.wheel_list()],
+                   hd=[dict(name=n) for n in HD_NAMES], wh=[dict(name=PT.WHEEL_NAMES[PT.WHEELS.index(w)] if w in PT.WHEELS else PT.EXTRA_WHEEL_NAMES.get(w, w)) for w in self.wheel_list()],
                    sk=[dict(name=n) for n in SK_NAMES])
         doors = {}
         for name, a, b in self.doors:
@@ -1360,6 +1616,17 @@ def gauge_painter(style, dx, cy, colors=None):
             red = tick & (a > -math.pi * 0.25) & (a < 0.15)
             out[red, :3] = (220, 40, 40)
             out[d < r * 0.08, :3] = (200, 60, 30)
+        return out
+    return f
+
+
+def vent_painter(kind, pitch):
+    def f(face, P, n):
+        out = fill(P, (16, 16, 18))
+        q = P[..., 1] if kind == 'h' else (P[..., 2] if kind == 'z' else P[..., 0])
+        out[np.mod(q / pitch, 1.0) < 0.35, :3] = (52, 54, 58)
+        if kind == 'mesh':
+            out[S.honeycomb(P, np.stack([P[..., 0], P[..., 1]], -1), pitch), :3] = (6, 6, 8)
         return out
     return f
 

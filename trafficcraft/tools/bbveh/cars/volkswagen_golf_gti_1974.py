@@ -55,3 +55,7 @@ SPEC['head'] = [big(SPEC['head'][0])]
 SPEC['tail_scale'] = 1.22
 
 SPEC['grip'] = 0.9
+
+# real performance: 0-100 km/h in 9.0 s, top speed 182 km/h
+SPEC['accel'] = 3.78
+SPEC['maxSpeed'] = 182

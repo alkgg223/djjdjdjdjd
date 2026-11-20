@@ -13,6 +13,8 @@ BLUE = ('#08101c', '#2a6ad0', '#8ec8ff')
 RED = ('#0c0c0e', '#c01e28', '#ff5050')
 
 INT = {
+    'toyota_gr_supra_a90': dict(wheel='3spoke', wheel_r=0.18, wheel_col='#1a1a1c', cluster='digital', gauge=RED, seat='sport', leather='#1c1c1e',
+                                fabric='#8a1a1e', dash='#18181a', shifter='auto'),
     'toyota_supra_mk4': dict(wheel='4spoke', wheel_r=0.185, wheel_col='#1e1e20', cluster='analog3', gauge=BLACK, seat='sport', leather='#1e1e20',
                              fabric='#2c2d30', dash='#232426', shifter='ball'),
     'nissan_gtr_r35': dict(wheel='3spoke', wheel_r=0.18, wheel_col='#1a1a1c', cluster='analog3', gauge=RED, seat='bucket', leather='#1b1b1d',

@@ -38,3 +38,51 @@ SPEC = dict(
 )
 
 SPEC['grip'] = 1.0
+
+# real performance: 0-100 km/h in 4.6 s, top speed 250 km/h
+SPEC['accel'] = 7.06
+SPEC['maxSpeed'] = 250
+
+# ---------------------------------------------------------------------------------------------------- benchmark detail pass
+import numpy as _np
+import bb as _bb
+
+
+def _rear_art(car, out, P, n, uv=None, k=0):
+    """Rear bumper: black lower valance with a stepped edge, panel line under the lamps, red reflectors at the corners."""
+    x, y = P[..., 0], P[..., 1]
+    ax = _np.abs(x)
+    val = (y < 0.3 + 0.03 * (ax < 0.45)) & (ax < 0.8)
+    out[val] = (20, 20, 22, 240)
+    out[_np.abs(y - (0.3 + 0.03 * (ax < 0.45))) < 0.006, :3] = (44, 44, 48)
+    seam = _np.abs(y - 0.6) < 0.004                              # hatch / bumper split line
+    out[seam, :3] = (out[seam, :3] * 0.45).astype(out.dtype)
+    refl = (ax > 0.58) & (ax < 0.72) & (_np.abs(y - 0.4) < 0.014)
+    out[refl] = (170, 14, 24, 255)
+
+
+def _side_art(car, out, P, n):
+    """Shadow line under the sharp side crease and the sill step."""
+    z, y = P[..., 2], P[..., 1]
+    band = (_np.abs(y - 0.6) < 0.008) & (z > 0.75) & (z < 3.6)
+    out[band, :3] = (out[band, :3] * 0.72).astype(out.dtype)
+
+
+SPEC.update(dict(
+    density=56, wheel_seg=24, spokes3d=True, rich_interior=True, seat_belts=True, frames=True, handles3d=True, handle_rear=True,
+    crease=[(0.0, 0.0), (0.75, 0.0), (1.0, 0.018), (2.0, 0.022), (3.0, 0.02), (3.6, 0.0), (L, 0.0)],
+    rear_art=_rear_art, side_art=_side_art, caliper=(196, 30, 34),
+    vent_list=[dict(view='L', outline=[(1.42, 0.34), (1.64, 0.34), (1.62, 0.44), (1.45, 0.43)], fins='h', pitch=0.022)],   # rear brake ducts
+))
+
+# real MK4 headlamp: long teardrop on the nose corner, pointed inner end, wide rounded outer end wrapping over the wing;
+# three round lamps in a row - low beam, high beam and the smaller amber corner lamp at the outer end
+SPEC['head'] = [dict(view='T', outline=[(0.3, 4.49), (0.45, 4.465), (0.6, 4.41), (0.71, 4.33), (0.775, 4.22), (0.805, 4.09), (0.79, 3.99),
+                                         (0.72, 4.01), (0.6, 4.12), (0.46, 4.26), (0.35, 4.37), (0.29, 4.44)],
+                     lamps=[(0.44, 4.4, 0.07, 'head'), (0.585, 4.29, 0.068, 'high'), (0.725, 4.13, 0.048, 'ind')])]
+
+# four large round tail lamps (two each side) in a dark red housing, amber indicator segment between them
+SPEC['tail'] = dict(housings=[dict(outline=[(x, y) for x, y in _bb.rrect(0.53, 0.205, 0.1, 4, 0.49, 0.715)])],
+                    rounds=[(0.625, 0.715, 0.086, 'tail', 'brake', 0.45), (0.355, 0.715, 0.086, 'tail', 'reverse', 0.28)],
+                    rects=[([(0.465, 0.665), (0.515, 0.665), (0.515, 0.765), (0.465, 0.765)], 'ind', 'amber_dark', 0.03)],
+                    garnish=dict(outline=_bb.rrect(0.32, 0.12, 0.03, 2, 0.0, 0.72), text_y=0.72), round_off=0.024)

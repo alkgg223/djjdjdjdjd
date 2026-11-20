@@ -73,6 +73,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         if (mesh.failed && lod == 1) mesh = VehicleMesh.get(v.getModel(), 0);
         if (mesh.failed) return;
         float ry = Mth.rotLerp(pt, v.yRotO, v.getYRot());
+        smoke(v, ps, buffers, pt, light);
         ps.pushPose();
         ps.mulPose(Axis.YP.rotationDegrees(-ry + Mth.lerp(pt, v.driftVisO, v.driftVis)));
         if (s.bike) ps.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(pt, v.leanO, v.lean))); // lean about the tyre contact line
@@ -161,6 +162,33 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
 
     // ---------------------------------------------------------------------------------------- backfire flames
     private static final ResourceLocation FLAME = TrafficCraft.id("textures/vehicle/flame.png");
+    private static final ResourceLocation SMOKE = TrafficCraft.id("textures/vehicle/smoke.png");
+
+    /** Billowing tyre smoke (camera-facing textured puffs in world space). ps is at the entity's interpolated position. */
+    private void smoke(VehicleEntity v, PoseStack ps, MultiBufferSource buf, float pt, int light) {
+        if (v.smoke.isEmpty()) return;
+        var cam = Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation();
+        double ex = Mth.lerp(pt, v.xo, v.getX()), ey = Mth.lerp(pt, v.yo, v.getY()), ez = Mth.lerp(pt, v.zo, v.getZ());
+        VertexConsumer vc = buf.getBuffer(RenderType.entityTranslucent(SMOKE));
+        for (float[] p : v.smoke) {
+            float life = p[6] / p[7];
+            float a = (life < 0.1f ? life / 0.1f : 1 - (life - 0.1f) / 0.9f) * 0.8f;
+            int frame = Math.min(3, (int) (life * 4));
+            float s = p[8];
+            ps.pushPose();
+            ps.translate(p[0] - ex, p[1] - ey, p[2] - ez);
+            ps.mulPose(cam);
+            ps.mulPose(Axis.ZP.rotationDegrees(p[6] * 3 + (p[7] * 37) % 360));
+            PoseStack.Pose pose = ps.last();
+            float u0 = frame / 4f, u1 = (frame + 1) / 4f;
+            int c = ((int) (a * 255) << 24) | 0xE6E6E6;
+            vc.addVertex(pose, -s, -s, 0).setColor(c).setUv(u0, 1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, 0, 0, 1);
+            vc.addVertex(pose, s, -s, 0).setColor(c).setUv(u1, 1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, 0, 0, 1);
+            vc.addVertex(pose, s, s, 0).setColor(c).setUv(u1, 0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, 0, 0, 1);
+            vc.addVertex(pose, -s, s, 0).setColor(c).setUv(u0, 0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, 0, 0, 1);
+            ps.popPose();
+        }
+    }
 
     /** Short exhaust flame: crossed additive sprites along the pipe axis, animated over 4 frames. */
     private void flames(VehicleEntity v, VehicleSpec s, PoseStack ps, MultiBufferSource buf, float pt) {

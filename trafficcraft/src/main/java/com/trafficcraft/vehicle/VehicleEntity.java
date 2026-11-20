@@ -190,6 +190,8 @@ public class VehicleEntity extends Entity {
     public float getDrift() { return entityData.get(DRIFT); }
     public void setDrift(float a) { if (Math.abs(a - entityData.get(DRIFT)) > 0.05f || a == 0) entityData.set(DRIFT, Math.abs(a) < 0.05f ? 0f : a); }
     public float driftVis, driftVisO, proBackfire;
+    /** client-side tyre smoke puffs: x y z vx vy vz age life size */
+    public final java.util.ArrayList<float[]> smoke = new java.util.ArrayList<>();
     int skidTick;
     public void setConfig(String c) { entityData.set(CONFIG, c == null ? "" : c); }
 
@@ -259,6 +261,7 @@ public class VehicleEntity extends Entity {
         if (t.contains("Plate")) setPlate(t.getString("Plate"));
         if (t.contains("Config")) setConfig(t.getString("Config"));
         setMode(t.getInt("Mode") == MODE_PARKED ? MODE_PARKED : MODE_FREE);
+        HeadLighting.load(this, t);
         refreshDimensions();
     }
 
@@ -272,6 +275,7 @@ public class VehicleEntity extends Entity {
         t.putString("Plate", getPlate());
         t.putString("Config", getConfig());
         t.putInt("Mode", getMode());
+        HeadLighting.save(this, t);
     }
 
     @Override
@@ -531,6 +535,7 @@ public class VehicleEntity extends Entity {
 
     @Override
     public void remove(RemovalReason reason) {
+        if (!level().isClientSide) HeadLighting.clear(this);
         ejectPassengers();
         super.remove(reason);
     }
@@ -588,7 +593,10 @@ public class VehicleEntity extends Entity {
             publishState();
         }
         deltaYaw = Mth.wrapDegrees(getYRot() - yaw0);
-        if (!level().isClientSide) serverTick();
+        if (!level().isClientSide) {
+            serverTick();
+            HeadLighting.tick(this);
+        }
         if (level().isClientSide) clientVisuals();
     }
 
@@ -800,14 +808,34 @@ public class VehicleEntity extends Entity {
         float v = visSpeed();
         driftVisO = driftVis;
         driftVis += (getDrift() - driftVis) * 0.3f;
-        if (Math.abs(driftVis) > 6 && Math.abs(v) > 3) {
-            // tyre smoke from the rear wheels + screech
+        // tyre smoke: drifting, or a sporty car launched / burning out on full throttle
+        String cat = spec().category;
+        boolean sporty = cat.equals("sports") || cat.equals("super") || cat.equals("muscle");
+        boolean burnout = sporty && has(F_ENGINE) && visLoad() > 0.85f && Math.abs(v) < 13f && visGear() >= 1;
+        float drift = Math.abs(driftVis);
+        if (burnout || (drift > 6 && Math.abs(v) > 3)) {
+            float k = burnout ? Math.max(0.4f, 1 - Math.abs(v) / 13f) : Math.min(1f, drift / 22f);
             for (VehicleSpec.Wheel w : spec().wheels) {
-                if (w.steer()) continue;
-                Vec3 p = position().add(toWorldOffset(w.x(), 0.1, w.z(), getYRot()));
-                level().addParticle(net.minecraft.core.particles.ParticleTypes.CLOUD, p.x, p.y, p.z, (random.nextFloat() - 0.5f) * 0.06f, 0.03f,
-                        (random.nextFloat() - 0.5f) * 0.06f);
+                if (w.steer() || random.nextFloat() > 0.35f + 0.6f * k) continue;
+                Vec3 p = position().add(toWorldOffset(w.x() * 1.05, 0.12, w.z() - 0.2, getYRot()));
+                Vec3 back = toWorldOffset((random.nextFloat() - 0.5f) * 0.06, 0, -0.04 - 0.05 * k, getYRot());
+                if (smoke.size() < 140)
+                    smoke.add(new float[]{(float) p.x, (float) p.y, (float) p.z, (float) back.x, 0.012f + random.nextFloat() * 0.01f, (float) back.z, 0,
+                            45 + random.nextInt(35), 0.5f + 0.4f * k});
             }
+        }
+        for (int i = smoke.size() - 1; i >= 0; i--) {
+            float[] p = smoke.get(i);
+            p[0] += p[3];
+            p[1] += p[4];
+            p[2] += p[5];
+            p[3] *= 0.94f;
+            p[5] *= 0.94f;
+            p[4] = p[4] * 0.97f + 0.0015f;
+            p[8] += 0.035f;
+            if (++p[6] > p[7]) smoke.remove(i);
+        }
+        if (drift > 6 && Math.abs(v) > 3 || burnout) {
             if (tickCount - skidTick > 26) {
                 skidTick = tickCount;
                 level().playLocalSound(getX(), getY(), getZ(), com.trafficcraft.registry.TCRegistry.snd("misc.skid"), net.minecraft.sounds.SoundSource.NEUTRAL,

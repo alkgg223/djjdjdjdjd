@@ -46,3 +46,7 @@ SPEC['head'] = [dict(view='F', dir=(-0.35, -0.35, -1.0), outline=[(0.42, 0.8), (
                      lamps=[(0.56, 0.86, 0.032, 'head'), (0.66, 0.862, 0.032, 'head'), (0.76, 0.864, 0.03, 'high')],
                      strips=[([(0.45, 0.905), (0.88, 0.912)], 0.016, 'drl')], rects=[(0.84, 0.82, 0.91, 0.88, 'ind')],
                      house='head_house_black', bezel='trim', lens_off=0.014)]
+
+# real performance: 0-100 km/h in 12.9 s, top speed 155 km/h
+SPEC['accel'] = 2.74
+SPEC['maxSpeed'] = 155

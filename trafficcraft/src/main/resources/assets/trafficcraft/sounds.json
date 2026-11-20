@@ -514,8 +514,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/toyota_supra_mk4_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -523,8 +522,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/toyota_supra_mk4_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -532,70 +530,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/toyota_supra_mk4_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.toyota_supra_mk4.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/toyota_supra_mk4_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_supra_mk4_pop0"
    },
    {
-    "name": "trafficcraft:backfire/toyota_supra_mk4_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_supra_mk4_pop1"
    },
    {
-    "name": "trafficcraft:backfire/toyota_supra_mk4_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_supra_mk4_pop2"
    },
    {
-    "name": "trafficcraft:backfire/toyota_supra_mk4_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_supra_mk4_pop3"
    }
   ]
  },
  "backfire.toyota_supra_mk4.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/toyota_supra_mk4_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_supra_mk4_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/toyota_supra_mk4_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_supra_mk4_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/toyota_supra_mk4_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_supra_mk4_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/toyota_supra_mk4_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_supra_mk4_crackle3"
    }
   ]
  },
  "backfire.toyota_supra_mk4.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/toyota_supra_mk4_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_supra_mk4_bang0"
    },
    {
-    "name": "trafficcraft:backfire/toyota_supra_mk4_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_supra_mk4_bang1"
    }
   ]
  },
@@ -603,8 +580,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/nissan_gtr_r35_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -612,8 +588,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/nissan_gtr_r35_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -621,70 +596,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/nissan_gtr_r35_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.nissan_gtr_r35.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/nissan_gtr_r35_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/nissan_gtr_r35_pop0"
    },
    {
-    "name": "trafficcraft:backfire/nissan_gtr_r35_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/nissan_gtr_r35_pop1"
    },
    {
-    "name": "trafficcraft:backfire/nissan_gtr_r35_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/nissan_gtr_r35_pop2"
    },
    {
-    "name": "trafficcraft:backfire/nissan_gtr_r35_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/nissan_gtr_r35_pop3"
    }
   ]
  },
  "backfire.nissan_gtr_r35.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/nissan_gtr_r35_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/nissan_gtr_r35_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/nissan_gtr_r35_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/nissan_gtr_r35_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/nissan_gtr_r35_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/nissan_gtr_r35_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/nissan_gtr_r35_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/nissan_gtr_r35_crackle3"
    }
   ]
  },
  "backfire.nissan_gtr_r35.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/nissan_gtr_r35_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/nissan_gtr_r35_bang0"
    },
    {
-    "name": "trafficcraft:backfire/nissan_gtr_r35_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/nissan_gtr_r35_bang1"
    }
   ]
  },
@@ -692,8 +646,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/bmw_m3_2026_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -701,8 +654,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/bmw_m3_2026_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -710,70 +662,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/bmw_m3_2026_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.bmw_m3_2026.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/bmw_m3_2026_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_2026_pop0"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_2026_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_2026_pop1"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_2026_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_2026_pop2"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_2026_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_2026_pop3"
    }
   ]
  },
  "backfire.bmw_m3_2026.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/bmw_m3_2026_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_2026_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_2026_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_2026_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_2026_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_2026_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_2026_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_2026_crackle3"
    }
   ]
  },
  "backfire.bmw_m3_2026.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/bmw_m3_2026_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_2026_bang0"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_2026_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_2026_bang1"
    }
   ]
  },
@@ -781,8 +712,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/ford_mustang_1964_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -790,8 +720,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/ford_mustang_1964_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -799,70 +728,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/ford_mustang_1964_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.ford_mustang_1964.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/ford_mustang_1964_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ford_mustang_1964_pop0"
    },
    {
-    "name": "trafficcraft:backfire/ford_mustang_1964_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ford_mustang_1964_pop1"
    },
    {
-    "name": "trafficcraft:backfire/ford_mustang_1964_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ford_mustang_1964_pop2"
    },
    {
-    "name": "trafficcraft:backfire/ford_mustang_1964_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ford_mustang_1964_pop3"
    }
   ]
  },
  "backfire.ford_mustang_1964.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/ford_mustang_1964_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ford_mustang_1964_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/ford_mustang_1964_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ford_mustang_1964_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/ford_mustang_1964_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ford_mustang_1964_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/ford_mustang_1964_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ford_mustang_1964_crackle3"
    }
   ]
  },
  "backfire.ford_mustang_1964.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/ford_mustang_1964_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ford_mustang_1964_bang0"
    },
    {
-    "name": "trafficcraft:backfire/ford_mustang_1964_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ford_mustang_1964_bang1"
    }
   ]
  },
@@ -870,8 +778,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/chevrolet_camaro_1966_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -879,8 +786,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/chevrolet_camaro_1966_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -888,70 +794,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/chevrolet_camaro_1966_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.chevrolet_camaro_1966.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/chevrolet_camaro_1966_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_pop0"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_camaro_1966_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_pop1"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_camaro_1966_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_pop2"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_camaro_1966_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_pop3"
    }
   ]
  },
  "backfire.chevrolet_camaro_1966.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/chevrolet_camaro_1966_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_camaro_1966_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_camaro_1966_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_camaro_1966_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_crackle3"
    }
   ]
  },
  "backfire.chevrolet_camaro_1966.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/chevrolet_camaro_1966_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_bang0"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_camaro_1966_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_bang1"
    }
   ]
  },
@@ -959,8 +844,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/dodge_challenger_1969_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -968,8 +852,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/dodge_challenger_1969_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -977,70 +860,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/dodge_challenger_1969_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.dodge_challenger_1969.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/dodge_challenger_1969_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/dodge_challenger_1969_pop0"
    },
    {
-    "name": "trafficcraft:backfire/dodge_challenger_1969_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/dodge_challenger_1969_pop1"
    },
    {
-    "name": "trafficcraft:backfire/dodge_challenger_1969_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/dodge_challenger_1969_pop2"
    },
    {
-    "name": "trafficcraft:backfire/dodge_challenger_1969_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/dodge_challenger_1969_pop3"
    }
   ]
  },
  "backfire.dodge_challenger_1969.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/dodge_challenger_1969_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/dodge_challenger_1969_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/dodge_challenger_1969_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/dodge_challenger_1969_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/dodge_challenger_1969_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/dodge_challenger_1969_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/dodge_challenger_1969_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/dodge_challenger_1969_crackle3"
    }
   ]
  },
  "backfire.dodge_challenger_1969.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/dodge_challenger_1969_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/dodge_challenger_1969_bang0"
    },
    {
-    "name": "trafficcraft:backfire/dodge_challenger_1969_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/dodge_challenger_1969_bang1"
    }
   ]
  },
@@ -1048,8 +910,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/chevrolet_corvette_1953_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1057,8 +918,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/chevrolet_corvette_1953_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1066,70 +926,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/chevrolet_corvette_1953_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.chevrolet_corvette_1953.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/chevrolet_corvette_1953_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_pop0"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_corvette_1953_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_pop1"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_corvette_1953_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_pop2"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_corvette_1953_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_pop3"
    }
   ]
  },
  "backfire.chevrolet_corvette_1953.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/chevrolet_corvette_1953_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_corvette_1953_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_corvette_1953_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_corvette_1953_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_crackle3"
    }
   ]
  },
  "backfire.chevrolet_corvette_1953.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/chevrolet_corvette_1953_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_bang0"
    },
    {
-    "name": "trafficcraft:backfire/chevrolet_corvette_1953_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_bang1"
    }
   ]
  },
@@ -1137,8 +976,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/porsche_911_1963_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1146,8 +984,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/porsche_911_1963_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1155,70 +992,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/porsche_911_1963_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.porsche_911_1963.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/porsche_911_1963_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/porsche_911_1963_pop0"
    },
    {
-    "name": "trafficcraft:backfire/porsche_911_1963_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/porsche_911_1963_pop1"
    },
    {
-    "name": "trafficcraft:backfire/porsche_911_1963_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/porsche_911_1963_pop2"
    },
    {
-    "name": "trafficcraft:backfire/porsche_911_1963_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/porsche_911_1963_pop3"
    }
   ]
  },
  "backfire.porsche_911_1963.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/porsche_911_1963_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/porsche_911_1963_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/porsche_911_1963_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/porsche_911_1963_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/porsche_911_1963_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/porsche_911_1963_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/porsche_911_1963_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/porsche_911_1963_crackle3"
    }
   ]
  },
  "backfire.porsche_911_1963.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/porsche_911_1963_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/porsche_911_1963_bang0"
    },
    {
-    "name": "trafficcraft:backfire/porsche_911_1963_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/porsche_911_1963_bang1"
    }
   ]
  },
@@ -1226,8 +1042,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/bmw_m3_1985_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1235,8 +1050,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/bmw_m3_1985_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1244,70 +1058,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/bmw_m3_1985_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.bmw_m3_1985.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/bmw_m3_1985_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_1985_pop0"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_1985_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_1985_pop1"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_1985_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_1985_pop2"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_1985_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_1985_pop3"
    }
   ]
  },
  "backfire.bmw_m3_1985.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/bmw_m3_1985_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_1985_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_1985_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_1985_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_1985_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_1985_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_1985_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_1985_crackle3"
    }
   ]
  },
  "backfire.bmw_m3_1985.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/bmw_m3_1985_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_1985_bang0"
    },
    {
-    "name": "trafficcraft:backfire/bmw_m3_1985_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bmw_m3_1985_bang1"
    }
   ]
  },
@@ -1315,8 +1108,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/mercedes_sclass_1972_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1324,8 +1116,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/mercedes_sclass_1972_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1333,70 +1124,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/mercedes_sclass_1972_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.mercedes_sclass_1972.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/mercedes_sclass_1972_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_pop0"
    },
    {
-    "name": "trafficcraft:backfire/mercedes_sclass_1972_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_pop1"
    },
    {
-    "name": "trafficcraft:backfire/mercedes_sclass_1972_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_pop2"
    },
    {
-    "name": "trafficcraft:backfire/mercedes_sclass_1972_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_pop3"
    }
   ]
  },
  "backfire.mercedes_sclass_1972.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/mercedes_sclass_1972_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/mercedes_sclass_1972_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/mercedes_sclass_1972_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/mercedes_sclass_1972_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_crackle3"
    }
   ]
  },
  "backfire.mercedes_sclass_1972.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/mercedes_sclass_1972_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_bang0"
    },
    {
-    "name": "trafficcraft:backfire/mercedes_sclass_1972_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_bang1"
    }
   ]
  },
@@ -1404,8 +1174,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/audi_rs6_2002_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1413,8 +1182,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/audi_rs6_2002_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1422,70 +1190,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/audi_rs6_2002_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.audi_rs6_2002.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/audi_rs6_2002_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/audi_rs6_2002_pop0"
    },
    {
-    "name": "trafficcraft:backfire/audi_rs6_2002_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/audi_rs6_2002_pop1"
    },
    {
-    "name": "trafficcraft:backfire/audi_rs6_2002_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/audi_rs6_2002_pop2"
    },
    {
-    "name": "trafficcraft:backfire/audi_rs6_2002_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/audi_rs6_2002_pop3"
    }
   ]
  },
  "backfire.audi_rs6_2002.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/audi_rs6_2002_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/audi_rs6_2002_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/audi_rs6_2002_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/audi_rs6_2002_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/audi_rs6_2002_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/audi_rs6_2002_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/audi_rs6_2002_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/audi_rs6_2002_crackle3"
    }
   ]
  },
  "backfire.audi_rs6_2002.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/audi_rs6_2002_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/audi_rs6_2002_bang0"
    },
    {
-    "name": "trafficcraft:backfire/audi_rs6_2002_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/audi_rs6_2002_bang1"
    }
   ]
  },
@@ -1493,8 +1240,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/honda_civic_1972_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1502,8 +1248,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/honda_civic_1972_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1511,70 +1256,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/honda_civic_1972_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.honda_civic_1972.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/honda_civic_1972_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_civic_1972_pop0"
    },
    {
-    "name": "trafficcraft:backfire/honda_civic_1972_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_civic_1972_pop1"
    },
    {
-    "name": "trafficcraft:backfire/honda_civic_1972_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_civic_1972_pop2"
    },
    {
-    "name": "trafficcraft:backfire/honda_civic_1972_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_civic_1972_pop3"
    }
   ]
  },
  "backfire.honda_civic_1972.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/honda_civic_1972_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_civic_1972_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/honda_civic_1972_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_civic_1972_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/honda_civic_1972_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_civic_1972_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/honda_civic_1972_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_civic_1972_crackle3"
    }
   ]
  },
  "backfire.honda_civic_1972.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/honda_civic_1972_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_civic_1972_bang0"
    },
    {
-    "name": "trafficcraft:backfire/honda_civic_1972_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_civic_1972_bang1"
    }
   ]
  },
@@ -1582,8 +1306,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/honda_accord_1976_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1591,8 +1314,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/honda_accord_1976_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1600,70 +1322,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/honda_accord_1976_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.honda_accord_1976.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/honda_accord_1976_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_accord_1976_pop0"
    },
    {
-    "name": "trafficcraft:backfire/honda_accord_1976_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_accord_1976_pop1"
    },
    {
-    "name": "trafficcraft:backfire/honda_accord_1976_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_accord_1976_pop2"
    },
    {
-    "name": "trafficcraft:backfire/honda_accord_1976_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_accord_1976_pop3"
    }
   ]
  },
  "backfire.honda_accord_1976.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/honda_accord_1976_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_accord_1976_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/honda_accord_1976_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_accord_1976_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/honda_accord_1976_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_accord_1976_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/honda_accord_1976_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_accord_1976_crackle3"
    }
   ]
  },
  "backfire.honda_accord_1976.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/honda_accord_1976_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_accord_1976_bang0"
    },
    {
-    "name": "trafficcraft:backfire/honda_accord_1976_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/honda_accord_1976_bang1"
    }
   ]
  },
@@ -1671,8 +1372,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/toyota_corolla_1966_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1680,8 +1380,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/toyota_corolla_1966_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1689,70 +1388,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/toyota_corolla_1966_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.toyota_corolla_1966.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/toyota_corolla_1966_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_corolla_1966_pop0"
    },
    {
-    "name": "trafficcraft:backfire/toyota_corolla_1966_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_corolla_1966_pop1"
    },
    {
-    "name": "trafficcraft:backfire/toyota_corolla_1966_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_corolla_1966_pop2"
    },
    {
-    "name": "trafficcraft:backfire/toyota_corolla_1966_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_corolla_1966_pop3"
    }
   ]
  },
  "backfire.toyota_corolla_1966.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/toyota_corolla_1966_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_corolla_1966_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/toyota_corolla_1966_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_corolla_1966_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/toyota_corolla_1966_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_corolla_1966_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/toyota_corolla_1966_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_corolla_1966_crackle3"
    }
   ]
  },
  "backfire.toyota_corolla_1966.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/toyota_corolla_1966_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_corolla_1966_bang0"
    },
    {
-    "name": "trafficcraft:backfire/toyota_corolla_1966_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_corolla_1966_bang1"
    }
   ]
  },
@@ -1760,8 +1438,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/toyota_camry_1982_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1769,8 +1446,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/toyota_camry_1982_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1778,70 +1454,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/toyota_camry_1982_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.toyota_camry_1982.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/toyota_camry_1982_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_camry_1982_pop0"
    },
    {
-    "name": "trafficcraft:backfire/toyota_camry_1982_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_camry_1982_pop1"
    },
    {
-    "name": "trafficcraft:backfire/toyota_camry_1982_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_camry_1982_pop2"
    },
    {
-    "name": "trafficcraft:backfire/toyota_camry_1982_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_camry_1982_pop3"
    }
   ]
  },
  "backfire.toyota_camry_1982.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/toyota_camry_1982_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_camry_1982_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/toyota_camry_1982_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_camry_1982_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/toyota_camry_1982_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_camry_1982_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/toyota_camry_1982_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_camry_1982_crackle3"
    }
   ]
  },
  "backfire.toyota_camry_1982.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/toyota_camry_1982_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_camry_1982_bang0"
    },
    {
-    "name": "trafficcraft:backfire/toyota_camry_1982_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/toyota_camry_1982_bang1"
    }
   ]
  },
@@ -1849,8 +1504,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/mazda_mx5_1989_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1858,8 +1512,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/mazda_mx5_1989_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1867,70 +1520,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/mazda_mx5_1989_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.mazda_mx5_1989.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/mazda_mx5_1989_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mazda_mx5_1989_pop0"
    },
    {
-    "name": "trafficcraft:backfire/mazda_mx5_1989_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mazda_mx5_1989_pop1"
    },
    {
-    "name": "trafficcraft:backfire/mazda_mx5_1989_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mazda_mx5_1989_pop2"
    },
    {
-    "name": "trafficcraft:backfire/mazda_mx5_1989_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mazda_mx5_1989_pop3"
    }
   ]
  },
  "backfire.mazda_mx5_1989.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/mazda_mx5_1989_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mazda_mx5_1989_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/mazda_mx5_1989_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mazda_mx5_1989_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/mazda_mx5_1989_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mazda_mx5_1989_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/mazda_mx5_1989_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mazda_mx5_1989_crackle3"
    }
   ]
  },
  "backfire.mazda_mx5_1989.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/mazda_mx5_1989_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mazda_mx5_1989_bang0"
    },
    {
-    "name": "trafficcraft:backfire/mazda_mx5_1989_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mazda_mx5_1989_bang1"
    }
   ]
  },
@@ -1938,8 +1570,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/subaru_wrx_sti_1992_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1947,8 +1578,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/subaru_wrx_sti_1992_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -1956,70 +1586,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/subaru_wrx_sti_1992_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.subaru_wrx_sti_1992.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_pop0"
    },
    {
-    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_pop1"
    },
    {
-    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_pop2"
    },
    {
-    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_pop3"
    }
   ]
  },
  "backfire.subaru_wrx_sti_1992.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_crackle3"
    }
   ]
  },
  "backfire.subaru_wrx_sti_1992.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_bang0"
    },
    {
-    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_bang1"
    }
   ]
  },
@@ -2027,8 +1636,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/mitsubishi_lancer_evo_1992_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2036,8 +1644,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/mitsubishi_lancer_evo_1992_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2045,70 +1652,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/mitsubishi_lancer_evo_1992_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.mitsubishi_lancer_evo_1992.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_pop0"
    },
    {
-    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_pop1"
    },
    {
-    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_pop2"
    },
    {
-    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_pop3"
    }
   ]
  },
  "backfire.mitsubishi_lancer_evo_1992.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_crackle3"
    }
   ]
  },
  "backfire.mitsubishi_lancer_evo_1992.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_bang0"
    },
    {
-    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_bang1"
    }
   ]
  },
@@ -2116,8 +1702,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/volkswagen_golf_gti_1974_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2125,8 +1710,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/volkswagen_golf_gti_1974_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2134,70 +1718,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/volkswagen_golf_gti_1974_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.volkswagen_golf_gti_1974.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_pop0"
    },
    {
-    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_pop1"
    },
    {
-    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_pop2"
    },
    {
-    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_pop3"
    }
   ]
  },
  "backfire.volkswagen_golf_gti_1974.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_crackle3"
    }
   ]
  },
  "backfire.volkswagen_golf_gti_1974.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_bang0"
    },
    {
-    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_bang1"
    }
   ]
  },
@@ -2205,8 +1768,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/jeep_wrangler_1986_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2214,8 +1776,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/jeep_wrangler_1986_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2223,70 +1784,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/jeep_wrangler_1986_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.jeep_wrangler_1986.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/jeep_wrangler_1986_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_pop0"
    },
    {
-    "name": "trafficcraft:backfire/jeep_wrangler_1986_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_pop1"
    },
    {
-    "name": "trafficcraft:backfire/jeep_wrangler_1986_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_pop2"
    },
    {
-    "name": "trafficcraft:backfire/jeep_wrangler_1986_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_pop3"
    }
   ]
  },
  "backfire.jeep_wrangler_1986.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/jeep_wrangler_1986_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/jeep_wrangler_1986_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/jeep_wrangler_1986_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/jeep_wrangler_1986_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_crackle3"
    }
   ]
  },
  "backfire.jeep_wrangler_1986.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/jeep_wrangler_1986_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_bang0"
    },
    {
-    "name": "trafficcraft:backfire/jeep_wrangler_1986_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_bang1"
    }
   ]
  },
@@ -2294,8 +1834,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/land_rover_range_rover_1970_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2303,8 +1842,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/land_rover_range_rover_1970_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2312,70 +1850,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/land_rover_range_rover_1970_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.land_rover_range_rover_1970.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/land_rover_range_rover_1970_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_pop0"
    },
    {
-    "name": "trafficcraft:backfire/land_rover_range_rover_1970_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_pop1"
    },
    {
-    "name": "trafficcraft:backfire/land_rover_range_rover_1970_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_pop2"
    },
    {
-    "name": "trafficcraft:backfire/land_rover_range_rover_1970_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_pop3"
    }
   ]
  },
  "backfire.land_rover_range_rover_1970.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/land_rover_range_rover_1970_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/land_rover_range_rover_1970_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/land_rover_range_rover_1970_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/land_rover_range_rover_1970_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_crackle3"
    }
   ]
  },
  "backfire.land_rover_range_rover_1970.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/land_rover_range_rover_1970_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_bang0"
    },
    {
-    "name": "trafficcraft:backfire/land_rover_range_rover_1970_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_bang1"
    }
   ]
  },
@@ -2383,8 +1900,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/hyundai_elantra_1990_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2392,8 +1908,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/hyundai_elantra_1990_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2401,70 +1916,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/hyundai_elantra_1990_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.hyundai_elantra_1990.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/hyundai_elantra_1990_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_pop0"
    },
    {
-    "name": "trafficcraft:backfire/hyundai_elantra_1990_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_pop1"
    },
    {
-    "name": "trafficcraft:backfire/hyundai_elantra_1990_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_pop2"
    },
    {
-    "name": "trafficcraft:backfire/hyundai_elantra_1990_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_pop3"
    }
   ]
  },
  "backfire.hyundai_elantra_1990.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/hyundai_elantra_1990_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/hyundai_elantra_1990_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/hyundai_elantra_1990_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/hyundai_elantra_1990_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_crackle3"
    }
   ]
  },
  "backfire.hyundai_elantra_1990.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/hyundai_elantra_1990_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_bang0"
    },
    {
-    "name": "trafficcraft:backfire/hyundai_elantra_1990_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_bang1"
    }
   ]
  },
@@ -2472,8 +1966,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/kia_stinger_2017_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2481,8 +1974,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/kia_stinger_2017_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2490,70 +1982,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/kia_stinger_2017_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.kia_stinger_2017.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/kia_stinger_2017_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/kia_stinger_2017_pop0"
    },
    {
-    "name": "trafficcraft:backfire/kia_stinger_2017_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/kia_stinger_2017_pop1"
    },
    {
-    "name": "trafficcraft:backfire/kia_stinger_2017_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/kia_stinger_2017_pop2"
    },
    {
-    "name": "trafficcraft:backfire/kia_stinger_2017_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/kia_stinger_2017_pop3"
    }
   ]
  },
  "backfire.kia_stinger_2017.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/kia_stinger_2017_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/kia_stinger_2017_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/kia_stinger_2017_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/kia_stinger_2017_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/kia_stinger_2017_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/kia_stinger_2017_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/kia_stinger_2017_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/kia_stinger_2017_crackle3"
    }
   ]
  },
  "backfire.kia_stinger_2017.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/kia_stinger_2017_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/kia_stinger_2017_bang0"
    },
    {
-    "name": "trafficcraft:backfire/kia_stinger_2017_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/kia_stinger_2017_bang1"
    }
   ]
  },
@@ -2561,8 +2032,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/ferrari_f40_1987_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2570,8 +2040,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/ferrari_f40_1987_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2579,70 +2048,49 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/ferrari_f40_1987_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.ferrari_f40_1987.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/ferrari_f40_1987_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ferrari_f40_1987_pop0"
    },
    {
-    "name": "trafficcraft:backfire/ferrari_f40_1987_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ferrari_f40_1987_pop1"
    },
    {
-    "name": "trafficcraft:backfire/ferrari_f40_1987_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ferrari_f40_1987_pop2"
    },
    {
-    "name": "trafficcraft:backfire/ferrari_f40_1987_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ferrari_f40_1987_pop3"
    }
   ]
  },
  "backfire.ferrari_f40_1987.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/ferrari_f40_1987_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ferrari_f40_1987_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/ferrari_f40_1987_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ferrari_f40_1987_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/ferrari_f40_1987_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ferrari_f40_1987_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/ferrari_f40_1987_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ferrari_f40_1987_crackle3"
    }
   ]
  },
  "backfire.ferrari_f40_1987.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/ferrari_f40_1987_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ferrari_f40_1987_bang0"
    },
    {
-    "name": "trafficcraft:backfire/ferrari_f40_1987_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/ferrari_f40_1987_bang1"
    }
   ]
  },
@@ -2650,8 +2098,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/lamborghini_aventador_2011_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2659,8 +2106,7 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/lamborghini_aventador_2011_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
@@ -2668,106 +2114,143 @@
   "sounds": [
    {
     "name": "trafficcraft:engine/lamborghini_aventador_2011_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "stream": false
    }
   ]
  },
  "backfire.lamborghini_aventador_2011.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/lamborghini_aventador_2011_pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_pop0"
    },
    {
-    "name": "trafficcraft:backfire/lamborghini_aventador_2011_pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_pop1"
    },
    {
-    "name": "trafficcraft:backfire/lamborghini_aventador_2011_pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_pop2"
    },
    {
-    "name": "trafficcraft:backfire/lamborghini_aventador_2011_pop3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_pop3"
    }
   ]
  },
  "backfire.lamborghini_aventador_2011.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/lamborghini_aventador_2011_crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_crackle0"
    },
    {
-    "name": "trafficcraft:backfire/lamborghini_aventador_2011_crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_crackle1"
    },
    {
-    "name": "trafficcraft:backfire/lamborghini_aventador_2011_crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_crackle2"
    },
    {
-    "name": "trafficcraft:backfire/lamborghini_aventador_2011_crackle3",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_crackle3"
    }
   ]
  },
  "backfire.lamborghini_aventador_2011.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/lamborghini_aventador_2011_bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_bang0"
    },
    {
-    "name": "trafficcraft:backfire/lamborghini_aventador_2011_bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_bang1"
    }
   ]
  },
  "engine.tesla_model_s_2012.idle": {
   "sounds": [
    {
-    "name": "trafficcraft:engine/tesla_model_s_2012_idle",
-    "stream": false,
-    "attenuation_distance": 24
+    "name": "trafficcraft:engine/tesla_model_s_2012_idle"
    }
   ]
  },
  "engine.tesla_model_s_2012.drive": {
   "sounds": [
    {
-    "name": "trafficcraft:engine/tesla_model_s_2012_drive",
-    "stream": false,
-    "attenuation_distance": 24
+    "name": "trafficcraft:engine/tesla_model_s_2012_drive"
    }
   ]
  },
  "engine.tesla_model_s_2012.start": {
   "sounds": [
    {
-    "name": "trafficcraft:engine/tesla_model_s_2012_start",
-    "stream": false,
-    "attenuation_distance": 24
+    "name": "trafficcraft:engine/tesla_model_s_2012_start"
    }
   ]
  },
  "misc.skid": {
   "sounds": [
    {
-    "name": "trafficcraft:misc/skid",
-    "stream": false,
-    "attenuation_distance": 40
+    "name": "trafficcraft:misc/skid"
+   }
+  ]
+ },
+ "engine.toyota_gr_supra_a90.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_gr_supra_a90_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.toyota_gr_supra_a90.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_gr_supra_a90_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.toyota_gr_supra_a90.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_gr_supra_a90_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.toyota_gr_supra_a90.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_pop3"
+   }
+  ]
+ },
+ "backfire.toyota_gr_supra_a90.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_crackle3"
+   }
+  ]
+ },
+ "backfire.toyota_gr_supra_a90.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_bang1"
    }
   ]
  }
