@@ -1,6 +1,6 @@
 import sys, os, time, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import specs, vehicle, render, dash
+import specs, vehicle, render, dash, bike
 OUT = sys.argv[1] if len(sys.argv) > 1 else '/tmp/claude-0/vehout'
 only = sys.argv[2].split(',') if len(sys.argv) > 2 and not sys.argv[2].startswith('--') else None
 quick = '--quick' in sys.argv
@@ -13,7 +13,8 @@ for S in specs.SPECS:
     if only and S['id'] not in only:
         continue
     t = time.time()
-    mesh, wm, meta = vehicle.build(S, verbose=True)
+    B = bike if S.get('bike') else vehicle
+    mesh, wm, meta = B.build(S, verbose=True)
     meta['dash'] = dmeta[S['id']]
     import sounds as SND
     E = SND.ENGINES[S['engine']]
@@ -21,9 +22,11 @@ for S in specs.SPECS:
     meta['paint2'] = S.get('paint2', '#f2f2f2')
     meta['horn'] = S.get('horn', {'truck': 'truck', 'sports': 'high', 'pickup': 'low', 'van': 'low'}.get(S['cat'], 'car'))
     meta['siren'] = S['cat'] == 'emergency'
+    if 'backfire' in S:
+        meta['backfire'] = S['backfire']
     vehicle.export(mesh, wm, meta, f"{OUT}/mesh/{S['id']}.tcm", f"{OUT}/mesh/{S['id']}.json")
     if not quick:
-        m1, w1, _ = vehicle.build(S, lod=1)
+        m1, w1, _ = B.build(S, lod=1)
         vehicle.export(m1, w1, meta, f"{OUT}/mesh/{S['id']}_lod1.tcm")
         print('  lod1 tris', m1.count() + w1.count() * len(meta['wheels']))
     col = tuple(int(S.get('preview', S.get('colors', ['#c0262c'])[0])[i:i + 2], 16) for i in (1, 3, 5))

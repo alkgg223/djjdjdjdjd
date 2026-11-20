@@ -88,6 +88,15 @@ public final class ClientEvents {
         }
     }
 
+    /** Players riding a motorcycle are drawn in a straddling pose instead of vanilla's sitting pose. */
+    @SubscribeEvent
+    public static void renderRider(net.neoforged.neoforge.client.event.RenderPlayerEvent.Pre e) {
+        if (e.getEntity().getVehicle() instanceof VehicleEntity v && v.spec().bike && e.getEntity() instanceof net.minecraft.client.player.AbstractClientPlayer ap) {
+            e.setCanceled(true);
+            com.trafficcraft.client.render.BikeRiders.renderPlayer(ap, v, e.getPoseStack(), e.getMultiBufferSource(), e.getPackedLight(), e.getPartialTick());
+        }
+    }
+
     @SubscribeEvent
     public static void hand(RenderHandEvent e) {
         if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.getVehicle() instanceof VehicleEntity) e.setCanceled(true);

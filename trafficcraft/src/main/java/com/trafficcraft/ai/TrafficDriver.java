@@ -48,6 +48,7 @@ public final class TrafficDriver {
     public boolean lastStopTold;
     int lastApproach = -1;
     int reverseTicks, unstickCooldown;
+    int stillTicks, blipQueue, blipDelay, launchTicks, liftTicks;
     boolean spotMode;
     final java.util.Set<Integer> consideredSpots = new java.util.HashSet<>();
     com.trafficcraft.road.RoadsideSpot pendingSpot;
@@ -246,6 +247,7 @@ public final class TrafficDriver {
             state = State.BROKEN;
             stateTicks = 0;
         }
+        if (spec.backfire > 0 && state == State.DRIVE) fwd = riderHabits(v, vel, vDesired, c, fwd);
         // ---------- lamps
         lights(v, level);
         indicators(v, net);
@@ -287,6 +289,47 @@ public final class TrafficDriver {
             if (!level.getBlockState(bp).getCollisionShape(level, bp).isEmpty()) return false;
         }
         return true;
+    }
+
+    /**
+     * Motorcycle riders: blip the throttle while waiting at lights / in queues (sometimes two or three blips),
+     * now and then while cruising, and occasionally launch hard from a stop and snap the throttle shut (backfire).
+     */
+    float riderHabits(VehicleEntity v, float vel, float vDesired, Constraint c, float fwd) {
+        var r = v.getRandom();
+        boolean still = Math.abs(vel) < 0.25f;
+        if (still) stillTicks++;
+        if (blipQueue > 0 && --blipDelay <= 0) {
+            v.revBlip(0.5f + r.nextFloat() * 0.5f, 2 + r.nextInt(4));
+            blipQueue--;
+            blipDelay = 7 + r.nextInt(8);
+        }
+        if (still && stillTicks > 30 && (c.why.contains("light") || c.byVehicle || c.why.contains("junction")) && r.nextFloat() < 0.0035f * Math.max(0.3f, 2 - pers.patience)) {
+            v.revBlip(0.55f + r.nextFloat() * 0.45f, 3 + r.nextInt(5));
+            blipQueue = r.nextFloat() < 0.5f ? 1 + r.nextInt(2) : 0;
+            blipDelay = 8 + r.nextInt(6);
+            TrafficStats.inc("bike_revs");
+        }
+        if (!still && vel > 6 && c.gap > 30 && fwd > 0.05f && launchTicks == 0 && r.nextFloat() < 0.0012f) {
+            v.revBlip(0.45f + r.nextFloat() * 0.3f, 3);
+            TrafficStats.inc("bike_revs");
+        }
+        // hard launch from a standstill when the road ahead is clear
+        if (!still && stillTicks > 20 && fwd > 0.2f && c.gap > 25 && r.nextFloat() < 0.3f * Math.max(0.3f, 2 - pers.patience)) {
+            launchTicks = 22 + r.nextInt(22);
+            TrafficStats.inc("bike_launches");
+        }
+        if (!still) stillTicks = 0;
+        if (launchTicks > 0) {
+            launchTicks--;
+            if (c.gap < 18 || vel > vDesired * 1.12f) launchTicks = 0;
+            else fwd = 1f;
+            if (launchTicks == 0) liftTicks = 5;
+        } else if (liftTicks > 0) {
+            liftTicks--;
+            fwd = Math.min(fwd, 0f);
+        }
+        return fwd;
     }
 
     boolean isStalled(VehicleEntity o) {

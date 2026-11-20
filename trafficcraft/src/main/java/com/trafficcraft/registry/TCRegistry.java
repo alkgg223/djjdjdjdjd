@@ -74,7 +74,8 @@ public final class TCRegistry {
             for (String k : new String[]{"idle", "drive", "start"}) sound("engine." + id + "." + k);
         }
         for (String k : new String[]{"horn.car", "horn.high", "horn.low", "horn.truck", "siren.wail", "misc.indicator_on", "misc.indicator_off",
-                "misc.door_close", "misc.door_open", "misc.barrier_motor", "misc.fuel_pump", "misc.crash", "misc.reverse_beep", "misc.gear_shift"}) {
+                "misc.door_close", "misc.door_open", "misc.barrier_motor", "misc.fuel_pump", "misc.crash", "misc.reverse_beep", "misc.gear_shift",
+                "horn.bike", "backfire.pop", "backfire.crackle", "backfire.bang"}) {
             sound(k);
         }
         BLOCKS.register(bus);

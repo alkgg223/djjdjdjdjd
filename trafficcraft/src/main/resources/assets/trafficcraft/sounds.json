@@ -242,6 +242,139 @@
    }
   ]
  },
+ "engine.cruiser_bike.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/cruiser_bike_idle",
+    "stream": false,
+    "attenuation_distance": 36
+   }
+  ]
+ },
+ "engine.cruiser_bike.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/cruiser_bike_drive",
+    "stream": false,
+    "attenuation_distance": 36
+   }
+  ]
+ },
+ "engine.cruiser_bike.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/cruiser_bike_start",
+    "stream": false,
+    "attenuation_distance": 36
+   }
+  ]
+ },
+ "engine.sport_bike.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/sport_bike_idle",
+    "stream": false,
+    "attenuation_distance": 36
+   }
+  ]
+ },
+ "engine.sport_bike.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/sport_bike_drive",
+    "stream": false,
+    "attenuation_distance": 36
+   }
+  ]
+ },
+ "engine.sport_bike.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/sport_bike_start",
+    "stream": false,
+    "attenuation_distance": 36
+   }
+  ]
+ },
+ "engine.scrambler_bike.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/scrambler_bike_idle",
+    "stream": false,
+    "attenuation_distance": 36
+   }
+  ]
+ },
+ "engine.scrambler_bike.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/scrambler_bike_drive",
+    "stream": false,
+    "attenuation_distance": 36
+   }
+  ]
+ },
+ "engine.scrambler_bike.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/scrambler_bike_start",
+    "stream": false,
+    "attenuation_distance": 36
+   }
+  ]
+ },
+ "backfire.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/pop0",
+    "stream": false,
+    "attenuation_distance": 56
+   },
+   {
+    "name": "trafficcraft:backfire/pop1",
+    "stream": false,
+    "attenuation_distance": 56
+   },
+   {
+    "name": "trafficcraft:backfire/pop2",
+    "stream": false,
+    "attenuation_distance": 56
+   }
+  ]
+ },
+ "backfire.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/crackle0",
+    "stream": false,
+    "attenuation_distance": 56
+   },
+   {
+    "name": "trafficcraft:backfire/crackle1",
+    "stream": false,
+    "attenuation_distance": 56
+   },
+   {
+    "name": "trafficcraft:backfire/crackle2",
+    "stream": false,
+    "attenuation_distance": 56
+   }
+  ]
+ },
+ "backfire.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/bang0",
+    "stream": false,
+    "attenuation_distance": 56
+   },
+   {
+    "name": "trafficcraft:backfire/bang1",
+    "stream": false,
+    "attenuation_distance": 56
+   }
+  ]
+ },
  "horn.car": {
   "sounds": [
    {
@@ -273,6 +406,15 @@
   "sounds": [
    {
     "name": "trafficcraft:horn/truck",
+    "stream": false,
+    "attenuation_distance": 64
+   }
+  ]
+ },
+ "horn.bike": {
+  "sounds": [
+   {
+    "name": "trafficcraft:horn/bike",
     "stream": false,
     "attenuation_distance": 64
    }

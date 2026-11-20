@@ -88,6 +88,8 @@ t('msg.trafficcraft.turn_banned', 'Turn #%s → #%s BANNED', 'اللف من %s �
 t('msg.trafficcraft.prio_first', 'Priority road #%s - now click the road that must give way', 'طريق الأولوية رقم %s - الآن انقر على الطريق الذي يجب أن ينتظر')
 t('msg.trafficcraft.prio_set', 'Road #%s now has priority over road #%s', 'الطريق %s له الأولوية على الطريق %s')
 t('msg.trafficcraft.prio_removed', 'Priority #%s over #%s removed', 'تمت إزالة أولوية %s على %s')
+t('tooltip.trafficcraft.category.motorcycle', 'Motorcycle', 'دراجة نارية')
+t('hud.trafficcraft.hint.rev', 'Space + W: rev the engine', 'المسافة + W: تدوير المحرك (ريف)')
 t('msg.trafficcraft.piece_created', '%s built', 'تم بناء %s')
 t('msg.trafficcraft.passenger', 'You are a passenger - the driver takes you along. Sneak to get out.', 'أنت راكب - السائق يأخذك معه. انحنِ للنزول.')
 t('msg.trafficcraft.last_stop', 'Last stop - please get out (sneak)', 'المحطة الأخيرة - انزل من فضلك (انحناء)')

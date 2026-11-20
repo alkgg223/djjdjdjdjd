@@ -318,3 +318,34 @@ BOXTRUCK = spec(
     maxSpeed=110, accel=1.4, brake=5.5, mass=7500, fuel=150, seats_n=2, spawnWeight=4,
     colors=['#1f4f9c', '#e8e8e4', '#b42424', '#2a7a3a'], paint2='#f2f2f0',
 )
+
+# ===================================================================================== motorcycles
+BIKE_CRUISER = spec(
+    id='cruiser_bike', name='Ironhorse Cruiser', cat='motorcycle', bike=True, style='cruiser',
+    L=2.42, W=0.95, H=1.2, WB=1.65, R=0.335, TW=0.15, rake=32, fork_len=0.8, offset=0.03, rim='wire', rimcol='#c9cdd2', twin_disc=False,
+    tank_z=0.02, tank_top=0.94, seat_top=0.7,
+    rider=dict(lean=-0.05, leg=-0.72, spread=0.24, scale=0.86),
+    cluster_style='bike_round', screen_style='nav_blue', engine='vtwin_cruiser', horn='bike',
+    maxSpeed=175, accel=3.4, brake=8.0, mass=320, fuel=19, seats_n=2, spawnWeight=4, backfire=0.55,
+    colors=['#0d0d0f', '#7a0f14', '#1c3a5c', '#3b4a2e', '#c9ccd0'], paint2='#d8b36a', preview='#7a0f14',
+)
+
+BIKE_SPORT = spec(
+    id='sport_bike', name='Vesper RR', cat='motorcycle', bike=True, style='sport',
+    L=2.08, W=0.75, H=1.15, WB=1.42, R=0.31, TW=0.17, rake=24, fork_len=0.7, offset=0.03, rim='cast3', rimcol='#c41a1a', twin_disc=True,
+    tank_z=0.05, tank_top=0.98, seat_top=0.83,
+    rider=dict(lean=0.6, leg=0.4, spread=0.34, scale=0.86),
+    cluster_style='bike_tft', screen_style='telemetry', engine='i4_sport', horn='bike',
+    maxSpeed=285, accel=6.5, brake=10.5, mass=200, fuel=17, seats_n=2, spawnWeight=4, backfire=0.4,
+    colors=['#c41a1a', '#f2f2f2', '#14284d', '#121214', '#d8d020'], paint2='#141416', preview='#c41a1a',
+)
+
+BIKE_SCRAMBLER = spec(
+    id='scrambler_bike', name='Dune Scrambler', cat='motorcycle', bike=True, style='scrambler',
+    L=2.15, W=0.88, H=1.22, WB=1.45, R=0.345, TW=0.14, rake=26, fork_len=0.82, offset=0.03, rim='wire', tyre='knobby', rimcol='#2a2b2d', twin_disc=False,
+    tank_z=0.04, tank_top=1.0, seat_top=0.88,
+    rider=dict(lean=0.18, leg=0.2, spread=0.26, scale=0.86),
+    cluster_style='bike_mini', screen_style='terrain', engine='single_thumper', horn='bike',
+    maxSpeed=150, accel=4.2, brake=8.0, mass=170, fuel=12, seats_n=2, spawnWeight=4, backfire=0.65,
+    colors=['#d8a21e', '#2f5d3a', '#e8e6df', '#1b1b1d', '#b8401c'], paint2='#e8e6df', preview='#d8a21e',
+)

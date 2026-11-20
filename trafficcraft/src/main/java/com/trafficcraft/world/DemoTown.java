@@ -110,6 +110,9 @@ public final class DemoTown {
             n.cfg.putInt("m_box_truck", 1);
             n.cfg.putInt("m_police", sp.equals("W") ? 1 : 0);
             n.cfg.putInt("m_sports", 1);
+            n.cfg.putInt("m_cruiser_bike", 1);
+            n.cfg.putInt("m_sport_bike", 1);
+            n.cfg.putInt("m_scrambler_bike", 1);
         }
         RoadNode p = net.nodes.get(ids.get("P"));
         p.cfg.putInt("spaces", 10);

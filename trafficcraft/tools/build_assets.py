@@ -55,7 +55,7 @@ if os.path.exists(f"{A}/sounds"):
 shutil.copytree(f"{GEN}/sounds", f"{A}/sounds")
 sj = json.load(open(f"{GEN}/sounds.json"))
 for k, v in sj.items():
-    dist = 24 if k.startswith('engine') else 64 if k.startswith('horn') else 112 if k.startswith('siren') else 16
+    dist = (36 if 'bike' in k else 24) if k.startswith('engine') else 64 if k.startswith('horn') else 112 if k.startswith('siren') else 56 if k.startswith('backfire') else 16
     for s in v['sounds']:
         s['attenuation_distance'] = dist
 json.dump(sj, open(f"{A}/sounds.json", 'w'), indent=1)

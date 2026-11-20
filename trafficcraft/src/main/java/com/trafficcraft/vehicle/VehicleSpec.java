@@ -32,6 +32,11 @@ public final class VehicleSpec {
     public final boolean diesel;
     public final int[] colors;
     public final int paint2;
+    // motorcycles
+    public final boolean bike;
+    public final float riderLean, riderLeg, riderSpread, riderScale, backfire;
+    public float[] grips = {0.3f, 1.1f, 0.3f};
+    public final List<float[]> exhausts = new ArrayList<>(); // pos xyz, dir xyz
 
     VehicleSpec(JsonObject o) {
         id = o.get("id").getAsString();
@@ -115,6 +120,20 @@ public final class VehicleSpec {
         colors = new int[Math.max(1, cs.size())];
         colors[0] = 0xB0121B;
         for (int i = 0; i < cs.size(); i++) colors[i] = Integer.parseInt(cs.get(i).getAsString().substring(1), 16);
+        bike = o.has("bike") && o.get("bike").getAsBoolean();
+        JsonObject rd = o.has("rider") ? o.getAsJsonObject("rider") : new JsonObject();
+        riderLean = f(rd, "lean", 0);
+        riderLeg = f(rd, "leg", 0);
+        riderSpread = f(rd, "spread", 0.15f);
+        riderScale = f(rd, "scale", 0.92f);
+        backfire = f(o, "backfire", 0);
+        if (o.has("grips")) grips = vec(o.getAsJsonArray("grips"));
+        for (JsonElement e : arr(o, "exhausts")) {
+            JsonArray a = e.getAsJsonArray();
+            float[] x = new float[6];
+            for (int i = 0; i < 6; i++) x[i] = a.get(i).getAsFloat();
+            exhausts.add(x);
+        }
         paint2 = o.has("paint2") ? Integer.parseInt(o.get("paint2").getAsString().substring(1), 16) : 0xF2F2F2;
     }
 

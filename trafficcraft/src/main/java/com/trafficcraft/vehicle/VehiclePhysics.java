@@ -112,7 +112,7 @@ public final class VehiclePhysics {
         v.speed = ns;
 
         // visual body motion
-        float roll = Mth.clamp((float) (-ns * Math.toRadians(yawRate)) * 0.9f, -4f, 4f);
+        float roll = s.bike ? 0 : Mth.clamp((float) (-ns * Math.toRadians(yawRate)) * 0.9f, -4f, 4f);
         float pitch = Mth.clamp(-acc * 0.35f, -3f, 3f);
         v.bodyRoll += (roll - v.bodyRoll) * 0.15f;
         v.bodyPitch += (pitch - v.bodyPitch) * 0.15f;
@@ -139,8 +139,12 @@ public final class VehiclePhysics {
             float f = Mth.clamp((frac - lo * (manual ? 0 : 0.8f)) / (hi - lo * (manual ? 0 : 0.8f)), 0, 1.05f);
             rpmT = idle * 1.1f + f * (red * 0.92f - idle * 1.1f) * (0.8f + 0.2f * v.throttle);
         }
+        // revving: AI blips, or the rider holding the brake (space) and opening the throttle at a standstill
+        if (in.handbrake() && fwd > 0.1f && Math.abs(ns) < 0.6f && v.getControllingPassenger() != null) v.revBlip(fwd, 3);
+        v.tickRev();
+        if (engine && v.revLevel > 0.01f) rpmT = Math.max(rpmT, idle + v.revLevel * (red * 0.93f - idle));
         if (v.has(VehicleEntity.F_STARTING)) rpmT = idle * 0.3f;
-        v.rpm += (rpmT - v.rpm) * 0.25f;
+        v.rpm += (rpmT - v.rpm) * (rpmT > v.rpm && v.revLevel > 0.01f ? 0.5f : s.bike ? 0.32f : 0.25f);
         v.setFlag(VehicleEntity.F_BRAKE, brake > 0.05f || (in.handbrake() && v.getControllingPassenger() != null) || (Math.abs(ns) < 0.05f && fwd < 0));
         v.setFlag(VehicleEntity.F_REVERSE, v.gear < 0 && engine);
         v.setFlag(VehicleEntity.F_HANDBRAKE, in.handbrake());

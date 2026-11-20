@@ -32,6 +32,16 @@ ENGINES = {
     'diesel_truck': dict(cyl=6, idle=600, drive=1700, pattern=[1.0, 0.92, 0.97, 0.9, 0.98, 0.93], res=[(60, 18, 1.0), (160, 40, 0.7), (420, 100, 0.4),
                                                                                                      (1100, 220, 0.15)],
                          clatter=0.85, turbo=2100, noise=0.2, starter=120, lp=4000, gain=1.0),
+    # ---- motorcycles
+    'vtwin_cruiser': dict(cyl=2, idle=900, drive=3000, pattern=[1.0, 0.82], fire=[0.0, 0.4375], jit=0.09,
+                          res=[(52, 16, 1.0), (138, 38, 0.85), (410, 105, 0.35), (1250, 250, 0.1)],
+                          clatter=0.0, turbo=0, noise=0.2, starter=230, lp=3300, gain=1.0),
+    'i4_sport': dict(cyl=4, idle=1300, drive=8500, pattern=[1.0, 0.96, 0.99, 0.95], res=[(250, 55, 1.0), (690, 140, 0.6), (1850, 300, 0.35),
+                                                                                       (4100, 600, 0.12)],
+                     clatter=0.0, turbo=0, noise=0.15, starter=270, lp=10000, gain=0.95, intake=1),
+    'single_thumper': dict(cyl=1, idle=1150, drive=4800, pattern=[1.0], jit=0.14, res=[(78, 20, 1.0), (236, 55, 0.7), (880, 180, 0.3),
+                                                                                       (2600, 420, 0.08)],
+                           clatter=0.0, turbo=0, noise=0.24, starter=240, lp=5600, gain=1.0),
 }
 
 
@@ -67,8 +77,9 @@ def engine_loop(E, rpm, seconds=2.0, load=0.5):
     times, amps, cl = [], [], []
     for c in range(ncyc):
         for k in range(cyl):
-            t = (c + k / cyl) * cyc_t + rng.normal(0, 0.0004)
-            a = E['pattern'][k] * (1 + rng.normal(0, 0.06)) * (0.75 + 0.5 * load)
+            off = E['fire'][k] if 'fire' in E else k / cyl
+            t = (c + off) * cyc_t + rng.normal(0, 0.0004)
+            a = E['pattern'][k] * (1 + rng.normal(0, E.get('jit', 0.06))) * (0.75 + 0.5 * load)
             times.append(t % (n / SR))
             amps.append(a)
     x = pulse_train(times, amps, n)
@@ -88,6 +99,10 @@ def engine_loop(E, rpm, seconds=2.0, load=0.5):
         f = E['turbo'] * (rpm / E['drive'])
         k = round(f * n / SR)
         y += 0.035 * load * np.sin(2 * np.pi * k * tt * SR / n)
+    if E.get('intake') and load > 0.3:
+        # induction howl: second harmonic of the firing frequency, band-passed (the supersport scream)
+        k2 = round(2 * ff * n / SR)
+        y += 0.12 * load * (np.sin(2 * np.pi * k2 * tt * SR / n) + 0.4 * np.sin(2 * np.pi * 2 * k2 * tt * SR / n))
     b, a = signal.butter(2, E['lp'] / (SR / 2))
     # filter circularly: pad with a copy to avoid the start transient
     yy = signal.lfilter(b, a, np.concatenate([y, y]))[n:]
@@ -145,6 +160,8 @@ def horn(kind, seconds=0.9):
         fs, rich, sec = (277, 349), 1.0, 1.2
     elif kind == 'high':
         fs, rich = (520, 650), 0.5
+    elif kind == 'bike':
+        fs, rich = (440,), 0.75
     elif kind == 'low':
         fs, rich = (330, 415), 0.7
     else:
@@ -221,6 +238,44 @@ def beep(seconds=0.5, f=1100):
     return np.sin(2 * np.pi * f * t) * (t < 0.25) * np.clip(t / 0.005, 0, 1)
 
 
+def backfire(kind, seed):
+    """Exhaust backfires: 'pop' (single sharp crack), 'crackle' (burst of small pops), 'bang' (big boom)."""
+    r = np.random.default_rng(1000 + seed)
+    n = int((0.5 if kind != 'crackle' else 0.9) * SR)
+    y = np.zeros(n)
+
+    def one(at, amp, size):
+        s = int(at * SR)
+        L = min(n - s, int(0.25 * SR))
+        if L <= 0:
+            return
+        t = np.arange(L) / SR
+        crack = r.standard_normal(L) * np.exp(-t * (900 / size)) * (1 - np.exp(-t * 20000))
+        b, a = signal.butter(2, [250 / (SR / 2), min(9000, 5200 * size ** 0.3) / (SR / 2)], 'band')
+        crack = signal.lfilter(b, a, crack)
+        f0 = 95 / size ** 0.5 * r.uniform(0.85, 1.15)
+        thump = np.sin(2 * np.pi * f0 * t * (1 - t * 2)) * np.exp(-t * (38 / size)) * 1.6
+        tail = r.standard_normal(L) * np.exp(-t * (14 / size)) * 0.18
+        bt, at_ = signal.butter(2, 900 / (SR / 2))
+        tail = signal.lfilter(bt, at_, tail)
+        y[s:s + L] += amp * (crack * 2.2 + thump + tail)
+
+    if kind == 'pop':
+        one(0.0, 1.0, r.uniform(0.8, 1.2))
+        if r.random() < 0.6:
+            one(r.uniform(0.04, 0.09), 0.5, 0.7)
+    elif kind == 'bang':
+        one(0.0, 1.6, 2.2)
+    else:
+        t0 = 0.0
+        amp = 1.0
+        for k in range(int(r.integers(6, 11))):
+            one(t0, amp * r.uniform(0.5, 1.0), r.uniform(0.45, 0.85))
+            t0 += r.uniform(0.025, 0.09)
+            amp *= 0.86
+    return y
+
+
 def write_ogg(y, path, rms=0.16, peak=0.97):
     y = np.asarray(y, float)
     r = np.sqrt(np.mean(y ** 2)) + 1e-9
@@ -250,7 +305,13 @@ def build_all(specs, out_dir):
         reg(f'engine.{vid}.idle', [f'engine/{vid}_idle'])
         reg(f'engine.{vid}.drive', [f'engine/{vid}_drive'])
         reg(f'engine.{vid}.start', [f'engine/{vid}_start'])
-    for k in ('car', 'high', 'low', 'truck'):
+    for k in ('pop', 'crackle', 'bang'):
+        files = []
+        for v in range(3 if k != 'bang' else 2):
+            write_ogg(backfire(k, v * 7 + len(k)), f"{out_dir}/backfire/{k}{v}.ogg", rms=0.2 if k != 'bang' else 0.26, peak=0.99)
+            files.append(f'backfire/{k}{v}')
+        reg(f'backfire.{k}', files)
+    for k in ('car', 'high', 'low', 'truck', 'bike'):
         write_ogg(horn(k, 1.0 if k != 'truck' else 1.3), f"{out_dir}/horn/{k}.ogg", rms=0.2)
         reg(f'horn.{k}', [f'horn/{k}'])
     write_ogg(siren(), f"{out_dir}/siren/wail.ogg", rms=0.2)

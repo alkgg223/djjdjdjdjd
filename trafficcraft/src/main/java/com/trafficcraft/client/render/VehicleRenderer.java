@@ -67,6 +67,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         float ry = Mth.rotLerp(pt, v.yRotO, v.getYRot());
         ps.pushPose();
         ps.mulPose(Axis.YP.rotationDegrees(-ry));
+        if (s.bike) ps.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(pt, v.leanO, v.lean))); // lean about the tyre contact line
         PoseStack.Pose base = ps.last();
         float roll = Mth.lerp(pt, v.bodyRollO, v.bodyRoll), pitch = Mth.lerp(pt, v.bodyPitchO, v.bodyPitch);
         ps.pushPose();
@@ -83,6 +84,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         }
         if (dist < 40 || inside) overlays(v, s, ps, buffers, light, lamps, dist, inside);
         if (v.hasAiDriver() && (dist < 64 || inside) && !s.seats.isEmpty()) drawDriver(v, s, ps, buffers, light);
+        if (v.tickCount - v.backfireTick < 5 && !s.exhausts.isEmpty() && dist < 80) flames(v, s, ps, buffers, pt);
         ps.popPose();
         if (TCConfig.HEADLIGHT_BEAMS.get() && dist < 96) beams(v, s, ps, buffers, lamps);
         ps.popPose();
@@ -103,6 +105,10 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             slim = skin.model() == net.minecraft.client.resources.PlayerSkin.Model.SLIM;
         }
         var m = slim ? driverSlim : driverWide;
+        if (s.bike) {
+            BikeRiders.render(m, tex, v, 0, ps, buf, light);
+            return;
+        }
         for (var part : new net.minecraft.client.model.geom.ModelPart[]{m.head, m.body, m.rightArm, m.leftArm, m.rightLeg, m.leftLeg}) part.resetPose();
         float k = Mth.clamp(v.steerVis / 30f, -1, 1);
         float t = v.tickCount * 0.05f + v.getId();
@@ -139,6 +145,44 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         ps.translate(0, -1.501f, 0);
         m.renderToBuffer(ps, buf.getBuffer(RenderType.entityCutoutNoCull(tex)), light, OverlayTexture.NO_OVERLAY);
         ps.popPose();
+    }
+
+    // ---------------------------------------------------------------------------------------- backfire flames
+    private static final ResourceLocation FLAME = TrafficCraft.id("textures/vehicle/flame.png");
+
+    /** Short exhaust flame: crossed additive sprites along the pipe axis, animated over 4 frames. */
+    private void flames(VehicleEntity v, VehicleSpec s, PoseStack ps, MultiBufferSource buf, float pt) {
+        float age = v.tickCount - v.backfireTick + pt;
+        int frame = Mth.clamp((int) (age * 0.7f), 0, 3);
+        float size = v.backfireKind == 2 ? 1.6f : v.backfireKind == 1 ? 0.8f : 1.0f;
+        float len = (0.5f + 0.15f * ((v.backfireTick * 7919) % 5) / 4f) * size * (1 - frame * 0.1f);
+        float w = 0.24f * size;
+        VertexConsumer vc = buf.getBuffer(RenderType.entityTranslucentEmissive(FLAME));
+        PoseStack.Pose pose = ps.last();
+        float u0 = frame / 4f, u1 = (frame + 1) / 4f;
+        for (float[] e : s.exhausts) {
+            Vector3f p = new Vector3f(e[0], e[1], e[2]);
+            Vector3f d = new Vector3f(e[3], e[4], e[5]).normalize();
+            Vector3f n1 = new Vector3f(d).cross(0, 1, 0);
+            if (n1.lengthSquared() < 1e-4) n1.set(1, 0, 0);
+            n1.normalize();
+            Vector3f n2 = new Vector3f(d).cross(n1).normalize();
+            for (Vector3f n : new Vector3f[]{n1, n2, new Vector3f(n1).add(n2).normalize(), new Vector3f(n1).sub(n2).normalize()}) {
+                Vector3f a = new Vector3f(p).add(new Vector3f(n).mul(w / 2)), b = new Vector3f(p).add(new Vector3f(n).mul(-w / 2));
+                Vector3f c = new Vector3f(b).add(new Vector3f(d).mul(len)), dd = new Vector3f(a).add(new Vector3f(d).mul(len));
+                c.add(new Vector3f(n).mul(w * 0.15f));
+                dd.add(new Vector3f(n).mul(-w * 0.15f));
+                flameVertex(vc, pose, a, u0, 0f);
+                flameVertex(vc, pose, b, u1, 0f);
+                flameVertex(vc, pose, c, u1, 1f);
+                flameVertex(vc, pose, dd, u0, 1f);
+            }
+        }
+    }
+
+    private static void flameVertex(VertexConsumer vc, PoseStack.Pose pose, Vector3f p, float u, float vv) {
+        vc.addVertex(pose, p.x, p.y, p.z).setColor(255, 255, 255, 255).setUv(u, vv).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0)
+                .setNormal(pose, 0, 1, 0);
     }
 
     // ---------------------------------------------------------------------------------------- GPU path
@@ -197,7 +241,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
                 Matrix3f nm = new Matrix3f(body.normal());
                 if (part.equals("steer")) {
                     float[] p = s.steerPivot, ax = s.steerAxis;
-                    float ang = (float) Math.toRadians(-steerVis * 13f);
+                    float ang = (float) Math.toRadians(s.bike ? steerVis : -steerVis * 13f);
                     m.translate(p[0], p[1], p[2]).rotate(ang, ax[0], ax[1], ax[2]).translate(-p[0], -p[1], -p[2]);
                     nm.rotate(ang, ax[0], ax[1], ax[2]);
                 } else if (part.startsWith("door_")) {

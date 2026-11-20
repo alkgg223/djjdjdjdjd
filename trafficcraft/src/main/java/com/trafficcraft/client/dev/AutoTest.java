@@ -109,6 +109,14 @@ public final class AutoTest {
                 sp.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
             });
         }
+        if (tt == 1610) server.execute(() -> bikeShot(server, false));
+        if (tt == 1630) shot(mc, "t19_bike_rider.png");
+        if (tt == 1632) server.execute(() -> bikeShot(server, true));
+        if (tt == 1637 && mc.level.getEntity(bikeId) instanceof VehicleEntity cb) {
+            cb.handleEntityEvent((byte) 62);
+            log("client backfire on " + cb.getModel() + " exhausts=" + cb.spec().exhausts.size());
+        }
+        if (tt == 1638) shot(mc, "t20_bike_backfire.png");
         if (tt == 1640) server.execute(() -> server.overworld().setDayTime(18000));
         if (tt == at[8] - 20) view(mc, -14, 22, 24, 150, 40);
         if (tt == at[8]) shot(mc, "t09_night_crossroads.png");
@@ -162,6 +170,40 @@ public final class AutoTest {
         log("closeUp " + best.getModel() + " " + best.driver.debug());
     }
 
+    /** Camera beside the nearest AI motorcycle; with fire, make it backfire (big bang) for the flame shot. */
+    static void bikeShot(net.minecraft.server.MinecraftServer server, boolean fire) {
+        ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+        VehicleEntity best = null;
+        double bd = 1e9;
+        for (var en : server.overworld().getAllEntities()) {
+            if (!(en instanceof VehicleEntity v) || !v.spec().bike) continue;
+            double d = v.position().distanceTo(sp.position()) + (Math.abs(v.speed) < 0.5f ? 0 : 30) + (v.getModel().equals("sport_bike") ? 0 : 60);
+            if (fire && bikeId >= 0) d = v.getId() == bikeId ? 0 : 1e8;
+            if (d < bd) {
+                bd = d;
+                best = v;
+            }
+        }
+        if (best == null) {
+            log("bikeShot: no motorcycle");
+            return;
+        }
+        if (!fire) bikeId = best.getId();
+        // rider shot from the left-front, flame shot from behind on the exhaust (right) side
+        var side = fire ? VehicleEntity.toWorldOffset(-1.6, 0, -2.4, best.getYRot()) : VehicleEntity.toWorldOffset(2.2, 0, -1.2, best.getYRot());
+        var cam = best.position().add(side).add(0, 1.2, 0);
+        var to = best.position().add(0, 0.7, 0).subtract(cam);
+        float yaw = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
+        float pitch = (float) -Math.toDegrees(Math.atan2(to.y, Math.hypot(to.x, to.z)));
+        sp.teleportTo(sp.serverLevel(), cam.x, cam.y, cam.z, yaw, pitch);
+        log("bikeShot " + best.getModel() + " " + (best.driver != null ? best.driver.debug() : ""));
+    }
+
+    static void fireBike(net.minecraft.server.MinecraftServer server) {
+        if (server.overworld().getEntity(bikeId) instanceof VehicleEntity v) server.overworld().broadcastEntityEvent(v, (byte) 62);
+    }
+
+    static int bikeId = -1;
     static int t = -1;
     static VehicleInput input;
     static final List<String> log = new ArrayList<>();

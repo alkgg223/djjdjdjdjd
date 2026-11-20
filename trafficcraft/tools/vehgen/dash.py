@@ -149,6 +149,47 @@ def cl_sport(d, W, H):
             dict(kind='fuel_bar', x=0.06, y=0.74, w=0.19, h=0.05)]
 
 
+def cl_bike_round(d, W, H):
+    """Cruiser: chrome-ringed round speedo on the tank console, odometer window, warning lamps."""
+    d.rectangle([0, 0, W, H], fill=(8, 8, 9))
+    cx, cy, r = W * 0.5, H * 0.5, H * 0.47
+    d.ellipse([cx - r * 1.02, cy - r * 1.02, cx + r * 1.02, cy + r * 1.02], fill=(200, 204, 210))
+    dial(d, cx, cy, r * 0.94, 200, 20, face=(16, 14, 12), ring=(230, 225, 210), tick=(245, 235, 210), label='km/h', num_col=(240, 225, 190))
+    d.rounded_rectangle([cx - r * 0.3, cy + r * 0.5, cx + r * 0.3, cy + r * 0.68], 4, fill=(30, 26, 20))
+    d.text((cx - r * 0.25, cy + r * 0.51), '04712', fill=(240, 200, 120), font=font(r * 0.13, False))
+    for i, c in enumerate([(60, 200, 90), (70, 140, 255), (255, 170, 40), (230, 50, 40)]):
+        x = W * 0.08 + i * W * 0.05
+        d.ellipse([x, H * 0.42, x + W * 0.035, H * 0.42 + W * 0.035], fill=(c[0] // 5, c[1] // 5, c[2] // 5), outline=c)
+    return [dict(kind='speed', cx=0.5, cy=0.5, r=0.47 * 0.94 * H / W, a0=225, a1=-45, max=200)]
+
+
+def cl_bike_tft(d, W, H):
+    """Supersport: colour TFT with a sweeping rev bar, big digital speed, lean / lap info."""
+    d.rectangle([0, 0, W, H], fill=(3, 4, 6))
+    for k in range(40):
+        x0 = W * 0.04 + k * W * 0.023
+        hgt = H * (0.06 + 0.16 * (k / 40) ** 1.6)
+        col = (60, 200, 255) if k < 28 else (255, 190, 40) if k < 35 else (255, 40, 40)
+        d.rectangle([x0, H * 0.3 - hgt, x0 + W * 0.016, H * 0.3], outline=col)
+    for k, lab in enumerate(['2', '4', '6', '8', '10', '12', '14']):
+        d.text((W * 0.04 + k * W * 0.13, H * 0.32), lab, fill=(160, 170, 180), font=font(H * 0.06, False))
+    d.text((W * 0.06, H * 0.78), 'LEAN  0°   TC 3   RIDE: SPORT', fill=(120, 210, 255), font=font(H * 0.06, False))
+    d.rounded_rectangle([W * 0.7, H * 0.42, W * 0.96, H * 0.74], 8, outline=(60, 200, 255), width=2)
+    return [dict(kind='rpm_bar', x=0.04, y=0.12, w=0.92, h=0.14, max=14000), dict(kind='digital_speed', x=0.4, y=0.5, size=0.34),
+            dict(kind='gear', x=0.83, y=0.58, size=0.26), dict(kind='fuel_bar', x=0.06, y=0.9, w=0.3, h=0.04)]
+
+
+def cl_bike_mini(d, W, H):
+    """Scrambler: small round analogue speedo with an LCD strip (gear, fuel)."""
+    d.rectangle([0, 0, W, H], fill=(14, 14, 13))
+    cx, cy, r = W * 0.36, H * 0.5, H * 0.46
+    dial(d, cx, cy, r, 160, 20, face=(232, 228, 214), ring=(40, 40, 38), tick=(20, 20, 18), label='km/h', num_col=(20, 20, 18))
+    d.rounded_rectangle([W * 0.62, H * 0.18, W * 0.95, H * 0.82], 10, fill=(150, 170, 120), outline=(40, 40, 38), width=3)
+    d.text((W * 0.65, H * 0.22), 'TRIP 128.4', fill=(30, 40, 25), font=font(H * 0.08, False))
+    return [dict(kind='speed', cx=0.36, cy=0.5, r=0.46 * H / W, a0=225, a1=-45, max=160, color=0xD02010), dict(kind='gear', x=0.785, y=0.55, size=0.22),
+            dict(kind='fuel_bar', x=0.66, y=0.72, w=0.26, h=0.05)]
+
+
 def cl_police(d, W, H):
     out = cl_digital_arcs(d, W, H)
     d.rectangle([W * 0.38, H * 0.05, W * 0.62, H * 0.2], fill=(4, 6, 10))
@@ -195,7 +236,7 @@ def cl_truck(d, W, H):
             dict(kind='fuel_bar', x=0.05, y=0.86, w=0.16, h=0.05)]
 
 
-CLUSTERS = dict(analog_modern=cl_analog_modern, compact=cl_compact, digital_arcs=cl_digital_arcs, rugged=cl_rugged, sport=cl_sport,
+CLUSTERS = dict(bike_round=cl_bike_round, bike_tft=cl_bike_tft, bike_mini=cl_bike_mini, analog_modern=cl_analog_modern, compact=cl_compact, digital_arcs=cl_digital_arcs, rugged=cl_rugged, sport=cl_sport,
                 police=cl_police, basic=cl_basic, commercial=cl_commercial, truck=cl_truck)
 
 

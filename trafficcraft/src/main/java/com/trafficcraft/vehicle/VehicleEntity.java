@@ -92,6 +92,12 @@ public class VehicleEntity extends Entity {
     public float throttle;        // smoothed 0..1
     public int gear = 1;          // -1 R, 0 N, 1..n
     public float bodyRoll, bodyPitch, bodyRollO, bodyPitchO;
+    /** motorcycles: lean angle (degrees, + = right), rev blip level 0..1, last backfire (client tick) */
+    public float lean, leanO, revLevel;
+    float revTarget;
+    int revHold, backfireCooldown;
+    float rpmPrevS;
+    public int backfireTick = -100, backfireKind;
     private float deltaYaw;
     private float vy;
     private int lastAutoGear = 1;
@@ -346,12 +352,12 @@ public class VehicleEntity extends Entity {
         if (p instanceof LivingEntity le) {
             le.setYBodyRot(getYRot());
             var inst = le.getAttribute(Attributes.SCALE);
-            if (inst != null) inst.addOrUpdateTransientModifier(new AttributeModifier(SEATED_SCALE_ID, TCConfig.SEATED_SCALE.get() - 1.0,
+            if (inst != null) inst.addOrUpdateTransientModifier(new AttributeModifier(SEATED_SCALE_ID, (spec().bike ? spec().riderScale : TCConfig.SEATED_SCALE.get()) - 1.0,
                     AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
         }
         if (!level().isClientSide) {
             entityData.set(left ? DOOR_L : DOOR_R, tickCount);
-            level().playSound(null, getX(), getY(), getZ(), TCRegistry.snd("misc.door_open"), SoundSource.NEUTRAL, 0.8f, 1.0f);
+            if (!spec().bike) level().playSound(null, getX(), getY(), getZ(), TCRegistry.snd("misc.door_open"), SoundSource.NEUTRAL, 0.8f, 1.0f);
             if (p instanceof Player && idx == 0 && getMode() != MODE_AI) setMode(MODE_PLAYER);
             if (p instanceof Player pl && getMode() == MODE_AI) pl.displayClientMessage(Component.translatable("msg.trafficcraft.passenger"), true);
         }
@@ -373,7 +379,7 @@ public class VehicleEntity extends Entity {
         if (!level().isClientSide) {
             boolean left = spec().seats.get(Math.min(Math.max(idx, 0), spec().seats.size() - 1)).x > 0;
             entityData.set(left ? DOOR_L : DOOR_R, tickCount);
-            level().playSound(null, getX(), getY(), getZ(), TCRegistry.snd("misc.door_close"), SoundSource.NEUTRAL, 0.9f, 1.0f);
+            if (!spec().bike) level().playSound(null, getX(), getY(), getZ(), TCRegistry.snd("misc.door_close"), SoundSource.NEUTRAL, 0.9f, 1.0f);
             if (getPassengers().isEmpty() && getMode() == MODE_PLAYER) {
                 setMode(MODE_FREE);
                 setFlag(F_BRAKE | F_REVERSE, false);
@@ -510,6 +516,7 @@ public class VehicleEntity extends Entity {
     public void tick() {
         float yaw0 = getYRot();
         bodyRollO = bodyRoll;
+        leanO = lean;
         bodyPitchO = bodyPitch;
         wheelSpinO = wheelSpin;
         steerVisO = steerVis;
@@ -546,8 +553,57 @@ public class VehicleEntity extends Entity {
         entityData.set(SPEED, speed);
         entityData.set(STEER, steer);
         entityData.set(RPM, has(F_ENGINE) ? rpm : 0f);
-        entityData.set(LOAD, throttle);
+        entityData.set(LOAD, Math.max(throttle, revLevel));
         entityData.set(GEAR, gear);
+    }
+
+    /** Throttle blip with the clutch in (revving at a standstill or while rolling). */
+    public void revBlip(float strength, int hold) {
+        if (!has(F_ENGINE)) return;
+        revTarget = Math.max(revTarget, Mth.clamp(strength, 0, 1));
+        revHold = Math.max(revHold, hold);
+    }
+
+    /** Rev envelope: fast rise, short hold, slower fall (runs where the vehicle is simulated). */
+    public void tickRev() {
+        if (revHold > 0) {
+            revHold--;
+            revLevel += (revTarget - revLevel) * 0.45f;
+        } else {
+            revTarget = 0;
+            revLevel = Math.max(0, revLevel - 0.09f);
+        }
+    }
+
+    /** Server: exhaust pops when the revs fall fast from high rpm with the throttle closed (lift-off, upshift, end of a rev blip). */
+    void backfireCheck() {
+        VehicleSpec s = spec();
+        float rpm = visRpm();
+        if (backfireCooldown > 0) backfireCooldown--;
+        if (s.backfire > 0 && has(F_ENGINE) && backfireCooldown == 0) {
+            float red = s.redRpm;
+            float load = entityData.get(LOAD);
+            boolean falling = rpmPrevS > red * 0.6f && rpm < rpmPrevS - red * 0.03f;
+            if (falling && (load < 0.3f || random.nextFloat() < 0.3f) && random.nextFloat() < s.backfire * 0.55f) {
+                float x = random.nextFloat();
+                int kind = rpmPrevS > red * 0.85f && x < 0.22f ? 2 : x < 0.6f ? 0 : 1;
+                level().broadcastEntityEvent(this, (byte) (60 + kind));
+                com.trafficcraft.ai.TrafficStats.inc("backfires");
+                backfireCooldown = kind == 1 ? 18 : 7;
+            }
+        }
+        rpmPrevS = rpm;
+    }
+
+    @Override
+    public void handleEntityEvent(byte id) {
+        if (id >= 60 && id <= 62) {
+            backfireTick = tickCount;
+            backfireKind = id - 60;
+            CLIENT_EVENT.accept(this, "backfire_" + backfireKind);
+            return;
+        }
+        super.handleEntityEvent(id);
     }
 
     /** Applies the driver's state packet on the server. */
@@ -576,6 +632,7 @@ public class VehicleEntity extends Entity {
     }
 
     private void serverTick() {
+        backfireCheck();
         if (startTimer > 0 && --startTimer == 0) {
             setFlag(F_STARTING, false);
             setFlag(F_ENGINE, true);
@@ -689,6 +746,12 @@ public class VehicleEntity extends Entity {
         float r = spec().wheels.isEmpty() ? 0.33f : spec().wheels.get(0).r();
         wheelSpin += (float) Math.toDegrees(v * 0.05f / r);
         steerVis += (visSteer() - steerVis) * 0.5f;
+        if (spec().bike) {
+            // lean into turns: tan(lean) = v * yaw rate / g
+            double omega = Math.toRadians(deltaYaw * 20.0);
+            float target = (float) Mth.clamp(Math.toDegrees(Math.atan(v * omega / 9.81)), -42, 42);
+            lean += (target - lean) * 0.2f;
+        }
         if (has(F_IND_L) || has(F_IND_R) || has(F_HAZARD)) {
             int phase = (int) ((level().getGameTime() / 8) & 1);
             if (phase != blinkTick) {
