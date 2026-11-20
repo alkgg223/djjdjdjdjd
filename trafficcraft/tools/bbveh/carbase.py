@@ -73,7 +73,7 @@ class Car:
         self.m.shift = V(0, 0, -self.L / 2)
         self.m.painters.update(S.COMMON)
         self.ROUTE = {}
-        self.RA = self.R + 0.045
+        self.RA = self.R + d.get('arch_gap', 0.045)
         self.WS0, self.WS1 = self.ws
         self.meta_extra = {}
         if self.beam is None:
@@ -104,16 +104,32 @@ class Car:
         b = self.bot(z) - chin * smooth(self.FB_Z, max(self.FB_Z + 0.05, self.L - 0.13), z)
         a = self.arch_h(z)
         a = a if a is not None else b
-        s2 = max(s, a + 0.03)
         cr = self.crown(z)
+        ts = self.fender_t(z)
+        s2 = max(s, a + 0.03)
+        s2 = min(s2, ts - 0.05)
         inner = min(0.6, w * 0.7)
-        return [(0.0, b + 0.02), (inner, b), (inner, a), (w * 0.965, max(a, b + 0.035)), (w, s2), (w - 0.02, (s2 + t) / 2),
-                (w - 0.058, t - 0.022), (w - 0.1, t), (w * 0.5, t + cr * 0.72), (0.0, t + cr)]
+        lift = ts - t                       # the bonnet follows the raised fenders, keeping only a gentle valley
+        return [(0.0, b + 0.02), (inner, b), (inner, a), (w * 0.965, max(a, b + 0.035)), (w, s2), (w - 0.02, (s2 + ts) / 2),
+                (w - 0.058, ts - 0.022), (w - 0.1, ts), (w * 0.5, t + cr * 0.72 + lift * 0.8), (0.0, t + cr + lift * 0.72)]
+
+    def fender_t(self, z):
+        """Top of the body side; raised over the wheels where the nose / tail is lower than the tyre top."""
+        t = self.belt(z)
+        ts = t
+        for za in (self.YR, self.YF):
+            d = abs(z - za)
+            top = self.R + self.RA + 0.05
+            if d < self.RA + 0.35 and top > t:
+                ts = max(ts, lerp(t, top, smooth(self.RA + 0.35, self.RA - 0.1, d)))
+        return ts
 
     def deck(self, x, z):
         w, t = self.hw(z), self.belt(z)
+        lift = self.fender_t(z) - t
         xx = min(abs(x), w - 0.1)
-        return t + self.crown(z) * (1 - (xx / max(w - 0.1, 1e-3)) ** 2)
+        f = (xx / max(w - 0.1, 1e-3)) ** 2
+        return t + self.crown(z) * (1 - f) + lift * (0.72 + 0.28 * f)
 
     def gpts(self, z):
         w, t = self.hw(z), self.belt(z)
@@ -494,7 +510,7 @@ class Car:
                 g = 'popup_' + side
                 x0, x1 = sorted((sx * p['x0'], sx * p['x1']))
                 z0, z1 = p['z0'], p['z1']
-                yt = max(self.deck(x0, z1), self.deck(x1, z1), self.deck(x0, z0), self.deck(x1, z0)) + 0.004
+                yt = (self.deck(x0, z1) + self.deck(x1, z1) + self.deck(x0, z0) + self.deck(x1, z0)) / 4 + 0.003
                 h = p.get('h', 0.12)
                 self.el(g, 'paint', 'paint')
                 m.box(V((x0 + x1) / 2, yt - h / 2, (z0 + z1) / 2), (x1 - x0, h, z1 - z0), 'paint')
@@ -906,7 +922,7 @@ class Car:
             out[..., :3] += noise(P, 3.0, 40)[..., None]
             side = abs(n[0]) > 0.45
             top = n[1] > 0.45
-            front = n[2] > 0.2
+            front = n[2] > 0.1
             rear = n[2] < -0.45
             px = 1.0 / face.dens
             put = lambda mask, c: out.__setitem__(mask, np.array(c, float))

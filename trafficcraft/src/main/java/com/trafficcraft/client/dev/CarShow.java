@@ -28,6 +28,7 @@ public final class CarShow {
     static int tt = -1;
     static double gy;
     static final List<Integer> ids = new ArrayList<>();
+    static final List<Vec3> spots = new ArrayList<>();
     static List<String> models = new ArrayList<>();
     static int step = 0;
 
@@ -46,7 +47,7 @@ public final class CarShow {
         float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
         server.execute(() -> {
             ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
-            sp.teleportTo(sp.serverLevel(), eye.x, eye.y, eye.z, yaw, pitch);
+            sp.teleportTo(sp.serverLevel(), eye.x, eye.y - sp.getEyeHeight(), eye.z, yaw, pitch);
         });
     }
 
@@ -98,6 +99,7 @@ public final class CarShow {
                 v.setFlag(VehicleEntity.F_BRAKE, true);
             }
         });
+        if (t == 6) view(mc, spots.get(0).add(3, 3, 8), spots.get(0));
         VehicleEntity v0 = car(mc, 0);
         if (v0 == null) return;
         if (t == 10) view(mc, rel(v0, 2.6, 1.6, 5.5), rel(v0, 0, 0.6, 0));
@@ -134,8 +136,7 @@ public final class CarShow {
         }
         // line-up
         if (t == 230) {
-            VehicleEntity last = car(mc, n - 1);
-            Vec3 mid = v0.position().add(last.position()).scale(0.5);
+            Vec3 mid = spots.get(0).add(spots.get(n - 1)).scale(0.5);
             view(mc, mid.add(-4, 9, -14), mid);
         }
         if (t == 270) shot(mc, "c_lineup.png");
@@ -162,6 +163,7 @@ public final class CarShow {
             v.moveTo(i * 6.0, gy, 0, 20, 0);
             lvl.addFreshEntity(v);
             ids.add(v.getId());
+            spots.add(v.position());
         }
     }
 

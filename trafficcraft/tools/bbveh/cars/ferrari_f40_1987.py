@@ -17,10 +17,21 @@ def top_art(car, out, P, n):
     out[m & (np.mod(z * 25, 1.0) < 0.45)] = (20, 20, 22, 240)
 
 
+def side_art(car, out, P, n):
+    from bb import inside
+    z, y = P[..., 2], P[..., 1]
+    uv = np.stack([z, y], -1)
+    # NACA duct in the door and the big intake on the rear flank
+    out[inside(uv, [(2.0, 0.66), (2.35, 0.62), (2.4, 0.64), (2.05, 0.72)])] = (16, 16, 18, 240)
+    m = inside(uv, [(1.2, 0.6), (1.62, 0.62), (1.68, 0.84), (1.3, 0.86)])
+    out[m] = (16, 16, 18, 240)
+    out[m & (np.mod(y * 50, 1.0) < 0.35)] = (44, 44, 48, 240)
+
+
 SPEC = dict(
     id='ferrari_f40_1987', name='Ferrari F40 1987', make='Ferrari', model='F40', year=1987, category='super', category_name='Supercar',
     description='Twin-turbo V8 mid-engine supercar built light and raw for Ferrari\'s 40th anniversary.',
-    L=L, W=1.97, H=1.13, YR=0.92, YF=3.37, R=0.33, TRACK=0.8, Rr=0.216, TW=0.27, tumble=0.08, top_art=top_art,
+    L=L, W=1.97, H=1.13, YR=0.92, YF=3.37, R=0.33, TRACK=0.8, Rr=0.216, TW=0.27, tumble=0.08, top_art=top_art, side_art=side_art,
     bot=[(0, 0.3), (0.15, 0.24), (0.6, 0.2), (1.4, 0.18), (3.0, 0.18), (3.9, 0.19), (L, 0.22)],
     belt=[(0, 0.86), (0.06, 0.9), (0.4, 0.9), (1.2, 0.87), (1.8, 0.82), (2.5, 0.76), (3.0, 0.7), (3.5, 0.62), (4.0, 0.52), (L, 0.4)],
     hw=[(0, 0.86), (0.1, 0.94), (0.6, 0.985), (1.2, 0.97), (2.0, 0.93), (2.8, 0.93), (3.4, 0.96), (3.9, 0.92), (4.2, 0.84), (L, 0.72)],
@@ -40,7 +51,7 @@ SPEC = dict(
               rects=[bar(0.1, 0.4, 0.2, 0.44, 'reverse', 'rev_core_r', 0.006)], round_off=0.016),
     badge='', plate_f=0.3, plate_r=0.5, exhaust=(-0.1, 0.38, -0.04), stock_exhaust='center', spoiler=(0.02, 0.9, 'hoop'),
     stock_wheel='star', caliper=(200, 30, 30), beam=(0.64, 0.42, L - 0.05),
-    cabin=dict(driver_x=0.34, rear=False, cluster='analog2', screen=False, shifter='manual', seat='sport', seat_z=1.95),
+    cabin=dict(driver_x=0.34, rear=False, cluster='analog2', screen=False, shifter='manual', seat='sport', seat_z=2.25),
     maxSpeed=320, accel=7.6, brake=10.5, mass=1100, fuel_l=120, spawnWeight=2, engine='v8_sport', horn='high', backfire=0.35,
     colors=['#c8102e', '#b5121b', '#f2c01e', '#1b1c1e', '#f2f2f0'],
 )

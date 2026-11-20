@@ -12,34 +12,81 @@ def tri(sx):
     return f
 
 
+INTAKE = [(0.32, 0.2), (0.97, 0.2), (1.0, 0.36), (0.9, 0.44), (0.62, 0.34), (0.44, 0.3)]
+
+
+def intakes(car, out, P):
+    """Big black corner intakes, painted on every nose face they cover (front and wrapped corners)."""
+    import numpy as np
+    from bb import inside
+    import styles as S
+    x, y, z = P[..., 0], P[..., 1], P[..., 2]
+    uv = np.stack([np.abs(x), y], -1)
+    m = inside(uv, INTAKE) & (z > car.L - 0.55)
+    hole = S.honeycomb(P, np.stack([x, y], -1), 0.02)
+    out[m] = (24, 24, 26, 240)
+    out[m & hole] = (6, 6, 8, 240)
+
+
+def side_art(car, out, P, n):
+    import numpy as np
+    from bb import inside
+    intakes(car, out, P)
+    z, y = P[..., 2], P[..., 1]
+    uv = np.stack([z, y], -1)
+    # the big hexagonal side intake ahead of the rear wheel and the upper scoop behind the side window
+    m = inside(uv, [(1.38, 0.44), (1.9, 0.5), (2.02, 0.68), (1.86, 0.8), (1.5, 0.84), (1.4, 0.7)])
+    hole = np.mod(z * 40 + y * 20, 1.0) < 0.3
+    out[m] = (16, 16, 18, 240)
+    out[m & hole] = (40, 40, 44, 240)
+    out[inside(uv, [(1.42, 0.86), (1.9, 0.86), (1.95, 0.92), (1.5, 0.95)])] = (16, 16, 18, 240)
+
+
+def top_art(car, out, P, n):
+    import numpy as np
+    z, x = P[..., 2], P[..., 0]
+    m = (z > 0.45) & (z < 1.38) & (np.abs(x) < 0.55)
+    out[m] = (26, 26, 28, 240)
+    out[m & (np.mod(z * 22, 1.0) < 0.4)] = (60, 62, 66, 240)
+
+
+def front_art(car, out, P, n, uv, k):
+    import numpy as np
+    intakes(car, out, P)
+    x, y = P[..., 0], P[..., 1]
+    # black splitter blade and the sharp 'arrow' line in the nose
+    out[y < 0.205] = (16, 16, 18, 240)
+    out[(np.abs(y - (0.3 - np.abs(x) * 0.12)) < 0.006) & (np.abs(x) < 0.3)] = (30, 30, 32, 240)
+
+
 SPEC = dict(
     id='lamborghini_aventador_2011', name='Lamborghini Aventador 2011', make='Lamborghini', model='Aventador LP700-4', year=2011, category='super',
     category_name='Supercar', description='V12 flagship with a carbon tub, scissor doors and a fighter-jet wedge shape.',
-    L=L, W=2.03, H=1.136, YR=1.0, YF=3.7, R=0.345, TRACK=0.85, Rr=0.254, TW=0.3, tumble=0.1,
+    L=L, W=2.03, H=1.136, YR=1.0, YF=3.7, R=0.345, TRACK=0.85, Rr=0.254, TW=0.3, tumble=0.1, arch_gap=0.03,
     bot=[(0, 0.3), (0.15, 0.24), (0.6, 0.19), (1.4, 0.17), (3.2, 0.17), (4.2, 0.18), (L, 0.2)],
-    belt=[(0, 0.86), (0.06, 0.88), (0.5, 0.88), (1.3, 0.86), (2.0, 0.8), (2.8, 0.72), (3.4, 0.64), (4.0, 0.52), (4.5, 0.42), (L, 0.33)],
-    hw=[(0, 0.9), (0.1, 0.97), (0.6, 1.01), (1.2, 1.0), (2.0, 0.96), (2.9, 0.97), (3.6, 1.0), (4.1, 0.96), (4.5, 0.86), (L, 0.72)],
+    belt=[(0, 0.86), (0.06, 0.89), (0.5, 0.9), (1.2, 0.88), (1.9, 0.82), (2.6, 0.77), (3.2, 0.72), (3.62, 0.67), (4.0, 0.58), (4.4, 0.47), (4.65, 0.39), (L, 0.35)],
+    hw=[(0, 0.9), (0.1, 0.97), (0.6, 1.01), (1.2, 1.0), (2.0, 0.96), (2.9, 0.97), (3.6, 1.0), (4.1, 0.97), (4.4, 0.9), (4.6, 0.8), (L, 0.62)],
     zsh=[(0, 0.56), (1.2, 0.52), (2.2, 0.48), (3.6, 0.44), (L, 0.3)],
-    CABIN0=1.55, CABIN1=3.2,
-    roofz=[(1.55, 0.86), (1.7, 1.05), (1.95, 1.13), (2.25, 1.136), (2.55, 1.1), (2.8, 0.98), (3.0, 0.84), (3.2, 0.68)],
-    roofw=[(1.55, 0.72), (1.95, 0.6), (2.4, 0.58), (3.2, 0.7)],
-    crown=[(0, 0.02), (1.5, 0.03), (3.2, 0.03), (4.0, 0.03), (L, 0.01)],
-    ws=(2.5, 3.16), rear_glass=(0.6, 1.5), windows=[(1.95, 3.1)], doors=[('f', 1.95, 3.05)], roof_black=False,
-    FB_Z=L - 0.4, RB_Z=0.3, hood=(3.22, L - 0.16, 0.66), fuel=('r', 3.0, 0.7), fb_top=6,
+    CABIN0=1.4, CABIN1=3.62,
+    roofz=[(1.4, 0.88), (1.6, 1.04), (1.9, 1.12), (2.2, 1.136), (2.5, 1.11), (2.8, 1.02), (3.1, 0.9), (3.4, 0.77), (3.62, 0.67)],
+    roofw=[(1.4, 0.74), (1.9, 0.6), (2.4, 0.57), (3.0, 0.62), (3.62, 0.74)],
+    crown=[(0, 0.02), (1.5, 0.03), (3.2, 0.04), (4.0, 0.05), (4.5, 0.03), (L, 0.01)],
+    ws=(2.72, 3.58), rear_glass=(1.45, 1.62), windows=[(1.95, 3.6)], doors=[('f', 1.95, 3.42)], roof_black=False, top_art=top_art,
+    FB_Z=L - 0.4, RB_Z=0.3, hood=(3.66, L - 0.16, 0.6), fuel=('r', 3.65, 0.66), fb_top=6,
     head=[dict(view='T', outline=[(0.5, 4.6), (0.74, 4.5), (0.92, 4.3), (0.95, 4.22), (0.86, 4.26), (0.66, 4.42), (0.48, 4.52)],
                lamps=[(0.62, 4.5, 0.03, 'head'), (0.74, 4.42, 0.03, 'high')], house='head_house_black',
                strips=[([(0.52, 4.57), (0.75, 4.47), (0.92, 4.28)], 0.012, 'drl'), ([(0.72, 4.48), (0.68, 4.42)], 0.012, 'drl'),
                        ([(0.88, 4.3), (0.93, 4.24)], 0.03, 'ind')])],
-    mouth=[dict(shape='poly', poly=tri(1), w=0.42, h=0.24, cx=0.66, cy=0.32, pattern='honeycomb', grow=0),
-           dict(shape='poly', poly=tri(-1), w=0.42, h=0.24, cx=0.66, cy=0.32, pattern='honeycomb', grow=0),
-           dict(w=0.6, h=0.06, r=0.02, cx=0.0, cy=0.24, pattern='honeycomb')],
+    mouth=[dict(shape='poly', poly=lambda cx, cy, w, h: [(-0.28, 0.2), (0.28, 0.2), (0.2, 0.25), (-0.2, 0.25)], w=1, h=1, cx=0, cy=0, pattern='bars',
+                pitch=0.012, grow=0)],
+    front_art=front_art, side_art=side_art,
     tail=dict(housings=[dict(outline=rr(-0.92, 0.42, 0.92, 0.8, 0.01), style='grille', off=0.004, bezel='trim')],
               strips=[([(0.42, 0.76), (0.62, 0.7), (0.88, 0.74)], 0.016, 'tail', 0.012), ([(0.62, 0.7), (0.66, 0.6), (0.86, 0.56)], 0.016, 'tail', 0.012),
                       ([(0.5, 0.735), (0.7, 0.72)], 0.012, 'brake', 0.014), ([(0.86, 0.74), (0.9, 0.7)], 0.02, 'ind', 0.014)],
               rects=[bar(0.2, 0.46, 0.3, 0.5, 'reverse', 'rev_core_r', 0.008)], round_off=0.016),
     badge='', plate_f=0.3, plate_r=0.52, exhaust=(0.0, 0.38, -0.04), stock_exhaust='center', spoiler=(0.05, 0.85, 'none'),
     stock_wheel='turbine', caliper=(200, 150, 40), beam=(0.68, 0.48, 4.5),
-    cabin=dict(driver_x=0.36, rear=False, cluster='digital', screen=True, shifter='auto', seat='sport', seat_z=2.2),
+    cabin=dict(driver_x=0.36, rear=False, cluster='digital', screen=True, shifter='auto', seat='sport'),
     maxSpeed=345, accel=8.2, brake=11.5, mass=1575, fuel_l=90, spawnWeight=2, engine='v8_sport', horn='high', backfire=0.3,
     colors=['#9acd32', '#f2a900', '#f2f2f0', '#1b1c1e', '#c8102e', '#7a7f86'],
 )
