@@ -1,0 +1,464 @@
+{
+ "id": "toyota_camry_1982",
+ "name": "Toyota Camry 1982",
+ "make": "Toyota",
+ "model": "Camry (V10)",
+ "year": 1982,
+ "category": "sedan",
+ "category_name": "Saloon",
+ "description": "First front-wheel-drive Camry: a sensible, square-cut family saloon built to last.",
+ "length": 4.435,
+ "width": 1.69,
+ "height": 1.37,
+ "wheelbase": 2.6,
+ "wheels": [
+  {
+   "x": 0.71,
+   "y": 0.29,
+   "z": -1.2975,
+   "r": 0.29,
+   "steer": false,
+   "mirror": false
+  },
+  {
+   "x": -0.71,
+   "y": 0.29,
+   "z": -1.2975,
+   "r": 0.29,
+   "steer": false,
+   "mirror": true
+  },
+  {
+   "x": 0.71,
+   "y": 0.29,
+   "z": 1.3025,
+   "r": 0.29,
+   "steer": true,
+   "mirror": false
+  },
+  {
+   "x": -0.71,
+   "y": 0.29,
+   "z": 1.3025,
+   "r": 0.29,
+   "steer": true,
+   "mirror": true
+  }
+ ],
+ "seats": [
+  [
+   0.33,
+   0.385,
+   -0.1974999999999998
+  ],
+  [
+   -0.33,
+   0.385,
+   -0.1974999999999998
+  ],
+  [
+   0.33,
+   0.385,
+   -0.9974999999999998
+  ],
+  [
+   -0.33,
+   0.385,
+   -0.9974999999999998
+  ]
+ ],
+ "doors": {
+  "door_rl": {
+   "hinge": [
+    0.815,
+    -0.107
+   ],
+   "side": 1,
+   "kind": "rear"
+  },
+  "door_rr": {
+   "hinge": [
+    -0.815,
+    -0.107
+   ],
+   "side": -1,
+   "kind": "rear"
+  },
+  "door_fl": {
+   "hinge": [
+    0.815,
+    0.843
+   ],
+   "side": 1,
+   "kind": "front"
+  },
+  "door_fr": {
+   "hinge": [
+    -0.815,
+    0.843
+   ],
+   "side": -1,
+   "kind": "front"
+  }
+ },
+ "steer": {
+  "pivot": [
+   0.33,
+   0.824640756507391,
+   0.32250000000000023
+  ],
+  "axis": [
+   0.0,
+   0.40673664307580026,
+   -0.913545457642601
+  ]
+ },
+ "cluster": {
+  "center": [
+   0.33,
+   0.929640756507391,
+   0.5415000000000005
+  ],
+  "right": [
+   -1,
+   0,
+   0
+  ],
+  "up": [
+   0,
+   0.995,
+   0.1
+  ],
+  "w": 0.38,
+  "h": 0.1
+ },
+ "shifter": {
+  "pivot": [
+   0,
+   0.46499999999999997,
+   0.2725000000000004
+  ],
+  "type": "auto"
+ },
+ "beams": [
+  [
+   0.52,
+   0.65,
+   2.1774999999999998
+  ],
+  [
+   -0.52,
+   0.65,
+   2.1774999999999998
+  ]
+ ],
+ "plates": [
+  {
+   "pos": [
+    0,
+    0.36,
+    2.2225
+   ],
+   "normal": [
+    0,
+    0,
+    1
+   ],
+   "w": 0.52,
+   "h": 0.12
+  },
+  {
+   "pos": [
+    0,
+    0.58,
+    -2.2295
+   ],
+   "normal": [
+    0,
+    0,
+    -1
+   ],
+   "w": 0.52,
+   "h": 0.12
+  }
+ ],
+ "filler": [
+  -0.8608639324726912,
+  0.82,
+  -1.6174999999999997
+ ],
+ "catalog": {
+  "fb": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Factory + lip"
+   },
+   {
+    "name": "Street mesh"
+   },
+   {
+    "name": "Time-attack"
+   },
+   {
+    "name": "Drift aero"
+   }
+  ],
+  "rb": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Diffuser"
+   },
+   {
+    "name": "Vented valance"
+   },
+   {
+    "name": "Track diffuser"
+   },
+   {
+    "name": "Cut-out valance"
+   }
+  ],
+  "ex": [
+   {
+    "name": "Factory oval tip"
+   },
+   {
+    "name": "Dual round tips"
+   },
+   {
+    "name": "Single titanium cannon"
+   },
+   {
+    "name": "Quad tips"
+   },
+   {
+    "name": "Centre exit"
+   }
+  ],
+  "sp": [
+   {
+    "name": "None"
+   },
+   {
+    "name": "Ducktail lip"
+   },
+   {
+    "name": "Low pedestal wing"
+   },
+   {
+    "name": "Swan-neck GT wing"
+   },
+   {
+    "name": "Time-attack wing"
+   }
+  ],
+  "hd": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Carbon"
+   },
+   {
+    "name": "Vented"
+   },
+   {
+    "name": "Ram-air scoop"
+   },
+   {
+    "name": "Carbon vented"
+   }
+  ],
+  "wh": [
+   {
+    "name": "aero"
+   },
+   {
+    "name": "Factory 5-spoke"
+   },
+   {
+    "name": "Forged 6-spoke"
+   },
+   {
+    "name": "Cross mesh"
+   },
+   {
+    "name": "Deep dish"
+   }
+  ],
+  "sk": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Extended skirts"
+   },
+   {
+    "name": "Skirts + winglets"
+   }
+  ]
+ },
+ "exhaust_variants": [
+  [
+   [
+    -0.45,
+    0.28,
+    -2.2575,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    0.45,
+    0.28,
+    -2.2575,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.45,
+    0.28,
+    -2.2575,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    -0.45,
+    0.28,
+    -2.2575,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    0.385,
+    0.28,
+    -2.2575,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.515,
+    0.28,
+    -2.2575,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.515,
+    0.28,
+    -2.2575,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.385,
+    0.28,
+    -2.2575,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    -0.075,
+    0.28,
+    -2.2575,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.075,
+    0.28,
+    -2.2575,
+    0,
+    0,
+    -1
+   ]
+  ]
+ ],
+ "screen_sensor": false,
+ "texture": "toyota_camry_1982",
+ "seats_n": 4,
+ "matcap": [
+  0.9375,
+  0.0,
+  1.0,
+  0.0625
+ ],
+ "exhausts": [
+  [
+   -0.45,
+   0.28,
+   -2.2575,
+   0,
+   0,
+   -1
+  ]
+ ],
+ "dash": {
+  "cluster_style": "analog2",
+  "dials": [
+   {
+    "kind": "rpm",
+    "cx": 0.27,
+    "cy": 0.5,
+    "r": 0.24,
+    "a0": 225,
+    "a1": -45,
+    "max": 8000,
+    "color": 16724000
+   },
+   {
+    "kind": "speed",
+    "cx": 0.73,
+    "cy": 0.5,
+    "r": 0.24,
+    "a0": 225,
+    "a1": -45,
+    "max": 240,
+    "color": 16724000
+   }
+  ]
+ },
+ "maxSpeed": 165,
+ "accel": 3.2,
+ "brake": 7.0,
+ "mass": 1050,
+ "fuel": 55,
+ "spawnWeight": 7,
+ "colors": [
+  "#c9c4b4",
+  "#8a1c22",
+  "#3d5a7a",
+  "#e8e4d8",
+  "#4b4f54",
+  "#6b5a3c"
+ ],
+ "horn": "car",
+ "engine": {
+  "type": "i4_petrol",
+  "idle": 800,
+  "drive": 2800,
+  "cyl": 4,
+  "diesel": false
+ },
+ "tris": 8367
+}

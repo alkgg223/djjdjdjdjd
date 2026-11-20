@@ -37,6 +37,17 @@ public final class VehicleSpec {
     public final float riderLean, riderLeg, riderSpread, riderScale, backfire;
     public float[] grips = {0.3f, 1.1f, 0.3f};
     public final List<float[]> exhausts = new ArrayList<>(); // pos xyz, dir xyz
+    // Blockbench pipeline: own texture, customisation catalog, gear lever, pop-up lamps, parking sensor
+    public String texture;
+    public float[] matcap;
+    public final java.util.Map<String, Integer> catalog = new java.util.LinkedHashMap<>();
+    public final List<List<float[]>> exhaustVariants = new ArrayList<>();
+    public float[] shifterPivot;
+    public String shifterType = "manual";
+    public final java.util.Map<String, float[]> popups = new java.util.HashMap<>();
+    public boolean screenSensor;
+    public String make = "", modelName = "", categoryName = "", description = "";
+    public int year;
 
     VehicleSpec(JsonObject o) {
         id = o.get("id").getAsString();
@@ -135,6 +146,36 @@ public final class VehicleSpec {
             exhausts.add(x);
         }
         paint2 = o.has("paint2") ? Integer.parseInt(o.get("paint2").getAsString().substring(1), 16) : 0xF2F2F2;
+        if (o.has("texture")) texture = o.get("texture").getAsString();
+        if (o.has("matcap")) matcap = vec(o.getAsJsonArray("matcap"));
+        if (o.has("catalog")) for (var en : o.getAsJsonObject("catalog").entrySet()) catalog.put(en.getKey(), en.getValue().getAsJsonArray().size());
+        for (JsonElement e : arr(o, "exhaust_variants")) {
+            List<float[]> l = new ArrayList<>();
+            for (JsonElement t : e.getAsJsonArray()) l.add(vec(t.getAsJsonArray()));
+            exhaustVariants.add(l);
+        }
+        if (o.has("shifter")) {
+            JsonObject sh = o.getAsJsonObject("shifter");
+            shifterPivot = vec(sh.getAsJsonArray("pivot"));
+            if (sh.has("type")) shifterType = sh.get("type").getAsString();
+        }
+        if (o.has("popups")) for (var en : o.getAsJsonObject("popups").entrySet()) {
+            JsonObject pp = en.getValue().getAsJsonObject();
+            float[] pv = vec(pp.getAsJsonArray("pivot"));
+            popups.put(en.getKey(), new float[]{pv[0], pv[1], f(pp, "angle", -62)});
+        }
+        screenSensor = o.has("screen_sensor") && o.get("screen_sensor").getAsBoolean();
+        if (o.has("make")) make = o.get("make").getAsString();
+        if (o.has("model")) modelName = o.get("model").getAsString();
+        if (o.has("category_name")) categoryName = o.get("category_name").getAsString();
+        if (o.has("description")) description = o.get("description").getAsString();
+        if (o.has("year")) year = o.get("year").getAsInt();
+    }
+
+    /** Exhaust tips of the fitted exhaust variant. */
+    public List<float[]> exhaustsFor(int variant) {
+        if (variant >= 0 && variant < exhaustVariants.size()) return exhaustVariants.get(variant);
+        return exhausts;
     }
 
     public boolean isHeavy() {

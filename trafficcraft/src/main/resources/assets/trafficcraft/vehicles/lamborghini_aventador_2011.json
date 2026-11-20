@@ -1,0 +1,447 @@
+{
+ "id": "lamborghini_aventador_2011",
+ "name": "Lamborghini Aventador 2011",
+ "make": "Lamborghini",
+ "model": "Aventador LP700-4",
+ "year": 2011,
+ "category": "super",
+ "category_name": "Supercar",
+ "description": "V12 flagship with a carbon tub, scissor doors and a fighter-jet wedge shape.",
+ "length": 4.78,
+ "width": 2.03,
+ "height": 1.136,
+ "wheelbase": 2.7,
+ "wheels": [
+  {
+   "x": 0.85,
+   "y": 0.345,
+   "z": -1.39,
+   "r": 0.345,
+   "steer": false,
+   "mirror": false
+  },
+  {
+   "x": -0.85,
+   "y": 0.345,
+   "z": -1.39,
+   "r": 0.345,
+   "steer": false,
+   "mirror": true
+  },
+  {
+   "x": 0.85,
+   "y": 0.345,
+   "z": 1.31,
+   "r": 0.345,
+   "steer": true,
+   "mirror": false
+  },
+  {
+   "x": -0.85,
+   "y": 0.345,
+   "z": 1.31,
+   "r": 0.345,
+   "steer": true,
+   "mirror": true
+  }
+ ],
+ "seats": [
+  [
+   0.36,
+   0.345,
+   -0.18999999999999995
+  ],
+  [
+   -0.36,
+   0.345,
+   -0.18999999999999995
+  ]
+ ],
+ "doors": {
+  "door_fl": {
+   "hinge": [
+    0.945,
+    0.66
+   ],
+   "side": 1,
+   "kind": "front"
+  },
+  "door_fr": {
+   "hinge": [
+    -0.945,
+    0.66
+   ],
+   "side": -1,
+   "kind": "front"
+  }
+ },
+ "steer": {
+  "pivot": [
+   0.36,
+   0.6630316712328765,
+   0.25
+  ],
+  "axis": [
+   0.0,
+   0.40673664307580026,
+   -0.913545457642601
+  ]
+ },
+ "cluster": {
+  "center": [
+   0.36,
+   0.7680316712328766,
+   0.4690000000000003
+  ],
+  "right": [
+   -1,
+   0,
+   0
+  ],
+  "up": [
+   0,
+   0.995,
+   0.1
+  ],
+  "w": 0.38,
+  "h": 0.1
+ },
+ "shifter": {
+  "pivot": [
+   0,
+   0.42500000000000004,
+   0.2799999999999998
+  ],
+  "type": "auto"
+ },
+ "beams": [
+  [
+   0.68,
+   0.48,
+   2.11
+  ],
+  [
+   -0.68,
+   0.48,
+   2.11
+  ]
+ ],
+ "plates": [
+  {
+   "pos": [
+    0,
+    0.3,
+    2.395
+   ],
+   "normal": [
+    0,
+    0,
+    1
+   ],
+   "w": 0.52,
+   "h": 0.12
+  },
+  {
+   "pos": [
+    0,
+    0.52,
+    -2.402
+   ],
+   "normal": [
+    0,
+    0,
+    -1
+   ],
+   "w": 0.52,
+   "h": 0.12
+  }
+ ],
+ "filler": [
+  -0.9929909020320261,
+  0.7,
+  0.6099999999999999
+ ],
+ "catalog": {
+  "fb": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Factory + lip"
+   },
+   {
+    "name": "Street mesh"
+   },
+   {
+    "name": "Time-attack"
+   },
+   {
+    "name": "Drift aero"
+   }
+  ],
+  "rb": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Diffuser"
+   },
+   {
+    "name": "Vented valance"
+   },
+   {
+    "name": "Track diffuser"
+   },
+   {
+    "name": "Cut-out valance"
+   }
+  ],
+  "ex": [
+   {
+    "name": "Centre exit"
+   },
+   {
+    "name": "Factory oval tip"
+   },
+   {
+    "name": "Dual round tips"
+   },
+   {
+    "name": "Single titanium cannon"
+   },
+   {
+    "name": "Quad tips"
+   }
+  ],
+  "sp": [
+   {
+    "name": "None"
+   },
+   {
+    "name": "Ducktail lip"
+   },
+   {
+    "name": "Low pedestal wing"
+   },
+   {
+    "name": "Swan-neck GT wing"
+   },
+   {
+    "name": "Time-attack wing"
+   }
+  ],
+  "hd": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Carbon"
+   },
+   {
+    "name": "Vented"
+   },
+   {
+    "name": "Ram-air scoop"
+   },
+   {
+    "name": "Carbon vented"
+   }
+  ],
+  "wh": [
+   {
+    "name": "Turbine 10-spoke"
+   },
+   {
+    "name": "Factory 5-spoke"
+   },
+   {
+    "name": "Forged 6-spoke"
+   },
+   {
+    "name": "Cross mesh"
+   },
+   {
+    "name": "Deep dish"
+   }
+  ],
+  "sk": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Extended skirts"
+   },
+   {
+    "name": "Skirts + winglets"
+   }
+  ]
+ },
+ "exhaust_variants": [
+  [
+   [
+    -0.075,
+    0.38,
+    -2.43,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.075,
+    0.38,
+    -2.43,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    0.0,
+    0.38,
+    -2.43,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    0.0,
+    0.38,
+    -2.43,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.0,
+    0.38,
+    -2.43,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    0.0,
+    0.38,
+    -2.43,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    -0.065,
+    0.38,
+    -2.43,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.065,
+    0.38,
+    -2.43,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.065,
+    0.38,
+    -2.43,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.065,
+    0.38,
+    -2.43,
+    0,
+    0,
+    -1
+   ]
+  ]
+ ],
+ "screen_sensor": true,
+ "texture": "lamborghini_aventador_2011",
+ "seats_n": 2,
+ "matcap": [
+  0.9375,
+  0.0,
+  1.0,
+  0.0625
+ ],
+ "exhausts": [
+  [
+   -0.075,
+   0.38,
+   -2.43,
+   0,
+   0,
+   -1
+  ],
+  [
+   0.075,
+   0.38,
+   -2.43,
+   0,
+   0,
+   -1
+  ]
+ ],
+ "dash": {
+  "cluster_style": "digital",
+  "dials": [
+   {
+    "kind": "speed",
+    "cx": 0.21,
+    "cy": 0.5,
+    "r": 0.22,
+    "a0": 225,
+    "a1": -45,
+    "max": 260,
+    "color": 3186943
+   },
+   {
+    "kind": "rpm",
+    "cx": 0.79,
+    "cy": 0.5,
+    "r": 0.22,
+    "a0": 225,
+    "a1": -45,
+    "max": 8000,
+    "color": 3186943
+   }
+  ]
+ },
+ "maxSpeed": 345,
+ "accel": 8.2,
+ "brake": 11.5,
+ "mass": 1575,
+ "fuel": 90,
+ "spawnWeight": 2,
+ "colors": [
+  "#9acd32",
+  "#f2a900",
+  "#f2f2f0",
+  "#1b1c1e",
+  "#c8102e",
+  "#7a7f86"
+ ],
+ "horn": "high",
+ "backfire": 0.3,
+ "engine": {
+  "type": "v8_sport",
+  "idle": 950,
+  "drive": 3400,
+  "cyl": 8,
+  "diesel": false
+ },
+ "tris": 8167
+}

@@ -36,6 +36,7 @@ public final class ClientEvents {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
         VehicleSounds.tick(mc);
+        com.trafficcraft.client.gui.ParkSensor.tick();
         VehicleEntity v = drivenVehicle();
         if (v == null) {
             for (var k : VehicleKeys.ALL) while (k.consumeClick()) { }

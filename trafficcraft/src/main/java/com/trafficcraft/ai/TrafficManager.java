@@ -211,6 +211,7 @@ public final class TrafficManager {
         if (!level.noCollision(new net.minecraft.world.phys.AABB(p.x - 0.8, p.y + 0.3, p.z - 0.8, p.x + 0.8, p.y + 1.4, p.z + 0.8))) return null;
         VehicleEntity v = new VehicleEntity(TCRegistry.VEHICLE.get(), level);
         v.setModel(model);
+        v.randomizeConfig(level.random);
         v.setColor(spec.colors[level.random.nextInt(spec.colors.length)]);
         v.setPlate(VehicleEntity.randomPlate(level.random));
         Vec3 t = g.tangent(sv).scale(e.a == n.id ? 1 : -1);

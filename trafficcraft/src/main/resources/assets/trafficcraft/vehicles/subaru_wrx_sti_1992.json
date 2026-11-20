@@ -1,0 +1,464 @@
+{
+ "id": "subaru_wrx_sti_1992",
+ "name": "Subaru Impreza WRX STI 1992",
+ "make": "Subaru",
+ "model": "Impreza WRX STI (GC8)",
+ "year": 1992,
+ "category": "sports",
+ "category_name": "Rally saloon",
+ "description": "Turbocharged flat-four, symmetrical all-wheel drive and a rally pedigree.",
+ "length": 4.34,
+ "width": 1.69,
+ "height": 1.405,
+ "wheelbase": 2.52,
+ "wheels": [
+  {
+   "x": 0.72,
+   "y": 0.31,
+   "z": -1.23,
+   "r": 0.31,
+   "steer": false,
+   "mirror": false
+  },
+  {
+   "x": -0.72,
+   "y": 0.31,
+   "z": -1.23,
+   "r": 0.31,
+   "steer": false,
+   "mirror": true
+  },
+  {
+   "x": 0.72,
+   "y": 0.31,
+   "z": 1.29,
+   "r": 0.31,
+   "steer": true,
+   "mirror": false
+  },
+  {
+   "x": -0.72,
+   "y": 0.31,
+   "z": 1.29,
+   "r": 0.31,
+   "steer": true,
+   "mirror": true
+  }
+ ],
+ "seats": [
+  [
+   0.33,
+   0.395,
+   -0.1499999999999999
+  ],
+  [
+   -0.33,
+   0.395,
+   -0.1499999999999999
+  ],
+  [
+   0.33,
+   0.395,
+   -0.9299999999999999
+  ],
+  [
+   -0.33,
+   0.395,
+   -0.9299999999999999
+  ]
+ ],
+ "doors": {
+  "door_rl": {
+   "hinge": [
+    0.812,
+    -0.12
+   ],
+   "side": 1,
+   "kind": "rear"
+  },
+  "door_rr": {
+   "hinge": [
+    -0.812,
+    -0.12
+   ],
+   "side": -1,
+   "kind": "rear"
+  },
+  "door_fl": {
+   "hinge": [
+    0.813,
+    0.89
+   ],
+   "side": 1,
+   "kind": "front"
+  },
+  "door_fr": {
+   "hinge": [
+    -0.813,
+    0.89
+   ],
+   "side": -1,
+   "kind": "front"
+  }
+ },
+ "steer": {
+  "pivot": [
+   0.33,
+   0.8383438626130135,
+   0.3700000000000001
+  ],
+  "axis": [
+   0.0,
+   0.40673664307580026,
+   -0.913545457642601
+  ]
+ },
+ "cluster": {
+  "center": [
+   0.33,
+   0.9433438626130136,
+   0.5890000000000004
+  ],
+  "right": [
+   -1,
+   0,
+   0
+  ],
+  "up": [
+   0,
+   0.995,
+   0.1
+  ],
+  "w": 0.38,
+  "h": 0.1
+ },
+ "shifter": {
+  "pivot": [
+   0,
+   0.475,
+   0.3200000000000003
+  ],
+  "type": "manual"
+ },
+ "beams": [
+  [
+   0.52,
+   0.65,
+   2.13
+  ],
+  [
+   -0.52,
+   0.65,
+   2.13
+  ]
+ ],
+ "plates": [
+  {
+   "pos": [
+    0,
+    0.34,
+    2.175
+   ],
+   "normal": [
+    0,
+    0,
+    1
+   ],
+   "w": 0.52,
+   "h": 0.12
+  },
+  {
+   "pos": [
+    0,
+    0.6,
+    -2.182
+   ],
+   "normal": [
+    0,
+    0,
+    -1
+   ],
+   "w": 0.52,
+   "h": 0.12
+  }
+ ],
+ "filler": [
+  -0.865,
+  0.86,
+  -1.5699999999999998
+ ],
+ "catalog": {
+  "fb": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Factory + lip"
+   },
+   {
+    "name": "Street mesh"
+   },
+   {
+    "name": "Time-attack"
+   },
+   {
+    "name": "Drift aero"
+   }
+  ],
+  "rb": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Diffuser"
+   },
+   {
+    "name": "Vented valance"
+   },
+   {
+    "name": "Track diffuser"
+   },
+   {
+    "name": "Cut-out valance"
+   }
+  ],
+  "ex": [
+   {
+    "name": "Single titanium cannon"
+   },
+   {
+    "name": "Factory oval tip"
+   },
+   {
+    "name": "Dual round tips"
+   },
+   {
+    "name": "Quad tips"
+   },
+   {
+    "name": "Centre exit"
+   }
+  ],
+  "sp": [
+   {
+    "name": "Low pedestal wing"
+   },
+   {
+    "name": "Hoop wing"
+   },
+   {
+    "name": "Ducktail lip"
+   },
+   {
+    "name": "Swan-neck GT wing"
+   },
+   {
+    "name": "Time-attack wing"
+   }
+  ],
+  "hd": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Carbon"
+   },
+   {
+    "name": "Vented"
+   },
+   {
+    "name": "Ram-air scoop"
+   },
+   {
+    "name": "Carbon vented"
+   }
+  ],
+  "wh": [
+   {
+    "name": "Forged 6-spoke"
+   },
+   {
+    "name": "Factory 5-spoke"
+   },
+   {
+    "name": "Cross mesh"
+   },
+   {
+    "name": "Deep dish"
+   },
+   {
+    "name": "Turbine 10-spoke"
+   }
+  ],
+  "sk": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Extended skirts"
+   },
+   {
+    "name": "Skirts + winglets"
+   }
+  ]
+ },
+ "exhaust_variants": [
+  [
+   [
+    -0.45,
+    0.3,
+    -2.21,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    -0.45,
+    0.3,
+    -2.21,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    0.45,
+    0.3,
+    -2.21,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.45,
+    0.3,
+    -2.21,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    0.385,
+    0.3,
+    -2.21,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.515,
+    0.3,
+    -2.21,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.515,
+    0.3,
+    -2.21,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.385,
+    0.3,
+    -2.21,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    -0.075,
+    0.3,
+    -2.21,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.075,
+    0.3,
+    -2.21,
+    0,
+    0,
+    -1
+   ]
+  ]
+ ],
+ "screen_sensor": false,
+ "texture": "subaru_wrx_sti_1992",
+ "seats_n": 4,
+ "matcap": [
+  0.9375,
+  0.0,
+  1.0,
+  0.0625
+ ],
+ "exhausts": [
+  [
+   -0.45,
+   0.3,
+   -2.21,
+   0,
+   0,
+   -1
+  ]
+ ],
+ "dash": {
+  "cluster_style": "analog2",
+  "dials": [
+   {
+    "kind": "rpm",
+    "cx": 0.27,
+    "cy": 0.5,
+    "r": 0.24,
+    "a0": 225,
+    "a1": -45,
+    "max": 8000,
+    "color": 16724000
+   },
+   {
+    "kind": "speed",
+    "cx": 0.73,
+    "cy": 0.5,
+    "r": 0.24,
+    "a0": 225,
+    "a1": -45,
+    "max": 240,
+    "color": 16724000
+   }
+  ]
+ },
+ "maxSpeed": 240,
+ "accel": 6.0,
+ "brake": 9.5,
+ "mass": 1250,
+ "fuel": 60,
+ "spawnWeight": 5,
+ "colors": [
+  "#1d3f9a",
+  "#f2f2f0",
+  "#1b1c1e",
+  "#b9bdc2",
+  "#a40f16"
+ ],
+ "horn": "high",
+ "backfire": 0.25,
+ "engine": {
+  "type": "i4_turbo",
+  "idle": 760,
+  "drive": 2500,
+  "cyl": 4,
+  "diesel": false
+ },
+ "tris": 9481
+}

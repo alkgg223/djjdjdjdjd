@@ -1,0 +1,483 @@
+{
+ "id": "nissan_gtr_r35",
+ "name": "Nissan GT-R R35",
+ "make": "Nissan",
+ "model": "GT-R (R35)",
+ "year": 2007,
+ "category": "sports",
+ "category_name": "Sports coupe",
+ "description": "All-wheel-drive 2+2 supercar with a hand-built twin-turbo V6, nicknamed Godzilla.",
+ "length": 4.655,
+ "width": 1.895,
+ "height": 1.37,
+ "wheelbase": 2.78,
+ "wheels": [
+  {
+   "x": 0.8,
+   "y": 0.356,
+   "z": -1.3975,
+   "r": 0.356,
+   "steer": false,
+   "mirror": false
+  },
+  {
+   "x": -0.8,
+   "y": 0.356,
+   "z": -1.3975,
+   "r": 0.356,
+   "steer": false,
+   "mirror": true
+  },
+  {
+   "x": 0.8,
+   "y": 0.356,
+   "z": 1.3825,
+   "r": 0.356,
+   "steer": true,
+   "mirror": false
+  },
+  {
+   "x": -0.8,
+   "y": 0.356,
+   "z": 1.3825,
+   "r": 0.356,
+   "steer": true,
+   "mirror": true
+  }
+ ],
+ "seats": [
+  [
+   0.33,
+   0.39,
+   -0.11750000000000016
+  ],
+  [
+   -0.33,
+   0.39,
+   -0.11750000000000016
+  ],
+  [
+   0.33,
+   0.39,
+   -0.7375000000000003
+  ],
+  [
+   -0.33,
+   0.39,
+   -0.7375000000000003
+  ]
+ ],
+ "doors": {
+  "door_fl": {
+   "hinge": [
+    0.908,
+    0.922
+   ],
+   "side": 1,
+   "kind": "front"
+  },
+  "door_fr": {
+   "hinge": [
+    -0.908,
+    0.922
+   ],
+   "side": -1,
+   "kind": "front"
+  }
+ },
+ "steer": {
+  "pivot": [
+   0.33,
+   0.8845007107746061,
+   0.40249999999999986
+  ],
+  "axis": [
+   0.0,
+   0.40673664307580026,
+   -0.913545457642601
+  ]
+ },
+ "cluster": {
+  "center": [
+   0.33,
+   0.9895007107746062,
+   0.6215000000000002
+  ],
+  "right": [
+   -1,
+   0,
+   0
+  ],
+  "up": [
+   0,
+   0.995,
+   0.1
+  ],
+  "w": 0.38,
+  "h": 0.1
+ },
+ "shifter": {
+  "pivot": [
+   0,
+   0.47,
+   0.3524999999999996
+  ],
+  "type": "auto"
+ },
+ "beams": [
+  [
+   0.62,
+   0.72,
+   2.1225
+  ],
+  [
+   -0.62,
+   0.72,
+   2.1225
+  ]
+ ],
+ "plates": [
+  {
+   "pos": [
+    0,
+    0.36,
+    2.3325
+   ],
+   "normal": [
+    0,
+    0,
+    1
+   ],
+   "w": 0.52,
+   "h": 0.12
+  },
+  {
+   "pos": [
+    0,
+    0.6,
+    -2.3395
+   ],
+   "normal": [
+    0,
+    0,
+    -1
+   ],
+   "w": 0.52,
+   "h": 0.12
+  }
+ ],
+ "filler": [
+  0.9667978441078244,
+  0.92,
+  -1.4775
+ ],
+ "catalog": {
+  "fb": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Factory + lip"
+   },
+   {
+    "name": "Street mesh"
+   },
+   {
+    "name": "Time-attack"
+   },
+   {
+    "name": "Drift aero"
+   }
+  ],
+  "rb": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Diffuser"
+   },
+   {
+    "name": "Vented valance"
+   },
+   {
+    "name": "Track diffuser"
+   },
+   {
+    "name": "Cut-out valance"
+   }
+  ],
+  "ex": [
+   {
+    "name": "Quad tips"
+   },
+   {
+    "name": "Factory oval tip"
+   },
+   {
+    "name": "Dual round tips"
+   },
+   {
+    "name": "Single titanium cannon"
+   },
+   {
+    "name": "Centre exit"
+   }
+  ],
+  "sp": [
+   {
+    "name": "Low pedestal wing"
+   },
+   {
+    "name": "Hoop wing"
+   },
+   {
+    "name": "Ducktail lip"
+   },
+   {
+    "name": "Swan-neck GT wing"
+   },
+   {
+    "name": "Time-attack wing"
+   }
+  ],
+  "hd": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Carbon"
+   },
+   {
+    "name": "Vented"
+   },
+   {
+    "name": "Ram-air scoop"
+   },
+   {
+    "name": "Carbon vented"
+   }
+  ],
+  "wh": [
+   {
+    "name": "Turbine 10-spoke"
+   },
+   {
+    "name": "Factory 5-spoke"
+   },
+   {
+    "name": "Forged 6-spoke"
+   },
+   {
+    "name": "Cross mesh"
+   },
+   {
+    "name": "Deep dish"
+   }
+  ],
+  "sk": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Extended skirts"
+   },
+   {
+    "name": "Skirts + winglets"
+   }
+  ]
+ },
+ "exhaust_variants": [
+  [
+   [
+    0.48500000000000004,
+    0.32,
+    -2.3675,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.615,
+    0.32,
+    -2.3675,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.615,
+    0.32,
+    -2.3675,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.48500000000000004,
+    0.32,
+    -2.3675,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    -0.55,
+    0.32,
+    -2.3675,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    0.55,
+    0.32,
+    -2.3675,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.55,
+    0.32,
+    -2.3675,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    -0.55,
+    0.32,
+    -2.3675,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    -0.075,
+    0.32,
+    -2.3675,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.075,
+    0.32,
+    -2.3675,
+    0,
+    0,
+    -1
+   ]
+  ]
+ ],
+ "screen_sensor": true,
+ "texture": "nissan_gtr_r35",
+ "seats_n": 4,
+ "matcap": [
+  0.9375,
+  0.0,
+  1.0,
+  0.0625
+ ],
+ "exhausts": [
+  [
+   0.48500000000000004,
+   0.32,
+   -2.3675,
+   0,
+   0,
+   -1
+  ],
+  [
+   0.615,
+   0.32,
+   -2.3675,
+   0,
+   0,
+   -1
+  ],
+  [
+   -0.615,
+   0.32,
+   -2.3675,
+   0,
+   0,
+   -1
+  ],
+  [
+   -0.48500000000000004,
+   0.32,
+   -2.3675,
+   0,
+   0,
+   -1
+  ]
+ ],
+ "dash": {
+  "cluster_style": "analog3",
+  "dials": [
+   {
+    "kind": "rpm",
+    "cx": 0.5,
+    "cy": 0.5,
+    "r": 0.28,
+    "a0": 225,
+    "a1": -45,
+    "max": 9000,
+    "color": 16734746
+   },
+   {
+    "kind": "speed",
+    "cx": 0.18,
+    "cy": 0.5,
+    "r": 0.22,
+    "a0": 225,
+    "a1": -45,
+    "max": 180,
+    "color": 16734746
+   },
+   {
+    "kind": "fuel",
+    "cx": 0.82,
+    "cy": 0.5,
+    "r": 0.2,
+    "a0": 200,
+    "a1": -20,
+    "max": 1,
+    "color": 16734746
+   }
+  ]
+ },
+ "maxSpeed": 315,
+ "accel": 7.2,
+ "brake": 11.0,
+ "mass": 1740,
+ "fuel": 74,
+ "spawnWeight": 5,
+ "colors": [
+  "#dcdedf",
+  "#16171a",
+  "#8c9095",
+  "#1c3f8a",
+  "#a40f16",
+  "#d86a17"
+ ],
+ "horn": "high",
+ "backfire": 0.12,
+ "engine": {
+  "type": "i6_twinturbo",
+  "idle": 750,
+  "drive": 3600,
+  "cyl": 6,
+  "diesel": false
+ },
+ "tris": 10559
+}

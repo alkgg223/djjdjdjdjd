@@ -1,0 +1,462 @@
+{
+ "id": "ferrari_f40_1987",
+ "name": "Ferrari F40 1987",
+ "make": "Ferrari",
+ "model": "F40",
+ "year": 1987,
+ "category": "super",
+ "category_name": "Supercar",
+ "description": "Twin-turbo V8 mid-engine supercar built light and raw for Ferrari's 40th anniversary.",
+ "length": 4.358,
+ "width": 1.97,
+ "height": 1.13,
+ "wheelbase": 2.45,
+ "wheels": [
+  {
+   "x": 0.8,
+   "y": 0.33,
+   "z": -1.259,
+   "r": 0.33,
+   "steer": false,
+   "mirror": false
+  },
+  {
+   "x": -0.8,
+   "y": 0.33,
+   "z": -1.259,
+   "r": 0.33,
+   "steer": false,
+   "mirror": true
+  },
+  {
+   "x": 0.8,
+   "y": 0.33,
+   "z": 1.191,
+   "r": 0.33,
+   "steer": true,
+   "mirror": false
+  },
+  {
+   "x": -0.8,
+   "y": 0.33,
+   "z": 1.191,
+   "r": 0.33,
+   "steer": true,
+   "mirror": true
+  }
+ ],
+ "seats": [
+  [
+   0.34,
+   0.355,
+   -0.22899999999999987
+  ],
+  [
+   -0.34,
+   0.355,
+   -0.22899999999999987
+  ]
+ ],
+ "doors": {
+  "door_fl": {
+   "hinge": [
+    0.902,
+    0.721
+   ],
+   "side": 1,
+   "kind": "front"
+  },
+  "door_fr": {
+   "hinge": [
+    -0.902,
+    0.721
+   ],
+   "side": -1,
+   "kind": "front"
+  }
+ },
+ "steer": {
+  "pivot": [
+   0.34,
+   0.6928073817890521,
+   0.2610000000000001
+  ],
+  "axis": [
+   0.0,
+   0.40673664307580026,
+   -0.913545457642601
+  ]
+ },
+ "cluster": {
+  "center": [
+   0.34,
+   0.7978073817890521,
+   0.4800000000000004
+  ],
+  "right": [
+   -1,
+   0,
+   0
+  ],
+  "up": [
+   0,
+   0.995,
+   0.1
+  ],
+  "w": 0.38,
+  "h": 0.1
+ },
+ "shifter": {
+  "pivot": [
+   0,
+   0.435,
+   0.2410000000000001
+  ],
+  "type": "manual"
+ },
+ "beams": [
+  [
+   0.64,
+   0.42,
+   2.129
+  ],
+  [
+   -0.64,
+   0.42,
+   2.129
+  ]
+ ],
+ "plates": [
+  {
+   "pos": [
+    0,
+    0.3,
+    2.184
+   ],
+   "normal": [
+    0,
+    0,
+    1
+   ],
+   "w": 0.52,
+   "h": 0.12
+  },
+  {
+   "pos": [
+    0,
+    0.5,
+    -2.191
+   ],
+   "normal": [
+    0,
+    0,
+    -1
+   ],
+   "w": 0.52,
+   "h": 0.12
+  }
+ ],
+ "filler": [
+  0.9513598632812501,
+  0.82,
+  -0.2789999999999999
+ ],
+ "catalog": {
+  "fb": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Factory + lip"
+   },
+   {
+    "name": "Street mesh"
+   },
+   {
+    "name": "Time-attack"
+   },
+   {
+    "name": "Drift aero"
+   }
+  ],
+  "rb": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Diffuser"
+   },
+   {
+    "name": "Vented valance"
+   },
+   {
+    "name": "Track diffuser"
+   },
+   {
+    "name": "Cut-out valance"
+   }
+  ],
+  "ex": [
+   {
+    "name": "Centre exit"
+   },
+   {
+    "name": "Factory oval tip"
+   },
+   {
+    "name": "Dual round tips"
+   },
+   {
+    "name": "Single titanium cannon"
+   },
+   {
+    "name": "Quad tips"
+   }
+  ],
+  "sp": [
+   {
+    "name": "Hoop wing"
+   },
+   {
+    "name": "Ducktail lip"
+   },
+   {
+    "name": "Low pedestal wing"
+   },
+   {
+    "name": "Swan-neck GT wing"
+   },
+   {
+    "name": "Time-attack wing"
+   }
+  ],
+  "hd": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Carbon"
+   },
+   {
+    "name": "Vented"
+   },
+   {
+    "name": "Ram-air scoop"
+   },
+   {
+    "name": "Carbon vented"
+   }
+  ],
+  "wh": [
+   {
+    "name": "star"
+   },
+   {
+    "name": "Factory 5-spoke"
+   },
+   {
+    "name": "Forged 6-spoke"
+   },
+   {
+    "name": "Cross mesh"
+   },
+   {
+    "name": "Deep dish"
+   }
+  ],
+  "sk": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Extended skirts"
+   },
+   {
+    "name": "Skirts + winglets"
+   }
+  ]
+ },
+ "exhaust_variants": [
+  [
+   [
+    -0.075,
+    0.38,
+    -2.219,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.075,
+    0.38,
+    -2.219,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    -0.1,
+    0.38,
+    -2.219,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    0.1,
+    0.38,
+    -2.219,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.1,
+    0.38,
+    -2.219,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    -0.1,
+    0.38,
+    -2.219,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    0.035,
+    0.38,
+    -2.219,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.165,
+    0.38,
+    -2.219,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.165,
+    0.38,
+    -2.219,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.035,
+    0.38,
+    -2.219,
+    0,
+    0,
+    -1
+   ]
+  ]
+ ],
+ "screen_sensor": false,
+ "texture": "ferrari_f40_1987",
+ "seats_n": 2,
+ "matcap": [
+  0.9375,
+  0.0,
+  1.0,
+  0.0625
+ ],
+ "exhausts": [
+  [
+   -0.075,
+   0.38,
+   -2.219,
+   0,
+   0,
+   -1
+  ],
+  [
+   0.075,
+   0.38,
+   -2.219,
+   0,
+   0,
+   -1
+  ]
+ ],
+ "dash": {
+  "cluster_style": "analog2",
+  "dials": [
+   {
+    "kind": "rpm",
+    "cx": 0.27,
+    "cy": 0.5,
+    "r": 0.24,
+    "a0": 225,
+    "a1": -45,
+    "max": 8000,
+    "color": 16724000
+   },
+   {
+    "kind": "speed",
+    "cx": 0.73,
+    "cy": 0.5,
+    "r": 0.24,
+    "a0": 225,
+    "a1": -45,
+    "max": 240,
+    "color": 16724000
+   }
+  ]
+ },
+ "maxSpeed": 320,
+ "accel": 7.6,
+ "brake": 10.5,
+ "mass": 1100,
+ "fuel": 120,
+ "spawnWeight": 2,
+ "colors": [
+  "#c8102e",
+  "#b5121b",
+  "#f2c01e",
+  "#1b1c1e",
+  "#f2f2f0"
+ ],
+ "horn": "high",
+ "backfire": 0.35,
+ "engine": {
+  "type": "v8_sport",
+  "idle": 950,
+  "drive": 3400,
+  "cyl": 8,
+  "diesel": false
+ },
+ "popups": {
+  "popup_l": {
+   "pivot": [
+    0.5558,
+    1.601
+   ],
+   "angle": -62
+  },
+  "popup_r": {
+   "pivot": [
+    0.5558,
+    1.601
+   ],
+   "angle": -62
+  }
+ },
+ "tris": 8631
+}

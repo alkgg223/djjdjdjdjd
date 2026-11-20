@@ -36,15 +36,20 @@ def tube(m, outline_xy, z0, z1, style_out, style_end, style_in, inner=0.78):
 # ------------------------------------------------------------------------------------------------ wheels
 def rim_painter(kind):
     """Rim face texture in wheel-local polar coordinates; spoke gaps are transparent (cut out)."""
-    col = {'spoke5': (200, 204, 210), 'spoke6': (150, 120, 70), 'mesh': (206, 208, 212), 'dish': (60, 62, 66), 'turbine': (90, 94, 100)}[kind]
+    col = {'spoke5': (200, 204, 210), 'spoke6': (150, 120, 70), 'mesh': (206, 208, 212), 'dish': (60, 62, 66), 'turbine': (90, 94, 100),
+           'hubcap': (214, 218, 222), 'steel': (46, 48, 52), 'fuchs': (40, 40, 42), 'wire': (210, 212, 216), 'snowflake': (196, 198, 202),
+           'aero': (70, 74, 80), 'star': (190, 194, 200)}[kind]
+    classic = kind in ('hubcap', 'steel', 'fuchs', 'wire', 'snowflake', 'aero', 'star')
 
     def f(face, P, n):
         r = np.linalg.norm(P[..., 1:], axis=-1)
         a = np.arctan2(P[..., 2], P[..., 1])
-        R = 0.216
+        R = max(np.max(r) * 0.995, 0.15)
         rn = r / R
         out = fill(P, col)
         out[..., :3] += noise(P, 4, 256)[..., None]
+        if classic:
+            return classic_rim(kind, out, P, rn, a)
         if kind == 'spoke5':
             k, w0, w1 = 5, 0.11, 0.07
         elif kind == 'spoke6':
@@ -82,9 +87,57 @@ def rim_painter(kind):
     return f
 
 
-def wheel(m, group, kind, R=0.322, TW=0.245, Rr=0.216, seg=16, caliper_color=(140, 142, 148), add_caliper=True):
+def classic_rim(kind, out, P, rn, a):
+    if kind == 'hubcap':
+        out[rn < 0.75, :3] = (226, 230, 234)
+        out[(rn > 0.72) & (rn < 0.76), :3] = (150, 154, 160)
+        out[(rn > 0.3) & (rn < 0.33), :3] = (170, 174, 180)
+        out[rn < 0.12, :3] = (200, 30, 30)
+    elif kind == 'steel':
+        slots = (rn > 0.55) & (rn < 0.7) & (np.mod(a * 8 / (2 * math.pi), 1.0) < 0.35)
+        out[slots, 3] = 0
+        out[rn < 0.4, :3] = (196, 200, 206)
+        out[(rn > 0.85), :3] = (36, 38, 42)
+    elif kind == 'fuchs':
+        ph = np.mod(a * 5 / (2 * math.pi), 1.0)
+        petal = (np.abs(ph - 0.5) < 0.16 + 0.1 * (1 - rn)) & (rn > 0.32) & (rn < 0.88)
+        out[petal, 3] = 0
+        out[~petal & (rn > 0.3), :3] = (200, 204, 210)
+        out[(rn > 0.88), :3] = (214, 218, 222)
+    elif kind == 'wire':
+        a1 = np.mod((a + rn * 1.2) * 18 / (2 * math.pi), 1.0)
+        a2 = np.mod((a - rn * 1.2) * 18 / (2 * math.pi), 1.0)
+        spoke = (np.abs(a1 - 0.5) > 0.44) | (np.abs(a2 - 0.5) > 0.44) | (rn > 0.9) | (rn < 0.3)
+        out[~spoke, 3] = 0
+        out[rn < 0.3, :3] = (230, 230, 234)
+    elif kind == 'snowflake':
+        ph = np.mod(a * 6 / (2 * math.pi), 1.0)
+        hole = (np.abs(ph - 0.5) < 0.1) & (rn > 0.45) & (rn < 0.85)
+        out[hole, 3] = 0
+        out[(rn > 0.86), :3] = (170, 172, 176)
+    elif kind == 'aero':
+        ph = np.mod((a + rn * 0.6) * 5 / (2 * math.pi), 1.0)
+        out[(ph < 0.18) & (rn > 0.3) & (rn < 0.9), :3] = (40, 42, 46)
+        out[(rn > 0.9), :3] = (150, 154, 160)
+    elif kind == 'star':
+        ph = np.mod(a * 5 / (2 * math.pi), 1.0)
+        hole = (np.abs(ph - 0.5) < 0.17) & (rn > 0.35) & (rn < 0.86)
+        out[hole, 3] = 0
+    lug = np.zeros_like(rn, bool)
+    out[rn < 0.08, :3] = (60, 62, 66)
+    return out
+
+
+def wheel(m, group, kind, R=0.322, TW=0.245, Rr=0.216, seg=16, caliper_color=(140, 142, 148), add_caliper=True, whitewall=False):
     """Wheel centred at the origin, axis X, outer face +X (game convention)."""
     h = TW / 2
+    if whitewall:
+        def ww(face, P, n, rr=(Rr + 0.03, Rr + 0.07)):
+            out = S.tyre(face, P, n)
+            r = np.linalg.norm(P[..., 1:], axis=-1)
+            out[(r > rr[0]) & (r < rr[1]) & (np.abs(P[..., 0]) > h - 0.01), :3] = (236, 236, 232)
+            return out
+        m.painters['tyre_ww'] = ww
     m.painters['rim_' + kind] = rim_painter(kind)
     rot = math.pi / seg
     m.element('tyre', 'solid', group, 'tyre')
@@ -99,7 +152,7 @@ def wheel(m, group, kind, R=0.322, TW=0.245, Rr=0.216, seg=16, caliper_color=(14
         ring1 = ngon(r1, seg, rot=rot)
         for k in range(seg):
             q = [V(sx * h, *ring0[k]), V(sx * h, *ring0[(k + 1) % seg]), V(sx * (h - 0.004), *ring1[(k + 1) % seg]), V(sx * (h - 0.004), *ring1[k])]
-            m.face(q, 'tyre', outward=V(sx, 0, 0), dens=64)
+            m.face(q, 'tyre_ww' if whitewall else 'tyre', outward=V(sx, 0, 0), dens=64)
     m.element('rim', 'solid', group, 'alu')
     lipx = h - 0.004
     depth = 0.075 if kind == 'dish' else 0.03

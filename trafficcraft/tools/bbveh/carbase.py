@@ -64,7 +64,7 @@ class Car:
                  spoiler=(0.04, 0.7, 'none'), stock_wheel='spoke5', wheel_color=None, caliper=(140, 142, 148), fuel=('r', 0.8, 0.84),
                  hood=None, trunk_y=None, hatch_x=None, rear_glass=None, ws=None, a_black=True, chrome_bumpers=None, cabin={}, beam=None,
                  fb_top=6, rb_top=3, front_art=None, rear_art=None, side_art=None, extra=None, colors=['#b0101c'], badge=None,
-                 roof_black=False, belt_chrome=False, window_chrome=False)
+                 roof_black=False, belt_chrome=False, window_chrome=False, top_art=None, no_exhaust=False)
         d.update(spec)
         self.__dict__.update(d)
         for k in ('bot', 'belt', 'hw', 'zsh', 'roofz', 'roofw', 'crown'):
@@ -101,7 +101,7 @@ class Car:
 
     def section(self, z, chin=0.0):
         w, t, s = self.hw(z), self.belt(z), self.zsh(z)
-        b = self.bot(z) - chin * smooth(self.FB_Z, self.L - 0.13, z)
+        b = self.bot(z) - chin * smooth(self.FB_Z, max(self.FB_Z + 0.05, self.L - 0.13), z)
         a = self.arch_h(z)
         a = a if a is not None else b
         s2 = max(s, a + 0.03)
@@ -366,7 +366,7 @@ class Car:
             if k in (1, 3, 4):
                 ext = 0.085 if k == 3 else 0.03
                 e = self.el(g, 'solid', 'carbon' if k == 3 else 'trim')
-                outer = [(self.hw(z) * 0.965 + ext * smooth(self.FB_Z, self.L - 0.2, z), z) for z in zs] + [(0.0, self.L + ext)]
+                outer = [(self.hw(z) * 0.965 + ext * smooth(self.FB_Z, max(self.FB_Z + 0.05, self.L - 0.2), z), z) for z in zs] + [(0.0, self.L + ext)]
                 inner = [(self.hw(z) * 0.965 - 0.08, z) for z in zs] + [(0.0, self.L - 0.08)]
                 y0, y1 = b0 - 0.018, b0 - 0.004
                 for sx in (1, -1):
@@ -700,9 +700,15 @@ class Car:
                         m.box(V(sx * (w + 0.02), b - 0.02, zz), (0.06, 0.008, 0.16), 'carbon')
                     self.el(g, 'paint', 'paint')
 
+    def exhaust_list(self):
+        if self.no_exhaust:
+            return []
+        st = getattr(self, 'stock_exhaust', 'oval')
+        return [st] + [e for e in PT.EXHAUSTS if e != st][:4]
+
     def exhausts(self):
         xm, y, ze = self.exhaust
-        for k, kind in enumerate(PT.EXHAUSTS):
+        for k, kind in enumerate(self.exhaust_list()):
             PT.exhaust(self.m, 'ex_%d' % k, kind, ze, y, x_main=xm)
 
     def spoiler_list(self):
@@ -727,7 +733,8 @@ class Car:
 
     def wheels(self):
         for k, kind in enumerate(self.wheel_list()):
-            PT.wheel(self.m, 'wh_%d' % k, kind, R=self.R, TW=self.TW + 0.01, Rr=self.Rr, add_caliper=(k == 0), caliper_color=self.caliper)
+            PT.wheel(self.m, 'wh_%d' % k, kind, R=self.R, TW=self.TW + 0.01, Rr=self.Rr, add_caliper=(k == 0), caliper_color=self.caliper,
+                     whitewall=(k == 0 and getattr(self, 'whitewall', False)))
 
     # ===================================================================================== interior
     def interior(self):
@@ -934,6 +941,8 @@ class Car:
                     put((z < car.CABIN0 + 0.02) & (np.abs(ax - car.hatch_x) < px * 0.6), GAP)
                 if car.trunk_z:
                     put((np.abs(z - car.trunk_z) < px * 0.6) & (ax < car.hw(car.trunk_z) - 0.12), GAP)
+                if car.top_art:
+                    car.top_art(car, out, P, n)
                 if 'hoodvent' in st:
                     for sx in (1, -1):
                         put((np.abs(x - sx * hwid * 0.62) < hwid * 0.2) & (z > z0h + (z1h - z0h) * 0.4 - 0.03) & (z < z0h + (z1h - z0h) * 0.4 + 0.21), (20, 20, 22, NOTINT))
@@ -1047,7 +1056,8 @@ class Car:
         self.lamp_painters()
         m.painters.update(LAMP_PAINTERS)
         m.painters['paint'] = self.paint_painter()
-        m.painters['garnish'] = garnish_painter(self.badge or '', self.tail.get('garnish', {}).get('text_y', 0.7))
+        gd = self.tail.get('garnish', {})
+        m.painters['garnish'] = garnish_painter(self.badge or '', gd.get('text_y', 0.7), gd.get('bg', (60, 12, 18)), gd.get('fg', (200, 200, 205)), gd.get('th', 0.05))
         m.painters.update(self.painters if hasattr(self, 'painters') else {})
         return self.write(out_dir)
 
@@ -1060,7 +1070,8 @@ class Car:
         mc = Image.open(atlas).convert('RGBA').crop((64, 128, 128, 192))
         m.paint(mc)
         L = self.L
-        cat = dict(fb=[dict(name=n) for n in FB_NAMES], rb=[dict(name=n) for n in RB_NAMES], ex=[dict(name=n) for n in PT.EXHAUST_NAMES],
+        cat = dict(fb=[dict(name=n) for n in FB_NAMES], rb=[dict(name=n) for n in RB_NAMES],
+                   ex=[dict(name=PT.EXHAUST_NAMES[PT.EXHAUSTS.index(e)]) for e in self.exhaust_list()],
                    sp=[dict(name=PT.SPOILER_NAMES[PT.SPOILERS.index(s)] if s in PT.SPOILERS else 'None') for s in self.spoiler_list()],
                    hd=[dict(name=n) for n in HD_NAMES], wh=[dict(name=PT.WHEEL_NAMES[PT.WHEELS.index(w)] if w in PT.WHEELS else w) for w in self.wheel_list()],
                    sk=[dict(name=n) for n in SK_NAMES])
@@ -1079,10 +1090,12 @@ class Car:
                     plates=[dict(pos=[0, self.plate_f, round(self.L + 0.005 - L / 2, 4)], normal=[0, 0, 1], w=0.52, h=0.12),
                             dict(pos=[0, self.plate_r, round(-0.012 - L / 2, 4)], normal=[0, 0, -1], w=0.52, h=0.12)],
                     filler=[(-1 if self.fuel[0] == 'r' else 1) * (self.hw(self.fuel[1]) + 0.02), self.fuel[2], self.fuel[1] - L / 2],
-                    catalog=cat, exhaust_variants=[[[p[0], p[1], p[2] - L / 2, p[3], p[4], p[5]] for p in PT.exhaust_points(k, ze, ye, xm)] for k in PT.EXHAUSTS],
+                    catalog=cat, exhaust_variants=[[[p[0], p[1], p[2] - L / 2, p[3], p[4], p[5]] for p in PT.exhaust_points(k, ze, ye, xm)] for k in self.exhaust_list()],
                     screen_sensor=bool(self.I.get('screen')), texture=self.id, seats_n=len(self.seats_meta))
         META['matcap'] = [m.matcap_rect[0] / m.tex, m.matcap_rect[1] / m.tex, m.matcap_rect[2] / m.tex, m.matcap_rect[3] / m.tex]
-        META['exhausts'] = META['exhaust_variants'][0]
+        META['exhausts'] = META['exhaust_variants'][0] if META['exhaust_variants'] else []
+        if self.no_exhaust:
+            cat.pop('ex', None)
         META['dash'] = dict(cluster_style=self.I['cluster'], dials=DIALS.get(self.I['cluster'], DIALS['analog3']))
         for k in ('maxSpeed', 'accel', 'brake', 'mass', 'fuel_l', 'spawnWeight', 'colors', 'electric', 'horn', 'steerMax', 'backfire'):
             if hasattr(self, k):
@@ -1124,14 +1137,14 @@ def gauge_painter(style, dx, cy):
     return f
 
 
-def garnish_painter(text, ty):
+def garnish_painter(text, ty, bg=(60, 12, 18), fg=(200, 200, 205), th=0.05):
     def f(face, P, n):
-        out = fill(P, (60, 12, 18))
+        out = fill(P, bg)
         if text:
             uv = np.stack([-P[..., 0], -P[..., 1]], -1)
-            h = 0.05
+            h = th
             wtxt = len(text) * h / 7 * 6
-            out[S.text_mask(uv, text, -wtxt / 2, -(ty + h / 2), h), :3] = (200, 200, 205)
+            out[S.text_mask(uv, text, -wtxt / 2, -(ty + h / 2), h), :3] = fg
         return out
     return f
 

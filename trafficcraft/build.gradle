@@ -21,6 +21,7 @@ neoForge {
             if (project.hasProperty('autotest')) {
                 systemProperty 'trafficcraft.autotest', 'true'
                 systemProperty 'trafficcraft.autotest.mode', project.property('autotest').toString()
+                if (project.hasProperty('cars')) systemProperty 'trafficcraft.cars', project.property('cars').toString()
                 programArguments.addAll('--quickPlaySingleplayer', project.property('autotest').toString() == 'town' ? 'town' : 'test', '--width', '1280', '--height', '720')
             }
         }

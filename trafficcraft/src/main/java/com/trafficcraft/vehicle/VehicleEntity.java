@@ -69,6 +69,7 @@ public class VehicleEntity extends Entity {
     private static final EntityDataAccessor<Integer> DOOR_L = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DOOR_R = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<String> PLATE = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> CONFIG = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> MODE = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);
     /** passenger entity id -> seat index */
     private static final EntityDataAccessor<net.minecraft.nbt.CompoundTag> SEATS = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.COMPOUND_TAG);
@@ -139,6 +140,7 @@ public class VehicleEntity extends Entity {
         b.define(DOOR_L, -1000);
         b.define(DOOR_R, -1000);
         b.define(PLATE, "TC 0000");
+        b.define(CONFIG, "");
         b.define(MODE, MODE_FREE);
         b.define(SEATS, new net.minecraft.nbt.CompoundTag());
     }
@@ -174,6 +176,49 @@ public class VehicleEntity extends Entity {
     public float getFuel() { return entityData.get(FUEL); }
     public void setFuel(float f) { entityData.set(FUEL, Mth.clamp(f, 0, spec().fuelCapacity)); }
     public String getPlate() { return entityData.get(PLATE); }
+
+    // ------------------------------------------------------------------ customisation ("fb=1;rb=0;wh=3")
+    private String cfgSrc = null;
+    private final java.util.Map<String, Integer> cfgMap = new java.util.HashMap<>();
+    /** client-side animation of pop-up headlamps (0 closed .. 1 open) */
+    public float popupVis;
+
+    public String getConfig() { return entityData.get(CONFIG); }
+    public void setConfig(String c) { entityData.set(CONFIG, c == null ? "" : c); }
+
+    public int cfg(String slot) {
+        String src = getConfig();
+        if (!src.equals(cfgSrc)) {
+            cfgSrc = src;
+            cfgMap.clear();
+            for (String kv : src.split(";")) {
+                int i = kv.indexOf('=');
+                if (i > 0) try { cfgMap.put(kv.substring(0, i), Integer.parseInt(kv.substring(i + 1))); } catch (NumberFormatException ignored) {}
+            }
+        }
+        return cfgMap.getOrDefault(slot, 0);
+    }
+
+    /** Coherent random build for spawned traffic: most cars stay factory, the rest get a themed set of parts. */
+    public void randomizeConfig(net.minecraft.util.RandomSource r) {
+        VehicleSpec s = spec();
+        if (s.catalog.isEmpty() || r.nextFloat() < 0.55f) {
+            setConfig("");
+            return;
+        }
+        boolean track = r.nextFloat() < 0.3f;
+        StringBuilder b = new StringBuilder();
+        for (var en : s.catalog.entrySet()) {
+            int n = en.getValue();
+            if (n <= 1) continue;
+            int v;
+            if (r.nextFloat() < (track ? 0.25f : 0.45f)) v = 0;
+            else if (track) v = Math.max(1, n - 1 - r.nextInt(Math.min(2, n - 1)));
+            else v = 1 + r.nextInt(Math.max(1, Math.min(n - 1, 3)));
+            if (v > 0) b.append(en.getKey()).append('=').append(Math.min(v, n - 1)).append(';');
+        }
+        setConfig(b.toString());
+    }
     public void setPlate(String p) { entityData.set(PLATE, p); }
     public int getMode() { return entityData.get(MODE); }
     public void setMode(int m) { entityData.set(MODE, m); }
@@ -205,6 +250,7 @@ public class VehicleEntity extends Entity {
         if (t.contains("Fuel")) entityData.set(FUEL, t.getFloat("Fuel"));
         entityData.set(FLAGS, t.getInt("Flags") & (F_LOW | F_HIGH | F_INTERIOR | F_HAZARD | F_MANUAL));
         if (t.contains("Plate")) setPlate(t.getString("Plate"));
+        if (t.contains("Config")) setConfig(t.getString("Config"));
         setMode(t.getInt("Mode") == MODE_PARKED ? MODE_PARKED : MODE_FREE);
         refreshDimensions();
     }
@@ -217,6 +263,7 @@ public class VehicleEntity extends Entity {
         t.putFloat("Fuel", getFuel());
         t.putInt("Flags", flags());
         t.putString("Plate", getPlate());
+        t.putString("Config", getConfig());
         t.putInt("Mode", getMode());
     }
 

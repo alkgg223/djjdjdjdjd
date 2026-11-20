@@ -16,6 +16,7 @@
         { "name": "LightUV", "type": "float", "count": 2, "values": [ 240.0, 240.0 ] },
         { "name": "Emissive", "type": "float", "count": 1, "values": [ 0.0 ] },
         { "name": "Gloss", "type": "float", "count": 1, "values": [ 0.0 ] },
+        { "name": "PaintMask", "type": "float", "count": 1, "values": [ 0.0 ] },
         { "name": "MatcapRect", "type": "float", "count": 4, "values": [ 0.25, 0.5, 0.5, 0.75 ] },
         { "name": "FogStart", "type": "float", "count": 1, "values": [ 0.0 ] },
         { "name": "FogEnd", "type": "float", "count": 1, "values": [ 1.0 ] },

@@ -1,0 +1,448 @@
+{
+ "id": "porsche_911_1963",
+ "name": "Porsche 911 1963",
+ "make": "Porsche",
+ "model": "911 (901)",
+ "year": 1963,
+ "category": "classic",
+ "category_name": "Sports coupe",
+ "description": "Rear-engined air-cooled flat-six coupe with the fastback silhouette that the 911 still keeps.",
+ "length": 4.163,
+ "width": 1.61,
+ "height": 1.32,
+ "wheelbase": 2.21,
+ "wheels": [
+  {
+   "x": 0.67,
+   "y": 0.3,
+   "z": -1.0815,
+   "r": 0.3,
+   "steer": false,
+   "mirror": false
+  },
+  {
+   "x": -0.67,
+   "y": 0.3,
+   "z": -1.0815,
+   "r": 0.3,
+   "steer": false,
+   "mirror": true
+  },
+  {
+   "x": 0.67,
+   "y": 0.3,
+   "z": 1.1285,
+   "r": 0.3,
+   "steer": true,
+   "mirror": false
+  },
+  {
+   "x": -0.67,
+   "y": 0.3,
+   "z": 1.1285,
+   "r": 0.3,
+   "steer": true,
+   "mirror": true
+  }
+ ],
+ "seats": [
+  [
+   0.29,
+   0.385,
+   -0.2615000000000003
+  ],
+  [
+   -0.29,
+   0.385,
+   -0.2615000000000003
+  ],
+  [
+   0.29,
+   0.385,
+   -0.8115000000000003
+  ],
+  [
+   -0.29,
+   0.385,
+   -0.8115000000000003
+  ]
+ ],
+ "doors": {
+  "door_fl": {
+   "hinge": [
+    0.758,
+    0.778
+   ],
+   "side": 1,
+   "kind": "front"
+  },
+  "door_fr": {
+   "hinge": [
+    -0.758,
+    0.778
+   ],
+   "side": -1,
+   "kind": "front"
+  }
+ },
+ "steer": {
+  "pivot": [
+   0.29,
+   0.7622908614131942,
+   0.25849999999999973
+  ],
+  "axis": [
+   0.0,
+   0.40673664307580026,
+   -0.913545457642601
+  ]
+ },
+ "cluster": {
+  "center": [
+   0.29,
+   0.8672908614131943,
+   0.47750000000000004
+  ],
+  "right": [
+   -1,
+   0,
+   0
+  ],
+  "up": [
+   0,
+   0.995,
+   0.1
+  ],
+  "w": 0.38,
+  "h": 0.1
+ },
+ "shifter": {
+  "pivot": [
+   0,
+   0.46499999999999997,
+   0.2084999999999999
+  ],
+  "type": "manual"
+ },
+ "beams": [
+  [
+   0.55,
+   0.72,
+   1.7184999999999997
+  ],
+  [
+   -0.55,
+   0.72,
+   1.7184999999999997
+  ]
+ ],
+ "plates": [
+  {
+   "pos": [
+    0,
+    0.3,
+    2.0865
+   ],
+   "normal": [
+    0,
+    0,
+    1
+   ],
+   "w": 0.52,
+   "h": 0.12
+  },
+  {
+   "pos": [
+    0,
+    0.5,
+    -2.0935
+   ],
+   "normal": [
+    0,
+    0,
+    -1
+   ],
+   "w": 0.52,
+   "h": 0.12
+  }
+ ],
+ "filler": [
+  0.8200000000000001,
+  0.78,
+  1.1185
+ ],
+ "catalog": {
+  "fb": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Factory + lip"
+   },
+   {
+    "name": "Street mesh"
+   },
+   {
+    "name": "Time-attack"
+   },
+   {
+    "name": "Drift aero"
+   }
+  ],
+  "rb": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Diffuser"
+   },
+   {
+    "name": "Vented valance"
+   },
+   {
+    "name": "Track diffuser"
+   },
+   {
+    "name": "Cut-out valance"
+   }
+  ],
+  "ex": [
+   {
+    "name": "Factory oval tip"
+   },
+   {
+    "name": "Dual round tips"
+   },
+   {
+    "name": "Single titanium cannon"
+   },
+   {
+    "name": "Quad tips"
+   },
+   {
+    "name": "Centre exit"
+   }
+  ],
+  "sp": [
+   {
+    "name": "None"
+   },
+   {
+    "name": "Ducktail lip"
+   },
+   {
+    "name": "Low pedestal wing"
+   },
+   {
+    "name": "Swan-neck GT wing"
+   },
+   {
+    "name": "Time-attack wing"
+   }
+  ],
+  "hd": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Carbon"
+   },
+   {
+    "name": "Vented"
+   },
+   {
+    "name": "Ram-air scoop"
+   },
+   {
+    "name": "Carbon vented"
+   }
+  ],
+  "wh": [
+   {
+    "name": "hubcap"
+   },
+   {
+    "name": "Factory 5-spoke"
+   },
+   {
+    "name": "Forged 6-spoke"
+   },
+   {
+    "name": "Cross mesh"
+   },
+   {
+    "name": "Deep dish"
+   }
+  ],
+  "sk": [
+   {
+    "name": "Factory"
+   },
+   {
+    "name": "Extended skirts"
+   },
+   {
+    "name": "Skirts + winglets"
+   }
+  ]
+ },
+ "exhaust_variants": [
+  [
+   [
+    -0.35,
+    0.28,
+    -2.1215,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    0.35,
+    0.28,
+    -2.1215,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.35,
+    0.28,
+    -2.1215,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    -0.35,
+    0.28,
+    -2.1215,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    0.285,
+    0.28,
+    -2.1215,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.415,
+    0.28,
+    -2.1215,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.415,
+    0.28,
+    -2.1215,
+    0,
+    0,
+    -1
+   ],
+   [
+    -0.285,
+    0.28,
+    -2.1215,
+    0,
+    0,
+    -1
+   ]
+  ],
+  [
+   [
+    -0.075,
+    0.28,
+    -2.1215,
+    0,
+    0,
+    -1
+   ],
+   [
+    0.075,
+    0.28,
+    -2.1215,
+    0,
+    0,
+    -1
+   ]
+  ]
+ ],
+ "screen_sensor": false,
+ "texture": "porsche_911_1963",
+ "seats_n": 4,
+ "matcap": [
+  0.9375,
+  0.0,
+  1.0,
+  0.0625
+ ],
+ "exhausts": [
+  [
+   -0.35,
+   0.28,
+   -2.1215,
+   0,
+   0,
+   -1
+  ]
+ ],
+ "dash": {
+  "cluster_style": "classic",
+  "dials": [
+   {
+    "kind": "speed",
+    "cx": 0.24,
+    "cy": 0.5,
+    "r": 0.24,
+    "a0": 225,
+    "a1": -45,
+    "max": 200,
+    "color": 2105376
+   },
+   {
+    "kind": "rpm",
+    "cx": 0.76,
+    "cy": 0.5,
+    "r": 0.24,
+    "a0": 225,
+    "a1": -45,
+    "max": 7000,
+    "color": 2105376
+   }
+  ]
+ },
+ "maxSpeed": 210,
+ "accel": 4.6,
+ "brake": 8.0,
+ "mass": 1080,
+ "fuel": 62,
+ "spawnWeight": 3,
+ "colors": [
+  "#c9c4b4",
+  "#b5121b",
+  "#1d4f8c",
+  "#e3b23c",
+  "#2d2e30",
+  "#3d6b4a"
+ ],
+ "horn": "high",
+ "engine": {
+  "type": "i4_sport",
+  "idle": 1300,
+  "drive": 8500,
+  "cyl": 4,
+  "diesel": false
+ },
+ "tris": 8887
+}

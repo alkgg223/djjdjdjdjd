@@ -43,7 +43,15 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
 
     @Override
     public ResourceLocation getTextureLocation(VehicleEntity e) {
-        return ATLAS;
+        return tex(e.spec());
+    }
+
+    private static final java.util.Map<String, ResourceLocation> TEX = new java.util.HashMap<>();
+
+    /** The vehicle's own texture (Blockbench pipeline) or the shared atlas (older generated vehicles). */
+    static ResourceLocation tex(VehicleSpec s) {
+        if (s.texture == null) return ATLAS;
+        return TEX.computeIfAbsent(s.texture, t -> TrafficCraft.id("textures/vehicle/" + t + ".png"));
     }
 
     @Override
@@ -84,7 +92,11 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         }
         if (dist < 40 || inside) overlays(v, s, ps, buffers, light, lamps, dist, inside);
         if (v.hasAiDriver() && (dist < 64 || inside) && !s.seats.isEmpty()) drawDriver(v, s, ps, buffers, light);
-        if (v.tickCount - v.backfireTick < 5 && !s.exhausts.isEmpty() && dist < 80) flames(v, s, ps, buffers, pt);
+        if (v.tickCount - v.backfireTick < 5 && !s.exhaustsFor(v.cfg("ex")).isEmpty() && dist < 80) flames(v, s, ps, buffers, pt);
+        if (!s.popups.isEmpty()) {
+            float target = lamps.on(VehicleMesh.HEAD) || lamps.on(VehicleMesh.HIGH) ? 1f : 0f;
+            v.popupVis += (target - v.popupVis) * Math.min(1f, mc.getTimer().getRealtimeDeltaTicks() * 0.12f);
+        }
         ps.popPose();
         if (TCConfig.HEADLIGHT_BEAMS.get() && dist < 96) beams(v, s, ps, buffers, lamps);
         ps.popPose();
@@ -160,7 +172,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         VertexConsumer vc = buf.getBuffer(RenderType.entityTranslucentEmissive(FLAME));
         PoseStack.Pose pose = ps.last();
         float u0 = frame / 4f, u1 = (frame + 1) / 4f;
-        for (float[] e : s.exhausts) {
+        for (float[] e : s.exhaustsFor(v.cfg("ex"))) {
             Vector3f p = new Vector3f(e[0], e[1], e[2]);
             Vector3f d = new Vector3f(e[3], e[4], e[5]).normalize();
             Vector3f n1 = new Vector3f(d).cross(0, 1, 0);
@@ -193,7 +205,8 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         Minecraft mc = Minecraft.getInstance();
         Matrix4f view = new Matrix4f(RenderSystem.getModelViewMatrix());
         Matrix4f proj = RenderSystem.getProjectionMatrix();
-        RenderSystem.setShaderTexture(0, ATLAS);
+        ResourceLocation texture = tex(s);
+        RenderSystem.setShaderTexture(0, texture);
         mc.gameRenderer.lightTexture().turnOnLightLayer();
         mc.gameRenderer.overlayTexture().setupOverlayColor();
         RenderSystem.enableDepthTest();
@@ -202,7 +215,8 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         RenderSystem.depthMask(true);
         int lu = light & 0xFFFF, lv = (light >> 16) & 0xFFFF;
         set(sh, "LightUV", lu, lv);
-        set4(sh, "MatcapRect", MATCAP[0], MATCAP[1], MATCAP[2], MATCAP[3]);
+        float[] mcp = s.matcap != null ? s.matcap : MATCAP;
+        set4(sh, "MatcapRect", mcp[0], mcp[1], mcp[2], mcp[3]);
         float steerVis = v.steerVis;
         float spin = v.wheelSpin;
         for (int pass = 0; pass < 2; pass++) {
@@ -215,8 +229,16 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             for (var en : mesh.parts.entrySet()) {
                 String part = en.getKey();
                 if (part.equals("interior") && lod > 0) continue;
+                int ci = part.indexOf(':');
+                if (ci > 0) {
+                    String slot = part.substring(0, ci);
+                    int idx;
+                    try { idx = Integer.parseInt(part.substring(ci + 1)); } catch (NumberFormatException ex) { idx = 0; }
+                    if (v.cfg(slot.equals("wheel") ? "wh" : slot) != idx) continue;
+                }
                 List<VehicleMesh.Group> groups = en.getValue();
-                if (part.equals("wheel") || part.equals("caliper")) {
+                boolean wheelPart = part.equals("wheel") || part.startsWith("wheel:");
+                if (wheelPart || part.equals("caliper")) {
                     for (VehicleSpec.Wheel w : s.wheels) {
                         Matrix4f m = new Matrix4f(base.pose()).translate(w.x(), w.y(), w.z());
                         Matrix3f nm = new Matrix3f(base.normal());
@@ -224,7 +246,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
                             m.rotateY((float) Math.toRadians(steerVis));
                             nm.rotateY((float) Math.toRadians(steerVis));
                         }
-                        if (part.equals("wheel")) {
+                        if (wheelPart) {
                             float a = (float) Math.toRadians(spin);
                             m.rotateX(a);
                             nm.rotateX(a);
@@ -244,6 +266,16 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
                     float ang = (float) Math.toRadians(s.bike ? steerVis : -steerVis * 13f);
                     m.translate(p[0], p[1], p[2]).rotate(ang, ax[0], ax[1], ax[2]).translate(-p[0], -p[1], -p[2]);
                     nm.rotate(ang, ax[0], ax[1], ax[2]);
+                } else if (part.equals("shifter") && s.shifterPivot != null) {
+                    float[] p = s.shifterPivot;
+                    float[] ang = shifterAngles(s.shifterType, v.visGear());
+                    m.translate(p[0], p[1], p[2]).rotateX((float) Math.toRadians(ang[0])).rotateZ((float) Math.toRadians(ang[1])).translate(-p[0], -p[1], -p[2]);
+                    nm.rotateX((float) Math.toRadians(ang[0])).rotateZ((float) Math.toRadians(ang[1]));
+                } else if (part.startsWith("popup_") && s.popups.containsKey(part)) {
+                    float[] pp = s.popups.get(part);
+                    float a = (float) Math.toRadians(pp[2] * v.popupVis);
+                    m.translate(0, pp[0], pp[1]).rotateX(a).translate(0, -pp[0], -pp[1]);
+                    nm.rotateX(a);
                 } else if (part.startsWith("door_")) {
                     VehicleSpec.Door d = door(s, part);
                     if (d != null) {
@@ -270,6 +302,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         RenderSystem.enableCull();
         set1(sh, "Emissive", 0);
         set1(sh, "Gloss", 0);
+        set1(sh, "PaintMask", 0);
     }
 
     private void drawGroups(ShaderInstance sh, List<VehicleMesh.Group> groups, Matrix4f view, Matrix4f proj, Matrix4f model, Matrix3f nm, int light,
@@ -283,6 +316,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             if (isGlass != translucent) continue;
             float r = 1, gg = 1, b = 1, a = 1, gloss = 0;
             boolean emissive = false;
+            set1(sh, "PaintMask", (g.mat == VehicleMesh.PAINT || g.mat == VehicleMesh.PAINT2) && v.spec().texture != null ? 1 : 0);
             switch (g.mat) {
                 case VehicleMesh.PAINT, VehicleMesh.PAINT2 -> {
                     int c = g.mat == VehicleMesh.PAINT ? v.getColor() : v.getColor2();
@@ -294,7 +328,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
                 case VehicleMesh.GLASS -> gloss = 0.18f;
                 case VehicleMesh.SOLID -> gloss = 0.0f;
                 case VehicleMesh.SCREEN -> {
-                    RenderSystem.setShaderTexture(0, DASH);
+                    if (v.spec().texture == null) RenderSystem.setShaderTexture(0, DASH);
                     emissive = v.has(VehicleEntity.F_ENGINE) || v.has(VehicleEntity.F_STARTING);
                     if (!emissive) {
                         r = gg = b = 0.12f;
@@ -317,8 +351,22 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             set1(sh, "Gloss", gloss);
             g.vbo.bind();
             g.vbo.drawWithShader(mv, proj, sh);
-            if (g.mat == VehicleMesh.SCREEN) RenderSystem.setShaderTexture(0, ATLAS);
+            if (g.mat == VehicleMesh.SCREEN) RenderSystem.setShaderTexture(0, tex(v.spec()));
         }
+    }
+
+    /** Gear lever tilt (forward/back about X, left/right about Z) for the selected gear: H-pattern or automatic gate. */
+    static float[] shifterAngles(String type, int gear) {
+        if (type.equals("auto")) {
+            // P R N D along the gate (driving = D)
+            float a = gear < 0 ? 8f : gear == 0 ? 0f : -12f;
+            return new float[]{a, 0};
+        }
+        if (gear == 0) return new float[]{0, 0};
+        if (gear < 0) return new float[]{-14f, -14f};          // reverse: right and back
+        int col = (Math.min(gear, 6) - 1) / 2;                 // 1-2 left, 3-4 centre, 5-6 right
+        boolean fwd = gear % 2 == 1;
+        return new float[]{fwd ? 14f : -14f, (1 - col) * 12f};
     }
 
     private static VehicleSpec.Door door(VehicleSpec s, String part) {

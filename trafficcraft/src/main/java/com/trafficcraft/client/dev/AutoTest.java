@@ -23,7 +23,8 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 /** Development-only automated in-game test (enabled with -Dtrafficcraft.autotest=true). */
 @EventBusSubscriber(modid = TrafficCraft.MODID, value = Dist.CLIENT)
 public final class AutoTest {
-    static final boolean ENABLED = Boolean.getBoolean("trafficcraft.autotest") && !"town".equals(System.getProperty("trafficcraft.autotest.mode"));
+    static final boolean ENABLED = Boolean.getBoolean("trafficcraft.autotest") && !"town".equals(System.getProperty("trafficcraft.autotest.mode"))
+            && !"cars".equals(System.getProperty("trafficcraft.autotest.mode"));
     static final boolean TOWN = "town".equals(System.getProperty("trafficcraft.autotest.mode"));
     static int tt = -1;
     static double gy;
