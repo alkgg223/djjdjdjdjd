@@ -31,6 +31,19 @@ public final class ClientEvents {
         PacketDistributor.sendToServer(new VehicleControlPayload(v.getId(), action));
     }
 
+    /** taps / clicks on the in-car screen (touch screens send these as attack / use) */
+    @SubscribeEvent
+    public static void screenTap(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered e) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || !(mc.player.getVehicle() instanceof VehicleEntity v)) return;
+        var cam = mc.gameRenderer.getMainCamera();
+        net.minecraft.world.phys.Vec3 look = net.minecraft.world.phys.Vec3.directionFromRotation(cam.getXRot(), cam.getYRot());
+        if (com.trafficcraft.client.gui.CarScreen.click(v, cam.getPosition(), look)) {
+            e.setCanceled(true);
+            e.setSwingHand(false);
+        }
+    }
+
     @SubscribeEvent
     public static void tick(ClientTickEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();

@@ -52,6 +52,47 @@ public final class CarScreen {
         } else s.toastUntil = v.tickCount + 40;
     }
 
+    /** Tap / click on the screen (looking at it and pressing use or attack). Returns true when the screen took the click. */
+    public static boolean click(VehicleEntity v, net.minecraft.world.phys.Vec3 eye, net.minecraft.world.phys.Vec3 look) {
+        VehicleSpec s = v.spec();
+        if (s.screen == null || !(v.has(VehicleEntity.F_ENGINE) || v.has(VehicleEntity.F_STARTING))) return false;
+        // camera ray into the car's frame
+        float yaw = v.getYRot();
+        net.minecraft.world.phys.Vec3 ex = VehicleEntity.toWorldOffset(1, 0, 0, yaw), ez = VehicleEntity.toWorldOffset(0, 0, 1, yaw);
+        net.minecraft.world.phys.Vec3 d0 = eye.subtract(v.position());
+        double ox = d0.dot(ex), oy = d0.y, oz = d0.dot(ez);
+        double dx = look.dot(ex), dy = look.y, dz = look.dot(ez);
+        float[] sc = s.screen;
+        double[] r = {sc[3], sc[4], sc[5]}, u = {sc[6], sc[7], sc[8]};
+        double[] n = {r[1] * u[2] - r[2] * u[1], r[2] * u[0] - r[0] * u[2], r[0] * u[1] - r[1] * u[0]};
+        double den = dx * n[0] + dy * n[1] + dz * n[2];
+        if (Math.abs(den) < 1e-6) return false;
+        double t = ((sc[0] - ox) * n[0] + (sc[1] - oy) * n[1] + (sc[2] - oz) * n[2]) / den;
+        if (t < 0 || t > 2.5) return false;
+        double px = ox + dx * t - sc[0], py = oy + dy * t - sc[1], pz = oz + dz * t - sc[2];
+        double a = (px * r[0] + py * r[1] + pz * r[2]) / sc[9] + 0.5, b = 0.5 - (px * u[0] + py * u[1] + pz * u[2]) / sc[10];
+        if (a < -0.05 || a > 1.05 || b < -0.05 || b > 1.05) return false;
+        State st = st(v);
+        if (v.tickCount - st.onSince < 60) return true;              // still booting
+        if (st.app != 0) {                                           // any tap inside an app: back to the menu
+            st.app = 0;
+            st.auto = false;
+            return true;
+        }
+        float X = (float) a * W, H = W * sc[10] / sc[9], Y = (float) b * H;
+        int idx = switch (s.uiLayout) {
+            case "list" -> (int) ((Y - 16) / ((H - 22) / 4));
+            case "dock" -> Y > H - 24 ? (int) ((X - 8) / ((W - 16) / 4)) : -1;
+            case "cards" -> (int) ((X - 4) / ((W - 20) / 4 + 4));
+            default -> Y < 14 ? -1 : (Y > 16 + (H - 20) / 2 ? 2 : 0) + (X > W / 2 ? 1 : 0);
+        };
+        if (idx >= 0 && idx < 4) {
+            st.sel = idx;
+            ok(v);
+        }
+        return true;
+    }
+
     // ------------------------------------------------------------------------------------------------ drawing
     static final float W = 200;
     private static PoseStack.Pose pose;
@@ -68,7 +109,7 @@ public final class CarScreen {
         for (int pass = 0; pass < 2; pass++) {
             for (int i = 0; i < 4; i++) {
                 float[] p = q[pass == 0 ? i : 3 - i];
-                vc.addVertex(m, p[0], p[1], -z).setColor(argb).setUv(p[2], p[3]).setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+                vc.addVertex(m, p[0], p[1], z).setColor(argb).setUv(p[2], p[3]).setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
                         .setLight(0xF000F0).setNormal(pose, 0, 0, pass == 0 ? 1 : -1);
             }
         }
@@ -176,7 +217,7 @@ public final class CarScreen {
     static void text(Font font, MultiBufferSource buf, String str, float x, float y, int col, float scale, boolean centre) {
         PoseStack p = new PoseStack();
         p.last().pose().set(pose.pose());
-        p.translate(x, y, -layer - 0.05f);
+        p.translate(x, y, layer + 0.05f);
         p.scale(scale, scale, 1);
         float dx = centre ? -font.width(str) / 2f : 0;
         font.drawInBatch(str, dx, 0, col, false, p.last().pose(), buf, Font.DisplayMode.POLYGON_OFFSET, 0, 0xF000F0);
@@ -253,7 +294,7 @@ public final class CarScreen {
         rect(0, 0, W, H, 0xFF0A0C10);
         text(font, buf, "PARK ASSIST", 4, 2, acc, 0.8f, false);
         float cx = W / 2, cy = H / 2 + 4;
-        float hl = Math.min(H * 0.3f, 34), hw = hl * s.planAspect;
+        float hl = Math.min(H * 0.34f, 40), hw = Math.max(hl * s.planAspect, 7);
         int body = 0xFF000000 | v.getColor(), glass = 0xFF1C2630, tyre = 0xFF050505;
         // the car itself, from above (its own outline; nose at the top)
         if (!s.plan.isEmpty()) {
@@ -300,7 +341,7 @@ public final class CarScreen {
 
     static void band(int zone, int k, float x, float y, float w, float h) {
         int lv = ParkSensor.level[zone];
-        int c = ParkSensor.OFF;
+        int c = 0xFF3C424B;
         if (lv >= 3 - k) c = k == 0 ? ParkSensor.RED : k == 1 ? ParkSensor.YELLOW : ParkSensor.GREEN;
         rect(x, y, w, h, c);
     }

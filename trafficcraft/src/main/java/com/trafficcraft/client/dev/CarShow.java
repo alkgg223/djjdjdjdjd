@@ -137,6 +137,13 @@ public final class CarShow {
                 mc.player.setXRot(26);
             }
         }
+        if (t == 240 && mc.player.getVehicle() instanceof VehicleEntity rv && rv.spec().screen != null) {
+            float[] sc = rv.spec().screen;
+            Vec3 eye = mc.gameRenderer.getMainCamera().getPosition();
+            Vec3 ctr = rv.position().add(VehicleEntity.toWorldOffset(sc[0], sc[1], sc[2], rv.getYRot()));
+            boolean took = com.trafficcraft.client.gui.CarScreen.click(rv, eye, ctr.subtract(eye).normalize());
+            TrafficCraft.LOG.info("[carshow] screen tap took=" + took);
+        }
         if (t == 250) shot(mc, "c_park_sensor.png");
         if (t == 255) {
             mc.options.hideGui = true;
