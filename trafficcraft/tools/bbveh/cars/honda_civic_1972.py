@@ -32,3 +32,6 @@ SPEC = dict(
 
 # modern-style lamps (from the reference photos)
 SPEC['head'] = [slim(0.3, 0.55, 0.66, 0.6, rise=0.03)]
+
+# model-specific lamp design
+SPEC['head'] = [dict(view='F', outline=[(0.3, 0.57), (0.66, 0.6), (0.7, 0.63), (0.66, 0.64), (0.34, 0.61)], lamps=[(0.48, 0.6, 0.016, 'head'), (0.57, 0.607, 0.016, 'high')], strips=[([(0.33, 0.605), (0.66, 0.633)], 0.01, 'drl')], rects=[(0.63, 0.6, 0.68, 0.625, 'ind')], smooth=0, house='head_house_black', bezel='trim')]

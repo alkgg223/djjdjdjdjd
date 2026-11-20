@@ -42,3 +42,6 @@ SPEC = dict(
 h = slim(0.34, 0.6, 0.76, 0.66, rise=0.02)
 h['strips'].append(([(0.37, 0.61), (0.35, 0.54), (0.42, 0.5)], 0.012, 'drl'))
 SPEC['head'] = [h]
+
+# model-specific lamp design
+SPEC['head'] = [dict(view='F', outline=[(0.36, 0.62), (0.74, 0.66), (0.76, 0.63), (0.4, 0.6)], lamps=[(0.52, 0.625, 0.016, 'head'), (0.62, 0.635, 0.016, 'high')], strips=[([(0.38, 0.618), (0.35, 0.56), (0.41, 0.52), (0.5, 0.51)], 0.012, 'drl'), ([(0.4, 0.616), (0.72, 0.653)], 0.009, 'drl')], rects=[(0.7, 0.64, 0.75, 0.655, 'ind')], smooth=0, house='head_house_black', bezel='trim')]

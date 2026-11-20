@@ -241,6 +241,12 @@ VIEWS = {
     'lamp_rear': ((-1.2, -3.6, 1.0), (-0.45, -2.25, 0.7), 50),
 }
 done = []
+if MODE == 'lampq':
+    studio()
+    build({})
+    loc, tgt, lens = ((1.0, L / 2 + 2.6, 1.0), (-0.3, L / 2 - 0.2, 0.6), 45)
+    camera(loc, tgt, lens)
+    render(os.path.join(OUT, 'q_lamp.png'), (480, 300), 8)
 if MODE == 'quick':
     studio()
     build({})

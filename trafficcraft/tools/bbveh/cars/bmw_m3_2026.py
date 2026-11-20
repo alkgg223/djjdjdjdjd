@@ -14,7 +14,7 @@ def side_art(car, out, P, n):
     out[m & (np.mod(y * 50, 1.0) < 0.35)] = (60, 62, 66, 240)
 
 
-h = slim(0.36, 0.58, 0.8, 0.64, rise=0.03)
+h = slim(0.36, 0.585, 0.8, 0.64, rise=0.035, shape='angular')
 h['strips'] += [([(0.44, 0.63), (0.5, 0.6), (0.56, 0.6)], 0.01, 'drl'), ([(0.6, 0.64), (0.66, 0.61), (0.72, 0.62)], 0.01, 'drl')]
 
 SPEC = dict(
@@ -45,3 +45,6 @@ SPEC = dict(
     maxSpeed=290, accel=7.4, brake=11.0, mass=1730, fuel_l=59, spawnWeight=4, engine='i6_twinturbo', horn='high', backfire=0.15,
     colors=['#3fae2a', '#1f6b4f', '#1b1c1e', '#e9edf0', '#1d3f9a', '#8c9095'],
 )
+
+# model-specific lamp design
+SPEC['head'] = [dict(view='F', outline=[(0.36, 0.6), (0.46, 0.64), (0.8, 0.68), (0.82, 0.655), (0.72, 0.62), (0.56, 0.6), (0.42, 0.585)], lamps=[(0.6, 0.632, 0.02, 'head'), (0.7, 0.648, 0.02, 'high')], strips=[([(0.46, 0.627), (0.53, 0.612), (0.56, 0.626)], 0.009, 'drl'), ([(0.63, 0.645), (0.69, 0.633), (0.72, 0.65)], 0.009, 'drl')], rects=[(0.76, 0.655, 0.81, 0.672, 'ind')], smooth=0, house='head_house_black', bezel='trim')]
