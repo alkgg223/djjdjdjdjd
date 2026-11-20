@@ -49,7 +49,21 @@ public final class CarScreen {
         if (s.sel == 3) {
             s.app = 1;
             s.auto = false;
+        } else if (s.sel == 2) {
+            s.app = 2;
+            s.auto = false;
         } else s.toastUntil = v.tickCount + 40;
+    }
+
+    public static void openApp(VehicleEntity v, int app) {
+        st(v).app = app;
+        st(v).auto = false;
+    }
+
+    /** Is the Map app showing on this car's screen? (X then opens the full map control) */
+    public static boolean mapOpen(VehicleEntity v) {
+        State s = STATES.get(v.getId());
+        return s != null && s.app == 2 && v.spec().screen != null;
     }
 
     /** Tap / click on the screen (looking at it and pressing use or attack). Returns true when the screen took the click. */
@@ -74,12 +88,19 @@ public final class CarScreen {
         if (a < -0.05 || a > 1.05 || b < -0.05 || b > 1.05) return false;
         State st = st(v);
         if (v.tickCount - st.onSince < 60) return true;              // still booting
+        float X = (float) a * W, H = W * sc[10] / sc[9], Y = (float) b * H;
+        if (st.app == 2) {                                           // map app: back, search, cancel trip, follow, or open the full map
+            if (X < 22 && Y < 16) st.app = 0;
+            else if (Y > H - 22 && X > W - 24) com.trafficcraft.client.nav.Nav.follow = !com.trafficcraft.client.nav.Nav.follow;
+            else if (Y > H - 22 && X > W - 48 && com.trafficcraft.client.nav.Nav.active()) com.trafficcraft.client.nav.Nav.cancel();
+            else Minecraft.getInstance().setScreen(new MapScreen(v, Y < 16));
+            return true;
+        }
         if (st.app != 0) {                                           // any tap inside an app: back to the menu
             st.app = 0;
             st.auto = false;
             return true;
         }
-        float X = (float) a * W, H = W * sc[10] / sc[9], Y = (float) b * H;
         int idx = switch (s.uiLayout) {
             case "list" -> (int) ((Y - 16) / ((H - 22) / 4));
             case "dock" -> Y > H - 24 ? (int) ((X - 8) / ((W - 16) / 4)) : -1;
@@ -208,6 +229,8 @@ public final class CarScreen {
             rect(W / 2 - 30, H - 10, 60 * Mth.clamp(t / 55f, 0, 1), 2, mix(acc, a));
         } else if (st.app == 1) {
             park(font, buf, v, s, bg, acc, fg, H);
+        } else if (st.app == 2) {
+            map(font, buf, v, s, bg, acc, fg, H);
         } else {
             menu(font, buf, v, s, st, bg, acc, fg, H);
         }
@@ -287,6 +310,81 @@ public final class CarScreen {
         if (v.tickCount < st.toastUntil) {
             rect(W / 2 - 50, H / 2 - 8, 100, 16, 0xE0000000);
             text(font, buf, "Not available", W / 2, H / 2 - 4, 0xFFFFFFFF, 0.9f, true);
+        }
+    }
+
+    /** Map app: the navigation map in this maker's colours, search bar on top, cancel / follow buttons bottom right. */
+    static void map(Font font, MultiBufferSource buf, VehicleEntity v, VehicleSpec s, int bg, int acc, int fg, float H) {
+        com.trafficcraft.client.nav.MapView.Theme th = theme(bg, acc, fg);
+        final float base = layer;
+        final int[] lastCol = {0};
+        final float[] z = {base};
+        com.trafficcraft.client.nav.MapView mv = new com.trafficcraft.client.nav.MapView(new com.trafficcraft.client.nav.MapView.Canvas() {
+            @Override
+            public void quad(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, int argb) {
+                if (argb != lastCol[0]) {
+                    lastCol[0] = argb;
+                    z[0] += 0.02f;
+                }
+                quadAt(x0, y0, x1, y1, x2, y2, x3, y3, z[0], argb);
+            }
+
+            @Override
+            public void text(String str, float x, float y, int argb, float scale, boolean centre) {
+                float keep = layer;
+                layer = z[0] + 0.02f;
+                CarScreen.text(font, buf, str, x, y, argb, scale, centre);
+                layer = keep;
+            }
+        }, th, W, H);
+        boolean follow = com.trafficcraft.client.nav.Nav.follow;
+        mv.setView(v.getX(), v.getZ(), 1.25f, follow, v.getYRot());
+        mv.drawMap(v, null);
+        layer = z[0] + 0.1f;
+        // top bar: back arrow, search / destination
+        rect(0, 0, W, 14, mix(darker(bg), 0.94f));
+        text(font, buf, "<", 8, 3, fg, 1f, true);
+        String top = com.trafficcraft.client.nav.Nav.active() ? com.trafficcraft.client.nav.Nav.destName + "  " + com.trafficcraft.client.nav.Nav.distText(com.trafficcraft.client.nav.Nav.routeLen)
+                : net.minecraft.network.chat.Component.translatable("map.trafficcraft.search").getString();
+        rect(20, 2, W - 24, 10, mix(bg, 1));
+        text(font, buf, top, 24, 3.5f, com.trafficcraft.client.nav.Nav.active() ? 0xFFFFFFFF : mix(fg, 0.7f), 0.75f, false);
+        // bottom right: cancel trip, follow
+        if (com.trafficcraft.client.nav.Nav.active()) {
+            rect(W - 46, H - 20, 20, 16, 0xFFC62828);
+            text(font, buf, "X", W - 36, H - 16, 0xFFFFFFFF, 1f, true);
+        }
+        rect(W - 23, H - 20, 20, 16, follow ? acc : mix(darker(bg), 1));
+        text(font, buf, follow ? "^" : "N", W - 13, H - 16, 0xFFFFFFFF, 1f, true);
+    }
+
+    public static com.trafficcraft.client.nav.MapView.Theme theme(int bg, int acc, int fg) {
+        var th = new com.trafficcraft.client.nav.MapView.Theme();
+        th.bg = 0xFF000000 | darker(bg);
+        th.road = mixRgb(fg, bg, 0.5f);
+        th.major = mixRgb(fg, bg, 0.82f);
+        th.roadEdge = mixRgb(fg, bg, 0.18f);
+        th.text = 0xFF000000 | fg;
+        th.accent = acc;
+        return th;
+    }
+
+    static int mixRgb(int a, int b, float k) {
+        int r = (int) (((a >> 16) & 255) * k + ((b >> 16) & 255) * (1 - k)), g = (int) (((a >> 8) & 255) * k + ((b >> 8) & 255) * (1 - k)),
+                bl = (int) ((a & 255) * k + (b & 255) * (1 - k));
+        return 0xFF000000 | r << 16 | g << 8 | bl;
+    }
+
+    static void quadAt(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, float z, int argb) {
+        Matrix4f m = pose.pose();
+        VertexConsumer vc = src.getBuffer(RenderType.entityTranslucentEmissive(com.trafficcraft.client.render.VehicleRenderer.ATLAS));
+        float u = 4 / 256f;
+        float[][] q = {{x0, y0}, {x1, y1}, {x2, y2}, {x3, y3}};
+        for (int pass = 0; pass < 2; pass++) {
+            for (int i = 0; i < 4; i++) {
+                float[] p = q[pass == 0 ? i : 3 - i];
+                vc.addVertex(m, p[0], p[1], z).setColor(argb).setUv(u, u).setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+                        .setLight(0xF000F0).setNormal(pose, 0, 0, pass == 0 ? 1 : -1);
+            }
         }
     }
 

@@ -75,6 +75,7 @@ public final class BorderControl {
 
     public void approve(ServerLevel level, RoadNode n, Case c) {
         TrafficStats.inc("border_approved");
+        TrafficStats.inc("border_approved@" + n.id);
         c.approved = true;
         c.approvedAt = level.getGameTime();
         if (level.getEntity(c.vehicle) instanceof VehicleEntity v) v.setFlag(VehicleEntity.F_HAZARD, false);

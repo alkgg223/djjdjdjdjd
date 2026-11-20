@@ -230,6 +230,30 @@ public final class RoadNetwork {
     }
 
     // ------------------------------------------------------------------------ persistence
+    // ------------------------------------------------------------------------ map locations
+    public final java.util.Map<Integer, Place> places = new java.util.LinkedHashMap<>();
+    public int nextPlace = 1;
+
+    public Place addPlace(double x, double y, double z, String type, String name) {
+        Place p = new Place(nextPlace++, x, y, z, type, name);
+        places.put(p.id, p);
+        changed();
+        return p;
+    }
+
+    public Place placeNear(Vec3 at, double r) {
+        Place best = null;
+        double bd = r;
+        for (Place p : places.values()) {
+            double d = p.pos().distanceTo(at);
+            if (d < bd) {
+                bd = d;
+                best = p;
+            }
+        }
+        return best;
+    }
+
     public CompoundTag save() {
         CompoundTag t = new CompoundTag();
         ListTag ln = new ListTag();
@@ -240,6 +264,10 @@ public final class RoadNetwork {
         t.put("edges", le);
         t.putInt("nn", nextNode);
         t.putInt("ne", nextEdge);
+        ListTag lp = new ListTag();
+        for (Place p : places.values()) lp.add(p.save());
+        t.put("places", lp);
+        t.putInt("np", nextPlace);
         return t;
     }
 
@@ -256,6 +284,12 @@ public final class RoadNetwork {
         }
         nextNode = Math.max(t.getInt("nn"), 1);
         nextEdge = Math.max(t.getInt("ne"), 1);
+        places.clear();
+        for (Tag x : t.getList("places", Tag.TAG_COMPOUND)) {
+            Place p = Place.load((CompoundTag) x);
+            places.put(p.id, p);
+        }
+        nextPlace = Math.max(t.getInt("np"), 1);
         rebuildAdjacency();
         version++;
         invalidateGeometry();

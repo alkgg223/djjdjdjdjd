@@ -46,7 +46,8 @@ public final class TCBlocks {
     public static final DeferredRegister<BlockEntityType<?>> BES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, TrafficCraft.MODID);
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, TrafficCraft.MODID);
     public static final Map<String, DeferredBlock<? extends Block>> MAP = new LinkedHashMap<>();
-    private static final List<String> TRAFFIC_LIGHT_BLOCKS = new ArrayList<>(), GATE_BLOCKS = new ArrayList<>(), GENERIC_BLOCKS = new ArrayList<>();
+    private static final List<String> TRAFFIC_LIGHT_BLOCKS = new ArrayList<>(), GENERIC_BLOCKS = new ArrayList<>();
+    public static final List<String> GATE_BLOCKS = new ArrayList<>();
 
     public static DeferredHolder<BlockEntityType<?>, BlockEntityType<TrafficLightBE>> TRAFFIC_LIGHT_BE;
     public static DeferredHolder<BlockEntityType<?>, BlockEntityType<BarrierGateBE>> BARRIER_GATE_BE;

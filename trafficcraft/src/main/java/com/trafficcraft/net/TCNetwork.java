@@ -10,6 +10,8 @@ public final class TCNetwork {
         r.playToServer(VehicleStatePayload.TYPE, VehicleStatePayload.CODEC, VehicleStatePayload::handle);
         r.playToClient(RoadSyncPayload.TYPE, RoadSyncPayload.CODEC, RoadSyncPayload::handle);
         r.playToServer(RoadEditPayload.TYPE, RoadEditPayload.CODEC, RoadEditPayload::handle);
+        r.playToServer(PlacePayload.TYPE, PlacePayload.CODEC, PlacePayload::handle);
+        r.playToServer(TuningPayload.TYPE, TuningPayload.CODEC, TuningPayload::handle);
         r.playToClient(OpenEditorPayload.TYPE, OpenEditorPayload.CODEC, OpenEditorPayload::handle);
     }
 }

@@ -194,10 +194,90 @@ public final class CarShow {
             view(mc, mid.add(-4, 9, -14), mid);
         }
         if (t == 300) shot(mc, "c_lineup.png");
-        if (t == 310) {
+        // tuning tool: open the screen on the first car and fit some parts
+        if (t == 302) {
+            server.execute(() -> server.getPlayerList().getPlayers().get(0).setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
+                    new net.minecraft.world.item.ItemStack(TCRegistry.TUNING_TOOL.get())));
+            view(mc, rel(v0, 3.8, 1.5, 3.2), rel(v0, 0.6, 0.5, 0.2));
+            mc.options.hideGui = false;
+        }
+        if (t == 306) mc.setScreen(new com.trafficcraft.client.gui.TuningScreen(v0));
+        if (t == 308 && mc.screen instanceof com.trafficcraft.client.gui.TuningScreen ts) ts.testFit();
+        if (t == 318) shot(mc, "c_tuning.png");
+        if (t == 319) TrafficCraft.LOG.info("[carshow] tuning config=" + v0.getConfig() + " color=" + Integer.toHexString(v0.getColor()));
+        if (t == 320) mc.setScreen(null);
+        // maps: a small road grid with locations, the Map app on the car screen, a route, the full map screen and a search
+        if (t == 322) server.execute(() -> {
+            roadGrid(server.overworld());
+            ride(server, ids.get(0));
+        });
+        if (t == 330) {
+            mc.options.setCameraType(CameraType.FIRST_PERSON);
+            com.trafficcraft.client.gui.CarScreen.openApp(v0, 2);
+        }
+        if (t >= 334 && t <= 415 && mc.player.getVehicle() instanceof VehicleEntity rv && rv.spec().screen != null) {
+            // look straight at the infotainment screen, zoomed in
+            float[] sc = rv.spec().screen;
+            Vec3 eye = mc.gameRenderer.getMainCamera().getPosition();
+            Vec3 d = rv.position().add(VehicleEntity.toWorldOffset(sc[0], sc[1], sc[2], rv.getYRot())).subtract(eye);
+            mc.player.setYRot((float) Math.toDegrees(Math.atan2(-d.x, d.z)));
+            mc.player.setXRot((float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z))));
+            mc.options.fov().set(30);
+            mc.options.hideGui = true;
+        }
+        if (t == 396) shot(mc, "c_map_car.png");
+        if (t == 398) {
+            var pl = com.trafficcraft.road.ClientRoads.net.places.values().stream().filter(p -> p.type.equals("hospital")).findFirst().orElse(null);
+            TrafficCraft.LOG.info("[carshow] places on client=" + com.trafficcraft.road.ClientRoads.net.places.size() + " edges=" + com.trafficcraft.road.ClientRoads.net.edges.size());
+            if (pl != null) {
+                com.trafficcraft.client.nav.Nav.setDestination(pl.pos(), pl.name);
+                com.trafficcraft.client.nav.Nav.compute(com.trafficcraft.road.ClientRoads.net, v0.position(), v0.forward(), pl.pos());
+                TrafficCraft.LOG.info("[carshow] route points=" + com.trafficcraft.client.nav.Nav.route.size() + " length=" + Math.round(com.trafficcraft.client.nav.Nav.routeLen));
+            }
+        }
+        if (t == 412) shot(mc, "c_map_route.png");
+        if (t == 416) {
+            mc.options.fov().set(70);
+            mc.options.hideGui = false;
+            mc.setScreen(new com.trafficcraft.client.gui.MapScreen(v0, false));
+        }
+        if (t == 432) shot(mc, "c_map_screen.png");
+        if (t == 434 && mc.screen instanceof com.trafficcraft.client.gui.MapScreen ms) ms.testSearch("bank");
+        if (t == 446) shot(mc, "c_map_search.png");
+        if (t == 448) mc.setScreen(null);
+        if (t == 452) {
             TrafficCraft.LOG.info("[carshow] done");
             mc.stop();
         }
+    }
+
+    /** 4 x 4 grid of two-lane roads 30 blocks apart around the cars, with a few locations on it. */
+    static void roadGrid(ServerLevel l) {
+        var net = com.trafficcraft.road.RoadData.get(l);
+        if (!net.places.isEmpty()) return;
+        int[][] id = new int[4][4];
+        for (int i = 0; i < 4; i++) for (int j = 0; j < 4; j++) {
+            var n = net.addNode(-35 + i * 30, gy, -40 + j * 30, com.trafficcraft.road.NodeType.ROAD);
+            id[i][j] = n.id;
+        }
+        for (int i = 0; i < 4; i++) for (int j = 0; j < 4; j++) {
+            if (i < 3) lanes(net.connect(id[i][j], id[i + 1][j], false), j == 1 ? 4 : 2);
+            if (j < 3) lanes(net.connect(id[i][j], id[i][j + 1], false), 2);
+        }
+        net.addPlace(-35 + 85, gy, -40 + 62, "hospital", "City Hospital");
+        net.addPlace(-35 + 28, gy, -40 + 4, "bank", "National Bank");
+        net.addPlace(-35 + 58, gy, -40 + 33, "supermarket", "Al-Yaqeen Market");
+        net.addPlace(-35 + 4, gy, -40 + 70, "restaurant", "Barakat Oven");
+        net.addPlace(-35 + 72, gy, -40 + 4, "gas_station", "Fuel 24");
+        net.addPlace(-35 + 33, gy, -40 + 88, "mosque", "Zahra Mosque");
+        net.changed();
+    }
+
+    static void lanes(com.trafficcraft.road.RoadEdge e, int n) {
+        if (e == null) return;
+        e.lanes.clear();
+        e.lanes.addAll(com.trafficcraft.road.RoadEdge.defaultLanes(n, false));
+        e.width = n == 4 ? 12 : 7;
     }
 
     static void flags(MinecraftServer server, int f, boolean on) {

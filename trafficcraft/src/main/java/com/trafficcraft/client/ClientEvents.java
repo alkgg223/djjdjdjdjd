@@ -59,7 +59,12 @@ public final class ClientEvents {
         while (VehicleKeys.HIGH_BEAM.consumeClick()) send(v, VehicleEntity.A_HIGH);
         while (VehicleKeys.IND_LEFT.consumeClick()) send(v, VehicleEntity.A_IND_L);
         while (VehicleKeys.IND_RIGHT.consumeClick()) send(v, VehicleEntity.A_IND_R);
-        while (VehicleKeys.HAZARD.consumeClick()) send(v, VehicleEntity.A_HAZARD);
+        while (VehicleKeys.HAZARD.consumeClick()) {
+            // with the Map app showing on the car screen, X opens the full map control instead of the hazard lights
+            if (com.trafficcraft.client.gui.CarScreen.mapOpen(v)) mc.setScreen(new com.trafficcraft.client.gui.MapScreen(v, false));
+            else send(v, VehicleEntity.A_HAZARD);
+        }
+        com.trafficcraft.client.nav.Nav.tick(v);
         while (VehicleKeys.ENGINE.consumeClick()) send(v, VehicleEntity.A_ENGINE);
         while (VehicleKeys.INTERIOR.consumeClick()) send(v, VehicleEntity.A_INTERIOR);
         while (VehicleKeys.SIREN.consumeClick()) send(v, VehicleEntity.A_SIREN);

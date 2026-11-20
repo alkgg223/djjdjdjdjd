@@ -82,6 +82,7 @@ public class VehicleEntity extends Entity {
     /** Called on the driving client after each physics step to send the state packet (installed by client setup). */
     public static java.util.function.Consumer<VehicleEntity> CLIENT_SEND = v -> {};
     public static java.util.function.BiConsumer<VehicleEntity, String> CLIENT_EVENT = (v, e) -> {};
+    public static java.util.function.Consumer<VehicleEntity> OPEN_TUNING = v -> {};
 
     private VehicleSpec spec;
     /** Server-side AI driver (MODE_AI vehicles). */
@@ -537,6 +538,10 @@ public class VehicleEntity extends Entity {
     @Override
     public InteractionResult interact(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        if (stack.getItem() instanceof TuningToolItem) {
+            if (level().isClientSide && !spec().catalog.isEmpty()) OPEN_TUNING.accept(this);
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
         if (stack.getItem() instanceof FuelCanItem) {
             if (!level().isClientSide) {
                 setFuel(getFuel() + FuelCanItem.LITRES);

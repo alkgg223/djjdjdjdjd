@@ -28,6 +28,8 @@ public final class ClientSetup {
         VehicleEntity.CLIENT_INPUT = DriverInput::read;
         VehicleEntity.CLIENT_SEND = DriverInput::sendState;
         VehicleEntity.CLIENT_EVENT = com.trafficcraft.client.sound.VehicleSounds::event;
+        com.trafficcraft.road.PlaceToolItem.OPEN = pos -> net.minecraft.client.Minecraft.getInstance().setScreen(new com.trafficcraft.client.gui.PlaceScreen(pos));
+        VehicleEntity.OPEN_TUNING = v -> net.minecraft.client.Minecraft.getInstance().setScreen(new com.trafficcraft.client.gui.TuningScreen(v));
         com.trafficcraft.net.OpenEditorPayload.CLIENT_HANDLER = com.trafficcraft.client.gui.Editors::open;
         ModList.get().getModContainerById(TrafficCraft.MODID).ifPresent(c -> c.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new));
     }

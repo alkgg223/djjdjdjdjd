@@ -41,6 +41,8 @@ public final class VehicleSpec {
     public String texture;
     public float[] matcap;
     public final java.util.Map<String, Integer> catalog = new java.util.LinkedHashMap<>();
+    /** part names per slot for the tuning screen */
+    public final java.util.Map<String, java.util.List<String>> catalogNames = new java.util.LinkedHashMap<>();
     public final List<List<float[]>> exhaustVariants = new ArrayList<>();
     public float[] shifterPivot;
     public String shifterType = "manual";
@@ -157,7 +159,12 @@ public final class VehicleSpec {
         paint2 = o.has("paint2") ? Integer.parseInt(o.get("paint2").getAsString().substring(1), 16) : 0xF2F2F2;
         if (o.has("texture")) texture = o.get("texture").getAsString();
         if (o.has("matcap")) matcap = vec(o.getAsJsonArray("matcap"));
-        if (o.has("catalog")) for (var en : o.getAsJsonObject("catalog").entrySet()) catalog.put(en.getKey(), en.getValue().getAsJsonArray().size());
+        if (o.has("catalog")) for (var en : o.getAsJsonObject("catalog").entrySet()) {
+            catalog.put(en.getKey(), en.getValue().getAsJsonArray().size());
+            java.util.List<String> nm = new java.util.ArrayList<>();
+            for (JsonElement it : en.getValue().getAsJsonArray()) nm.add(it.isJsonObject() && it.getAsJsonObject().has("name") ? it.getAsJsonObject().get("name").getAsString() : "?");
+            catalogNames.put(en.getKey(), nm);
+        }
         for (JsonElement e : arr(o, "exhaust_variants")) {
             List<float[]> l = new ArrayList<>();
             for (JsonElement t : e.getAsJsonArray()) l.add(vec(t.getAsJsonArray()));

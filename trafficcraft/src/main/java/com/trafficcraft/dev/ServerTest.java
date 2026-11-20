@@ -33,7 +33,7 @@ public final class ServerTest {
     static final List<String> log = new ArrayList<>();
     static double speedSum;
     static final Map<Integer, Integer> boulevardLane = new java.util.HashMap<>();
-    static long speedN, overlapTicks, maxActive, headingN, spinLogs;
+    static long speedN, overlapTicks, maxActive, headingN, spinLogs, gateLogs;
     static BlockPos origin;
 
     static void log(String s) {
@@ -100,6 +100,31 @@ public final class ServerTest {
             for (int cx = -7; cx <= 7; cx++) for (int cz = -8; cz <= -5; cz++) l.setChunkForced(cx, cz, true);
             net.changed();
         }
+        {
+            // easy border checkpoint: a barrier gate placed like a player would, then the road on each side connected to its node
+            var rnet = RoadData.get(l);
+            BlockPos gp = origin.offset(-43, 0, 67);
+            l.setBlock(gp, com.trafficcraft.registry.TCBlocks.get("barrier_gate").defaultBlockState()
+                    .setValue(com.trafficcraft.block.FacingBlock.FACING, net.minecraft.core.Direction.EAST), 3);
+            var bn = com.trafficcraft.block.GateEvents.setup(l, gp, null);
+            var a = rnet.addNode(origin.getX() - 74, origin.getY(), origin.getZ() + 64.5, com.trafficcraft.road.NodeType.SPAWN);
+            var b = rnet.addNode(origin.getX() - 12, origin.getY(), origin.getZ() + 64.5, com.trafficcraft.road.NodeType.SPAWN);
+            for (var sp : new com.trafficcraft.road.RoadNode[]{a, b}) {
+                com.trafficcraft.road.Props.defaults(com.trafficcraft.road.NodeType.SPAWN, sp.cfg);
+                sp.cfg.putInt("max", 3);
+                sp.cfg.putInt("interval", 8);
+            }
+            for (var e2 : new com.trafficcraft.road.RoadEdge[]{rnet.connect(a.id, bn.id, false), rnet.connect(bn.id, b.id, false)}) {
+                e2.lanes.clear();
+                e2.lanes.addAll(com.trafficcraft.road.RoadEdge.defaultLanes(2, false));
+                e2.width = 7;
+                e2.speed = 40;
+            }
+            rnet.changed();
+            log(String.format("gate checkpoint node %d at (%.1f, %.1f), officer=%s", bn.id, bn.pos().x - origin.getX(), bn.pos().z - origin.getZ(),
+                    com.trafficcraft.npc.Workplaces.officerNear(l, bn)));
+        }
+        com.trafficcraft.TCConfig.MAX_AI_VEHICLES.set(90);
         TrafficManager.observer = Vec3.atCenterOf(origin).add(20, 0, 0);
         l.setDayTime(1000);
         t = 0;
@@ -120,6 +145,10 @@ public final class ServerTest {
             if (Math.abs(a.speed) > 0.5f) {
                 speedSum += Math.abs(a.speed);
                 speedN++;
+            }
+            if (Math.abs(a.getZ() - origin.getZ() - 64.5) < 4 && Math.abs(a.getX() - origin.getX() + 42.5) < 14 && a.driver != null && a.driver.state != TrafficDriver.State.PARKED && gateLogs < 60 && t % 5 == 0) {
+                gateLogs++;
+                log(String.format("   near-gate %s #%d dx=%.1f v=%.1f %s %s", a.getModel(), a.getId(), a.getX() - origin.getX() + 42.5, a.speed * 3.6, a.driver.debug(), a.driver.pieceInfo()));
             }
             if (Math.abs(a.getZ() - origin.getZ() + 96) < 8 && a.speed > 2f) {
                 // six-lane boulevard: which lane is the car in (by lateral offset)?
@@ -168,6 +197,8 @@ public final class ServerTest {
                 if (v.driver != null) log(String.format("   %s #%d %s v=%.1f pos=(%.1f,%.1f,%.1f) yaw=%.0f", v.getModel(), v.getId(), v.driver.debug(), v.speed * 3.6,
                         v.getX() - origin.getX(), v.getY() - origin.getY(), v.getZ() - origin.getZ(), v.getYRot()));
             }
+            for (VehicleEntity v : vs) if (Math.abs(v.getX() - origin.getX() + 43) < 32 && Math.abs(v.getZ() - origin.getZ() - 55) < 8 && v.driver != null)
+                log(String.format("   gate-road %s #%d v=%.1f x=%.1f %s", v.getModel(), v.getId(), v.speed * 3.6, v.getX() - origin.getX(), v.driver.debug()));
             Map<String, Integer> peds = new java.util.TreeMap<>();
             for (Entity en : l.getAllEntities()) if (en instanceof com.trafficcraft.npc.PedestrianEntity p) peds.merge(p.kind() + ":" + p.anim(), 1, Integer::sum);
             log("   pedestrians (kind:anim)=" + peds);

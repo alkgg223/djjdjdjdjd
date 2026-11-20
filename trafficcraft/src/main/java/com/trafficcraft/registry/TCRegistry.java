@@ -53,6 +53,10 @@ public final class TCRegistry {
     }
     public static final DeferredItem<Item> PASSPORT = ITEMS.registerSimpleItem("passport", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> INSPECTION_STAMP = ITEMS.registerSimpleItem("inspection_stamp", new Item.Properties().stacksTo(1));
+    public static final DeferredItem<com.trafficcraft.vehicle.TuningToolItem> TUNING_TOOL = ITEMS.register("tuning_tool",
+            () -> new com.trafficcraft.vehicle.TuningToolItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<com.trafficcraft.road.PlaceToolItem> PLACE_TOOL = ITEMS.register("place_tool",
+            () -> new com.trafficcraft.road.PlaceToolItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<Item> CAR_KEY = ITEMS.registerSimpleItem("car_key", new Item.Properties().stacksTo(1));
 
     private static final Map<String, DeferredHolder<SoundEvent, SoundEvent>> SOUND_MAP = new HashMap<>();
@@ -64,6 +68,8 @@ public final class TCRegistry {
                 VEHICLE_ITEMS.values().forEach(i -> out.accept(i.get()));
                 out.accept(FUEL_CAN.get());
                 out.accept(CAR_KEY.get());
+                out.accept(TUNING_TOOL.get());
+                out.accept(PLACE_TOOL.get());
                 out.accept(PASSPORT.get());
                 out.accept(INSPECTION_STAMP.get());
             }).build());
