@@ -19,8 +19,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * a paint palette, "Random" and "Factory". Every change is applied at once so the car can be watched behind the screen.
  */
 public class TuningScreen extends Screen {
-    static final String[] SLOTS = {"fb", "rb", "ex", "sp", "hd", "wh", "sk"};
+    static final String[] SLOTS = {"kt", "fb", "rb", "ex", "sp", "hd", "wh", "sk", "lv", "dc"};
     static final int[] PAINT = {0xC8102E, 0xE8EAEC, 0x0D0D0F, 0x1F5FBF, 0xF1C40F, 0x3FAE2A, 0xFF7A00, 0x6A6E73, 0x7B1FA2, 0x00A3A3, 0x8C1E1E, 0xB9BDC2};
+    static final int ROW = 20;
     final VehicleEntity v;
     final Map<String, Integer> sel = new LinkedHashMap<>();
     int color;
@@ -43,7 +44,7 @@ public class TuningScreen extends Screen {
     }
 
     int top() {
-        return Math.max(30, height / 2 - (slots.size() * 24 + 90) / 2);
+        return Math.max(8, height / 2 - (slots.size() * ROW + 96) / 2);
     }
 
     @Override
@@ -51,9 +52,9 @@ public class TuningScreen extends Screen {
         int x0 = 20, y = top() + 16;
         for (String k : slots) {
             final String slot = k;
-            addRenderableWidget(Button.builder(Component.literal("<"), b -> step(slot, -1)).bounds(x0 + 110, y, 20, 20).build());
-            addRenderableWidget(Button.builder(Component.literal(">"), b -> step(slot, 1)).bounds(x0 + 290, y, 20, 20).build());
-            y += 24;
+            addRenderableWidget(Button.builder(Component.literal("<"), b -> step(slot, -1)).bounds(x0 + 110, y, 20, 18).build());
+            addRenderableWidget(Button.builder(Component.literal(">"), b -> step(slot, 1)).bounds(x0 + 290, y, 20, 18).build());
+            y += ROW;
         }
         y += 8;
         for (int i = 0; i < PAINT.length; i++) {
@@ -112,18 +113,18 @@ public class TuningScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
         int x0 = 20, y0 = top();
-        int h = slots.size() * 24 + 120;
+        int h = slots.size() * ROW + 104;
         g.fill(x0 - 10, y0 - 10, x0 + 320, y0 + h, 0xB0101014);
         g.drawString(font, Component.translatable("screen.trafficcraft.tuning").append(" - " + v.spec().name), x0, y0, 0xFFFFD060);
         int y = y0 + 16;
         for (String k : slots) {
-            g.drawString(font, Component.translatable("tuning.trafficcraft.slot." + k), x0, y + 6, 0xFFE0E0E0);
+            g.drawString(font, Component.translatable("tuning.trafficcraft.slot." + k), x0, y + 5, 0xFFE0E0E0);
             List<String> names = v.spec().catalogNames.getOrDefault(k, List.of());
             int i = sel.getOrDefault(k, 0);
             String nm = i < names.size() ? names.get(i) : "#" + i;
             int n = v.spec().catalog.getOrDefault(k, 1);
-            g.drawCenteredString(font, nm + "  (" + (i + 1) + "/" + n + ")", x0 + 210, y + 6, i == 0 ? 0xFFB0B0B0 : 0xFF80E0FF);
-            y += 24;
+            g.drawCenteredString(font, nm + "  (" + (i + 1) + "/" + n + ")", x0 + 210, y + 5, i == 0 ? 0xFFB0B0B0 : 0xFF80E0FF);
+            y += ROW;
         }
         g.drawString(font, Component.translatable("tuning.trafficcraft.paint"), x0, y + 14, 0xFFE0E0E0);
         super.render(g, mx, my, pt);

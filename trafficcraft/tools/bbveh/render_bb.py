@@ -18,7 +18,7 @@ TRIS, IMG, META = bb.read_bbmodel(SRC)
 TEXPATH = os.path.join(tempfile.gettempdir(), 'bbtex_%d.png' % os.getpid())
 IMG.save(TEXPATH)
 INV = {v: k for k, v in bb.MATS.items()}
-LAMP_COL = {'head': (1, 0.97, 0.9), 'high': (0.9, 0.95, 1), 'tail': (1, 0.05, 0.08), 'brake': (1, 0.04, 0.06), 'reverse': (1, 1, 1),
+LAMP_COL = {'deco_a': 1, 'deco_b': 1, 'deco_y': 1, 'head': (1, 0.97, 0.9), 'high': (0.9, 0.95, 1), 'tail': (1, 0.05, 0.08), 'brake': (1, 0.04, 0.06), 'reverse': (1, 1, 1),
             'ind_l': (1, 0.5, 0.05), 'ind_r': (1, 0.5, 0.05), 'drl': (1, 1, 1), 'marker': (1, 0.5, 0.05), 'plate': (1, 1, 1)}
 
 
@@ -336,4 +336,16 @@ if MODE == 'headlamps':
             render(pth, (800, 500), 32 if night else 24)
             tiles.append(pth)
     sheet(tiles, 4, os.path.join(OUT, 'sheet_headlamps.png'))
+if MODE == 'kits':
+    studio()
+    tiles = []
+    for cfg, name in (({'kt': 1}, 'kt1'), ({'kt': 2}, 'kt2'), ({'kt': 3}, 'kt3'), ({'kt': 4}, 'kt4'), ({'dc': 1}, 'dc1'), ({'dc': 2}, 'dc2')):
+        build(cfg, ('deco_a', 'deco_b', 'deco_y', 'high') if name.startswith('dc') else ())
+        for view in ('front34', 'rear34'):
+            loc, tgt, lens = VIEWS[view]
+            camera(loc, tgt, lens)
+            p = os.path.join(OUT, '%s_%s.png' % (name, view))
+            render(p, (560, 330), 12)
+            tiles.append(p)
+    sheet(tiles, 2, os.path.join(OUT, 'sheet_kits.png'))
 print('done')

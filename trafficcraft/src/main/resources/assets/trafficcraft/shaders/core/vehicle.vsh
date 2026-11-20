@@ -29,6 +29,8 @@ out vec4 lightMapColor;
 out vec4 overlayColor;
 out vec2 texCoord0;
 out vec2 matcapCoord;
+out vec3 objPos;
+out vec3 objNormal;
 
 void main() {
     vec4 viewPos = ModelViewMat * vec4(Position, 1.0);
@@ -39,6 +41,8 @@ void main() {
     lightMapColor = Emissive > 0.5 ? vec4(1.0) : texelFetch(Sampler2, ivec2(LightUV) / 16, 0);
     overlayColor = texelFetch(Sampler1, UV1, 0);
     texCoord0 = UV0;
+    objPos = Position;
+    objNormal = Normal;
     vec3 vn = normalize(mat3(ModelViewMat) * Normal);
     vec2 m = vn.xy * 0.48 + 0.5;
     matcapCoord = vec2(mix(MatcapRect.x, MatcapRect.z, m.x), mix(MatcapRect.w, MatcapRect.y, m.y));

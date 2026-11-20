@@ -23,7 +23,8 @@ import net.minecraft.resources.ResourceLocation;
 public final class VehicleMesh {
     // material ids (must match tools/vehgen/geom.py)
     public static final int PAINT = 0, SOLID = 1, GLASS = 2, HEAD = 3, HIGH = 4, DRL = 5, TAIL = 6, BRAKE = 7, IND_L = 8, IND_R = 9, REVERSE = 10,
-            INTERIOR_LIGHT = 11, PLATE_LIGHT = 12, BEACON_A = 13, BEACON_B = 14, TAXI_SIGN = 15, MARKER = 16, PAINT2 = 17, SCREEN = 18;
+            INTERIOR_LIGHT = 11, PLATE_LIGHT = 12, BEACON_A = 13, BEACON_B = 14, TAXI_SIGN = 15, MARKER = 16, PAINT2 = 17, SCREEN = 18,
+            DECO_A = 19, DECO_B = 20, DECO_Y = 21;   // Christmas bulbs (red / green, blinking in turn), pumpkin glow
 
     /** ARGB of window glass: neutral (slightly warm to cancel the cool reflection texture), ~15 % opaque. */
     public static final int CLEAR_GLASS = (38 << 24) | (255 << 16) | (250 << 8) | 240;

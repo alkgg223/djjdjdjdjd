@@ -291,7 +291,8 @@ public class VehicleEntity extends Entity {
         StringBuilder b = new StringBuilder();
         for (var en : s.catalog.entrySet()) {
             int n = en.getValue();
-            if (n <= 1) continue;
+            if (n <= 1 || en.getKey().equals("dc")) continue;                          // festive decor only by the player
+            if ((en.getKey().equals("kt") || en.getKey().equals("lv")) && r.nextFloat() > 0.12f) continue;   // body kits and liveries are rare in traffic
             int v;
             if (r.nextFloat() < (track ? 0.25f : 0.45f)) v = 0;
             else if (track) v = Math.max(1, n - 1 - r.nextInt(Math.min(2, n - 1)));

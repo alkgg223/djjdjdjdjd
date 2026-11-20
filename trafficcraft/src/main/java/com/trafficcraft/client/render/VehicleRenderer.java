@@ -323,6 +323,11 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         set(sh, "LightUV", lu, lv);
         float[] mcp = s.matcap != null ? s.matcap : MATCAP;
         set4(sh, "MatcapRect", mcp[0], mcp[1], mcp[2], mcp[3]);
+        // livery drawn by the shader on the paint (Halloween decor brings the pumpkin livery with it)
+        int livery = v.cfg("lv");
+        if (livery == 0 && v.cfg("dc") == 2) livery = 7;
+        set1(sh, "Livery", livery);
+        set4(sh, "LiveryDims", s.length / 2, s.width / 2, s.height, v.getId() % 97);
         float steerVis = v.steerVis;
         float spin = v.wheelSpin;
         for (int pass = 0; pass < 2; pass++) {
@@ -409,6 +414,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         set1(sh, "Emissive", 0);
         set1(sh, "Gloss", 0);
         set1(sh, "PaintMask", 0);
+        set1(sh, "Livery", 0);
     }
 
     private void drawGroups(ShaderInstance sh, List<VehicleMesh.Group> groups, Matrix4f view, Matrix4f proj, Matrix4f model, Matrix3f nm, int light,
@@ -738,6 +744,9 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
                 case VehicleMesh.BEACON_A -> v.has(VehicleEntity.F_BEACONS) && (v.tickCount / 3) % 2 == 0 ? 1f : 0f;
                 case VehicleMesh.BEACON_B -> v.has(VehicleEntity.F_BEACONS) && (v.tickCount / 3) % 2 == 1 ? 1f : 0f;
                 case VehicleMesh.TAXI_SIGN -> engine ? 1f : 0f;
+                case VehicleMesh.DECO_A -> (v.tickCount / 8) % 2 == 0 ? 1f : 0.12f;
+                case VehicleMesh.DECO_B -> (v.tickCount / 8) % 2 == 1 ? 1f : 0.12f;
+                case VehicleMesh.DECO_Y -> 0.8f + 0.2f * (float) Math.abs(Math.sin(v.tickCount * 0.37 + v.getId()));
                 default -> 0f;
             };
         }

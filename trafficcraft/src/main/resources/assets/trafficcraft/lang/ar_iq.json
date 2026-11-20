@@ -566,5 +566,8 @@
  "item.trafficcraft.vehicle_toyota_camry_2023": "Toyota Camry 2023",
  "item.trafficcraft.vehicle_toyota_hilux_2021": "Toyota Hilux 2021",
  "item.trafficcraft.vehicle_toyota_land_cruiser_2022": "Toyota Land Cruiser 2022",
- "item.trafficcraft.vehicle_toyota_yaris_2020": "Toyota Yaris 2020"
+ "item.trafficcraft.vehicle_toyota_yaris_2020": "Toyota Yaris 2020",
+ "tuning.trafficcraft.slot.kt": "طقم الهيكل",
+ "tuning.trafficcraft.slot.lv": "الرسمة",
+ "tuning.trafficcraft.slot.dc": "الزينة"
 }

@@ -18,7 +18,7 @@ import numpy as np
 from PIL import Image
 
 MATS = {'paint': 0, 'solid': 1, 'glass': 2, 'head': 3, 'high': 4, 'drl': 5, 'tail': 6, 'brake': 7, 'ind_l': 8, 'ind_r': 9, 'reverse': 10,
-        'interior': 11, 'plate': 12, 'beacon_a': 13, 'beacon_b': 14, 'taxi': 15, 'marker': 16, 'paint2': 17, 'screen': 18}
+        'interior': 11, 'plate': 12, 'beacon_a': 13, 'beacon_b': 14, 'taxi': 15, 'marker': 16, 'paint2': 17, 'screen': 18, 'deco_a': 19, 'deco_b': 20, 'deco_y': 21}
 PX = 16.0   # Blockbench pixels per metre
 NOTINT = 240  # alpha marking untinted pixels on paint
 

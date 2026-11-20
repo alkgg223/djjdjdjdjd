@@ -22,6 +22,9 @@ FB_NAMES = ['Factory', 'Factory + lip', 'Street mesh', 'Time-attack', 'Drift aer
 RB_NAMES = ['Factory', 'Diffuser', 'Vented valance', 'Track diffuser', 'Cut-out valance']
 HD_NAMES = ['Factory', 'Carbon', 'Vented', 'Ram-air scoop', 'Carbon vented']
 SK_NAMES = ['Factory', 'Extended skirts', 'Skirts + winglets']
+KT_NAMES = ['None', 'Widebody', 'Time-attack aero', 'Apocalypse', 'Drag monster']
+LV_NAMES = ['Plain paint', 'Racing stripes', 'Flames', 'Race number', 'Digital camo', 'Shark teeth', 'Checkered flag', 'Pumpkin', 'Candy cane']
+DC_NAMES = ['None', 'Christmas lights', 'Halloween pumpkins']
 FB_CHIN = [0.0, 0.0, 0.0, 0.03, 0.015]
 LAMP_MAT = {'head': 'head', 'high': 'high', 'drl': 'drl', 'fog': 'head', 'tail': 'tail', 'brake': 'brake', 'reverse': 'reverse',
             'marker': 'marker'}
@@ -984,6 +987,234 @@ class Car:
                 continue
             PT.spoiler(self.m, 'sp_%d' % k, kind, deck, z_te, hwid)
 
+    # ===================================================================================== body kits (whole front / rear changes)
+    def tube(self, a, b, r=0.025, style='alu'):
+        self.strap(V(a), V(b), w=r * 2, t=r * 2, style=style)
+
+    def kits(self):
+        m = self.m
+        S_ = self.m.painters
+        S_.setdefault('kit_black', S.flat((22, 22, 24), 4))
+        S_.setdefault('kit_steel', S.flat((70, 72, 76), 6))
+        S_.setdefault('kit_rivet', S.flat((200, 202, 206), 2))
+        S_.setdefault('kit_red', S.flat((200, 24, 30), 3))
+        S_.setdefault('kit_yellow', S.flat((230, 190, 30), 3))
+        L, R = self.L, self.R
+        bf, br = self.bot(L - 0.05), self.bot(0.05)
+        for k in range(5):
+            g = 'kt_%d' % k
+            if k == 0:
+                m.element('kit_none', 'solid', g, 'trim')
+                continue
+            if k in (1, 2):
+                # bolt-on over-fenders round every wheel arch, with rivets
+                for za in (self.YR, self.YF):
+                    for sx in (1, -1):
+                        x = sx * (max(self.hw(za - 0.3), self.hw(za + 0.3)) + (0.035 if k == 1 else 0.05))
+                        self.el(g, 'paint', 'paint')
+                        n = 9
+                        for i in range(n):
+                            a0, a1 = math.pi * i / n, math.pi * (i + 1) / n
+                            rr_ = self.RA + 0.05
+                            p0 = V(x, R + rr_ * math.sin(a0), za + rr_ * math.cos(a0))
+                            p1 = V(x, R + rr_ * math.sin(a1), za + rr_ * math.cos(a1))
+                            self.strap(p0, p1, w=0.1, t=0.09 if k == 1 else 0.12, style='paint')
+                        self.el(g, 'solid', 'kit_rivet')
+                        for i in range(1, n, 2):
+                            a = math.pi * (i + 0.5) / n
+                            rr_ = self.RA + 0.05
+                            m.box(V(x + sx * 0.05, R + rr_ * math.sin(a), za + rr_ * math.cos(a)), (0.02, 0.02, 0.02), 'kit_rivet')
+                # splitter + canards in front, diffuser at the back
+                ext = 0.12 if k == 1 else 0.3
+                w = self.hw(L - 0.2) * (1.0 if k == 1 else 1.04)
+                self.el(g, 'solid', 'carbon' if k == 2 else 'kit_black')
+                m.box(V(0, bf - 0.012, L - 0.12 + ext / 2), (2 * w, 0.02, 0.24 + ext), 'carbon' if k == 2 else 'kit_black')
+                if k == 2:
+                    for sx in (1, -1):
+                        self.tube(V(sx * w * 0.5, bf - 0.01, L + ext - 0.05), V(sx * w * 0.5, bf + 0.15, L - 0.05), 0.008, 'kit_steel')
+                for sx in (1, -1):
+                    for i, dy in enumerate((0.1, 0.2) if k == 2 else (0.12,)):
+                        c = V(sx * (self.hw(L - 0.15) + 0.02), bf + dy, L - 0.18)
+                        m.box(c, (0.16 if k == 2 else 0.1, 0.012, 0.18), 'carbon' if k == 2 else 'kit_black', M=rz(sx * (12 + 6 * i)))
+                dz = 0.08 if k == 1 else 0.26
+                wr = self.hw(0.2) * 0.92
+                m.box(V(0, br - 0.01, 0.12 - dz / 2), (2 * wr, 0.02, 0.24 + dz), 'carbon' if k == 2 else 'kit_black')
+                for i in range(7 if k == 2 else 5):
+                    x = -wr * 0.8 + 1.6 * wr * i / ((7 if k == 2 else 5) - 1)
+                    m.box(V(x, br + 0.06, 0.06 - dz / 2), (0.012, 0.14 if k == 2 else 0.1, 0.2 + dz), 'carbon' if k == 2 else 'kit_black')
+                if k == 2:
+                    self.el(g, 'solid', 'kit_red')
+                    m.box(V(-self.hw(L) * 0.5, bf + 0.08, L + 0.03), (0.04, 0.02, 0.08), 'kit_red')
+                    m.box(V(self.hw(0) * 0.5, br + 0.08, -0.03), (0.04, 0.02, 0.08), 'kit_red')
+            if k == 3:
+                # apocalypse: steel bull bar with spikes and light pods, armour plates, roof cage + light bar, rear ladder + spare wheel
+                w = self.hw(L - 0.1)
+                zb = L + 0.14
+                yb0, yb1 = bf + 0.08, self.belt(L) + 0.06
+                self.el(g, 'solid', 'kit_steel')
+                for x in (-w * 0.9, -w * 0.35, w * 0.35, w * 0.9):
+                    self.tube(V(x, yb0, zb), V(x, yb1, zb - 0.06), 0.03, 'kit_steel')
+                    self.tube(V(x, yb0 + 0.05, zb), V(x, yb0 + 0.05, L - 0.15), 0.025, 'kit_steel')
+                for y in (yb0 + 0.04, (yb0 + yb1) / 2, yb1):
+                    self.tube(V(-w * 0.95, y, zb - (y - yb0) / (yb1 - yb0) * 0.06), V(w * 0.95, y, zb - (y - yb0) / (yb1 - yb0) * 0.06), 0.028, 'kit_steel')
+                self.el(g, 'solid', 'kit_rivet')
+                for i in range(9):
+                    x = -w * 0.85 + 1.7 * w * i / 8
+                    m.box(V(x, yb0 + 0.04, zb + 0.07), (0.03, 0.03, 0.1), 'kit_rivet', M=rx(0))
+                self.el(g, 'high', 'proj_high')
+                for sx in (1, -1):
+                    m.cylinder(V(sx * w * 0.62, yb1 + 0.08, zb - 0.04), V(0, 0, 1), 0.07, 0.05, 10, 'proj_high')
+                for name, a, b in self.doors:
+                    for sx in (1, -1):
+                        gd = g
+                        self.el(gd, 'solid', 'kit_steel')
+                        x = sx * (self.hw((a + b) / 2) + 0.02)
+                        m.box(V(x, self.bot((a + b) / 2) + 0.28, (a + b) / 2), (0.025, 0.3, (b - a) * 0.8), 'kit_steel')
+                        self.el(gd, 'solid', 'kit_rivet')
+                        for i in range(4):
+                            m.box(V(x + sx * 0.015, self.bot((a + b) / 2) + 0.4, a + (b - a) * (0.2 + 0.2 * i)), (0.012, 0.02, 0.02), 'kit_rivet')
+                if not self.open_top:
+                    self.el(g, 'solid', 'kit_steel')
+                    z0, z1 = self.CABIN0 + 0.25, self.CABIN1 - 0.35
+                    for sx in (1, -1):
+                        pts = [V(sx * (self.roofw(z) - 0.02), self.roofz(z) + 0.1, z) for z in np.linspace(z0, z1, 5)]
+                        for a_, b_ in zip(pts[:-1], pts[1:]):
+                            self.tube(a_, b_, 0.022, 'kit_steel')
+                    for z in (z0, (z0 + z1) / 2, z1):
+                        self.tube(V(-self.roofw(z) + 0.02, self.roofz(z) + 0.1, z), V(self.roofw(z) - 0.02, self.roofz(z) + 0.1, z), 0.022, 'kit_steel')
+                    self.el(g, 'high', 'proj_high')
+                    for i in range(6):
+                        x = -0.45 + 0.9 * i / 5
+                        m.box(V(x, self.roofz(z1) + 0.16, z1 + 0.02), (0.11, 0.08, 0.06), 'proj_high')
+                # rear: bumper bar, ladder, spare wheel
+                wr = self.hw(0.1)
+                self.el(g, 'solid', 'kit_steel')
+                self.tube(V(-wr, br + 0.12, -0.12), V(wr, br + 0.12, -0.12), 0.035, 'kit_steel')
+                for x in (-wr * 0.6, wr * 0.6):
+                    self.tube(V(x, br + 0.12, -0.12), V(x, br + 0.12, 0.15), 0.03, 'kit_steel')
+                for sx in (1,):
+                    x = -wr * 0.6
+                    self.tube(V(x - 0.12, br + 0.2, -0.04), V(x - 0.12, self.belt(0) + 0.3, -0.02), 0.012, 'kit_steel')
+                    self.tube(V(x + 0.12, br + 0.2, -0.04), V(x + 0.12, self.belt(0) + 0.3, -0.02), 0.012, 'kit_steel')
+                    for y in np.linspace(br + 0.3, self.belt(0) + 0.25, 5):
+                        self.tube(V(x - 0.12, y, -0.035), V(x + 0.12, y, -0.035), 0.01, 'kit_steel')
+                self.el(g, 'solid', 'tyre')
+                m.cylinder(V(wr * 0.35, (br + self.belt(0)) / 2 + 0.05, -0.02), V(0, 0, -1), self.R * 0.95, self.TW * 0.8, 14, 'tyre', cap_style='tyre')
+                self.el(g, 'solid', 'alu')
+                m.cylinder(V(wr * 0.35, (br + self.belt(0)) / 2 + 0.05, -0.02 - self.TW * 0.8), V(0, 0, -1), self.Rr * 0.9, 0.01, 12, 'alu')
+            if k == 4:
+                # drag monster: wheelie bar with small wheels, parachute pack, giant front lip, stacked exhausts out of the bonnet sides
+                self.el(g, 'solid', 'kit_steel')
+                wr = self.hw(0.3) * 0.5
+                zt = -1.1
+                for sx in (1, -1):
+                    self.tube(V(sx * wr, br + 0.1, 0.3), V(sx * 0.12, 0.12, zt), 0.022, 'kit_steel')
+                self.tube(V(-0.12, 0.12, zt), V(0.12, 0.12, zt), 0.02, 'kit_steel')
+                self.el(g, 'solid', 'tyre')
+                for sx in (1, -1):
+                    m.cylinder(V(sx * 0.15, 0.08, zt), V(sx, 0, 0), 0.08, 0.05, 10, 'tyre', cap_style='alu')
+                self.el(g, 'solid', 'kit_red')
+                m.box(V(0, self.belt(0) - 0.05, -0.12), (0.34, 0.24, 0.2), 'kit_red')
+                self.el(g, 'solid', 'kit_yellow')
+                m.box(V(0, self.belt(0) - 0.05, -0.225), (0.3, 0.06, 0.01), 'kit_yellow')
+                self.el(g, 'solid', 'kit_black')
+                w = self.hw(L - 0.1)
+                m.box(V(0, bf - 0.02, L + 0.04), (2 * w * 0.98, 0.03, 0.28), 'kit_black')
+                self.el(g, 'solid', 'chrome')
+                zh = (self.hood[0] + self.hood[1]) / 2
+                for sx in (1, -1):
+                    for i in range(4):
+                        z = zh - 0.3 + i * 0.2
+                        x = sx * (self.hw(z) + 0.03)
+                        y0 = self.belt(z) - 0.25
+                        m.cylinder(V(x, y0, z), V(sx * 0.25, 1, 0), 0.03, 0.28 + 0.03 * i, 8, 'chrome', caps=(False, True))
+
+    # ===================================================================================== Christmas / Halloween decor
+    def decor(self):
+        m = self.m
+        P_ = self.m.painters
+        P_.setdefault('bulb_red', S.flat((255, 40, 40), 2))
+        P_.setdefault('bulb_green', S.flat((40, 230, 70), 2))
+        P_.setdefault('wire', S.flat((20, 46, 24), 3))
+        P_.setdefault('pumpkin', pumpkin_painter)
+        P_.setdefault('pumpkin_glow', S.flat((255, 214, 60), 1))
+        P_.setdefault('stem', S.flat((60, 90, 30), 4))
+        L = self.L
+        for k in range(3):
+            g = 'dc_%d' % k
+            if k == 0:
+                m.element('decor_none', 'solid', g, 'trim')
+                continue
+            if k == 1:
+                # strings of red / green bulbs on wires: both shoulders, the nose, the tail and (closed cars) the roof edges
+                paths = []
+                zs = list(np.linspace(0.08, L - 0.08, max(8, int(L / 0.22))))
+                for sx in (1, -1):
+                    paths.append([V(sx * (self.hw(z) - 0.03), self.fender_t(z) + 0.012, z) for z in zs])
+                xs = np.linspace(-self.hw(L - 0.05) + 0.05, self.hw(L - 0.05) - 0.05, 9)
+                paths.append([V(x, self.belt(L - 0.03) + 0.01, L - 0.01) for x in xs])
+                xs = np.linspace(-self.hw(0.05) + 0.05, self.hw(0.05) - 0.05, 9)
+                paths.append([V(x, self.belt(0.03) + 0.01, 0.0) for x in xs])
+                if not self.open_top:
+                    zr = list(np.linspace(self.CABIN0 + 0.1, self.CABIN1 - 0.1, 9))
+                    for sx in (1, -1):
+                        paths.append([V(sx * (self.roofw(z) - 0.01), self.roofz(z) + 0.012, z) for z in zr])
+                n = 0
+                for path in paths:
+                    self.el(g, 'solid', 'wire')
+                    for a, b in zip(path[:-1], path[1:]):
+                        mid = (a + b) / 2 + V(0, -0.025, 0)
+                        self.strap(a, mid, w=0.008, t=0.008, style='wire')
+                        self.strap(mid, b, w=0.008, t=0.008, style='wire')
+                    for p in path:
+                        red = n % 2 == 0
+                        self.el(g, 'deco_a' if red else 'deco_b', 'bulb_red' if red else 'bulb_green')
+                        m.box(p + V(0, -0.02, 0), (0.035, 0.05, 0.035), 'bulb_red' if red else 'bulb_green')
+                        n += 1
+            if k == 2:
+                # pumpkins with glowing faces: on the bonnet corners, on the boot / tailgate, on the roof corners, and a big one on the roof
+                spots = []
+                for sx in (1, -1):
+                    z = self.hood[1] - 0.25
+                    spots.append((V(sx * (self.hw(z) - 0.22), self.deck(sx * (self.hw(z) - 0.22), z), z), 0.1, 1))
+                    z = 0.25
+                    spots.append((V(sx * (self.hw(z) - 0.24), max(self.deck(0, z), self.belt(z)), z), 0.09, -1))
+                if not self.open_top:
+                    zt = (self.CABIN0 + self.CABIN1) / 2
+                    spots.append((V(0, self.roofz(zt) + 0.005, zt), 0.26, 1))
+                    for sx in (1, -1):
+                        for z in (self.CABIN0 + 0.45, self.CABIN1 - 0.55):
+                            spots.append((V(sx * (self.roofw(z) - 0.12), self.roofz(z) + 0.005, z), 0.08, 1 if z > zt else -1))
+                else:
+                    zt = 0.6
+                    spots.append((V(0, self.deck(0, zt) + 0.005, zt), 0.22, 1))
+                for c, r, face in spots:
+                    self.pumpkin(g, c, r, face)
+
+    def pumpkin(self, g, base, r, face):
+        m = self.m
+        h = r * 1.5
+        c = base + V(0, 0, 0)
+        self.el(g, 'solid', 'pumpkin')
+        # ribbed body: three squashed rings stacked
+        for i, (y0, y1, k0, k1) in enumerate(((0.0, 0.25, 0.75, 1.0), (0.25, 0.75, 1.0, 1.0), (0.75, 1.0, 1.0, 0.7))):
+            m.cylinder(c + V(0, h * y0, 0), V(0, 1, 0), r * k0, h * (y1 - y0), 10, 'pumpkin', r1=r * k1, caps=(i == 0, i == 2), cap_style='pumpkin')
+        self.el(g, 'solid', 'stem')
+        m.box(c + V(0, h + r * 0.12, 0), (r * 0.18, r * 0.3, r * 0.18), 'stem', M=rz(12))
+        # carved face glowing from inside: two triangle eyes, a nose and a jagged mouth on the side facing 'face' (+1 forward / -1 back)
+        self.el(g, 'deco_y', 'pumpkin_glow')
+        zf = face * (r * 1.005)
+        def tri(cx, cy, s):
+            pts = [c + V(cx - s, h * cy - s * 0.6, zf), c + V(cx + s, h * cy - s * 0.6, zf), c + V(cx, h * cy + s * 0.8, zf)]
+            m.face(pts if face > 0 else pts[::-1], 'pumpkin_glow', outward=V(0, 0, face))
+        tri(-r * 0.35, 0.62, r * 0.16)
+        tri(r * 0.35, 0.62, r * 0.16)
+        tri(0, 0.46, r * 0.09)
+        for i in range(5):
+            x = -r * 0.45 + i * r * 0.225
+            y = 0.3 if i % 2 == 0 else 0.26
+            m.box(c + V(x, h * y, zf), (r * 0.2, r * 0.13, 0.004), 'pumpkin_glow')
+
     def wheel_list(self):
         rest = [w for w in PT.WHEELS if w != self.stock_wheel]
         return [self.stock_wheel] + rest[:4]
@@ -1540,6 +1771,8 @@ class Car:
         self.skirts()
         self.exhausts()
         self.spoilers()
+        self.kits()
+        self.decor()
         self.wheels()
         self.interior()
         self.liners()
@@ -1566,7 +1799,8 @@ class Car:
                    ex=[dict(name=PT.EXHAUST_NAMES[PT.EXHAUSTS.index(e)]) for e in self.exhaust_list()],
                    sp=[dict(name=PT.SPOILER_NAMES[PT.SPOILERS.index(s)] if s in PT.SPOILERS else 'None') for s in self.spoiler_list()],
                    hd=[dict(name=n) for n in HD_NAMES], wh=[dict(name=PT.WHEEL_NAMES[PT.WHEELS.index(w)] if w in PT.WHEELS else PT.EXTRA_WHEEL_NAMES.get(w, w)) for w in self.wheel_list()],
-                   sk=[dict(name=n) for n in SK_NAMES])
+                   sk=[dict(name=n) for n in SK_NAMES], kt=[dict(name=n) for n in KT_NAMES], lv=[dict(name=n) for n in LV_NAMES],
+                   dc=[dict(name=n) for n in DC_NAMES])
         doors = {}
         for name, a, b in self.doors:
             for sx in (1, -1):
@@ -1666,6 +1900,13 @@ def gauge_painter(style, dx, cy, colors=None):
             out[d < r * 0.08, :3] = (200, 60, 30)
         return out
     return f
+
+
+def pumpkin_painter(face, P, n):
+    out = fill(P, (232, 110, 18))
+    a = np.arctan2(P[..., 2] - np.mean(P[..., 2]), P[..., 0] - np.mean(P[..., 0]))
+    out[np.mod(a * 10 / (2 * math.pi), 1.0) < 0.12, :3] = (170, 70, 10)          # ribs
+    return out
 
 
 def vent_painter(kind, pitch):

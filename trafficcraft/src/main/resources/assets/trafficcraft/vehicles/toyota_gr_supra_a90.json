@@ -274,6 +274,63 @@
    {
     "name": "Skirts + winglets"
    }
+  ],
+  "kt": [
+   {
+    "name": "None"
+   },
+   {
+    "name": "Widebody"
+   },
+   {
+    "name": "Time-attack aero"
+   },
+   {
+    "name": "Apocalypse"
+   },
+   {
+    "name": "Drag monster"
+   }
+  ],
+  "lv": [
+   {
+    "name": "Plain paint"
+   },
+   {
+    "name": "Racing stripes"
+   },
+   {
+    "name": "Flames"
+   },
+   {
+    "name": "Race number"
+   },
+   {
+    "name": "Digital camo"
+   },
+   {
+    "name": "Shark teeth"
+   },
+   {
+    "name": "Checkered flag"
+   },
+   {
+    "name": "Pumpkin"
+   },
+   {
+    "name": "Candy cane"
+   }
+  ],
+  "dc": [
+   {
+    "name": "None"
+   },
+   {
+    "name": "Christmas lights"
+   },
+   {
+    "name": "Halloween pumpkins"
+   }
   ]
  },
  "exhaust_variants": [
@@ -620,5 +677,5 @@
   "cyl": 6,
   "diesel": false
  },
- "tris": 12287
+ "tris": 18898
 }
