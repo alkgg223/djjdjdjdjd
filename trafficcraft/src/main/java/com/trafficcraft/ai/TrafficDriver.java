@@ -217,6 +217,7 @@ public final class TrafficDriver {
             TrafficStats.inc("reversed_out");
         }
         if (unstickCooldown > 0) unstickCooldown--;
+        if (laneCool > 0) laneCool--;
         // ---------- blocked / horn / stuck handling
         if (Math.abs(vel) < 0.3f && c.why.equals("blocked")) {
             blockedTicks++;
@@ -432,15 +433,20 @@ public final class TrafficDriver {
             RoadEdge out = chooseExit(v, net, in, node, tm);
             if (out == null) return;
             int move = RoutePlanner.movement(net, in, node, out);
-            int outLane = RoutePlanner.chooseLane(out, node, nextMoveAfter(net, out, node, v), -1, v.getRandom());
-            // make sure we are in a lane that can make this movement
+            // keep the same lane position (counted from the kerb) on the next road unless the next manoeuvre needs another one;
+            // picking a random lane at every node made cars weave across multi-lane roads
+            int outLane = RoutePlanner.chooseLane(out, node, nextMoveAfter(net, out, node, v), sameRank(in, in.other(node), lastP.lane, out, node), v.getRandom());
+            // make sure we are in a lane that can make this movement (only when there is room to change smoothly)
             int needLane = RoutePlanner.chooseLane(in, in.other(node), move, lastP.lane, v.getRandom());
-            if (needLane != lastP.lane && !lastP.connector) {
-                boolean isFirst = lastP == path.peekFirst();
+            boolean isFirstP = lastP == path.peekFirst();
+            double roomLeft = isFirstP ? lastP.length - s : lastP.length;
+            if (needLane != lastP.lane && !lastP.connector && roomLeft > 16) {
+                boolean isFirst = isFirstP;
                 EdgeGeom gIn = net.geom(in);
                 double[] po = new double[2];
                 double sNow = gIn.project(isFirst ? v.position() : lastP.at(0), po);
-                Piece rebuilt = RoutePlanner.edgePiece(net, in, in.other(node), needLane, sNow, (float) po[0], Math.min(18, Math.max(6, lastP.length * 0.6)));
+                double blend = Math.min(roomLeft * 0.8, Math.max(14, Math.abs(v.speed) * 2.2));
+                Piece rebuilt = RoutePlanner.edgePiece(net, in, in.other(node), needLane, sNow, (float) po[0], blend);
                 if (lastP == path.peekFirst()) {
                     path.pollFirst();
                     path.addFirst(rebuilt);
@@ -450,6 +456,7 @@ public final class TrafficDriver {
                     path.addLast(rebuilt);
                 }
                 lastP = rebuilt;
+                TrafficStats.inc("lane_change_for_turn");
             }
             Piece con = RoutePlanner.connector(net, in, lastP.lane, node, out, outLane);
             if (con != null) path.add(con);
@@ -459,6 +466,14 @@ public final class TrafficDriver {
                 path.add(RoutePlanner.edgePiece(net, out, node, outLane, null, travelOff * dirOut, 8));
             }
         }
+    }
+
+    /** Lane of 'out' (leaving 'node') at the same position from the kerb as 'lane' on 'in' (entered from 'inFrom'). */
+    static int sameRank(RoadEdge in, int inFrom, int lane, RoadEdge out, int node) {
+        List<Integer> a = in.lanesFrom(inFrom), b = out.lanesFrom(node);
+        if (b.isEmpty()) return -1;
+        int r = a.indexOf(lane);
+        return b.get(Math.max(0, Math.min(b.size() - 1, r < 0 ? 0 : r)));
     }
 
     int laneForConnector(Piece con, RoadEdge out) {
@@ -1177,10 +1192,11 @@ public final class TrafficDriver {
         // 1) same-direction neighbour lane
         List<Integer> same = e.lanesFrom(from);
         int idx = same.indexOf(cur.lane);
-        if (same.size() > 1 && idx >= 0) {
+        if (same.size() > 1 && idx >= 0 && laneCool == 0) {
             int target = idx + 1 < same.size() ? same.get(idx + 1) : same.get(idx - 1);
             if (laneFree(v, net, tm, e, target, 18)) {
                 changeLane(v, net, e, from, target, idx + 1 < same.size() ? VehicleEntity.F_IND_L : VehicleEntity.F_IND_R);
+                laneCool = 140;                     // stay in the new lane for a while (no ping-pong)
                 return;
             }
         }
@@ -1238,17 +1254,36 @@ public final class TrafficDriver {
         double[] out = new double[2];
         double sv = g.project(v.position(), out);
         float curOff = (float) out[0];
-        Piece np = RoutePlanner.edgePiece(net, e, from, lane, sv, curOff, Math.max(10, Math.abs(v.speed) * 1.6));
+        Piece np = RoutePlanner.edgePiece(net, e, from, lane, sv, curOff, Math.max(14, Math.abs(v.speed) * 2.2));
         // replace the current piece and everything planned after it
         path.clear();
         path.add(np);
         s = 0;
+        TrafficStats.inc("lane_change_manoeuvre");
         v.setFlag(VehicleEntity.F_IND_L | VehicleEntity.F_IND_R, false);
         v.setFlag(indicator, true);
         indicatorHold = 50;
     }
 
-    int indicatorHold;
+    int indicatorHold, laneCool;
+
+    public String pieceInfo() {
+        Piece p = path.peekFirst();
+        if (p == null) return "none";
+        Vec3 a = p.at(0), e = p.at(p.length), here = p.at(Math.min(p.length, s));
+        return String.format("piece[con=%s edge=%d lane=%d dir=%d node=%d len=%.1f s=%.1f mv=%d start=(%.0f,%.0f) end=(%.0f,%.0f) here=(%.1f,%.1f)] n=%d overtaking=%s",
+                p.connector, p.edge, p.lane, p.dir, p.node, p.length, s, p.movement, a.x, a.z, e.x, e.z, here.x, here.z, path.size(), overtaking);
+    }
+
+    /** Angle (degrees) between the car's heading and the direction of its planned path where it is now (test metric). */
+    public double headingError(VehicleEntity v) {
+        Piece p = path.peekFirst();
+        if (p == null || p.length < 1) return 0;
+        Vec3 t = p.tangent(Math.min(p.length, s));
+        Vec3 f = v.forward();
+        double dot = (t.x * f.x + t.z * f.z) / Math.max(1e-6, Math.hypot(t.x, t.z) * Math.hypot(f.x, f.z));
+        return Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, dot))));
+    }
 
     boolean laneFree(VehicleEntity v, RoadNetwork net, TrafficManager tm, RoadEdge e, int lane, double range) {
         EdgeGeom g = net.geom(e);

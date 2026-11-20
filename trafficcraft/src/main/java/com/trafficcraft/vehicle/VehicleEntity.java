@@ -190,8 +190,79 @@ public class VehicleEntity extends Entity {
     public float getDrift() { return entityData.get(DRIFT); }
     public void setDrift(float a) { if (Math.abs(a - entityData.get(DRIFT)) > 0.05f || a == 0) entityData.set(DRIFT, Math.abs(a) < 0.05f ? 0f : a); }
     public float driftVis, driftVisO, proBackfire;
-    /** client-side tyre smoke puffs: x y z vx vy vz age life size */
+    /** client-side tyre smoke puffs: x y z vx vy vz age life size [grey 0..1] */
     public final java.util.ArrayList<float[]> smoke = new java.util.ArrayList<>();
+    /** client-side backfire events: start tick, kind (0 pop, 1 crackle, 2 bang), seed, n sub-pops, sub-pop times... */
+    public final java.util.ArrayList<float[]> bfx = new java.util.ArrayList<>();
+    /** client-side exhaust sparks: x y z vx vy vz age life */
+    public final java.util.ArrayList<float[]> sparks = new java.util.ArrayList<>();
+
+    private void backfireFx(int kind) {
+        float seed = random.nextFloat();
+        int n = kind == 1 ? 7 + random.nextInt(7) : 1;
+        float[] ev = new float[4 + n];
+        ev[0] = tickCount;
+        ev[1] = kind;
+        ev[2] = seed;
+        ev[3] = n;
+        float t = 0;
+        for (int i = 0; i < n; i++) {
+            ev[4 + i] = t;
+            t += 0.6f + random.nextFloat() * 2.4f;          // crackle: irregular pops over about a second
+        }
+        if (bfx.size() < 6) bfx.add(ev);
+    }
+
+    private void sparkBurst(int count, float speed) {
+        VehicleSpec s = spec();
+        for (float[] e : s.exhaustsFor(cfg("ex"))) {
+            Vec3 p = position().add(toWorldOffset(e[0], e[1], e[2], getYRot()));
+            Vec3 d = toWorldOffset(e[3], e[4], e[5], getYRot()).normalize();
+            Vec3 vel = getDeltaMovement();
+            for (int i = 0; i < count && sparks.size() < 160; i++) {
+                double sp = speed * (0.4 + random.nextFloat() * 0.9);
+                double jx = (random.nextFloat() - 0.5) * 0.35, jy = random.nextFloat() * 0.2, jz = (random.nextFloat() - 0.5) * 0.35;
+                sparks.add(new float[]{(float) p.x, (float) p.y, (float) p.z, (float) (vel.x + (d.x + jx) * sp), (float) (vel.y + (d.y + jy) * sp),
+                        (float) (vel.z + (d.z + jz) * sp), 0, 3 + random.nextInt(6)});
+            }
+        }
+    }
+
+    private void exhaustPuff(float size, float grey) {
+        VehicleSpec s = spec();
+        for (float[] e : s.exhaustsFor(cfg("ex"))) {
+            Vec3 p = position().add(toWorldOffset(e[0], e[1], e[2] - 0.15f, getYRot()));
+            Vec3 d = toWorldOffset(e[3], e[4], e[5], getYRot()).normalize().scale(0.05);
+            if (smoke.size() < 150) smoke.add(new float[]{(float) p.x, (float) p.y, (float) p.z, (float) d.x, 0.01f, (float) d.z, 0, 30 + random.nextInt(20), size, grey});
+        }
+    }
+
+    private void tickBackfireFx() {
+        for (int i = bfx.size() - 1; i >= 0; i--) {
+            float[] ev = bfx.get(i);
+            int age = tickCount - (int) ev[0] - 1;          // the event arrives just before this entity's tick
+            int kind = (int) ev[1];
+            if (kind == 1) {
+                for (int k = 0; k < (int) ev[3]; k++) if ((int) ev[4 + k] == age) {
+                    CLIENT_EVENT.accept(this, "bf_tick");        // each flicker of flame has its own pop, in sync
+                    if (random.nextFloat() < 0.5f) sparkBurst(1, 0.2f);
+                }
+            }
+            if (age == 0) sparkBurst(kind == 2 ? 4 : kind == 0 ? 2 : 0, kind == 2 ? 0.32f : 0.24f);
+            if (age == (kind == 2 ? 5 : 3)) exhaustPuff(kind == 2 ? 0.55f : 0.3f, kind == 2 ? 0.25f : 0.4f);
+            if (age > 32) bfx.remove(i);
+        }
+        for (int i = sparks.size() - 1; i >= 0; i--) {
+            float[] p = sparks.get(i);
+            p[0] += p[3];
+            p[1] += p[4];
+            p[2] += p[5];
+            p[3] *= 0.9f;
+            p[5] *= 0.9f;
+            p[4] = p[4] * 0.9f - 0.025f;
+            if (++p[6] > p[7]) sparks.remove(i);
+        }
+    }
     int skidTick;
     public void setConfig(String c) { entityData.set(CONFIG, c == null ? "" : c); }
 
@@ -663,6 +734,7 @@ public class VehicleEntity extends Entity {
         if (id >= 60 && id <= 62) {
             backfireTick = tickCount;
             backfireKind = id - 60;
+            if (level().isClientSide) backfireFx(backfireKind);
             CLIENT_EVENT.accept(this, "backfire_" + backfireKind);
             return;
         }
@@ -808,6 +880,7 @@ public class VehicleEntity extends Entity {
         float v = visSpeed();
         driftVisO = driftVis;
         driftVis += (getDrift() - driftVis) * 0.3f;
+        tickBackfireFx();
         // tyre smoke: drifting, or a sporty car launched / burning out on full throttle
         String cat = spec().category;
         boolean sporty = cat.equals("sports") || cat.equals("super") || cat.equals("muscle");

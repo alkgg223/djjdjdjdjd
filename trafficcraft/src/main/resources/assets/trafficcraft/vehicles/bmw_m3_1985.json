@@ -431,7 +431,7 @@
   ]
  },
  "maxSpeed": 235,
- "accel": 5.0,
+ "accel": 4.96,
  "brake": 8.5,
  "mass": 1200,
  "fuel": 55,
@@ -454,5 +454,5 @@
   "cyl": 4,
   "diesel": false
  },
- "tris": 10681
+ "tris": 12631
 }

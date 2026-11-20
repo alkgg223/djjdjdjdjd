@@ -74,6 +74,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         if (mesh.failed) return;
         float ry = Mth.rotLerp(pt, v.yRotO, v.getYRot());
         smoke(v, ps, buffers, pt, light);
+        sparks(v, ps, buffers, pt);
         ps.pushPose();
         ps.mulPose(Axis.YP.rotationDegrees(-ry + Mth.lerp(pt, v.driftVisO, v.driftVis)));
         if (s.bike) ps.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(pt, v.leanO, v.lean))); // lean about the tyre contact line
@@ -93,7 +94,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         }
         if (dist < 40 || inside) overlays(v, s, ps, buffers, light, lamps, dist, inside);
         if (v.hasAiDriver() && (dist < 64 || inside) && !s.seats.isEmpty()) drawDriver(v, s, ps, buffers, light);
-        if (v.tickCount - v.backfireTick < 5 && !s.exhaustsFor(v.cfg("ex")).isEmpty() && dist < 80) flames(v, s, ps, buffers, pt);
+        if (!v.bfx.isEmpty() && !s.exhaustsFor(v.cfg("ex")).isEmpty() && dist < 96) flames(v, s, ps, buffers, pt);
         if (!s.popups.isEmpty()) {
             float target = lamps.on(VehicleMesh.HEAD) || lamps.on(VehicleMesh.HIGH) ? 1f : 0f;
             v.popupVis += (target - v.popupVis) * Math.min(1f, mc.getTimer().getRealtimeDeltaTicks() * 0.12f);
@@ -164,6 +165,29 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
     private static final ResourceLocation FLAME = TrafficCraft.id("textures/vehicle/flame.png");
     private static final ResourceLocation SMOKE = TrafficCraft.id("textures/vehicle/smoke.png");
 
+    /** Exhaust sparks: tiny hot billboards in world space, cooling from yellow-white to red. */
+    private void sparks(VehicleEntity v, PoseStack ps, MultiBufferSource buf, float pt) {
+        if (v.sparks.isEmpty()) return;
+        var cam = Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation();
+        double ex = Mth.lerp(pt, v.xo, v.getX()), ey = Mth.lerp(pt, v.yo, v.getY()), ez = Mth.lerp(pt, v.zo, v.getZ());
+        VertexConsumer vc = buf.getBuffer(RenderType.lightning());
+        for (float[] p : v.sparks) {
+            float life = Math.min(1f, (p[6] + pt) / p[7]);
+            int rgb = life < 0.3f ? 0xFFF2C0 : life < 0.65f ? 0xFFB040 : 0xE04010;
+            int a = (int) (255 * (1 - life * 0.8f));
+            float sz = 0.016f * (1 - life * 0.5f);
+            ps.pushPose();
+            ps.translate(p[0] + p[3] * pt - ex, p[1] + p[4] * pt - ey, p[2] + p[5] * pt - ez);
+            ps.mulPose(cam);
+            PoseStack.Pose pose = ps.last();
+            vert(vc, pose, -sz, -sz, 0, rgb, a);
+            vert(vc, pose, sz, -sz, 0, rgb, a);
+            vert(vc, pose, sz, sz, 0, rgb, a);
+            vert(vc, pose, -sz, sz, 0, rgb, a);
+            ps.popPose();
+        }
+    }
+
     /** Billowing tyre smoke (camera-facing textured puffs in world space). ps is at the entity's interpolated position. */
     private void smoke(VehicleEntity v, PoseStack ps, MultiBufferSource buf, float pt, int light) {
         if (v.smoke.isEmpty()) return;
@@ -181,7 +205,8 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
             ps.mulPose(Axis.ZP.rotationDegrees(p[6] * 3 + (p[7] * 37) % 360));
             PoseStack.Pose pose = ps.last();
             float u0 = frame / 4f, u1 = (frame + 1) / 4f;
-            int c = ((int) (a * 255) << 24) | 0xE6E6E6;
+            int g = p.length > 9 ? (int) (p[9] * 230) : 230;
+            int c = ((int) (a * (p.length > 9 ? 0.9f : 1f) * 255) << 24) | g << 16 | g << 8 | g;
             vc.addVertex(pose, -s, -s, 0).setColor(c).setUv(u0, 1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, 0, 0, 1);
             vc.addVertex(pose, s, -s, 0).setColor(c).setUv(u1, 1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, 0, 0, 1);
             vc.addVertex(pose, s, s, 0).setColor(c).setUv(u1, 0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, 0, 0, 1);
@@ -190,34 +215,87 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         }
     }
 
-    /** Short exhaust flame: crossed additive sprites along the pipe axis, animated over 4 frames. */
+    private static final ResourceLocation FIREBALL = TrafficCraft.id("textures/vehicle/fireball.png");
+
+    /**
+     * Backfire effects at every tailpipe: white-hot flash and glow on the bumper, a turbulent flame tongue (4 growth frames),
+     * a string of small flickers for a crackle, and a rolling fireball for a big bang. Sparks and the smoke puff are world-space.
+     */
     private void flames(VehicleEntity v, VehicleSpec s, PoseStack ps, MultiBufferSource buf, float pt) {
-        float age = v.tickCount - v.backfireTick + pt;
-        int frame = Mth.clamp((int) (age * 0.7f), 0, 3);
-        float size = v.backfireKind == 2 ? 1.6f : v.backfireKind == 1 ? 0.8f : 1.0f;
-        float len = (0.5f + 0.15f * ((v.backfireTick * 7919) % 5) / 4f) * size * (1 - frame * 0.1f);
-        float w = 0.24f * size;
-        VertexConsumer vc = buf.getBuffer(RenderType.entityTranslucentEmissive(FLAME));
+        var exhausts = s.exhaustsFor(v.cfg("ex"));
         PoseStack.Pose pose = ps.last();
-        float u0 = frame / 4f, u1 = (frame + 1) / 4f;
-        for (float[] e : s.exhaustsFor(v.cfg("ex"))) {
-            Vector3f p = new Vector3f(e[0], e[1], e[2]);
-            Vector3f d = new Vector3f(e[3], e[4], e[5]).normalize();
-            Vector3f n1 = new Vector3f(d).cross(0, 1, 0);
-            if (n1.lengthSquared() < 1e-4) n1.set(1, 0, 0);
-            n1.normalize();
-            Vector3f n2 = new Vector3f(d).cross(n1).normalize();
-            for (Vector3f n : new Vector3f[]{n1, n2, new Vector3f(n1).add(n2).normalize(), new Vector3f(n1).sub(n2).normalize()}) {
-                Vector3f a = new Vector3f(p).add(new Vector3f(n).mul(w / 2)), b = new Vector3f(p).add(new Vector3f(n).mul(-w / 2));
-                Vector3f c = new Vector3f(b).add(new Vector3f(d).mul(len)), dd = new Vector3f(a).add(new Vector3f(d).mul(len));
-                c.add(new Vector3f(n).mul(w * 0.15f));
-                dd.add(new Vector3f(n).mul(-w * 0.15f));
-                flameVertex(vc, pose, a, u0, 0f);
-                flameVertex(vc, pose, b, u1, 0f);
-                flameVertex(vc, pose, c, u1, 1f);
-                flameVertex(vc, pose, dd, u0, 1f);
+        for (float[] ev : v.bfx) {
+            float age = v.tickCount - ev[0] + pt;
+            int kind = (int) ev[1];
+            float seed = ev[2];
+            for (float[] e : exhausts) {
+                Vector3f p = new Vector3f(e[0], e[1], e[2]);
+                Vector3f d = new Vector3f(e[3], e[4], e[5]).normalize();
+                if (kind == 1) {
+                    for (int k = 0; k < (int) ev[3]; k++) {
+                        float a = age - ev[4 + k];
+                        if (a < 0 || a > 3.5f) continue;
+                        float h = (float) Math.abs(Math.sin((seed + k) * 12.9898f) * 43758.5453f) % 1f;
+                        tongue(buf, pose, p, d, a / 3.5f, 0.35f + 0.3f * h, 0.19f + 0.07f * h);
+                        glowAt(buf, pose, ps, p, d, 0.22f, (int) (110 * (1 - a / 3.5f)));
+                    }
+                } else if (kind == 0) {
+                    if (age < 5f) tongue(buf, pose, p, d, age / 5f, 0.55f + 0.25f * seed, 0.26f);
+                    if (age < 2.5f) glowAt(buf, pose, ps, p, d, 0.32f, (int) (130 * (1 - age / 2.5f)));
+                } else {
+                    if (age < 4.5f) tongue(buf, pose, p, d, age / 4.5f, 1.05f + 0.3f * seed, 0.38f);
+                    if (age < 3.5f) glowAt(buf, pose, ps, p, d, 0.6f, (int) (160 * (1 - age / 3.5f)));
+                    if (age < 9f) fireball(buf, ps, p, d, age / 9f);
+                }
             }
         }
+    }
+
+    private void tongue(MultiBufferSource buf, PoseStack.Pose pose, Vector3f p, Vector3f d, float life, float len, float w) {
+        int frame = Mth.clamp((int) (life * 4), 0, 3);
+        float grow = life < 0.25f ? 0.55f + life * 1.8f : 1f - (life - 0.25f) * 0.5f;
+        float L = len * grow;
+        VertexConsumer vc = buf.getBuffer(RenderType.entityTranslucentEmissive(FLAME));
+        float u0 = frame / 4f, u1 = (frame + 1) / 4f;
+        Vector3f n1 = new Vector3f(d).cross(0, 1, 0);
+        if (n1.lengthSquared() < 1e-4) n1.set(1, 0, 0);
+        n1.normalize();
+        Vector3f n2 = new Vector3f(d).cross(n1).normalize();
+        for (Vector3f n : new Vector3f[]{n1, n2, new Vector3f(n1).add(n2).normalize(), new Vector3f(n1).sub(n2).normalize()}) {
+            Vector3f a = new Vector3f(p).add(new Vector3f(n).mul(w / 2)), b = new Vector3f(p).add(new Vector3f(n).mul(-w / 2));
+            Vector3f c = new Vector3f(b).add(new Vector3f(d).mul(L)), dd = new Vector3f(a).add(new Vector3f(d).mul(L));
+            c.add(new Vector3f(n).mul(-w * 0.35f));
+            dd.add(new Vector3f(n).mul(w * 0.35f));
+            flameVertex(vc, pose, a, u0, 0f);
+            flameVertex(vc, pose, b, u1, 0f);
+            flameVertex(vc, pose, c, u1, 1f);
+            flameVertex(vc, pose, dd, u0, 1f);
+        }
+    }
+
+    private void glowAt(MultiBufferSource buf, PoseStack.Pose pose, PoseStack ps, Vector3f p, Vector3f d, float r, int a) {
+        VertexConsumer vc = buf.getBuffer(RenderType.lightning());
+        glow(vc, pose, ps, p.x + d.x * 0.08f, p.y + d.y * 0.08f, p.z + d.z * 0.08f, r, 0xFFD890, a);
+        glow(vc, pose, ps, p.x + d.x * 0.05f, p.y + d.y * 0.05f, p.z + d.z * 0.05f, r * 0.35f, 0xFFFFFF, Math.min(255, a + 40));
+    }
+
+    private void fireball(MultiBufferSource buf, PoseStack ps, Vector3f p, Vector3f d, float life) {
+        var cam = entityRenderDispatcher.cameraOrientation();
+        int frame = Mth.clamp((int) (life * 4), 0, 3);
+        float size = 0.18f + 0.38f * (float) Math.sqrt(life);
+        Vector3f c = new Vector3f(p).add(new Vector3f(d).mul(0.25f + life * 0.6f)).add(0, life * 0.35f, 0);
+        VertexConsumer vc = buf.getBuffer(RenderType.entityTranslucentEmissive(FIREBALL));
+        ps.pushPose();
+        ps.translate(c.x, c.y, c.z);
+        Matrix3f inv = new Matrix3f(ps.last().normal()).invert();
+        Vector3f r = new Vector3f(1, 0, 0).rotate(cam).mul(inv).mul(size), u = new Vector3f(0, 1, 0).rotate(cam).mul(inv).mul(size);
+        PoseStack.Pose pose = ps.last();
+        float u0 = frame / 4f, u1 = (frame + 1) / 4f;
+        flameVertex(vc, pose, new Vector3f(r).add(u).negate(), u0, 1f);
+        flameVertex(vc, pose, new Vector3f(r).sub(u), u1, 1f);
+        flameVertex(vc, pose, new Vector3f(r).add(u), u1, 0f);
+        flameVertex(vc, pose, new Vector3f(u).sub(r), u0, 0f);
+        ps.popPose();
     }
 
     private static void flameVertex(VertexConsumer vc, PoseStack.Pose pose, Vector3f p, float u, float vv) {

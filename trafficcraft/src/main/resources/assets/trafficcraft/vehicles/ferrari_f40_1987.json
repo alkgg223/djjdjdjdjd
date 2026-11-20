@@ -420,8 +420,8 @@
    }
   ]
  },
- "maxSpeed": 320,
- "accel": 7.6,
+ "maxSpeed": 324,
+ "accel": 8.48,
  "brake": 10.5,
  "mass": 1100,
  "fuel": 120,
@@ -459,5 +459,5 @@
    "angle": 0
   }
  },
- "tris": 9053
+ "tris": 10763
 }

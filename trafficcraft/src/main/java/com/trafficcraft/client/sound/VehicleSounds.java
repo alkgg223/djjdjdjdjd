@@ -85,8 +85,15 @@ public final class VehicleSounds {
             }
             case "crash" -> mc.level.playLocalSound(v.getX(), v.getY() + 0.8, v.getZ(), TCRegistry.snd("misc.crash"), SoundSource.NEUTRAL, 1.0f,
                     0.9f + v.getRandom().nextFloat() * 0.2f, false);
-            case "backfire_0", "backfire_1", "backfire_2" -> {
-                String kind = ev.endsWith("0") ? "pop" : ev.endsWith("1") ? "crackle" : "bang";
+            case "bf_tick" -> {
+                var ex = v.spec().exhausts.isEmpty() ? null : v.spec().exhausts.get(0);
+                var off = ex == null ? net.minecraft.world.phys.Vec3.ZERO : VehicleEntity.toWorldOffset(ex[0], ex[1], ex[2], v.getYRot());
+                mc.level.playLocalSound(v.getX() + off.x, v.getY() + off.y, v.getZ() + off.z, TCRegistry.sound("backfire." + v.getModel() + ".tick", () -> "backfire.tick"),
+                        SoundSource.NEUTRAL, 0.7f + v.getRandom().nextFloat() * 0.5f, 0.9f + v.getRandom().nextFloat() * 0.25f, false);
+            }
+            case "backfire_1" -> { }   // the crackle is played pop by pop ("bf_tick") in time with its flames
+            case "backfire_0", "backfire_2" -> {
+                String kind = ev.endsWith("0") ? "pop" : "bang";
                 String k0 = "backfire." + kind;
                 var ex = v.spec().exhausts.isEmpty() ? null : v.spec().exhausts.get(0);
                 var off = ex == null ? net.minecraft.world.phys.Vec3.ZERO : VehicleEntity.toWorldOffset(ex[0], ex[1], ex[2], v.getYRot());

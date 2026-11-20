@@ -242,41 +242,133 @@ def beep(seconds=0.5, f=1100):
     return np.sin(2 * np.pi * f * t) * (t < 0.25) * np.clip(t / 0.005, 0, 1)
 
 
-def backfire(kind, seed):
-    """Exhaust backfires: 'pop' (single sharp crack), 'crackle' (burst of small pops), 'bang' (big boom)."""
+# exhaust voices for backfires: pipe length (m), silencer formant (Hz), metal ring (Hz), loudness of the crack
+BF_VOICES = {
+    'turbo': dict(pipe=2.6, muff=165, ring=2600, crack=1.0, dark=0.0),
+    'v8': dict(pipe=3.1, muff=105, ring=1900, crack=0.85, dark=0.25),
+    'old': dict(pipe=2.9, muff=92, ring=1700, crack=0.7, dark=0.4),
+    'race': dict(pipe=1.5, muff=260, ring=3400, crack=1.3, dark=-0.2),
+    'rally': dict(pipe=1.7, muff=230, ring=3100, crack=1.25, dark=-0.1),
+    'bike': dict(pipe=1.1, muff=300, ring=3800, crack=1.15, dark=-0.15),
+    'na': dict(pipe=2.4, muff=150, ring=2400, crack=0.95, dark=0.1),
+    'quiet': dict(pipe=3.0, muff=120, ring=2000, crack=0.55, dark=0.35),
+    'small': dict(pipe=1.9, muff=210, ring=3000, crack=0.8, dark=0.05),
+}
+
+
+def _friedlander(T, b, n):
+    """Blast pressure wave: instant rise, linear-exponential fall through zero into a negative phase."""
+    t = np.arange(n) / SR
+    p = (1 - t / T) * np.exp(-b * t / T)
+    p[t > 7 * T] *= np.exp(-(t[t > 7 * T] - 7 * T) * 900)
+    return p
+
+
+def _pipe_ir(V, size, r, n):
+    """Exhaust system response: quarter-wave pipe modes, silencer formant and a short metallic ring."""
+    t = np.arange(n) / SR
+    c = 343.0
+    h = np.zeros(n)
+    f1 = c / (4 * V['pipe'])
+    for k in range(1, 10):
+        f = (2 * k - 1) * f1 * r.uniform(0.97, 1.03)
+        if f > 5000:
+            break
+        h += k ** -0.7 * np.exp(-(22 + 16 * k) / size * t) * np.sin(2 * np.pi * f * t)
+    h += 0.9 * np.exp(-55 / size * t) * np.sin(2 * np.pi * V['muff'] * r.uniform(0.92, 1.08) * t)
+    h += 0.18 * np.exp(-160 * t) * np.sin(2 * np.pi * V['ring'] * r.uniform(0.9, 1.1) * t)
+    return h / (np.abs(h).max() + 1e-9)
+
+
+def _room(y, rt60, r, wet=0.28):
+    """Ground bounce, a few wall reflections (a street) and a short diffuse tail."""
+    n = len(y)
+    out = y.copy()
+    for d_ms, g, lp in ((r.uniform(3, 6), 0.55, 6000), (r.uniform(16, 22), 0.3, 4000), (r.uniform(28, 36), 0.2, 3000), (r.uniform(44, 55), 0.12, 2500)):
+        d = int(d_ms / 1000 * SR)
+        b, a = signal.butter(1, lp / (SR / 2))
+        e = signal.lfilter(b, a, y)[:n - d] * g
+        out[d:] += e
+    L = int(rt60 * SR)
+    t = np.arange(L) / SR
+    ir_ = r.standard_normal(L) * np.exp(-6.9 * t / rt60)
+    b, a = signal.butter(2, 3500 / (SR / 2))
+    ir_ = signal.lfilter(b, a, ir_)
+    ir_ /= np.sqrt(np.sum(ir_ ** 2)) + 1e-9
+    tail = signal.fftconvolve(y, ir_)[:n]
+    return out + wet * tail
+
+
+def backfire(kind, seed, voice='turbo'):
+    """Exhaust backfires: 'pop' (one or two sharp cracks), 'crackle' (burst of pops and gurgle on the overrun), 'bang' (big boom).
+    Physical model: blast wave -> pipe/silencer resonances, direct crack, flame whoosh, sub thump, saturation, street acoustics."""
+    V = BF_VOICES.get(voice, BF_VOICES['turbo'])
     r = np.random.default_rng(1000 + seed)
-    n = int((0.5 if kind != 'crackle' else 0.9) * SR)
+    dur = {'pop': 0.75, 'crackle': 1.25, 'bang': 1.6, 'tick': 0.45}[kind]
+    n = int(dur * SR)
     y = np.zeros(n)
 
     def one(at, amp, size):
         s = int(at * SR)
-        L = min(n - s, int(0.25 * SR))
+        L = min(n - s, int(0.45 * SR))
         if L <= 0:
             return
         t = np.arange(L) / SR
-        crack = r.standard_normal(L) * np.exp(-t * (900 / size)) * (1 - np.exp(-t * 20000))
-        b, a = signal.butter(2, [250 / (SR / 2), min(9000, 5200 * size ** 0.3) / (SR / 2)], 'band')
-        crack = signal.lfilter(b, a, crack)
-        f0 = 95 / size ** 0.5 * r.uniform(0.85, 1.15)
-        thump = np.sin(2 * np.pi * f0 * t * (1 - t * 2)) * np.exp(-t * (38 / size)) * 1.6
-        tail = r.standard_normal(L) * np.exp(-t * (14 / size)) * 0.18
-        bt, at_ = signal.butter(2, 900 / (SR / 2))
-        tail = signal.lfilter(bt, at_, tail)
-        y[s:s + L] += amp * (crack * 2.2 + thump + tail)
+        shock = _friedlander(0.00045 * size + 0.0002, 1.6, L)
+        body = signal.fftconvolve(shock, _pipe_ir(V, size, r, L))[:L]
+        body /= np.abs(body).max() + 1e-9
+        bh, ah = signal.butter(2, 1800 / (SR / 2), 'high')
+        crack = signal.lfilter(bh, ah, shock)
+        crack /= np.abs(crack).max() + 1e-9
+        flame = r.standard_normal(L) * (1 - np.exp(-t / 0.003)) * np.exp(-t / (0.045 * size))
+        bf, af = signal.butter(2, [350 / (SR / 2), 2600 / (SR / 2)], 'band')
+        flame = signal.lfilter(bf, af, flame)
+        flame /= np.abs(flame).max() + 1e-9
+        sub = np.sin(2 * np.pi * (48 - 8 * V['dark']) / size ** 0.3 * t) * np.exp(-t * 22 / size) * min(1.0, size - 0.4)
+        x = body * (1.25 + 0.3 * V['dark']) + crack * 0.42 * V['crack'] + flame * 0.26 + sub * (0.9 + 0.5 * V['dark'])
+        y[s:s + L] += amp * x
 
     if kind == 'pop':
-        one(0.0, 1.0, r.uniform(0.8, 1.2))
-        if r.random() < 0.6:
-            one(r.uniform(0.04, 0.09), 0.5, 0.7)
+        one(0.0, 1.0, r.uniform(0.9, 1.25))
+        if r.random() < 0.65:
+            one(r.uniform(0.035, 0.11), r.uniform(0.35, 0.6), r.uniform(0.55, 0.8))
+        rt = 0.38
+    elif kind == 'tick':
+        # one pop of an overrun crackle (the game plays these in time with each flicker of flame)
+        one(0.0, 1.0, r.uniform(0.38, 0.75))
+        if r.random() < 0.25:
+            one(r.uniform(0.006, 0.014), r.uniform(0.3, 0.55), r.uniform(0.3, 0.45))
+        rt = 0.24
     elif kind == 'bang':
-        one(0.0, 1.6, 2.2)
+        one(0.0, 1.7, r.uniform(2.1, 2.6))
+        if r.random() < 0.45:
+            one(r.uniform(0.07, 0.14), 0.55, 0.9)
+        rt = 0.9
     else:
-        t0 = 0.0
-        amp = 1.0
-        for k in range(int(r.integers(6, 11))):
-            one(t0, amp * r.uniform(0.5, 1.0), r.uniform(0.45, 0.85))
-            t0 += r.uniform(0.025, 0.09)
-            amp *= 0.86
+        # overrun crackle: clustered irregular pops (some doublets), fading out, over a low gurgle
+        t0, amp = 0.0, 1.0
+        for k in range(int(r.integers(9, 17))):
+            one(t0, amp * r.uniform(0.45, 1.0), r.uniform(0.35, 0.85))
+            if r.random() < 0.22:
+                one(t0 + r.uniform(0.005, 0.013), amp * r.uniform(0.3, 0.6), r.uniform(0.3, 0.5))
+            t0 += r.gamma(2.0, 0.022) + 0.006
+            amp *= r.uniform(0.86, 0.97)
+            if t0 > dur - 0.35:
+                break
+        L = int(min(t0 + 0.1, dur) * SR)
+        g = r.standard_normal(L)
+        bg, ag = signal.butter(2, [55 / (SR / 2), 230 / (SR / 2)], 'band')
+        g = signal.lfilter(bg, ag, g)
+        mod = np.abs(signal.lfilter(*signal.butter(1, 30 / (SR / 2)), r.standard_normal(L)))
+        g = g * mod / (np.abs(g * mod).max() + 1e-9) * np.exp(-np.arange(L) / SR / 0.5)
+        y[:L] += 0.22 * g
+        rt = 0.3
+    y = np.tanh(1.7 * y / (np.abs(y).max() + 1e-9)) / np.tanh(1.7)
+    bl, al = signal.butter(2, (5200 - 1800 * V['dark']) / (SR / 2))
+    y = signal.lfilter(bl, al, y)
+    y = _room(y, rt, r, wet=0.3 if kind != 'bang' else 0.38)
+    fade = int(0.05 * SR)
+    y[-fade:] *= np.linspace(1, 0, fade)
     return y
 
 

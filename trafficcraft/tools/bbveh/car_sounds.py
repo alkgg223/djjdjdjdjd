@@ -99,21 +99,22 @@ def main():
             sj[f'engine.{cid}.{k}'] = {'sounds': [{'name': f'trafficcraft:engine/{cid}_{k}', 'stream': False}]}
         # backfires: every car has its own set; each event picks one of several different variations
         seed0 = sum(map(ord, cid))
-        for k in ('pop', 'crackle', 'bang'):
+        for k in ('pop', 'crackle', 'bang', 'tick'):
             files = []
-            nv = 4 if k != 'bang' else 2
+            nv = {'bang': 2, 'tick': 6}.get(k, 4)
             for v in range(nv):
-                y = S.backfire(k, seed0 + v * 13 + len(k))
-                if style in ('v8', 'old'):
-                    y = resample(y, bp * 0.9)
-                elif style in ('race', 'rally'):
-                    y = resample(y, bp * 1.1)
-                else:
-                    y = resample(y, bp)
-                S.write_ogg(y, f"{sdir}/backfire/{cid}_{k}{v}.ogg", rms=0.2 if k != 'bang' else 0.26, peak=0.99)
+                y = S.backfire(k, seed0 + v * 13 + len(k), style)
+                y = resample(y, bp)
+                S.write_ogg(y, f"{sdir}/backfire/{cid}_{k}{v}.ogg", rms={'bang': 0.26, 'tick': 0.17}.get(k, 0.2), peak=0.99)
                 files.append({'name': f'trafficcraft:backfire/{cid}_{k}{v}'})
             sj[f'backfire.{cid}.{k}'] = {'sounds': files}
         print(cid, base, 'pitch', p)
+    # generic backfires (motorcycles and the other kept vehicles)
+    for k in ('pop', 'crackle', 'bang', 'tick'):
+        nv = {'bang': 2, 'tick': 6}.get(k, 3)
+        for v in range(nv):
+            S.write_ogg(S.backfire(k, v * 7 + len(k), 'bike'), f"{sdir}/backfire/{k}{v}.ogg", rms=0.2 if k != 'bang' else 0.26, peak=0.99)
+        sj[f'backfire.{k}'] = {'sounds': [{'name': f'trafficcraft:backfire/{k}{v}'} for v in range(nv)]}
     # tyre screech for drifting
     SR = S.SR
     t = np.arange(int(1.5 * SR)) / SR

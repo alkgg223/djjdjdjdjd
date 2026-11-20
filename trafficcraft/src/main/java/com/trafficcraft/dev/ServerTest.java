@@ -32,7 +32,8 @@ public final class ServerTest {
     static int t = -1;
     static final List<String> log = new ArrayList<>();
     static double speedSum;
-    static long speedN, overlapTicks, maxActive;
+    static final Map<Integer, Integer> boulevardLane = new java.util.HashMap<>();
+    static long speedN, overlapTicks, maxActive, headingN, spinLogs;
     static BlockPos origin;
 
     static void log(String s) {
@@ -74,6 +75,31 @@ public final class ServerTest {
             RoadData.get(l).changed();
         }
         for (var n : RoadData.get(l).nodesOfType(com.trafficcraft.road.NodeType.PARK_SPOT)) log("spot " + n.id + " -> " + com.trafficcraft.road.RoadsideSpot.of(RoadData.get(l), n));
+        {
+            // six-lane boulevard (3 lanes each way) made of short segments with slight bends: lane keeping test
+            var net = RoadData.get(l);
+            double[][] pts = {{-60, -95}, {-30, -97}, {0, -94}, {30, -98}, {60, -95}, {90, -96}};
+            int prev = -1;
+            for (int i = 0; i < pts.length; i++) {
+                var type = i == 0 || i == pts.length - 1 ? com.trafficcraft.road.NodeType.SPAWN : com.trafficcraft.road.NodeType.ROAD;
+                var n = net.addNode(origin.getX() + pts[i][0], origin.getY(), origin.getZ() + pts[i][1], type);
+                com.trafficcraft.road.Props.defaults(type, n.cfg);
+                if (type == com.trafficcraft.road.NodeType.SPAWN) {
+                    n.cfg.putInt("max", 8);
+                    n.cfg.putInt("interval", 4);
+                }
+                if (prev >= 0) {
+                    var e6 = net.connect(prev, n.id, false);
+                    e6.lanes.clear();
+                    e6.lanes.addAll(com.trafficcraft.road.RoadEdge.defaultLanes(6, false));
+                    e6.width = 20;
+                    e6.speed = 70;
+                }
+                prev = n.id;
+            }
+            for (int cx = -7; cx <= 7; cx++) for (int cz = -8; cz <= -5; cz++) l.setChunkForced(cx, cz, true);
+            net.changed();
+        }
         TrafficManager.observer = Vec3.atCenterOf(origin).add(20, 0, 0);
         l.setDayTime(1000);
         t = 0;
@@ -94,6 +120,31 @@ public final class ServerTest {
             if (Math.abs(a.speed) > 0.5f) {
                 speedSum += Math.abs(a.speed);
                 speedN++;
+            }
+            if (Math.abs(a.getZ() - origin.getZ() + 96) < 8 && a.speed > 2f) {
+                // six-lane boulevard: which lane is the car in (by lateral offset)?
+                var bnet = RoadData.get(l);
+                var be = bnet.nearestEdge(a.position(), 12, false);
+                if (be != null && be.lanes.size() == 6) {
+                    double[] po = new double[2];
+                    bnet.geom(be).project(a.position(), po);
+                    int lane = (int) Math.floor((be.width / 2 - po[0]) / be.laneWidth());
+                    Integer prevLane = boulevardLane.put(a.getId(), lane);
+                    if (prevLane == null) TrafficStats.inc("boulevard_cars");
+                    else if (prevLane != lane) TrafficStats.inc("boulevard_lane_switches");
+                    TrafficStats.inc("boulevard_samples");
+                    if (a.driver != null && a.driver.headingError(a) > 20) TrafficStats.inc("boulevard_heading_off_20deg");
+                }
+            }
+            if (a.speed > 3f && a.driver != null && a.driver.state == TrafficDriver.State.DRIVE) {
+                double he = a.driver.headingError(a);
+                headingN++;
+                if (he > 25) TrafficStats.inc("heading_off_25deg");
+                if (he > 90) {
+                    TrafficStats.inc("heading_reversed");
+                    if (spinLogs++ < 40 && (spinLogs % 4 == 1)) log(String.format("   spin? %s #%d err=%.0f v=%.1f pos=(%.1f,%.1f) yaw=%.0f %s %s", a.getModel(), a.getId(), he, a.speed * 3.6,
+                            a.getX(), a.getZ(), a.getYRot(), a.driver.debug(), a.driver.pieceInfo()));
+                }
             }
             for (int j = i + 1; j < vs.size(); j++) if (a.overlaps(vs.get(j), a.position(), a.getYRot())) overlaps++;
         }
@@ -130,6 +181,7 @@ public final class ServerTest {
             log("spawned=" + tm.spawnedTotal + " despawned=" + tm.despawnedTotal + " max_active=" + maxActive);
             log(String.format("average moving speed=%.1f km/h", speedN == 0 ? 0 : speedSum / speedN * 3.6));
             log("ticks with overlapping vehicles=" + overlapTicks + " of " + t);
+            log("moving-car samples=" + headingN);
             log("counters=" + TrafficStats.C);
             try (FileWriter w = new FileWriter("traffic_report.txt")) {
                 for (String s : log) w.write(s + "\n");

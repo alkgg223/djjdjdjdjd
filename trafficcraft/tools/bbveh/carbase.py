@@ -165,12 +165,12 @@ class Car:
     fr_fn = None
     pinch_fn = None
     roof_dip = 0.0
-    seat_belts = False
-    frames = False
-    handles3d = False
-    spokes3d = False
-    rich_interior = False
-    wheel_seg = 16
+    seat_belts = True
+    frames = True
+    handles3d = True
+    spokes3d = True
+    rich_interior = True
+    wheel_seg = 20
 
     def stations(self):
         zs = [0.0, 0.05, 0.18, self.RB_Z, self.CABIN0, self.CABIN1, self.FB_Z, self.WS0, self.WS1, self.L - 0.31, self.L - 0.16, self.L - 0.07,
@@ -1494,7 +1494,7 @@ class Car:
         self.vents()
         if self.handles3d:
             self.door_handles()
-        if self.frames:
+        if self.frames and not self.open_top:
             self.window_frames()
         self.mirrors()
         self.wipers()

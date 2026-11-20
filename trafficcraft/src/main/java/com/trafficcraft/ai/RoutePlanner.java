@@ -48,8 +48,12 @@ public final class RoutePlanner {
         int to = e.other(from);
         double a = dir > 0 ? g.trimA : g.length - g.trimB;
         double b = dir > 0 ? g.length - g.trimB : g.trimA;
-        if (sStart != null) a = sStart;
+        if (sStart != null) {
+            // never start past the end of the lane: a reversed piece made the car turn round on the spot
+            a = dir > 0 ? Math.min(sStart, b - 0.5) : Math.max(sStart, b + 0.5);
+        }
         double total = Math.abs(b - a);
+        if (offsetStart != null) blend = Math.min(blend, Math.max(1.0, total * 0.9));
         float off = e.laneOffset(Math.max(0, Math.min(e.lanes.size() - 1, lane)));
         List<Vec3> pts = new ArrayList<>();
         int n = Math.max(1, (int) Math.ceil(total / 1.0));

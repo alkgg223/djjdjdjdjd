@@ -72,11 +72,11 @@ public final class TCRegistry {
         for (String id : VehicleSpecs.ids()) {
             VEHICLE_ITEMS.put(id, ITEMS.register("vehicle_" + id, () -> new VehicleItem(id, new Item.Properties().stacksTo(1))));
             for (String k : new String[]{"idle", "drive", "start"}) sound("engine." + id + "." + k);
-            if (VehicleSpecs.get(id).texture != null) for (String k : new String[]{"pop", "crackle", "bang"}) sound("backfire." + id + "." + k);
+            if (VehicleSpecs.get(id).texture != null) for (String k : new String[]{"pop", "crackle", "bang", "tick"}) sound("backfire." + id + "." + k);
         }
         for (String k : new String[]{"horn.car", "horn.high", "horn.low", "horn.truck", "siren.wail", "misc.indicator_on", "misc.indicator_off",
                 "misc.door_close", "misc.door_open", "misc.barrier_motor", "misc.fuel_pump", "misc.crash", "misc.reverse_beep", "misc.gear_shift",
-                "horn.bike", "backfire.pop", "backfire.crackle", "backfire.bang", "misc.skid"}) {
+                "horn.bike", "backfire.pop", "backfire.crackle", "backfire.bang", "backfire.tick", "misc.skid"}) {
             sound(k);
         }
         BLOCKS.register(bus);

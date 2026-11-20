@@ -24,7 +24,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 /** Development-only showroom (-Pautotest=cars, optional -Dtrafficcraft.cars=a,b): screenshots of every car in the game. */
 @EventBusSubscriber(modid = TrafficCraft.MODID, value = Dist.CLIENT)
 public final class CarShow {
-    static final boolean ON = Boolean.getBoolean("trafficcraft.autotest") && "cars".equals(System.getProperty("trafficcraft.autotest.mode"));
+    public static final boolean ON = Boolean.getBoolean("trafficcraft.autotest") && "cars".equals(System.getProperty("trafficcraft.autotest.mode"));
     static int tt = -1;
     static double gy;
     static final List<Integer> ids = new ArrayList<>();
@@ -97,7 +97,7 @@ public final class CarShow {
         if (v0 == null) return;
         float L0 = v0.spec().length, W0 = v0.spec().width;
         // night lighting sequence: DRL only, low beam (close-up, front, road), high beam on the road, brake, tail, indicators, reverse
-        if (t < 300) {
+        if (t < 420) {
             if (t == 5) flags(server, VehicleEntity.F_ENGINE, true);
             if (t == 6) flags(server, VehicleEntity.F_LOW | VehicleEntity.F_HIGH | VehicleEntity.F_BRAKE, false);
             if (t == 10) view(mc, rel(v0, W0 * 0.75, 1.05, L0 / 2 + 1.4), rel(v0, W0 * 0.28, 0.62, L0 / 2 - 0.25));
@@ -119,16 +119,27 @@ public final class CarShow {
             if (t == 192) flags(server, VehicleEntity.F_BRAKE, false);
             if (t == 215) shot(mc, "c_night_tail.png");
             if (t == 217) flags(server, VehicleEntity.F_IND_L, true);
-            for (int k = 0; k < 12; k++) if (t == 240 + k * 3) shot(mc, "c_night_ind_" + k + ".png");
+            for (int q = 0; q < 12; q++) if (t == 240 + q * 3) shot(mc, "c_night_ind_" + q + ".png");
             if (t == 278) {
                 flags(server, VehicleEntity.F_IND_L, false);
                 flags(server, VehicleEntity.F_REVERSE, true);
             }
             if (t == 296) shot(mc, "c_night_reverse.png");
             if (t == 298) flags(server, VehicleEntity.F_REVERSE, false);
+            // backfires at the tail pipes: big bang, overrun crackle, single pop
+            if (t == 300) view(mc, rel(v0, -1.6, 0.9, -L0 / 2 - 2.6), rel(v0, -0.2, 0.35, -L0 / 2 - 0.3));
+            // slow motion for the backfire shots (the software renderer of the test only draws a few frames per second)
+            if (t == 305) server.execute(() -> server.tickRateManager().setTickRate(2f));
+            if (t == 405) server.execute(() -> server.tickRateManager().setTickRate(20f));
+            for (int[] b : new int[][]{{320, 2}, {350, 1}, {390, 0}}) if (t == b[0]) server.execute(() -> {
+                for (var en : server.overworld().getAllEntities()) if (en instanceof VehicleEntity sv) sv.level().broadcastEntityEvent(sv, (byte) (60 + b[1]));
+            });
+            for (int q : new int[]{321, 322, 324, 327}) if (t == q) shot(mc, "c_bf_bang_" + (q - 320) + ".png");
+            for (int q : new int[]{352, 356, 360, 366}) if (t == q) shot(mc, "c_bf_crackle_" + (q - 350) + ".png");
+            for (int q : new int[]{391, 392, 394}) if (t == q) shot(mc, "c_bf_pop_" + (q - 390) + ".png");
             return;
         }
-        t -= 200;
+        t -= 320;
         if (t == 100) server.execute(() -> server.overworld().setDayTime(3000));
         // driver's seat (steering wheel, gear lever, gauges)
         if (t == 105) server.execute(() -> ride(server, ids.get(0)));
@@ -203,7 +214,11 @@ public final class CarShow {
         lvl.setWeatherParameters(6000, 0, false, false);
         sp.setGameMode(GameType.SPECTATOR);
         sp.teleportTo(lvl, 0, gy + 4, -10, 0, 20);
-        TrafficCraft.LOG.info("[carshow] spawning " + models.size() + " cars at y=" + gy);
+        // clean slate: remove the cars left in the test world by earlier showroom runs
+        List<VehicleEntity> old = new ArrayList<>();
+        for (var en : lvl.getAllEntities()) if (en instanceof VehicleEntity ov) old.add(ov);
+        for (VehicleEntity ov : old) ov.discard();
+        TrafficCraft.LOG.info("[carshow] removed " + old.size() + " old cars; spawning " + models.size() + " cars at y=" + gy);
         for (int i = 0; i < models.size(); i++) {
             VehicleEntity v = new VehicleEntity(TCRegistry.VEHICLE.get(), lvl);
             v.setModel(models.get(i));
@@ -252,6 +267,8 @@ public final class CarShow {
     }
 
     static void shot(Minecraft mc, String name) {
+        if (name.startsWith("c_bf")) for (var en : mc.level.entitiesForRendering()) if (en instanceof VehicleEntity v)
+            TrafficCraft.LOG.info("[carshow] " + name + " " + v.getModel() + " bfx=" + v.bfx.size() + " sparks=" + v.sparks.size() + " lastBf=" + (v.tickCount - v.backfireTick));
         Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), c -> {});
         TrafficCraft.LOG.info("[carshow] screenshot " + name);
     }

@@ -422,8 +422,8 @@
    }
   ]
  },
- "maxSpeed": 150,
- "accel": 3.0,
+ "maxSpeed": 145,
+ "accel": 2.82,
  "brake": 6.5,
  "mass": 1400,
  "fuel": 57,
@@ -445,5 +445,5 @@
   "cyl": 6,
   "diesel": false
  },
- "tris": 9757
+ "tris": 11563
 }

@@ -326,52 +326,36 @@
  "backfire.pop": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/pop0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/pop0"
    },
    {
-    "name": "trafficcraft:backfire/pop1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/pop1"
    },
    {
-    "name": "trafficcraft:backfire/pop2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/pop2"
    }
   ]
  },
  "backfire.crackle": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/crackle0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/crackle0"
    },
    {
-    "name": "trafficcraft:backfire/crackle1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/crackle1"
    },
    {
-    "name": "trafficcraft:backfire/crackle2",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/crackle2"
    }
   ]
  },
  "backfire.bang": {
   "sounds": [
    {
-    "name": "trafficcraft:backfire/bang0",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bang0"
    },
    {
-    "name": "trafficcraft:backfire/bang1",
-    "stream": false,
-    "attenuation_distance": 56
+    "name": "trafficcraft:backfire/bang1"
    }
   ]
  },
@@ -2251,6 +2235,600 @@
    },
    {
     "name": "trafficcraft:backfire/toyota_gr_supra_a90_bang1"
+   }
+  ]
+ },
+ "backfire.toyota_supra_mk4.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_supra_mk4_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_supra_mk4_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_supra_mk4_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_supra_mk4_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_supra_mk4_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_supra_mk4_tick5"
+   }
+  ]
+ },
+ "backfire.toyota_gr_supra_a90.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_gr_supra_a90_tick5"
+   }
+  ]
+ },
+ "backfire.nissan_gtr_r35.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_gtr_r35_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_gtr_r35_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_gtr_r35_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_gtr_r35_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_gtr_r35_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_gtr_r35_tick5"
+   }
+  ]
+ },
+ "backfire.bmw_m3_2026.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/bmw_m3_2026_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_m3_2026_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_m3_2026_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_m3_2026_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_m3_2026_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_m3_2026_tick5"
+   }
+  ]
+ },
+ "backfire.ford_mustang_1964.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ford_mustang_1964_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_mustang_1964_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_mustang_1964_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_mustang_1964_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_mustang_1964_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_mustang_1964_tick5"
+   }
+  ]
+ },
+ "backfire.chevrolet_camaro_1966.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_camaro_1966_tick5"
+   }
+  ]
+ },
+ "backfire.dodge_challenger_1969.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_1969_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_1969_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_1969_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_1969_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_1969_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_1969_tick5"
+   }
+  ]
+ },
+ "backfire.chevrolet_corvette_1953.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_corvette_1953_tick5"
+   }
+  ]
+ },
+ "backfire.porsche_911_1963.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/porsche_911_1963_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_1963_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_1963_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_1963_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_1963_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_1963_tick5"
+   }
+  ]
+ },
+ "backfire.bmw_m3_1985.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/bmw_m3_1985_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_m3_1985_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_m3_1985_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_m3_1985_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_m3_1985_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_m3_1985_tick5"
+   }
+  ]
+ },
+ "backfire.mercedes_sclass_1972.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_sclass_1972_tick5"
+   }
+  ]
+ },
+ "backfire.audi_rs6_2002.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/audi_rs6_2002_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_rs6_2002_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_rs6_2002_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_rs6_2002_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_rs6_2002_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_rs6_2002_tick5"
+   }
+  ]
+ },
+ "backfire.honda_civic_1972.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/honda_civic_1972_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/honda_civic_1972_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/honda_civic_1972_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/honda_civic_1972_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/honda_civic_1972_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/honda_civic_1972_tick5"
+   }
+  ]
+ },
+ "backfire.honda_accord_1976.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/honda_accord_1976_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/honda_accord_1976_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/honda_accord_1976_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/honda_accord_1976_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/honda_accord_1976_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/honda_accord_1976_tick5"
+   }
+  ]
+ },
+ "backfire.toyota_corolla_1966.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_corolla_1966_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_corolla_1966_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_corolla_1966_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_corolla_1966_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_corolla_1966_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_corolla_1966_tick5"
+   }
+  ]
+ },
+ "backfire.toyota_camry_1982.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_camry_1982_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_1982_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_1982_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_1982_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_1982_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_1982_tick5"
+   }
+  ]
+ },
+ "backfire.mazda_mx5_1989.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mazda_mx5_1989_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_mx5_1989_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_mx5_1989_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_mx5_1989_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_mx5_1989_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_mx5_1989_tick5"
+   }
+  ]
+ },
+ "backfire.subaru_wrx_sti_1992.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/subaru_wrx_sti_1992_tick5"
+   }
+  ]
+ },
+ "backfire.mitsubishi_lancer_evo_1992.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/mitsubishi_lancer_evo_1992_tick5"
+   }
+  ]
+ },
+ "backfire.volkswagen_golf_gti_1974.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/volkswagen_golf_gti_1974_tick5"
+   }
+  ]
+ },
+ "backfire.jeep_wrangler_1986.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/jeep_wrangler_1986_tick5"
+   }
+  ]
+ },
+ "backfire.land_rover_range_rover_1970.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/land_rover_range_rover_1970_tick5"
+   }
+  ]
+ },
+ "backfire.hyundai_elantra_1990.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_elantra_1990_tick5"
+   }
+  ]
+ },
+ "backfire.kia_stinger_2017.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/kia_stinger_2017_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/kia_stinger_2017_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/kia_stinger_2017_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/kia_stinger_2017_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/kia_stinger_2017_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/kia_stinger_2017_tick5"
+   }
+  ]
+ },
+ "backfire.ferrari_f40_1987.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ferrari_f40_1987_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_f40_1987_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_f40_1987_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_f40_1987_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_f40_1987_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_f40_1987_tick5"
+   }
+  ]
+ },
+ "backfire.lamborghini_aventador_2011.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_aventador_2011_tick5"
+   }
+  ]
+ },
+ "backfire.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/tick5"
    }
   ]
  }
