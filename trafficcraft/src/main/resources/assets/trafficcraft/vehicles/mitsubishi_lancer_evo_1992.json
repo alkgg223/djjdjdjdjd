@@ -453,6 +453,7 @@
  ],
  "horn": "high",
  "backfire": 0.25,
+ "grip": 1.05,
  "engine": {
   "type": "i4_turbo",
   "idle": 760,
@@ -460,5 +461,5 @@
   "cyl": 4,
   "diesel": false
  },
- "tris": 9591
+ "tris": 9557
 }

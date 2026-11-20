@@ -1182,6 +1182,8 @@ class Car:
         for k in ('maxSpeed', 'accel', 'brake', 'mass', 'fuel_l', 'spawnWeight', 'colors', 'electric', 'horn', 'steerMax', 'backfire'):
             if hasattr(self, k):
                 META['fuel' if k == 'fuel_l' else k] = getattr(self, k)
+        GRIP = dict(super=1.18, sports=1.0, wagon=0.95, sedan=0.86, compact=0.84, luxury=0.82, muscle=0.8, classic=0.74, suv=0.7)
+        META['grip'] = getattr(self, 'grip', GRIP.get(self.category, 0.85))
         from_engine = __import__('sounds_ref').engine_meta(self.engine)
         META['engine'] = from_engine
         META.update(self.meta_extra)

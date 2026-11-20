@@ -70,6 +70,7 @@ public class VehicleEntity extends Entity {
     private static final EntityDataAccessor<Integer> DOOR_R = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<String> PLATE = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<String> CONFIG = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Float> DRIFT = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> MODE = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);
     /** passenger entity id -> seat index */
     private static final EntityDataAccessor<net.minecraft.nbt.CompoundTag> SEATS = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.COMPOUND_TAG);
@@ -141,6 +142,7 @@ public class VehicleEntity extends Entity {
         b.define(DOOR_R, -1000);
         b.define(PLATE, "TC 0000");
         b.define(CONFIG, "");
+        b.define(DRIFT, 0f);
         b.define(MODE, MODE_FREE);
         b.define(SEATS, new net.minecraft.nbt.CompoundTag());
     }
@@ -184,6 +186,11 @@ public class VehicleEntity extends Entity {
     public float popupVis;
 
     public String getConfig() { return entityData.get(CONFIG); }
+    /** visual drift (slip) angle in degrees, + = nose to the left */
+    public float getDrift() { return entityData.get(DRIFT); }
+    public void setDrift(float a) { if (Math.abs(a - entityData.get(DRIFT)) > 0.05f || a == 0) entityData.set(DRIFT, Math.abs(a) < 0.05f ? 0f : a); }
+    public float driftVis, driftVisO, proBackfire;
+    int skidTick;
     public void setConfig(String c) { entityData.set(CONFIG, c == null ? "" : c); }
 
     public int cfg(String slot) {
@@ -627,11 +634,12 @@ public class VehicleEntity extends Entity {
         VehicleSpec s = spec();
         float rpm = visRpm();
         if (backfireCooldown > 0) backfireCooldown--;
-        if (s.backfire > 0 && has(F_ENGINE) && backfireCooldown == 0) {
+        float bfc = Math.max(s.backfire, proBackfire);
+        if (bfc > 0 && has(F_ENGINE) && backfireCooldown == 0) {
             float red = s.redRpm;
             float load = entityData.get(LOAD);
             boolean falling = rpmPrevS > red * 0.6f && rpm < rpmPrevS - red * 0.03f;
-            if (falling && (load < 0.3f || random.nextFloat() < 0.3f) && random.nextFloat() < s.backfire * 0.55f) {
+            if (falling && (load < 0.3f || random.nextFloat() < 0.3f) && random.nextFloat() < bfc * 0.55f) {
                 float x = random.nextFloat();
                 int kind = rpmPrevS > red * 0.85f && x < 0.22f ? 2 : x < 0.6f ? 0 : 1;
                 level().broadcastEntityEvent(this, (byte) (60 + kind));
@@ -790,6 +798,22 @@ public class VehicleEntity extends Entity {
     // ================================================================= client visuals
     private void clientVisuals() {
         float v = visSpeed();
+        driftVisO = driftVis;
+        driftVis += (getDrift() - driftVis) * 0.3f;
+        if (Math.abs(driftVis) > 6 && Math.abs(v) > 3) {
+            // tyre smoke from the rear wheels + screech
+            for (VehicleSpec.Wheel w : spec().wheels) {
+                if (w.steer()) continue;
+                Vec3 p = position().add(toWorldOffset(w.x(), 0.1, w.z(), getYRot()));
+                level().addParticle(net.minecraft.core.particles.ParticleTypes.CLOUD, p.x, p.y, p.z, (random.nextFloat() - 0.5f) * 0.06f, 0.03f,
+                        (random.nextFloat() - 0.5f) * 0.06f);
+            }
+            if (tickCount - skidTick > 26) {
+                skidTick = tickCount;
+                level().playLocalSound(getX(), getY(), getZ(), com.trafficcraft.registry.TCRegistry.snd("misc.skid"), net.minecraft.sounds.SoundSource.NEUTRAL,
+                        Math.min(1f, Math.abs(driftVis) / 20f), 0.9f + random.nextFloat() * 0.2f, false);
+            }
+        }
         float r = spec().wheels.isEmpty() ? 0.33f : spec().wheels.get(0).r();
         wheelSpin += (float) Math.toDegrees(v * 0.05f / r);
         steerVis += (visSteer() - steerVis) * 0.5f;

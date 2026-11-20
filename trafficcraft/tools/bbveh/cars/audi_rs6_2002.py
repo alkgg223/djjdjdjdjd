@@ -36,3 +36,5 @@ SPEC = dict(
 
 # modern-style lamps (from the reference photos)
 SPEC['head'][0]['strips'].append(([(0.42, 4.68), (0.62, 4.71), (0.8, 4.62)], 0.012, 'drl'))
+
+SPEC['grip'] = 1.0

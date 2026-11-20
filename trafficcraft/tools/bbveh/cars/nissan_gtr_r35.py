@@ -52,3 +52,5 @@ SPEC = dict(
     maxSpeed=315, accel=7.2, brake=11.0, mass=1740, fuel_l=74, spawnWeight=5, engine='i6_twinturbo', horn='high', backfire=0.12,
     colors=['#dcdedf', '#16171a', '#8c9095', '#1c3f8a', '#a40f16', '#d86a17'],
 )
+
+SPEC['grip'] = 1.12

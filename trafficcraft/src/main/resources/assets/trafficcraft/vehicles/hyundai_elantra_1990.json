@@ -452,6 +452,7 @@
   "#2f4f3a"
  ],
  "horn": "car",
+ "grip": 0.86,
  "engine": {
   "type": "i4_petrol",
   "idle": 800,
@@ -459,5 +460,5 @@
   "cyl": 4,
   "diesel": false
  },
- "tris": 8691
+ "tris": 8655
 }

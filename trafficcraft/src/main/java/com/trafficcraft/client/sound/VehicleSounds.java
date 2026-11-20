@@ -86,10 +86,11 @@ public final class VehicleSounds {
             case "crash" -> mc.level.playLocalSound(v.getX(), v.getY() + 0.8, v.getZ(), TCRegistry.snd("misc.crash"), SoundSource.NEUTRAL, 1.0f,
                     0.9f + v.getRandom().nextFloat() * 0.2f, false);
             case "backfire_0", "backfire_1", "backfire_2" -> {
-                String k = ev.endsWith("0") ? "backfire.pop" : ev.endsWith("1") ? "backfire.crackle" : "backfire.bang";
+                String kind = ev.endsWith("0") ? "pop" : ev.endsWith("1") ? "crackle" : "bang";
+                String k0 = "backfire." + kind;
                 var ex = v.spec().exhausts.isEmpty() ? null : v.spec().exhausts.get(0);
                 var off = ex == null ? net.minecraft.world.phys.Vec3.ZERO : VehicleEntity.toWorldOffset(ex[0], ex[1], ex[2], v.getYRot());
-                mc.level.playLocalSound(v.getX() + off.x, v.getY() + off.y, v.getZ() + off.z, TCRegistry.snd(k), SoundSource.NEUTRAL,
+                mc.level.playLocalSound(v.getX() + off.x, v.getY() + off.y, v.getZ() + off.z, TCRegistry.sound("backfire." + v.getModel() + "." + kind, () -> k0), SoundSource.NEUTRAL,
                         ev.endsWith("2") ? 1.6f : 1.2f, 0.92f + v.getRandom().nextFloat() * 0.16f, false);
             }
             default -> { }

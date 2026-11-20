@@ -31,3 +31,5 @@ SPEC = dict(
     maxSpeed=210, accel=8.0, brake=10.5, mass=2100, fuel_l=85, spawnWeight=5, engine='i4_petrol', horn='car',
     colors=['#c8102e', '#f2f2f0', '#1b1c1e', '#8c9095', '#1d3f7a', '#5a5e63'],
 )
+
+SPEC['grip'] = 0.95

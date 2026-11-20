@@ -62,7 +62,7 @@ public final class VehiclePhysics {
         v.steer = approach(v.steer, steerTarget, rate);
         float yawRate = (float) Math.toDegrees(ns * Math.tan(Math.toRadians(v.steer)) / s.wheelbase);
         // tyre grip limit: lateral acceleration v*w <= ~0.85 g (more with the handbrake = slide)
-        float gripRate = (float) Math.toDegrees(8.3f / Math.max(3f, Math.abs(ns)));
+        float gripRate = (float) Math.toDegrees(s.grip * 9.81f / Math.max(3f, Math.abs(ns)));
         if (Math.abs(yawRate) > gripRate) {
             yawRate = Math.copySign(gripRate, yawRate);
             ns *= 0.995f;

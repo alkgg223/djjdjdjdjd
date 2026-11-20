@@ -47,6 +47,7 @@ public final class Props {
                 l.add(Prop.i("patient", 0, 100, 5));
                 l.add(Prop.i("normal", 0, 100, 5));
                 l.add(Prop.i("impatient", 0, 100, 5));
+                l.add(Prop.i("pro", 0, 100, 5));
                 for (String id : VehicleSpecs.ids()) l.add(Prop.i("m_" + id, 0, 40, 1));
             }
             case PARKING -> {
@@ -141,6 +142,7 @@ public final class Props {
                 put(c, "patient", 30);
                 put(c, "normal", 50);
                 put(c, "impatient", 20);
+                put(c, "pro", 10);
             }
             case PARKING -> {
                 put(c, "spaces", 6);

@@ -478,6 +478,7 @@
  ],
  "horn": "high",
  "backfire": 0.1,
+ "grip": 0.97,
  "engine": {
   "type": "v6_cruiser",
   "idle": 650,

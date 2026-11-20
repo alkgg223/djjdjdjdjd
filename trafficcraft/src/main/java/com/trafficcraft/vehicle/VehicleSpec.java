@@ -46,6 +46,7 @@ public final class VehicleSpec {
     public String shifterType = "manual";
     public final java.util.Map<String, float[]> popups = new java.util.HashMap<>();
     public boolean screenSensor;
+    public float grip = 0.85f;
     public String make = "", modelName = "", categoryName = "", description = "";
     public int year;
 
@@ -164,6 +165,7 @@ public final class VehicleSpec {
             float[] pv = vec(pp.getAsJsonArray("pivot"));
             popups.put(en.getKey(), new float[]{pv[0], pv[1], f(pp, "angle", -62)});
         }
+        grip = f(o, "grip", 0.85f);
         screenSensor = o.has("screen_sensor") && o.get("screen_sensor").getAsBoolean();
         if (o.has("make")) make = o.get("make").getAsString();
         if (o.has("model")) modelName = o.get("model").getAsString();

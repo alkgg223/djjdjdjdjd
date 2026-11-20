@@ -240,6 +240,10 @@ public final class TrafficDriver {
             }
         } else if (vel > 1) blockedTicks = 0;
         if (!overtaking && c.leader instanceof VehicleEntity lv && c.gap < 25 && lv.speed < vDesired * 0.55f && vel > 3) tryOvertake(v, net, tm, c, false);
+        boolean pro = pers == Personality.PRO;
+        if (pro && !overtaking && state == State.DRIVE && c.leader instanceof VehicleEntity lv2 && c.gap < 32 && lv2.speed < vDesired * 0.9f && vel > 4
+                && (v.tickCount + v.getId()) % 10 == 0) tryOvertake(v, net, tm, c, false);
+        v.proBackfire = pro ? 0.4f : 0f;
         if (overtaking) checkReturn(v, net, tm);
         // breakdown
         if (state == State.DRIVE && v.getRandom().nextFloat() < TCConfig.BREAKDOWN_CHANCE.get() / 1200f && vel > 4) {
@@ -247,9 +251,11 @@ public final class TrafficDriver {
             state = State.BROKEN;
             stateTicks = 0;
         }
-        if (spec.backfire > 0 && state == State.DRIVE) fwd = riderHabits(v, vel, vDesired, c, fwd);
+        if ((spec.backfire > 0 || pro) && state == State.DRIVE) fwd = riderHabits(v, vel, vDesired, c, fwd);
+        if (pro) proDrift(v, vel);
         // ---------- lamps
         lights(v, level);
+        if (pro) proFlash(v, c, vDesired);
         indicators(v, net);
         boolean hb = fwd <= 0 && Math.abs(vel) < 0.2f;
         last = new VehicleInput(fwd, steerIn, hb);
@@ -330,6 +336,47 @@ public final class TrafficDriver {
             fwd = Math.min(fwd, 0f);
         }
         return fwd;
+    }
+
+    // =================================================================================== pro driver
+    int flashTicks, flashCooldown;
+    Piece driftPiece;
+    float driftSign, driftAmp;
+
+    /** Headlight flashes ("رماش") at a slower car ahead: three quick high-beam blinks, then a pause. */
+    void proFlash(VehicleEntity v, Constraint c, float vDesired) {
+        if (flashCooldown > 0) flashCooldown--;
+        if (flashTicks == 0 && flashCooldown == 0 && c.leader instanceof VehicleEntity lv && c.gap < 28 && lv.speed < vDesired * 0.85f) {
+            flashTicks = 24;
+            flashCooldown = 160 + v.getRandom().nextInt(120);
+            TrafficStats.inc("pro_flashes");
+        }
+        if (flashTicks > 0) {
+            flashTicks--;
+            v.setFlag(VehicleEntity.F_HIGH, (flashTicks / 4) % 2 == 0 && flashTicks > 0);
+        }
+    }
+
+    /** Smooth power-slides through junction turns: the car follows its path exactly, only the body yaws out (visual) with tyre smoke. */
+    void proDrift(VehicleEntity v, float vel) {
+        Piece p = path.peekFirst();
+        if (p == null || !p.connector || p.movement == TrafficLights.MOVE_STRAIGHT || p.x.length < 3) {
+            v.setDrift(v.getDrift() * 0.8f);
+            driftPiece = null;
+            return;
+        }
+        if (p != driftPiece) {
+            driftPiece = p;
+            int n = p.x.length;
+            double h0 = Math.atan2(p.z[1] - p.z[0], p.x[1] - p.x[0]), h1 = Math.atan2(p.z[n - 1] - p.z[n - 2], p.x[n - 1] - p.x[n - 2]);
+            double turn = Mth.wrapDegrees(Math.toDegrees(h1 - h0));
+            driftSign = (float) -Math.signum(turn);
+            driftAmp = Math.abs(turn) > 40 && vel > 5.5f && v.getRandom().nextFloat() < 0.55f ? Math.min(28f, 10f + vel * 1.6f) : 0f;
+            if (driftAmp > 0) TrafficStats.inc("pro_drifts");
+        }
+        double prog = p.length > 0 ? Mth.clamp(s / p.length, 0, 1) : 0;
+        float target = (float) (driftSign * driftAmp * Math.sin(Math.PI * prog));
+        v.setDrift(v.getDrift() + (target - v.getDrift()) * 0.35f);
     }
 
     boolean isStalled(VehicleEntity o) {
@@ -1122,7 +1169,8 @@ public final class TrafficDriver {
         if (cur == null || cur.connector || cur.edge < 0) return;
         RoadEdge e = net.edges.get(cur.edge);
         if (e == null) return;
-        if (v.getRandom().nextFloat() > pers.overtake * TCConfig.OVERTAKE_CHANCE.get() * 2 && !stalled) return;
+        boolean pro = pers == Personality.PRO;
+        if (!pro && v.getRandom().nextFloat() > pers.overtake * TCConfig.OVERTAKE_CHANCE.get() * 2 && !stalled) return;
         double remaining = cur.length - s;
         if (remaining < (stalled ? 10 : 40)) return;
         int from = e.other(cur.node);
@@ -1144,6 +1192,22 @@ public final class TrafficDriver {
         double need = c.gap + 25 + v.spec().length * 2;
         if (remaining < need + 20) return;
         if (oncomingOnEdge(v, net, tm, e, cur, need * 2.2)) return;
+        if (pro) {
+            // search the next three road sections for oncoming traffic before pulling out
+            int checked = 0;
+            boolean first = true;
+            for (Piece p : path) {
+                if (first) {
+                    first = false;
+                    continue;
+                }
+                if (checked >= 3) break;
+                if (p.connector || p.edge < 0) continue;
+                RoadEdge pe = net.edges.get(p.edge);
+                if (pe != null && oncomingOnEdge(v, net, tm, pe, p, p.length + 20)) return;
+                checked++;
+            }
+        }
         changeLane(v, net, e, from, oppLane, VehicleEntity.F_IND_L);
         overtaking = true;
         TrafficStats.inc("overtakes");

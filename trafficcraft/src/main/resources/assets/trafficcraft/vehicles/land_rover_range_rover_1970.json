@@ -437,6 +437,7 @@
   "#4b4f54"
  ],
  "horn": "low",
+ "grip": 0.7,
  "engine": {
   "type": "v8_sport",
   "idle": 950,

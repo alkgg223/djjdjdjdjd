@@ -436,6 +436,7 @@
   "#2f5f3a"
  ],
  "horn": "car",
+ "grip": 0.9,
  "engine": {
   "type": "i4_sport",
   "idle": 1300,
@@ -443,5 +444,5 @@
   "cyl": 4,
   "diesel": false
  },
- "tris": 9599
+ "tris": 9581
 }

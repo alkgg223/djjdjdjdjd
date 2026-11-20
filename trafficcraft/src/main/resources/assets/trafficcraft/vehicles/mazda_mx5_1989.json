@@ -428,6 +428,7 @@
  ],
  "horn": "high",
  "backfire": 0.1,
+ "grip": 0.95,
  "engine": {
   "type": "i4_sport",
   "idle": 1300,

@@ -437,6 +437,7 @@
   "#d86a17"
  ],
  "horn": "car",
+ "grip": 0.84,
  "engine": {
   "type": "i4_petrol",
   "idle": 800,

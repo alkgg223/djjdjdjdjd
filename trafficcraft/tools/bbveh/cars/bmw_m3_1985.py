@@ -41,3 +41,5 @@ SPEC['head'] = [rect_head(0.38, 0.58, 0.76, 0.7, lamps=[(0.47, 0.64, 0.05, 'high
 
 # lamp size pass
 SPEC['tail_scale'] = 1.22
+
+SPEC['grip'] = 0.95

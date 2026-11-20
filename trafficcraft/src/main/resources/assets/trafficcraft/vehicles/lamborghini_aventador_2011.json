@@ -436,6 +436,7 @@
  ],
  "horn": "high",
  "backfire": 0.3,
+ "grip": 1.2,
  "engine": {
   "type": "v8_sport",
   "idle": 950,

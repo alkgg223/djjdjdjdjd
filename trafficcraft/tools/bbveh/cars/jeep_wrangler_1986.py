@@ -51,3 +51,5 @@ SPEC['head'] = [h]
 
 # lamp size pass
 SPEC['tail_scale'] = 1.22
+
+SPEC['grip'] = 0.62

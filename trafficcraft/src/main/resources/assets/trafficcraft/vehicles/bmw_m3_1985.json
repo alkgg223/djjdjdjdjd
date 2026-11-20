@@ -446,6 +446,7 @@
  ],
  "horn": "high",
  "backfire": 0.15,
+ "grip": 0.95,
  "engine": {
   "type": "i4_sport",
   "idle": 1300,
@@ -453,5 +454,5 @@
   "cyl": 4,
   "diesel": false
  },
- "tris": 10679
+ "tris": 10645
 }

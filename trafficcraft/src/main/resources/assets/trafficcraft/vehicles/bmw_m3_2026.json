@@ -478,6 +478,7 @@
  ],
  "horn": "high",
  "backfire": 0.15,
+ "grip": 1.08,
  "engine": {
   "type": "i6_twinturbo",
   "idle": 750,

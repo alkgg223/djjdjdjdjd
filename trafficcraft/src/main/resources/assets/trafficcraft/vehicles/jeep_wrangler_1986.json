@@ -437,6 +437,7 @@
   "#3d5a7a"
  ],
  "horn": "low",
+ "grip": 0.62,
  "engine": {
   "type": "v6_cruiser",
   "idle": 650,

@@ -437,6 +437,7 @@
   "#3d6b4a"
  ],
  "horn": "high",
+ "grip": 0.86,
  "engine": {
   "type": "i4_sport",
   "idle": 1300,

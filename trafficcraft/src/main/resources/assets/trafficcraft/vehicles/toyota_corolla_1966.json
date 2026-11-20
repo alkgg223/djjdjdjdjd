@@ -436,6 +436,7 @@
   "#c9b98a"
  ],
  "horn": "car",
+ "grip": 0.84,
  "engine": {
   "type": "i4_petrol",
   "idle": 800,

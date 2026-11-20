@@ -74,7 +74,7 @@ public class VehicleRenderer extends EntityRenderer<VehicleEntity> {
         if (mesh.failed) return;
         float ry = Mth.rotLerp(pt, v.yRotO, v.getYRot());
         ps.pushPose();
-        ps.mulPose(Axis.YP.rotationDegrees(-ry));
+        ps.mulPose(Axis.YP.rotationDegrees(-ry + Mth.lerp(pt, v.driftVisO, v.driftVis)));
         if (s.bike) ps.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(pt, v.leanO, v.lean))); // lean about the tyre contact line
         PoseStack.Pose base = ps.last();
         float roll = Mth.lerp(pt, v.bodyRollO, v.bodyRoll), pitch = Mth.lerp(pt, v.bodyPitchO, v.bodyPitch);

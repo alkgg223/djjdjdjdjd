@@ -234,10 +234,10 @@ public final class TrafficManager {
 
     Personality pickPersonality(ServerLevel level, RoadNode n) {
         int p = n.cfg.contains("patient") ? n.cfg.getInt("patient") : 30, m = n.cfg.contains("normal") ? n.cfg.getInt("normal") : 50,
-                i = n.cfg.contains("impatient") ? n.cfg.getInt("impatient") : 20;
-        int t = Math.max(1, p + m + i);
+                i = n.cfg.contains("impatient") ? n.cfg.getInt("impatient") : 20, pr = n.cfg.contains("pro") ? n.cfg.getInt("pro") : 10;
+        int t = Math.max(1, p + m + i + pr);
         int r = level.random.nextInt(t);
-        return r < p ? Personality.PATIENT : r < p + m ? Personality.NORMAL : Personality.IMPATIENT;
+        return r < p ? Personality.PATIENT : r < p + m ? Personality.NORMAL : r < p + m + i ? Personality.IMPATIENT : Personality.PRO;
     }
 
     void despawn(ServerLevel level, RoadNetwork net) {

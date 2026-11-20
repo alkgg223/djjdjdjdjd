@@ -337,6 +337,7 @@
  ],
  "electric": true,
  "horn": "car",
+ "grip": 0.95,
  "engine": {
   "type": "i4_petrol",
   "idle": 800,

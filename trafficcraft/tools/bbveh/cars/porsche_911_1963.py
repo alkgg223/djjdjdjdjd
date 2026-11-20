@@ -46,3 +46,5 @@ SPEC['tail']['center_strips'] = [([(-0.6, 0.67), (0.6, 0.67)], 0.018, 'tail', 0.
 
 # lamp size pass
 SPEC['tail_scale'] = 1.22
+
+SPEC['grip'] = 0.86

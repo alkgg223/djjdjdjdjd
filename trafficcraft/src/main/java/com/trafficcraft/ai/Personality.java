@@ -6,7 +6,9 @@ import com.trafficcraft.TCConfig;
 public enum Personality {
     PATIENT(0.92f, 1.8f, 0.65f, 2.2f, 0.15f, 2.5f),
     NORMAL(1.0f, 1.4f, 0.8f, 1.0f, 0.5f, 3.0f),
-    IMPATIENT(1.1f, 1.0f, 1.0f, 0.45f, 0.9f, 3.6f);
+    IMPATIENT(1.1f, 1.0f, 1.0f, 0.45f, 0.9f, 3.6f),
+    /** fast and skilled: flashes slower cars, overtakes after checking three road sections ahead, drifts the turns cleanly */
+    PRO(1.3f, 0.85f, 1.0f, 0.25f, 1.0f, 4.6f);
 
     public final float speedFactor, headway, accelUse, patience, overtake, brakeComfort;
 

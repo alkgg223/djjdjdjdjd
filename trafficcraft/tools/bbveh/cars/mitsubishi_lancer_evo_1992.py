@@ -54,3 +54,5 @@ SPEC['head'] = [big(SPEC['head'][0])]
 
 # lamp size pass
 SPEC['tail_scale'] = 1.22
+
+SPEC['grip'] = 1.05

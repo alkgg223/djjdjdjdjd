@@ -52,3 +52,5 @@ SPEC['head'] = [dict(view='F', outline=[(0.34, 0.6), (0.74, 0.62), (0.76, 0.68),
 # lamp size pass
 SPEC['head'] = [big(SPEC['head'][0], sy=1.5, sx=1.05)]
 SPEC['tail_scale'] = 1.2
+
+SPEC['grip'] = 1.04
