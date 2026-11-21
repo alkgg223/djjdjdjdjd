@@ -2831,5 +2831,2205 @@
     "name": "trafficcraft:backfire/tick5"
    }
   ]
+ },
+ "engine.toyota_land_cruiser_2022.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_land_cruiser_2022_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.toyota_land_cruiser_2022.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_land_cruiser_2022_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.toyota_land_cruiser_2022.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_land_cruiser_2022_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.toyota_land_cruiser_2022.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_pop3"
+   }
+  ]
+ },
+ "backfire.toyota_land_cruiser_2022.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_crackle3"
+   }
+  ]
+ },
+ "backfire.toyota_land_cruiser_2022.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_bang1"
+   }
+  ]
+ },
+ "backfire.toyota_land_cruiser_2022.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_land_cruiser_2022_tick5"
+   }
+  ]
+ },
+ "engine.nissan_patrol_2020.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/nissan_patrol_2020_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.nissan_patrol_2020.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/nissan_patrol_2020_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.nissan_patrol_2020.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/nissan_patrol_2020_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.nissan_patrol_2020.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_pop3"
+   }
+  ]
+ },
+ "backfire.nissan_patrol_2020.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_crackle3"
+   }
+  ]
+ },
+ "backfire.nissan_patrol_2020.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_bang1"
+   }
+  ]
+ },
+ "backfire.nissan_patrol_2020.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_patrol_2020_tick5"
+   }
+  ]
+ },
+ "engine.chevrolet_caprice_2013.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/chevrolet_caprice_2013_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.chevrolet_caprice_2013.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/chevrolet_caprice_2013_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.chevrolet_caprice_2013.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/chevrolet_caprice_2013_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.chevrolet_caprice_2013.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_pop3"
+   }
+  ]
+ },
+ "backfire.chevrolet_caprice_2013.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_crackle3"
+   }
+  ]
+ },
+ "backfire.chevrolet_caprice_2013.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_bang1"
+   }
+  ]
+ },
+ "backfire.chevrolet_caprice_2013.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_caprice_2013_tick5"
+   }
+  ]
+ },
+ "engine.mercedes_g63_2019.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/mercedes_g63_2019_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.mercedes_g63_2019.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/mercedes_g63_2019_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.mercedes_g63_2019.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/mercedes_g63_2019_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.mercedes_g63_2019.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_pop3"
+   }
+  ]
+ },
+ "backfire.mercedes_g63_2019.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_crackle3"
+   }
+  ]
+ },
+ "backfire.mercedes_g63_2019.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_bang1"
+   }
+  ]
+ },
+ "backfire.mercedes_g63_2019.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_g63_2019_tick5"
+   }
+  ]
+ },
+ "engine.chevrolet_tahoe_2021.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/chevrolet_tahoe_2021_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.chevrolet_tahoe_2021.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/chevrolet_tahoe_2021_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.chevrolet_tahoe_2021.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/chevrolet_tahoe_2021_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.chevrolet_tahoe_2021.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_pop3"
+   }
+  ]
+ },
+ "backfire.chevrolet_tahoe_2021.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_crackle3"
+   }
+  ]
+ },
+ "backfire.chevrolet_tahoe_2021.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_bang1"
+   }
+  ]
+ },
+ "backfire.chevrolet_tahoe_2021.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_tahoe_2021_tick5"
+   }
+  ]
+ },
+ "engine.toyota_hilux_2021.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_hilux_2021_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.toyota_hilux_2021.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_hilux_2021_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.toyota_hilux_2021.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_hilux_2021_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.toyota_hilux_2021.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_pop3"
+   }
+  ]
+ },
+ "backfire.toyota_hilux_2021.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_crackle3"
+   }
+  ]
+ },
+ "backfire.toyota_hilux_2021.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_bang1"
+   }
+  ]
+ },
+ "backfire.toyota_hilux_2021.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_hilux_2021_tick5"
+   }
+  ]
+ },
+ "engine.hyundai_sonata_2020.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/hyundai_sonata_2020_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.hyundai_sonata_2020.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/hyundai_sonata_2020_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.hyundai_sonata_2020.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/hyundai_sonata_2020_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.hyundai_sonata_2020.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_pop3"
+   }
+  ]
+ },
+ "backfire.hyundai_sonata_2020.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_crackle3"
+   }
+  ]
+ },
+ "backfire.hyundai_sonata_2020.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_bang1"
+   }
+  ]
+ },
+ "backfire.hyundai_sonata_2020.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_sonata_2020_tick5"
+   }
+  ]
+ },
+ "engine.toyota_camry_2023.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_camry_2023_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.toyota_camry_2023.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_camry_2023_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.toyota_camry_2023.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_camry_2023_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.toyota_camry_2023.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_pop3"
+   }
+  ]
+ },
+ "backfire.toyota_camry_2023.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_crackle3"
+   }
+  ]
+ },
+ "backfire.toyota_camry_2023.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_bang1"
+   }
+  ]
+ },
+ "backfire.toyota_camry_2023.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_camry_2023_tick5"
+   }
+  ]
+ },
+ "engine.hyundai_accent_2018.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/hyundai_accent_2018_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.hyundai_accent_2018.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/hyundai_accent_2018_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.hyundai_accent_2018.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/hyundai_accent_2018_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.hyundai_accent_2018.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_pop3"
+   }
+  ]
+ },
+ "backfire.hyundai_accent_2018.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_crackle3"
+   }
+  ]
+ },
+ "backfire.hyundai_accent_2018.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_bang1"
+   }
+  ]
+ },
+ "backfire.hyundai_accent_2018.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/hyundai_accent_2018_tick5"
+   }
+  ]
+ },
+ "engine.toyota_yaris_2020.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_yaris_2020_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.toyota_yaris_2020.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_yaris_2020_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.toyota_yaris_2020.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/toyota_yaris_2020_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.toyota_yaris_2020.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_pop3"
+   }
+  ]
+ },
+ "backfire.toyota_yaris_2020.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_crackle3"
+   }
+  ]
+ },
+ "backfire.toyota_yaris_2020.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_bang1"
+   }
+  ]
+ },
+ "backfire.toyota_yaris_2020.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/toyota_yaris_2020_tick5"
+   }
+  ]
+ },
+ "engine.chevrolet_malibu_2019.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/chevrolet_malibu_2019_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.chevrolet_malibu_2019.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/chevrolet_malibu_2019_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.chevrolet_malibu_2019.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/chevrolet_malibu_2019_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.chevrolet_malibu_2019.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_pop3"
+   }
+  ]
+ },
+ "backfire.chevrolet_malibu_2019.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_crackle3"
+   }
+  ]
+ },
+ "backfire.chevrolet_malibu_2019.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_bang1"
+   }
+  ]
+ },
+ "backfire.chevrolet_malibu_2019.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/chevrolet_malibu_2019_tick5"
+   }
+  ]
+ },
+ "engine.ford_f150_2021.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/ford_f150_2021_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.ford_f150_2021.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/ford_f150_2021_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.ford_f150_2021.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/ford_f150_2021_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.ford_f150_2021.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_pop3"
+   }
+  ]
+ },
+ "backfire.ford_f150_2021.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_crackle3"
+   }
+  ]
+ },
+ "backfire.ford_f150_2021.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_bang1"
+   }
+  ]
+ },
+ "backfire.ford_f150_2021.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/ford_f150_2021_tick5"
+   }
+  ]
+ },
+ "engine.ram_1500_2022.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/ram_1500_2022_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.ram_1500_2022.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/ram_1500_2022_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.ram_1500_2022.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/ram_1500_2022_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.ram_1500_2022.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_pop3"
+   }
+  ]
+ },
+ "backfire.ram_1500_2022.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_crackle3"
+   }
+  ]
+ },
+ "backfire.ram_1500_2022.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_bang1"
+   }
+  ]
+ },
+ "backfire.ram_1500_2022.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/ram_1500_2022_tick5"
+   }
+  ]
+ },
+ "engine.dodge_charger_2020.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/dodge_charger_2020_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.dodge_charger_2020.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/dodge_charger_2020_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.dodge_charger_2020.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/dodge_charger_2020_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.dodge_charger_2020.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_pop3"
+   }
+  ]
+ },
+ "backfire.dodge_charger_2020.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_crackle3"
+   }
+  ]
+ },
+ "backfire.dodge_charger_2020.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_bang1"
+   }
+  ]
+ },
+ "backfire.dodge_charger_2020.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_charger_2020_tick5"
+   }
+  ]
+ },
+ "engine.dodge_challenger_2021.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/dodge_challenger_2021_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.dodge_challenger_2021.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/dodge_challenger_2021_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.dodge_challenger_2021.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/dodge_challenger_2021_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.dodge_challenger_2021.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_pop3"
+   }
+  ]
+ },
+ "backfire.dodge_challenger_2021.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_crackle3"
+   }
+  ]
+ },
+ "backfire.dodge_challenger_2021.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_bang1"
+   }
+  ]
+ },
+ "backfire.dodge_challenger_2021.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/dodge_challenger_2021_tick5"
+   }
+  ]
+ },
+ "engine.mercedes_e_class_2021.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/mercedes_e_class_2021_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.mercedes_e_class_2021.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/mercedes_e_class_2021_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.mercedes_e_class_2021.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/mercedes_e_class_2021_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.mercedes_e_class_2021.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_pop3"
+   }
+  ]
+ },
+ "backfire.mercedes_e_class_2021.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_crackle3"
+   }
+  ]
+ },
+ "backfire.mercedes_e_class_2021.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_bang1"
+   }
+  ]
+ },
+ "backfire.mercedes_e_class_2021.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/mercedes_e_class_2021_tick5"
+   }
+  ]
+ },
+ "engine.bmw_x5_2020.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/bmw_x5_2020_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.bmw_x5_2020.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/bmw_x5_2020_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.bmw_x5_2020.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/bmw_x5_2020_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.bmw_x5_2020.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_pop3"
+   }
+  ]
+ },
+ "backfire.bmw_x5_2020.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_crackle3"
+   }
+  ]
+ },
+ "backfire.bmw_x5_2020.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_bang1"
+   }
+  ]
+ },
+ "backfire.bmw_x5_2020.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/bmw_x5_2020_tick5"
+   }
+  ]
+ },
+ "engine.audi_r8_2020.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/audi_r8_2020_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.audi_r8_2020.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/audi_r8_2020_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.audi_r8_2020.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/audi_r8_2020_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.audi_r8_2020.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_pop3"
+   }
+  ]
+ },
+ "backfire.audi_r8_2020.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_crackle3"
+   }
+  ]
+ },
+ "backfire.audi_r8_2020.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_bang1"
+   }
+  ]
+ },
+ "backfire.audi_r8_2020.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/audi_r8_2020_tick5"
+   }
+  ]
+ },
+ "engine.porsche_911_992_2020.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/porsche_911_992_2020_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.porsche_911_992_2020.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/porsche_911_992_2020_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.porsche_911_992_2020.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/porsche_911_992_2020_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.porsche_911_992_2020.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_pop3"
+   }
+  ]
+ },
+ "backfire.porsche_911_992_2020.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_crackle3"
+   }
+  ]
+ },
+ "backfire.porsche_911_992_2020.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_bang1"
+   }
+  ]
+ },
+ "backfire.porsche_911_992_2020.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/porsche_911_992_2020_tick5"
+   }
+  ]
+ },
+ "engine.mclaren_720s_2018.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/mclaren_720s_2018_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.mclaren_720s_2018.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/mclaren_720s_2018_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.mclaren_720s_2018.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/mclaren_720s_2018_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.mclaren_720s_2018.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_pop3"
+   }
+  ]
+ },
+ "backfire.mclaren_720s_2018.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_crackle3"
+   }
+  ]
+ },
+ "backfire.mclaren_720s_2018.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_bang1"
+   }
+  ]
+ },
+ "backfire.mclaren_720s_2018.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/mclaren_720s_2018_tick5"
+   }
+  ]
+ },
+ "engine.lamborghini_urus_2019.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/lamborghini_urus_2019_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.lamborghini_urus_2019.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/lamborghini_urus_2019_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.lamborghini_urus_2019.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/lamborghini_urus_2019_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.lamborghini_urus_2019.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_pop3"
+   }
+  ]
+ },
+ "backfire.lamborghini_urus_2019.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_crackle3"
+   }
+  ]
+ },
+ "backfire.lamborghini_urus_2019.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_bang1"
+   }
+  ]
+ },
+ "backfire.lamborghini_urus_2019.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/lamborghini_urus_2019_tick5"
+   }
+  ]
+ },
+ "engine.ferrari_488_2016.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/ferrari_488_2016_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.ferrari_488_2016.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/ferrari_488_2016_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.ferrari_488_2016.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/ferrari_488_2016_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.ferrari_488_2016.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_pop3"
+   }
+  ]
+ },
+ "backfire.ferrari_488_2016.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_crackle3"
+   }
+  ]
+ },
+ "backfire.ferrari_488_2016.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_bang1"
+   }
+  ]
+ },
+ "backfire.ferrari_488_2016.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/ferrari_488_2016_tick5"
+   }
+  ]
+ },
+ "engine.nissan_skyline_r34_1999.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/nissan_skyline_r34_1999_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.nissan_skyline_r34_1999.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/nissan_skyline_r34_1999_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.nissan_skyline_r34_1999.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/nissan_skyline_r34_1999_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.nissan_skyline_r34_1999.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_pop3"
+   }
+  ]
+ },
+ "backfire.nissan_skyline_r34_1999.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_crackle3"
+   }
+  ]
+ },
+ "backfire.nissan_skyline_r34_1999.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_bang1"
+   }
+  ]
+ },
+ "backfire.nissan_skyline_r34_1999.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_skyline_r34_1999_tick5"
+   }
+  ]
+ },
+ "engine.mazda_rx7_fd_1993.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/mazda_rx7_fd_1993_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.mazda_rx7_fd_1993.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/mazda_rx7_fd_1993_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.mazda_rx7_fd_1993.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/mazda_rx7_fd_1993_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.mazda_rx7_fd_1993.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_pop3"
+   }
+  ]
+ },
+ "backfire.mazda_rx7_fd_1993.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_crackle3"
+   }
+  ]
+ },
+ "backfire.mazda_rx7_fd_1993.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_bang1"
+   }
+  ]
+ },
+ "backfire.mazda_rx7_fd_1993.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/mazda_rx7_fd_1993_tick5"
+   }
+  ]
+ },
+ "engine.nissan_silvia_s15_1999.idle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/nissan_silvia_s15_1999_idle",
+    "stream": false
+   }
+  ]
+ },
+ "engine.nissan_silvia_s15_1999.drive": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/nissan_silvia_s15_1999_drive",
+    "stream": false
+   }
+  ]
+ },
+ "engine.nissan_silvia_s15_1999.start": {
+  "sounds": [
+   {
+    "name": "trafficcraft:engine/nissan_silvia_s15_1999_start",
+    "stream": false
+   }
+  ]
+ },
+ "backfire.nissan_silvia_s15_1999.pop": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_pop0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_pop1"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_pop2"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_pop3"
+   }
+  ]
+ },
+ "backfire.nissan_silvia_s15_1999.crackle": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_crackle0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_crackle1"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_crackle2"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_crackle3"
+   }
+  ]
+ },
+ "backfire.nissan_silvia_s15_1999.bang": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_bang0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_bang1"
+   }
+  ]
+ },
+ "backfire.nissan_silvia_s15_1999.tick": {
+  "sounds": [
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_tick0"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_tick1"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_tick2"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_tick3"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_tick4"
+   },
+   {
+    "name": "trafficcraft:backfire/nissan_silvia_s15_1999_tick5"
+   }
+  ]
  }
 }
